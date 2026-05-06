@@ -1,21 +1,34 @@
 <%- include('../../partials/header') %>
 <div class="container mt-4">
-  <h2>Rekap Inspeksi Listrik Rumah Tangga</h2>
-  <table class="table table-bordered">
-    <thead><tr><th>No</th><th>Tanggal</th><th>Kelompok</th><th>Pemilik</th><th>Desa</th><th>Petugas</th><th>Aksi</th></tr></thead>
-    <tbody>
-      <% data.forEach((item, idx) => { %>
-      <tr>
-        <td><%= idx+1 %></td>
-        <td><%= new Date(item.tanggal).toLocaleDateString() %></td>
-        <td><%= item.kelompok %></td>
-        <td><%= item.pemilikRumah %></td>
-        <td><%= item.desa %></td>
-        <td><%= item.petugasNama %></td>
-        <td><a href="/admin/inspeksi/<%= item.id %>" class="btn btn-sm btn-info">Detail</a></td>
-      </tr>
-      <% }) %>
-    </tbody>
-  </table>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Rekap Inspeksi Listrik Rumah Tangga</h2>
+    <a href="/admin/dashboard" class="btn btn-secondary">Kembali ke Dashboard</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped">
+      <thead class="table-dark">
+        <tr><th>No</th><th>Tanggal</th><th>Kelompok</th><th>Pemilik</th><th>Desa/Dusun</th><th>Daya Terpasang (VA)</th><th>Total Beban (W)</th><th>Kesimpulan</th><th>Petugas</th><th>Aksi</th></tr>
+      </thead>
+      <tbody>
+        <% data.forEach((item, idx) => { %>
+        <tr>
+          <td><%= idx+1 %></td>
+          <td><%= new Date(item.tanggal).toLocaleDateString('id-ID') %></td>
+          <td><%= item.kelompok %></td>
+          <td><%= item.pemilikRumah %></td>
+          <td><%= item.desa %> - <%= item.dusunRt %></td>
+          <td><%= item.dayaTerpasang %></td>
+          <td><%= item.totalBeban ? item.totalBeban.toLocaleString() : '-' %></td>
+          <td><span class="badge bg-<%= item.kesimpulan === 'Instalasi aman' ? 'success' : (item.kesimpulan === 'Berbahaya' ? 'danger' : 'warning') %>"><%= item.kesimpulan %></span></td>
+          <td><%= item.petugasNama || item.namaMahasiswa %></td>
+          <td>
+            <a href="/admin/inspeksi/<%= item.id %>" class="btn btn-sm btn-info">Detail</a>
+            <a href="/admin/inspeksi/cetak/<%= item.id %>" class="btn btn-sm btn-secondary" target="_blank">Cetak</a>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
 </div>
 <%- include('../../partials/footer') %>

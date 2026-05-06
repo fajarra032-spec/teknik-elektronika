@@ -28,5 +28,16 @@ router.get('/:id', async (req, res) => {
     res.status(500).send('Gagal memuat detail');
   }
 });
-
+// Cetak laporan inspeksi (halaman print-friendly)
+router.get('/cetak/:id', async (req, res) => {
+  try {
+    const doc = await db.collection('inspeksi_listrik').doc(req.params.id).get();
+    if (!doc.exists) return res.status(404).send('Data tidak ditemukan');
+    const data = { id: doc.id, ...doc.data() };
+    res.render('admin/inspeksi/cetak', { title: 'Cetak Laporan Inspeksi', data });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Gagal memuat data untuk cetak');
+  }
+});
 module.exports = router;

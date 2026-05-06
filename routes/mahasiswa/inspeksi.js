@@ -70,9 +70,19 @@ router.post('/', async (req, res) => {
     res.status(500).send('Gagal menyimpan data inspeksi');
   }
 });
-
+// Halaman cetak laporan (POST)
+router.post('/cetak', (req, res) => {
+  const data = JSON.parse(req.body.data);
+  // Kirim data ke view cetak
+  res.render('mahasiswa/inspeksi/cetak', { 
+    title: 'Cetak Laporan Inspeksi',
+    data: data,
+    tanggalCetak: new Date().toLocaleDateString('id-ID')
+  });
+});
 router.get('/selesai', (req, res) => {
   res.render('mahasiswa/inspeksi/selesai', { title: 'Terima Kasih' });
 });
+
 
 module.exports = router;

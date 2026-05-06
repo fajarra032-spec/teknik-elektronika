@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Laporan Inspeksi Listrik - <%= data.pemilikRumah %></title>
+  <!-- Masukkan Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <style>
+    /* PENGATURAN KERTAS LANSKAP */
+    @page {
+      size: A4 landscape;
+      margin: 1.5cm;
+    }
+    
+    /* VARIABEL WARNA & TIPOGRAFI MODERN */
+    :root {
+      --primary-color: #1e3a8a; /* Biru Navy / Teknik */
+      --secondary-color: #3b82f6;
+      --text-main: #334155;
+      --bg-light: #f8fafc;
+      --border-color: #cbd5e1;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.4;
+      color: var(--text-main);
+      background-color: #fff;
+    }
+    
+    /* KOP SURAT ELEGANT */
+    .kop-surat {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 3px solid var(--primary-color);
+      position: relative;
+    }
+    .kop-surat::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background-color: var(--primary-color);
+    }
+    .logo-kop {
+      width: 85px;
+      height: auto;
+      margin-right: 25px;
+    }
+    .teks-kop {
+      flex: 1;
+    }
+    .teks-kop .nama-kampus {
+      font-size: 22pt;
+      font-weight: 800;
+      margin: 0;
+      color: var(--primary-color);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .teks-kop .alamat, 
+    .teks-kop .kontak {
+      font-size: 10pt;
+      margin: 2px 0 0 0;
+      color: #475569;
+    }
+    
+    /* JUDUL LAPORAN */
+    .judul-laporan {
+      text-align: center;
+      margin: 20px 0 25px;
+    }
+    .judul-laporan h3 {
+      font-size: 15pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 5px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .judul-laporan p {
+      margin: 0;
+      font-weight: 600;
+      color: var(--secondary-color);
+    }
+
+    /* JUDUL SEKSI (SECTION HEADERS) */
+    h4 {
+      margin: 15px 0 10px 0;
+      font-size: 11.5pt;
+      font-weight: 700;
+      color: var(--primary-color);
+      background-color: #eff6ff;
+      padding: 6px 12px;
+      border-left: 5px solid var(--secondary-color);
+      border-radius: 0 4px 4px 0;
+      page-break-after: avoid; 
+    }
+
+    /* GRID UNTUK INFORMASI AWAL (Lanskap 2 Kolom) */
+    .info-grid {
+      display: flex;
+      gap: 25px;
+      margin-bottom: 15px;
+      page-break-inside: avoid;
+    }
+    .info-col {
+      flex: 1;
+    }
+
+    /* TABEL MODERN */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+      page-break-inside: avoid; 
+      font-size: 10pt;
+    }
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 7px 10px;
+      vertical-align: middle;
+    }
+    th {
+      background-color: var(--primary-color);
+      color: #ffffff;
+      font-weight: 600;
+      text-align: center;
+      text-transform: uppercase;
+      font-size: 9pt;
+      letter-spacing: 0.5px;
+    }
+    tr:nth-child(even) td {
+      background-color: var(--bg-light); /* Zebra striping */
+    }
+    
+    /* TABEL DATA (Informasi Awal - Clean look) */
+    .tabel-data {
+      margin-bottom: 0;
+    }
+    .tabel-data th, .tabel-data td {
+      border: none;
+      border-bottom: 1px dashed #e2e8f0;
+      padding: 6px 4px;
+      background-color: transparent !important;
+      font-size: 10.5pt;
+    }
+    .tabel-data tr:last-child td {
+      border-bottom: none;
+    }
+    .tabel-data td:first-child {
+      font-weight: 600;
+      color: #475569;
+    }
+    
+    /* STYLE BOX & HIGHLIGHTS */
+    .summary-box {
+      display: flex;
+      justify-content: space-between;
+      background-color: #f1f5f9;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px 20px;
+      margin-bottom: 15px;
+      page-break-inside: avoid;
+    }
+    .summary-box p {
+      margin: 0;
+      font-size: 11pt;
+    }
+    .summary-box strong {
+      color: var(--primary-color);
+      font-size: 12pt;
+    }
+
+    .analisis-box {
+      margin-bottom: 15px; 
+      padding: 10px 15px; 
+      background-color: #fffbeb; 
+      border-left: 4px solid #f59e0b; 
+      color: #92400e;
+      border-radius: 4px; 
+      font-weight: 500;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .section-grafik {
+      page-break-inside: avoid; 
+      margin: 20px 0;
+      width: 100%;
+    }
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 220px;
+      padding: 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    /* DAFTAR REKOMENDASI */
+    ul.rekomendasi-list {
+      margin: 0;
+      padding-left: 20px;
+    }
+    ul.rekomendasi-list li {
+      margin-bottom: 6px;
+      padding-left: 5px;
+    }
+    ul.rekomendasi-list li strong {
+      color: #b91c1c; /* Merah untuk prioritas */
+    }
+
+    /* TANDA TANGAN */
+    .tanda-tangan {
+      margin-top: 30px;
+      display: flex;
+      justify-content: space-around;
+      page-break-inside: avoid;
+    }
+    .ttd-box {
+      width: 260px;
+      text-align: center;
+    }
+    .ttd-box p {
+      margin: 0 0 5px 0;
+    }
+    .ttd-line {
+      border-bottom: 1px solid #000;
+      margin: 60px auto 5px auto;
+      width: 80%;
+    }
+    
+    /* FOOTER */
+    .footer {
+      margin-top: 25px;
+      font-size: 8.5pt;
+      text-align: center;
+      color: #64748b;
+      border-top: 1px dashed var(--border-color);
+      padding-top: 10px;
+      page-break-inside: avoid;
+    }
+    
+    /* TOMBOL AKSI */
+    .btn {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .btn-primary { background-color: var(--primary-color); color: white; }
+    .btn-primary:hover { background-color: #172a6b; }
+    .btn-secondary { background-color: #64748b; color: white; }
+
+    /* PENGATURAN KHUSUS CETAK PRINTER */
+    @media print {
+      body {
+        margin: 0;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .chart-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 220px !important;
+      }
+      canvas {
+        max-width: 100% !important;
+        max-height: 220px !important;
+      }
+      tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- KOP SURAT -->
+<div class="kop-surat">
+  <img src="/images/logo.png" alt="Logo Politeknik Dewantara" class="logo-kop">
+  <div class="teks-kop">
+    <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
+    <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo. Sulawesi Selatan</p>
+    <p class="kontak">E-mail: sdm@polidewa.ac.id | Website: polidewa.ac.id</p>
+  </div>
+</div>
+
+<!-- JUDUL LAPORAN -->
+<div class="judul-laporan">
+  <h3>LAPORAN HASIL INSPEKSI INSTALASI LISTRIK</h3>
+  <p>Program Studi Teknik Elektronika – ELECTRO CARE C4S</p>
+</div>
+
+<!-- INFO AWAL (2 KOLOM LANSKAP) -->
+<div class="info-grid">
+  <div class="info-col">
+    <h4>A. Identitas Pemilik & Lokasi</h4>
+    <table class="tabel-data">
+      <tr><td style="width: 130px;">Kelompok</td><td>: <%= data.kelompok %></td></tr>
+      <tr><td>Tanggal Inspeksi</td><td>: <%= data.tanggal %></td></tr>
+      <tr><td>Desa</td><td>: <%= data.desa %></td></tr>
+      <tr><td>Dusun/RT</td><td>: <%= data.dusunRt %></td></tr>
+      <tr><td>Pemilik Rumah</td><td>: <strong><%= data.pemilikRumah %></strong></td></tr>
+      <tr><td>Alamat</td><td>: <%= data.alamat %></td></tr>
+    </table>
+  </div>
+  <div class="info-col">
+    <h4>B. Informasi Awal</h4>
+    <table class="tabel-data">
+      <tr><td style="width: 180px;">Daya Terpasang</td><td>: <strong><%= data.dayaTerpasang %> VA</strong></td></tr>
+      <tr><td>Jumlah Penghuni</td><td>: <%= data.jumlahPenghuni %> Orang</td></tr>
+      <tr><td>Riwayat Korsleting</td><td>: 
+        <% if (data.pernahKorsleting === 'Ya') { %>
+          <span style="color: #dc2626; font-weight: bold;">Ya (<%= data.keteranganKorsleting %>)</span>
+        <% } else { %>
+          Tidak Pernah
+        <% } %>
+      </td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- PENGUKURAN LISTRIK -->
+<h4>C. Pengukuran Parameter Listrik</h4>
+<table>
+  <tr>
+    <th style="width: 33%;">Tegangan Terukur (Volt)</th>
+    <th style="width: 33%;">Arus Total (Ampere)</th>
+    <th style="width: 33%;">Beban Aktual Terukur (Watt)</th>
+  </tr>
+  <tr style="font-size: 11pt; font-weight: 600;">
+    <td style="text-align:center; color: #0f172a;"><%= data.tegangan %> V</td>
+    <td style="text-align:center; color: #0f172a;"><%= data.arusTotal || '-' %> A</td>
+    <td style="text-align:center; color: #0f172a;"><%= data.bebanTerpasang %> W</td>
+  </tr>
+</table>
+
+<!-- DAFTAR BEBAN -->
+<h4>D. Inventarisasi Beban Listrik Terpasang</h4>
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left;">Jenis Peralatan</th>
+      <th style="width: 50px;">Jml</th>
+      <th style="width: 70px;">Daya</th>
+      <th style="width: 80px;">Total (W)</th>
+      <th style="width: 70px;">Mulai</th>
+      <th style="width: 70px;">Selesai</th>
+      <th style="width: 80px;">Durasi (Jam)</th>
+      <th style="width: 100px;">Energi (Wh)</th>
+      <th style="text-align: left;">Keterangan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% data.bebanList.forEach(b => { 
+      const totalDaya = (b.jml || 0) * (b.daya || 0);
+      const durasi = (() => {
+        if (!b.mulai || !b.selesai) return 0;
+        const toMin = (t) => { let [h,m] = t.split(':').map(Number); return h*60 + (m||0); };
+        let start = toMin(b.mulai), end = toMin(b.selesai);
+        if (end < start) end += 24*60;
+        return (end - start)/60;
+      })();
+      const energi = totalDaya * durasi;
+    %>
+    <tr>
+      <td><strong><%= b.jenis %></strong></td>
+      <td style="text-align:center;"><%= b.jml %></td>
+      <td style="text-align:center;"><%= b.daya %></td>
+      <td style="text-align:center; font-weight:600;"><%= totalDaya %></td>
+      <td style="text-align:center;"><%= b.mulai || '-' %></td>
+      <td style="text-align:center;"><%= b.selesai || '-' %></td>
+      <td style="text-align:center;"><%= durasi.toFixed(1) %></td>
+      <td style="text-align:center;"><%= Math.round(energi) %></td>
+      <td><%= b.ket || '-' %></td>
+    </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<!-- BOX RINGKASAN DAYA & ENERGI -->
+<div class="summary-box">
+  <p>Total Daya Maksimum (Semua Aktif): <strong><%= data.totalDaya %> Watt</strong></p>
+  <p>Estimasi Konsumsi Energi Harian: <strong><%= data.totalEnergi %> Wh <span style="color:#64748b; font-weight:normal;">(~<%= (data.totalEnergi/1000).toFixed(1) %> kWh/hari)</span></strong></p>
+</div>
+
+<!-- GRAFIK BEBAN PUNCAK -->
+<div class="section-grafik">
+  <h4>E. Profil Beban Puncak Harian</h4>
+  
+  <div class="analisis-box">
+    <span style="margin-right: 8px;">💡</span> <strong>Analisis:</strong> Puncak beban tertinggi mencapai <strong><span id="teksBebanPuncak">0</span> Watt</strong> dan umumnya terjadi pada jam <strong><span id="teksJamPuncak">-</span></strong>.
+  </div>
+
+  <div class="chart-container">
+    <canvas id="cetakBebanChart"></canvas>
+  </div>
+</div>
+
+<!-- PEMERIKSAAN MCB -->
+<h4>F. Pengecekan Sistem Proteksi (MCB)</h4>
+<table>
+  <tr>
+    <th style="text-align:left;">Komponen Proteksi</th>
+    <th style="width: 100px;">Ketersediaan</th>
+    <th style="width: 100px;">Ukuran (A)</th>
+    <th style="width: 120px;">Kesesuaian</th>
+    <th style="text-align:left;">Catatan / Rekomendasi</th>
+  </tr>
+  <tr>
+    <td style="font-weight:600;">MCB Utama</td>
+    <td style="text-align:center;"><%= data.mcbUtamaAda === 'Y' ? 'Ada' : 'Tidak Ada' %></td>
+    <td style="text-align:center;"><%= data.mcbUtamaUkuran || '-' %></td>
+    <td style="text-align:center;"><%= data.mcbUtamaSesuai === 'Y' ? 'Sesuai' : 'Tidak Sesuai' %></td>
+    <td><%= data.mcbUtamaRekomendasi || '-' %></td>
+  </tr>
+  <tr>
+    <td style="font-weight:600;">MCB Cabang</td>
+    <td style="text-align:center;"><%= data.mcbCabangAda === 'Y' ? 'Ada' : 'Tidak Ada' %></td>
+    <td style="text-align:center;"><%= data.mcbCabangUkuran || '-' %></td>
+    <td style="text-align:center;"><%= data.mcbCabangSesuai === 'Y' ? 'Sesuai' : 'Tidak Sesuai' %></td>
+    <td><%= data.mcbCabangRekomendasi || '-' %></td>
+  </tr>
+  <tr>
+    <td colspan="5" style="background-color: #f8fafc;">
+      Riwayat MCB Jatuh/Trip: <strong style="color: <%= data.mcbPernahTrip === 'Ya' ? '#dc2626' : '#16a34a' %>;"><%= data.mcbPernahTrip %></strong>
+    </td>
+  </tr>
+</table>
+
+<!-- PEMERIKSAAN INSTALASI (Tabel Horizontal) -->
+<h4>G. Kondisi Fisik Instalasi Pengkabelan</h4>
+<table>
+  <tr>
+    <th style="width:11%;">Kabel Utama</th>
+    <th style="width:11%;">Sesuai?</th>
+    <th style="width:11%;">Kabel Cabang</th>
+    <th style="width:11%;">Sesuai?</th>
+    <th style="width:12%;">Fisik Kabel</th>
+    <th style="width:12%;">Titik Sambung</th>
+    <th style="width:11%;">Stop Kontak</th>
+    <th style="width:10%;">Grounding</th>
+    <th style="width:11%;">Area Lembab</th>
+  </tr>
+  <tr style="text-align: center; font-weight:500;">
+    <td><%= data.kabelUtamaUkuran || '-' %> mm²</td>
+    <td><%= data.kabelUtamaSesuai === 'Y' ? 'Ya' : 'Tidak' %></td>
+    <td><%= data.kabelCabangUkuran || '-' %> mm²</td>
+    <td><%= data.kabelCabangSesuai === 'Y' ? 'Ya' : 'Tidak' %></td>
+    <td><%= data.kabelTerbuka %></td>
+    <td><%= data.sambunganRapi %></td>
+    <td><%= data.stopKontakLonggar %></td>
+    <td><%= data.adaGrounding %></td>
+    <td><%= data.lembab %></td>
+  </tr>
+</table>
+
+<!-- REKOMENDASI & KESIMPULAN -->
+<div style="page-break-inside: avoid; border: 1px solid var(--border-color); border-radius: 6px; padding: 15px; margin-top: 15px; background-color: #fafaf9;">
+  <h4 style="margin-top: 0; background: transparent; padding: 0; border: none; color: #0f172a;">H. Kesimpulan & Tindak Lanjut</h4>
+  
+  <p style="margin: 10px 0 5px 0;"><strong>Rekomendasi Perbaikan:</strong></p>
+  <ul class="rekomendasi-list">
+    <% if (data.rekomendasiList && data.rekomendasiList.length) { %>
+      <% data.rekomendasiList.forEach(r => { %>
+        <li>[<strong><%= r.prioritas %></strong>] <%= r.deskripsi %></li>
+      <% }) %>
+    <% } else { %>
+      <li><em style="color:#64748b;">Tidak ada temuan yang memerlukan tindakan spesifik saat ini.</em></li>
+    <% } %>
+  </ul>
+  
+  <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e1;">
+    <span style="font-size: 11pt;">Status Kesimpulan Umum: </span>
+    <strong style="font-size: 12pt; text-transform:uppercase; color: var(--primary-color); padding: 4px 8px; background: #e0e7ff; border-radius: 4px; margin-left: 5px;">
+      <%= data.kesimpulan %>
+    </strong>
+  </div>
+</div>
+
+<!-- TANDA TANGAN -->
+<div class="tanda-tangan">
+  <div class="ttd-box">
+    <p>Mengetahui,</p>
+    <p>Pemilik Rumah,</p>
+    <div class="ttd-line"></div>
+    <p><strong><%= data.pemilikNama %></strong></p>
+  </div>
+  <div class="ttd-box">
+    <p>Cimpu, <%= typeof tanggalCetak !== 'undefined' ? tanggalCetak : data.tanggal %></p>
+    <p>Petugas Inspeksi,</p>
+    <div class="ttd-line"></div>
+    <p><strong><%= data.petugasNama %></strong></p>
+    <p style="font-size: 9.5pt; color: #475569;">Mahasiswa Teknik Elektronika</p>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <p style="margin:0;">Dicetak secara digital dari Sistem Informasi Elektronika Polidewa.</p>
+  <p style="margin:2px 0 0 0;">Dokumen Laporan Inspeksi Asli ELECTRO CARE tersimpan pada basis data institusi.</p>
+</div>
+
+<!-- TOMBOL AKSI -->
+<div class="no-print" style="text-align: center; margin-top: 30px; margin-bottom: 50px;">
+  <button onclick="window.print();" class="btn btn-primary">
+    <svg style="width:16px; height:16px; vertical-align:text-bottom; margin-right:5px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+    Cetak / Simpan PDF
+  </button>
+  <button onclick="window.close();" class="btn btn-secondary">Tutup Tab</button>
+</div>
+
+<!-- SCRIPT UNTUK RENDER GRAFIK & ANALISIS -->
+<script>
+  const bebanList = <%- JSON.stringify(data.bebanList || []) %>;
+  
+  function timeToMinutes(timeStr) {
+    if (!timeStr) return 0;
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return 0;
+    return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+  }
+
+  let bebanPerJam = new Array(24).fill(0);
+  
+  for (let b of bebanList) {
+    if (!b.mulai || !b.selesai) continue;
+    if ((b.jml || 0) === 0 || (b.daya || 0) === 0) continue;
+    
+    const totalDayaBaris = (b.jml || 0) * (b.daya || 0);
+    let start = timeToMinutes(b.mulai);
+    let end = timeToMinutes(b.selesai);
+    
+    if (end < start) end += 24 * 60;
+    
+    let startHour = Math.floor(start / 60);
+    let endHour = Math.floor(end / 60);
+    
+    for (let h = startHour; h <= endHour; h++) {
+      let hourMod = h % 24;
+      bebanPerJam[hourMod] += totalDayaBaris;
+    }
+  }
+
+  window.addEventListener('load', () => {
+    // --- Hitung Beban Puncak ---
+    let maxBeban = 0;
+    let jamPuncakArray = [];
+    for (let i = 0; i < 24; i++) {
+      if (bebanPerJam[i] > maxBeban) {
+        maxBeban = bebanPerJam[i];
+        jamPuncakArray = [i];
+      } else if (bebanPerJam[i] === maxBeban && maxBeban > 0) {
+        jamPuncakArray.push(i);
+      }
+    }
+    
+    // Tampilkan di HTML
+    document.getElementById('teksBebanPuncak').innerText = maxBeban.toLocaleString();
+    document.getElementById('teksJamPuncak').innerText = jamPuncakArray.length ? jamPuncakArray.map(j => j.toString().padStart(2,'0')+':00').join(', ') : '-';
+
+    // --- Render Grafik Modern ---
+    const ctx = document.getElementById('cetakBebanChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Array.from({length: 24}, (_, i) => i.toString().padStart(2,'0') + ':00'),
+        datasets: [{
+          label: 'Daya (Watt)',
+          data: bebanPerJam,
+          backgroundColor: 'rgba(59, 130, 246, 0.8)', // Biru terang modern
+          borderColor: 'rgba(30, 58, 138, 1)',
+          borderWidth: 1,
+          borderRadius: 4, // Membuat ujung bar sedikit melengkung (modern look)
+          barPercentage: 0.8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false, 
+        animation: false, 
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: '#e2e8f0', drawBorder: false },
+            title: { display: true, text: 'Beban Listrik (Watt)', color: '#475569', font: { weight: 'bold' } }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { maxRotation: 45, minRotation: 0, color: '#64748b' }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+            titleFont: { size: 13 },
+            bodyFont: { size: 13 },
+            padding: 10,
+            cornerRadius: 4
+          }
+        }
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
