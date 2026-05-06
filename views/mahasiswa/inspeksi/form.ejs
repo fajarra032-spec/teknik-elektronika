@@ -1,0 +1,259 @@
+<%- include('../../partials/header') %>
+<style>
+  .form-section { background: white; border-radius: 1rem; padding: 2rem; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .section-title { font-weight: 700; margin-bottom: 1.5rem; border-left: 5px solid #1e3a8a; padding-left: 1rem; color: #1e3a8a; text-transform: uppercase; }
+  .beban-row { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border: 1px solid #dee2e6; }
+  .standard-text { font-size: 0.85rem; color: #6c757d; font-style: italic; display: block; margin-top: 4px; }
+  @media (max-width: 768px) { .beban-row { flex-direction: column; align-items: stretch; } }
+</style>
+
+<div class="container mt-4 mb-5">
+  <div class="form-section">
+    <div class="text-center mb-4">
+      <h2 class="fw-bold">FORMULIR INSPEKSI INSTALASI LISTRIK RUMAH TANGGA</h2>
+      <p class="text-muted">Hari Ke-1 — ELECTRO CARE – C4S DESA CIMPU[cite: 1]<br>Politeknik Dewantara – Prodi Teknik Elektronika</p>
+    </div>
+
+    <form method="POST" id="inspeksiForm">
+      <!-- IDENTITAS -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3"><label class="form-label fw-bold">Kelompok</label><input type="text" name="kelompok" class="form-control" required></div>
+        <div class="col-md-3"><label class="form-label fw-bold">Tanggal</label><input type="date" name="tanggal" class="form-control" required></div>
+        <div class="col-md-3"><label class="form-label fw-bold">Desa</label><input type="text" name="desa" class="form-control" value="Cimpu" readonly></div>
+        <div class="col-md-3"><label class="form-label fw-bold">Dusun/RT</label><input type="text" name="dusunRt" class="form-control" required></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Pemilik Rumah</label><input type="text" name="pemilikRumah" class="form-control" required></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Alamat</label><input type="text" name="alamat" class="form-control" required></div>
+      </div>
+
+      <hr>
+
+      <!-- A. INFORMASI AWAL -->
+      <h4 class="section-title">A. Informasi Awal[cite: 1]</h4>
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <label class="form-label">Daya Terpasang (VA)</label>
+          <input type="number" name="dayaTerpasang" class="form-control" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Jumlah Penghuni</label>
+          <input type="number" name="jumlahPenghuni" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Pernah korsleting/kebakaran?[cite: 1]</label>
+          <select name="pernahKorsleting" class="form-select" required>
+            <option value="Tidak">Tidak</option>
+            <option value="Ya">Ya</option>
+          </select>
+          <input type="text" name="keteranganKorsleting" class="form-control mt-2" placeholder="Jika ya, jelaskan penyebabnya">
+        </div>
+      </div>
+
+      <!-- B. PENGUKURAN LISTRIK -->
+      <h4 class="section-title">B. Pengukuran Listrik[cite: 1]</h4>
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label">Tegangan (Volt)</label>
+          <input type="number" step="0.1" name="tegangan" id="tegangan" class="form-control" required>
+          <small class="standard-text">Standar: 198-242 V (220V ±10%)[cite: 1]</small>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Arus Total (Ampere)</label>
+          <input type="number" step="0.01" name="arusTotal" id="arusTotal" class="form-control">
+          <small class="standard-text">Standar: < Kapasitas MCB[cite: 1]</small>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Beban Terukur (Watt)</label>
+          <input type="number" name="bebanTerukur" id="bebanTerukur" class="form-control" readonly placeholder="Otomatis V x I">
+        </div>
+      </div>
+
+      <!-- C. DAFTAR BEBAN LISTRIK -->
+      <h4 class="section-title">C. Daftar Beban Listrik Terpasang[cite: 1]</h4>
+      <p class="text-muted small mb-3">Petunjuk: Tanyakan dan catat semua peralatan, daya (W), durasi pemakaian, dan catatan kondisi alat[cite: 1].</p>
+      
+      <div id="bebanContainer">
+        <!-- Header Row for Desktop -->
+        <div class="d-none d-md-flex gap-2 mb-2 px-3 fw-bold text-secondary small">
+          <div style="flex: 2;">Jenis Peralatan</div>
+          <div style="flex: 0.5;">Jml</div>
+          <div style="flex: 1;">Daya (W)</div>
+          <div style="flex: 1;">Total (W)</div>
+          <div style="flex: 1;">Jam/Hari</div>
+          <div style="flex: 2;">Keterangan/Kondisi Alat</div>
+          <div style="flex: 0.3;"></div>
+        </div>
+      </div>
+      
+      <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="addBeban">+ Tambah Baris Peralatan</button>
+
+      <div class="row mb-4">
+        <div class="col-md-6 offset-md-6">
+          <div class="card card-body bg-light shadow-sm text-end">
+            <label class="fw-bold">Total Keseluruhan Beban (Watt):[cite: 1]</label>
+            <h3 class="mb-0 text-primary fw-bold" id="totalBebanDisplay">0</h3>
+            <input type="hidden" name="totalBeban" id="totalBeban">
+          </div>
+        </div>
+      </div>
+
+      <!-- D & E: PEMERIKSAAN TEKNIS -->
+      <h4 class="section-title">D & E. Pemeriksaan MCB & Instalasi[cite: 1]</h4>
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label">MCB Utama (Ukuran A)[cite: 1]</label>
+          <input type="number" name="mcbUtamaUkuran" class="form-control">
+          <small class="text-danger small">MCB ideal = 125% dari arus beban[cite: 1]</small>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Kondisi Kabel[cite: 1]</label>
+          <select name="kabelKondisi" class="form-select">
+            <option value="Aman">Aman</option>
+            <option value="Bahaya">Bahaya (Terkelupas)</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Ada Grounding?[cite: 1]</label>
+          <select name="adaGrounding" class="form-select">
+            <option value="Ya">Ya</option>
+            <option value="Tidak">Tidak</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- F. REKOMENDASI -->
+      <h4 class="section-title">F. Rekomendasi & Kesimpulan[cite: 1]</h4>
+      <div id="rekomendasiContainer"></div>
+      <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="addRekomendasi">+ Tambah Rekomendasi</button>
+
+      <div class="row mb-4 mt-2">
+        <div class="col-md-12">
+          <label class="form-label fw-bold">Kesimpulan Umum[cite: 1]</label>
+          <select name="kesimpulan" class="form-select form-select-lg border-primary">
+            <option value="Instalasi aman">Instalasi aman</option>
+            <option value="Perbaikan ringan">Perbaikan ringan</option>
+            <option value="Perbaikan sedang">Perbaikan sedang</option>
+            <option value="Berbahaya">Berbahaya</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- TANDA TANGAN -->
+      <div class="row g-4 mt-5">
+        <div class="col-6 text-center border-top pt-3">
+          <p class="mb-5 small">Petugas Inspeksi (Mahasiswa)[cite: 1]</p>
+          <p class="fw-bold text-decoration-underline mb-0"><%= user.nama %></p>
+        </div>
+        <div class="col-6 text-center border-top pt-3">
+          <p class="mb-5 small">Pemilik Rumah[cite: 1]</p>
+          <p class="fw-bold text-decoration-underline mb-0">____________________</p>
+        </div>
+      </div>
+
+      <div class="text-center mt-5">
+        <button type="submit" class="btn btn-primary btn-lg px-5">Simpan Data Inspeksi</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Daftar Peralatan Default dari Formulir[cite: 1]
+  const defaultBeban = [
+    { jenis: "Lampu LED", jml: 0, daya: 0, waktu: 0, ket: "" },
+    { jenis: "Lampu pijar / neon", jml: 0, daya: 0, waktu: 0, ket: "" },
+    { jenis: "Kulkas", jml: 0, daya: 0, waktu: 0, ket: "" },
+    { jenis: "Mesin cuci", jml: 0, daya: 0, waktu: 0, ket: "" },
+    { jenis: "Setrika", jml: 0, daya: 0, waktu: 0, ket: "" },
+    { jenis: "Rice cooker", jml: 0, daya: 0, waktu: 0, ket: "" },
+    { jenis: "Kipas angin", jml: 0, daya: 0, waktu: 0, ket: "" },
+    { jenis: "TV", jml: 0, daya: 0, waktu: 0, ket: "" },
+    { jenis: "Pompa air", jml: 0, daya: 0, waktu: 0, ket: "" },
+    { jenis: "Dispenser", jml: 0, daya: 0, waktu: 0, ket: "" },
+    { jenis: "Charger HP/Powerbank", jml: 0, daya: 0, waktu: 0, ket: "" },
+    { jenis: "Komputer / laptop", jml: 0, daya: 0, waktu: 0, ket: "" }
+  ];
+
+  let bebanList = [...defaultBeban];
+  let rekomendasiList = [{ deskripsi: '', prioritas: 'Segera' }];
+
+  function renderBeban() {
+    const container = document.getElementById('bebanContainer');
+    // Remove existing rows except header
+    const rows = container.querySelectorAll('.beban-row');
+    rows.forEach(r => r.remove());
+
+    bebanList.forEach((b, i) => {
+      const row = document.createElement('div');
+      row.className = 'beban-row';
+      const total = (b.jml || 0) * (b.daya || 0);
+      row.innerHTML = `
+        <div style="flex: 2; min-width: 150px;"><input type="text" class="form-control form-control-sm" value="${b.jenis}" onchange="updateBeban(${i}, 'jenis', this.value)"></div>
+        <div style="flex: 0.5; min-width: 60px;"><input type="number" class="form-control form-control-sm" value="${b.jml}" onchange="updateBeban(${i}, 'jml', this.value)"></div>
+        <div style="flex: 1; min-width: 80px;"><input type="number" class="form-control form-control-sm" value="${b.daya}" onchange="updateBeban(${i}, 'daya', this.value)"></div>
+        <div style="flex: 1; min-width: 80px;"><input type="number" class="form-control form-control-sm bg-light fw-bold" value="${total}" readonly></div>
+        <div style="flex: 1; min-width: 80px;"><input type="number" class="form-control form-control-sm" value="${b.waktu}" onchange="updateBeban(${i}, 'waktu', this.value)"></div>
+        <div style="flex: 2; min-width: 180px;"><input type="text" class="form-control form-control-sm" value="${b.ket}" onchange="updateBeban(${i}, 'ket', this.value)" placeholder="Misal: Colokan kendor"></div>
+        <button type="button" class="btn btn-sm text-danger" onclick="removeBeban(${i})">✕</button>
+      `;
+      container.appendChild(row);
+    });
+    calculateTotal();
+  }
+
+  function updateBeban(i, field, val) {
+    bebanList[i][field] = field === 'jenis' || field === 'ket' ? val : parseFloat(val) || 0;
+    renderBeban();
+  }
+
+  function calculateTotal() {
+    const total = bebanList.reduce((sum, b) => sum + ((b.jml || 0) * (b.daya || 0)), 0);
+    document.getElementById('totalBebanDisplay').innerText = total.toLocaleString() + ' Watt';
+    document.getElementById('totalBeban').value = total;
+  }
+
+  function removeBeban(i) { bebanList.splice(i, 1); renderBeban(); }
+  document.getElementById('addBeban').addEventListener('click', () => {
+    bebanList.push({ jenis: '', jml: 0, daya: 0, waktu: 0, ket: '' });
+    renderBeban();
+  });
+
+  // Logika Perhitungan Arus Otomatis
+  const teg = document.getElementById('tegangan');
+  const arus = document.getElementById('arusTotal');
+  const terukur = document.getElementById('bebanTerukur');
+
+  [teg, arus].forEach(el => el.addEventListener('input', () => {
+    terukur.value = Math.round((parseFloat(teg.value) || 0) * (parseFloat(arus.value) || 0));
+  }));
+
+  // Rekomendasi Logic
+  function renderRekomendasi() {
+    const container = document.getElementById('rekomendasiContainer');
+    container.innerHTML = '';
+    rekomendasiList.forEach((r, i) => {
+      const row = document.createElement('div');
+      row.className = 'row g-2 mb-2';
+      row.innerHTML = `
+        <div class="col-8"><input type="text" class="form-control" placeholder="Rekomendasi perbaikan..." value="${r.deskripsi}" onchange="rekomendasiList[${i}].deskripsi = this.value"></div>
+        <div class="col-3"><select class="form-select" onchange="rekomendasiList[${i}].prioritas = this.value"><option value="Segera" ${r.prioritas === 'Segera' ? 'selected' : ''}>Segera[cite: 1]</option><option value="Berkala" ${r.prioritas === 'Berkala' ? 'selected' : ''}>Berkala[cite: 1]</option></select></div>
+        <div class="col-1"><button type="button" class="btn text-danger" onclick="rekomendasiList.splice(${i}, 1); renderRekomendasi();">✕</button></div>
+      `;
+      container.appendChild(row);
+    });
+  }
+  document.getElementById('addRekomendasi').addEventListener('click', () => {
+    rekomendasiList.push({ deskripsi: '', prioritas: 'Segera' });
+    renderRekomendasi();
+  });
+
+  // Serialisasi data JSON sebelum submit
+  document.getElementById('inspeksiForm').addEventListener('submit', function() {
+    const inputB = document.createElement('input'); inputB.type = 'hidden'; inputB.name = 'bebanJSON'; inputB.value = JSON.stringify(bebanList);
+    const inputR = document.createElement('input'); inputR.type = 'hidden'; inputR.name = 'rekomendasiJSON'; inputR.value = JSON.stringify(rekomendasiList);
+    this.appendChild(inputB); this.appendChild(inputR);
+  });
+
+  renderBeban();
+  renderRekomendasi();
+</script>
+<%- include('../../partials/footer') %>

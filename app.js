@@ -103,7 +103,13 @@ app.use('/admin/berita', adminBeritaRoutes);   // mount di /admin/berita
 // ============================================================================
 const mahasiswaRoutes = require('./routes/mahasiswa/index');
 app.use('/mahasiswa', mahasiswaRoutes);
+// Mahasiswa
+const inspeksiRouter = require('./routes/mahasiswa/inspeksi');
+app.use('/mahasiswa/inspeksi', inspeksiRouter);
 
+// Admin
+const adminInspeksiRouter = require('./routes/admin/inspeksi');
+app.use('/admin/inspeksi', adminInspeksiRouter);
 // ============================================================================
 // ROUTES DOSEN
 // ============================================================================
