@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kurikulum D3 Teknik Elektronika</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        .table-header { background-color: #1a5276; color: white; }
+        .semester-title { border-left: 5px solid #1a5276; padding-left: 15px; margin-bottom: 1.5rem; color: #1a5276; }
+        .subtotal-row { background-color: #e8f4fd; font-weight: bold; }
+        .concentration-badge { font-size: 0.9rem; margin-bottom: 10px; display: inline-block; }
+    </style>
+</head>
+<body>
+
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold">Struktur Mata Kuliah</h1>
+        <p class="lead text-secondary">Program Studi D3 Teknik Elektronika - Politeknik Dewantara Palopo</p>
+        <hr class="w-25 mx-auto">
+    </div>
+
+    <!-- SEMESTER I -->
+    <div class="card p-4">
+        <h3 class="semester-title">Semester I</h3>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-header text-center">
+                    <tr>
+                        <th>No</th>
+                        <th>Kode</th>
+                        <th>Mata Kuliah</th>
+                        <th>Teori</th>
+                        <th>Prak.</th>
+                        <th>Lap.</th>
+                        <th>SKS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% const sem1 = [
+                        {no: 1, kode: 'WUD2201-5', mk: 'Pendidikan Agama', t: 1, p: 1, l: 0, sks: 2},
+                        {no: 2, kode: 'WUD3208', mk: 'Bahasa Indonesia', t: 1, p: 2, l: 0, sks: 3},
+                        {no: 3, kode: 'WUD3209', mk: 'Bahasa Inggris', t: 1, p: 2, l: 0, sks: 3},
+                        {no: 4, kode: 'PD3201', mk: 'Etika Kerja', t: 1, p: 2, l: 0, sks: 3},
+                        {no: 5, kode: 'PD3203', mk: 'Matematika Teknik', t: 1, p: 2, l: 0, sks: 3},
+                        {no: 6, kode: 'PD3204', mk: 'Perangkat Lunak Aplikasi', t: 1, p: 2, l: 0, sks: 3},
+                        {no: 7, kode: 'PD3202', mk: 'Standardisasi', t: 1, p: 2, l: 0, sks: 3}
+                    ] %>
+                    <% sem1.forEach(item => { %>
+                        <tr>
+                            <td class="text-center"><%= item.no %></td>
+                            <td class="fw-semibold text-primary"><%= item.kode %></td>
+                            <td><%= item.mk %></td>
+                            <td class="text-center"><%= item.t %></td>
+                            <td class="text-center"><%= item.p %></td>
+                            <td class="text-center"><%= item.l %></td>
+                            <td class="text-center fw-bold"><%= item.sks %></td>
+                        </tr>
+                    <% }) %>
+                    <tr class="subtotal-row">
+                        <td colspan="3" class="text-center">TOTAL SKS SEMESTER I</td>
+                        <td class="text-center">7</td>
+                        <td class="text-center">13</td>
+                        <td class="text-center">0</td>
+                        <td class="text-center">20</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <small class="text-muted italic">* Pendidikan Agama dipilih sesuai keyakinan (WUD2201 s.d WUD2205)</small>
+    </div>
+
+    <!-- SEMESTER II -->
+    <div class="card p-4">
+        <h3 class="semester-title">Semester II</h3>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-header text-center">
+                    <tr>
+                        <th>No</th>
+                        <th>Kode</th>
+                        <th>Mata Kuliah</th>
+                        <th>Teori</th>
+                        <th>Prak.</th>
+                        <th>Lap.</th>
+                        <th>SKS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% const sem2 = [
+                        {no: 1, kode: 'PD3206', mk: 'Aplikasi Komputer', t: 1, p: 2, l: 0, sks: 3},
+                        {no: 2, kode: 'PD3205', mk: 'K3 (Keselamatan & Kesehatan Kerja)', t: 1, p: 2, l: 0, sks: 3},
+                        {no: 3, kode: 'PD3210', mk: 'Data dan Sistem Informasi', t: 1, p: 2, l: 0, sks: 3},
+                        {no: 4, kode: 'PD3209', mk: 'Menggambar Teknik', t: 1, p: 2, l: 0, sks: 3},
+                        {no: 5, kode: 'PD3208', mk: 'Peralatan Teknik', t: 1, p: 2, l: 0, sks: 3},
+                        {no: 6, kode: 'WUD2206', mk: 'Pendidikan Kewarganegaraan', t: 2, p: 0, l: 0, sks: 2},
+                        {no: 7, kode: 'PD3207', mk: 'Teknik Pengukuran', t: 1, p: 2, l: 0, sks: 3}
+                    ] %>
+                    <% sem2.forEach(item => { %>
+                        <tr>
+                            <td class="text-center"><%= item.no %></td>
+                            <td class="fw-semibold text-primary"><%= item.kode %></td>
+                            <td><%= item.mk %></td>
+                            <td class="text-center"><%= item.t %></td>
+                            <td class="text-center"><%= item.p %></td>
+                            <td class="text-center"><%= item.l %></td>
+                            <td class="text-center fw-bold"><%= item.sks %></td>
+                        </tr>
+                    <% }) %>
+                    <tr class="subtotal-row">
+                        <td colspan="3" class="text-center">TOTAL SKS SEMESTER II</td>
+                        <td class="text-center">8</td>
+                        <td class="text-center">12</td>
+                        <td class="text-center">0</td>
+                        <td class="text-center">20</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SEMESTER III (Dual Tab/Section) -->
+    <div class="card p-4">
+        <h3 class="semester-title">Semester III</h3>
+        <div class="row">
+            <!-- Konsentrasi A -->
+            <div class="col-lg-6">
+                <span class="badge bg-primary concentration-badge">Konsentrasi: Instrumentasi</span>
+                <table class="table table-sm table-bordered">
+                    <thead class="table-dark text-center">
+                        <tr><th>Kode</th><th>Mata Kuliah</th><th>SKS</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>WUD2207</td><td>Pendidikan Pancasila</td><td class="text-center">2</td></tr>
+                        <tr><td>PEK3201</td><td>Dasar Sistem Tenaga Listrik</td><td class="text-center">3</td></tr>
+                        <tr><td>PEK3202</td><td>Elektronika Digital</td><td class="text-center">3</td></tr>
+                        <tr><td>PEK3203</td><td>Mikrokontroler</td><td class="text-center">3</td></tr>
+                        <tr><td>PEK3205</td><td>Perawatan dan Perbaikan</td><td class="text-center">3</td></tr>
+                        <tr><td>PEK3204</td><td>Rangkaian Elektronika</td><td class="text-center">3</td></tr>
+                        <tr><td>PEK3206</td><td>PLC</td><td class="text-center">3</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Konsentrasi B -->
+            <div class="col-lg-6">
+                <span class="badge bg-success concentration-badge">Konsentrasi: Telekomunikasi</span>
+                <table class="table table-sm table-bordered">
+                    <thead class="table-dark text-center">
+                        <tr><th>Kode</th><th>Mata Kuliah</th><th>SKS</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>WUD2207</td><td>Pendidikan Pancasila</td><td class="text-center">2</td></tr>
+                        <tr><td>PEK3207</td><td>Komunikasi Data & Jaringan</td><td class="text-center">3</td></tr>
+                        <tr><td>PEK3208</td><td>Elektronika Digital</td><td class="text-center">3</td></tr>
+                        <tr><td>PEK3209</td><td>Antena dan Propagasi</td><td class="text-center">3</td></tr>
+                        <tr><td>PEK3205</td><td>Perawatan dan Perbaikan</td><td class="text-center">3</td></tr>
+                        <tr><td>PEK3210</td><td>Keamanan Siber</td><td class="text-center">3</td></tr>
+                        <tr><td>PEK3206</td><td>PLC</td><td class="text-center">3</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEMESTER AKHIR -->
+    <div class="card p-4">
+        <h3 class="semester-title">Semester IV - VI (Magang/MBKM)</h3>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead class="text-center table-secondary">
+                    <tr>
+                        <th>Semester</th>
+                        <th>Kode MK</th>
+                        <th>Mata Kuliah</th>
+                        <th>Kategori</th>
+                        <th>SKS</th>
+                    </tr>
+                </thead>
+                <tbody class="text-center">
+                    <tr><td>IV</td><td>WP2021</td><td>Praktik Dunia Kerja 1</td><td>Praktek Lapangan</td><td>20</td></tr>
+                    <tr><td>V</td><td>WP2022</td><td>Praktik Dunia Kerja 2</td><td>Praktek Lapangan</td><td>20</td></tr>
+                    <tr><td>VI</td><td>WP2023</td><td>Praktik Dunia Kerja 3</td><td>Praktek Lapangan</td><td>20</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer class="text-center mt-5 text-secondary">
+        <p>&copy; 2026 Politeknik Dewantara Palopo | Program Studi Teknik Elektronika</p>
+    </footer>
+</div>
+
+<!-- Bootstrap Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

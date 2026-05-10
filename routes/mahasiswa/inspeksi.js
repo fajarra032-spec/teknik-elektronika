@@ -14,7 +14,6 @@ router.get('/', (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const data = req.body;
-    // parse array beban dari form (dikirim sebagai JSON string)
     let bebanList = [];
     if (data.bebanList) {
       bebanList = JSON.parse(data.bebanList);
@@ -55,8 +54,14 @@ router.post('/', async (req, res) => {
       kabelTerbuka: data.kabelTerbuka === 'Bahaya',
       sambunganRapi: data.sambunganRapi === 'Ya',
       stopKontakLonggar: data.stopKontakLonggar === 'Ya',
+      jumlahStopKontakLonggar: data.jumlahStopKontakLonggar ? parseInt(data.jumlahStopKontakLonggar) : 0,
       adaGrounding: data.adaGrounding === 'Ya',
       lembab: data.lembab === 'Ya',
+      kabelTerkelupasLokasi: data.kabelTerkelupasLokasi || '',
+sambunganTidakRapiLokasi: data.sambunganTidakRapiLokasi || '',
+lembabLokasi: data.lembabLokasi || '',
+      komentarInspeksi: data.komentarInspeksi || '',
+      rekomendasiOtomatis: data.rekomendasiOtomatis || '',
       rekomendasiList: data.rekomendasiList ? JSON.parse(data.rekomendasiList) : [],
       kesimpulan: data.kesimpulan,
       petugasNama: data.petugasNama,
@@ -70,19 +75,19 @@ router.post('/', async (req, res) => {
     res.status(500).send('Gagal menyimpan data inspeksi');
   }
 });
+
 // Halaman cetak laporan (POST)
 router.post('/cetak', (req, res) => {
   const data = JSON.parse(req.body.data);
-  // Kirim data ke view cetak
   res.render('mahasiswa/inspeksi/cetak', { 
     title: 'Cetak Laporan Inspeksi',
     data: data,
     tanggalCetak: new Date().toLocaleDateString('id-ID')
   });
 });
+
 router.get('/selesai', (req, res) => {
   res.render('mahasiswa/inspeksi/selesai', { title: 'Terima Kasih' });
 });
-
 
 module.exports = router;

@@ -48,6 +48,15 @@
 </style>
 
 <div class="container mt-4">
+  <!-- Flash Message -->
+  <% if (message) { %>
+    <div class="alert alert-<%= message.type === 'success' ? 'success' : (message.type === 'error' ? 'danger' : 'info') %> alert-dismissible fade show" role="alert">
+      <i class="bi bi-<%= message.type === 'success' ? 'check-circle-fill' : (message.type === 'error' ? 'exclamation-triangle-fill' : 'info-circle-fill') %> me-2"></i>
+      <%= message.text %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% } %>
+
   <div class="form-card">
     <div class="form-header">
       <h3><i class="bi bi-question-circle me-2"></i><%= question ? 'Edit Pertanyaan' : 'Tambah Pertanyaan' %></h3>
@@ -61,18 +70,18 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label class="form-label">Tipe</label>
-            <select name="tipe" class="form-select">
-              <option value="rating" <%= question && question.tipe === 'rating' ? 'selected' : '' %>>Rating (1-5)</option>
+            <select name="tipe" id="tipeSelect" class="form-select">
+              <option value="rating" <%= question && question.tipe === 'rating' ? 'selected' : '' %>>Rating (skala 1-5)</option>
               <option value="text" <%= question && question.tipe === 'text' ? 'selected' : '' %>>Teks (opsional)</option>
             </select>
           </div>
-          <div class="col-md-6 mb-3">
+          <div class="col-md-6 mb-3" id="skalaGroup" style="<%= question && question.tipe === 'text' ? 'display:none' : '' %>">
             <label class="form-label">Skala (maks nilai)</label>
             <input type="number" name="skala" class="form-control" min="1" max="10" value="<%= question ? (question.skala || 5) : 5 %>">
           </div>
         </div>
         <div class="row">
-          <div class="col-md-6 mb-3">
+          <div class="col-md-6 mb-3" id="bobotGroup" style="<%= question && question.tipe === 'text' ? 'display:none' : '' %>">
             <label class="form-label">Bobot</label>
             <input type="number" name="bobot" class="form-control" step="0.1" min="0" value="<%= question ? (question.bobot || 1) : 1 %>">
           </div>
@@ -93,5 +102,21 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Toggle tampilan skala dan bobot berdasarkan tipe
+  const tipeSelect = document.getElementById('tipeSelect');
+  const skalaGroup = document.getElementById('skalaGroup');
+  const bobotGroup = document.getElementById('bobotGroup');
+
+  function toggleFields() {
+    const isRating = tipeSelect.value === 'rating';
+    skalaGroup.style.display = isRating ? 'block' : 'none';
+    bobotGroup.style.display = isRating ? 'block' : 'none';
+  }
+
+  tipeSelect.addEventListener('change', toggleFields);
+  toggleFields(); // initial call
+</script>
 
 <%- include('../../partials/footer') %>

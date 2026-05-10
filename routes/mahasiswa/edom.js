@@ -2,27 +2,41 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isMahasiswa } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const { getActiveEdomPeriod, getActiveQuestions, hasFilledEdom, calculateAverage } = require('../../helpers/edomHelper');
+const { getActiveEdomPeriod, getActiveQuestions, hasFilledEdom } = require('../../helpers/edomHelper');
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
+
+function setMessage(req, type, text) {
+  req.session.message = { type, text };
+}
+function getMessage(req) {
+  const msg = req.session.message;
+  delete req.session.message;
+  return msg || null;
+}
+
+router.use((req, res, next) => {
+  console.log(`[EDOM DEBUG] ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 router.use(verifyToken);
 router.use(isMahasiswa);
 
-// Daftar mata kuliah yang perlu dievaluasi
+// ==================== DAFTAR MATA KULIAH ====================
 router.get('/', async (req, res) => {
   try {
     const activePeriod = await getActiveEdomPeriod();
+    const message = getMessage(req);
     if (!activePeriod) {
       return res.render('mahasiswa/edom/index', {
         title: 'EDOM',
         activePeriod: null,
         mkList: [],
-        message: 'Tidak ada periode evaluasi aktif saat ini.'
+        message: message || { type: 'info', text: 'Tidak ada periode evaluasi aktif saat ini.' }
       });
     }
 
     const currentSemester = getCurrentAcademicSemester().label;
-    // Ambil enrollment aktif mahasiswa untuk semester yang sama dengan periode (asumsi periode memiliki field semester)
     const semesterPeriod = activePeriod.semester || currentSemester;
     const enrollmentSnap = await db.collection('enrollment')
       .where('userId', '==', req.user.id)
@@ -36,7 +50,8 @@ router.get('/', async (req, res) => {
       const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
       if (!mkDoc.exists) continue;
       const mk = mkDoc.data();
-      // Ambil nama dosen
+
+      // Ambil daftar nama dosen (untuk tampilan)
       let dosenNames = [];
       if (mk.dosenIds && mk.dosenIds.length) {
         for (const dId of mk.dosenIds) {
@@ -44,115 +59,165 @@ router.get('/', async (req, res) => {
           if (dosenDoc.exists) dosenNames.push(dosenDoc.data().nama);
         }
       }
-      const sudahIsi = await hasFilledEdom(req.user.id, mkId, activePeriod.id);
-      mkList.push({
-        id: mkId,
-        kode: mk.kode,
-        nama: mk.nama,
-        dosen: dosenNames.join(', '),
-        sudahIsi,
-        semester: semesterPeriod
-      });
+
+      // Cek apakah sudah ada evaluasi (minimal satu) untuk MK ini
+      const sudahDiisi = await hasFilledEdom(req.user.id, mkId, activePeriod.id); // tanpa dosenId
+
+mkList.push({
+  id: mkId,
+  kode: mk.kode,
+  nama: mk.nama,
+  dosen: dosenNames.join(', ') || 'Tidak ada dosen',
+  sudahDiisi,   // <-- boolean: true jika ada minimal satu respon
+  semester: semesterPeriod
+});
     }
 
-    res.render('mahasiswa/edom/index', {
-      title: 'Evaluasi Dosen (EDOM)',
-      activePeriod,
-      mkList,
-      message: null
-    });
+    res.render('mahasiswa/edom/index', { title: 'Evaluasi Dosen (EDOM)', activePeriod, mkList, message });
   } catch (err) {
     console.error(err);
-    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat data' });
+    setMessage(req, 'error', 'Gagal memuat data mata kuliah');
+    res.redirect('/mahasiswa/dashboard');
   }
 });
 
-// Form isi edom untuk MK tertentu
+// ==================== FORM EVALUASI ====================
 router.get('/mk/:mkId', async (req, res) => {
   try {
     const { mkId } = req.params;
     const activePeriod = await getActiveEdomPeriod();
     if (!activePeriod) {
-      return res.status(400).send('Tidak ada periode evaluasi aktif');
+      setMessage(req, 'error', 'Tidak ada periode evaluasi aktif');
+      return res.redirect('/mahasiswa/edom');
     }
 
-    const sudahIsi = await hasFilledEdom(req.user.id, mkId, activePeriod.id);
-    if (sudahIsi) {
-      return res.status(400).send('Anda sudah mengisi evaluasi untuk mata kuliah ini');
+    // Cek apakah sudah ada evaluasi untuk MK ini
+    const sudahDiisi = await hasFilledEdom(req.user.id, mkId, activePeriod.id);
+    if (sudahDiisi) {
+      setMessage(req, 'info', 'Anda sudah mengisi evaluasi untuk mata kuliah ini.');
+      return res.redirect('/mahasiswa/edom');
     }
 
     const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
-    if (!mkDoc.exists) return res.status(404).send('Mata kuliah tidak ditemukan');
+    if (!mkDoc.exists) {
+      setMessage(req, 'error', 'Mata kuliah tidak ditemukan');
+      return res.redirect('/mahasiswa/edom');
+    }
     const mk = mkDoc.data();
 
-    // Ambil daftar pertanyaan aktif
-    const questions = await getActiveQuestions();
-    if (!questions.length) {
-      return res.status(400).send('Belum ada pertanyaan evaluasi. Silakan hubungi admin.');
+    // Ambil daftar dosen pengampu (semua)
+    let dosenList = [];
+    if (mk.dosenIds && mk.dosenIds.length) {
+      for (const dId of mk.dosenIds) {
+        const dosenDoc = await db.collection('dosen').doc(dId).get();
+        if (dosenDoc.exists) {
+          dosenList.push({ id: dId, nama: dosenDoc.data().nama });
+        }
+      }
     }
 
+    const questions = await getActiveQuestions();
+    if (!questions.length) {
+      setMessage(req, 'error', 'Belum ada pertanyaan evaluasi. Silakan hubungi admin.');
+      return res.redirect('/mahasiswa/edom');
+    }
+    if (dosenList.length === 0) {
+      setMessage(req, 'error', 'Mata kuliah ini belum memiliki dosen pengampu.');
+      return res.redirect('/mahasiswa/edom');
+    }
+
+    const message = getMessage(req);
     res.render('mahasiswa/edom/form', {
       title: `Evaluasi - ${mk.kode} ${mk.nama}`,
       mk,
+      mkId,
+      dosenList,
       questions,
       activePeriod,
-      user: req.user
+      message
     });
   } catch (err) {
     console.error(err);
-    res.status(500).send('Gagal memuat form');
+    setMessage(req, 'error', 'Gagal memuat form evaluasi');
+    res.redirect('/mahasiswa/edom');
   }
 });
 
-// Submit edom
+// ==================== PROSES SUBMIT ====================
 router.post('/mk/:mkId', async (req, res) => {
   try {
     const { mkId } = req.params;
-    const { jawaban, komentar } = req.body; // jawaban array of nilai, komentar per pertanyaan opsional
+    const { dosenId } = req.body;
+
+    if (!dosenId) {
+      setMessage(req, 'error', 'Pilih dosen yang akan dievaluasi');
+      return res.redirect(`/mahasiswa/edom/mk/${mkId}`);
+    }
+
     const activePeriod = await getActiveEdomPeriod();
     if (!activePeriod) {
-      return res.status(400).send('Periode evaluasi tidak aktif');
+      setMessage(req, 'error', 'Periode evaluasi tidak aktif');
+      return res.redirect('/mahasiswa/edom');
     }
 
-    const sudahIsi = await hasFilledEdom(req.user.id, mkId, activePeriod.id);
-    if (sudahIsi) {
-      return res.status(400).send('Anda sudah mengisi evaluasi untuk mata kuliah ini');
+    // Cek apakah sudah ada evaluasi (global per MK)
+    const sudahDiisi = await hasFilledEdom(req.user.id, mkId, activePeriod.id);
+    if (sudahDiisi) {
+      setMessage(req, 'error', 'Anda sudah mengisi evaluasi untuk mata kuliah ini.');
+      return res.redirect('/mahasiswa/edom');
     }
+
+    // Data dosen
+    const dosenDoc = await db.collection('dosen').doc(dosenId).get();
+    if (!dosenDoc.exists) {
+      setMessage(req, 'error', 'Dosen tidak ditemukan');
+      return res.redirect(`/mahasiswa/edom/mk/${mkId}`);
+    }
+    const dosenNama = dosenDoc.data().nama;
 
     const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
-    if (!mkDoc.exists) return res.status(404).send('Mata kuliah tidak ditemukan');
+    if (!mkDoc.exists) {
+      setMessage(req, 'error', 'Mata kuliah tidak ditemukan');
+      return res.redirect('/mahasiswa/edom');
+    }
     const mk = mkDoc.data();
 
-    // Ambil dosen pengampu (asumsi dosenIds[0] sebagai dosen utama untuk evaluasi)
-    // Bisa disederhanakan: simpan semua dosen yang mengampu MK ini, tapi evaluasi bisa per dosen? Untuk sederhana, evaluasi untuk semua dosen MK
-    let dosenId = null, dosenNama = '';
-    if (mk.dosenIds && mk.dosenIds.length) {
-      dosenId = mk.dosenIds[0];
-      const dosenDoc = await db.collection('dosen').doc(dosenId).get();
-      if (dosenDoc.exists) dosenNama = dosenDoc.data().nama;
-    }
-
     const questions = await getActiveQuestions();
-    // Parse jawaban: expect req.body.nilai_<questionId> dan req.body.komentar_<questionId>
     const answers = [];
+    let totalNilai = 0;
+    let ratingCount = 0;
+
     for (const q of questions) {
-      const nilai = parseInt(req.body[`nilai_${q.id}`]);
-      const komentarQ = req.body[`komentar_${q.id}`] || '';
-      if (!isNaN(nilai)) {
+      if (q.tipe === 'rating') {
+        const nilai = parseInt(req.body[`nilai_${q.id}`]);
+        if (isNaN(nilai)) {
+          setMessage(req, 'error', `Harap pilih skala untuk pertanyaan: ${q.pertanyaan}`);
+          return res.redirect(`/mahasiswa/edom/mk/${mkId}`);
+        }
         answers.push({
           pertanyaanId: q.id,
           pertanyaan: q.pertanyaan,
+          tipe: 'rating',
           nilai,
-          komentar: komentarQ
+        });
+        totalNilai += nilai;
+        ratingCount++;
+      } else {
+        const jawabanTeks = (req.body[`jawaban_teks_${q.id}`] || '').trim();
+        if (!jawabanTeks) {
+          setMessage(req, 'error', `Jawaban untuk pertanyaan teks wajib diisi: ${q.pertanyaan}`);
+          return res.redirect(`/mahasiswa/edom/mk/${mkId}`);
+        }
+        answers.push({
+          pertanyaanId: q.id,
+          pertanyaan: q.pertanyaan,
+          tipe: 'text',
+          jawabanTeks,
         });
       }
     }
 
-    if (answers.length === 0) {
-      return res.status(400).send('Harap memberikan penilaian');
-    }
-
-    const nilaiRata = calculateAverage(answers.map(a => ({ nilai: a.nilai })));
+    const nilaiRata = ratingCount > 0 ? totalNilai / ratingCount : 0;
 
     await db.collection('edom_respon').add({
       mahasiswaId: req.user.id,
@@ -170,10 +235,12 @@ router.post('/mk/:mkId', async (req, res) => {
       updatedAt: new Date().toISOString()
     });
 
+    setMessage(req, 'success', `Evaluasi untuk ${dosenNama} berhasil disimpan. Terima kasih.`);
     res.redirect('/mahasiswa/edom');
   } catch (err) {
     console.error(err);
-    res.status(500).send('Gagal menyimpan evaluasi');
+    setMessage(req, 'error', 'Gagal menyimpan evaluasi: ' + err.message);
+    res.redirect(`/mahasiswa/edom/mk/${req.params.mkId}`);
   }
 });
 

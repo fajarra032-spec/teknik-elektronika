@@ -4,7 +4,6 @@
   :root {
     --primary-start: #1e3a8a;
     --primary-end: #3b82f6;
-    --primary-light: rgba(30,58,138,0.08);
   }
   .page-header {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
@@ -12,12 +11,12 @@
     padding: 1.8rem 2rem;
     color: white;
     margin-bottom: 2rem;
-    box-shadow: 0 15px 30px rgba(30,58,138,0.25);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
   }
   .page-header h2 {
     font-weight: 800;
     font-size: 1.8rem;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
   }
   .page-header p {
     opacity: 0.9;
@@ -44,12 +43,25 @@
     padding: 0.4rem 1rem;
     min-width: 240px;
   }
+  .btn-danger-custom {
+    background: #dc2626;
+    border: none;
+    border-radius: 60px;
+    padding: 0.4rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    color: white;
+  }
+  .btn-danger-custom:hover {
+    background: #b91c1c;
+    transform: translateY(-2px);
+  }
   .table-container {
     background: white;
     border-radius: 1.2rem;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
     overflow-x: auto;
     border: 1px solid rgba(30,58,138,0.1);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   }
   .table th {
     background: #f8fafc;
@@ -67,14 +79,6 @@
   }
   .table tr:hover td {
     background: #fefce8;
-  }
-  .badge-rating {
-    background: #d1fae5;
-    color: #065f46;
-    font-weight: 600;
-    padding: 0.2rem 0.6rem;
-    border-radius: 2rem;
-    font-size: 0.8rem;
   }
   .rating-stars {
     font-size: 0.9rem;
@@ -102,6 +106,15 @@
 </style>
 
 <div class="container mt-4">
+  <!-- Flash Message -->
+  <% if (message) { %>
+    <div class="alert alert-<%= message.type === 'success' ? 'success' : (message.type === 'error' ? 'danger' : 'info') %> alert-dismissible fade show" role="alert">
+      <i class="bi bi-<%= message.type === 'success' ? 'check-circle-fill' : (message.type === 'error' ? 'exclamation-triangle-fill' : 'info-circle-fill') %> me-2"></i>
+      <%= message.text %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% } %>
+
   <div class="page-header">
     <h2><i class="bi bi-bar-chart-steps me-2"></i>Rekap Hasil EDOM</h2>
     <p>Rekapitulasi evaluasi dosen per periode</p>
@@ -110,7 +123,7 @@
   <!-- Filter periode -->
   <div class="filter-card">
     <label for="periodeSelect"><i class="bi bi-calendar-week me-1"></i> Pilih Periode:</label>
-    <form method="GET" action="/admin/edom/rekap" id="periodeForm">
+    <form method="GET" action="/admin/edom/rekap" id="periodeForm" style="flex:1; min-width: 200px;">
       <select name="periodeId" id="periodeSelect" class="form-select" onchange="this.form.submit()">
         <option value="">-- Pilih Periode --</option>
         <% periods.forEach(p => { %>
@@ -118,6 +131,11 @@
         <% }) %>
       </select>
     </form>
+    <% if (selectedPeriod && results && results.length > 0) { %>
+      <button class="btn-danger-custom" onclick="confirmDeleteAll('<%= selectedPeriod %>')">
+        <i class="bi bi-trash3 me-1"></i> Hapus Semua Respon Periode
+      </button>
+    <% } %>
   </div>
 
   <% if (selectedPeriod) { %>
@@ -132,6 +150,7 @@
               <th>Jumlah Respon</th>
               <th>Rata-rata Nilai</th>
               <th>Rating</th>
+              <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -153,6 +172,11 @@
                 <td class="text-center"><%= dosen.count %></td>
                 <td class="text-center fw-bold"><%= dosen.average %></td>
                 <td class="rating-stars"><%- bintang %></td>
+                <td>
+                  <button class="btn btn-sm btn-outline-danger" onclick="confirmDeleteDosen('<%= selectedPeriod %>', '<%= dosen.dosenId %>', '<%= dosen.dosenNama.replace(/'/g, "\\'") %>')">
+                    <i class="bi bi-trash"></i> Hapus Respon Dosen
+                  </button>
+                </td>
               </tr>
             <% }) %>
           </tbody>
@@ -171,5 +195,27 @@
     </div>
   <% } %>
 </div>
+
+<script>
+  function confirmDeleteAll(periodeId) {
+    if (confirm('⚠️ PERINGATAN: Semua respon evaluasi untuk periode ini akan dihapus permanen. Tindakan ini tidak dapat dibatalkan. Lanjutkan?')) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/admin/edom/rekap/${periodeId}/delete-all`;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+
+  function confirmDeleteDosen(periodeId, dosenId, dosenNama) {
+    if (confirm(`Hapus semua respon untuk dosen "${dosenNama}" pada periode ini? Data tidak dapat dikembalikan.`)) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/admin/edom/rekap/${periodeId}/delete-dosen/${dosenId}`;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+</script>
 
 <%- include('../../partials/footer') %>
