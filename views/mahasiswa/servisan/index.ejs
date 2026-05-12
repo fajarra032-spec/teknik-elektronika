@@ -1,0 +1,181 @@
+<%- include('../../partials/header') %>
+<style>
+  .page-header {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-3px); }
+  .stat-number { font-size: 2rem; font-weight: 800; color: #1e3a8a; }
+  .servisan-card {
+    background: white;
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid #eef2ff;
+  }
+  .servisan-header {
+    background: #f8fafc;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: 1rem 1rem 0 0;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  @media (max-width: 768px) {
+    .page-header { padding: 1rem; }
+    .stat-number { font-size: 1.5rem; }
+    .btn-sm { font-size: 0.7rem; }
+  }
+</style>
+
+<div class="container mt-4 mb-5">
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+      <div>
+        <h2 class="fw-bold mb-1">📋 Daftar Servisan Alat Listrik</h2>
+        <p class="mb-0 opacity-75">Kelola perbaikan alat warga – semua anggota dapat melihat, mengedit, dan menghapus data</p>
+      </div>
+      <a href="/mahasiswa/servisan/tambah" class="btn btn-light btn-sm mt-2 mt-md-0 fw-bold shadow-sm">
+        <i class="bi bi-plus-circle"></i> Servis Baru
+      </a>
+    </div>
+  </div>
+
+  <!-- STATISTIK -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-number"><%= data.length %></div>
+        <div class="text-muted small">Total Servisan</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-number"><%= data.filter(i => i.hasilPerbaikan === 'Berhasil').length %></div>
+        <div class="text-muted small">Berhasil</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-number"><%= data.filter(i => i.hasilPerbaikan === 'Tidak berhasil').length %></div>
+        <div class="text-muted small">Tidak Berhasil</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-number"><%= data.filter(i => !i.hasilPerbaikan || i.hasilPerbaikan === 'Belum Diperbaiki').length %></div>
+        <div class="text-muted small">Belum Diperbaiki</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAMPILAN MOBILE (CARD) -->
+  <div class="d-block d-md-none">
+    <% if(data.length === 0) { %>
+      <div class="alert alert-info text-center">Belum ada data servisan. Klik "Servis Baru" untuk memulai.</div>
+    <% } %>
+    <% data.forEach((item, idx) => { %>
+      <div class="servisan-card">
+        <div class="servisan-header">
+          <div>
+            <strong class="text-primary"><i class="bi bi-upc-scan"></i> <%= item.noKupon %></strong>
+            <span class="badge bg-<%= item.hasilPerbaikan === 'Berhasil' ? 'success' : (item.hasilPerbaikan === 'Tidak berhasil' ? 'danger' : 'secondary') %> ms-2">
+              <%= item.hasilPerbaikan || 'Belum Diperbaiki' %>
+            </span>
+          </div>
+          <div class="text-muted small"><%= new Date(item.tanggalServis).toLocaleDateString('id-ID') %></div>
+        </div>
+        <div class="p-3">
+          <div><i class="bi bi-person"></i> <%= item.namaPemilik %></div>
+          <div class="small text-muted mt-1">
+            <i class="bi bi-people"></i> PJ: <strong><%= item.kelompokPenanggungJawab || '-' %></strong>
+          </div>
+          <div class="small text-muted">
+            <% 
+              let alat = [];
+              if(item.jenisAlat && item.jenisAlat.riceCooker) alat.push('Rice cooker');
+              if(item.jenisAlat && item.jenisAlat.kipasAngin) alat.push('Kipas');
+              if(item.jenisAlat && item.jenisAlat.dispenser) alat.push('Dispenser');
+              if(item.jenisAlat && item.jenisAlat.mesinCuci) alat.push('Cuci');
+              if(item.jenisAlat && item.jenisAlat.lainnya) alat.push(item.jenisAlat.lainnya);
+            %>
+            <i class="bi bi-tools"></i> <%= alat.join(', ') || '-' %>
+          </div>
+          <div class="mt-2 d-flex gap-2">
+            <a href="/mahasiswa/servisan/<%= item.id %>" class="btn btn-sm btn-outline-primary flex-fill">Detail</a>
+            <a href="/mahasiswa/servisan/edit/<%= item.id %>" class="btn btn-sm btn-outline-warning flex-fill">Edit</a>
+           
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+
+  <!-- TAMPILAN DESKTOP (TABEL) -->
+  <div class="d-none d-md-block table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>No</th>
+          <th>No. Kupon</th>
+          <th>Tanggal</th>
+          <th>Pemilik</th>
+          <th>Kelompok PJ</th>
+          <th>Jenis Alat</th>
+          <th>Hasil</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% data.forEach((item, idx) => { %>
+        <tr>
+          <td><%= idx+1 %></td>
+          <td><%= item.noKupon %></td>
+          <td><%= new Date(item.tanggalServis).toLocaleDateString('id-ID') %></td>
+          <td><%= item.namaPemilik %></td>
+          <td><%= item.kelompokPenanggungJawab || '-' %></td>
+          <td>
+            <% 
+              let alat = [];
+              if(item.jenisAlat && item.jenisAlat.riceCooker) alat.push('RC');
+              if(item.jenisAlat && item.jenisAlat.kipasAngin) alat.push('Kipas');
+              if(item.jenisAlat && item.jenisAlat.dispenser) alat.push('Dispenser');
+              if(item.jenisAlat && item.jenisAlat.mesinCuci) alat.push('Cuci');
+              if(item.jenisAlat && item.jenisAlat.lainnya) alat.push(item.jenisAlat.lainnya);
+            %>
+            <%= alat.join(', ') || '-' %>
+          </td>
+          <td>
+            <span class="badge bg-<%= item.hasilPerbaikan === 'Berhasil' ? 'success' : (item.hasilPerbaikan === 'Tidak berhasil' ? 'danger' : 'secondary') %>">
+              <%= item.hasilPerbaikan || 'Belum' %>
+            </span>
+          </td>
+          <td>
+            <div class="btn-group">
+              <a href="/mahasiswa/servisan/<%= item.id %>" class="btn btn-sm btn-info" title="Detail"><i class="bi bi-eye"></i></a>
+              <a href="/mahasiswa/servisan/edit/<%= item.id %>" class="btn btn-sm btn-warning" title="Edit"><i class="bi bi-pencil"></i></a>
+            </div>
+          </td>
+        </tr>
+        <% }) %>
+        <% if(data.length === 0) { %>
+          <tr><td colspan="8" class="text-center">Tidak ada data servisan.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../../partials/footer') %>

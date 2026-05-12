@@ -106,10 +106,13 @@ app.use('/mahasiswa', mahasiswaRoutes);
 // Mahasiswa
 const inspeksiRouter = require('./routes/mahasiswa/inspeksi');
 app.use('/mahasiswa/inspeksi', inspeksiRouter);
-
+const servisanRoutes = require('./routes/mahasiswa/servisan');
+app.use('/mahasiswa/servisan', servisanRoutes);
 // Admin
 const adminInspeksiRouter = require('./routes/admin/inspeksi');
 app.use('/admin/inspeksi', adminInspeksiRouter);
+const adminServisanRoutes = require('./routes/admin/servisan');
+app.use('/admin/servisan', adminServisanRoutes);
 // ============================================================================
 // ROUTES DOSEN
 // ============================================================================

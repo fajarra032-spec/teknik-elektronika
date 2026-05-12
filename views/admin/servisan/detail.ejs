@@ -1,0 +1,71 @@
+<%- include('../../partials/header') %>
+<style>
+  .detail-card {
+    background: white;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+  }
+  .detail-header {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    padding: 1.25rem;
+    color: white;
+  }
+  .detail-section {
+    border-left: 3px solid #3b82f6;
+    padding-left: 0.75rem;
+    margin: 1.25rem 0 0.75rem 0;
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+  .info-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+  }
+  .info-label { width: 35%; font-weight: 600; }
+  .info-value { width: 65%; }
+  @media (max-width: 768px) {
+    .info-label, .info-value { width: 100%; }
+  }
+</style>
+<div class="container mt-4 mb-5">
+  <div class="detail-card">
+    <div class="detail-header">
+      <h3 class="fw-bold mb-0">Detail Servisan Alat</h3>
+      <p>No Kupon: <%= servisan.noKupon %></p>
+    </div>
+    <div class="p-4">
+      <div class="detail-section">👤 Identitas Pemilik</div>
+      <div class="info-row"><div class="info-label">Nama</div><div class="info-value"><%= servisan.namaPemilik %></div></div>
+      <div class="info-row"><div class="info-label">Alamat</div><div class="info-value"><%= servisan.alamat || '-' %></div></div>
+      <div class="info-row"><div class="info-label">No HP</div><div class="info-value"><%= servisan.noHp || '-' %></div></div>
+      <div class="info-row"><div class="info-label">Tanggal Servis</div><div class="info-value"><%= new Date(servisan.tanggalServis).toLocaleDateString() %></div></div>
+
+      <div class="detail-section">💡 Informasi Alat</div>
+      <div class="info-row"><div class="info-label">Jenis</div><div class="info-value"><% let alat=[]; if(servisan.jenisAlat && servisan.jenisAlat.riceCooker) alat.push('Rice cooker'); if(servisan.jenisAlat && servisan.jenisAlat.kipasAngin) alat.push('Kipas angin'); if(servisan.jenisAlat && servisan.jenisAlat.dispenser) alat.push('Dispenser'); if(servisan.jenisAlat && servisan.jenisAlat.mesinCuci) alat.push('Mesin cuci'); if(servisan.jenisAlat && servisan.jenisAlat.lainnya) alat.push(servisan.jenisAlat.lainnya); %><%= alat.join(', ') || '-' %></div></div>
+      <div class="info-row"><div class="info-label">Merk & Model</div><div class="info-value"><%= servisan.merkModel || '-' %></div></div>
+      <div class="info-row"><div class="info-label">Keluhan</div><div class="info-value"><%= servisan.keluhan || '-' %></div></div>
+
+      <div class="detail-section">🩺 Diagnosis & Tindakan</div>
+      <div class="info-row"><div class="info-label">Diagnosis</div><div class="info-value"><% let d=[]; if(servisan.diagnosis && servisan.diagnosis.fusePutus) d.push('Fuse'); if(servisan.diagnosis && servisan.diagnosis.kabelPutus) d.push('Kabel'); if(servisan.diagnosis && servisan.diagnosis.sakelarRusak) d.push('Sakelar'); if(servisan.diagnosis && servisan.diagnosis.lainnya) d.push(servisan.diagnosis.lainnya); %><%= d.join(', ') || '-' %></div></div>
+      <div class="info-row"><div class="info-label">Tindakan</div><div class="info-value"><% let t=[]; if(servisan.tindakan && servisan.tindakan.gantiKomponen) t.push('Ganti komponen'); if(servisan.tindakan && servisan.tindakan.penyolderan) t.push('Penyolderan'); if(servisan.tindakan && servisan.tindakan.pembersihan) t.push('Pembersihan'); if(servisan.tindakan && servisan.tindakan.tidakBisaDiperbaiki) t.push('Tidak bisa'); %><%= t.join(', ') || '-' %></div></div>
+      <div class="info-row"><div class="info-label">Suku cadang</div><div class="info-value"><%= servisan.sukuCadang || '-' %></div></div>
+      <div class="info-row"><div class="info-label">Biaya Komponen</div><div class="info-value">Rp <%= (servisan.biayaKomponen || 0).toLocaleString() %></div></div>
+
+      <div class="detail-section">✅ Hasil & Verifikasi</div>
+      <div class="info-row"><div class="info-label">Hasil Perbaikan</div><div class="info-value"><span class="badge bg-<%= servisan.hasilPerbaikan === 'Berhasil' ? 'success' : 'danger' %>"><%= servisan.hasilPerbaikan || 'Belum' %></span></div></div>
+      <div class="info-row"><div class="info-label">Uji Coba</div><div class="info-value"><%= servisan.sudahDiuji || '-' %></div></div>
+      <div class="info-row"><div class="info-label">Waktu Selesai</div><div class="info-value"><%= servisan.waktuSelesai || '-' %></div></div>
+      <div class="info-row"><div class="info-label">Keterangan</div><div class="info-value"><%= servisan.keteranganTambahan || '-' %></div></div>
+
+      <div class="detail-section">🧑‍🔧 Teknisi & Penanggung Jawab</div>
+      <div class="info-row"><div class="info-label">Teknisi pencatat</div><div class="info-value"><%= servisan.namaMahasiswa %> (<%= servisan.nim %>)</div></div>
+      <div class="info-row"><div class="info-label">Kelompok Penanggung Jawab</div><div class="info-value"><%= servisan.kelompokPenanggungJawab || '-' %></div></div>
+    </div>
+    <div class="bg-light p-3 text-end">
+      <a href="/admin/servisan" class="btn btn-secondary">Kembali</a>
+    </div>
+  </div>
+</div>
+<%- include('../../partials/footer') %>
