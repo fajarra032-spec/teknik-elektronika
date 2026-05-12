@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Detail servisan (opsional, bisa melihat detail)
+// Detail servisan
 router.get('/:id', async (req, res) => {
   try {
     const doc = await db.collection('servisan').doc(req.params.id).get();
@@ -31,7 +31,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Hapus servisan (opsional)
+// Hapus servisan
 router.get('/hapus/:id', async (req, res) => {
   try {
     const id = req.params.id;
@@ -42,16 +42,16 @@ router.get('/hapus/:id', async (req, res) => {
     res.status(500).send('Gagal menghapus data');
   }
 });
+
 router.get('/cetak', async (req, res) => {
+  console.log('🟢 Route cetak dipanggil');
   try {
-    const snapshot = await db.collection('servisan').orderBy('createdAt', 'desc').get();
+    const snapshot = await db.collection('servisan').get();
     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    console.log('📊 Jumlah data servisan:', data.length);
-    if (data.length > 0) console.log('📄 Contoh data:', data[0]);
-    // Kirim sebagai JSON untuk debugging
-    res.json({ success: true, count: data.length, data: data });
+    console.log(`📦 Jumlah data: ${data.length}`);
+    res.json({ success: true, total: data.length, sample: data.slice(0, 3) });
   } catch (err) {
-    console.error('❌ Error cetak:', err);
+    console.error('❌ Error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
