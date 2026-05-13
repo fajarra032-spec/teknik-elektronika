@@ -2,13 +2,47 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const drive = require('../../config/googleDrive');
+const { Readable } = require('stream');
+const multer = require('multer');
+const sharp = require('sharp');
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 router.use(verifyToken);
 
-// Konfigurasi jumlah kelompok (1–4)
-const JUMLAH_KELOMPOK = 4;
+// Konstanta folder Data WEB (sama dengan modul magang)
+const DATA_WEB_FOLDER_ID = '17Z02_5zOImG1GYfi_5gvWL97-p6dW5t0';
 
-// Generate nomor kupon (SRV/YYYYMMDD/xxxx)
+// ====================== Fungsi Bantu Google Drive ======================
+async function getOrCreateSubFolder(parentId, name) {
+  const query = await drive.files.list({
+    q: `'${parentId}' in parents and name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    fields: 'files(id)',
+  });
+  if (query.data.files.length > 0) {
+    return query.data.files[0].id;
+  } else {
+    const folder = await drive.files.create({
+      resource: { name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] },
+      fields: 'id',
+    });
+    return folder.data.id;
+  }
+}
+
+async function getServisanFolder(nim, nama, tanggalServis) {
+  const tahun = new Date(tanggalServis).getFullYear().toString();
+  const sanitizedNama = nama.replace(/[^a-zA-Z0-9]/g, '_');
+  const folderMahasiswa = `${nim}_${sanitizedNama}`;
+
+  const parent = await getOrCreateSubFolder(DATA_WEB_FOLDER_ID, 'Dokumentasi Servisan');
+  const tahunFolder = await getOrCreateSubFolder(parent, tahun);
+  const mahasiswaFolder = await getOrCreateSubFolder(tahunFolder, folderMahasiswa);
+  return mahasiswaFolder;
+}
+
+// ====================== Generate Nomor Kupon ======================
 function generateNoKupon() {
   const date = new Date();
   const yyyymmdd = date.toISOString().slice(0, 10).replace(/-/g, '');
@@ -16,15 +50,16 @@ function generateNoKupon() {
   return `SRV/${yyyymmdd}/${random}`;
 }
 
-// Hitung jumlah data servisan saat ini untuk menentukan kelompok berikutnya (round-robin)
+// ====================== Hitung Kelompok (Round Robin) ======================
 async function getNextKelompok() {
   const snapshot = await db.collection('servisan').get();
-  const count = snapshot.size; // jumlah dokumen
+  const count = snapshot.size;
+  const JUMLAH_KELOMPOK = 4;
   const nextKelompok = (count % JUMLAH_KELOMPOK) + 1;
   return `Kelompok ${nextKelompok}`;
 }
 
-// Daftar semua servisan (tanpa filter mahasiswa)
+// ====================== Daftar Semua Servisan ======================
 router.get('/', async (req, res) => {
   try {
     const snapshot = await db.collection('servisan')
@@ -38,24 +73,51 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Form tambah servisan
+// ====================== Form Tambah ======================
 router.get('/tambah', (req, res) => {
   res.render('mahasiswa/servisan/form', { title: 'Tambah Servisan', servisan: null, user: req.user });
 });
 
-// Simpan servisan baru (otomatis tentukan kelompok penanggung jawab)
-router.post('/', async (req, res) => {
+// ====================== Simpan Servisan + Upload Gambar ======================
+router.post('/', upload.array('images', 5), async (req, res) => {
   try {
     const data = req.body;
+    const files = req.files || [];
     const noKupon = generateNoKupon();
     const kelompokPenanggungJawab = await getNextKelompok();
+
+    // Upload gambar ke Google Drive
+    const imageUrls = [];
+    const imageFileIds = [];
+    if (files.length > 0) {
+      const folderId = await getServisanFolder(req.user.nim, req.user.nama, data.tanggalServis);
+      for (const file of files) {
+        const compressedBuffer = await sharp(file.buffer)
+          .resize({ width: 800, withoutEnlargement: true })
+          .jpeg({ quality: 80 })
+          .toBuffer();
+
+        const fileName = `${req.user.nim}_${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+        const fileMetadata = { name: fileName, parents: [folderId] };
+        const media = { mimeType: 'image/jpeg', body: Readable.from(compressedBuffer) };
+        const response = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
+
+        await drive.permissions.create({
+          fileId: response.data.id,
+          requestBody: { role: 'reader', type: 'anyone' }
+        });
+
+        imageUrls.push(`https://drive.google.com/uc?export=view&id=${response.data.id}`);
+        imageFileIds.push(response.data.id);
+      }
+    }
 
     const servisanData = {
       userId: req.user.id,
       namaMahasiswa: req.user.nama,
       nim: req.user.nim,
       noKupon: noKupon,
-      kelompokPenanggungJawab: kelompokPenanggungJawab, // ditentukan sistem
+      kelompokPenanggungJawab: kelompokPenanggungJawab,
       namaPemilik: data.namaPemilik,
       alamat: data.alamat,
       noHp: data.noHp || '',
@@ -94,6 +156,8 @@ router.post('/', async (req, res) => {
       keteranganTambahan: data.keteranganTambahan || '',
       waktuSelesai: data.waktuSelesai || '',
       tanggalServis: data.tanggalServis,
+      imageUrls: imageUrls,
+      imageFileIds: imageFileIds,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -105,7 +169,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Form edit (tanpa pengecekan userId)
+// ====================== Form Edit ======================
 router.get('/edit/:id', async (req, res) => {
   try {
     const doc = await db.collection('servisan').doc(req.params.id).get();
@@ -118,14 +182,43 @@ router.get('/edit/:id', async (req, res) => {
   }
 });
 
-// Update servisan (tanpa pengecekan userId)
-router.post('/update/:id', async (req, res) => {
+// ====================== Update Servisan (dengan tambah gambar) ======================
+router.post('/update/:id', upload.array('images', 5), async (req, res) => {
   try {
     const id = req.params.id;
     const data = req.body;
-    const doc = await db.collection('servisan').doc(id).get();
+    const files = req.files || [];
+    const docRef = db.collection('servisan').doc(id);
+    const doc = await docRef.get();
     if (!doc.exists) return res.status(404).send('Data tidak ditemukan');
-    // Tidak ada pengecekan userId → semua mahasiswa bisa edit data apapun
+
+    const existingData = doc.data();
+    const newImageUrls = [...(existingData.imageUrls || [])];
+    const newImageFileIds = [...(existingData.imageFileIds || [])];
+
+    // Upload gambar baru (jika ada)
+    if (files.length > 0) {
+      const folderId = await getServisanFolder(req.user.nim, req.user.nama, data.tanggalServis);
+      for (const file of files) {
+        const compressedBuffer = await sharp(file.buffer)
+          .resize({ width: 800, withoutEnlargement: true })
+          .jpeg({ quality: 80 })
+          .toBuffer();
+
+        const fileName = `${req.user.nim}_${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+        const fileMetadata = { name: fileName, parents: [folderId] };
+        const media = { mimeType: 'image/jpeg', body: Readable.from(compressedBuffer) };
+        const response = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
+
+        await drive.permissions.create({
+          fileId: response.data.id,
+          requestBody: { role: 'reader', type: 'anyone' }
+        });
+
+        newImageUrls.push(`https://drive.google.com/uc?export=view&id=${response.data.id}`);
+        newImageFileIds.push(response.data.id);
+      }
+    }
 
     const updateData = {
       namaPemilik: data.namaPemilik,
@@ -166,23 +259,34 @@ router.post('/update/:id', async (req, res) => {
       keteranganTambahan: data.keteranganTambahan || '',
       waktuSelesai: data.waktuSelesai || '',
       tanggalServis: data.tanggalServis,
+      imageUrls: newImageUrls,
+      imageFileIds: newImageFileIds,
       updatedAt: new Date().toISOString()
     };
-    await db.collection('servisan').doc(id).update(updateData);
+    await docRef.update(updateData);
     res.redirect('/mahasiswa/servisan');
   } catch (err) {
     console.error(err);
-    res.status(500).send('Gagal mengupdate data');
+    res.status(500).send('Gagal mengupdate data: ' + err.message);
   }
 });
 
-// Hapus servisan (tanpa pengecekan userId)
+// ====================== Hapus Servisan (termasuk gambar di Drive) ======================
 router.get('/hapus/:id', async (req, res) => {
   try {
     const id = req.params.id;
     const doc = await db.collection('servisan').doc(id).get();
     if (!doc.exists) return res.status(404).send('Data tidak ditemukan');
-    // Tidak ada pengecekan userId → semua mahasiswa bisa hapus data apapun
+    const data = doc.data();
+    if (data.imageFileIds && data.imageFileIds.length) {
+      for (const fileId of data.imageFileIds) {
+        try {
+          await drive.files.delete({ fileId });
+        } catch (err) {
+          console.error('Gagal hapus gambar:', err.message);
+        }
+      }
+    }
     await db.collection('servisan').doc(id).delete();
     res.redirect('/mahasiswa/servisan');
   } catch (err) {
@@ -191,7 +295,7 @@ router.get('/hapus/:id', async (req, res) => {
   }
 });
 
-// Detail servisan (tanpa pengecekan userId)
+// ====================== Detail Servisan ======================
 router.get('/:id', async (req, res) => {
   try {
     const doc = await db.collection('servisan').doc(req.params.id).get();
