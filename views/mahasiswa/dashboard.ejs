@@ -48,6 +48,71 @@
     background-color: #f8fafc;
   }
 
+.edom-announcement-card {
+    background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+    color: #ffffff;
+    border-radius: 1rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);
+  }
+  
+  /* Ornamen background agar tidak terlalu sepi */
+  .edom-announcement-card::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -20px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    z-index: 0;
+  }
+
+  .edom-announcement-card::after {
+    content: '';
+    position: absolute;
+    bottom: -40px;
+    left: -40px;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    z-index: 0;
+  }
+
+  .edom-content-wrapper {
+    position: relative;
+    z-index: 1;
+  }
+
+  .edom-date-badge {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0.75rem;
+    padding: 12px 20px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .btn-edom {
+    background-color: #ffc107; /* Warna warning bootstrap */
+    color: #000;
+    transition: all 0.3s ease;
+  }
+
+  .btn-edom:hover {
+    background-color: #ffca2c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(255, 193, 7, 0.4);
+  }
+
+
+
   /* ===== PROFILE CARD ===== */
   .profile-card {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
@@ -468,6 +533,10 @@
     </div>
   </div>
 
+  <!-- EDOM Banner Gambar PNG -->
+<a href="/mahasiswa/edom" class="d-block mb-4">
+  <img src="/images/edom-banner.png" alt="EDOM - Evaluasi Dosen oleh Mahasiswa" class="img-fluid rounded-4 shadow-sm" style="width: 100%; object-fit: cover; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+</a>
   <!-- Tagihan SPP -->
   <!--  <div class="tagihan-card">
     <div class="tagihan-header d-flex flex-wrap justify-content-between align-items-center">
