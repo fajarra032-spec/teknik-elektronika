@@ -26,7 +26,6 @@
       padding-bottom: 15px;
     }
 
-    /* Kop surat */
     .kop-surat {
       display: flex;
       align-items: center;
@@ -69,11 +68,10 @@
 
     .sub-judul {
       text-align: center;
-      font-size: 1pt;
+      font-size: 10pt;
       margin-bottom: 25px;
     }
 
-    /* Info Grid */
     .info-container {
       width: 100%;
       margin-bottom: 15px;
@@ -98,7 +96,7 @@
       width: 15px;
     }
 
-    /* Table Pertanyaan */
+    /* Table Pertanyaan Rating */
     .table-pertanyaan {
       width: 100%;
       border-collapse: collapse;
@@ -122,23 +120,38 @@
       text-align: center;
     }
 
-    /* Komentar */
-    .komentar-section {
-      margin-top: 20px;
+    /* Bagian Pertanyaan Teks */
+    .text-answers-section {
+      margin-top: 30px;
+      page-break-before: avoid;
     }
-
-    .komentar-box {
+    .text-answers-section h4 {
+      font-size: 11pt;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .text-question-card {
+      margin-bottom: 20px;
       border: 1px solid #ccc;
       padding: 10px;
       background: #fafafa;
-      min-height: 60px;
+      border-radius: 5px;
     }
-
-    .komentar-item {
+    .text-question-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 10pt;
+    }
+    .jawaban-list {
+      margin-left: 20px;
+      padding-left: 0;
+      list-style-type: none;
+    }
+    .jawaban-list li {
+      margin-bottom: 6px;
       font-style: italic;
-      font-size: 9pt;
-      border-bottom: 1px dashed #eee;
-      padding: 5px 0;
+      border-bottom: 1px dashed #ddd;
+      padding-bottom: 4px;
     }
 
     /* Tanda Tangan */
@@ -174,6 +187,9 @@
       .table-pertanyaan th {
         background-color: #f2f2f2 !important;
         -webkit-print-color-adjust: exact;
+      }
+      .text-question-card {
+        break-inside: avoid;
       }
     }
   </style>
@@ -217,14 +233,15 @@
       <tr>
         <td class="info-label">Rata-rata Nilai</td>
         <td class="titik-dua">:</td>
-        <td><strong><%= rataNilai.toFixed(2) %> / 5.00</strong></td>
+        <td><strong><%= (typeof rataNilai === 'number' && !isNaN(rataNilai)) ? rataNilai.toFixed(2) : '0.00' %> / 5.00</strong></td>
         <td class="info-label">Total Responden</td>
         <td class="titik-dua">:</td>
-        <td><%= totalResponden %> Mahasiswa</td>
+        <td><%= typeof totalResponden === 'number' ? totalResponden : 0 %> Mahasiswa</td>
       </tr>
     </table>
   </div>
 
+  <!-- Tabel untuk pertanyaan rating -->
   <table class="table-pertanyaan">
     <thead>
       <tr>
@@ -235,16 +252,21 @@
       </tr>
     </thead>
     <tbody>
-      <% if (pertanyaanList && pertanyaanList.length > 0) { %>
-        <% pertanyaanList.forEach((q, idx) => { %>
+      <% 
+        // Filter pertanyaan rating
+        const ratingQuestions = (pertanyaanList || []).filter(q => q.tipe === 'rating');
+        if (ratingQuestions.length) {
+          ratingQuestions.forEach((q, idx) => { 
+            const safeRata = (typeof q.rataNilai === 'number' && !isNaN(q.rataNilai)) ? q.rataNilai : 0;
+      %>
           <tr>
             <td class="text-center"><%= idx + 1 %></td>
             <td><%= q.pertanyaan %></td>
-            <td class="text-center"><%= q.rataNilai.toFixed(2) %></td>
+            <td class="text-center"><%= safeRata.toFixed(2) %></td>
             <td class="rating-stars">
               <% 
-                let starFull = Math.floor(q.rataNilai);
-                let starHalf = (q.rataNilai % 1) >= 0.5;
+                let starFull = Math.floor(safeRata);
+                let starHalf = (safeRata % 1) >= 0.5;
                 for (let i = 1; i <= 5; i++) { 
                   if (i <= starFull) { %>
                     <i class="bi bi-star-fill"></i>
@@ -257,33 +279,46 @@
               %>
             </td>
           </tr>
-        <% }) %>
-      <% } else { %>
-        <tr>
-          <td colspan="4" class="text-center">Data penilaian belum tersedia.</td>
-        </tr>
+      <%     });
+        } else { %>
+          <tr><td colspan="4" class="text-center">Tidak ada pertanyaan skala.</td></tr>
       <% } %>
     </tbody>
   </table>
 
-  <div class="komentar-section">
-    <strong>Komentar / Saran Mahasiswa:</strong>
-    <div class="komentar-box mt-2">
-      <% if (semuaKomentar && semuaKomentar.length > 0) { %>
-        <% semuaKomentar.forEach(k => { %>
-          <div class="komentar-item">"<%= k %>"</div>
-        <% }) %>
-      <% } else { %>
-        <p class="text-muted mb-0"><em>Tidak ada komentar yang diberikan.</em></p>
-      <% } %>
-    </div>
+  <!-- Bagian untuk pertanyaan teks (jawaban terbuka) -->
+  <div class="text-answers-section">
+    <h4>Jawaban / Komentar (Pertanyaan Teks)</h4>
+    <%
+      const textQuestions = (pertanyaanList || []).filter(q => q.tipe === 'text');
+      if (textQuestions.length) {
+        textQuestions.forEach((q, idx) => {
+    %>
+        <div class="text-question-card">
+          <div class="text-question-title"><%= idx+1 %>. <%= q.pertanyaan %></div>
+          <% if (q.jawabanTeksList && q.jawabanTeksList.length) { %>
+            <ul class="jawaban-list">
+              <% q.jawabanTeksList.forEach(teks => { %>
+                <li><i class="bi bi-person-circle me-2"></i> <%= teks %></li>
+              <% }) %>
+            </ul>
+          <% } else { %>
+            <p class="text-muted mb-0">Tidak ada jawaban untuk pertanyaan ini.</p>
+          <% } %>
+        </div>
+    <%
+        });
+      } else {
+    %>
+        <p class="text-muted">Tidak ada pertanyaan teks.</p>
+    <% } %>
   </div>
 
   <div class="tanda-tangan-container">
     <div class="kolom-tanda">
       <p>Mengetahui,<br>Ketua Program Studi</p>
       <div class="area-ttd"></div>
-      <p class="nama-ttd">Fajar Ramadhan, S.Pd., M.T</p>
+      <p class="nama-ttd">FAJAR RAMADHAN, S.Pd., M.T</p>
       <p>NIDN. 8559777678130153</p>
     </div>
 
@@ -295,10 +330,10 @@
     </div>
 
     <div class="kolom-tanda">
-      <p>Palopo, <%= new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %><br>Penilai,</p>
+      <p>Palopo, <%= new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %><br>Wakil Direktur 1,</p>
       <div class="area-ttd"></div>
-      <p class="nama-ttd">( ............................ )</p>
-      <p>Bagian Akademik</p>
+      <p class="nama-ttd">ANDI RISNAWATI RAMLI, S.T., M.T</p>
+      <p>NIDN.0931108203</p>
     </div>
   </div>
 

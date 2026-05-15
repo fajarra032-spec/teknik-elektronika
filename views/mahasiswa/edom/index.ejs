@@ -31,6 +31,31 @@
     font-size: 0.85rem;
   }
 
+  /* Informasi Tujuan EDOM */
+  .info-edom {
+    background: #f0f9ff;
+    border-left: 5px solid var(--primary-start);
+    border-radius: 1rem;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.8rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  }
+  .info-edom i {
+    color: var(--primary-start);
+    font-size: 1.2rem;
+    margin-right: 0.7rem;
+  }
+  .info-edom h5 {
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+    font-size: 1rem;
+  }
+  .info-edom p {
+    margin-bottom: 0;
+    color: #334155;
+    font-size: 0.85rem;
+  }
+
   .card-mk {
     transition: var(--transition);
     border-radius: var(--card-radius);
@@ -114,6 +139,15 @@
     .page-header h2 {
       font-size: 1.3rem;
     }
+    .info-edom {
+      padding: 0.8rem 1rem;
+    }
+    .info-edom h5 {
+      font-size: 0.9rem;
+    }
+    .info-edom p {
+      font-size: 0.75rem;
+    }
     .card-mk .card-body {
       padding: 1rem;
     }
@@ -147,6 +181,17 @@
         <% } else { %>
           <p class="mb-0 mt-1"><%= (typeof message !== 'undefined' && message) ? message.text : 'Tidak ada periode aktif' %></p>
         <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Informasi Tujuan EDOM untuk Mahasiswa -->
+  <div class="info-edom">
+    <div class="d-flex align-items-start gap-2">
+      <i class="bi bi-info-circle-fill fs-4"></i>
+      <div>
+        <h5>Tujuan Evaluasi Dosen (EDOM)</h5>
+        <p>Evaluasi ini bertujuan untuk mengukur kinerja dosen dalam proses pembelajaran, mencakup penguasaan materi, metode mengajar, interaksi dengan mahasiswa, serta aspek pendukung lainnya. Partisipasi Anda sangat berharga untuk perbaikan kualitas pengajaran di masa mendatang. Seluruh jawaban bersifat <strong>anonim</strong> dan dijamin kerahasiaannya.</p>
       </div>
     </div>
   </div>

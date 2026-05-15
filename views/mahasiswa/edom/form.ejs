@@ -57,6 +57,66 @@
     border-color: var(--primary-start);
     box-shadow: 0 0 0 0.2rem rgba(30,58,138,0.25);
   }
+  /* Info anonim */
+  .info-anonim {
+    background: #fef9e3;
+    border-left: 5px solid #eab308;
+    border-radius: 1rem;
+    padding: 0.8rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #854d0e;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .info-anonim i {
+    font-size: 1.2rem;
+  }
+  /* Panduan skala */
+  .scale-guide {
+    background: #eef2ff;
+    border-radius: 1rem;
+    padding: 0.8rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+    color: #1e3a8a;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .scale-guide-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .scale-number {
+    font-weight: 800;
+    background: white;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 60px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  @media (max-width: 576px) {
+    .info-anonim {
+      font-size: 0.75rem;
+      padding: 0.6rem;
+    }
+    .scale-guide {
+      font-size: 0.7rem;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .rating-option {
+      min-width: 40px;
+    }
+  }
 </style>
 
 <div class="container mt-4 form-container">
@@ -73,6 +133,22 @@
       <p class="text-muted mt-2">Periode: <%= activePeriod.nama %> (sampai <%= activePeriod.tanggalSelesai %>)</p>
     </div>
     <div class="card-body">
+      <!-- PENGINGAT ANONIM & KEJUJURAN -->
+      <div class="info-anonim">
+        <i class="bi bi-shield-lock-fill"></i>
+        <span><strong>Identitas Anda dirahasiakan.</strong> Jawablah dengan jujur dan sesuai pengalaman selama mengikuti perkuliahan. Penilaian ini sangat membantu meningkatkan kualitas pembelajaran di Program Studi Elektronika.</span>
+      </div>
+
+      <!-- PANDUAN SKALA 1-5 -->
+      <div class="scale-guide">
+        <span><i class="bi bi-info-circle-fill"></i> <strong>Panduan Skala:</strong></span>
+        <span class="scale-guide-item"><span class="scale-number">1</span> Sangat Buruk</span>
+        <span class="scale-guide-item"><span class="scale-number">2</span> Kurang</span>
+        <span class="scale-guide-item"><span class="scale-number">3</span> Cukup</span>
+        <span class="scale-guide-item"><span class="scale-number">4</span> Baik</span>
+        <span class="scale-guide-item"><span class="scale-number">5</span> Sangat Baik</span>
+      </div>
+
       <form method="POST" action="/mahasiswa/edom/mk/<%= mkId %>" id="edomForm" onsubmit="return validateForm()">
         <!-- Dropdown Pilih Dosen -->
         <div class="dosen-select">
@@ -92,7 +168,7 @@
         
         <% if (ratingQuestions.length) { %>
           <div class="mb-2">
-            <h5 class="fw-semibold">Penilaian Skala</h5>
+            <h5 class="fw-semibold"><i class="bi bi-star-fill me-1"></i> Penilaian Skala</h5>
           </div>
           <% ratingQuestions.forEach((q, idx) => { %>
             <div class="question-card">
@@ -121,15 +197,15 @@
         <% if (textQuestions.length) { %>
           <div class="mt-4 mb-2">
             <hr>
-            <h5 class="text-muted">Jawaban Teks</h5>
-            <small class="text-muted">Isikan jawaban sesuai dengan pertanyaan di bawah ini</small>
+            <h5 class="text-muted"><i class="bi bi-chat-text-fill me-1"></i> Jawaban Teks</h5>
+            <small class="text-muted">Isikan jawaban sesuai dengan pertanyaan di bawah ini (wajib diisi)</small>
           </div>
           <% textQuestions.forEach((q, idx) => { %>
             <div class="question-card">
               <div class="d-flex justify-content-between align-items-start">
                 <div>
                   <h6 class="fw-bold"><%= (ratingQuestions.length + idx + 1) %>. <%= q.pertanyaan %></h6>
-                  <small class="text-danger required-field">Jawaban teks (wajib diisi)</small>
+                  <small class="text-danger required-field">Wajib diisi</small>
                 </div>
               </div>
               <div class="mt-2">

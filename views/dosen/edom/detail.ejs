@@ -99,13 +99,6 @@
     font-weight: bold;
     color: var(--primary-start);
   }
-  .komentar-mhs {
-    margin-top: 0.5rem;
-    font-size: 0.9rem;
-    background: white;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-  }
   .btn-back {
     border: 1.5px solid var(--primary-start);
     color: var(--primary-start);
@@ -122,6 +115,22 @@
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
     border-color: transparent;
     color: white;
+  }
+  .badge-tipe {
+    font-size: 0.7rem;
+    background: #e2e8f0;
+    color: #334155;
+    border-radius: 60px;
+    padding: 0.2rem 0.6rem;
+    margin-left: 0.5rem;
+  }
+  .jawaban-list {
+    margin-top: 0.5rem;
+    padding-left: 1.2rem;
+  }
+  .jawaban-list li {
+    margin-bottom: 0.5rem;
+    word-break: break-word;
   }
 
   @media (max-width: 768px) {
@@ -146,12 +155,13 @@
   <!-- Ringkasan -->
   <div class="summary-stats">
     <div class="stats-item">
-      <div class="stats-number"><%= rataNilai.toFixed(2) %></div>
+      <% const safeRata = (typeof rataNilai === 'number' && !isNaN(rataNilai)) ? rataNilai : 0; %>
+      <div class="stats-number"><%= safeRata.toFixed(2) %></div>
       <div class="stats-label">Rata-rata Nilai</div>
       <div class="star-rating-large mt-1">
         <% 
-          let fullStars = Math.floor(rataNilai);
-          let halfStar = (rataNilai % 1) >= 0.5;
+          let fullStars = Math.floor(safeRata);
+          let halfStar = (safeRata % 1) >= 0.5;
           for (let i = 1; i <= 5; i++) {
             if (i <= fullStars) { %>
               <i class="bi bi-star-fill"></i>
@@ -165,89 +175,101 @@
       </div>
     </div>
     <div class="stats-item">
-      <div class="stats-number"><%= totalResponden %></div>
+      <div class="stats-number"><%= typeof totalResponden === 'number' ? totalResponden : 0 %></div>
       <div class="stats-label">Jumlah Responden</div>
     </div>
     <div class="stats-item">
-      <div class="stats-number"><%= jumlahPertanyaan %></div>
+      <div class="stats-number"><%= typeof jumlahPertanyaan === 'number' ? jumlahPertanyaan : 0 %></div>
       <div class="stats-label">Pertanyaan Dinilai</div>
     </div>
   </div>
 
-  <!-- Daftar Pertanyaan dan Rata-rata per pertanyaan -->
+  <!-- Daftar Pertanyaan Rating (skala) tanpa komentar -->
   <div class="detail-card">
     <div class="card-header">
-      <h4><i class="bi bi-question-circle me-2"></i> Rekap Per Pertanyaan</h4>
+      <h4><i class="bi bi-question-circle me-2"></i> Rekap Per Pertanyaan (Skala)</h4>
     </div>
     <div class="card-body">
-      <% if (pertanyaanList && pertanyaanList.length) { %>
-        <% pertanyaanList.forEach((q, idx) => { %>
-          <div class="pertanyaan-item">
-            <div class="pertanyaan-text"><%= idx+1 %>. <%= q.pertanyaan %></div>
-            <div class="d-flex justify-content-between align-items-center mt-2">
-              <span class="rating-value"><%= q.rataNilai.toFixed(2) %> / 5.00</span>
-              <span class="star-rating">
-                <% 
-                  let starFull = Math.floor(q.rataNilai);
-                  let starHalf = (q.rataNilai % 1) >= 0.5;
-                  for (let i = 1; i <= 5; i++) {
-                    if (i <= starFull) { %>
-                      <i class="bi bi-star-fill"></i>
-                    <% } else if (i === starFull+1 && starHalf) { %>
-                      <i class="bi bi-star-half"></i>
-                    <% } else { %>
-                      <i class="bi bi-star"></i>
-                    <% }
-                  }
-                %>
-              </span>
-            </div>
-            <!-- Tampilkan komentar anonim untuk pertanyaan ini (opsional) -->
-            <% if (q.komentarList && q.komentarList.length) { %>
-              <div class="komentar-mhs mt-2">
-                <strong><i class="bi bi-chat-dots"></i> Komentar:</strong>
-                <ul class="mb-0 mt-1">
-                  <% q.komentarList.slice(0,5).forEach(k => { %>
-                    <li><%= k %></li>
-                  <% }) %>
-                  <% if (q.komentarList.length > 5) { %>
-                    <li><em>... dan <%= q.komentarList.length - 5 %> komentar lainnya</em></li>
-                  <% } %>
-                </ul>
+      <% if (pertanyaanList && pertanyaanList.length) { 
+        const ratingQuestions = pertanyaanList.filter(q => q.tipe === 'rating');
+        if (ratingQuestions.length) { %>
+          <% ratingQuestions.forEach((q, idx) => { %>
+            <div class="pertanyaan-item">
+              <div class="pertanyaan-text">
+                <%= idx+1 %>. <%= q.pertanyaan %>
+                <span class="badge-tipe">Skala</span>
               </div>
-            <% } %>
-          </div>
-        <% }) %>
+              <% const safeRataQ = (typeof q.rataNilai === 'number' && !isNaN(q.rataNilai)) ? q.rataNilai : 0; %>
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <span class="rating-value"><%= safeRataQ.toFixed(2) %> / 5.00</span>
+                <span class="star-rating">
+                  <% 
+                    let starFull = Math.floor(safeRataQ);
+                    let starHalf = (safeRataQ % 1) >= 0.5;
+                    for (let i = 1; i <= 5; i++) {
+                      if (i <= starFull) { %>
+                        <i class="bi bi-star-fill"></i>
+                      <% } else if (i === starFull+1 && starHalf) { %>
+                        <i class="bi bi-star-half"></i>
+                      <% } else { %>
+                        <i class="bi bi-star"></i>
+                      <% }
+                    }
+                  %>
+                </span>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <p class="text-muted">Tidak ada pertanyaan skala.</p>
+        <% } %>
       <% } else { %>
         <p class="text-muted">Belum ada data pertanyaan.</p>
       <% } %>
     </div>
   </div>
 
-  <!-- Semua Komentar Anonim (opsional, bisa dijadikan satu) -->
-  <% if (semuaKomentar && semuaKomentar.length) { %>
-    <div class="detail-card">
-      <div class="card-header">
-        <h4><i class="bi bi-chat-dots-fill me-2"></i> Semua Komentar Anonim</h4>
-      </div>
-      <div class="card-body">
-        <div class="komentar-list" style="max-height: 300px; overflow-y: auto;">
-          <% semuaKomentar.forEach(k => { %>
-            <div class="komentar-item">
-              <i class="bi bi-person-circle me-2"></i> <%= k %>
+  <!-- Tampilkan semua pertanyaan teks beserta jawabannya -->
+  <div class="detail-card">
+    <div class="card-header">
+      <h4><i class="bi bi-chat-dots-fill me-2"></i> Jawaban Teks per Pertanyaan</h4>
+    </div>
+    <div class="card-body">
+      <% if (pertanyaanList && pertanyaanList.length) { 
+        const textQuestions = pertanyaanList.filter(q => q.tipe === 'text');
+        if (textQuestions.length) { %>
+          <% textQuestions.forEach((q, idx) => { %>
+            <div class="pertanyaan-item">
+              <div class="pertanyaan-text">
+                <%= idx+1 %>. <%= q.pertanyaan %>
+                <span class="badge-tipe">Teks</span>
+              </div>
+              <% if (q.jawabanTeksList && q.jawabanTeksList.length) { %>
+                <ul class="jawaban-list">
+                  <% q.jawabanTeksList.forEach(teks => { %>
+                    <li><i class="bi bi-person-circle me-2 text-primary"></i> <%= teks %></li>
+                  <% }) %>
+                </ul>
+              <% } else { %>
+                <p class="text-muted mt-2 mb-0">Tidak ada jawaban untuk pertanyaan ini.</p>
+              <% } %>
             </div>
           <% }) %>
-        </div>
-      </div>
+        <% } else { %>
+          <p class="text-muted">Tidak ada pertanyaan teks.</p>
+        <% } %>
+      <% } else { %>
+        <p class="text-muted">Belum ada data pertanyaan.</p>
+      <% } %>
     </div>
-  <% } %>
+  </div>
 
-  <!-- Tombol cetak (opsional) -->
-<div class="text-end mt-4">
-  <a href="/dosen/edom/print?mkId=<%= mkId %>&periode=<%= periodeId %>" class="btn btn-primary" target="_blank">
-    <i class="bi bi-printer me-1"></i> Cetak Laporan
-  </a>
-</div>
+  <!-- Tombol cetak -->
+  <div class="text-end mt-4">
+    <a href="/dosen/edom/print?mkId=<%= mkId %>&periode=<%= periodeId %>" class="btn btn-primary" target="_blank">
+      <i class="bi bi-printer me-1"></i> Cetak Laporan
+    </a>
+  </div>
 </div>
 
 <%- include('../../partials/footer') %>

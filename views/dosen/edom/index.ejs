@@ -44,6 +44,29 @@
     z-index: 2;
   }
 
+  /* Info tujuan EDOM */
+  .info-edom {
+    background: #f0f9ff;
+    border-left: 5px solid var(--primary-start);
+    border-radius: 1rem;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.8rem;
+    box-shadow: var(--card-shadow);
+  }
+  .info-edom i {
+    color: var(--primary-start);
+    font-size: 1.2rem;
+    margin-right: 0.7rem;
+  }
+  .info-edom h5 {
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+  }
+  .info-edom p {
+    margin-bottom: 0;
+    color: #334155;
+  }
+
   .filter-card {
     background: white;
     border-radius: 1rem;
@@ -90,6 +113,8 @@
     font-weight: 700;
     margin: 0;
     color: #0f172a;
+    font-size: 1rem;
+    word-break: break-word;
   }
   .average-score {
     font-size: 2.5rem;
@@ -110,11 +135,11 @@
     display: inline-block;
     padding: 0.2rem 0.6rem;
     border-radius: 60px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
   }
   .komentar-list {
-    max-height: 200px;
+    max-height: 180px;
     overflow-y: auto;
     margin-top: 0.5rem;
   }
@@ -123,17 +148,20 @@
     border-radius: 1rem;
     padding: 0.5rem 0.8rem;
     margin-bottom: 0.5rem;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     border-left: 3px solid var(--primary-start);
+    word-break: break-word;
   }
   .btn-outline-custom {
     border: 1.5px solid var(--primary-start);
     color: var(--primary-start);
     background: transparent;
     border-radius: 60px;
-    padding: 0.25rem 0.9rem;
+    padding: 0.3rem 1rem;
     font-size: 0.75rem;
     transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
   }
   .btn-outline-custom:hover {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
@@ -141,11 +169,51 @@
     color: white;
   }
   @media (max-width: 768px) {
-    .page-header { padding: 1.2rem; }
-    .page-header h2 { font-size: 1.4rem; }
-    .filter-card { flex-direction: column; align-items: stretch; }
-    .filter-card select { width: 100%; }
-    .average-score { font-size: 2rem; }
+    .page-header {
+      padding: 1rem 1.2rem;
+    }
+    .page-header h2 {
+      font-size: 1.3rem;
+    }
+    .page-header p {
+      font-size: 0.8rem;
+    }
+    .info-edom {
+      padding: 0.8rem 1rem;
+    }
+    .info-edom h5 {
+      font-size: 1rem;
+    }
+    .info-edom p {
+      font-size: 0.8rem;
+    }
+    .filter-card {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .filter-card select {
+      width: 100%;
+    }
+    .average-score {
+      font-size: 2rem;
+    }
+    .card-header-edom h5 {
+      font-size: 0.9rem;
+    }
+    .responden-count {
+      font-size: 0.65rem;
+    }
+    .komentar-item {
+      font-size: 0.75rem;
+    }
+  }
+  @media (max-width: 480px) {
+    .row {
+      --bs-gutter-y: 1rem;
+    }
+    .card-edom {
+      margin-bottom: 0.5rem;
+    }
   }
 </style>
 
@@ -155,9 +223,20 @@
     <p>Rekap penilaian mahasiswa per mata kuliah secara anonim</p>
   </div>
 
+  <!-- Informasi Tujuan EDOM -->
+  <div class="info-edom">
+    <div class="d-flex align-items-start gap-2">
+      <i class="bi bi-info-circle-fill fs-4"></i>
+      <div>
+        <h5>Tujuan Evaluasi Dosen (EDOM)</h5>
+        <p>Evaluasi ini bertujuan untuk mengukur kinerja dosen dalam proses pembelajaran, mencakup penguasaan materi, metode mengajar, interaksi dengan mahasiswa, serta aspek pendukung lainnya. Hasil evaluasi digunakan sebagai bahan perbaikan kualitas pengajaran dan pengembangan profesional dosen.</p>
+      </div>
+    </div>
+  </div>
+
   <div class="filter-card">
     <label><i class="bi bi-calendar-week me-1"></i> Periode Evaluasi:</label>
-    <form method="GET" class="d-inline">
+    <form method="GET" class="flex-grow-1">
       <select name="periode" class="form-select" onchange="this.form.submit()">
         <option value="">-- Pilih Periode --</option>
         <% periods.forEach(p => { %>
@@ -205,7 +284,7 @@
                   %>
                 </div>
               </div>
-              <% if (r.komentarList.length) { %>
+              <% if (r.komentarList && r.komentarList.length) { %>
                 <hr>
                 <strong><i class="bi bi-chat-dots me-1"></i> Komentar Anonim</strong>
                 <div class="komentar-list">
@@ -217,9 +296,9 @@
                 </div>
               <% } %>
             </div>
-            <div class="card-footer bg-transparent border-0 pb-3">
-              <a href="/dosen/edom/detail?mkId=<%= r.mkId %>&periode=<%= selectedPeriodId %>" class="btn-outline-custom btn-sm">
-                <i class="bi bi-graph-up"></i> Detail
+            <div class="card-footer bg-transparent border-0 pb-3 pt-0">
+              <a href="/dosen/edom/detail?mkId=<%= r.mkId %>&periode=<%= selectedPeriodId %>" class="btn-outline-custom">
+                <i class="bi bi-graph-up me-1"></i> Detail
               </a>
             </div>
           </div>

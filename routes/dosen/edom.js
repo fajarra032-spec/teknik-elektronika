@@ -71,6 +71,7 @@ router.get('/', async (req, res) => {
 // ============================================================================
 // DETAIL EVALUASI PER MATA KULIAH
 // ============================================================================
+// ==================== DETAIL EVALUASI PER MATA KULIAH ====================
 router.get('/detail', async (req, res) => {
   try {
     const { mkId, periode } = req.query;
@@ -101,22 +102,25 @@ router.get('/detail', async (req, res) => {
       return res.status(404).send('Belum ada evaluasi untuk mata kuliah ini pada periode tersebut');
     }
 
-    // Ambil daftar pertanyaan dari kuisioner
+    // Ambil daftar pertanyaan dari kuisioner (beserta tipe)
     const pertanyaanSnap = await db.collection('edom_kuisioner')
       .orderBy('urutan', 'asc')
       .get();
-
-    const pertanyaanList = pertanyaanSnap.docs.map(doc => ({
-      id: doc.id,
-      pertanyaan: doc.data().pertanyaan,
-      totalNilai: 0,
-      count: 0,
-      komentarList: []
-    }));
+    const pertanyaanMap = new Map(); // key = id pertanyaan, value = { ... }
+    pertanyaanSnap.docs.forEach(doc => {
+      const data = doc.data();
+      pertanyaanMap.set(doc.id, {
+        id: doc.id,
+        pertanyaan: data.pertanyaan,
+        tipe: data.tipe, // 'rating' atau 'text'
+        totalNilai: 0,
+        count: 0,
+        jawabanTeksList: [] // untuk tipe text
+      });
+    });
 
     let totalNilai = 0;
     let jumlahRespon = 0;
-    const semuaKomentar = [];
 
     for (const doc of responSnap.docs) {
       const data = doc.data();
@@ -124,31 +128,42 @@ router.get('/detail', async (req, res) => {
       jumlahRespon++;
       if (data.jawaban && Array.isArray(data.jawaban)) {
         data.jawaban.forEach(jawab => {
-          const qIdx = pertanyaanList.findIndex(q => q.id === jawab.pertanyaanId);
-          if (qIdx !== -1) {
-            pertanyaanList[qIdx].totalNilai += jawab.nilai;
-            pertanyaanList[qIdx].count++;
-            if (jawab.komentar && jawab.komentar.trim()) {
-              pertanyaanList[qIdx].komentarList.push(jawab.komentar);
-              semuaKomentar.push(jawab.komentar);
+          const q = pertanyaanMap.get(jawab.pertanyaanId);
+          if (!q) return;
+          if (q.tipe === 'rating') {
+            if (typeof jawab.nilai === 'number') {
+              q.totalNilai += jawab.nilai;
+              q.count++;
+            }
+            // Komentar pada pertanyaan rating TIDAK dimasukkan ke jawaban teks
+          } else if (q.tipe === 'text') {
+            // Jawaban teks dikumpulkan
+            if (jawab.jawabanTeks && jawab.jawabanTeks.trim()) {
+              q.jawabanTeksList.push(jawab.jawabanTeks);
             }
           }
         });
       }
     }
 
-    pertanyaanList.forEach(q => {
-      q.rataNilai = q.count ? q.totalNilai / q.count : 0;
+    // Hitung rata-rata untuk pertanyaan rating
+    const pertanyaanList = Array.from(pertanyaanMap.values()).map(q => {
+      if (q.tipe === 'rating') {
+        q.rataNilai = q.count > 0 ? q.totalNilai / q.count : 0;
+      } else {
+        q.rataNilai = null;
+      }
+      return q;
     });
 
-    const rataNilai = totalNilai / jumlahRespon;
+    const rataNilai = jumlahRespon > 0 ? totalNilai / jumlahRespon : 0;
     const totalResponden = jumlahRespon;
     const jumlahPertanyaan = pertanyaanList.length;
 
     res.render('dosen/edom/detail', {
       title: `Detail Evaluasi - ${mkData.nama}`,
-      mkId: mkId,                // <-- tambahkan
-      periodeId: periode,        // <-- tambahkan
+      mkId,
+      periodeId: periode,
       mkKode: mkData.kode,
       mkNama: mkData.nama,
       periodeNama: periodeData.nama,
@@ -156,7 +171,7 @@ router.get('/detail', async (req, res) => {
       totalResponden,
       jumlahPertanyaan,
       pertanyaanList,
-      semuaKomentar
+      // tidak perlu semuaKomentar karena sudah digabung di view
     });
   } catch (err) {
     console.error(err);
@@ -200,21 +215,27 @@ router.get('/print', async (req, res) => {
       return res.status(404).send('Belum ada evaluasi untuk mata kuliah ini pada periode tersebut');
     }
 
-    // Ambil daftar pertanyaan dari kuisioner
+    // Ambil daftar pertanyaan dari kuisioner (beserta tipe)
     const pertanyaanSnap = await db.collection('edom_kuisioner')
       .orderBy('urutan', 'asc')
       .get();
-    const pertanyaanList = pertanyaanSnap.docs.map(doc => ({
-      id: doc.id,
-      pertanyaan: doc.data().pertanyaan,
-      totalNilai: 0,
-      count: 0,
-      komentarList: []
-    }));
+
+    const pertanyaanMap = new Map();
+    pertanyaanSnap.docs.forEach(doc => {
+      const data = doc.data();
+      pertanyaanMap.set(doc.id, {
+        id: doc.id,
+        pertanyaan: data.pertanyaan,
+        tipe: data.tipe,
+        totalNilai: 0,
+        count: 0,
+        komentarList: [],
+        jawabanTeksList: []
+      });
+    });
 
     let totalNilai = 0;
     let jumlahRespon = 0;
-    const semuaKomentar = [];
 
     for (const doc of responSnap.docs) {
       const data = doc.data();
@@ -222,26 +243,40 @@ router.get('/print', async (req, res) => {
       jumlahRespon++;
       if (data.jawaban && Array.isArray(data.jawaban)) {
         data.jawaban.forEach(jawab => {
-          const qIdx = pertanyaanList.findIndex(q => q.id === jawab.pertanyaanId);
-          if (qIdx !== -1) {
-            pertanyaanList[qIdx].totalNilai += jawab.nilai;
-            pertanyaanList[qIdx].count++;
+          const q = pertanyaanMap.get(jawab.pertanyaanId);
+          if (!q) return;
+          if (q.tipe === 'rating') {
+            if (typeof jawab.nilai === 'number') {
+              q.totalNilai += jawab.nilai;
+              q.count++;
+            }
             if (jawab.komentar && jawab.komentar.trim()) {
-              pertanyaanList[qIdx].komentarList.push(jawab.komentar);
-              semuaKomentar.push(jawab.komentar);
+              q.komentarList.push(jawab.komentar);
+            }
+          } else if (q.tipe === 'text') {
+            if (jawab.jawabanTeks && jawab.jawabanTeks.trim()) {
+              q.jawabanTeksList.push(jawab.jawabanTeks);
             }
           }
         });
       }
     }
 
-    pertanyaanList.forEach(q => {
-      q.rataNilai = q.count ? q.totalNilai / q.count : 0;
+    // Hitung rata-rata untuk pertanyaan rating
+    const pertanyaanList = Array.from(pertanyaanMap.values()).map(q => {
+      if (q.tipe === 'rating') {
+        q.rataNilai = q.count > 0 ? q.totalNilai / q.count : 0;
+      } else {
+        q.rataNilai = null;
+      }
+      return q;
     });
 
-    const rataNilai = totalNilai / jumlahRespon;
+    const rataNilai = jumlahRespon > 0 ? totalNilai / jumlahRespon : 0;
     const totalResponden = jumlahRespon;
+    const jumlahPertanyaan = pertanyaanList.length;
 
+    // ✅ PERBAIKAN: render ke view 'print' bukan 'detail'
     res.render('dosen/edom/print', {
       title: `Cetak EDOM - ${mkData.nama}`,
       mkId,
@@ -253,8 +288,8 @@ router.get('/print', async (req, res) => {
       dosenNip,
       rataNilai,
       totalResponden,
+      jumlahPertanyaan,
       pertanyaanList,
-      semuaKomentar
     });
   } catch (err) {
     console.error(err);
