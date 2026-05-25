@@ -41,13 +41,22 @@ router.get('/', async (req, res) => {
       .get();
     const laporanPending = laporanPendingSnapshot.size;
 
-    // 7. Surat Pending
-    const suratPendingSnapshot = await db.collection('surat')
+    // 7. Surat Mahasiswa Pending
+    const suratMahasiswaPendingSnapshot = await db.collection('surat')
       .where('status', '==', 'pending')
       .get();
-    const suratPending = suratPendingSnapshot.size;
+    const suratMahasiswaPending = suratMahasiswaPendingSnapshot.size;
 
-    // 8. Event Mendatang (5 terdekat)
+    // 8. Surat Izin Dosen Pending (tambahan)
+    const suratDosenPendingSnapshot = await db.collection('surat_dosen')
+      .where('status', '==', 'pending')
+      .get();
+    const suratDosenPending = suratDosenPendingSnapshot.size;
+
+    // Total surat pending (mahasiswa + dosen)
+    const suratPending = suratMahasiswaPending + suratDosenPending;
+
+    // 9. Event Mendatang (5 terdekat)
     const today = new Date().toISOString().split('T')[0];
     const eventsSnapshot = await db.collection('jadwalPenting')
       .where('tanggal', '>=', today)
@@ -63,7 +72,10 @@ router.get('/', async (req, res) => {
       krsPending,
       logbookPending,
       laporanPending,
-      suratPending
+      suratPending,
+      // Opsional: kirim juga detail per role jika diperlukan di view
+      suratMahasiswaPending,
+      suratDosenPending
     };
 
     res.render('admin/dashboard', {
