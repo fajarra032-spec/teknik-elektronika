@@ -36,7 +36,7 @@ router.get('/', async (req, res) => {
 });
 
 // ============================================================================
-// FORM PENGAJUAN SURAT
+// FORM PENGAJUAN SURAT UMUM
 // ============================================================================
 router.get('/ajukan', (req, res) => {
   const currentSemester = getCurrentAcademicSemester();
@@ -49,7 +49,7 @@ router.get('/ajukan', (req, res) => {
 });
 
 // ============================================================================
-// PROSES PENGAJUAN SURAT
+// PROSES PENGAJUAN SURAT UMUM
 // ============================================================================
 router.post('/ajukan', async (req, res) => {
   try {
@@ -84,7 +84,87 @@ router.post('/ajukan', async (req, res) => {
 });
 
 // ============================================================================
-// DETAIL SURAT
+// FORM PENGAJUAN IZIN DOSEN
+// ============================================================================
+router.get('/ajukan-izin', (req, res) => {
+  res.render('dosen/persuratan/ajukan_izin', {
+    title: 'Ajukan Izin',
+    dosen: req.dosen,
+    user: req.dosen   // untuk kompatibilitas template yang menggunakan user
+  });
+});
+
+// ============================================================================
+// PROSES PENGAJUAN IZIN DOSEN
+// ============================================================================
+router.post('/ajukan-izin', async (req, res) => {
+  try {
+    const {
+      noHp,
+      jenisIzin,
+      tanggalMulai,
+      tanggalSelesai,
+      jumlahHari,
+      namaPengganti,
+      tugasPengganti,
+      bentukPengalihan,
+      catatanTambahan
+    } = req.body;
+
+    // Validasi wajib
+    if (!jenisIzin || !tanggalMulai || !tanggalSelesai || !jumlahHari) {
+      return res.status(400).send('Jenis izin, tanggal mulai, tanggal selesai, dan jumlah hari harus diisi');
+    }
+
+    // Pastikan jenisIzin berupa array (checkbox multiple)
+    const jenisIzinArray = Array.isArray(jenisIzin) ? jenisIzin : (jenisIzin ? [jenisIzin] : []);
+    const bentukPengalihanArray = Array.isArray(bentukPengalihan) ? bentukPengalihan : (bentukPengalihan ? [bentukPengalihan] : []);
+
+    const kodeValidasi = generateKodeValidasi();
+    const current = getCurrentAcademicSemester();
+
+    const suratData = {
+      // Data identitas
+      dosenId: req.dosen.id,
+      dosenNama: req.dosen.nama,
+      nip: req.dosen.nip,
+      email: req.dosen.email,
+      noHp: noHp || '',
+      
+      // Data khusus izin
+      jenisIzin: jenisIzinArray,
+      tanggalMulai,
+      tanggalSelesai,
+      jumlahHari: parseInt(jumlahHari),
+      namaPengganti: namaPengganti || '',
+      tugasPengganti: tugasPengganti || '',
+      bentukPengalihan: bentukPengalihanArray,
+      catatanTambahan: catatanTambahan || '',
+      
+      // Default persetujuan (admin yang akan menentukan nanti)
+      persetujuan: 'Disetujui',
+      catatanPersetujuan: '',
+      
+      // Metadata
+      kodeValidasi,
+      status: 'pending',
+      semester: current.label,
+      tahunAkademik: current.tahunAkademik,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{ status: 'pending', timestamp: new Date().toISOString(), catatan: 'Pengajuan izin diterima' }]
+    };
+
+    await db.collection('surat_dosen').add(suratData);
+    res.redirect('/dosen/surat');
+  } catch (error) {
+    console.error('Error ajukan izin:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal mengajukan izin' });
+  }
+});
+
+// ============================================================================
+// DETAIL SURAT (mendukung surat umum dan surat izin)
 // ============================================================================
 router.get('/:id', async (req, res) => {
   try {
@@ -108,7 +188,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // ============================================================================
-// BATALKAN PENGAJUAN
+// BATALKAN PENGAJUAN (hanya jika status pending)
 // ============================================================================
 router.post('/:id/batal', async (req, res) => {
   try {
@@ -131,7 +211,7 @@ router.post('/:id/batal', async (req, res) => {
 });
 
 // ============================================================================
-// DOWNLOAD SURAT (jika sudah diupload admin)
+// DOWNLOAD SURAT (jika sudah diupload/generate oleh admin)
 // ============================================================================
 router.get('/:id/download', async (req, res) => {
   try {

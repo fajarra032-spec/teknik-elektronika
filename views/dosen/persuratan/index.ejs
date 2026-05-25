@@ -83,6 +83,17 @@
     border-color: transparent;
     color: white;
   }
+  .btn-success-custom {
+    background: #10b981;
+    border: none;
+    color: white;
+    border-radius: 60px;
+    padding: 0.3rem 0.9rem;
+    font-size: 0.75rem;
+  }
+  .btn-success-custom:hover {
+    background: #059669;
+  }
 </style>
 
 <div class="container mt-4">
@@ -91,7 +102,10 @@
       <h2><i class="bi bi-envelope-paper me-2"></i>Daftar Pengajuan Surat</h2>
       <p>Semua surat yang pernah Anda ajukan ke prodi</p>
     </div>
-    <a href="/dosen/surat/ajukan" class="btn-primary-custom"><i class="bi bi-plus-circle me-2"></i>Ajukan Surat Baru</a>
+    <div class="d-flex gap-2">
+      <a href="/dosen/surat/ajukan" class="btn-primary-custom"><i class="bi bi-plus-circle me-2"></i>Ajukan Surat Umum</a>
+      <a href="/dosen/surat/ajukan-izin" class="btn-primary-custom" style="background: linear-gradient(105deg, #059669, #10b981);"><i class="bi bi-calendar-check me-2"></i>Ajukan Izin</a>
+    </div>
   </div>
 
   <div class="table-card">
@@ -101,7 +115,7 @@
           <tr>
             <th>No</th>
             <th>Jenis Surat</th>
-            <th>Keperluan</th>
+            <th>Keperluan / Keterangan</th>
             <th>Status</th>
             <th>Tgl Pengajuan</th>
             <th>Aksi</th>
@@ -113,15 +127,30 @@
               <td colspan="6" class="text-center py-5">
                 <i class="bi bi-inbox fs-1 text-muted"></i>
                 <p class="mt-2 mb-0 text-muted">Belum ada pengajuan surat.</p>
-                <a href="/dosen/surat/ajukan" class="btn-primary-custom mt-2">Ajukan Surat Sekarang</a>
+                <div class="mt-2">
+                  <a href="/dosen/surat/ajukan" class="btn-primary-custom">Ajukan Surat Umum</a>
+                  <a href="/dosen/surat/ajukan-izin" class="btn-primary-custom" style="background: #10b981;">Ajukan Izin</a>
+                </div>
               </td>
             </tr>
           <% } else { %>
             <% suratList.forEach((s, idx) => { %>
+              <% 
+                // Tentukan tampilan jenis surat
+                let jenisTampilan = s.jenisSurat || '';
+                let keperluanTampilan = s.keperluan || '';
+                if (s.jenisIzin && s.jenisIzin.length > 0) {
+                  jenisTampilan = 'Surat Izin';
+                  // Buat ringkasan izin
+                  const jenisIzinStr = Array.isArray(s.jenisIzin) ? s.jenisIzin.join(', ') : s.jenisIzin;
+                  const waktu = (s.tanggalMulai ? new Date(s.tanggalMulai).toLocaleDateString('id-ID') : '?') + ' s.d ' + (s.tanggalSelesai ? new Date(s.tanggalSelesai).toLocaleDateString('id-ID') : '?');
+                  keperluanTampilan = `${jenisIzinStr} | ${waktu}`;
+                }
+              %>
               <tr>
                 <td class="fw-bold"><%= idx + 1 %></td>
-                <td><%= s.jenisSurat %></td>
-                <td><%= s.keperluan.substring(0, 50) + (s.keperluan.length > 50 ? '...' : '') %></td>
+                <td><%= jenisTampilan %></td>
+                <td><%= keperluanTampilan.substring(0, 60) + (keperluanTampilan.length > 60 ? '...' : '') %></td>
                 <td>
                   <span class="badge-status 
                     <%= s.status === 'pending' ? 'badge-pending' : (s.status === 'completed' ? 'badge-completed' : (s.status === 'rejected' ? 'badge-rejected' : 'badge-cancelled')) %>">
@@ -140,7 +169,7 @@
                       </form>
                     <% } %>
                     <% if (s.status === 'completed' && s.fileUrl) { %>
-                      <a href="/dosen/surat/<%= s.id %>/download" target="_blank" class="btn-outline-custom btn-sm" style="border-color: #10b981 !important; color: #10b981 !important;">
+                      <a href="/dosen/surat/<%= s.id %>/download" target="_blank" class="btn-success-custom btn-sm">
                         <i class="bi bi-download me-1"></i>Unduh
                       </a>
                     <% } %>

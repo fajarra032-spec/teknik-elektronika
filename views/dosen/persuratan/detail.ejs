@@ -36,6 +36,14 @@
   .badge-completed { background: #d1fae5; color: #065f46; }
   .badge-rejected { background: #fee2e2; color: #991b1b; }
   .badge-cancelled { background: #e2e8f0; color: #475569; }
+  .info-label {
+    font-weight: 600;
+    width: 180px;
+    display: inline-block;
+  }
+  .info-row {
+    margin-bottom: 8px;
+  }
 </style>
 
 <div class="container mt-4">
@@ -52,28 +60,75 @@
       <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Informasi Surat</h5>
     </div>
     <div class="card-body p-4">
-      <div class="row">
-        <div class="col-md-6">
-          <p><strong>Jenis Surat:</strong> <%= surat.jenisSurat %></p>
-          <p><strong>Tujuan:</strong> <%= surat.tujuan || '-' %></p>
-          <p><strong>Keperluan:</strong> <%= surat.keperluan %></p>
+      <% 
+        // Cek apakah ini surat izin (ada field jenisIzin)
+        const isIzin = surat.jenisIzin && surat.jenisIzin.length > 0;
+      %>
+      <% if (!isIzin) { %>
+        <!-- Tampilan untuk surat umum -->
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-row"><span class="info-label">Jenis Surat:</span> <%= surat.jenisSurat %></div>
+            <div class="info-row"><span class="info-label">Tujuan:</span> <%= surat.tujuan || '-' %></div>
+            <div class="info-row"><span class="info-label">Keperluan:</span> <%= surat.keperluan %></div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-row"><span class="info-label">Kode Validasi:</span> <code><%= surat.kodeValidasi %></code></div>
+            <div class="info-row"><span class="info-label">Tanggal Pengajuan:</span> <%= new Date(surat.createdAt).toLocaleString('id-ID') %></div>
+            <div class="info-row"><span class="info-label">Status:</span> 
+              <span class="badge-status 
+                <%= surat.status === 'pending' ? 'badge-pending' : (surat.status === 'completed' ? 'badge-completed' : (surat.status === 'rejected' ? 'badge-rejected' : 'badge-cancelled')) %>">
+                <%= surat.status === 'pending' ? 'Menunggu' : (surat.status === 'completed' ? 'Selesai' : (surat.status === 'rejected' ? 'Ditolak' : 'Dibatalkan')) %>
+              </span>
+            </div>
+          </div>
         </div>
-        <div class="col-md-6">
-          <p><strong>Kode Validasi:</strong> <code class="bg-light p-1 rounded"><%= surat.kodeValidasi %></code></p>
-          <p><strong>Tanggal Pengajuan:</strong> <%= new Date(surat.createdAt).toLocaleString('id-ID') %></p>
-          <p><strong>Status:</strong> 
-            <span class="badge-status 
-              <%= surat.status === 'pending' ? 'badge-pending' : (surat.status === 'completed' ? 'badge-completed' : (surat.status === 'rejected' ? 'badge-rejected' : 'badge-cancelled')) %>">
-              <%= surat.status === 'pending' ? 'Menunggu' : (surat.status === 'completed' ? 'Selesai' : (surat.status === 'rejected' ? 'Ditolak' : 'Dibatalkan')) %>
-            </span>
-          </p>
+        <% if (surat.isiLain) { %>
+          <div class="mt-3">
+            <strong>Informasi Tambahan:</strong>
+            <p class="bg-light p-2 rounded mt-1"><%= surat.isiLain %></p>
+          </div>
+        <% } %>
+      <% } else { %>
+        <!-- Tampilan untuk surat izin -->
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-row"><span class="info-label">Jenis Izin:</span> 
+              <%= Array.isArray(surat.jenisIzin) ? surat.jenisIzin.join(', ') : surat.jenisIzin %>
+            </div>
+            <div class="info-row"><span class="info-label">Tanggal Mulai:</span> <%= surat.tanggalMulai ? new Date(surat.tanggalMulai).toLocaleDateString('id-ID') : '-' %></div>
+            <div class="info-row"><span class="info-label">Tanggal Selesai:</span> <%= surat.tanggalSelesai ? new Date(surat.tanggalSelesai).toLocaleDateString('id-ID') : '-' %></div>
+            <div class="info-row"><span class="info-label">Jumlah Hari:</span> <%= surat.jumlahHari %> hari</div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-row"><span class="info-label">Kode Validasi:</span> <code><%= surat.kodeValidasi %></code></div>
+            <div class="info-row"><span class="info-label">Tanggal Pengajuan:</span> <%= new Date(surat.createdAt).toLocaleString('id-ID') %></div>
+            <div class="info-row"><span class="info-label">Status:</span> 
+              <span class="badge-status 
+                <%= surat.status === 'pending' ? 'badge-pending' : (surat.status === 'completed' ? 'badge-completed' : (surat.status === 'rejected' ? 'badge-rejected' : 'badge-cancelled')) %>">
+                <%= surat.status === 'pending' ? 'Menunggu' : (surat.status === 'completed' ? 'Selesai' : (surat.status === 'rejected' ? 'Ditolak' : 'Dibatalkan')) %>
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
-      <% if (surat.isiLain) { %>
         <div class="mt-3">
-          <strong>Informasi Tambahan:</strong>
-          <p class="bg-light p-2 rounded mt-1"><%= surat.isiLain %></p>
+          <strong>Pengalihan Tugas:</strong><br>
+          <div class="info-row"><span class="info-label">Nama Pengganti:</span> <%= surat.namaPengganti || '-' %></div>
+          <div class="info-row"><span class="info-label">Tugas:</span> <%= surat.tugasPengganti || '-' %></div>
+          <div class="info-row"><span class="info-label">Bentuk Pengalihan:</span> 
+            <%= Array.isArray(surat.bentukPengalihan) ? surat.bentukPengalihan.join(', ') : (surat.bentukPengalihan || '-') %>
+          </div>
         </div>
+        <div class="mt-3">
+          <strong>Persetujuan Atasan:</strong> <%= surat.persetujuan || 'Disetujui' %><br>
+          <strong>Catatan Persetujuan:</strong> <%= surat.catatanPersetujuan || '-' %>
+        </div>
+        <% if (surat.catatanTambahan) { %>
+          <div class="mt-3">
+            <strong>Catatan Tambahan Dosen:</strong>
+            <p class="bg-light p-2 rounded mt-1"><%= surat.catatanTambahan %></p>
+          </div>
+        <% } %>
       <% } %>
     </div>
   </div>

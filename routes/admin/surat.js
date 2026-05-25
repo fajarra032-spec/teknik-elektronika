@@ -5,6 +5,7 @@
  * - Dosen: collection 'surat_dosen'
  * - Upload file ke Google Drive, verifikasi, tolak surat
  * - Tambahan: Generate otomatis surat aktif kuliah (mahasiswa) menggunakan Puppeteer
+ * - Tambahan: Generate otomatis surat izin dosen (formulir izin) menggunakan Puppeteer
  */
 
 const express = require('express');
@@ -14,7 +15,15 @@ const { db } = require('../../config/firebaseAdmin');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
-const upload = multer({ storage: multer.memoryStorage() });
+// Konfigurasi multer dengan limit dan filter file
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') cb(null, true);
+    else cb(new Error('Hanya file PDF yang diperbolehkan'), false);
+  }
+});
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
@@ -69,6 +78,40 @@ function generateKodeValidasi() {
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 8).toUpperCase();
   return `ELK${timestamp}${random}`;
+}
+
+// ============================================================================
+// FUNGSI BANTU UNTUK GENERATE SURAT DOSEN (IZIN)
+// ============================================================================
+
+function getTemplateAndDataForSuratDosen(suratDosen, dosen) {
+  const formatTanggal = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+  };
+
+  return {
+    template: 'admin/surat/izin_dosen_form',
+    data: {
+      logoBase64: '',
+      kodeValidasi: suratDosen.kodeValidasi || '', // <-- TAMBAHKAN INI
+      nama: dosen.nama || suratDosen.dosenNama,
+      nidn: dosen.nip || suratDosen.nip,
+      noHp: suratDosen.noHp || '',
+      jenisIzin: suratDosen.jenisIzin || [],
+      tanggalMulai: formatTanggal(suratDosen.tanggalMulai),
+      tanggalSelesai: formatTanggal(suratDosen.tanggalSelesai),
+      jumlahHari: suratDosen.jumlahHari || 0,
+      namaPengganti: suratDosen.namaPengganti || '',
+      tugasPengganti: suratDosen.tugasPengganti || '',
+      bentukPengalihan: suratDosen.bentukPengalihan || [],
+      tanggalPengajuan: formatTanggal(suratDosen.createdAt) || formatTanggal(new Date()),
+      persetujuan: suratDosen.persetujuan || 'Disetujui',
+      catatanPersetujuan: suratDosen.catatanPersetujuan || '',
+      tanggalPersetujuan: formatTanggal(suratDosen.tanggalPersetujuan) || formatTanggal(new Date())
+    }
+  };
 }
 
 // ============================================================================
@@ -135,118 +178,219 @@ router.post('/create', upload.single('file'), async (req, res) => {
 });
 
 // ============================================================================
-// GENERATE SURAT OTOMATIS (MAHASISWA - AKTIF KULIAH)
+// FITUR ADMIN: Buat Izin Dosen (Formulir Pengajuan Izin)
+// ============================================================================
+
+router.get('/dosen/create-izin', async (req, res) => {
+  try {
+    const dosenSnapshot = await db.collection('dosen').orderBy('nama').get();
+    const dosenList = dosenSnapshot.docs.map(doc => ({ id: doc.id, nama: doc.data().nama, nip: doc.data().nip }));
+    res.render('admin/surat/create_izin_dosen', { title: 'Buat Izin Dosen', dosenList });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Gagal memuat data dosen');
+  }
+});
+
+router.post('/dosen/create-izin', upload.none(), async (req, res) => {
+  try {
+    const {
+      dosenId, noHp, jenisIzin, tanggalMulai, tanggalSelesai, jumlahHari,
+      namaPengganti, tugasPengganti, bentukPengalihan, persetujuan, catatanPersetujuan
+    } = req.body;
+
+    const dosenDoc = await db.collection('dosen').doc(dosenId).get();
+    if (!dosenDoc.exists) return res.status(404).send('Dosen tidak ditemukan');
+    const dosenData = dosenDoc.data();
+
+    const kodeValidasi = generateKodeValidasi();
+    const suratData = {
+      dosenId: dosenId,
+      dosenNama: dosenData.nama,
+      nip: dosenData.nip,
+      email: dosenData.email || '',
+      noHp: noHp || '',
+      jenisIzin: Array.isArray(jenisIzin) ? jenisIzin : (jenisIzin ? [jenisIzin] : []),
+      tanggalMulai,
+      tanggalSelesai,
+      jumlahHari: parseInt(jumlahHari) || 0,
+      namaPengganti: namaPengganti || '',
+      tugasPengganti: tugasPengganti || '',
+      bentukPengalihan: Array.isArray(bentukPengalihan) ? bentukPengalihan : (bentukPengalihan ? [bentukPengalihan] : []),
+      persetujuan: persetujuan || 'Disetujui',
+      catatanPersetujuan: catatanPersetujuan || '',
+      kodeValidasi,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{ status: 'pending', timestamp: new Date().toISOString(), catatan: 'Pengajuan izin dibuat oleh admin' }]
+    };
+
+    const docRef = await db.collection('surat_dosen').add(suratData);
+    res.redirect(`/admin/surat/${docRef.id}/dosen`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Gagal membuat surat izin dosen: ' + err.message);
+  }
+});
+
+// ============================================================================
+// GENERATE SURAT OTOMATIS (MAHASISWA & DOSEN)
 // ============================================================================
 
 router.post('/:id/:role/generate', async (req, res) => {
   try {
     const { id, role } = req.params;
     const { nomorSurat } = req.body;
-    if (!nomorSurat) return res.status(400).send('Nomor surat wajib diisi');
-    if (role !== 'mahasiswa') return res.status(400).send('Generate surat hanya untuk mahasiswa');
 
-    const suratRef = db.collection('surat').doc(id);
-    const suratDoc = await suratRef.get();
-    if (!suratDoc.exists) return res.status(404).send('Surat tidak ditemukan');
-    const surat = suratDoc.data();
-    if (surat.jenis !== 'Aktif Kuliah') {
-      return res.status(400).send('Generate otomatis hanya untuk surat jenis "Aktif Kuliah"');
-    }
+    // --- ROLE MAHASISWA (Aktif Kuliah) ---
+    if (role === 'mahasiswa') {
+      if (!nomorSurat) return res.status(400).send('Nomor surat wajib diisi');
+      const suratRef = db.collection('surat').doc(id);
+      const suratDoc = await suratRef.get();
+      if (!suratDoc.exists) return res.status(404).send('Surat tidak ditemukan');
+      const surat = suratDoc.data();
+      if (surat.jenis !== 'Aktif Kuliah') {
+        return res.status(400).send('Generate otomatis hanya untuk surat jenis "Aktif Kuliah"');
+      }
 
-    const mahasiswa = await getMahasiswa(surat.userId);
-    if (!mahasiswa.nim) return res.status(404).send('Data mahasiswa tidak lengkap');
+      const mahasiswa = await getMahasiswa(surat.userId);
+      if (!mahasiswa.nim) return res.status(404).send('Data mahasiswa tidak lengkap');
 
-    const templateData = {
-      nomorSurat,
-      nama: mahasiswa.nama,
-      nim: mahasiswa.nim,
-      tempatLahir: surat.tempatLahir || '-',
-      tanggalLahir: surat.tanggalLahir ? new Date(surat.tanggalLahir) : new Date(),
-      semester: surat.semester,
-      tahunAkademik: surat.tahunAkademik,
-      keperluan: surat.keperluan,
-      kodeValidasi: surat.kodeValidasi   // ← tambahkan ini
-    };
+      const templateData = {
+        nomorSurat,
+        nama: mahasiswa.nama,
+        nim: mahasiswa.nim,
+        tempatLahir: surat.tempatLahir || '-',
+        tanggalLahir: surat.tanggalLahir ? new Date(surat.tanggalLahir) : new Date(),
+        semester: surat.semester,
+        tahunAkademik: surat.tahunAkademik,
+        keperluan: surat.keperluan,
+        kodeValidasi: surat.kodeValidasi
+      };
 
-    // Render HTML
-    let html = await new Promise((resolve, reject) => {
-      res.render('admin/surat/aktif_kuliah', templateData, (err, html) => {
-        if (err) reject(err);
-        else resolve(html);
+      let html = await new Promise((resolve, reject) => {
+        res.render('admin/surat/aktif_kuliah', templateData, (err, html) => {
+          if (err) reject(err);
+          else resolve(html);
+        });
       });
-    });
 
-    // Baca gambar logo dan ttd, konversi ke base64
-    const logoPath = path.join(__dirname, '../../public/images/logo.png');
-    const ttdPath = path.join(__dirname, '../../public/images/ttd.png');
-    let logoBase64 = '';
-    let ttdBase64 = '';
-    try {
-      if (fs.existsSync(logoPath)) {
-        logoBase64 = fs.readFileSync(logoPath).toString('base64');
-      } else {
-        console.warn('Logo tidak ditemukan di', logoPath);
-      }
-      if (fs.existsSync(ttdPath)) {
-        ttdBase64 = fs.readFileSync(ttdPath).toString('base64');
-      } else {
-        console.warn('TTD tidak ditemukan di', ttdPath);
-      }
-    } catch (err) {
-      console.error('Gagal membaca file gambar:', err);
+      const logoPath = path.join(__dirname, '../../public/images/logo.png');
+      const ttdPath = path.join(__dirname, '../../public/images/ttd.png');
+      let logoBase64 = '', ttdBase64 = '';
+      if (fs.existsSync(logoPath)) logoBase64 = fs.readFileSync(logoPath).toString('base64');
+      if (fs.existsSync(ttdPath)) ttdBase64 = fs.readFileSync(ttdPath).toString('base64');
+
+      if (logoBase64) html = html.replace('src="/images/logo.png"', `src="data:image/png;base64,${logoBase64}"`);
+      if (ttdBase64) html = html.replace('src="/images/ttd.png"', `src="data:image/png;base64,${ttdBase64}"`);
+
+      const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: 'new', timeout: 60000 });
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0', timeout: 60000 });
+      const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '2cm', bottom: '2cm', left: '2cm', right: '2cm' } });
+      await browser.close();
+
+      // Konversi ke Buffer (menangani Uint8Array atau tipe lain)
+      const buffer = Buffer.from(pdfBuffer);
+
+      const folderId = await getSuratFolderMahasiswa(mahasiswa.nim, surat.tahunAkademik);
+      const fileName = `${surat.kodeValidasi}_${nomorSurat.replace(/\//g, '_')}.pdf`;
+      const fileMetadata = { name: fileName, parents: [folderId] };
+      const media = { mimeType: 'application/pdf', body: Readable.from(buffer) };
+      const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
+      await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+      const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
+
+      await suratRef.update({
+        status: 'completed',
+        fileUrl,
+        fileId: driveResponse.data.id,
+        nomorSurat,
+        updatedAt: new Date().toISOString(),
+        history: [...(surat.history || []), { status: 'completed', timestamp: new Date().toISOString(), catatan: `Surat diterbitkan otomatis dengan nomor ${nomorSurat}` }]
+      });
+
+      return res.redirect(`/admin/surat/${id}/${role}`);
     }
 
-    // Ganti src gambar di HTML dengan base64
-    if (logoBase64) {
-      html = html.replace('src="/images/logo.png"', `src="data:image/png;base64,${logoBase64}"`);
+    // --- ROLE DOSEN (Surat Izin) ---
+// --- ROLE DOSEN (Surat Izin) ---
+else if (role === 'dosen') {
+  const suratRef = db.collection('surat_dosen').doc(id);
+  const suratDoc = await suratRef.get();
+  if (!suratDoc.exists) return res.status(404).send('Surat tidak ditemukan');
+  const surat = suratDoc.data();
+
+  if (!surat.jenisIzin || surat.jenisIzin.length === 0) {
+    return res.status(400).send('Generate otomatis hanya untuk surat izin dosen (field jenisIzin harus ada)');
+  }
+
+  const dosen = await getDosen(surat.dosenId);
+  const { template, data: templateData } = getTemplateAndDataForSuratDosen(surat, dosen);
+
+  let html = await new Promise((resolve, reject) => {
+    res.render(template, templateData, (err, html) => {
+      if (err) reject(err);
+      else resolve(html);
+    });
+  });
+
+  // Baca logo dan TTD, ubah ke base64
+  const logoPath = path.join(__dirname, '../../public/images/logo.png');
+  const ttdPath = path.join(__dirname, '../../public/images/ttd.png');
+  let logoBase64 = '', ttdBase64 = '';
+
+  if (fs.existsSync(logoPath)) {
+    logoBase64 = fs.readFileSync(logoPath).toString('base64');
+    html = html.replace(/__LOGO_BASE64__/g, logoBase64);
+    html = html.replace(/data:image\/png;base64,<%= logoBase64 %>/g, `data:image/png;base64,${logoBase64}`);
+    html = html.replace(/src="\/images\/logo\.png"/g, `src="data:image/png;base64,${logoBase64}"`);
+  }
+  if (fs.existsSync(ttdPath)) {
+    ttdBase64 = fs.readFileSync(ttdPath).toString('base64');
+    html = html.replace(/src="\/images\/ttd\.png"/g, `src="data:image/png;base64,${ttdBase64}"`);
+  }
+
+  const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: 'new', timeout: 60000 });
+  const page = await browser.newPage();
+  await page.setContent(html, { waitUntil: 'networkidle0', timeout: 60000 });
+  const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '1.5cm', bottom: '1.5cm', left: '1.5cm', right: '1.5cm' } });
+  await browser.close();
+
+  const buffer = Buffer.from(pdfBuffer);
+
+  const tahunAkademik = getCurrentAcademicSemester().tahunAkademik;
+  const folderId = await getSuratFolderDosen(dosen.nip || surat.dosenId, tahunAkademik);
+  const fileName = `Izin_Dosen_${surat.kodeValidasi || Date.now()}.pdf`;
+  const fileMetadata = { name: fileName, parents: [folderId] };
+  const media = { mimeType: 'application/pdf', body: Readable.from(buffer) };
+  const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
+  await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+  const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
+
+  const finalNomorSurat = nomorSurat || `IZIN/${surat.kodeValidasi}`;
+  await suratRef.update({
+    status: 'completed',
+    fileUrl,
+    fileId: driveResponse.data.id,
+    nomorSurat: finalNomorSurat,
+    updatedAt: new Date().toISOString(),
+    history: [
+      ...(surat.history || []),
+      { status: 'completed', timestamp: new Date().toISOString(), catatan: `Surat izin dosen di-generate otomatis dengan nomor ${finalNomorSurat}` }
+    ]
+  });
+
+  return res.redirect(`/admin/surat/${id}/${role}`);
+}
+
+    else {
+      return res.status(400).send('Role tidak valid');
     }
-    if (ttdBase64) {
-      html = html.replace('src="/images/ttd.png"', `src="data:image/png;base64,${ttdBase64}"`);
-    }
-
-    // Launch puppeteer
-    const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      headless: 'new',
-      timeout: 60000
-    });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 60000 });
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: '2cm', bottom: '2cm', left: '2cm', right: '2cm' }
-    });
-    await browser.close();
-
-    const buffer = Buffer.from(pdfBuffer);
-
-    // Upload ke Google Drive
-    const folderId = await getSuratFolderMahasiswa(mahasiswa.nim, surat.tahunAkademik);
-    const fileName = `${surat.kodeValidasi}_${nomorSurat.replace(/\//g, '_')}.pdf`;
-    const fileMetadata = { name: fileName, parents: [folderId] };
-    const media = { mimeType: 'application/pdf', body: Readable.from(buffer) };
-    const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
-    await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
-    const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
-
-    // Update surat
-    await suratRef.update({
-      status: 'completed',
-      fileUrl,
-      fileId: driveResponse.data.id,
-      nomorSurat,
-      updatedAt: new Date().toISOString(),
-      history: [
-        ...(surat.history || []),
-        { status: 'completed', timestamp: new Date().toISOString(), catatan: `Surat diterbitkan otomatis dengan nomor ${nomorSurat}` }
-      ]
-    });
-
-    res.redirect(`/admin/surat/${id}/${role}`);
   } catch (err) {
-    console.error('Error:', err);
-    res.status(500).send('Gagal generate surat: ' + err.message);
+    console.error('Error generate surat:', err);
+    res.status(500).send('Terjadi kesalahan internal saat generate surat. Silakan coba lagi.');
   }
 });
 
