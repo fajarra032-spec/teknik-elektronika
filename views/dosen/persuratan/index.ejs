@@ -102,10 +102,11 @@
       <h2><i class="bi bi-envelope-paper me-2"></i>Daftar Pengajuan Surat</h2>
       <p>Semua surat yang pernah Anda ajukan ke prodi</p>
     </div>
-    <div class="d-flex gap-2">
-      <a href="/dosen/surat/ajukan" class="btn-primary-custom"><i class="bi bi-plus-circle me-2"></i>Ajukan Surat Umum</a>
-      <a href="/dosen/surat/ajukan-izin" class="btn-primary-custom" style="background: linear-gradient(105deg, #059669, #10b981);"><i class="bi bi-calendar-check me-2"></i>Ajukan Izin</a>
-    </div>
+<div class="d-flex gap-2">
+  <a href="/dosen/surat/ajukan" class="btn-primary-custom"><i class="bi bi-plus-circle me-2"></i>Ajukan Surat Umum</a>
+  <a href="/dosen/surat/ajukan-izin" class="btn-primary-custom" style="background: linear-gradient(105deg, #059669, #10b981);"><i class="bi bi-calendar-check me-2"></i>Ajukan Izin</a>
+  <a href="/dosen/surat/ajukan-tugas" class="btn-primary-custom" style="background: linear-gradient(105deg, #8b5cf6, #a78bfa);"><i class="bi bi-file-earmark-text me-2"></i>Ajukan Surat Tugas</a>
+</div>
   </div>
 
   <div class="table-card">
@@ -131,24 +132,35 @@
                   <a href="/dosen/surat/ajukan" class="btn-primary-custom">Ajukan Surat Umum</a>
                   <a href="/dosen/surat/ajukan-izin" class="btn-primary-custom" style="background: #10b981;">Ajukan Izin</a>
                 </div>
-              </td>
-            </tr>
+               </td>
+             </tr>
           <% } else { %>
             <% suratList.forEach((s, idx) => { %>
               <% 
-                // Tentukan tampilan jenis surat
-                let jenisTampilan = s.jenisSurat || '';
-                let keperluanTampilan = s.keperluan || '';
-                if (s.jenisIzin && s.jenisIzin.length > 0) {
+                // Tentukan jenis surat dan keterangan berdasarkan field yang ada
+                let jenisTampilan = '';
+                let keperluanTampilan = '';
+
+                // Cek apakah surat tugas (memiliki field namaKegiatan)
+                if (s.namaKegiatan) {
+                  jenisTampilan = 'Surat Tugas';
+                  keperluanTampilan = `Kegiatan: ${s.namaKegiatan} | ${s.penyelenggara || ''}`;
+                } 
+                // Cek apakah surat izin (memiliki field jenisIzin)
+                else if (s.jenisIzin && s.jenisIzin.length > 0) {
                   jenisTampilan = 'Surat Izin';
-                  // Buat ringkasan izin
                   const jenisIzinStr = Array.isArray(s.jenisIzin) ? s.jenisIzin.join(', ') : s.jenisIzin;
                   const waktu = (s.tanggalMulai ? new Date(s.tanggalMulai).toLocaleDateString('id-ID') : '?') + ' s.d ' + (s.tanggalSelesai ? new Date(s.tanggalSelesai).toLocaleDateString('id-ID') : '?');
                   keperluanTampilan = `${jenisIzinStr} | ${waktu}`;
+                } 
+                // Surat umum
+                else {
+                  jenisTampilan = s.jenisSurat || 'Surat Lainnya';
+                  keperluanTampilan = s.keperluan || '';
                 }
               %>
               <tr>
-                <td class="fw-bold"><%= idx + 1 %></td>
+                <td class="fw-bold"><%= idx + 1 %> </td>
                 <td><%= jenisTampilan %></td>
                 <td><%= keperluanTampilan.substring(0, 60) + (keperluanTampilan.length > 60 ? '...' : '') %></td>
                 <td>
@@ -161,7 +173,11 @@
                 <td>
                   <div class="d-flex gap-1">
                     <a href="/dosen/surat/<%= s.id %>" class="btn-outline-custom btn-sm"><i class="bi bi-eye me-1"></i>Detail</a>
-                    <% if (s.status === 'pending') { %>
+                    <% 
+                      // Tampilkan tombol batal hanya jika status pending dan bukan surat tugas (karena surat tugas dibuat admin)
+                      const isSuratTugas = !!s.namaKegiatan;
+                      if (s.status === 'pending' && !isSuratTugas) { 
+                    %>
                       <form method="POST" action="/dosen/surat/<%= s.id %>/batal" onsubmit="return confirm('Batalkan pengajuan surat ini?')" class="d-inline">
                         <button class="btn-outline-custom btn-sm" style="border-color: #dc3545 !important; color: #dc3545 !important;">
                           <i class="bi bi-x-circle me-1"></i>Batal

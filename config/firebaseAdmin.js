@@ -1,23 +1,32 @@
 // config/firebaseAdmin.js
-
 require('dotenv').config();
-const admin = require('firebase-admin');
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-    }),
-  });
+let _admin = null;
+let _db = null;
+let _auth = null;
+
+function setFirebaseInstances({ admin, db, auth }) {
+  _admin = admin;
+  _db = db;
+  _auth = auth;
 }
 
-const db = admin.firestore();
-const auth = admin.auth(); // <-- tambahkan ini
+function getDb() {
+  if (!_db) throw new Error('Firebase DB belum siap.');
+  return _db;
+}
+function getAuth() {
+  if (!_auth) throw new Error('Firebase Auth belum siap.');
+  return _auth;
+}
+function getAdmin() {
+  if (!_admin) throw new Error('Firebase Admin belum siap.');
+  return _admin;
+}
 
 module.exports = {
-  admin,
-  db,
-  auth, // <-- ekspor auth
+  setFirebaseInstances,
+  get db() { return getDb(); },
+  get auth() { return getAuth(); },
+  get admin() { return getAdmin(); }
 };

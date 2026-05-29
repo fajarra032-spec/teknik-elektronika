@@ -23,6 +23,8 @@
     --info-text: #1e40af;
     --secondary-bg: #e9ecef;
     --secondary-text: #6c757d;
+    --tugas-bg: #f3e8ff;
+    --tugas-text: #6b21a5;
     --font-base: 16px;
   }
 
@@ -193,6 +195,7 @@
     border: 1px solid #ced4da;
   }
 
+  /* Custom Buttons */
   .btn-detail {
     background: transparent;
     border: 1.5px solid var(--primary-start);
@@ -214,6 +217,24 @@
     transform: translateY(-2px);
     box-shadow: 0 5px 10px rgba(30,58,138,0.3);
   }
+  .btn-generate {
+    border-color: #10b981;
+    color: #10b981;
+  }
+  .btn-generate:hover {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    border-color: transparent;
+    color: white;
+  }
+  .btn-download {
+    border-color: #0d6efd;
+    color: #0d6efd;
+  }
+  .btn-download:hover {
+    background: linear-gradient(135deg, #0d6efd, #3b82f6);
+    border-color: transparent;
+    color: white;
+  }
 
   .empty-state {
     padding: 4rem 2rem;
@@ -233,6 +254,13 @@
     border-radius: 50px;
     font-size: 0.7rem;
     font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .role-badge-tugas {
+    background: var(--tugas-bg);
+    color: var(--tugas-text);
   }
 
   @media (max-width: 768px) {
@@ -253,11 +281,16 @@
 <div class="container mt-4">
   <div class="page-header d-flex justify-content-between align-items-center">
     <div>
-      <h2><i class="bi bi-envelope-paper me-2"></i>Manajemen Surat (Mahasiswa & Dosen)</h2>
+      <h2><i class="bi bi-envelope-paper me-2"></i>Manajemen Surat (Mahasiswa, Dosen, & Tugas)</h2>
     </div>
-    <a href="/admin/surat/create" class="btn btn-light rounded-pill px-4">
-      <i class="bi bi-plus-circle me-2"></i>Kirim Surat ke Dosen
-    </a>
+    <div class="d-flex gap-2">
+      <a href="/admin/surat/create" class="btn btn-light rounded-pill px-4">
+        <i class="bi bi-plus-circle me-2"></i>Kirim Surat ke Dosen
+      </a>
+      <a href="/admin/surat/create-tugas" class="btn btn-outline-light rounded-pill px-4">
+        <i class="bi bi-file-text me-2"></i>Buat Surat Tugas
+      </a>
+    </div>
   </div>
 
   <div class="filter-card">
@@ -267,7 +300,8 @@
         <select name="role" class="form-select">
           <option value="">Semua</option>
           <option value="mahasiswa" <%= filters.role === 'mahasiswa' ? 'selected' : '' %>>Mahasiswa</option>
-          <option value="dosen" <%= filters.role === 'dosen' ? 'selected' : '' %>>Dosen</option>
+          <option value="dosen" <%= filters.role === 'dosen' ? 'selected' : '' %>>Dosen (Izin)</option>
+          <option value="tugas" <%= filters.role === 'tugas' ? 'selected' : '' %>>Surat Tugas</option>
         </select>
       </div>
       <div class="col-md-3">
@@ -302,7 +336,7 @@
             <th>Role</th>
             <th>Pemohon</th>
             <th>Jenis Surat</th>
-            <th>Keperluan</th>
+            <th>Keperluan / Keterangan</th>
             <th>Tgl Pengajuan</th>
             <th>Status</th>
             <th>Aksi</th>
@@ -316,26 +350,34 @@
                   <i class="bi bi-inbox"></i>
                   <p>Tidak ada surat.</p>
                 </div>
-               </td>
+                </td>
             </tr>
           <% } else { %>
-            <% suratList.forEach((surat, idx) => { %>
+            <% suratList.forEach((surat, idx) => { 
+               // Tentukan teks keperluan yang lebih informatif untuk surat tugas
+               let keperluanText = surat.keperluan || '';
+               if (surat.role === 'tugas' && surat.namaKegiatan) {
+                 keperluanText = `${surat.namaKegiatan} - ${surat.penyelenggara || ''} (${surat.tanggalPelaksanaan || ''})`;
+               }
+            %>
               <tr>
                 <td class="text-center"><%= idx+1 %></td>
                 <td class="text-center">
                   <% if (surat.role === 'mahasiswa') { %>
                     <span class="role-badge"><i class="bi bi-mortarboard"></i> Mahasiswa</span>
+                  <% } else if (surat.role === 'tugas') { %>
+                    <span class="role-badge role-badge-tugas"><i class="bi bi-file-text"></i> Surat Tugas</span>
                   <% } else { %>
                     <span class="role-badge"><i class="bi bi-person-badge"></i> Dosen</span>
                   <% } %>
-                </td>
+                 </td>
                 <td>
                   <strong><%= surat.pemohon %></strong><br>
                   <small class="text-muted"><%= surat.identitas %></small>
-                </td>
-                <td><%= surat.jenis || surat.jenisSurat %></td>
-                <td><%= surat.keperluan && surat.keperluan.length > 50 ? surat.keperluan.substring(0,50)+'...' : surat.keperluan %></td>
-                <td><%= new Date(surat.createdAt).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) %></td>
+                 </td>
+                <td><%= surat.jenis || surat.jenisSurat || 'Surat' %> </td>
+                <td><%= keperluanText.length > 60 ? keperluanText.substring(0,60)+'...' : keperluanText %> </td>
+                <td><%= new Date(surat.createdAt).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) %> </td>
                 <td>
                   <% if (surat.status === 'pending') { %>
                     <span class="badge-status badge-pending">Pending</span>
@@ -346,13 +388,25 @@
                   <% } else if (surat.status === 'cancelled') { %>
                     <span class="badge-status badge-cancelled">Dibatalkan</span>
                   <% } %>
-                </td>
+                 </td>
                 <td>
-                  <a href="/admin/surat/<%= surat.id %>/<%= surat.role %>" class="btn-detail">
-                    <i class="bi bi-eye"></i> Detail
-                  </a>
-                </td>
-              </tr>
+                  <div class="d-flex gap-1 flex-wrap">
+                    <a href="/admin/surat/<%= surat.id %>/<%= surat.role %>" class="btn-detail">
+                      <i class="bi bi-eye"></i> Detail
+                    </a>
+                    <% if (surat.role === 'tugas' && surat.status === 'pending') { %>
+                      <a href="/admin/surat/tugas/<%= surat.id %>/generate" class="btn-detail btn-generate">
+                        <i class="bi bi-gear"></i> Generate
+                      </a>
+                    <% } %>
+                    <% if (surat.status === 'completed' && surat.fileUrl) { %>
+                      <a href="<%= surat.fileUrl %>" target="_blank" class="btn-detail btn-download">
+                        <i class="bi bi-download"></i> Unduh
+                      </a>
+                    <% } %>
+                  </div>
+                 </td>
+               </tr>
             <% }) %>
           <% } %>
         </tbody>

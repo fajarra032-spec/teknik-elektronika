@@ -1,0 +1,529 @@
+<%- include('../partials/header-landing') %>
+
+<style>
+    /* ===== PMB PAGE STYLES (mempercantik & konsisten) ===== */
+    .pmb-page-wrapper {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        padding: 2rem 0 4rem;
+    }
+
+    /* Hero Section */
+    .pmb-hero {
+        background: linear-gradient(145deg, #0b5ed7, #0a58ca);
+        border-radius: var(--border-radius);
+        padding: 4rem 2rem;
+        text-align: center;
+        color: white !important;
+        margin-bottom: 3rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
+    }
+    .pmb-hero::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        left: -30%;
+        width: 160%;
+        height: 160%;
+        background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+        z-index: 1;
+        animation: slowRotate 20s infinite linear;
+    }
+    @keyframes slowRotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .pmb-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    .pmb-hero-content h1, 
+    .pmb-hero-content p, 
+    .pmb-hero-content .lead,
+    .pmb-hero-content small {
+        color: #ffffff !important;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Gelombang Badge */
+    .gelombang-badge {
+        display: inline-block;
+        background: linear-gradient(145deg, #ffc107, #ffb300);
+        color: #1e293b;
+        font-size: 1.8rem;
+        font-weight: 800;
+        padding: 0.6rem 2rem;
+        border-radius: 60px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        letter-spacing: 1px;
+        margin-bottom: 1rem;
+    }
+    .gelombang-badge i {
+        margin-right: 0.75rem;
+        font-size: 2rem;
+        vertical-align: middle;
+    }
+
+    /* Countdown Box */
+    .countdown-box {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+    }
+    .countdown-box:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: scale(1.02);
+    }
+    .countdown-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        font-family: 'Montserrat', sans-serif;
+        color: #ffffff !important;
+        line-height: 1.2;
+        text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    /* Button Umum */
+    .btn-pmb {
+        background: linear-gradient(145deg, #ffffff, #f8fafc);
+        border: none;
+        border-radius: 50px;
+        padding: 0.85rem 2rem;
+        font-weight: 700;
+        color: #0a58ca;
+        transition: all 0.3s;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    .btn-pmb:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        color: #084298;
+    }
+
+    /* Section Wrapper */
+    .section-wrapper {
+        background: #ffffff;
+        border-radius: 1.5rem;
+        padding: 2rem 2rem;
+        box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2.5rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .section-wrapper:hover {
+        box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1);
+    }
+    .section-title {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 2rem;
+        font-size: 1.85rem;
+        position: relative;
+        display: inline-block;
+    }
+    .section-title span {
+        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .section-title:after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(90deg, #0d6efd, #0dcaf0);
+        border-radius: 4px;
+    }
+
+    /* Table Biaya */
+    .table-pmb {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+    }
+    .table-pmb thead th {
+        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+        color: white;
+        padding: 1rem;
+        font-weight: 600;
+        border: none;
+    }
+    .table-pmb tbody tr {
+        transition: background 0.2s;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .table-pmb tbody tr:hover {
+        background: #f8fafc;
+    }
+    .table-pmb td, .table-pmb th {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    /* Info Card */
+    .info-card {
+        background: #ffffff;
+        border-radius: 1.5rem;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s;
+        height: 100%;
+        border: 1px solid #eef2ff;
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.02);
+    }
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.1);
+        border-color: rgba(13, 110, 253, 0.3);
+    }
+    .info-card i.main-icon {
+        font-size: 2.5rem;
+        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        margin-bottom: 1rem;
+    }
+    .info-card h4 {
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #0f172a;
+    }
+    .info-card p {
+        color: #475569;
+        font-size: 0.9rem;
+    }
+
+    /* Form styling */
+    .form-control, .form-select {
+        border: 1px solid #cbd5e1;
+        border-radius: 0.75rem;
+        padding: 0.7rem 1rem;
+        transition: all 0.2s;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
+    }
+    .input-group-text {
+        background-color: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.75rem 0 0 0.75rem;
+        color: #0d6efd;
+    }
+    .btn-outline-secondary {
+        border-radius: 50px;
+        padding: 0.6rem 1.5rem;
+    }
+    .wa-link-group {
+        background: #f1f5f9;
+        border-radius: 1rem;
+        padding: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .wa-link-group a {
+        background: #25D366;
+        color: white;
+        padding: 0.4rem 1rem;
+        border-radius: 50px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .wa-link-group a:hover {
+        background: #128C7E;
+        transform: translateY(-2px);
+    }
+    .alert-success-custom {
+        background: linear-gradient(145deg, #d1e7dd, #b8e0c2);
+        border: none;
+        border-radius: 1rem;
+        padding: 1.2rem;
+    }
+</style>
+
+<div class="pmb-page-wrapper">
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="pmb-hero">
+            <div class="pmb-hero-content">
+                <h1 class="fw-bold mb-3"><i class="bi bi-mortarboard-fill me-2"></i> Penerimaan Mahasiswa Baru</h1>
+                <p class="lead mb-1 fs-4 fw-semibold">Politeknik Dewantara</p>
+                <p class="opacity-90 mb-4">Tahun Akademik 2026/2027</p>
+
+                <!-- GELOMBANG SAAT INI (BESAR & MENCERAH) -->
+                <div class="gelombang-badge">
+                    <i class="bi bi-megaphone-fill"></i> Gelombang 4 – Mei 2026
+                </div>
+               
+
+                <!-- Countdown -->
+                <div class="row justify-content-center my-4">
+                    <div class="col-xl-5 col-lg-7 col-md-9">
+                        <div class="countdown-box">
+                            <div class="row g-0">
+                                <div class="col-3 border-end border-white border-opacity-20">
+                                    <div class="countdown-number" id="days">00</div>
+                                    <small>Hari</small>
+                                </div>
+                                <div class="col-3 border-end border-white border-opacity-20">
+                                    <div class="countdown-number" id="hours">00</div>
+                                    <small>Jam</small>
+                                </div>
+                                <div class="col-3 border-end border-white border-opacity-20">
+                                    <div class="countdown-number" id="minutes">00</div>
+                                    <small>Menit</small>
+                                </div>
+                                <div class="col-3">
+                                    <div class="countdown-number" id="seconds">00</div>
+                                    <small>Detik</small>
+                                </div>
+                            </div>
+                            <p class="mt-3 mb-0 small opacity-90 fw-medium"><i class="bi bi-exclamation-circle me-1"></i> Menuju penutupan pendaftaran gelombang 4</p>
+                        </div>
+                    </div>
+                </div>
+                <a href="#pendaftaran" class="btn btn-light btn-lg rounded-pill px-5 fw-bold text-primary shadow-sm mt-2">Daftar Sekarang <i class="bi bi-arrow-right ms-2"></i></a>
+            </div>
+        </div>
+
+        <!-- Informasi Biaya per Jurusan (Sesuai data terbaru) -->
+        <div class="section-wrapper">
+            <h2 class="section-title">Informasi <span>Biaya Awal Pendaftaran</span></h2>
+            <p class="text-muted mb-4">
+                <i class="bi bi-info-circle-fill text-primary me-1"></i> 
+                Gelombang 4 – Mei 2026: Calon mahasiswa membayar <strong>50% dari SPP semester pertama</strong> + <strong>Biaya Pendaftaran Rp200.000</strong> di awal.
+            </p>
+            <div class="table-responsive">
+                <table class="table table-pmb">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Program Studi</th>
+                            <th>SPP Normal / Semester</th>
+                            <th>Yang Dibayar di Awal<br>(50% SPP + 200rb)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td class="text-start">Mesin Otomotif</td><td>Rp2.000.000</td><td><strong>Rp1.200.000</strong><br><small>(1.000.000 + 200.000)</small></td></tr>
+                        <tr><td>2</td><td class="text-start">Teknik Elektronika</td><td>Rp2.000.000</td><td><strong>Rp1.200.000</strong><br><small>(1.000.000 + 200.000)</small></td></tr>
+                        <tr><td>3</td><td class="text-start">Teknik Sipil</td><td>Rp2.000.000</td><td><strong>Rp1.200.000</strong><br><small>(1.000.000 + 200.000)</small></td></tr>
+                        <tr><td>4</td><td class="text-start">Multimedia</td><td>Rp2.000.000</td><td><strong>Rp1.200.000</strong><br><small>(1.000.000 + 200.000)</small></td></tr>
+                        <tr><td>5</td><td class="text-start">Teknologi Pangan</td><td>Rp2.000.000</td><td><strong>Rp1.200.000</strong><br><small>(1.000.000 + 200.000)</small></td></tr>
+                        <tr><td>6</td><td class="text-start">Arsitektur</td><td>Rp2.000.000</td><td><strong>Rp1.200.000</strong><br><small>(1.000.000 + 200.000)</small></td></tr>
+                        <tr><td>7</td><td class="text-start">Teknik Pertambangan</td><td>Rp2.500.000</td><td><strong>Rp1.450.000</strong><br><small>(1.250.000 + 200.000)</small></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="alert alert-success mt-4 mb-0">
+                <i class="bi bi-calculator-fill me-2"></i>
+                <strong>Total yang harus ditransfer di awal:</strong> 
+                Sesuai kolom “Yang Dibayar di Awal” (sudah termasuk biaya pendaftaran Rp200.000). 
+                Sisa SPP berikutnya dibayarkan setiap awal semester.
+            </div>
+        </div>
+
+        <!-- Informasi Pembayaran (3 Card) -->
+        <h2 class="section-title">Informasi <span>Pembayaran</span></h2>
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="info-card">
+                    <i class="bi bi-calculator-fill main-icon"></i>
+                    <h4>Biaya Pendaftaran</h4>
+                    <p><strong>Rp200.000</strong> + <strong>50% SPP</strong><br>Dibayarkan di awal sebagai tanda jadi.</p>
+                    <div class="mt-2">
+                        <i class="bi bi-info-circle-fill text-primary me-1"></i> Transfer ke rekening di samping
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-card" style="text-align: left;">
+                    <i class="bi bi-bank2 main-icon" style="display: block; text-align: center;"></i>
+                    <h4 class="text-center">Rekening Tujuan</h4>
+                    <div class="mt-3">
+                        <p><i class="bi bi-bank me-2 text-primary"></i> <strong>BRI</strong> 2188-01-000423-30-9<br><span class="ms-4 text-muted">a.n. Politeknik Dewantara</span></p>
+                        <p><i class="bi bi-bank me-2 text-primary"></i> <strong>Bank Mandiri</strong> 170-00-1777177-9<br><span class="ms-4 text-muted">a.n. Politeknik Dewantara</span></p>
+                        <p><i class="bi bi-bank me-2 text-primary"></i> <strong>Bank Muamalat</strong> 802-002-4946<br><span class="ms-4 text-muted">a.n. Politeknik Dewantara</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-card">
+                    <i class="bi bi-shield-check main-icon"></i>
+                    <h4>Setelah Transfer</h4>
+                    <p>Simpan bukti transfer untuk diupload pada formulir di bawah.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- WhatsApp Verification Alert -->
+        <div class="alert alert-success-custom d-flex align-items-center mb-5">
+            <i class="bi bi-whatsapp fs-1 me-3" style="color: #25D366;"></i>
+            <div>
+                <strong class="fs-5">Setelah melakukan transfer, segera hubungi WhatsApp:</strong><br>
+                <span class="fs-4 fw-bold">0852-4245-9746</span><br>
+                <span>Untuk <strong>verifikasi NIM</strong> dan <strong>follow up pendaftaran</strong> di PMB Politeknik Dewantara.</span>
+            </div>
+        </div>
+
+        <!-- Formulir Pendaftaran -->
+        <div id="pendaftaran" class="section-wrapper">
+            <h2 class="section-title">Formulir <span>Pendaftaran Online</span></h2>
+            <form action="/pmb/submit" method="POST" enctype="multipart/form-data">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" name="nama" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Jenis Kelamin <span class="text-danger">*</span></label>
+                        <div class="d-flex gap-4 mt-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="jenis_kelamin" value="Laki-laki" required>
+                                <label class="form-check-label">Laki-laki</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="jenis_kelamin" value="Perempuan" required>
+                                <label class="form-check-label">Perempuan</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nomor Induk Siswa <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+                            <input type="text" name="nis" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Asal Sekolah <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-building"></i></span>
+                            <input type="text" name="asal_sekolah" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nomor WhatsApp <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-whatsapp"></i></span>
+                            <input type="tel" name="wa" class="form-control" placeholder="08xxxxxxxxxx" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Pilihan Jurusan/Program Studi <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-book"></i></span>
+                            <select name="jurusan" class="form-select" required>
+                                <option value="">Pilih Jurusan</option>
+                                <option>Mesin Otomotif</option>
+                                <option>Teknik Elektronika</option>
+                                <option>Teknik Sipil</option>
+                                <option>Multimedia</option>
+                                <option>Teknologi Pangan</option>
+                                <option>Arsitektur</option>
+                                <option>Teknik Pertambangan</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Jalur Pendaftaran <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-star"></i></span>
+                            <select name="jalur" id="jalur" class="form-select" required>
+                                <option value="Reguler">Jalur Reguler</option>
+                                <option value="Beasiswa">Jalur Beasiswa</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12" id="grupBeasiswa" style="display: none;">
+                        <label class="form-label fw-semibold">Grup WhatsApp Beasiswa (pilih sesuai jalur)</label>
+                        <div class="wa-link-group">
+                            <a href="https://chat.whatsapp.com/BOi2ISglh2GHOwZpPSwgfy" target="_blank"><i class="bi bi-whatsapp"></i> KIP Kuliah</a>
+                            <a href="https://chat.whatsapp.com/DVGBvmco6rlFUU25Bj8Om4" target="_blank"><i class="bi bi-whatsapp"></i> Tahfidz</a>
+                            <a href="https://chat.whatsapp.com/I83I3L3ltEe7Cjvv55HnyR" target="_blank"><i class="bi bi-whatsapp"></i> Kredit Mahasiswa Dewantara</a>
+                            <a href="https://chat.whatsapp.com/GoU9KVxSaYM3PpGsTsCnN1" target="_blank"><i class="bi bi-whatsapp"></i> Beasiswa Prestasi</a>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Bukti Pembayaran Biaya Pendaftaran <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-cloud-arrow-up"></i></span>
+                            <input type="file" name="bukti_pembayaran" class="form-control" accept="image/*,.pdf" required>
+                        </div>
+                        <small class="text-muted">Upload foto/scan bukti transfer (max 2MB)</small>
+                    </div>
+                    <div class="col-12 my-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="agree" required>
+                            <label class="form-check-label small fw-medium" for="agree">
+                                Saya menyatakan bahwa data yang saya isi adalah benar dan bertanggung jawab penuh.
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-12 text-center mt-4">
+                        <button type="submit" class="btn-pmb px-5"><i class="bi bi-send me-2"></i> Kirim Pendaftaran</button>
+                        <button type="reset" class="btn btn-outline-secondary ms-3 px-4">Kosongkan Formulir</button>
+                        <p class="text-secondary mt-4 small mb-0">
+                           
+                        </p>
+
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Countdown Timer (target: 31 Mei 2026)
+    function updateCountdown() {
+        const targetDate = new Date(2026, 4, 31, 23, 59, 59); // 31 Mei 2026
+        const now = new Date();
+        const diff = targetDate - now;
+        if (diff <= 0) {
+            document.getElementById('days').innerText = '00';
+            document.getElementById('hours').innerText = '00';
+            document.getElementById('minutes').innerText = '00';
+            document.getElementById('seconds').innerText = '00';
+            return;
+        }
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (86400000)) / (3600000));
+        const minutes = Math.floor((diff % 3600000) / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        document.getElementById('days').innerText = String(days).padStart(2, '0');
+        document.getElementById('hours').innerText = String(hours).padStart(2, '0');
+        document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
+        document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    // Toggle grup beasiswa
+    const jalurSelect = document.getElementById('jalur');
+    const grupDiv = document.getElementById('grupBeasiswa');
+    function toggleGrupBeasiswa() {
+        grupDiv.style.display = jalurSelect.value === 'Beasiswa' ? 'block' : 'none';
+    }
+    jalurSelect.addEventListener('change', toggleGrupBeasiswa);
+    toggleGrupBeasiswa();
+</script>
+
+<%- include('../partials/footer-landing') %>

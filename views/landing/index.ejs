@@ -199,7 +199,63 @@
             transform: translateY(0);
         }
     }
-    
+   /* ===== CAROUSEL MAGANG (Dashboard Style) ===== */
+/* Modern Gallery Card - versi lebih segar */
+.gallery-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.gallery-card:hover {
+    transform: translateY(-12px);
+    box-shadow: 0 30px 40px -15px rgba(0,0,0,0.2);
+}
+.gallery-img-wrapper {
+    aspect-ratio: 4/3;
+    position: relative;
+}
+.gallery-img-wrapper img {
+    transition: transform 0.6s;
+}
+.gallery-card:hover .gallery-img-wrapper img {
+    transform: scale(1.08);
+}
+.gallery-caption {
+    padding: 1.2rem;
+    position: relative;
+    background: white;
+}
+.gallery-caption h5 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+.gallery-caption .perusahaan {
+    font-size: 0.8rem;
+    color: #0d6efd;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.gallery-caption .caption {
+    font-size: 0.85rem;
+    color: #475569;
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
+}
+.progress-small {
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.progress-small-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #0d6efd, #0dcaf0);
+    width: 0%;
+}
     /* ===== STATISTICS CARDS ===== */
     .stat-card {
         background: white;
@@ -743,8 +799,8 @@
             <h1>SELAMAT DATANG DI <br><span>PROGRAM STUDI TEKNIK ELEKTRONIKA</span></h1>
             <p>Mencetak inovator handal di bidang elektronika industri, telekomunikasi, instrumentasi, dan teknologi robotika masa depan.</p>
             <div class="hero-buttons">
-                <a href="#berita" class="btn btn-light">Jelajahi Prodi</a>
-                <a href="/auth/login" class="btn btn-outline-light">Portal Mahasiswa</a>
+                <a href="/pmb" class="btn btn-light">Daftar di Polidewa <i class="bi bi-arrow-right-circle"></i></a>
+                <a href="/auth/login" class="btn btn-outline-light">Login</a>
             </div>
         </div>
     </div>
@@ -917,7 +973,58 @@
             <% } %>
         </div>
     </section>
-
+<!-- GALERI MAGANG MAHASISWA - CAROUSEL STYLE DASHBOARD -->
+<section class="section-wrapper">
+    <h2 class="section-title">Dokumentasi <span>Magang Mahasiswa</span></h2>
+    <div id="magangCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="6000">
+        <div class="carousel-inner" style="border-radius: var(--border-radius); overflow: hidden;">
+            <% 
+            const slidesMagang = typeof magangSlides !== 'undefined' && magangSlides.length ? magangSlides : [];
+            if (slidesMagang.length === 0) { %>
+                <div class="carousel-item active">
+                    <img src="https://via.placeholder.com/1200x600?text=Belum+Ada+Dokumentasi+Magang" class="d-block w-100" style="height: 450px; object-fit: cover;">
+                    <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-3">
+                        <h5>Belum Ada Dokumentasi</h5>
+                        <p>Segera upload aktivitas magang mahasiswa</p>
+                    </div>
+                </div>
+            <% } else {
+                slidesMagang.forEach((item, idx) => { %>
+                    <div class="carousel-item <%= idx === 0 ? 'active' : '' %>">
+                        <img src="<%= item.imageUrl %>" class="d-block w-100" style="height: 450px; object-fit: cover;" 
+                             onerror="this.src='https://via.placeholder.com/1200x600?text=Foto+Magang'">
+                        <div class="carousel-caption d-none d-md-block" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); border-radius: 20px; bottom: 0; left: 0; right: 0; text-align: left; padding: 30px 20px 20px;">
+                            <h3 style="font-weight: 800; margin-bottom: 5px;"><%= item.mahasiswa || 'Mahasiswa Magang' %></h3>
+                            <p class="mb-1"><i class="bi bi-building"></i> <%= item.perusahaan || 'Perusahaan Mitra' %></p>
+                            <p><i class="bi bi-card-text"></i> <%= item.caption || 'Aktivitas magang' %></p>
+                            <% if (item.progressPercent) { %>
+                                <div class="progress" style="height: 8px; width: 300px; background: rgba(255,255,255,0.3);">
+                                    <div class="progress-bar bg-warning" style="width: <%= item.progressPercent %>%;" role="progressbar"></div>
+                                </div>
+                                <small>Progress Logbook: <%= item.progressPercent %>% (<%= item.progressUploaded %>/<%= item.progressTotal %> hari)</small>
+                            <% } %>
+                        </div>
+                    </div>
+            <% }); 
+            } %>
+        </div>
+        <!-- Tombol navigasi -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#magangCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#magangCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+        <!-- Indikator slide -->
+        <div class="carousel-indicators" style="margin-bottom: 10px;">
+            <% slidesMagang.forEach((_, idx) => { %>
+                <button type="button" data-bs-target="#magangCarousel" data-bs-slide-to="<%= idx %>" class="<%= idx === 0 ? 'active' : '' %>" aria-current="<%= idx === 0 ? 'true' : 'false' %>" aria-label="Slide <%= idx+1 %>"></button>
+            <% }); %>
+        </div>
+    </div>
+</section>
     <!-- JADWAL PENTING -->
     <section id="seminar" class="section-wrapper">
         <h2 class="section-title">Jadwal <span>Penting</span></h2>
@@ -1144,6 +1251,40 @@
         </div>
     </section>
 </div>
+<script>
+    // Klik pada gambar carousel untuk membuka modal (gunakan Bootstrap Modal)
+    const carouselImages = document.querySelectorAll('#magangCarousel .carousel-item img');
+    const modalHtml = `
+        <div class="modal fade" id="magangModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content bg-dark text-white">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title">Dokumentasi Magang</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img id="modalMagangImg" src="" class="img-fluid rounded" alt="Preview">
+                        <p id="modalMagangCaption" class="mt-3"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    carouselImages.forEach(img => {
+        img.style.cursor = 'pointer';
+        img.addEventListener('click', function() {
+            const src = this.src;
+            const captionElem = this.closest('.carousel-item').querySelector('.carousel-caption');
+            const captionText = captionElem ? captionElem.innerText : 'Dokumentasi Magang';
+            document.getElementById('modalMagangImg').src = src;
+            document.getElementById('modalMagangCaption').innerText = captionText;
+            const modal = new bootstrap.Modal(document.getElementById('magangModal'));
+            modal.show();
+        });
+    });
+</script>
 <div class="text-center text-muted mt-5 mb-3">
     <small><i class="bi bi-shield-check me-1"></i> Sistem Informasi Program Studi Elektronika - Politeknik Dewantara 2025 by Fajar Elektrik</small>
 </div>
