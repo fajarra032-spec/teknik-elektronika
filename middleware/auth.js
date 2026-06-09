@@ -1,4 +1,5 @@
-const { admin, db } = require('../config/firebaseAdmin');
+// middleware/auth.js
+const { auth, db } = require('../config/firebaseAdmin');
 
 /**
  * Middleware untuk memverifikasi token sesi dan mendapatkan data user
@@ -10,12 +11,12 @@ const verifyToken = async (req, res, next) => {
   }
 
   try {
-    const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
+    const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
     const uid = decodedClaims.uid;
 
     // Coba ambil dari collection users (untuk admin & mahasiswa)
     let userDoc = await db.collection('users').doc(uid).get();
-    
+
     if (userDoc.exists) {
       req.user = { id: uid, ...userDoc.data() };
     } else {

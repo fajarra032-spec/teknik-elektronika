@@ -80,7 +80,6 @@
     </div>
     <div class="form-body">
       <form method="POST" action="<%= mahasiswa ? '/admin/mahasiswa/' + mahasiswa.id + '/update' : '/admin/mahasiswa' %>" enctype="multipart/form-data">
-        <!-- Preview Foto (jika edit dan ada foto) -->
         <% if (mahasiswa && mahasiswa.foto) { %>
           <div class="text-center mb-3">
             <img src="<%= mahasiswa.foto %>" alt="foto" class="avatar-preview">
@@ -123,15 +122,40 @@
           </div>
         <% } %>
 
+        <!-- Tiga Status Terpisah -->
         <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="status" class="form-label">Status</label>
-            <select class="form-select" id="status" name="status">
-              <option value="aktif" <%= mahasiswa && mahasiswa.status === 'aktif' ? 'selected' : '' %>>Aktif</option>
-              <option value="lulus" <%= mahasiswa && mahasiswa.status === 'lulus' ? 'selected' : '' %>>Lulus</option>
-              <option value="cuti" <%= mahasiswa && mahasiswa.status === 'cuti' ? 'selected' : '' %>>Cuti</option>
+          <div class="col-md-4 mb-3">
+            <label for="semester" class="form-label">Semester (1-12)</label>
+            <select class="form-select" id="semester" name="semester">
+              <option value="">Pilih Semester</option>
+              <% for(let i=1; i<=12; i++) { %>
+                <option value="Semester <%= i %>" <%= mahasiswa && mahasiswa.semester === ('Semester '+i) ? 'selected' : '' %>>Semester <%= i %></option>
+              <% } %>
             </select>
           </div>
+          <div class="col-md-4 mb-3">
+            <label for="statusMagang" class="form-label">Status Magang</label>
+            <select class="form-select" id="statusMagang" name="statusMagang">
+              <option value="">Pilih Status Magang</option>
+              <option value="Magang 1" <%= mahasiswa && mahasiswa.statusMagang === 'Magang 1' ? 'selected' : '' %>>Magang 1</option>
+              <option value="Magang 2" <%= mahasiswa && mahasiswa.statusMagang === 'Magang 2' ? 'selected' : '' %>>Magang 2</option>
+              <option value="Magang 3" <%= mahasiswa && mahasiswa.statusMagang === 'Magang 3' ? 'selected' : '' %>>Magang 3</option>
+              <option value="Selesai Magang" <%= mahasiswa && mahasiswa.statusMagang === 'Selesai Magang' ? 'selected' : '' %>>Selesai Magang</option>
+            </select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="statusMahasiswa" class="form-label">Status Mahasiswa</label>
+            <select class="form-select" id="statusMahasiswa" name="statusMahasiswa">
+              <option value="">Pilih Status</option>
+              <option value="Aktif" <%= mahasiswa && mahasiswa.statusMahasiswa === 'Aktif' ? 'selected' : '' %>>Aktif</option>
+              <option value="Lulus" <%= mahasiswa && mahasiswa.statusMahasiswa === 'Lulus' ? 'selected' : '' %>>Lulus</option>
+              <option value="Cuti" <%= mahasiswa && mahasiswa.statusMahasiswa === 'Cuti' ? 'selected' : '' %>>Cuti</option>
+              <option value="Keluar" <%= mahasiswa && mahasiswa.statusMahasiswa === 'Keluar' ? 'selected' : '' %>>Keluar</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
           <div class="col-md-6 mb-3">
             <label for="foto" class="form-label">Foto Profil</label>
             <input type="file" class="form-control" id="foto" name="foto" accept="image/*">
@@ -154,7 +178,6 @@
 
 <% if (!mahasiswa) { %>
 <script>
-  // Validasi password sama
   document.querySelector('form').addEventListener('submit', function(e) {
     const password = document.getElementById('password').value;
     const confirm = document.getElementById('confirmPassword').value;

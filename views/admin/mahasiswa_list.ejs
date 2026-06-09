@@ -4,26 +4,33 @@
   // Fungsi untuk mengekstrak ID file dari URL Google Drive
   const getFileIdFromUrl = (url) => {
     if (!url) return null;
-    // Format: https://drive.google.com/uc?export=view&id=XXX
     let match = url.match(/[?&]id=([^&]+)/);
     if (match) return match[1];
-    // Format: https://drive.google.com/file/d/XXX/view
     match = url.match(/\/d\/([^\/]+)/);
     if (match) return match[1];
     return null;
   };
+
+  // Pastikan semua variabel filter ada (mencegah error "is not defined")
+  var filterAngkatan = typeof filterAngkatan !== 'undefined' ? filterAngkatan : '';
+  var filterSemester = typeof filterSemester !== 'undefined' ? filterSemester : '';
+  var filterStatusMagang = typeof filterStatusMagang !== 'undefined' ? filterStatusMagang : '';
+  var filterStatusMahasiswa = typeof filterStatusMahasiswa !== 'undefined' ? filterStatusMahasiswa : '';
+  var search = typeof search !== 'undefined' ? search : '';
+  var angkatanList = typeof angkatanList !== 'undefined' ? angkatanList : [];
+  var mahasiswa = typeof mahasiswa !== 'undefined' ? mahasiswa : [];
+  var importResult = typeof importResult !== 'undefined' ? importResult : null;
+  var importError = typeof importError !== 'undefined' ? importError : null;
+  var success = typeof success !== 'undefined' ? success : null;
 %>
 
 <style>
-  /* ===== VARIABEL WARNA ===== */
   :root {
     --primary-start: #2193b0;
     --primary-end: #6dd5ed;
     --primary-light: rgba(33,147,176,0.1);
     --primary-dark: #1a7a8f;
   }
-
-  /* ===== FILTER CARD ===== */
   .filter-card {
     border-radius: 1.2rem;
     border: 1px solid rgba(33,147,176,0.1);
@@ -32,21 +39,11 @@
     padding: 1.5rem;
     margin-bottom: 2rem;
   }
-  .filter-card .form-label {
-    font-weight: 600;
-    color: #1e293b;
-  }
-  .filter-card .form-select,
-  .filter-card .form-control {
+  .filter-card .form-label { font-weight: 600; color: #1e293b; }
+  .filter-card .form-select, .filter-card .form-control {
     border-radius: 50px;
     border: 1px solid #dee2e6;
     padding: 0.6rem 1rem;
-    transition: all 0.2s;
-  }
-  .filter-card .form-select:focus,
-  .filter-card .form-control:focus {
-    border-color: var(--primary-start);
-    box-shadow: 0 0 0 0.25rem rgba(33,147,176,0.25);
   }
   .btn-filter {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
@@ -56,7 +53,6 @@
     padding: 0.6rem 1.5rem;
     border-radius: 50px;
     transition: all 0.3s;
-    box-shadow: 0 5px 15px rgba(33,147,176,0.2);
     width: 100%;
   }
   .btn-filter:hover {
@@ -64,43 +60,6 @@
     box-shadow: 0 10px 25px rgba(33,147,176,0.4);
     color: white;
   }
-
-  /* ===== TABEL ===== */
-  .table-container {
-    background: white;
-    border-radius: 1.5rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-  }
-  .mahasiswa-table {
-    margin-bottom: 0;
-  }
-  .mahasiswa-table thead th {
-    background: linear-gradient(135deg, var(--primary-light), rgba(109,213,237,0.1));
-    color: var(--primary-dark);
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid var(--primary-start);
-    padding: 1rem 0.75rem;
-  }
-  .mahasiswa-table tbody tr {
-    transition: all 0.2s;
-  }
-  .mahasiswa-table tbody tr:hover {
-    background-color: var(--primary-light);
-    transform: scale(1.01);
-    box-shadow: 0 5px 15px rgba(33,147,176,0.1);
-  }
-  .mahasiswa-table td {
-    padding: 1rem 0.75rem;
-    vertical-align: middle;
-    border-bottom: 1px solid #e9ecef;
-  }
-
-  /* ===== TOMBOL GRADIEN ===== */
   .btn-gradient {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
     border: none;
@@ -109,7 +68,6 @@
     padding: 0.6rem 1.5rem;
     border-radius: 50px;
     transition: all 0.3s;
-    box-shadow: 0 5px 15px rgba(33,147,176,0.2);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
@@ -120,8 +78,42 @@
     box-shadow: 0 10px 25px rgba(33,147,176,0.4);
     color: white;
   }
-
-  /* ===== TOMBOL AKSI ===== */
+  .btn-outline {
+    background: transparent;
+    border: 2px solid var(--primary-start);
+    color: var(--primary-start);
+    border-radius: 50px;
+    padding: 0.5rem 1.2rem;
+    transition: all 0.3s;
+  }
+  .btn-outline:hover {
+    background: var(--primary-start);
+    color: white;
+  }
+  .table-container {
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .mahasiswa-table thead th {
+    background: linear-gradient(135deg, var(--primary-light), rgba(109,213,237,0.1));
+    color: var(--primary-dark);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    border-bottom: 2px solid var(--primary-start);
+    padding: 1rem 0.75rem;
+  }
+  .mahasiswa-table tbody tr:hover {
+    background-color: var(--primary-light);
+    transform: scale(1.01);
+  }
+  .mahasiswa-table td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+  }
   .btn-icon-sm {
     display: inline-flex;
     align-items: center;
@@ -129,48 +121,14 @@
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    border: 1px solid transparent;
     transition: all 0.2s;
     color: white;
     margin: 0 2px;
   }
-  .btn-icon-sm i {
-    font-size: 1rem;
-  }
-  .btn-detail {
-    background: var(--primary-start);
-  }
-  .btn-detail:hover {
-    background: var(--primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 10px rgba(33,147,176,0.3);
-  }
-  .btn-edit {
-    background: #ffc107;
-  }
-  .btn-edit:hover {
-    background: #e0a800;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 10px rgba(255,193,7,0.3);
-  }
-  .btn-reset {
-    background: #6c757d;
-  }
-  .btn-reset:hover {
-    background: #5a6268;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 10px rgba(108,117,125,0.3);
-  }
-  .btn-delete {
-    background: #dc3545;
-  }
-  .btn-delete:hover {
-    background: #c82333;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 10px rgba(220,53,69,0.3);
-  }
-
-  /* ===== AVATAR ===== */
+  .btn-detail { background: var(--primary-start); }
+  .btn-edit { background: #ffc107; }
+  .btn-reset { background: #6c757d; }
+  .btn-delete { background: #dc3545; }
   .avatar-circle {
     width: 40px;
     height: 40px;
@@ -182,7 +140,6 @@
     justify-content: center;
     font-weight: 600;
     font-size: 1.2rem;
-    box-shadow: 0 5px 10px rgba(33,147,176,0.2);
   }
   .foto-mahasiswa {
     width: 40px;
@@ -190,86 +147,47 @@
     object-fit: cover;
     border-radius: 50%;
     border: 2px solid var(--primary-start);
-    box-shadow: 0 5px 10px rgba(33,147,176,0.2);
   }
-
-  /* ===== BADGE STATUS ===== */
-  .badge-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.4rem 1rem;
-    border-radius: 50px;
-    font-weight: 500;
-    font-size: 0.85rem;
-    background: #f8f9fa;
-    border: 1px solid transparent;
-  }
-  .badge-aktif {
-    background: #d4edda;
-    color: #155724;
-    border-color: #c3e6cb;
-  }
-  .badge-lulus {
-    background: #d1ecf1;
-    color: #0c5460;
-    border-color: #bee5eb;
-  }
-  .badge-cuti {
-    background: #fff3cd;
-    color: #856404;
-    border-color: #ffeeba;
-  }
-  .badge-secondary {
-    background: #e2e3e5;
-    color: #383d41;
-    border-color: #d6d8db;
-  }
-
-  /* ===== ALERT ===== */
-  .alert-custom {
-    border-radius: 1rem;
-    border-left: 4px solid;
-  }
-
-  /* ===== EMPTY STATE ===== */
+  .badge-semester { background: #cfe2ff; color: #084298; }
+  .badge-magang { background: #cff4fc; color: #055160; }
+  .badge-aktif { background: #d4edda; color: #155724; }
+  .badge-lulus { background: #d1ecf1; color: #0c5460; }
+  .badge-cuti { background: #fff3cd; color: #856404; }
+  .badge-keluar { background: #f8d7da; color: #842029; }
   .empty-state {
     padding: 4rem 2rem;
     text-align: center;
     background: #f8f9fa;
     border-radius: 1.5rem;
-    margin: 2rem 0;
   }
-  .empty-state i {
-    font-size: 4rem;
-    color: #adb5bd;
-    margin-bottom: 1.5rem;
-  }
-  .empty-state h4 {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.5rem;
-  }
-  .empty-state p {
-    color: #6c757d;
-    margin-bottom: 1.5rem;
-  }
+  .empty-state i { font-size: 4rem; color: #adb5bd; margin-bottom: 1.5rem; }
 </style>
 
 <div class="container-fluid mt-4">
-  <!-- Header dengan tombol tambah -->
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
     <h2 class="fw-bold"><i class="bi bi-mortarboard-fill me-2" style="color: var(--primary-start);"></i>Kelola Mahasiswa</h2>
-    <a href="/admin/mahasiswa/create" class="btn-gradient">
-      <i class="bi bi-plus-circle"></i> Tambah Mahasiswa
-    </a>
+    <div>
+      <a href="/admin/mahasiswa/template" class="btn-outline me-2" style="text-decoration: none;">
+        <i class="bi bi-download"></i> Template CSV
+      </a>
+      <button class="btn-outline me-2" data-bs-toggle="modal" data-bs-target="#importModal">
+        <i class="bi bi-upload"></i> Import CSV
+      </button>
+      <a href="/admin/mahasiswa/export/csv<%= (filterAngkatan || filterSemester || filterStatusMagang || filterStatusMahasiswa || search) ? '?' + new URLSearchParams({angkatan: filterAngkatan, semester: filterSemester, statusMagang: filterStatusMagang, statusMahasiswa: filterStatusMahasiswa, search: search}).toString() : '' %>" 
+         class="btn-outline me-2" style="text-decoration: none;">
+        <i class="bi bi-download"></i> Download CSV
+      </a>
+      <a href="/admin/mahasiswa/create" class="btn-gradient">
+        <i class="bi bi-plus-circle"></i> Tambah Mahasiswa
+      </a>
+    </div>
   </div>
 
   <!-- Filter Card -->
   <div class="filter-card">
     <form method="GET" class="row g-3 align-items-end">
-      <div class="col-md-3">
-        <label for="angkatan" class="form-label fw-semibold"><i class="bi bi-funnel me-1"></i>Angkatan</label>
+      <div class="col-md-2">
+        <label for="angkatan" class="form-label fw-semibold">Angkatan</label>
         <select class="form-select" id="angkatan" name="angkatan">
           <option value="">Semua Angkatan</option>
           <% if (angkatanList && angkatanList.length) { %>
@@ -279,39 +197,80 @@
           <% } %>
         </select>
       </div>
-      <div class="col-md-3">
-        <label for="status" class="form-label fw-semibold"><i class="bi bi-tag me-1"></i>Status</label>
-        <select class="form-select" id="status" name="status">
-          <option value="">Semua</option>
-          <option value="aktif" <%= filterStatus === 'aktif' ? 'selected' : '' %>>Aktif</option>
-          <option value="lulus" <%= filterStatus === 'lulus' ? 'selected' : '' %>>Lulus</option>
-          <option value="cuti" <%= filterStatus === 'cuti' ? 'selected' : '' %>>Cuti</option>
+      <div class="col-md-2">
+        <label for="semester" class="form-label fw-semibold">Semester (1-12)</label>
+        <select class="form-select" id="semester" name="semester">
+          <option value="">Semua Semester</option>
+          <% for(let i=1; i<=12; i++) { %>
+            <option value="Semester <%= i %>" <%= filterSemester === ('Semester '+i) ? 'selected' : '' %>>Semester <%= i %></option>
+          <% } %>
         </select>
       </div>
-      <div class="col-md-4">
-        <label for="search" class="form-label fw-semibold"><i class="bi bi-search me-1"></i>Cari</label>
-        <input type="text" class="form-control" id="search" name="search" placeholder="Nama atau NIM" value="<%= search || '' %>">
+      <div class="col-md-2">
+        <label for="statusMagang" class="form-label fw-semibold">Status Magang</label>
+        <select class="form-select" id="statusMagang" name="statusMagang">
+          <option value="">Semua</option>
+          <option value="Magang 1" <%= filterStatusMagang === 'Magang 1' ? 'selected' : '' %>>Magang 1</option>
+          <option value="Magang 2" <%= filterStatusMagang === 'Magang 2' ? 'selected' : '' %>>Magang 2</option>
+          <option value="Magang 3" <%= filterStatusMagang === 'Magang 3' ? 'selected' : '' %>>Magang 3</option>
+          <option value="Selesai Magang" <%= filterStatusMagang === 'Selesai Magang' ? 'selected' : '' %>>Selesai Magang</option>
+        </select>
       </div>
       <div class="col-md-2">
-        <button type="submit" class="btn-filter">Terapkan</button>
+        <label for="statusMahasiswa" class="form-label fw-semibold">Status Mahasiswa</label>
+        <select class="form-select" id="statusMahasiswa" name="statusMahasiswa">
+          <option value="">Semua</option>
+          <option value="Aktif" <%= filterStatusMahasiswa === 'Aktif' ? 'selected' : '' %>>Aktif</option>
+          <option value="Lulus" <%= filterStatusMahasiswa === 'Lulus' ? 'selected' : '' %>>Lulus</option>
+          <option value="Cuti" <%= filterStatusMahasiswa === 'Cuti' ? 'selected' : '' %>>Cuti</option>
+          <option value="Keluar" <%= filterStatusMahasiswa === 'Keluar' ? 'selected' : '' %>>Keluar</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="search" class="form-label fw-semibold">Cari (Nama/NIM)</label>
+        <input type="text" class="form-control" id="search" name="search" placeholder="Nama atau NIM" value="<%= search %>">
+      </div>
+      <div class="col-md-1">
+        <button type="submit" class="btn-filter">Filter</button>
       </div>
     </form>
   </div>
 
-  <!-- Notifikasi Sukses -->
-  <% if (typeof success !== 'undefined' && success) { %>
-    <div class="alert alert-success alert-dismissible fade show mb-4 alert-custom" role="alert" style="border-left-color: #28a745;">
+  <% if (success) { %>
+    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
       <i class="bi bi-check-circle-fill me-2"></i>Data mahasiswa berhasil <%= success %>.
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   <% } %>
 
-  <!-- Info jumlah ditampilkan -->
+  <!-- Notifikasi hasil import -->
+  <% if (importResult) { %>
+    <div class="alert alert-info alert-dismissible fade show mb-4">
+      <i class="bi bi-info-circle"></i> Import selesai: <strong><%= importResult.success %></strong> berhasil, <strong><%= importResult.failed %></strong> gagal.
+      <% if (importResult.errors.length) { %>
+        <details>
+          <summary>Detail error (<%= importResult.errors.length %>)</summary>
+          <ul>
+            <% importResult.errors.forEach(e => { %>
+              <li><%= e %></li>
+            <% }) %>
+          </ul>
+        </details>
+      <% } %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% } %>
+  <% if (importError) { %>
+    <div class="alert alert-danger alert-dismissible fade show mb-4">
+      <i class="bi bi-exclamation-triangle"></i> <%= importError %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% } %>
+
   <div class="d-flex justify-content-between align-items-center mb-3">
     <p class="mb-0">Menampilkan <strong><%= mahasiswa.length %></strong> mahasiswa</p>
   </div>
 
-  <!-- Tabel Mahasiswa -->
   <div class="table-container">
     <div class="table-responsive">
       <table class="table mahasiswa-table">
@@ -322,26 +281,35 @@
             <th>Nama</th>
             <th>Email</th>
             <th>Angkatan</th>
-            <th>Status</th>
+            <th>Semester</th>
+            <th>Status Magang</th>
+            <th>Status Mahasiswa</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
           <% if (mahasiswa.length === 0) { %>
             <tr>
-              <td colspan="7" class="text-center py-5">
+              <td colspan="9" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <h4>Belum Ada Data Mahasiswa</h4>
-                  <p class="text-muted">Silakan tambahkan mahasiswa pertama dengan klik tombol "Tambah Mahasiswa".</p>
+                  <p class="text-muted">Silakan tambahkan mahasiswa pertama.</p>
                 </div>
               </td>
             </tr>
           <% } else { %>
             <% mahasiswa.forEach(m => { 
-              let angkatan = m.nim && m.nim.length >= 2 ? '20' + m.nim.substring(0,2) : '-';
-              // Normalisasi status
-              let status = m.status ? m.status.toString().toLowerCase().trim() : '';
+              let angkatan = (m.nim && m.nim.length >= 2) ? '20' + m.nim.substring(0,2) : '-';
+              let semesterText = m.semester || '-';
+              let magangText = m.statusMagang || '-';
+              let mahasiswaStatus = m.statusMahasiswa || '-';
+              let badgeMahasiswa = '';
+              if (mahasiswaStatus === 'Aktif') badgeMahasiswa = 'badge-aktif';
+              else if (mahasiswaStatus === 'Lulus') badgeMahasiswa = 'badge-lulus';
+              else if (mahasiswaStatus === 'Cuti') badgeMahasiswa = 'badge-cuti';
+              else if (mahasiswaStatus === 'Keluar') badgeMahasiswa = 'badge-keluar';
+              else badgeMahasiswa = 'badge-default';
             %>
             <tr>
               <td>
@@ -349,34 +317,23 @@
                   const fileId = getFileIdFromUrl(m.foto);
                   if (fileId) { %>
                     <img src="https://drive.google.com/thumbnail?id=<%= fileId %>&sz=w100" 
-                         alt="foto" 
                          class="foto-mahasiswa"
                          onerror="this.onerror=null; this.src='<%= m.foto %>';">
                   <% } else { %>
-                    <img src="<%= m.foto %>" 
-                         alt="foto" 
-                         class="foto-mahasiswa"
+                    <img src="<%= m.foto %>" class="foto-mahasiswa"
                          onerror="this.onerror=null; this.src='https://via.placeholder.com/40?text=<%= (m.nama || '?').charAt(0).toUpperCase() %>';">
                   <% } %>
                 <% } else { %>
                   <div class="avatar-circle"><%= (m.nama || '?').charAt(0).toUpperCase() %></div>
                 <% } %>
               </td>
-              <td><span class="badge bg-secondary"><%= m.nim || '-' %></span></td>
+              <td><%= m.nim || '-' %></td>
               <td><strong><%= m.nama %></strong></td>
               <td><%= m.email %></td>
-              <td><span class="fw-semibold"><%= angkatan %></span></td>
-              <td>
-                <% if (status === 'aktif') { %>
-                  <span class="badge-status badge-aktif"><i class="bi bi-check-circle"></i> Aktif</span>
-                <% } else if (status === 'lulus') { %>
-                  <span class="badge-status badge-lulus"><i class="bi bi-mortarboard"></i> Lulus</span>
-                <% } else if (status === 'cuti') { %>
-                  <span class="badge-status badge-cuti"><i class="bi bi-pause-circle"></i> Cuti</span>
-                <% } else { %>
-                  <span class="badge-status badge-secondary"><%= m.status || 'Tidak diketahui' %></span>
-                <% } %>
-              </td>
+              <td><%= angkatan %></td>
+              <td><span class="badge badge-semester"><%= semesterText %></span></td>
+              <td><span class="badge badge-magang"><%= magangText %></span></td>
+              <td><span class="badge <%= badgeMahasiswa %>"><%= mahasiswaStatus %></span></td>
               <td>
                 <div class="d-flex gap-1">
                   <a href="/admin/mahasiswa/<%= m.id %>" class="btn-icon-sm btn-detail" title="Detail">
@@ -385,7 +342,7 @@
                   <a href="/admin/mahasiswa/<%= m.id %>/edit" class="btn-icon-sm btn-edit" title="Edit">
                     <i class="bi bi-pencil"></i>
                   </a>
-                  <button class="btn-icon-sm btn-reset" title="Reset Password" onclick="resetPassword('<%= m.email %>')">
+                  <button class="btn-icon-sm btn-reset" title="Reset Password" onclick="resetPassword('<%= m.id %>', '<%= m.email %>')">
                     <i class="bi bi-key"></i>
                   </button>
                   <form method="POST" action="/admin/mahasiswa/<%= m.id %>/delete" style="display:inline;" onsubmit="return confirm('Yakin hapus mahasiswa ini? Semua data terkait akan hilang.')">
@@ -404,13 +361,40 @@
   </div>
 </div>
 
+<!-- Modal Import CSV -->
+<div class="modal fade" id="importModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-file-earmark-spreadsheet"></i> Import Mahasiswa (CSV)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="/admin/mahasiswa/import" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> Format CSV: <strong>nim,nama,email,password,semester,statusMagang,statusMahasiswa,noHp</strong><br>
+            Gunakan tombol <strong>Template CSV</strong> untuk contoh.
+          </div>
+          <div class="mb-3">
+            <label for="csvFile" class="form-label">Pilih file CSV</label>
+            <input type="file" class="form-control" id="csvFile" name="file" accept=".csv" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary">Import</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script>
-  function resetPassword(email) {
+  function resetPassword(id, email) {
     if (confirm(`Kirim email reset password ke ${email}?`)) {
-      fetch('/admin/users/reset-password', {
+      fetch(`/admin/mahasiswa/${id}/reset-password`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        headers: { 'Content-Type': 'application/json' }
       }).then(res => {
         if (res.ok) alert('Email reset telah dikirim.');
         else alert('Gagal mengirim email.');

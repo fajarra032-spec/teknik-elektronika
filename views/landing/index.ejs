@@ -13,700 +13,271 @@
 %>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-    /* ===== RESET & BASE ===== */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
+  /* ===== RESET & BASE ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-    html {
-        font-size: 16px; /* base font untuk desktop */
-    }
+html {
+    font-size: 16px;
+}
 
-    body {
-        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-        scroll-behavior: smooth;
-        background-color: #f8fafc;
-    }
+/* ===== VARIABLES ===== */
+:root {
+    --primary: #0d6efd;
+    --primary-dark: #0b5ed7;
+    --secondary: #0dcaf0;
+    --success: #198754;
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    
+    /* UI Colors */
+    --bg-body: #f8fafc;
+    --bg-card: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #475569;
+    --text-light: #64748b;
+    
+    /* Effects */
+    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.12);
+    --border-radius: 1rem;
+    --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    
+    /* Typography */
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-heading: 'Montserrat', var(--font-sans);
+}
 
-    /* ===== TYPOGRAPHY RESPONSIF ===== */
-    @media (max-width: 768px) {
-        html { font-size: 15px; }
-    }
-    @media (max-width: 576px) {
-        html { font-size: 14px; }
-    }
-    @media (max-width: 400px) {
-        html { font-size: 13px; }
-    }
+body {
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+    background-color: var(--bg-body);
+    color: var(--text-main);
+}
 
-    /* ===== VARIABLES ===== */
-    :root {
-        --primary: #0d6efd;
-        --primary-dark: #0b5ed7;
-        --secondary: #0dcaf0;
-        --success: #198754;
-        --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
-        --shadow-sm: 0 0.5rem 1rem rgba(0,0,0,0.08);
-        --shadow-hover: 0 1rem 2rem rgba(0,0,0,0.12);
-        --border-radius: 1rem;
-        --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-        --card-bg: white;
-        --card-border: 1px solid rgba(0,0,0,0.05);
-    }
+/* ===== SECTION & COMPONENT FLUID TYPOGRAPHY ===== */
 
-    /* ===== SECTION STYLES ===== */
-    .section-wrapper {
-        background: var(--card-bg);
-        border-radius: var(--border-radius);
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-sm);
-        border: var(--card-border);
-    }
+/* Section Title */
+.section-title {
+    /* Minimal 1.3rem di HP, ideal 4vw, maksimal 1.8rem di Desktop */
+    font-size: clamp(1.3rem, 4vw, 1.8rem); 
+    margin-bottom: clamp(1.5rem, 4vw, 2rem);
+}
 
-    .section-title {
-        position: relative;
-        margin-bottom: 2rem;
-        font-weight: 700;
-        font-size: 1.8rem; /* relative terhadap root */
-        color: #1e293b;
-        text-align: center;
-    }
-    .section-title span {
-        background: var(--gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    .section-title:after {
-        content: '';
-        display: block;
-        width: 80px;
-        height: 4px;
-        background: var(--gradient);
-        margin: 0.6rem auto 0;
-        border-radius: 50px;
-    }
+/* Statistics Card */
+.stat-icon {
+    font-size: clamp(1.8rem, 5vw, 2.2rem);
+}
+.stat-number {
+    font-size: clamp(1.4rem, 4vw, 1.8rem);
+}
+.stat-label {
+    font-size: clamp(0.65rem, 1.5vw, 0.75rem);
+}
 
-    /* ===== HERO SECTION ===== */
-    .hero-content h1 span {
-    color: var(--secondary);
-    /* atau background gradient seperti kode pertama */
+/* Visi Misi Card */
+.visi-misi-card h4 {
+    font-size: clamp(1.05rem, 2.5vw, 1.2rem);
+}
+.visi-misi-card p, 
+.visi-misi-list li {
+    font-size: clamp(0.85rem, 2vw, 0.95rem);
+}
+.visi-misi-icon {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+/* Gallery & News Cards */
+.gallery-caption h5,
+.news-card .card-title {
+    font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+}
+.gallery-caption .caption,
+.news-card .card-text {
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+}
+.gallery-caption .perusahaan {
+    font-size: clamp(0.75rem, 1.8vw, 0.8rem);
+}
+
+/* ID Card Dosen */
+.id-card-body h5 {
+    font-size: clamp(0.85rem, 2vw, 0.95rem);
+}
+.id-card-body p {
+    font-size: clamp(0.7rem, 1.5vw, 0.8rem);
+}
+
+/* Table Schedule */
+.table-schedule th {
+    font-size: clamp(0.75rem, 1.8vw, 0.85rem);
+}
+.table-schedule td {
+    font-size: clamp(0.85rem, 2vw, 0.95rem);
+}
+.badge-schedule {
+    font-size: clamp(0.65rem, 1.5vw, 0.75rem);
+}
+
+/* Testimonial */
+.testimonial-card i {
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
+}
+.testimonial-name {
+    font-size: clamp(0.95rem, 2.5vw, 1.05rem);
+}
+.testimonial-role {
+    font-size: clamp(0.75rem, 1.8vw, 0.8rem);
+}
+.testimonial-text {
+    font-size: clamp(0.85rem, 2vw, 0.95rem);
+}
+
+/* Tombol secara umum di dalam Card */
+.news-card .btn-outline-primary,
+.search-form .btn-primary {
+    font-size: clamp(0.8rem, 2vw, 0.95rem);
+}
+
+/* ===== TYPOGRAPHY RESPONSIF ===== */
+
+/* Base Typography (Default untuk layar menengah ke atas) */
+html {
+    /* Menggunakan fluid typography dasar (opsional) atau fallback tetap */
+    font-size: clamp(14px, 1vw + 10px, 16px);
+}
+
+h1, .h1 { font-size: 2.5rem; font-weight: 800; line-height: 1.2; }
+h2, .h2 { font-size: 2rem; font-weight: 700; line-height: 1.25; }
+h3, .h3 { font-size: 1.75rem; font-weight: 700; line-height: 1.3; }
+h4, .h4 { font-size: 1.5rem; font-weight: 600; line-height: 1.35; }
+h5, .h5 { font-size: 1.25rem; font-weight: 600; line-height: 1.4; }
+h6, .h6 { font-size: 1rem; font-weight: 600; line-height: 1.4; }
+p, .text-body { line-height: 1.6; margin-bottom: 1rem; }
+
+/* Layar Sangat Besar (Monitor Ultra Wide) */
+@media (min-width: 1400px) {
+    html { font-size: 16.5px; }
+    h1, .h1 { font-size: 2.8rem; }
+    h2, .h2 { font-size: 2.2rem; }
+}
+
+/* Tablet Landscape & Laptop Kecil */
+@media (max-width: 992px) {
+    html { font-size: 15.5px; }
+    h1, .h1 { font-size: 2.2rem; }
+    h2, .h2 { font-size: 1.8rem; }
+    h3, .h3 { font-size: 1.6rem; }
+}
+
+/* Tablet Portrait */
+@media (max-width: 768px) {
+    html { font-size: 15px; }
+    h1, .h1 { font-size: 2rem; }
+    h2, .h2 { font-size: 1.6rem; }
+    h3, .h3 { font-size: 1.4rem; }
+    h4, .h4 { font-size: 1.25rem; }
+    p, .text-body { line-height: 1.5; }
+}
+
+/* Smartphone Landscape & Phablet */
+@media (max-width: 576px) {
+    html { font-size: 14px; }
+    h1, .h1 { font-size: 1.8rem; }
+    h2, .h2 { font-size: 1.5rem; }
+    h3, .h3 { font-size: 1.3rem; }
+    h4, .h4 { font-size: 1.2rem; }
+    h5, .h5 { font-size: 1.1rem; }
+}
+
+/* Smartphone Portrait / Layar Sangat Kecil */
+@media (max-width: 400px) {
+    html { font-size: 13px; }
+    h1, .h1 { font-size: 1.6rem; }
+    h2, .h2 { font-size: 1.35rem; }
+    h3, .h3 { font-size: 1.2rem; }
+    h4, .h4 { font-size: 1.1rem; }
+    h5, .h5 { font-size: 1rem; }
+    p, .text-body { 
+        font-size: 0.95rem; 
+        line-height: 1.45; 
+        margin-bottom: 0.8rem;
+    }
+}
+
+/* ===== GLOBAL COMPONENTS ===== */
+.section-wrapper {
+    background: var(--bg-card);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+    position: relative;
+    margin-bottom: 2rem;
+    font-weight: 700;
+    font-size: 1.8rem;
+    color: var(--text-main);
+    text-align: center;
+}
+
+.section-title span {
     background: var(--gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-}
-    .hero-section {
-        position: relative;
-        border-radius: 20px;
-        overflow: hidden;
-        margin-bottom: 2rem;
-    }
-    .hero-carousel,
-    .hero-carousel .carousel-inner,
-    .hero-carousel .carousel-item {
-        width: 100%;
-    }
-    .hero-carousel .carousel-item img {
-        width: 100%;
-        height: auto;
-        display: block;
-        object-fit: cover;
-        filter: brightness(.9);
-        transition: transform 6s ease;
-    }
-    .hero-carousel .carousel-item.active img {
-        transform: scale(1.05);
-    }
-    .hero-overlay {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        background: linear-gradient(180deg, rgba(0,0,0,0.226), rgba(0,0,0,0.212));
-        color: white;
-        padding: clamp(1rem, 5vw, 2.5rem);
-        z-index: 5;
-    }
-    .hero-content {
-        max-width: 900px;
-        width: 100%;
-        margin: auto;
-        animation: fadeInUp 1.2s ease;
-    }
-    /* Pastikan font Montserrat untuk heading hero */
-.hero-content h1,
-.hero-content h1 span {
-    font-family: 'Montserrat', var(--font-sans) !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.02em;
+    background-clip: text;
 }
 
-/* Pastikan font Inter untuk teks deskripsi dan tombol */
-.hero-content p,
-.hero-buttons .btn {
-    font-family: 'Inter', var(--font-sans) !important;
-}
-
-/* Jika tombol ingin tetap konsisten */
-.hero-buttons .btn {
-    font-weight: 600 !important;
-}
-    .hero-content h1 {
-        font-size: clamp(1.5rem, 5vw, 2.8rem);
-        font-weight: 700;
-        line-height: 1.2;
-        text-shadow: 0 4px 20px rgba(0,0,0,.8);
-        margin-bottom: clamp(0.5rem, 2vw, 1.5rem);
-    }
-    .hero-content p {
-        font-size: clamp(0.9rem, 2vw, 1.1rem);
-        line-height: 1.6;
-        opacity: .95;
-        text-shadow: 0 2px 10px rgba(0,0,0,.7);
-        margin-bottom: clamp(0.8rem, 2.5vw, 2rem);
-    }
-    .hero-buttons {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 0.8rem;
-    }
-    .hero-buttons .btn {
-        padding: 0.6rem 1.5rem;
-        border-radius: 50px;
-        font-weight: 600;
-        font-size: clamp(0.8rem, 2vw, 0.95rem);
-        box-shadow: 0 5px 20px rgba(0,0,0,.35);
-        transition: .3s;
-    }
-    .hero-buttons .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(0,0,0,.45);
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-   /* ===== CAROUSEL MAGANG (Dashboard Style) ===== */
-/* Modern Gallery Card - versi lebih segar */
-.gallery-card {
-    background: white;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-}
-.gallery-card:hover {
-    transform: translateY(-12px);
-    box-shadow: 0 30px 40px -15px rgba(0,0,0,0.2);
-}
-.gallery-img-wrapper {
-    aspect-ratio: 4/3;
-    position: relative;
-}
-.gallery-img-wrapper img {
-    transition: transform 0.6s;
-}
-.gallery-card:hover .gallery-img-wrapper img {
-    transform: scale(1.08);
-}
-.gallery-caption {
-    padding: 1.2rem;
-    position: relative;
-    background: white;
-}
-.gallery-caption h5 {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: #1e293b;
-    margin-bottom: 0.25rem;
-}
-.gallery-caption .perusahaan {
-    font-size: 0.8rem;
-    color: #0d6efd;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-.gallery-caption .caption {
-    font-size: 0.85rem;
-    color: #475569;
-    line-height: 1.4;
-    margin-bottom: 0.75rem;
-}
-.progress-small {
+.section-title::after {
+    content: '';
+    display: block;
+    width: 80px;
     height: 4px;
-    background: #e2e8f0;
-    border-radius: 4px;
-    overflow: hidden;
+    background: var(--gradient);
+    margin: 0.6rem auto 0;
+    border-radius: 50px;
 }
-.progress-small-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #0d6efd, #0dcaf0);
-    width: 0%;
-}
-    /* ===== STATISTICS CARDS ===== */
-    .stat-card {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 1.2rem 0.5rem;
-        text-align: center;
-        box-shadow: var(--shadow-sm);
-        transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-        border: 1px solid rgba(255,255,255,0.2);
-        backdrop-filter: blur(2px);
-        position: relative;
-        overflow: hidden;
-        height: 100%;
-    }
-    .stat-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: var(--shadow-hover);
-    }
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(13,110,253,0.1) 0%, transparent 70%);
-        opacity: 0;
-        transition: opacity 0.5s;
-    }
-    .stat-card:hover::before {
-        opacity: 1;
-    }
-    .stat-icon {
-        font-size: 2.2rem;
-        background: var(--gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 0.5rem;
-    }
-    .stat-number {
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: #1e293b;
-        line-height: 1.2;
-    }
-    .stat-label {
-        font-size: 0.75rem;
-        color: #64748b;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
 
-    /* ===== VISI MISI CARD ===== */
-    .visi-misi-card {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 1.5rem;
-        box-shadow: var(--shadow-sm);
-        transition: all 0.3s;
-        height: 100%;
-        border: 1px solid #f1f5f9;
-    }
-    .visi-misi-card:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--shadow-hover);
-    }
-    .visi-misi-icon {
-        font-size: 2rem;
-        background: var(--gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 0.8rem;
-    }
-    .visi-misi-card h4 {
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 0.8rem;
-        position: relative;
-        display: inline-block;
-        font-size: 1.2rem;
-    }
-    .visi-misi-card h4:after {
-        content: '';
-        display: block;
-        width: 50px;
-        height: 3px;
-        background: var(--gradient);
-        margin-top: 0.3rem;
-        border-radius: 50px;
-    }
-    .visi-misi-card p {
-        color: #475569;
-        line-height: 1.6;
-        margin-bottom: 0.5rem;
-        font-size: 0.95rem;
-    }
-    .visi-misi-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    .visi-misi-list li {
-        padding: 0.4rem 0;
-        border-bottom: 1px dashed #e2e8f0;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.95rem;
-    }
-    .visi-misi-list li:last-child {
-        border-bottom: none;
-    }
-    .visi-misi-list i {
-        color: var(--primary);
-        font-size: 1.1rem;
-    }
-
-    /* ===== CHART CARD ===== */
-    .chart-card {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 1.5rem;
-        box-shadow: var(--shadow-sm);
-        transition: box-shadow 0.3s;
-    }
-    .chart-card:hover {
-        box-shadow: var(--shadow-hover);
-    }
-
-    /* ===== NEWS CARDS ===== */
-    .news-card {
-        border: none;
-        border-radius: var(--border-radius);
-        overflow: hidden;
-        box-shadow: var(--shadow-sm);
-        transition: all 0.3s;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-    .news-card:hover {
-        transform: translateY(-8px);
-        box-shadow: var(--shadow-hover);
-    }
-    .news-card .card-img-wrapper {
-        height: 200px;
-        overflow: hidden;
-    }
-    .news-card img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.5s;
-    }
-    .news-card:hover img {
-        transform: scale(1.05);
-    }
-    .news-card .card-body {
-        padding: 1.2rem;
-        flex-grow: 1;
-    }
-    .news-card .card-title {
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        color: #1e293b;
-        font-size: 1.1rem;
-    }
-    .news-card .card-text {
-        color: #475569;
-        margin-bottom: 1rem;
-        font-size: 0.9rem;
-    }
-    .news-card .btn-outline-primary {
-        border-radius: 50px;
-        padding: 0.4rem 1rem;
-        font-weight: 600;
-        border-width: 2px;
-        font-size: 0.85rem;
-        transition: all 0.3s;
-    }
-    .news-card .btn-outline-primary:hover {
-        background: var(--gradient);
-        border-color: transparent;
-        color: white;
-    }
-
-    /* ===== TABLE STYLING ===== */
-    .table-schedule {
-        border-radius: var(--border-radius);
-        overflow: hidden;
-        box-shadow: var(--shadow-sm);
-    }
-    .table-schedule thead {
-        background: var(--gradient);
-        color: white;
-    }
-    .table-schedule th {
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border: none;
-        font-size: 0.85rem;
-    }
-    .table-schedule td {
-        vertical-align: middle;
-        border-color: #f1f5f9;
-        font-size: 0.95rem;
-    }
-    .table-schedule tbody tr:hover {
-        background-color: #f8fafc;
-    }
-    .badge-schedule {
-        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
-        color: white;
-        padding: 0.3rem 0.7rem;
-        border-radius: 50px;
-        font-weight: 500;
-        font-size: 0.75rem;
-    }
-
-    /* ===== ID CARD STYLE (DOSEN) ===== */
-    .id-card {
-        background: white;
-        border-radius: var(--border-radius);
-        overflow: hidden;
-        box-shadow: var(--shadow-sm);
-        transition: all 0.3s;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        border: 1px solid #f1f5f9;
-    }
-    .id-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: var(--shadow-hover);
-    }
-    .id-card-img-wrapper {
-        position: relative;
-        overflow: hidden;
-        aspect-ratio: 3/4;
-        background: #f1f5f9;
-    }
-    .id-card-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.5s;
-    }
-    .id-card:hover .id-card-img {
-        transform: scale(1.05);
-    }
-    .id-card-social {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-        padding: 0.8rem 0.5rem 0.5rem;
-        display: flex;
-        justify-content: center;
-        gap: 0.8rem;
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
-    .id-card:hover .id-card-social {
-        opacity: 1;
-    }
-    .id-card-social a {
-        color: white;
-        font-size: 1rem;
-        transition: transform 0.2s;
-    }
-    .id-card-social a:hover {
-        transform: scale(1.2);
-        color: var(--secondary);
-    }
-    .id-card-body {
-        padding: 0.8rem;
-        text-align: center;
-        background: white;
-    }
-    .id-card-body h5 {
-        font-weight: 700;
-        margin-bottom: 0.2rem;
-        font-size: 0.95rem;
-        color: #1e293b;
-    }
-    .id-card-body p {
-        color: #64748b;
-        font-size: 0.8rem;
-        margin-bottom: 0;
-        font-weight: 500;
-    }
-
-    /* ===== MITRA SECTION ===== */
-    .mitra-item {
-        background: white;
-        border-radius: 1rem;
-        padding: 1rem;
-        text-align: center;
-        box-shadow: var(--shadow-sm);
-        transition: all 0.3s;
-        height: 100px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .mitra-item:hover {
-        transform: scale(1.05);
-        box-shadow: var(--shadow-hover);
-    }
-    .mitra-item img {
-        max-width: 100%;
-        max-height: 50px;
-        filter: grayscale(100%);
-        opacity: 0.7;
-        transition: all 0.3s;
-    }
-    .mitra-item:hover img {
-        filter: grayscale(0);
-        opacity: 1;
-    }
-
-    /* ===== TESTIMONI CAROUSEL ===== */
-    .testimonial-card {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 1.5rem;
-        box-shadow: var(--shadow-sm);
-        margin: 1rem;
-        text-align: center;
-        position: relative;
-    }
-    .testimonial-card i {
-        font-size: 2.5rem;
-        color: var(--primary);
-        opacity: 0.2;
-        position: absolute;
-        top: 10px;
-        right: 20px;
-    }
-    .testimonial-img {
-        width: 70px;
-        height: 70px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin: 0 auto 1rem;
-        border: 3px solid var(--primary);
-    }
-    .testimonial-name {
-        font-weight: 700;
-        color: #1e293b;
-        font-size: 1rem;
-    }
-    .testimonial-role {
-        color: #64748b;
-        font-size: 0.8rem;
-        margin-bottom: 0.8rem;
-    }
-    .testimonial-text {
-        font-style: italic;
-        color: #334155;
-        font-size: 0.9rem;
-    }
-    .carousel-control-prev,
-    .carousel-control-next {
-        width: 5%;
-        color: var(--primary);
-    }
-
-    /* ===== ANIMATIONS ===== */
-    @keyframes float {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
-        100% { transform: translateY(0px); }
-    }
-    .float-animation {
-        animation: float 3s ease-in-out infinite;
-    }
-
-    /* Custom untuk carousel dosen */
-    #dosenCarousel .carousel-control-prev,
-    #dosenCarousel .carousel-control-next {
-        width: 5%;
-        opacity: 1;
-    }
-    #dosenCarousel .carousel-control-prev-icon,
-    #dosenCarousel .carousel-control-next-icon {
-        background-color: var(--primary);
-        border-radius: 50%;
-        padding: 1rem;
-        background-size: 50%;
-    }
-    #dosenCarousel .carousel-indicators {
-        position: relative;
-        margin-top: 1rem;
-        bottom: 0;
-    }
-    #dosenCarousel .carousel-indicators button {
-        background-color: var(--primary);
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-    }
-
-    /* ===== RESPONSIVE EXTRA ===== */
-    @media (max-width: 576px) {
-        .mitra-item {
-            height: 80px;
-            padding: 0.5rem;
-        }
-        .mitra-item img {
-            max-height: 40px;
-        }
-        .section-wrapper {
-            padding: 1rem;
-        }
-    }
-    /* Efek background gradien lembut pada semua card */
+/* ===== SHARED CARD STYLES (Soft Glassmorphism) ===== */
 .stat-card,
 .visi-misi-card,
 .chart-card,
 .news-card,
 .id-card,
 .mitra-item,
-.testimonial-card {
-    background: linear-gradient(145deg, #ffffff, #f8fafc);
-    border: 1px solid rgba(13, 110, 253, 0.1);
+.testimonial-card,
+.card-akademik {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.02) 0%, rgba(13, 202, 240, 0.02) 100%);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(13, 110, 253, 0.08);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
     position: relative;
+    overflow: hidden;
     z-index: 1;
-    transition: all 0.3s ease;
 }
 
-/* Efek border gradien saat hover */
 .stat-card:hover,
 .visi-misi-card:hover,
 .chart-card:hover,
 .news-card:hover,
 .id-card:hover,
 .mitra-item:hover,
-.testimonial-card:hover {
-    border: 1px solid transparent;
-    background: linear-gradient(#ffffff, #f8fafc) padding-box,
-                linear-gradient(135deg, #0d6efd, #0dcaf0) border-box;
-    box-shadow: 0 8px 20px rgba(13, 110, 253, 0.15);
+.testimonial-card:hover,
+.card-akademik:hover {
+    transform: translateY(-8px);
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.05) 0%, rgba(13, 202, 240, 0.05) 100%);
+    border-color: rgba(13, 110, 253, 0.25);
+    box-shadow: var(--shadow-hover);
 }
 
-/* Alternatif: aksen garis bawah gradien */
+/* Aksesoris Bawah Kartu Akademik */
 .card-akademik::after {
     content: '';
     position: absolute;
@@ -714,68 +285,688 @@
     left: 0;
     width: 100%;
     height: 4px;
-    background: linear-gradient(90deg, #0d6efd, #0dcaf0);
-    border-radius: 0 0 1rem 1rem;
-}
-/* Soft gradient background untuk semua card */
-.stat-card,
-.visi-misi-card,
-.chart-card,
-.news-card,
-.id-card,
-.mitra-item,
-.testimonial-card,
-.table-schedule {
-    background: linear-gradient(145deg, rgba(13,110,253,0.03), rgba(13,202,240,0.03));
-    backdrop-filter: blur(1px);
-    border: 1px solid rgba(13,110,253,0.1);
-    transition: all 0.3s ease;
+    background: var(--gradient);
 }
 
-/* Efek hover yang lebih terlihat */
-.stat-card:hover,
-.visi-misi-card:hover,
-.chart-card:hover,
-.news-card:hover,
-.id-card:hover,
-.mitra-item:hover,
-.testimonial-card:hover,
-.table-schedule:hover {
-    background: linear-gradient(145deg, rgba(13,110,253,0.05), rgba(13,202,240,0.05));
-    border-color: rgba(13,110,253,0.3);
-    box-shadow: 0 5px 20px rgba(13,110,253,0.1);
-}
-/* Soft gradient background untuk semua card */
-.stat-card,
-.visi-misi-card,
-.chart-card,
-.news-card,
-.id-card,
-.mitra-item,
-.testimonial-card,
-.table-schedule {
-    background: linear-gradient(135deg, rgba(13,110,253,0.05) 0%, rgba(13,202,240,0.05) 100%);
-    border: 1px solid rgba(13,110,253,0.15);
-    transition: all 0.3s ease;
+/* ===== HERO SECTION ===== */
+.hero-section {
+    position: relative;
+    max-width: 1300px;
+    margin: 0 auto;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
 }
 
-/* Efek hover dengan warna lebih terang */
-.stat-card:hover,
-.visi-misi-card:hover,
-.chart-card:hover,
-.news-card:hover,
-.id-card:hover,
-.mitra-item:hover,
-.testimonial-card:hover,
-.table-schedule:hover {
-    background: linear-gradient(135deg, rgba(13,110,253,0.1) 0%, rgba(13,202,240,0.1) 100%);
-    border-color: rgba(13,110,253,0.3);
-    box-shadow: 0 8px 20px rgba(13,110,253,0.15);
+.hero-carousel,
+.hero-carousel .carousel-inner,
+.hero-carousel .carousel-item {
+    height: 100%;
 }
 
-/* Untuk tabel, biarkan background putih agar kontras dengan header */
-.table-schedule {
+.hero-carousel .carousel-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.85);
+    transition: transform 6s ease;
+}
+
+.hero-carousel .carousel-item.active img {
+    transform: scale(1.05);
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0; /* Menggantikan top, left, right, bottom 0 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.1) 100%);
+    color: white;
+    padding: 1rem;
+    z-index: 5;
+}
+
+.hero-content {
+    max-width: 85%;
+    width: 100%;
+    margin: 0 auto;
+    animation: fadeInUp 1.2s ease;
+}
+
+.hero-content h1 {
+    font-family: var(--font-heading) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px;
+    font-size: clamp(1.4rem, 7vw, 2.6rem);
+    line-height: 1.3;
+    margin-bottom: 0.75rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.hero-content h1 span {
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-block;
+}
+
+.hero-content p {
+    font-family: var(--font-sans) !important;
+    font-size: clamp(0.85rem, 3.5vw, 1.05rem);
+    line-height: 1.5;
+    opacity: 0.95;
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.4);
+    margin: 0 auto 1.2rem;
+    max-width: 80%;
+}
+
+.hero-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.8rem;
+}
+
+.hero-buttons .btn {
+    font-family: var(--font-sans) !important;
+    font-weight: 600 !important;
+    padding: 0.6rem 1.5rem;
+    border-radius: 50px;
+    font-size: clamp(0.75rem, 3vw, 0.95rem);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+/* ===== SEARCH HERO CARD ===== */
+.search-hero-card {
+    background: var(--bg-card);
+    border-radius: 2rem;
+    padding: 2rem;
+    box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.02);
+    transition: var(--transition);
+}
+
+.search-hero-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 30px 45px -12px rgba(0, 0, 0, 0.1);
+}
+
+.search-form .input-group-text {
     background: white;
+    border: 1px solid #dee2e6;
+    color: var(--primary);
+}
+
+.search-form .form-control {
+    border: 1px solid #dee2e6;
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
+}
+
+.search-form .form-control:focus {
+    border-color: var(--primary);
+    box-shadow: none;
+}
+
+.search-form .btn-primary {
+    background: linear-gradient(105deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border: none;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.search-form .btn-primary:hover {
+    background: linear-gradient(105deg, var(--primary-dark) 0%, #0a58ca 100%);
+    transform: translateX(3px);
+}
+
+/* ===== CAROUSEL MAGANG / GALLERY ===== */
+.gallery-card {
+    background: var(--bg-card);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.gallery-card:hover {
+    transform: translateY(-12px);
+    box-shadow: var(--shadow-hover);
+}
+
+.gallery-img-wrapper {
+    aspect-ratio: 4 / 3;
+    position: relative;
+    overflow: hidden;
+}
+
+.gallery-img-wrapper img {
+    transition: transform 0.6s;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.gallery-card:hover .gallery-img-wrapper img {
+    transform: scale(1.08);
+}
+
+.gallery-caption {
+    padding: 1.2rem;
+    background: white;
+}
+
+.gallery-caption h5 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 0.25rem;
+}
+
+.gallery-caption .perusahaan {
+    font-size: 0.8rem;
+    color: var(--primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.gallery-caption .caption {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
+}
+
+.progress-small {
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-small-bar {
+    height: 100%;
+    background: var(--gradient);
+    width: 0%;
+}
+
+/* ===== STATISTICS CARDS ===== */
+.stat-card {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    height: 100%;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(13, 110, 253, 0.08) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+}
+
+.stat-icon {
+    font-size: 2.2rem;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.stat-number {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ===== VISI MISI CARD ===== */
+.visi-misi-card {
+    padding: 1.5rem;
+    height: 100%;
+}
+
+.visi-misi-icon {
+    font-size: 2rem;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.8rem;
+}
+
+.visi-misi-card h4 {
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 0.8rem;
+    position: relative;
+    display: inline-block;
+    font-size: 1.2rem;
+}
+
+.visi-misi-card h4::after {
+    content: '';
+    display: block;
+    width: 50px;
+    height: 3px;
+    background: var(--gradient);
+    margin-top: 0.3rem;
+    border-radius: 50px;
+}
+
+.visi-misi-card p {
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.visi-misi-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.visi-misi-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.95rem;
+}
+
+.visi-misi-list li:last-child {
+    border-bottom: none;
+}
+
+.visi-misi-list i {
+    color: var(--primary);
+    font-size: 1.1rem;
+}
+
+/* ===== NEWS CARDS ===== */
+.news-card {
+    display: flex;
+    flex-direction: column;
+    padding: 0; /* Override shared padding */
+}
+
+.news-card .card-img-wrapper {
+    height: 200px;
+    overflow: hidden;
+}
+
+.news-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+}
+
+.news-card:hover img {
+    transform: scale(1.05);
+}
+
+.news-card .card-body {
+    padding: 1.2rem;
+    flex-grow: 1;
+}
+
+.news-card .card-title {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+    font-size: 1.1rem;
+}
+
+.news-card .card-text {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.news-card .btn-outline-primary {
+    border-radius: 50px;
+    padding: 0.4rem 1rem;
+    font-weight: 600;
+    border-width: 2px;
+    font-size: 0.85rem;
+    transition: var(--transition);
+}
+
+.news-card .btn-outline-primary:hover {
+    background: var(--gradient);
+    border-color: transparent;
+    color: white;
+}
+
+/* ===== TABLE STYLING ===== */
+.table-schedule {
+    background: white; /* Tabel tetap putih untuk kontras data */
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(13, 110, 253, 0.1);
+    transition: var(--transition);
+}
+
+.table-schedule:hover {
+    border-color: rgba(13, 110, 253, 0.3);
+    box-shadow: var(--shadow-hover);
+}
+
+.table-schedule thead {
+    background: var(--gradient);
+    color: white;
+}
+
+.table-schedule th {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    font-size: 0.85rem;
+}
+
+.table-schedule td {
+    vertical-align: middle;
+    border-color: #f1f5f9;
+    font-size: 0.95rem;
+}
+
+.table-schedule tbody tr:hover {
+    background-color: var(--bg-body);
+}
+
+.badge-schedule {
+    background: var(--gradient);
+    color: white;
+    padding: 0.3rem 0.7rem;
+    border-radius: 50px;
+    font-weight: 500;
+    font-size: 0.75rem;
+}
+
+/* ===== ID CARD STYLE (DOSEN) ===== */
+.id-card {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.id-card-img-wrapper {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 3 / 4;
+    background: #f1f5f9;
+}
+
+.id-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+}
+
+.id-card:hover .id-card-img {
+    transform: scale(1.05);
+}
+
+.id-card-social {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+    padding: 1.5rem 0.5rem 0.8rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.id-card:hover .id-card-social {
+    opacity: 1;
+}
+
+.id-card-social a {
+    color: white;
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+
+.id-card-social a:hover {
+    transform: scale(1.2);
+    color: var(--secondary);
+}
+
+.id-card-body {
+    padding: 1rem;
+    text-align: center;
+}
+
+.id-card-body h5 {
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+    font-size: 0.95rem;
+    color: var(--text-main);
+}
+
+.id-card-body p {
+    color: var(--text-light);
+    font-size: 0.8rem;
+    margin-bottom: 0;
+    font-weight: 500;
+}
+
+/* Custom Dosen Carousel */
+#dosenCarousel .carousel-control-prev,
+#dosenCarousel .carousel-control-next {
+    width: 5%;
+    opacity: 1;
+}
+
+#dosenCarousel .carousel-control-prev-icon,
+#dosenCarousel .carousel-control-next-icon {
+    background-color: var(--primary);
+    border-radius: 50%;
+    padding: 1rem;
+    background-size: 50%;
+}
+
+#dosenCarousel .carousel-indicators {
+    position: relative;
+    margin-top: 1.5rem;
+    bottom: 0;
+}
+
+#dosenCarousel .carousel-indicators button {
+    background-color: var(--primary);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    opacity: 0.5;
+}
+
+#dosenCarousel .carousel-indicators button.active {
+    opacity: 1;
+}
+
+/* ===== MITRA SECTION ===== */
+.mitra-item {
+    padding: 1rem;
+    text-align: center;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mitra-item:hover {
+    transform: translateY(-5px) scale(1.02);
+}
+
+.mitra-item img {
+    max-width: 100%;
+    max-height: 50px;
+    filter: grayscale(100%);
+    opacity: 0.6;
+    transition: var(--transition);
+}
+
+.mitra-item:hover img {
+    filter: grayscale(0);
+    opacity: 1;
+}
+
+/* ===== TESTIMONI CAROUSEL ===== */
+.testimonial-card {
+    padding: 2rem 1.5rem;
+    margin: 1rem;
+    text-align: center;
+}
+
+.testimonial-card i {
+    font-size: 2.5rem;
+    color: var(--primary);
+    opacity: 0.15;
+    position: absolute;
+    top: 15px;
+    right: 20px;
+}
+
+.testimonial-img {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 1rem;
+    border: 3px solid var(--primary);
+    padding: 2px;
+}
+
+.testimonial-name {
+    font-weight: 700;
+    color: var(--text-main);
+    font-size: 1.05rem;
+}
+
+.testimonial-role {
+    color: var(--text-light);
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.testimonial-text {
+    font-style: italic;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.float-animation {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* ===== RESPONSIVE EXTRA ===== */
+@media (max-width: 576px) {
+    .hero-section {
+        aspect-ratio: 4 / 3;
+    }
+    .hero-content {
+        max-width: 95%;
+    }
+    .hero-content h1 {
+        font-size: 1.3rem;
+        line-height: 1.4;
+        letter-spacing: -0.3px;
+    }
+    .hero-content p {
+        font-size: 0.8rem;
+        max-width: 95%;
+    }
+    .hero-buttons .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+        white-space: normal;
+    }
+    .mitra-item {
+        height: 80px;
+        padding: 0.5rem;
+    }
+    .mitra-item img {
+        max-height: 40px;
+    }
+    .section-wrapper {
+        padding: 1rem;
+    }
+    .search-hero-card {
+        padding: 1.5rem;
+    }
+    .search-form .input-group {
+        flex-wrap: wrap;
+    }
+    .search-form .input-group-text,
+    .search-form .form-control,
+    .search-form .btn {
+        border-radius: 50px !important;
+        margin-bottom: 0.5rem;
+        width: 100%; /* Full width di mobile */
+    }
+}
+
+@media (max-width: 400px) {
+    .hero-content h1 {
+        font-size: 1.1rem;
+    }
+    .hero-content p {
+        font-size: 0.75rem;
+    }
 }
 </style>
 
@@ -825,21 +1016,13 @@
                     <div class="stat-label">Mahasiswa Magang</div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
-                    <div class="stat-number">
-                        <% 
-                            let total = 0;
-                            if (statistik.angkatan && Array.isArray(statistik.angkatan)) {
-                                total = statistik.angkatan.reduce((sum, a) => sum + (Number(a.jumlah) || 0), 0);
-                            }
-                        %>
-                        <%= total %>
-                    </div>
-                    <div class="stat-label">Total Mahasiswa</div>
-                </div>
-            </div>
+<div class="col-6 col-md-3">
+    <div class="stat-card">
+        <div class="stat-icon"><i class="bi bi-person-badge"></i></div>
+        <div class="stat-number"><%= jumlahDosen || 0 %></div>
+        <div class="stat-label">Dosen Pengajar</div>
+    </div>
+</div>
             <div class="col-6 col-md-3">
                 <div class="stat-card">
                     <div class="stat-icon"><i class="bi bi-calendar-event"></i></div>
@@ -847,8 +1030,37 @@
                     <div class="stat-label">Seminar Mendatang</div>
                 </div>
             </div>
+<div class="row mt-5 pt-2">
+    <div class="col-12">
+        <div class="search-hero-card">
+            <div class="text-center mb-4">
+
+                <p class="text-muted">Masukkan NIM atau Nama Mahasiswa untuk melihat progres akademik & magang</p>
+            </div>
+            <div class="search-wrapper">
+                <form action="/cekmahasiswa" method="GET" class="search-form">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white border-end-0 rounded-start-pill ps-4">
+                            <i class="bi bi-search text-primary"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0 border-end-0" 
+                               name="search" placeholder="Cari berdasarkan NIM atau Nama..." 
+                               value="<%= typeof search !== 'undefined' ? search : '' %>">
+                        <button class="btn btn-primary rounded-end-pill px-4" type="submit">
+                            Cari <i class="bi bi-arrow-right-short"></i>
+                        </button>
+                    </div>
+                </form>
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        Contoh: 20230101, Budi, atau langsung 
+                        <a href="/cekmahasiswa" class="text-decoration-none">Lihat semua mahasiswa →</a>
+                    </small>
+                </div>
+            </div>
         </div>
-    </section>
+    </div>
+</div>
 
     <!-- VISI MISI -->
     <section class="section-wrapper">

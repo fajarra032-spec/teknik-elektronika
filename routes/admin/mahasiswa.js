@@ -1,6 +1,6 @@
 /**
  * routes/admin/mahasiswa.js
- * Kelola data mahasiswa (CRUD + tagihan SPP + reset password)
+ * Kelola data mahasiswa dengan progres semester (1-12), status magang, dan status mahasiswa terpisah
  */
 
 const express = require('express');
@@ -25,33 +25,41 @@ async function getMahasiswaFotoFolderId() {
     q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: 'files(id)',
   });
-  if (query.data.files.length > 0) {
-    return query.data.files[0].id;
-  } else {
-    const folder = await drive.files.create({
-      resource: { name: folderName, mimeType: 'application/vnd.google-apps.folder' },
-      fields: 'id',
-    });
-    return folder.data.id;
-  }
+  if (query.data.files.length > 0) return query.data.files[0].id;
+  const folder = await drive.files.create({
+    resource: { name: folderName, mimeType: 'application/vnd.google-apps.folder' },
+    fields: 'id',
+  });
+  return folder.data.id;
 }
 
 function getAngkatanFromNim(nim) {
-  if (nim && nim.length >= 2) {
-    return '20' + nim.substring(0, 2);
-  }
+  if (nim && nim.length >= 2) return '20' + nim.substring(0, 2);
   return new Date().getFullYear().toString();
 }
 
+const SEMESTER_OPTIONS = Array.from({ length: 12 }, (_, i) => `Semester ${i + 1}`);
+const MAGANG_OPTIONS = ['Magang 1', 'Magang 2', 'Magang 3', 'Selesai Magang'];
+const STATUS_MAHASISWA_OPTIONS = ['Aktif', 'Lulus', 'Cuti', 'Keluar'];
+
 // ============================================================================
-// DAFTAR MAHASISWA
+// DAFTAR MAHASISWA (dengan filter lengkap)
 // ============================================================================
 
 router.get('/', async (req, res) => {
   try {
-    const { angkatan, search, status } = req.query;
+    const { angkatan, semester, statusMagang, statusMahasiswa, search } = req.query;
 
-    // Ambil semua mahasiswa
+    let importResult = null, importError = null;
+    if (req.query.import === 'done' && req.session.importResult) {
+      importResult = req.session.importResult;
+      delete req.session.importResult;
+    }
+    if (req.session.importError) {
+      importError = req.session.importError;
+      delete req.session.importError;
+    }
+
     const snapshot = await db.collection('users')
       .where('role', '==', 'mahasiswa')
       .orderBy('nim')
@@ -60,35 +68,38 @@ router.get('/', async (req, res) => {
     const mahasiswaList = [];
     const angkatanSet = new Set();
 
-    snapshot.docs.forEach(doc => {
+    for (const doc of snapshot.docs) {
       const data = doc.data();
       const m = { id: doc.id, ...data };
       const angkatanMhs = getAngkatanFromNim(m.nim);
       angkatanSet.add(angkatanMhs);
 
-      // Filter berdasarkan angkatan
-      if (angkatan && angkatanMhs !== angkatan) return;
-
-      // Filter berdasarkan search (nama atau nim)
+      if (angkatan && angkatanMhs !== angkatan) continue;
+      if (semester && m.semester !== semester) continue;
+      if (statusMagang && m.statusMagang !== statusMagang) continue;
+      if (statusMahasiswa && m.statusMahasiswa !== statusMahasiswa) continue;
       if (search) {
-        const lowerSearch = search.toLowerCase();
-        const matchNama = m.nama && m.nama.toLowerCase().includes(lowerSearch);
+        const lower = search.toLowerCase();
+        const matchNama = m.nama && m.nama.toLowerCase().includes(lower);
         const matchNim = m.nim && m.nim.includes(search);
-        if (!matchNama && !matchNim) return;
+        if (!matchNama && !matchNim) continue;
       }
-
       mahasiswaList.push(m);
-    });
+    }
 
     const angkatanList = Array.from(angkatanSet).sort().reverse();
 
     res.render('admin/mahasiswa_list', {
       title: 'Kelola Mahasiswa',
-      mahasiswa: mahasiswaList,  // <-- diubah dari mahasiswaList menjadi mahasiswa
+      mahasiswa: mahasiswaList,
       angkatanList,
       filterAngkatan: angkatan || '',
+      filterSemester: semester || '',
+      filterStatusMagang: statusMagang || '',
+      filterStatusMahasiswa: statusMahasiswa || '',
       search: search || '',
-      filterStatus: status || '' // tambahkan jika ada filter status
+      importResult,
+      importError,
     });
   } catch (error) {
     console.error('Error mengambil data mahasiswa:', error);
@@ -104,12 +115,18 @@ router.get('/', async (req, res) => {
 // ============================================================================
 
 router.get('/create', (req, res) => {
-  res.render('admin/mahasiswa_form', { title: 'Tambah Mahasiswa', mahasiswa: null });
+  res.render('admin/mahasiswa_form', {
+    title: 'Tambah Mahasiswa',
+    mahasiswa: null,
+    semesterOptions: SEMESTER_OPTIONS,
+    magangOptions: MAGANG_OPTIONS,
+    statusMahasiswaOptions: STATUS_MAHASISWA_OPTIONS
+  });
 });
 
 router.post('/', upload.single('foto'), async (req, res) => {
   try {
-    const { nim, nama, email, password } = req.body;
+    const { nim, nama, email, password, semester, statusMagang, statusMahasiswa } = req.body;
     const file = req.file;
 
     if (!nim || !nama || !email || !password) {
@@ -118,11 +135,7 @@ router.post('/', upload.single('foto'), async (req, res) => {
 
     let userRecord;
     try {
-      userRecord = await auth.createUser({
-        email,
-        password,
-        displayName: nama,
-      });
+      userRecord = await auth.createUser({ email, password, displayName: nama });
     } catch (authError) {
       console.error('Gagal membuat user di Auth:', authError);
       return res.status(400).send('Email sudah terdaftar atau password tidak valid');
@@ -131,7 +144,8 @@ router.post('/', upload.single('foto'), async (req, res) => {
     let fotoUrl = null, fotoFileId = null;
     if (file) {
       const folderId = await getMahasiswaFotoFolderId();
-      const fileName = `${nim}_${Date.now()}.${file.originalname.split('.').pop()}`;
+      const ext = file.originalname.split('.').pop();
+      const fileName = `${nim}_${Date.now()}.${ext}`;
       const fileMetadata = { name: fileName, parents: [folderId] };
       const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
       const response = await drive.files.create({
@@ -143,6 +157,10 @@ router.post('/', upload.single('foto'), async (req, res) => {
       fotoFileId = response.data.id;
     }
 
+    const finalSemester = SEMESTER_OPTIONS.includes(semester) ? semester : null;
+    const finalMagang = MAGANG_OPTIONS.includes(statusMagang) ? statusMagang : null;
+    const finalStatus = STATUS_MAHASISWA_OPTIONS.includes(statusMahasiswa) ? statusMahasiswa : 'Aktif';
+
     await db.collection('users').doc(userRecord.uid).set({
       nim,
       nama,
@@ -150,6 +168,9 @@ router.post('/', upload.single('foto'), async (req, res) => {
       foto: fotoUrl,
       fotoFileId,
       role: 'mahasiswa',
+      semester: finalSemester,
+      statusMagang: finalMagang,
+      statusMahasiswa: finalStatus,
       createdAt: new Date().toISOString(),
     });
 
@@ -211,7 +232,13 @@ router.get('/:id/edit', async (req, res) => {
       });
     }
     const mahasiswa = { id: mahasiswaDoc.id, ...mahasiswaDoc.data() };
-    res.render('admin/mahasiswa_form', { title: 'Edit Mahasiswa', mahasiswa });
+    res.render('admin/mahasiswa_form', {
+      title: 'Edit Mahasiswa',
+      mahasiswa,
+      semesterOptions: SEMESTER_OPTIONS,
+      magangOptions: MAGANG_OPTIONS,
+      statusMahasiswaOptions: STATUS_MAHASISWA_OPTIONS
+    });
   } catch (error) {
     console.error('Error memuat form edit mahasiswa:', error);
     res.status(500).render('error', {
@@ -223,7 +250,7 @@ router.get('/:id/edit', async (req, res) => {
 
 router.post('/:id/update', upload.single('foto'), async (req, res) => {
   try {
-    const { nim, nama, email } = req.body;
+    const { nim, nama, email, semester, statusMagang, statusMahasiswa } = req.body;
     const file = req.file;
     const mahasiswaRef = db.collection('users').doc(req.params.id);
     const mahasiswaDoc = await mahasiswaRef.get();
@@ -240,12 +267,16 @@ router.post('/:id/update', upload.single('foto'), async (req, res) => {
       nim,
       nama,
       email,
+      semester: SEMESTER_OPTIONS.includes(semester) ? semester : (oldData.semester || null),
+      statusMagang: MAGANG_OPTIONS.includes(statusMagang) ? statusMagang : (oldData.statusMagang || null),
+      statusMahasiswa: STATUS_MAHASISWA_OPTIONS.includes(statusMahasiswa) ? statusMahasiswa : (oldData.statusMahasiswa || 'Aktif'),
       updatedAt: new Date().toISOString(),
     };
 
     if (file) {
       const folderId = await getMahasiswaFotoFolderId();
-      const fileName = `${nim}_${Date.now()}.${file.originalname.split('.').pop()}`;
+      const ext = file.originalname.split('.').pop();
+      const fileName = `${nim}_${Date.now()}.${ext}`;
       const fileMetadata = { name: fileName, parents: [folderId] };
       const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
       const response = await drive.files.create({
@@ -515,6 +546,236 @@ router.post('/:id/delete', async (req, res) => {
   } catch (error) {
     console.error('Error hapus mahasiswa:', error);
     res.status(500).send('Gagal hapus mahasiswa: ' + error.message);
+  }
+});
+
+
+// ============================================================================
+// IMPORT & EXPORT CSV (dengan kolom nama)
+// ============================================================================
+
+/**
+ * GET /admin/mahasiswa/template
+ * Download template CSV untuk update data mahasiswa
+ */
+router.get('/template', (req, res) => {
+  const headers = ['nim', 'nama', 'noHp', 'semester', 'statusMagang', 'statusMahasiswa'];
+  const example = ['20230101', 'Budi Santoso', '08123456789', 'Semester 1', 'Magang 1', 'Aktif'];
+  const csvContent = [headers, example].map(row => row.join(',')).join('\n');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename=template_update_mahasiswa.csv');
+  res.send('\uFEFF' + csvContent);
+});
+
+/**
+ * POST /admin/mahasiswa/import
+ * Upload CSV untuk update data mahasiswa (nim sebagai identifier)
+ */
+router.post('/import', upload.single('file'), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file || file.mimetype !== 'text/csv') {
+      req.session.importError = 'File harus berformat CSV';
+      return res.redirect('/admin/mahasiswa');
+    }
+
+    let csvContent = file.buffer.toString('utf8');
+    if (csvContent.charCodeAt(0) === 0xFEFF) csvContent = csvContent.substring(1);
+    const lines = csvContent.split(/\r?\n/);
+    if (lines.length < 2) {
+      req.session.importError = 'File CSV kosong';
+      return res.redirect('/admin/mahasiswa');
+    }
+
+    // Normalisasi header
+    const normalizeHeader = (h) => {
+      let header = h.trim().toLowerCase().replace(/\s/g, '');
+      if (header === 'nohp') return 'noHp';
+      if (header === 'statusmagang') return 'statusMagang';
+      if (header === 'statusmahasiswa') return 'statusMahasiswa';
+      if (header === 'nim') return 'nim';
+      if (header === 'nama') return 'nama';
+      if (header === 'semester') return 'semester';
+      return null;
+    };
+
+    const rawHeaders = lines[0].split(',').map(h => normalizeHeader(h)).filter(h => h !== null);
+    const required = ['nim']; // minimal nim untuk identifikasi
+    const missing = required.filter(r => !rawHeaders.includes(r));
+    if (missing.length) {
+      req.session.importError = `Header tidak lengkap: ${missing.join(', ')}. Header terbaca: ${rawHeaders.join(', ')}. Pastikan file CSV memiliki kolom: nim, dan minimal satu kolom update (nama, noHp, semester, statusMagang, statusMahasiswa)`;
+      return res.redirect('/admin/mahasiswa');
+    }
+
+    let success = 0, failed = 0, errors = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line === '') continue;
+      const values = line.split(',').map(v => v.trim());
+      if (values.length < rawHeaders.length) {
+        failed++;
+        errors.push(`Baris ${i}: Jumlah kolom tidak sesuai (${values.length} kolom, seharusnya ${rawHeaders.length})`);
+        continue;
+      }
+      const row = {};
+      rawHeaders.forEach((h, idx) => { row[h] = values[idx] || ''; });
+
+      const nim = row.nim;
+      if (!nim) {
+        failed++;
+        errors.push(`Baris ${i}: NIM tidak boleh kosong`);
+        continue;
+      }
+
+      // Cari mahasiswa berdasarkan NIM
+      const userSnapshot = await db.collection('users')
+        .where('nim', '==', nim)
+        .where('role', '==', 'mahasiswa')
+        .limit(1)
+        .get();
+      if (userSnapshot.empty) {
+        failed++;
+        errors.push(`Baris ${i}: NIM ${nim} tidak ditemukan`);
+        continue;
+      }
+      const userDoc = userSnapshot.docs[0];
+      const updateData = {};
+
+      // Update nama jika ada dan tidak kosong
+      if (rawHeaders.includes('nama') && row.nama && row.nama.trim() !== '') {
+        updateData.nama = row.nama.trim();
+      }
+      // Update noHp jika ada (boleh kosong)
+      if (rawHeaders.includes('noHp')) {
+        updateData.noHp = row.noHp || '';
+      }
+      // Update semester
+      if (rawHeaders.includes('semester')) {
+        let semester = row.semester?.trim();
+        if (semester) {
+          const match = semester.match(/\d+/);
+          if (match) {
+            const num = parseInt(match[0]);
+            if (num >= 1 && num <= 12) updateData.semester = `Semester ${num}`;
+            else updateData.semester = null;
+          } else if (SEMESTER_OPTIONS.includes(semester)) {
+            updateData.semester = semester;
+          } else {
+            updateData.semester = null;
+          }
+        } else {
+          updateData.semester = null;
+        }
+      }
+      // Update statusMagang
+      if (rawHeaders.includes('statusMagang')) {
+        let magang = row.statusMagang?.trim();
+        if (magang) {
+          const lower = magang.toLowerCase();
+          if (lower.includes('magang 1') || lower === 'magang1') updateData.statusMagang = 'Magang 1';
+          else if (lower.includes('magang 2') || lower === 'magang2') updateData.statusMagang = 'Magang 2';
+          else if (lower.includes('magang 3') || lower === 'magang3') updateData.statusMagang = 'Magang 3';
+          else if (lower.includes('selesai')) updateData.statusMagang = 'Selesai Magang';
+          else if (MAGANG_OPTIONS.includes(magang)) updateData.statusMagang = magang;
+          else updateData.statusMagang = null;
+        } else {
+          updateData.statusMagang = null;
+        }
+      }
+      // Update statusMahasiswa
+      if (rawHeaders.includes('statusMahasiswa')) {
+        let status = row.statusMahasiswa?.trim();
+        if (status) {
+          const lower = status.toLowerCase();
+          if (lower === 'aktif') updateData.statusMahasiswa = 'Aktif';
+          else if (lower === 'lulus') updateData.statusMahasiswa = 'Lulus';
+          else if (lower === 'cuti') updateData.statusMahasiswa = 'Cuti';
+          else if (lower === 'keluar') updateData.statusMahasiswa = 'Keluar';
+          else if (STATUS_MAHASISWA_OPTIONS.includes(status)) updateData.statusMahasiswa = status;
+          else updateData.statusMahasiswa = null;
+        } else {
+          updateData.statusMahasiswa = null;
+        }
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        failed++;
+        errors.push(`Baris ${i}: Tidak ada data yang akan diupdate (semua kolom kosong)`);
+        continue;
+      }
+
+      try {
+        await userDoc.ref.update(updateData);
+        success++;
+      } catch (err) {
+        failed++;
+        errors.push(`Baris ${i}: ${err.message}`);
+      }
+    }
+
+    req.session.importResult = { success, failed, errors };
+    res.redirect('/admin/mahasiswa?import=done');
+  } catch (error) {
+    console.error('Import error:', error);
+    req.session.importError = 'Gagal memproses file: ' + error.message;
+    res.redirect('/admin/mahasiswa');
+  }
+});
+
+/**
+ * GET /admin/mahasiswa/export/csv
+ * Ekspor data mahasiswa sesuai filter ke CSV (kolom: nim, nama, noHp, semester, statusMagang, statusMahasiswa)
+ */
+router.get('/export/csv', async (req, res) => {
+  try {
+    const { angkatan, search, semester, statusMagang, statusMahasiswa } = req.query;
+    const snapshot = await db.collection('users')
+      .where('role', '==', 'mahasiswa')
+      .orderBy('nim')
+      .get();
+
+    const mahasiswaList = [];
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      const m = { id: doc.id, ...data };
+      const angkatanMhs = getAngkatanFromNim(m.nim);
+      if (angkatan && angkatanMhs !== angkatan) continue;
+      if (semester && m.semester !== semester) continue;
+      if (statusMagang && m.statusMagang !== statusMagang) continue;
+      if (statusMahasiswa && m.statusMahasiswa !== statusMahasiswa) continue;
+      if (search) {
+        const lower = search.toLowerCase();
+        if (!(m.nama && m.nama.toLowerCase().includes(lower)) &&
+            !(m.nim && m.nim.includes(search))) continue;
+      }
+      mahasiswaList.push(m);
+    }
+
+    const rows = [
+      ['nim', 'nama', 'noHp', 'semester', 'statusMagang', 'statusMahasiswa']
+    ];
+    for (const m of mahasiswaList) {
+      rows.push([
+        m.nim || '',
+        m.nama || '',
+        m.noHp || '',
+        m.semester || '',
+        m.statusMagang || '',
+        m.statusMahasiswa || ''
+      ]);
+    }
+
+    const csvContent = rows.map(row =>
+      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=mahasiswa_export.csv');
+    res.send('\uFEFF' + csvContent);
+  } catch (error) {
+    console.error('Error export CSV:', error);
+    res.status(500).send('Gagal export CSV');
   }
 });
 

@@ -1,0 +1,199 @@
+<%- include('../partials/header-landing') %>
+
+<style>
+  /* PDDIKTI Style */
+  .search-section {
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(13,110,253,0.1);
+  }
+  .search-box {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .search-box .input-group {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    border-radius: 60px;
+    overflow: hidden;
+  }
+  .search-box input {
+    border: none;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+  }
+  .search-box button {
+    background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+    border: none;
+    padding: 0 2rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .search-box button:hover {
+    transform: scale(1.02);
+    box-shadow: 0 5px 15px rgba(13,110,253,0.3);
+  }
+  .info-jumlah {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: #4b5563;
+    text-align: center;
+  }
+  .table-mahasiswa {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+  }
+  .table-mahasiswa thead th {
+    background: #1e293b;
+    color: white;
+    padding: 1rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+  }
+  .table-mahasiswa tbody tr {
+    background: white;
+    border-radius: 1rem;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+  .table-mahasiswa tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    background: #ffffff;
+  }
+  .table-mahasiswa td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: none;
+    background: inherit;
+  }
+  .table-mahasiswa td:first-child {
+    border-top-left-radius: 1rem;
+    border-bottom-left-radius: 1rem;
+  }
+  .table-mahasiswa td:last-child {
+    border-top-right-radius: 1rem;
+    border-bottom-right-radius: 1rem;
+  }
+  .badge-status {
+    padding: 0.3rem 0.8rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+  }
+  .badge-semester { background: #e0f2fe; color: #0369a1; }
+  .badge-magang { background: #f3e8ff; color: #7e22ce; }
+  .badge-aktif { background: #d1fae5; color: #065f46; }
+  .badge-lulus { background: #dbeafe; color: #1e40af; }
+  .badge-cuti { background: #fed7aa; color: #9a3412; }
+  .badge-keluar { background: #fee2e2; color: #b91c1c; }
+  .badge-default { background: #f1f5f9; color: #334155; }
+  .nama-link {
+    font-weight: 700;
+    color: #0d6efd;
+    text-decoration: none;
+    transition: 0.2s;
+  }
+  .nama-link:hover {
+    color: #0b5ed7;
+    text-decoration: underline;
+  }
+  @media (max-width: 768px) {
+    .table-mahasiswa thead {
+      display: none;
+    }
+    .table-mahasiswa tbody tr {
+      display: block;
+      margin-bottom: 1rem;
+      border-radius: 1rem;
+    }
+    .table-mahasiswa td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .table-mahasiswa td:last-child {
+      border-bottom: none;
+    }
+    .table-mahasiswa td::before {
+      content: attr(data-label);
+      font-weight: 600;
+      width: 40%;
+      color: #1e293b;
+    }
+  }
+</style>
+
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-11">
+      <!-- Header -->
+      <div class="text-center mb-5">
+        <h2 class="fw-bold" style="color: #1e293b;">Pusat Data <span style="background: linear-gradient(135deg, #0d6efd, #0dcaf0); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Mahasiswa Prodi Elektronika</span></h2>
+        <p class="text-muted">Data mahasiswa aktif, semester, dan status magang</p>
+      </div>
+
+      <!-- Pencarian -->
+      <div class="search-section">
+        <form method="GET" action="/cekmahasiswa">
+          <div class="search-box">
+            <div class="input-group">
+              <input type="text" name="search" class="form-control" placeholder="Cari berdasarkan NIM atau Nama Mahasiswa..." value="<%= search %>">
+              <button class="btn btn-primary" type="submit">
+                <i class="bi bi-search"></i> Cari
+              </button>
+            </div>
+            <div class="info-jumlah">
+              <i class="bi bi-database"></i> Menampilkan <strong><%= mahasiswa.length %></strong> mahasiswa
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tabel / Card -->
+      <div class="result-card" style="background: transparent; padding: 0;">
+        <div class="table-responsive">
+          <table class="table-mahasiswa">
+            <thead>
+              <tr><th>NIM</th><th>Nama</th><th>Semester</th><th>Status Magang</th><th>Status Mahasiswa</th></tr>
+            </thead>
+            <tbody>
+              <% if (mahasiswa.length === 0) { %>
+                <td><td colspan="5" class="text-center py-5 text-muted">Tidak ada data mahasiswa yang ditemukan.</td></tr>
+              <% } else { %>
+                <% mahasiswa.forEach(m => { 
+                  let semesterText = m.semester || '-';
+                  let magangText = m.statusMagang || '-';
+                  let statusText = m.statusMahasiswa || 'Aktif';
+                  let badgeClass = 'badge-default';
+                  if (statusText === 'Aktif') badgeClass = 'badge-aktif';
+                  else if (statusText === 'Lulus') badgeClass = 'badge-lulus';
+                  else if (statusText === 'Cuti') badgeClass = 'badge-cuti';
+                  else if (statusText === 'Keluar') badgeClass = 'badge-keluar';
+                %>
+                  <tr>
+                    <td data-label="NIM"><strong><%= m.nim || '-' %></strong></td>
+                    <td data-label="Nama"><a href="/cekmahasiswa/<%= m.id %>" class="nama-link"><%= m.nama || '-' %></a></td>
+                    <td data-label="Semester"><span class="badge-status badge-semester"><%= semesterText %></span></td>
+                    <td data-label="Status Magang"><span class="badge-status badge-magang"><%= magangText %></span></td>
+                    <td data-label="Status Mahasiswa"><span class="badge-status <%= badgeClass %>"><%= statusText %></span></td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer-landing') %>

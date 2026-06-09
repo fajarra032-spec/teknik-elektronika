@@ -1,32 +1,46 @@
 // config/firebaseAdmin.js
+const admin = require('firebase-admin');
 require('dotenv').config();
 
-let _admin = null;
-let _db = null;
-let _auth = null;
+let db, auth;
 
-function setFirebaseInstances({ admin, db, auth }) {
-  _admin = admin;
-  _db = db;
-  _auth = auth;
+try {
+  if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      }),
+    });
+    console.log('✅ Firebase Admin SDK initialized with environment variables');
+  } else {
+    const serviceAccount = require('./serviceAccountKey.json');
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+    console.log('✅ Firebase Admin SDK initialized with service account file');
+  }
+
+  db = admin.firestore();
+  auth = admin.auth();
+  console.log('✅ Firestore dan Auth siap');
+} catch (error) {
+  console.error('❌ Gagal inisialisasi Firebase Admin SDK:', error.message);
+  // Tidak exit, biarkan db dan auth null
 }
 
-function getDb() {
-  if (!_db) throw new Error('Firebase DB belum siap.');
-  return _db;
-}
-function getAuth() {
-  if (!_auth) throw new Error('Firebase Auth belum siap.');
-  return _auth;
-}
-function getAdmin() {
-  if (!_admin) throw new Error('Firebase Admin belum siap.');
-  return _admin;
+// Fungsi dummy untuk kompatibilitas dengan app.js
+function setFirebaseInstances(instances) {
+  // Jika diperlukan, bisa simpan ke global
+  if (instances) {
+    global.db = instances.db;
+    global.auth = instances.auth;
+  } else {
+    // Jika dipanggil tanpa argumen, set global dari instance yang sudah ada
+    global.db = db;
+    global.auth = auth;
+  }
 }
 
-module.exports = {
-  setFirebaseInstances,
-  get db() { return getDb(); },
-  get auth() { return getAuth(); },
-  get admin() { return getAdmin(); }
-};
+module.exports = { admin, db, auth, setFirebaseInstances };
