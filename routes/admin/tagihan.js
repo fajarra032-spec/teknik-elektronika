@@ -1,12 +1,14 @@
 /**
  * routes/admin/tagihan.js
- * Admin: Mengelola tagihan mahasiswa (daftar, detail, edit, hapus)
+ * Admin: Mengelola tagihan mahasiswa (daftar, detail, edit, hapus, import/export CSV)
  */
 
 const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -17,12 +19,11 @@ function getAngkatanFromNim(nim) {
   return '20' + nim.substring(0, 2);
 }
 
-// GET /admin/tagihan - Daftar mahasiswa dan ringkasan tagihan
+// ========== RUTE UTAMA (daftar) ==========
 router.get('/', async (req, res) => {
   try {
     const { angkatan, search } = req.query;
 
-    // Ambil semua mahasiswa
     const mahasiswaSnapshot = await db.collection('users')
       .where('role', '==', 'mahasiswa')
       .orderBy('nama')
@@ -34,10 +35,7 @@ router.get('/', async (req, res) => {
       const nim = data.nim || '';
       const angkatanMhs = getAngkatanFromNim(nim);
 
-      // Filter berdasarkan angkatan
       if (angkatan && angkatanMhs !== angkatan) continue;
-
-      // Filter berdasarkan search (nim atau nama)
       if (search) {
         const searchLower = search.toLowerCase();
         const nimMatch = nim.toLowerCase().includes(searchLower);
@@ -45,7 +43,6 @@ router.get('/', async (req, res) => {
         if (!nimMatch && !namaMatch) continue;
       }
 
-      // Ambil data tagihan mahasiswa
       const tagihanDoc = await db.collection('tagihan').doc(doc.id).get();
       let totalBelumLunas = 0;
       let tagihanCount = 0;
@@ -68,7 +65,6 @@ router.get('/', async (req, res) => {
       });
     }
 
-    // Ambil daftar angkatan unik untuk dropdown filter
     const angkatanSet = new Set();
     mahasiswaSnapshot.docs.forEach(doc => {
       const nim = doc.data().nim;
@@ -79,17 +75,200 @@ router.get('/', async (req, res) => {
     });
     const angkatanList = Array.from(angkatanSet).sort().reverse();
 
+    // Notifikasi import/export
+    let importResult = null, importError = null;
+    if (req.query.import === 'done' && req.session.importResult) {
+      importResult = req.session.importResult;
+      delete req.session.importResult;
+    }
+    if (req.session.importError) {
+      importError = req.session.importError;
+      delete req.session.importError;
+    }
+
     res.render('admin/tagihan_list', {
       title: 'Kelola Tagihan Mahasiswa',
       mahasiswaList,
       angkatanList,
-      filters: { angkatan: angkatan || '', search: search || '' }
+      filters: { angkatan: angkatan || '', search: search || '' },
+      importResult,
+      importError
     });
   } catch (error) {
     console.error('Error memuat daftar tagihan:', error);
     res.status(500).render('error', { message: 'Gagal memuat daftar tagihan' });
   }
 });
+
+// ========== EKSPORT CSV ==========
+router.get('/export', async (req, res) => {
+  try {
+    const { angkatan, search } = req.query;
+
+    const mahasiswaSnapshot = await db.collection('users')
+      .where('role', '==', 'mahasiswa')
+      .orderBy('nim')
+      .get();
+
+    const rows = [];
+    rows.push(['NIM', 'Nama', 'Semester', 'Jumlah', 'Jatuh Tempo', 'Status']);
+
+    for (const doc of mahasiswaSnapshot.docs) {
+      const data = doc.data();
+      const nim = data.nim || '';
+      const angkatanMhs = getAngkatanFromNim(nim);
+      if (angkatan && angkatanMhs !== angkatan) continue;
+      if (search) {
+        const searchLower = search.toLowerCase();
+        const nimMatch = nim.toLowerCase().includes(searchLower);
+        const namaMatch = (data.nama || '').toLowerCase().includes(searchLower);
+        if (!nimMatch && !namaMatch) continue;
+      }
+
+      const tagihanDoc = await db.collection('tagihan').doc(doc.id).get();
+      if (tagihanDoc.exists) {
+        const tagihanList = tagihanDoc.data().semester || [];
+        for (const t of tagihanList) {
+          rows.push([
+            nim,
+            data.nama || '',
+            t.semester || '',
+            t.jumlah || '',
+            t.jatuhTempo || '',
+            t.status || 'belum lunas'
+          ]);
+        }
+      } else {
+        rows.push([nim, data.nama || '', '', '', '', '']);
+      }
+    }
+
+    const csvContent = rows.map(row => 
+      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=tagihan_export.csv');
+    res.send('\uFEFF' + csvContent);
+  } catch (error) {
+    console.error('Error export tagihan:', error);
+    res.status(500).send('Gagal ekspor data');
+  }
+});
+
+// ========== TEMPLATE CSV UNTUK IMPORT ==========
+router.get('/template', (req, res) => {
+  const headers = ['nim', 'semester', 'jumlah', 'jatuh_tempo', 'status'];
+  const example = ['20230101', 'Semester 1', '2000000', '2025-01-15', 'belum lunas'];
+  const csvContent = [headers, example].map(row => row.join(',')).join('\n');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename=template_tagihan.csv');
+  res.send('\uFEFF' + csvContent);
+});
+
+// ========== IMPORT CSV ==========
+router.post('/import', upload.single('file'), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file || file.mimetype !== 'text/csv') {
+      req.session.importError = 'File harus berformat CSV';
+      return res.redirect('/admin/tagihan');
+    }
+
+    let csvContent = file.buffer.toString('utf8');
+    if (csvContent.charCodeAt(0) === 0xFEFF) csvContent = csvContent.substring(1);
+    const lines = csvContent.split(/\r?\n/);
+    if (lines.length < 2) {
+      req.session.importError = 'File CSV kosong';
+      return res.redirect('/admin/tagihan');
+    }
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const required = ['nim', 'semester', 'jumlah'];
+    const missing = required.filter(r => !headers.includes(r));
+    if (missing.length) {
+      req.session.importError = `Header tidak lengkap: ${missing.join(', ')}. Header wajib: nim, semester, jumlah.`;
+      return res.redirect('/admin/tagihan');
+    }
+
+    let success = 0, failed = 0, errors = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line === '') continue;
+      const values = line.split(',').map(v => v.trim());
+      if (values.length < headers.length) {
+        failed++;
+        errors.push(`Baris ${i}: Jumlah kolom tidak sesuai`);
+        continue;
+      }
+
+      const row = {};
+      headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
+
+      const nim = row.nim;
+      const semester = row.semester;
+      const jumlah = parseFloat(row.jumlah);
+      const jatuhTempo = row.jatuh_tempo || null;
+      let status = row.status ? row.status.toLowerCase() : 'belum lunas';
+      if (!['belum lunas', 'lunas'].includes(status)) status = 'belum lunas';
+
+      if (!nim || !semester || isNaN(jumlah)) {
+        failed++;
+        errors.push(`Baris ${i}: NIM, semester, dan jumlah (angka) wajib diisi`);
+        continue;
+      }
+
+      // Cari mahasiswa berdasarkan NIM
+      const userSnapshot = await db.collection('users')
+        .where('nim', '==', nim)
+        .where('role', '==', 'mahasiswa')
+        .limit(1)
+        .get();
+
+      if (userSnapshot.empty) {
+        failed++;
+        errors.push(`Baris ${i}: NIM ${nim} tidak ditemukan`);
+        continue;
+      }
+
+      const userId = userSnapshot.docs[0].id;
+      const tagihanRef = db.collection('tagihan').doc(userId);
+      const tagihanDoc = await tagihanRef.get();
+
+      const newTagihan = {
+        semester,
+        jumlah,
+        jatuhTempo: jatuhTempo || null,
+        status
+      };
+
+      if (tagihanDoc.exists) {
+        const data = tagihanDoc.data();
+        const semesterList = data.semester || [];
+        const existingIndex = semesterList.findIndex(t => t.semester === semester);
+        if (existingIndex !== -1) {
+          semesterList[existingIndex] = newTagihan;
+        } else {
+          semesterList.push(newTagihan);
+        }
+        await tagihanRef.update({ semester: semesterList });
+      } else {
+        await tagihanRef.set({ semester: [newTagihan] });
+      }
+      success++;
+    }
+
+    req.session.importResult = { success, failed, errors };
+    res.redirect('/admin/tagihan?import=done');
+  } catch (error) {
+    console.error('Import error:', error);
+    req.session.importError = 'Gagal memproses file: ' + error.message;
+    res.redirect('/admin/tagihan');
+  }
+});
+
+// ========== RUTE DETAIL, TAMBAH, EDIT, HAPUS ==========
 
 // GET /admin/tagihan/mahasiswa/:id - Detail tagihan per mahasiswa
 router.get('/mahasiswa/:id', async (req, res) => {
@@ -172,8 +351,7 @@ router.post('/mahasiswa/:id/tambah', async (req, res) => {
   }
 });
 
-// GET /admin/tagihan/edit/:id - Form edit tagihan (per item semester)
-// (Ini bisa dikembangkan lebih lanjut, misalnya dengan mengirim index)
+// GET /admin/tagihan/edit/:userId/:index - Form edit tagihan
 router.get('/edit/:userId/:index', async (req, res) => {
   try {
     const { userId, index } = req.params;

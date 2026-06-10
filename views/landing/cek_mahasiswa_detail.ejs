@@ -455,62 +455,83 @@
     </div>
   </div>
 
-  <!-- Informasi Magang & Mata Kuliah (menggantikan statistik logbook) -->
-  <div class="magang-info-card">
-    <h4 class="section-title"><i class="bi bi-briefcase-fill"></i> Informasi Magang & Akademik</h4>
-    <div class="magang-info-grid">
-      <div class="magang-item">
-        <div class="magang-label">Status Magang</div>
-        <div class="magang-value">
-          <span class="badge-status badge-magang"><%= mahasiswa.statusMagang || 'Belum Magang' %></span>
-        </div>
+<!-- Informasi Magang & Mata Kuliah (menggantikan statistik logbook) -->
+<div class="magang-info-card">
+  <h4 class="section-title"><i class="bi bi-briefcase-fill"></i> Informasi Magang & Akademik</h4>
+  <div class="magang-info-grid">
+    <div class="magang-item">
+      <div class="magang-label">Status Magang</div>
+      <div class="magang-value">
+        <span class="badge-status badge-magang"><%= mahasiswa.statusMagang || 'Belum Magang' %></span>
       </div>
-      <!-- Jika ada data magang aktif -->
-      <% if (typeof activePeriod !== 'undefined' && activePeriod && activePeriod.perusahaan) { %>
-        <div class="magang-item">
-          <div class="magang-label">Perusahaan</div>
-          <div class="magang-value"><%= activePeriod.perusahaan.nama || '-' %></div>
-        </div>
-        <div class="magang-item">
-          <div class="magang-label">Pembimbing 1</div>
-          <div class="magang-value"><%= activePeriod.pembimbing1Nama || '-' %></div>
-        </div>
-        <div class="magang-item">
-          <div class="magang-label">Pembimbing 2</div>
-          <div class="magang-value"><%= activePeriod.pembimbing2Nama || '-' %></div>
-        </div>
-      <% } else { %>
-        <div class="magang-item">
-          <div class="magang-label">Perusahaan</div>
-          <div class="magang-value">-</div>
-        </div>
-        <div class="magang-item">
-          <div class="magang-label">Pembimbing 1</div>
-          <div class="magang-value">-</div>
-        </div>
-        <div class="magang-item">
-          <div class="magang-label">Pembimbing 2</div>
-          <div class="magang-value">-</div>
-        </div>
-      <% } %>
+    </div>
+    <!-- Jika ada data magang aktif -->
+    <% if (typeof activePeriod !== 'undefined' && activePeriod && activePeriod.perusahaan) { %>
       <div class="magang-item">
-        <div class="magang-label">Mata Kuliah Diprogram Semester Ini</div>
-        <div class="magang-value">
-          <% if (typeof mkList !== 'undefined' && mkList && mkList.length) { %>
-            <ul>
-              <% mkList.forEach(mk => { %>
-                <li><%= mk.kode %> - <%= mk.nama %> (<%= mk.sks %> SKS)</li>
-              <% }) %>
-            </ul>
-          <% } else if (mahasiswa.statusMagang && mahasiswa.statusMagang.includes('Magang')) { %>
-            <em>Sedang menjalani <%= mahasiswa.statusMagang %>, tidak ada mata kuliah reguler semester ini.</em>
-          <% } else { %>
-            <em>Belum ada data mata kuliah yang diprogram.</em>
-          <% } %>
-        </div>
+        <div class="magang-label">Perusahaan</div>
+        <div class="magang-value"><%= activePeriod.perusahaan.nama || '-' %></div>
+      </div>
+      <div class="magang-item">
+        <div class="magang-label">Pembimbing 1</div>
+        <div class="magang-value"><%= activePeriod.pembimbing1Nama || '-' %></div>
+      </div>
+      <div class="magang-item">
+        <div class="magang-label">Pembimbing 2</div>
+        <div class="magang-value"><%= activePeriod.pembimbing2Nama || '-' %></div>
+      </div>
+    <% } else { %>
+      <div class="magang-item">
+        <div class="magang-label">Perusahaan</div>
+        <div class="magang-value">-</div>
+      </div>
+      <div class="magang-item">
+        <div class="magang-label">Pembimbing 1</div>
+        <div class="magang-value">-</div>
+      </div>
+      <div class="magang-item">
+        <div class="magang-label">Pembimbing 2</div>
+        <div class="magang-value">-</div>
+      </div>
+    <% } %>
+    <div class="magang-item">
+      <div class="magang-label">Mata Kuliah Diprogram Semester Ini</div>
+      <div class="magang-value">
+        <% if (typeof mkList !== 'undefined' && mkList && mkList.length) { %>
+          <ul>
+            <% mkList.forEach(mk => { %>
+              <li><%= mk.kode %> - <%= mk.nama %> (<%= mk.sks %> SKS)</li>
+            <% }) %>
+          </ul>
+        <% } else if (mahasiswa.statusMagang && mahasiswa.statusMagang.includes('Magang')) { %>
+          <em>Sedang menjalani <%= mahasiswa.statusMagang %>, tidak ada mata kuliah reguler semester ini.</em>
+        <% } else { %>
+          <em>Belum ada data mata kuliah yang diprogram.</em>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- ====== TAMBAHAN: Total Tagihan Belum Lunas ====== -->
+    <div class="magang-item">
+      <div class="magang-label">Total Sisa Tagihan SPP</div>
+      <div class="magang-value">
+        <% 
+          let totalTagihan = 0;
+          if (typeof totalTagihanBelumLunas !== 'undefined') {
+            totalTagihan = totalTagihanBelumLunas;
+          }
+        %>
+        <strong class="fs-5" style="color: #dc3545;">
+          Rp <%= new Intl.NumberFormat('id-ID').format(totalTagihan) %>
+        </strong>
+        <% if (totalTagihan === 0) { %>
+          <div class="small text-success mt-1"><i class="bi bi-check-circle"></i> Tidak ada tagihan tertunda</div>
+        <% } else { %>
+          <div class="small text-warning mt-1"><i class="bi bi-exclamation-triangle"></i> Segera lunasi tagihan</div>
+        <% } %>
       </div>
     </div>
   </div>
+</div>
 
   <!-- Logbook Terbaru -->
   <div class="logbook-card">

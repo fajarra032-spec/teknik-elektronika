@@ -358,7 +358,15 @@ router.get('/cekmahasiswa/:id', async (req, res) => {
       pending: allLogbook.docs.filter(d => d.data().status === 'pending').length,
       rejected: allLogbook.docs.filter(d => d.data().status === 'rejected').length
     };
-
+    // Ambil data tagihan mahasiswa dari koleksi 'tagihan'
+let totalTagihanBelumLunas = 0;
+const tagihanDoc = await db.collection('tagihan').doc(id).get();
+if (tagihanDoc.exists) {
+  const tagihanList = tagihanDoc.data().semester || [];
+  totalTagihanBelumLunas = tagihanList
+    .filter(t => t.status !== 'lunas')
+    .reduce((sum, t) => sum + (t.jumlah || 0), 0);
+}
     // Periode magang aktif
     const activePeriodSnap = await db.collection('magangPeriod')
       .where('mahasiswaId', '==', id)
@@ -387,14 +395,15 @@ router.get('/cekmahasiswa/:id', async (req, res) => {
       }
     }
 
-    res.render('landing/cek_mahasiswa_detail', {
-      title: `Detail Mahasiswa - ${mahasiswa.nama}`,
-      mahasiswa,
-      logbook,
-      stats,
-      activePeriod,
-      mkList
-    });
+res.render('landing/cek_mahasiswa_detail', {
+  title: `Detail Mahasiswa - ${mahasiswa.nama}`,
+  mahasiswa,
+  logbook,
+  stats,
+  activePeriod,
+  mkList,
+  totalTagihanBelumLunas: totalTagihanBelumLunas  
+});
   } catch (error) {
     console.error('Error detail mahasiswa:', error);
     res.status(500).render('error', { title: 'Error', message: 'Gagal memuat detail mahasiswa' });
