@@ -1,0 +1,326 @@
+<%- include('../partials/header') %>
+
+<style>
+  /* ===== ADMIN PMB STYLES ===== */
+  :root {
+    --primary: #0d6efd;
+    --primary-light: #e7f1ff;
+  }
+  body {
+    background: #f1f5f9;
+  }
+  .filter-card, .table-card {
+    background: white;
+    border-radius: 1.2rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #eef2ff;
+  }
+  .btn-gradient {
+    background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+    border: none;
+    color: white;
+    font-weight: 500;
+    padding: 0.6rem 1.5rem;
+    border-radius: 50px;
+    transition: all 0.3s;
+  }
+  .btn-gradient:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(13,110,253,0.2);
+    color: white;
+  }
+  .badge-status {
+    padding: 0.3rem 0.8rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .badge-pending { background: #fef3c7; color: #92400e; }
+  .badge-verified { background: #d1fae5; color: #065f46; }
+  .badge-rejected { background: #fee2e2; color: #b91c1c; }
+  .table-pmb {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table-pmb th, .table-pmb td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+  }
+  .table-pmb th {
+    background: #f8fafc;
+    font-weight: 600;
+    color: #1e293b;
+  }
+  .table-pmb tr:hover {
+    background-color: #f8fafc;
+  }
+  .btn-action {
+    padding: 0.25rem 0.6rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    transition: 0.2s;
+  }
+  .btn-verif { background: #10b981; color: white; border: none; }
+  .btn-verif:hover { background: #059669; }
+  .btn-reject { background: #ef4444; color: white; border: none; }
+  .btn-reject:hover { background: #dc2626; }
+  .btn-detail { background: #3b82f6; color: white; border: none; }
+  .btn-detail:hover { background: #2563eb; }
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+  }
+  .pagination .page-item {
+    list-style: none;
+  }
+  .pagination .page-link {
+    padding: 0.5rem 0.8rem;
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+    color: #0d6efd;
+    text-decoration: none;
+  }
+  .pagination .active .page-link {
+    background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+    color: white;
+    border: none;
+  }
+  @media (max-width: 768px) {
+    .table-pmb thead {
+      display: none;
+    }
+    .table-pmb, .table-pmb tbody, .table-pmb tr, .table-pmb td {
+      display: block;
+      width: 100%;
+    }
+    .table-pmb tr {
+      margin-bottom: 1rem;
+      border: 1px solid #e9ecef;
+      border-radius: 0.8rem;
+      overflow: hidden;
+    }
+    .table-pmb td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .table-pmb td:last-child {
+      border-bottom: none;
+    }
+    .table-pmb td::before {
+      content: attr(data-label);
+      font-weight: 600;
+      width: 40%;
+      color: #1e293b;
+    }
+  }
+</style>
+
+<div class="container-fluid mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="bi bi-people-fill me-2" style="color: #0d6efd;"></i>Daftar Pendaftar PMB</h2>
+        <a href="/admin/dashboard" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
+      </div>
+
+      <!-- Filter Card -->
+      <div class="filter-card">
+        <form method="GET" class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label fw-semibold"><i class="bi bi-funnel"></i> Status</label>
+            <select name="status" class="form-select">
+              <option value="">Semua Status</option>
+              <option value="pending" <%= filterStatus === 'pending' ? 'selected' : '' %>>Pending</option>
+              <option value="verified" <%= filterStatus === 'verified' ? 'selected' : '' %>>Terverifikasi</option>
+              <option value="rejected" <%= filterStatus === 'rejected' ? 'selected' : '' %>>Ditolak</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold"><i class="bi bi-search"></i> Cari (Nama / NIS / WA)</label>
+            <input type="text" name="search" class="form-control" placeholder="Nama, NIS, atau No WA..." value="<%= search || '' %>">
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn-gradient w-100"><i class="bi bi-search"></i> Filter</button>
+          </div>
+          <div class="col-md-3 text-md-end">
+            <a href="/admin/pmb/export" class="btn btn-success"><i class="bi bi-file-excel"></i> Export Excel</a>
+          </div>
+        </form>
+      </div>
+
+      <!-- Info Jumlah -->
+      <div class="mb-2">
+        <p class="text-muted">Menampilkan <strong><%= pendaftar.length %></strong> pendaftar</p>
+      </div>
+
+      <!-- Tabel Daftar Pendaftar -->
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="table-pmb">
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>NIS</th>
+                <th>Asal Sekolah</th>
+                <th>Jurusan</th>
+                <th>WA</th>
+                <th>Jalur</th>
+                <th>Status</th>
+                <th>Tgl Daftar</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (pendaftar.length === 0) { %>
+                <tr>
+                  <td colspan="9" class="text-center py-5 text-muted">Belum ada pendaftar.</td>
+                </tr>
+              <% } else { %>
+                <% pendaftar.forEach(p => { %>
+                  <tr>
+                    <td data-label="Nama"><strong><%= p.nama %></strong></td>
+                    <td data-label="NIS"><%= p.nis || '-' %></td>
+                    <td data-label="Asal Sekolah"><%= p.asal_sekolah || '-' %></td>
+                    <td data-label="Jurusan"><span class="badge bg-primary bg-opacity-10 text-primary"><%= p.jurusan %></span></td>
+                    <td data-label="WA"><a href="https://wa.me/<%= p.wa.replace(/\D/g, '') %>" target="_blank"><%= p.wa %></a></td>
+                    <td data-label="Jalur"><%= p.jalur %></td>
+                    <td data-label="Status">
+                      <% if (p.status === 'verified') { %>
+                        <span class="badge-status badge-verified"><i class="bi bi-check-circle"></i> Terverifikasi</span>
+                      <% } else if (p.status === 'rejected') { %>
+                        <span class="badge-status badge-rejected"><i class="bi bi-x-circle"></i> Ditolak</span>
+                      <% } else { %>
+                        <span class="badge-status badge-pending"><i class="bi bi-hourglass-split"></i> Pending</span>
+                      <% } %>
+                    </td>
+                    <td data-label="Tgl Daftar"><%= new Date(p.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) %></td>
+                    <td data-label="Aksi">
+                      <div class="d-flex gap-1 flex-wrap">
+                        <button class="btn-action btn-detail" onclick="detailPendaftar('<%= p.id %>')" title="Detail"><i class="bi bi-eye"></i></button>
+                        <% if (p.status === 'pending') { %>
+                          <button class="btn-action btn-verif" onclick="ubahStatus('<%= p.id %>', 'verified')" title="Verifikasi"><i class="bi bi-check-lg"></i></button>
+                          <button class="btn-action btn-reject" onclick="ubahStatus('<%= p.id %>', 'rejected')" title="Tolak"><i class="bi bi-x-lg"></i></button>
+                        <% } %>
+                        <button class="btn-action btn-danger" onclick="hapusPendaftar('<%= p.id %>')" title="Hapus"><i class="bi bi-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination (sederhana) -->
+        <% if (totalPages > 1) { %>
+          <div class="pagination">
+            <% for (let i = 1; i <= totalPages; i++) { %>
+              <a href="?page=<%= i %>&status=<%= filterStatus || '' %>&search=<%= search || '' %>" class="page-item <%= currentPage == i ? 'active' : '' %>">
+                <span class="page-link"><%= i %></span>
+              </a>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detail Pendaftar -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-gradient text-white" style="background: linear-gradient(135deg, #0d6efd, #0dcaf0);">
+        <h5 class="modal-title"><i class="bi bi-person-badge"></i> Detail Pendaftar</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="detailContent">
+        <div class="text-center py-4">Memuat data...</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function detailPendaftar(id) {
+    fetch(`/admin/pmb/detail/${id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const p = data.data;
+          let buktiHtml = p.bukti_pembayaran ? `<a href="${p.bukti_pembayaran}" target="_blank" class="btn btn-sm btn-primary">Lihat Bukti</a>` : '-';
+          let statusBadge = '';
+          if (p.status === 'verified') statusBadge = '<span class="badge-status badge-verified">Terverifikasi</span>';
+          else if (p.status === 'rejected') statusBadge = '<span class="badge-status badge-rejected">Ditolak</span>';
+          else statusBadge = '<span class="badge-status badge-pending">Pending</span>';
+          const html = `
+            <div class="row">
+              <div class="col-md-6 mb-3"><strong>Nama:</strong> ${p.nama}</div>
+              <div class="col-md-6 mb-3"><strong>Jenis Kelamin:</strong> ${p.jenis_kelamin || '-'}</div>
+              <div class="col-md-6 mb-3"><strong>NIS:</strong> ${p.nis || '-'}</div>
+              <div class="col-md-6 mb-3"><strong>Asal Sekolah:</strong> ${p.asal_sekolah || '-'}</div>
+              <div class="col-md-6 mb-3"><strong>No WhatsApp:</strong> ${p.wa || '-'}</div>
+              <div class="col-md-6 mb-3"><strong>Jurusan:</strong> ${p.jurusan}</div>
+              <div class="col-md-6 mb-3"><strong>Jalur:</strong> ${p.jalur}</div>
+              <div class="col-md-6 mb-3"><strong>Status:</strong> ${statusBadge}</div>
+              <div class="col-md-6 mb-3"><strong>Tanggal Daftar:</strong> ${new Date(p.createdAt).toLocaleString('id-ID')}</div>
+              <div class="col-12 mb-3"><strong>Bukti Pembayaran:</strong> ${buktiHtml}</div>
+              <div class="col-12 mb-3"><strong>IP Address:</strong> ${p.ip || '-'}</div>
+              <div class="col-12 mb-3"><strong>User Agent:</strong> <small>${p.userAgent || '-'}</small></div>
+            </div>
+          `;
+          document.getElementById('detailContent').innerHTML = html;
+          new bootstrap.Modal(document.getElementById('detailModal')).show();
+        } else {
+          alert('Gagal memuat detail');
+        }
+      })
+      .catch(err => alert('Terjadi kesalahan'));
+  }
+
+  function ubahStatus(id, status) {
+    let confirmMsg = status === 'verified' ? 'Verifikasi pendaftar ini?' : 'Tolak pendaftar ini?';
+    if (confirm(confirmMsg)) {
+      fetch(`/admin/pmb/status/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      }).then(res => res.json()).then(data => {
+        if (data.success) {
+          alert('Status berhasil diubah');
+          location.reload();
+        } else {
+          alert('Gagal mengubah status');
+        }
+      }).catch(() => alert('Error'));
+    }
+  }
+
+  function hapusPendaftar(id) {
+    if (confirm('Yakin hapus pendaftar ini? Data akan hilang permanen.')) {
+      fetch(`/admin/pmb/hapus/${id}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert('Pendaftar dihapus');
+            location.reload();
+          } else {
+            alert('Gagal hapus');
+          }
+        }).catch(() => alert('Error'));
+    }
+  }
+</script>
+
+<%- include('../partials/footer') %>

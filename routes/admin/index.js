@@ -46,7 +46,8 @@ router.use('/laporan-magang', require('./laporanMagang'));   // untuk persetujua
 router.use('/elk-library', require('./elkLibrary'));        // untuk kelola konten library
 // Seminar Magang
 router.use('/seminar', seminarRouter);
-
+const pmbRouter = require('./pmb');
+router.use('/pmb', pmbRouter);
 // Kelola Dosen – CRUD data dosen, upload foto
 router.use('/dosen', require('./dosen'));
 
