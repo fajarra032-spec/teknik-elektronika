@@ -1,0 +1,206 @@
+<%- include('../partials/header-landing') %>
+
+<style>
+  .detail-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  
+  /* ===== HEADER CARD BERWARNA BIRU ===== */
+  .header-card {
+    background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+    border-radius: 1.5rem;
+    padding: 2.5rem 2rem;
+    color: white;
+    box-shadow: 0 10px 30px rgba(13, 110, 253, 0.2);
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  .header-card h2 {
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .header-card p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    margin: 0;
+  }
+
+  .profile-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+  .profile-header {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    padding: 1.5rem 2rem;
+    color: white;
+  }
+  .profile-header h3 {
+    margin: 0;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .profile-body {
+    padding: 2rem;
+  }
+  .photo-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+  .photo-frame {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #0d6efd;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+  .dosen-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .photo-placeholder {
+    width: 100%;
+    height: 100%;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: #94a3b8;
+  }
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+  .info-item {
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 0.5rem;
+  }
+  .info-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .info-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-top: 0.2rem;
+  }
+  .btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem 1.2rem;
+    border-radius: 50px;
+    text-decoration: none;
+    color: #1e293b;
+    margin-bottom: 1rem;
+    transition: 0.2s;
+  }
+  .btn-back:hover {
+    background: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+  }
+  @media (max-width: 576px) {
+    .header-card { padding: 2rem 1.5rem; }
+    .header-card h2 { font-size: 1.5rem; }
+    .profile-header h3 { font-size: 1.2rem; }
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="detail-container">
+  <a href="/cekmahasiswa" class="btn-back">
+    <i class="bi bi-arrow-left"></i> Kembali ke Daftar
+  </a>
+
+  <div class="header-card">
+    <h2>Profil Dosen</h2>
+    <p>Informasi akademik dan riwayat mengajar</p>
+  </div>
+
+  <div class="profile-card">
+    <div class="profile-header">
+      <h3><i class="bi bi-person-badge"></i> Detail Dosen</h3>
+    </div>
+    <div class="profile-body">
+      <div class="photo-wrapper">
+        <div class="photo-frame">
+          <% 
+            const getFileIdFromUrl = (url) => {
+              if (!url) return null;
+              let match = url.match(/[?&]id=([^&]+)/);
+              if (match) return match[1];
+              match = url.match(/\/d\/([^\/]+)/);
+              if (match) return match[1];
+              return null;
+            };
+            const fotoUrl = dosen.foto;
+            const fileId = getFileIdFromUrl(fotoUrl);
+            let fotoSrc = '';
+            if (fileId) fotoSrc = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
+            else if (fotoUrl && fotoUrl.startsWith('http')) fotoSrc = fotoUrl;
+          %>
+          <% if (fotoSrc) { %>
+            <img src="<%= fotoSrc %>" class="dosen-photo" alt="Foto <%= dosen.nama %>" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=No+Image';">
+          <% } else { %>
+            <div class="photo-placeholder"><i class="bi bi-person-circle"></i></div>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">NUPTK</div>
+          <div class="info-value"><%= dosen.nuptk || '-' %></div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Nama Lengkap</div>
+          <div class="info-value"><%= dosen.nama || '-' %></div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Bidang / Keahlian</div>
+          <div class="info-value"><%= dosen.bidang || dosen.keahlian || '-' %></div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">Pendidikan Terakhir</div>
+          <div class="info-value"><%= dosen.pendidikan || '-' %></div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Mata Kuliah Diampu</div>
+          <div class="info-value">
+            <% if (mkList && mkList.length) { %>
+              <ul class="mb-0">
+                <% mkList.forEach(mk => { %>
+                  <li><%= mk.kode %> - <%= mk.nama %></li>
+                <% }) %>
+              </ul>
+            <% } else { %>
+              -
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer-landing') %>

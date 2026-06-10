@@ -12,7 +12,6 @@
     --bg-main: #f8fafc;
     --card-bg: #ffffff;
     --border-color: #e2e8f0;
-    
     --success: #10b981;
     --success-light: #d1fae5;
     --warning: #f59e0b;
@@ -29,10 +28,31 @@
   .detail-container {
     max-width: 1140px;
     margin: 3rem auto;
-    padding: 0 1.5rem;
+    padding: 0 1rem;
   }
 
-  /* Tombol Kembali */
+  /* HEADER CARD */
+  .header-card {
+    background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+    border-radius: 1.5rem;
+    padding: 2.5rem 2rem;
+    color: white;
+    box-shadow: 0 10px 30px rgba(13, 110, 253, 0.2);
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  .header-card h2 {
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .header-card p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    margin: 0;
+  }
+
   .btn-back {
     display: inline-flex;
     align-items: center;
@@ -45,10 +65,9 @@
     font-weight: 500;
     text-decoration: none;
     transition: all 0.3s ease;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
   }
-
   .btn-back:hover {
     background: var(--primary);
     color: white;
@@ -57,7 +76,7 @@
     box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
   }
 
-  /* Kartu Profil */
+  /* PROFILE CARD */
   .profile-card {
     background: var(--card-bg);
     border-radius: 20px;
@@ -65,41 +84,64 @@
     overflow: hidden;
     margin-bottom: 2.5rem;
   }
-
   .profile-header {
     background: var(--primary-gradient);
-    padding: 1.5rem 2.5rem;
+    padding: 1.5rem 2rem;
     color: white;
   }
-
   .profile-header h3 {
     margin: 0;
     font-weight: 700;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     display: flex;
     align-items: center;
     gap: 0.75rem;
     letter-spacing: -0.5px;
   }
-
   .profile-body {
-    padding: 2.5rem;
+    padding: 2rem;
   }
-
-  /* Layout Baru untuk Data & Foto */
   .profile-data-wrapper {
     display: flex;
+    flex-wrap: nowrap;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 3rem;
+    gap: 2rem;
   }
-
+  .info-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    min-width: 0;
+  }
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .info-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--secondary);
+    letter-spacing: 0.5px;
+    margin-bottom: 0.4rem;
+  }
+  .info-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
   .photo-wrapper {
     flex-shrink: 0;
     width: 180px;
     text-align: center;
   }
-
   .photo-frame {
     background: var(--bg-main);
     border-radius: 20px;
@@ -108,12 +150,10 @@
     transition: all 0.3s ease;
     box-shadow: 0 5px 15px rgba(0,0,0,0.05);
   }
-
   .photo-frame:hover {
     border-color: var(--primary);
     transform: scale(1.02);
   }
-
   .student-photo {
     width: 100%;
     aspect-ratio: 1 / 1;
@@ -121,7 +161,6 @@
     border-radius: 16px;
     display: block;
   }
-
   .photo-placeholder {
     width: 100%;
     aspect-ratio: 1 / 1;
@@ -133,47 +172,16 @@
     justify-content: center;
     color: #475569;
   }
-
   .photo-placeholder i {
     font-size: 4rem;
     margin-bottom: 0.5rem;
   }
-
   .photo-placeholder span {
     font-size: 0.9rem;
     font-weight: 500;
   }
 
-  .info-grid {
-    flex-grow: 1;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 2rem 1.5rem;
-  }
-
-  .info-item {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .info-label {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: var(--secondary);
-    letter-spacing: 0.5px;
-    margin-bottom: 0.4rem;
-  }
-
-  .info-value {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text-main);
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 0.5rem;
-  }
-
-  /* Badges */
+  /* BADGES */
   .badge-status {
     display: inline-flex;
     align-items: center;
@@ -183,8 +191,8 @@
     font-size: 0.85rem;
     font-weight: 600;
     letter-spacing: 0.3px;
+    white-space: nowrap;
   }
-
   .badge-semester { background: var(--primary-light); color: var(--primary); }
   .badge-magang { background: #f3e8ff; color: #7e22ce; }
   .badge-aktif { background: var(--success-light); color: var(--success); }
@@ -193,15 +201,14 @@
   .badge-keluar { background: var(--danger-light); color: var(--danger); }
   .badge-default { background: var(--border-color); color: var(--secondary); }
 
-  /* Statistik Card */
-  .stats-card {
+  /* INFORMASI MAGANG & MATA KULIAH */
+  .magang-info-card {
     background: var(--card-bg);
     border-radius: 20px;
     padding: 2rem;
     margin-bottom: 2.5rem;
     box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
   }
-
   .section-title {
     font-weight: 700;
     margin-bottom: 1.5rem;
@@ -211,49 +218,37 @@
     gap: 0.75rem;
     font-size: 1.25rem;
   }
-
   .section-title i {
     color: var(--primary);
   }
-
-  .stats-grid {
+  .magang-info-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1.5rem;
   }
-
-  .stat-item {
-    background: var(--bg-main);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 1.5rem;
-    text-align: center;
-    transition: all 0.3s ease;
+  .magang-item {
+    border-left: 3px solid var(--primary);
+    padding-left: 1rem;
   }
-
-  .stat-item:hover {
-    background: white;
-    border-color: var(--primary);
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px -5px rgba(13, 110, 253, 0.15);
-  }
-
-  .stat-number {
-    font-size: 2.5rem;
-    font-weight: 800;
-    line-height: 1;
-    margin-bottom: 0.5rem;
-  }
-
-  .stat-label {
-    font-size: 0.9rem;
-    color: var(--secondary);
-    font-weight: 600;
+  .magang-label {
+    font-size: 0.75rem;
     text-transform: uppercase;
+    font-weight: 600;
+    color: var(--secondary);
     letter-spacing: 0.5px;
+    margin-bottom: 0.3rem;
+  }
+  .magang-value {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-main);
+  }
+  .magang-value ul {
+    margin: 0;
+    padding-left: 1.2rem;
   }
 
-  /* Logbook Card & Table */
+  /* LOGBOOK CARD */
   .logbook-card {
     background: var(--card-bg);
     border-radius: 20px;
@@ -261,22 +256,21 @@
     box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
     margin-bottom: 2.5rem;
   }
-
   .table-responsive {
     border-radius: 12px;
-    overflow: hidden;
     border: 1px solid var(--border-color);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
-
   .table-logbook {
     width: 100%;
     border-collapse: collapse;
     background: white;
+    min-width: 500px;
   }
-
   .table-logbook th {
     text-align: left;
-    padding: 1rem;
+    padding: 0.9rem;
     background: var(--bg-main);
     color: var(--secondary);
     font-weight: 600;
@@ -284,73 +278,103 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-bottom: 2px solid var(--border-color);
+    white-space: nowrap;
   }
-
   .table-logbook td {
-    padding: 1rem;
+    padding: 0.9rem;
     border-bottom: 1px solid var(--border-color);
     vertical-align: middle;
     color: var(--text-main);
     font-weight: 500;
   }
-
-  .table-logbook tbody tr {
-    transition: background-color 0.2s ease;
-  }
-
   .table-logbook tbody tr:hover {
     background-color: var(--primary-light);
   }
 
-  .table-logbook tbody tr:last-child td {
-    border-bottom: none;
-  }
-
-  /* Responsif */
+  /* RESPONSIF */
   @media (max-width: 768px) {
-    .profile-header {
-      text-align: center;
-      padding: 1.5rem;
+    .detail-container {
+      padding: 0 1rem;
+      margin: 2rem auto;
     }
-    .profile-header h3 {
-      justify-content: center;
+    .header-card {
+      padding: 2rem 1.5rem;
+    }
+    .header-card h2 {
+      font-size: 1.5rem;
+    }
+    .profile-header {
+      padding: 1.2rem;
     }
     .profile-data-wrapper {
-      flex-direction: column;
-      align-items: center;
-      gap: 2rem;
+      flex-direction: row;
+      gap: 1.2rem;
+    }
+    .info-grid {
+      grid-template-columns: 1fr;
+      order: 1;
     }
     .photo-wrapper {
-      width: 150px;
+      width: 110px;
+      order: 2;
     }
-    .stats-grid {
-      grid-template-columns: repeat(2, 1fr);
+    .magang-info-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
     }
-    .profile-body, .stats-card, .logbook-card {
+    .profile-body, .magang-info-card, .logbook-card {
       padding: 1.5rem;
     }
   }
 
-  @media (max-width: 480px) {
-    .stats-grid {
-      grid-template-columns: 1fr;
+  @media (max-width: 576px) {
+    .btn-back {
+      padding: 0.5rem 1.2rem;
+      font-size: 0.9rem;
+    }
+    .header-card h2 {
+      font-size: 1.3rem;
+    }
+    .photo-wrapper {
+      width: 90px;
+    }
+    .photo-placeholder i {
+      font-size: 2.5rem;
+    }
+    .info-label {
+      font-size: 0.7rem;
+    }
+    .info-value {
+      font-size: 0.85rem;
+    }
+    .badge-status {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.8rem;
+    }
+    .table-logbook th, .table-logbook td {
+      padding: 0.7rem;
+      font-size: 0.85rem;
     }
   }
 </style>
 
 <div class="detail-container">
   <a href="/cekmahasiswa" class="btn-back">
-    <i class="bi bi-arrow-left"></i> Kembali ke Daftar
+    <i class="bi bi-arrow-left"></i> Kembali
   </a>
 
+  <div class="header-card">
+    <h2>Data Mahasiswa</h2>
+    <p>Informasi akademik, status, dan riwayat magang</p>
+  </div>
+
+  <!-- Data Pribadi -->
   <div class="profile-card">
     <div class="profile-header">
-      <h3><i class="bi bi-person-badge"></i> Data Mahasiswa</h3>
+      <h3><i class="bi bi-person-badge"></i> Data Pribadi</h3>
     </div>
     <div class="profile-body">
-      
       <div class="profile-data-wrapper">
-        <!-- Informasi Data Mahasiswa -->
         <div class="info-grid">
           <div class="info-item">
             <div class="info-label">NIM</div>
@@ -397,11 +421,9 @@
           </div>
         </div>
 
-        <!-- Foto Mahasiswa (menggantikan logo kampus) -->
         <div class="photo-wrapper">
           <div class="photo-frame">
             <% 
-              // Fungsi untuk mengekstrak fileId dari URL foto Google Drive
               const getFileIdFromUrl = (url) => {
                 if (!url) return null;
                 let match = url.match(/[?&]id=([^&]+)/);
@@ -429,35 +451,70 @@
             <% } %>
           </div>
         </div>
-
       </div>
     </div>
   </div>
 
-  <div class="stats-card">
-    <h4 class="section-title"><i class="bi bi-bar-chart-fill"></i> Statistik Logbook</h4>
-    <div class="stats-grid">
-      <div class="stat-item">
-        <div class="stat-number" style="color: var(--primary);"><%= stats.total || 0 %></div>
-        <div class="stat-label">Total Logbook</div>
+  <!-- Informasi Magang & Mata Kuliah (menggantikan statistik logbook) -->
+  <div class="magang-info-card">
+    <h4 class="section-title"><i class="bi bi-briefcase-fill"></i> Informasi Magang & Akademik</h4>
+    <div class="magang-info-grid">
+      <div class="magang-item">
+        <div class="magang-label">Status Magang</div>
+        <div class="magang-value">
+          <span class="badge-status badge-magang"><%= mahasiswa.statusMagang || 'Belum Magang' %></span>
+        </div>
       </div>
-      <div class="stat-item">
-        <div class="stat-number" style="color: var(--success);"><%= stats.approved || 0 %></div>
-        <div class="stat-label">Disetujui</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-number" style="color: var(--warning);"><%= stats.pending || 0 %></div>
-        <div class="stat-label">Menunggu</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-number" style="color: var(--danger);"><%= stats.rejected || 0 %></div>
-        <div class="stat-label">Ditolak</div>
+      <!-- Jika ada data magang aktif -->
+      <% if (typeof activePeriod !== 'undefined' && activePeriod && activePeriod.perusahaan) { %>
+        <div class="magang-item">
+          <div class="magang-label">Perusahaan</div>
+          <div class="magang-value"><%= activePeriod.perusahaan.nama || '-' %></div>
+        </div>
+        <div class="magang-item">
+          <div class="magang-label">Pembimbing 1</div>
+          <div class="magang-value"><%= activePeriod.pembimbing1Nama || '-' %></div>
+        </div>
+        <div class="magang-item">
+          <div class="magang-label">Pembimbing 2</div>
+          <div class="magang-value"><%= activePeriod.pembimbing2Nama || '-' %></div>
+        </div>
+      <% } else { %>
+        <div class="magang-item">
+          <div class="magang-label">Perusahaan</div>
+          <div class="magang-value">-</div>
+        </div>
+        <div class="magang-item">
+          <div class="magang-label">Pembimbing 1</div>
+          <div class="magang-value">-</div>
+        </div>
+        <div class="magang-item">
+          <div class="magang-label">Pembimbing 2</div>
+          <div class="magang-value">-</div>
+        </div>
+      <% } %>
+      <div class="magang-item">
+        <div class="magang-label">Mata Kuliah Diprogram Semester Ini</div>
+        <div class="magang-value">
+          <% if (typeof mkList !== 'undefined' && mkList && mkList.length) { %>
+            <ul>
+              <% mkList.forEach(mk => { %>
+                <li><%= mk.kode %> - <%= mk.nama %> (<%= mk.sks %> SKS)</li>
+              <% }) %>
+            </ul>
+          <% } else if (mahasiswa.statusMagang && mahasiswa.statusMagang.includes('Magang')) { %>
+            <em>Sedang menjalani <%= mahasiswa.statusMagang %>, tidak ada mata kuliah reguler semester ini.</em>
+          <% } else { %>
+            <em>Belum ada data mata kuliah yang diprogram.</em>
+          <% } %>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Logbook Terbaru -->
   <div class="logbook-card">
-    <h4 class="section-title"><i class="bi bi-journal-check"></i> Aktivitas Magang Saat ini</h4>
+    <h4 class="section-title"><i class="bi bi-journal-check"></i> Aktivitas Magang Terbaru</h4>
     <div class="table-responsive">
       <table class="table-logbook">
         <thead>

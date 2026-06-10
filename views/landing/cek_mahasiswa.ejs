@@ -1,87 +1,100 @@
 <%- include('../partials/header-landing') %>
 
 <style>
-  /* PDDIKTI Style */
-  .search-section {
-    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
-    border-radius: 1.5rem;
-    padding: 2rem;
+  /* Tab style */
+  .tab-container {
+    background: white;
+    border-radius: 1.2rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    padding: 1rem 1.5rem;
     margin-bottom: 2rem;
-    border: 1px solid rgba(13,110,253,0.1);
   }
-  .search-box {
-    max-width: 600px;
-    margin: 0 auto;
+  .tab-buttons {
+    display: flex;
+    gap: 1rem;
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 1.5rem;
   }
-  .search-box .input-group {
-    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-    border-radius: 60px;
-    overflow: hidden;
-  }
-  .search-box input {
+  .tab-btn {
+    background: none;
     border: none;
     padding: 0.8rem 1.5rem;
     font-size: 1rem;
+    font-weight: 600;
+    color: #64748b;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .tab-btn:hover { color: #0d6efd; }
+  .tab-btn.active {
+    color: #0d6efd;
+    border-bottom: 3px solid #0d6efd;
+    margin-bottom: -2px;
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; animation: fadeIn 0.3s; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .search-card {
+    background: #f8fafc;
+    border-radius: 1rem;
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  .search-box {
+    display: flex;
+    gap: 0.5rem;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  .search-box input {
+    flex: 1;
+    border-radius: 50px;
+    padding: 0.7rem 1.2rem;
+    border: 1px solid #dee2e6;
   }
   .search-box button {
+    border-radius: 50px;
+    padding: 0.7rem 1.5rem;
     background: linear-gradient(135deg, #0d6efd, #0dcaf0);
     border: none;
-    padding: 0 2rem;
+    color: white;
     font-weight: 600;
-    transition: all 0.2s;
-  }
-  .search-box button:hover {
-    transform: scale(1.02);
-    box-shadow: 0 5px 15px rgba(13,110,253,0.3);
   }
   .info-jumlah {
-    margin-top: 1rem;
+    margin-top: 0.8rem;
     font-size: 0.85rem;
-    color: #4b5563;
+    color: #6c757d;
     text-align: center;
   }
-  .table-mahasiswa {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0 8px;
+  .table-responsive {
+    overflow-x: auto;
   }
-  .table-mahasiswa thead th {
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 1rem;
+  }
+  .data-table th {
     background: #1e293b;
     color: white;
-    padding: 1rem;
+    padding: 0.8rem;
     font-weight: 600;
     font-size: 0.85rem;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border: none;
+    white-space: nowrap;
   }
-  .table-mahasiswa tbody tr {
-    background: white;
-    border-radius: 1rem;
-    transition: all 0.2s;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  }
-  .table-mahasiswa tbody tr:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    background: #ffffff;
-  }
-  .table-mahasiswa td {
-    padding: 1rem;
+  .data-table td {
+    padding: 0.8rem;
+    border-bottom: 1px solid #e9ecef;
     vertical-align: middle;
-    border-bottom: none;
-    background: inherit;
   }
-  .table-mahasiswa td:first-child {
-    border-top-left-radius: 1rem;
-    border-bottom-left-radius: 1rem;
-  }
-  .table-mahasiswa td:last-child {
-    border-top-right-radius: 1rem;
-    border-bottom-right-radius: 1rem;
+  .data-table tr:hover {
+    background-color: #f8f9fa;
   }
   .badge-status {
-    padding: 0.3rem 0.8rem;
+    padding: 0.2rem 0.7rem;
     border-radius: 50px;
     font-size: 0.75rem;
     font-weight: 600;
@@ -98,102 +111,187 @@
     font-weight: 700;
     color: #0d6efd;
     text-decoration: none;
-    transition: 0.2s;
   }
   .nama-link:hover {
-    color: #0b5ed7;
     text-decoration: underline;
   }
-  @media (max-width: 768px) {
-    .table-mahasiswa thead {
-      display: none;
-    }
-    .table-mahasiswa tbody tr {
-      display: block;
-      margin-bottom: 1rem;
-      border-radius: 1rem;
-    }
-    .table-mahasiswa td {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.75rem;
-      border-bottom: 1px solid #e9ecef;
-    }
-    .table-mahasiswa td:last-child {
-      border-bottom: none;
-    }
-    .table-mahasiswa td::before {
-      content: attr(data-label);
-      font-weight: 600;
-      width: 40%;
-      color: #1e293b;
-    }
+  
+  /* ===== HEADER CARD DIUBAH MENJADI GRADIENT BIRU ===== */
+  .header-card {
+    background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+    border-radius: 1.5rem;
+    padding: 2.5rem 2rem;
+    box-shadow: 0 10px 30px rgba(13, 110, 253, 0.2);
+    text-align: center;
+    margin-bottom: 2rem;
+    color: white;
+  }
+  .header-card h2 {
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 0.5rem;
+  }
+  .header-card p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    margin: 0;
+  }
+
+  @media (max-width: 576px) {
+    .tab-btn { padding: 0.5rem 1rem; font-size: 0.9rem; }
+    .search-box { flex-wrap: wrap; }
+    .search-box input, .search-box button { width: 100%; border-radius: 50px; }
+    .header-card { padding: 2rem 1.5rem; }
+    .header-card h2 { font-size: 1.5rem; }
   }
 </style>
 
 <div class="container mt-5">
   <div class="row justify-content-center">
     <div class="col-lg-11">
-      <!-- Header -->
-      <div class="text-center mb-5">
-        <h2 class="fw-bold" style="color: #1e293b;">Pusat Data <span style="background: linear-gradient(135deg, #0d6efd, #0dcaf0); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Mahasiswa Prodi Elektronika</span></h2>
-        <p class="text-muted">Data mahasiswa aktif, semester, dan status magang</p>
+      <div class="header-card">
+        <h2 class="fw-bold">Pusat Data Prodi Elektronika</h2>
+        <p>Informasi mahasiswa & dosen</p>
       </div>
 
-      <!-- Pencarian -->
-      <div class="search-section">
-        <form method="GET" action="/cekmahasiswa">
-          <div class="search-box">
-            <div class="input-group">
-              <input type="text" name="search" class="form-control" placeholder="Cari berdasarkan NIM atau Nama Mahasiswa..." value="<%= search %>">
-              <button class="btn btn-primary" type="submit">
-                <i class="bi bi-search"></i> Cari
-              </button>
-            </div>
+      <div class="tab-container">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-tab="mahasiswa">📘 Mahasiswa</button>
+          <button class="tab-btn" data-tab="dosen">👨‍🏫 Dosen</button>
+        </div>
+
+        <div id="tab-mahasiswa" class="tab-pane active">
+          <div class="search-card">
+            <form method="GET" action="/cekmahasiswa" class="search-box">
+              <input type="text" name="searchMahasiswa" placeholder="Cari NIM atau Nama Mahasiswa..." value="<%= searchMahasiswa %>">
+              <button type="submit"><i class="bi bi-search"></i> Cari</button>
+            </form>
             <div class="info-jumlah">
-              <i class="bi bi-database"></i> Menampilkan <strong><%= mahasiswa.length %></strong> mahasiswa
+              Menampilkan <strong><%= mahasiswa.length %></strong> mahasiswa
             </div>
           </div>
-        </form>
-      </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>NIM</th>
+                  <th>Nama</th>
+                  <th>Semester</th>
+                  <th>Status Magang</th>
+                  <th>Status Mahasiswa</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (mahasiswa.length === 0) { %>
+                  <tr><td colspan="5" class="text-center py-4">Tidak ada data mahasiswa.</td></tr>
+                <% } else { %>
+                  <% mahasiswa.forEach(m => { 
+                    let semesterText = m.semester || '-';
+                    let magangText = m.statusMagang || '-';
+                    let statusText = m.statusMahasiswa || 'Aktif';
+                    let badgeClass = 'badge-default';
+                    if (statusText === 'Aktif') badgeClass = 'badge-aktif';
+                    else if (statusText === 'Lulus') badgeClass = 'badge-lulus';
+                    else if (statusText === 'Cuti') badgeClass = 'badge-cuti';
+                    else if (statusText === 'Keluar') badgeClass = 'badge-keluar';
+                  %>
+                    <tr>
+                      <td><strong><%= m.nim || '-' %></strong></td>
+                      <td><a href="/cekmahasiswa/<%= m.id %>" class="nama-link"><%= m.nama || '-' %></a></td>
+                      <td><span class="badge-status badge-semester"><%= semesterText %></span></td>
+                      <td><span class="badge-status badge-magang"><%= magangText %></span></td>
+                      <td><span class="badge-status <%= badgeClass %>"><%= statusText %></span></td>
+                    </tr>
+                  <% }) %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-      <!-- Tabel / Card -->
-      <div class="result-card" style="background: transparent; padding: 0;">
-        <div class="table-responsive">
-          <table class="table-mahasiswa">
-            <thead>
-              <tr><th>NIM</th><th>Nama</th><th>Semester</th><th>Status Magang</th><th>Status Mahasiswa</th></tr>
-            </thead>
-            <tbody>
-              <% if (mahasiswa.length === 0) { %>
-                <td><td colspan="5" class="text-center py-5 text-muted">Tidak ada data mahasiswa yang ditemukan.</td></tr>
-              <% } else { %>
-                <% mahasiswa.forEach(m => { 
-                  let semesterText = m.semester || '-';
-                  let magangText = m.statusMagang || '-';
-                  let statusText = m.statusMahasiswa || 'Aktif';
-                  let badgeClass = 'badge-default';
-                  if (statusText === 'Aktif') badgeClass = 'badge-aktif';
-                  else if (statusText === 'Lulus') badgeClass = 'badge-lulus';
-                  else if (statusText === 'Cuti') badgeClass = 'badge-cuti';
-                  else if (statusText === 'Keluar') badgeClass = 'badge-keluar';
-                %>
-                  <tr>
-                    <td data-label="NIM"><strong><%= m.nim || '-' %></strong></td>
-                    <td data-label="Nama"><a href="/cekmahasiswa/<%= m.id %>" class="nama-link"><%= m.nama || '-' %></a></td>
-                    <td data-label="Semester"><span class="badge-status badge-semester"><%= semesterText %></span></td>
-                    <td data-label="Status Magang"><span class="badge-status badge-magang"><%= magangText %></span></td>
-                    <td data-label="Status Mahasiswa"><span class="badge-status <%= badgeClass %>"><%= statusText %></span></td>
-                  </tr>
-                <% }) %>
-              <% } %>
-            </tbody>
-          </table>
+        <div id="tab-dosen" class="tab-pane">
+          <div class="search-card">
+            <form method="GET" action="/cekmahasiswa" class="search-box">
+              <input type="text" name="searchDosen" placeholder="Cari NUPTK atau Nama Dosen..." value="<%= searchDosen %>">
+              <button type="submit"><i class="bi bi-search"></i> Cari</button>
+            </form>
+            <div class="info-jumlah">
+              Menampilkan <strong><%= dosen.length %></strong> dosen
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>NUPTK</th>
+                  <th>Nama</th>
+                  <th>Bidang / Keahlian</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (dosen.length === 0) { %>
+                  <tr><td colspan="3" class="text-center py-4">Tidak ada data dosen.</td></tr>
+                <% } else { %>
+                  <% dosen.forEach(d => { %>
+                    <tr>
+                      <td><strong><%= d.nuptk || '-' %></strong></td>
+                      <td><a href="/cekdosen/<%= d.id %>" class="nama-link"><%= d.nama || '-' %></a></td>
+                      <td><%= d.bidang || d.keahlian || '-' %></td>
+                    </tr>
+                  <% }) %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  // Tab switching logic (tanpa reload, tapi karena form submit dengan GET akan reload, ini hanya untuk klik tab tanpa mempertahankan filter)
+  // Agar tab tetap aktif setelah reload, kita perlu menambahkan parameter ?tab=... pada URL. Implementasi sederhana: tangani klik tab dengan mengubah hash.
+  const tabs = document.querySelectorAll('.tab-btn');
+  const panes = document.querySelectorAll('.tab-pane');
+  function activateTab(tabId) {
+    tabs.forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+    });
+    panes.forEach(pane => {
+      pane.classList.toggle('active', pane.id === `tab-${tabId}`);
+    });
+    // Simpan tab aktif ke localStorage atau URL hash
+    localStorage.setItem('activeTab', tabId);
+  }
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabId = btn.getAttribute('data-tab');
+      activateTab(tabId);
+      // Hapus parameter search dari URL agar tidak membingungkan? Bisa juga redirect ke halaman yang sama tanpa query.
+      // Untuk mempertahankan pencarian, lebih baik tidak mengubah URL. Tapi karena form submit akan reload, maka tab akan reset.
+      // Alternatif: kita bisa menambahkan input tersembunyi pada form untuk menyimpan tab aktif.
+      // Solusi sederhana: saat load, cek localStorage dan set tab aktif, lalu pada form submit, tambahkan hidden input.
+    });
+  });
+  // Saat halaman dimuat, cek localStorage
+  const savedTab = localStorage.getItem('activeTab');
+  if (savedTab && (savedTab === 'mahasiswa' || savedTab === 'dosen')) {
+    activateTab(savedTab);
+  }
+  // Tambahkan hidden input pada form untuk menyimpan tab aktif
+  document.querySelectorAll('form').forEach(form => {
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'tab';
+    hiddenInput.value = savedTab || 'mahasiswa';
+    form.appendChild(hiddenInput);
+    // Saat submit, perbarui nilai hidden input dengan tab aktif saat ini
+    form.addEventListener('submit', function() {
+      const activeTab = document.querySelector('.tab-btn.active').getAttribute('data-tab');
+      hiddenInput.value = activeTab;
+    });
+  });
+</script>
 
 <%- include('../partials/footer-landing') %>

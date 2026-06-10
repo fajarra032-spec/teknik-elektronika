@@ -43,7 +43,7 @@ router.get('/', async (req, res) => {
     statistik.mahasiswaAktif = aktifCount;
     statistik.mahasiswaMagang = magangCount;
     const dosenSnapshot = await db.collection('dosen').get();
-const jumlahDosen = dosenSnapshot.size;
+    const jumlahDosen = dosenSnapshot.size;
 
     // 2. Berita terbaru
     const beritaSnapshot = await db.collection('berita')
@@ -248,11 +248,11 @@ const jumlahDosen = dosenSnapshot.size;
     }
 
     // ============ RENDER VIEW ============
-res.render('landing/index', {
+    res.render('landing/index', {
       title: 'Teknik Elektronika - Politeknik Dewantara',
       user: req.user || null,
-      statistik,     
-      jumlahDosen,   
+      statistik,
+      jumlahDosen,
       berita,
       jadwalPenting: jadwal,
       seminar,
@@ -273,83 +273,58 @@ res.render('landing/index', {
 });
 
 // ============================================================================
-// CEK MAHASISWA (DAFTAR + PENCARIAN)
+// CEK MAHASISWA & DOSEN (GABUNGAN DENGAN TAB)
 // ============================================================================
 router.get('/cekmahasiswa', async (req, res) => {
   try {
-    const { search } = req.query;
+    const { searchMahasiswa, searchDosen } = req.query;
+
+    // Data Mahasiswa
     let mahasiswa = [];
-
-    if (search && search.trim() !== '') {
-      const keyword = search.trim();
-      const nimSnapshot = await db.collection('users')
-        .where('role', '==', 'mahasiswa')
-        .where('nim', '==', keyword)
-        .get();
-      const namaSnapshot = await db.collection('users')
-        .where('role', '==', 'mahasiswa')
-        .where('nama', '>=', keyword)
-        .where('nama', '<=', keyword + '\uf8ff')
-        .get();
-
-      const combined = new Map();
-      nimSnapshot.forEach(doc => combined.set(doc.id, { id: doc.id, ...doc.data() }));
-      namaSnapshot.forEach(doc => combined.set(doc.id, { id: doc.id, ...doc.data() }));
-      mahasiswa = Array.from(combined.values());
-    } else {
-      const snapshot = await db.collection('users')
-        .where('role', '==', 'mahasiswa')
-        .orderBy('nim')
-        .get();
-      mahasiswa = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const mhsSnapshot = await db.collection('users').where('role', '==', 'mahasiswa').get();
+    mahasiswa = mhsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (searchMahasiswa) {
+      const keyword = searchMahasiswa.toLowerCase();
+      mahasiswa = mahasiswa.filter(m =>
+        (m.nim && m.nim.includes(keyword)) ||
+        (m.nama && m.nama.toLowerCase().includes(keyword))
+      );
     }
+    mahasiswa.sort((a, b) => (a.nim || '').localeCompare(b.nim || ''));
+
+    // Data Dosen - pastikan field nuptk ada (ambil dari nip jika tidak ada)
+    let dosen = [];
+    const dosenSnapshot = await db.collection('dosen').get();
+    dosen = dosenSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        nuptk: data.nuptk || data.nip || '-',   // <-- mapping nip ke nuptk
+        nama: data.nama || '-',
+        bidang: data.bidang || data.keahlian || '-',
+        email: data.email || '-',
+        ...data   // jika ada field lain, tetap disertakan
+      };
+    });
+    if (searchDosen) {
+      const keyword = searchDosen.toLowerCase();
+      dosen = dosen.filter(d =>
+        (d.nuptk && d.nuptk.includes(keyword)) ||
+        (d.nama && d.nama.toLowerCase().includes(keyword))
+      );
+    }
+    dosen.sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
 
     res.render('landing/cek_mahasiswa', {
-      title: 'Cek Data Mahasiswa - Teknik Elektronika',
+      title: 'Data Mahasiswa & Dosen',
       mahasiswa,
-      search: search || ''
+      dosen,
+      searchMahasiswa: searchMahasiswa || '',
+      searchDosen: searchDosen || ''
     });
   } catch (error) {
     console.error('Error di /cekmahasiswa:', error);
-    res.status(500).send('Terjadi kesalahan saat memuat data mahasiswa');
-  }
-});
-
-// ============================================================================
-// CEK DOSEN (DAFTAR + PENCARIAN)
-// ============================================================================
-router.get('/cekdosen', async (req, res) => {
-  try {
-    const { search } = req.query;
-    let dosen = [];
-
-    if (search && search.trim() !== '') {
-      const keyword = search.trim();
-      const nuptkSnapshot = await db.collection('dosen')
-        .where('nuptk', '==', keyword)
-        .get();
-      const namaSnapshot = await db.collection('dosen')
-        .where('nama', '>=', keyword)
-        .where('nama', '<=', keyword + '\uf8ff')
-        .get();
-
-      const combined = new Map();
-      nuptkSnapshot.forEach(doc => combined.set(doc.id, { id: doc.id, ...doc.data() }));
-      namaSnapshot.forEach(doc => combined.set(doc.id, { id: doc.id, ...doc.data() }));
-      dosen = Array.from(combined.values());
-    } else {
-      const snapshot = await db.collection('dosen').orderBy('nama').get();
-      dosen = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    }
-
-    res.render('landing/cek_dosen', {
-      title: 'Cek Data Dosen - Teknik Elektronika',
-      dosen,
-      search: search || ''
-    });
-  } catch (error) {
-    console.error('Error di /cekdosen:', error);
-    res.status(500).send('Terjadi kesalahan saat memuat data dosen');
+    res.status(500).send('Terjadi kesalahan saat memuat data');
   }
 });
 
@@ -384,15 +359,89 @@ router.get('/cekmahasiswa/:id', async (req, res) => {
       rejected: allLogbook.docs.filter(d => d.data().status === 'rejected').length
     };
 
+    // Periode magang aktif
+    const activePeriodSnap = await db.collection('magangPeriod')
+      .where('mahasiswaId', '==', id)
+      .where('status', '==', 'active')
+      .limit(1)
+      .get();
+    const activePeriod = activePeriodSnap.empty ? null : { id: activePeriodSnap.docs[0].id, ...activePeriodSnap.docs[0].data() };
+
+    // Mata kuliah yang diprogram
+    const enrollmentSnapshot = await db.collection('enrollment')
+      .where('userId', '==', id)
+      .where('status', '==', 'active')
+      .get();
+    const mkList = [];
+    for (const enrollDoc of enrollmentSnapshot.docs) {
+      const enrollData = enrollDoc.data();
+      const mkDoc = await db.collection('mataKuliah').doc(enrollData.mkId).get();
+      if (mkDoc.exists && !mkDoc.data().isPDK) {
+        mkList.push({
+          id: mkDoc.id,
+          kode: mkDoc.data().kode,
+          nama: mkDoc.data().nama,
+          sks: mkDoc.data().sks,
+          semester: enrollData.semester
+        });
+      }
+    }
+
     res.render('landing/cek_mahasiswa_detail', {
       title: `Detail Mahasiswa - ${mahasiswa.nama}`,
       mahasiswa,
       logbook,
-      stats
+      stats,
+      activePeriod,
+      mkList
     });
   } catch (error) {
     console.error('Error detail mahasiswa:', error);
     res.status(500).render('error', { title: 'Error', message: 'Gagal memuat detail mahasiswa' });
+  }
+});
+
+// ============================================================================
+// DETAIL DOSEN (PUBLIK)
+// ============================================================================
+router.get('/cekdosen/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const dosenDoc = await db.collection('dosen').doc(id).get();
+    if (!dosenDoc.exists) {
+      return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Data dosen tidak ditemukan' });
+    }
+    const data = dosenDoc.data();
+    const dosen = {
+      id: dosenDoc.id,
+      nuptk: data.nuptk || data.nip || '-',
+      nama: data.nama || '-',
+      bidang: data.bidang || data.keahlian || '-',
+      email: data.email || '-',
+      foto: data.foto || null,
+      pendidikan: data.pendidikan || '-',
+      ...data
+    };
+
+    // Ambil mata kuliah yang diampu (jika ada field dosenIds di mataKuliah)
+    let mkList = [];
+    try {
+      const mkSnapshot = await db.collection('mataKuliah')
+        .where('dosenIds', 'array-contains', id)
+        .get();
+      mkList = mkSnapshot.docs.map(doc => ({ id: doc.id, kode: doc.data().kode, nama: doc.data().nama }));
+    } catch (err) {
+      console.warn('Gagal ambil mata kuliah yang diampu:', err.message);
+    }
+
+    res.render('landing/cek_dosen_detail', {
+      title: `Detail Dosen - ${dosen.nama}`,
+      dosen,
+      mkList
+    });
+  } catch (error) {
+    console.error('Error detail dosen:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat detail dosen' });
   }
 });
 
