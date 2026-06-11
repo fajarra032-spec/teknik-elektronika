@@ -3,39 +3,60 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+  /* ===== VARIABEL CSS LENGKAP (MENGADOPSI DARI LANDING) ===== */
   :root {
     --primary: #0d6efd;
+    --primary-dark: #0b5ed7;
+    --secondary: #0dcaf0;
+    --success: #198754;
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    
+    /* Tambahan dari desain asli */
     --primary-gradient: linear-gradient(135deg, #0d6efd, #0a58ca);
     --primary-light: #eff5ff;
-    --secondary: #64748b;
+    --secondary-text: #64748b;
     --text-main: #0f172a;
     --bg-main: #f8fafc;
     --card-bg: #ffffff;
     --border-color: #e2e8f0;
-    --success: #10b981;
     --success-light: #d1fae5;
     --warning: #f59e0b;
     --warning-light: #fef3c7;
     --danger: #ef4444;
     --danger-light: #fee2e2;
+    
+    /* Efek & transisi */
+    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.12);
+    --border-radius: 1rem;
+    --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  /* ===== BASE FLUID FONT (SAMA PERSIS DENGAN LANDING) ===== */
+  html {
+    font-size: clamp(14px, 1vw + 10px, 16px);
   }
 
   body {
     background: var(--bg-main);
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
+    color: var(--text-main);
   }
 
+  /* ===== GAYA ASLI (DIADAPTASI DENGAN CLAMP & FLUID) ===== */
   .detail-container {
     max-width: 1140px;
     margin: 3rem auto;
-    padding: 0 1rem;
+    padding: 0 clamp(1rem, 4vw, 2rem);
   }
 
   /* HEADER CARD */
   .header-card {
     background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
     border-radius: 1.5rem;
-    padding: 2.5rem 2rem;
+    padding: clamp(2rem, 5vw, 2.5rem) clamp(1.5rem, 4vw, 2rem);
     color: white;
     box-shadow: 0 10px 30px rgba(13, 110, 253, 0.2);
     margin-bottom: 2rem;
@@ -46,10 +67,11 @@
     text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     font-weight: 700;
     margin-bottom: 0.5rem;
+    font-size: clamp(1.5rem, 5vw, 2rem);
   }
   .header-card p {
     color: rgba(255, 255, 255, 0.9);
-    font-size: 1.1rem;
+    font-size: clamp(0.85rem, 3vw, 1.1rem);
     margin: 0;
   }
 
@@ -59,21 +81,22 @@
     gap: 0.5rem;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    padding: 0.6rem 1.5rem;
+    padding: clamp(0.5rem, 2vw, 0.6rem) clamp(1rem, 3vw, 1.5rem);
     border-radius: 50px;
-    color: var(--secondary);
+    color: var(--secondary-text);
     font-weight: 500;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: var(--transition);
     margin-bottom: 1.5rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    font-size: clamp(0.85rem, 2vw, 0.95rem);
   }
   .btn-back:hover {
     background: var(--primary);
     color: white;
     border-color: var(--primary);
     transform: translateX(-4px);
-    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+    box-shadow: var(--shadow-hover);
   }
 
   /* PROFILE CARD */
@@ -86,33 +109,33 @@
   }
   .profile-header {
     background: var(--primary-gradient);
-    padding: 1.5rem 2rem;
+    padding: clamp(1rem, 3vw, 1.5rem) clamp(1.2rem, 4vw, 2rem);
     color: white;
   }
   .profile-header h3 {
     margin: 0;
     font-weight: 700;
-    font-size: 1.3rem;
+    font-size: clamp(1.1rem, 3vw, 1.3rem);
     display: flex;
     align-items: center;
     gap: 0.75rem;
     letter-spacing: -0.5px;
   }
   .profile-body {
-    padding: 2rem;
+    padding: clamp(1.2rem, 4vw, 2rem);
   }
   .profile-data-wrapper {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 2rem;
+    gap: clamp(1rem, 3vw, 2rem);
   }
   .info-grid {
     flex: 1;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.5rem;
+    gap: clamp(1rem, 3vw, 1.5rem);
     min-width: 0;
   }
   .info-item {
@@ -121,15 +144,15 @@
     min-width: 0;
   }
   .info-label {
-    font-size: 0.75rem;
+    font-size: clamp(0.65rem, 2vw, 0.75rem);
     text-transform: uppercase;
     font-weight: 600;
-    color: var(--secondary);
+    color: var(--secondary-text);
     letter-spacing: 0.5px;
     margin-bottom: 0.4rem;
   }
   .info-value {
-    font-size: 1rem;
+    font-size: clamp(0.85rem, 2.5vw, 1rem);
     font-weight: 600;
     color: var(--text-main);
     border-bottom: 2px solid var(--border-color);
@@ -139,7 +162,7 @@
   }
   .photo-wrapper {
     flex-shrink: 0;
-    width: 180px;
+    width: clamp(90px, 20vw, 180px);
     text-align: center;
   }
   .photo-frame {
@@ -147,8 +170,8 @@
     border-radius: 20px;
     border: 2px solid var(--border-color);
     padding: 0.5rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
   }
   .photo-frame:hover {
     border-color: var(--primary);
@@ -173,11 +196,11 @@
     color: #475569;
   }
   .photo-placeholder i {
-    font-size: 4rem;
+    font-size: clamp(2rem, 8vw, 4rem);
     margin-bottom: 0.5rem;
   }
   .photo-placeholder span {
-    font-size: 0.9rem;
+    font-size: clamp(0.7rem, 2vw, 0.9rem);
     font-weight: 500;
   }
 
@@ -186,9 +209,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.35rem 1rem;
+    padding: clamp(0.25rem, 1vw, 0.35rem) clamp(0.6rem, 2vw, 1rem);
     border-radius: 50px;
-    font-size: 0.85rem;
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
     font-weight: 600;
     letter-spacing: 0.3px;
     white-space: nowrap;
@@ -199,13 +222,13 @@
   .badge-lulus { background: #e0f2fe; color: #0284c7; }
   .badge-cuti { background: var(--warning-light); color: var(--warning); }
   .badge-keluar { background: var(--danger-light); color: var(--danger); }
-  .badge-default { background: var(--border-color); color: var(--secondary); }
+  .badge-default { background: var(--border-color); color: var(--secondary-text); }
 
   /* INFORMASI MAGANG & MATA KULIAH */
   .magang-info-card {
     background: var(--card-bg);
     border-radius: 20px;
-    padding: 2rem;
+    padding: clamp(1.2rem, 4vw, 2rem);
     margin-bottom: 2.5rem;
     box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
   }
@@ -216,7 +239,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    font-size: 1.25rem;
+    font-size: clamp(1.1rem, 3vw, 1.25rem);
   }
   .section-title i {
     color: var(--primary);
@@ -224,22 +247,22 @@
   .magang-info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
+    gap: clamp(1rem, 3vw, 1.5rem);
   }
   .magang-item {
     border-left: 3px solid var(--primary);
     padding-left: 1rem;
   }
   .magang-label {
-    font-size: 0.75rem;
+    font-size: clamp(0.65rem, 2vw, 0.75rem);
     text-transform: uppercase;
     font-weight: 600;
-    color: var(--secondary);
+    color: var(--secondary-text);
     letter-spacing: 0.5px;
     margin-bottom: 0.3rem;
   }
   .magang-value {
-    font-size: 1rem;
+    font-size: clamp(0.85rem, 2.5vw, 1rem);
     font-weight: 500;
     color: var(--text-main);
   }
@@ -252,7 +275,7 @@
   .logbook-card {
     background: var(--card-bg);
     border-radius: 20px;
-    padding: 2rem;
+    padding: clamp(1.2rem, 4vw, 2rem);
     box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
     margin-bottom: 2.5rem;
   }
@@ -270,41 +293,33 @@
   }
   .table-logbook th {
     text-align: left;
-    padding: 0.9rem;
+    padding: clamp(0.6rem, 2vw, 0.9rem);
     background: var(--bg-main);
-    color: var(--secondary);
+    color: var(--secondary-text);
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-bottom: 2px solid var(--border-color);
     white-space: nowrap;
   }
   .table-logbook td {
-    padding: 0.9rem;
+    padding: clamp(0.6rem, 2vw, 0.9rem);
     border-bottom: 1px solid var(--border-color);
     vertical-align: middle;
     color: var(--text-main);
     font-weight: 500;
+    font-size: clamp(0.8rem, 2vw, 0.95rem);
   }
   .table-logbook tbody tr:hover {
     background-color: var(--primary-light);
+    transition: var(--transition);
   }
 
-  /* RESPONSIF */
+  /* ===== MEDIA QUERY LEBIH LENGKAP (SESUAI LANDING) ===== */
   @media (max-width: 768px) {
     .detail-container {
-      padding: 0 1rem;
       margin: 2rem auto;
-    }
-    .header-card {
-      padding: 2rem 1.5rem;
-    }
-    .header-card h2 {
-      font-size: 1.5rem;
-    }
-    .profile-header {
-      padding: 1.2rem;
     }
     .profile-data-wrapper {
       flex-direction: row;
@@ -322,38 +337,47 @@
       grid-template-columns: 1fr;
       gap: 1rem;
     }
-    .profile-body, .magang-info-card, .logbook-card {
-      padding: 1.5rem;
-    }
   }
 
   @media (max-width: 576px) {
-    .btn-back {
-      padding: 0.5rem 1.2rem;
-      font-size: 0.9rem;
+    .profile-data-wrapper {
+      flex-direction: column;
+      align-items: center;
     }
-    .header-card h2 {
-      font-size: 1.3rem;
+    .info-grid {
+      order: 2;
+      width: 100%;
     }
     .photo-wrapper {
-      width: 90px;
+      order: 1;
+      width: 120px;
+      margin-bottom: 1rem;
     }
-    .photo-placeholder i {
-      font-size: 2.5rem;
-    }
-    .info-label {
-      font-size: 0.7rem;
-    }
-    .info-value {
+    .btn-back {
+      padding: 0.4rem 1rem;
       font-size: 0.85rem;
     }
     .badge-status {
-      font-size: 0.75rem;
-      padding: 0.3rem 0.8rem;
+      white-space: normal;
+      text-align: center;
     }
     .table-logbook th, .table-logbook td {
-      padding: 0.7rem;
-      font-size: 0.85rem;
+      padding: 0.6rem;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .header-card h2 {
+      font-size: 1.3rem;
+    }
+    .profile-header h3 {
+      font-size: 1rem;
+    }
+    .section-title {
+      font-size: 1rem;
+    }
+    .photo-wrapper {
+      width: 100px;
     }
   }
 </style>
@@ -510,7 +534,7 @@
       </div>
     </div>
 
-    <!-- ====== TAMBAHAN: Total Tagihan Belum Lunas ====== -->
+    <!-- Total Tagihan Belum Lunas -->
     <div class="magang-item">
       <div class="magang-label">Total Sisa Tagihan SPP</div>
       <div class="magang-value">
@@ -562,12 +586,12 @@
                     else { statusText = 'Pending'; statusClass = 'badge-default'; }
                   %>
                   <span class="badge-status <%= statusClass %>"><%= statusText %></span>
-                </td>
-              </tr>
+                 </td>
+               </tr>
             <% }) %>
           <% } else { %>
             <tr>
-              <td colspan="4" class="text-center" style="padding: 3rem 1rem; color: var(--secondary);">
+              <td colspan="4" class="text-center" style="padding: 3rem 1rem; color: var(--secondary-text);">
                 <i class="bi bi-inbox fs-2 d-block mb-2"></i>
                 Belum ada logbook yang diunggah.
               </td>

@@ -1,34 +1,70 @@
 <%- include('../partials/header-landing') %>
 
 <style>
-  /* Tab style */
+  /* ===== VARIABEL CSS DARI LANDING ===== */
+  :root {
+    --primary: #0d6efd;
+    --primary-dark: #0b5ed7;
+    --secondary: #0dcaf0;
+    --success: #198754;
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    
+    --bg-body: #f8fafc;
+    --bg-card: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #475569;
+    --text-light: #64748b;
+    
+    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.12);
+    --border-radius: 1rem;
+    --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-heading: 'Montserrat', var(--font-sans);
+  }
+
+  /* ===== BASE FLUID FONT (SAMA PERSIS DENGAN LANDING) ===== */
+  html {
+    font-size: clamp(14px, 1vw + 10px, 16px);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-body);
+    color: var(--text-main);
+  }
+
+  /* ===== GAYA ASLI (TIDAK DIUBAH, HANYA DIADAPTASI DENGAN CLAMP) ===== */
   .tab-container {
     background: white;
     border-radius: 1.2rem;
     box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    padding: 1rem 1.5rem;
+    padding: clamp(1rem, 3vw, 1.5rem);
     margin-bottom: 2rem;
   }
   .tab-buttons {
     display: flex;
-    gap: 1rem;
+    gap: clamp(0.5rem, 2vw, 1rem);
     border-bottom: 2px solid #e9ecef;
     margin-bottom: 1.5rem;
+    flex-wrap: wrap;
   }
   .tab-btn {
     background: none;
     border: none;
-    padding: 0.8rem 1.5rem;
-    font-size: 1rem;
+    padding: clamp(0.5rem, 2vw, 0.8rem) clamp(1rem, 3vw, 1.5rem);
+    font-size: clamp(0.85rem, 2.5vw, 1rem);
     font-weight: 600;
     color: #64748b;
-    transition: all 0.2s;
+    transition: var(--transition);
     cursor: pointer;
+    white-space: nowrap;
   }
-  .tab-btn:hover { color: #0d6efd; }
+  .tab-btn:hover { color: var(--primary); }
   .tab-btn.active {
-    color: #0d6efd;
-    border-bottom: 3px solid #0d6efd;
+    color: var(--primary);
+    border-bottom: 3px solid var(--primary);
     margin-bottom: -2px;
   }
   .tab-pane { display: none; }
@@ -38,7 +74,7 @@
   .search-card {
     background: #f8fafc;
     border-radius: 1rem;
-    padding: 1.2rem;
+    padding: clamp(1rem, 3vw, 1.5rem);
     margin-bottom: 1.5rem;
   }
   .search-box {
@@ -46,24 +82,32 @@
     gap: 0.5rem;
     max-width: 500px;
     margin: 0 auto;
+    flex-wrap: wrap;
   }
   .search-box input {
     flex: 1;
     border-radius: 50px;
-    padding: 0.7rem 1.2rem;
+    padding: clamp(0.5rem, 2vw, 0.7rem) clamp(1rem, 3vw, 1.2rem);
     border: 1px solid #dee2e6;
+    font-size: clamp(0.85rem, 2vw, 1rem);
   }
   .search-box button {
     border-radius: 50px;
-    padding: 0.7rem 1.5rem;
-    background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+    padding: clamp(0.5rem, 2vw, 0.7rem) clamp(1rem, 3vw, 1.5rem);
+    background: var(--gradient);
     border: none;
     color: white;
     font-weight: 600;
+    font-size: clamp(0.85rem, 2vw, 1rem);
+    transition: var(--transition);
+  }
+  .search-box button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
   }
   .info-jumlah {
     margin-top: 0.8rem;
-    font-size: 0.85rem;
+    font-size: clamp(0.75rem, 2vw, 0.85rem);
     color: #6c757d;
     text-align: center;
   }
@@ -79,24 +123,29 @@
   .data-table th {
     background: #1e293b;
     color: white;
-    padding: 0.8rem;
+    padding: clamp(0.5rem, 2vw, 0.8rem);
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
     text-transform: uppercase;
     white-space: nowrap;
   }
   .data-table td {
-    padding: 0.8rem;
+    padding: clamp(0.5rem, 2vw, 0.8rem);
     border-bottom: 1px solid #e9ecef;
     vertical-align: middle;
+    font-size: clamp(0.8rem, 2vw, 0.95rem);
   }
-  .data-table tr:hover {
-    background-color: #f8f9fa;
+  .data-table tbody tr {
+    transition: var(--transition);
+  }
+  .data-table tbody tr:hover {
+    background-color: #f1f5f9;
+    transform: scale(1.01);
   }
   .badge-status {
     padding: 0.2rem 0.7rem;
     border-radius: 50px;
-    font-size: 0.75rem;
+    font-size: clamp(0.65rem, 1.8vw, 0.75rem);
     font-weight: 600;
     display: inline-block;
   }
@@ -109,18 +158,17 @@
   .badge-default { background: #f1f5f9; color: #334155; }
   .nama-link {
     font-weight: 700;
-    color: #0d6efd;
+    color: var(--primary);
     text-decoration: none;
   }
   .nama-link:hover {
     text-decoration: underline;
   }
   
-  /* ===== HEADER CARD DIUBAH MENJADI GRADIENT BIRU ===== */
   .header-card {
-    background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+    background: var(--gradient);
     border-radius: 1.5rem;
-    padding: 2.5rem 2rem;
+    padding: clamp(2rem, 5vw, 2.5rem) clamp(1.5rem, 4vw, 2rem);
     box-shadow: 0 10px 30px rgba(13, 110, 253, 0.2);
     text-align: center;
     margin-bottom: 2rem;
@@ -130,19 +178,52 @@
     color: #ffffff;
     text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin-bottom: 0.5rem;
+    font-size: clamp(1.5rem, 5vw, 2rem);
   }
   .header-card p {
     color: rgba(255, 255, 255, 0.9);
-    font-size: 1.1rem;
+    font-size: clamp(0.85rem, 3vw, 1.1rem);
     margin: 0;
   }
 
+  /* ===== MEDIA QUERY TAMBAHAN AGAR SAMA PERSIS DENGAN LANDING ===== */
+  @media (max-width: 768px) {
+    .tab-buttons {
+      justify-content: center;
+    }
+    .tab-btn {
+      white-space: normal;
+    }
+    .search-box {
+      max-width: 100%;
+    }
+  }
+
   @media (max-width: 576px) {
-    .tab-btn { padding: 0.5rem 1rem; font-size: 0.9rem; }
-    .search-box { flex-wrap: wrap; }
-    .search-box input, .search-box button { width: 100%; border-radius: 50px; }
-    .header-card { padding: 2rem 1.5rem; }
-    .header-card h2 { font-size: 1.5rem; }
+    .search-box {
+      flex-direction: column;
+    }
+    .search-box input,
+    .search-box button {
+      width: 100%;
+      border-radius: 50px;
+    }
+    .data-table th, .data-table td {
+      white-space: nowrap;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .header-card h2 {
+      font-size: 1.3rem;
+    }
+    .tab-container {
+      padding: 0.8rem;
+    }
+    .tab-btn {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+    }
   }
 </style>
 
@@ -250,8 +331,7 @@
 </div>
 
 <script>
-  // Tab switching logic (tanpa reload, tapi karena form submit dengan GET akan reload, ini hanya untuk klik tab tanpa mempertahankan filter)
-  // Agar tab tetap aktif setelah reload, kita perlu menambahkan parameter ?tab=... pada URL. Implementasi sederhana: tangani klik tab dengan mengubah hash.
+  // Tab switching logic (tanpa reload, namun form submit akan reload. Hidden input untuk mempertahankan tab)
   const tabs = document.querySelectorAll('.tab-btn');
   const panes = document.querySelectorAll('.tab-pane');
   function activateTab(tabId) {
@@ -261,32 +341,30 @@
     panes.forEach(pane => {
       pane.classList.toggle('active', pane.id === `tab-${tabId}`);
     });
-    // Simpan tab aktif ke localStorage atau URL hash
     localStorage.setItem('activeTab', tabId);
   }
   tabs.forEach(btn => {
     btn.addEventListener('click', () => {
       const tabId = btn.getAttribute('data-tab');
       activateTab(tabId);
-      // Hapus parameter search dari URL agar tidak membingungkan? Bisa juga redirect ke halaman yang sama tanpa query.
-      // Untuk mempertahankan pencarian, lebih baik tidak mengubah URL. Tapi karena form submit akan reload, maka tab akan reset.
-      // Alternatif: kita bisa menambahkan input tersembunyi pada form untuk menyimpan tab aktif.
-      // Solusi sederhana: saat load, cek localStorage dan set tab aktif, lalu pada form submit, tambahkan hidden input.
+      // Update hidden input di semua form
+      document.querySelectorAll('form input[name="tab"]').forEach(inp => inp.value = tabId);
     });
   });
-  // Saat halaman dimuat, cek localStorage
   const savedTab = localStorage.getItem('activeTab');
   if (savedTab && (savedTab === 'mahasiswa' || savedTab === 'dosen')) {
     activateTab(savedTab);
   }
   // Tambahkan hidden input pada form untuk menyimpan tab aktif
   document.querySelectorAll('form').forEach(form => {
-    const hiddenInput = document.createElement('input');
-    hiddenInput.type = 'hidden';
-    hiddenInput.name = 'tab';
+    let hiddenInput = form.querySelector('input[name="tab"]');
+    if (!hiddenInput) {
+      hiddenInput = document.createElement('input');
+      hiddenInput.type = 'hidden';
+      hiddenInput.name = 'tab';
+      form.appendChild(hiddenInput);
+    }
     hiddenInput.value = savedTab || 'mahasiswa';
-    form.appendChild(hiddenInput);
-    // Saat submit, perbarui nilai hidden input dengan tab aktif saat ini
     form.addEventListener('submit', function() {
       const activeTab = document.querySelector('.tab-btn.active').getAttribute('data-tab');
       hiddenInput.value = activeTab;
