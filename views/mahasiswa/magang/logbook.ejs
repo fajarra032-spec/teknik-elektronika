@@ -20,8 +20,19 @@
 %>
 
 <style>
-  /* ===== VARIABEL WARNA (sesuai navbar) ===== */
+  /* ===== VARIABEL DARI LANDING + GAYA ASLI ===== */
   :root {
+    /* Tambahan dari landing */
+    --primary: #0d6efd;
+    --primary-dark: #0b5ed7;
+    --secondary: #0dcaf0;
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.12);
+    --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    
+    /* Variabel asli */
     --primary-start: #1e3a8a;
     --primary-end: #3b82f6;
     --primary-light: rgba(30,58,138,0.1);
@@ -32,12 +43,15 @@
     --success-text: #065f46;
     --danger-bg: #fee2e2;
     --danger-text: #991b1b;
-    --font-base: 16px;
   }
 
-  html { font-size: 16px; }
+  /* ===== BASE FLUID FONT (SAMA PERSIS DENGAN LANDING) ===== */
+  html {
+    font-size: clamp(14px, 1vw + 10px, 16px);
+  }
+
   body {
-    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-sans);
     background-color: #f8fafc;
   }
 
@@ -45,7 +59,7 @@
   .magang-header {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
     border-radius: 1.5rem;
-    padding: 2rem;
+    padding: clamp(1.2rem, 4vw, 2rem);
     color: white;
     margin-bottom: 2rem;
     box-shadow: 0 15px 30px rgba(30,58,138,0.25);
@@ -68,28 +82,29 @@
     margin-bottom: 0.5rem;
     position: relative;
     z-index: 1;
-    font-size: 2.2rem;
+    font-size: clamp(1.4rem, 5vw, 2.2rem);
   }
   .magang-header p {
     margin-bottom: 0;
     opacity: 0.9;
     position: relative;
     z-index: 1;
-    font-size: 1.1rem;
+    font-size: clamp(0.85rem, 3vw, 1.1rem);
   }
   .magang-header .btn-light {
     border-radius: 50px;
-    padding: 0.6rem 1.5rem;
+    padding: clamp(0.4rem, 2vw, 0.6rem) clamp(1rem, 4vw, 1.5rem);
     font-weight: 500;
     background: white;
     color: var(--primary-start);
     border: none;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    transition: all 0.3s;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+    font-size: clamp(0.8rem, 2.5vw, 0.95rem);
   }
   .magang-header .btn-light:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-hover);
   }
 
   /* ===== TAB PDK ===== */
@@ -97,21 +112,22 @@
     margin-bottom: 1.5rem;
     background: white;
     border-radius: 1rem;
-    padding: 0.5rem;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    padding: clamp(0.3rem, 2vw, 0.5rem);
+    box-shadow: var(--shadow-sm);
   }
   .nav-tabs {
     border-bottom: none;
-    gap: 0.5rem;
+    gap: clamp(0.3rem, 2vw, 0.5rem);
     flex-wrap: wrap;
   }
   .nav-tabs .nav-link {
     border: none;
     border-radius: 2rem;
-    padding: 0.6rem 1.5rem;
+    padding: clamp(0.4rem, 2vw, 0.6rem) clamp(1rem, 3vw, 1.5rem);
     color: #6c757d;
     font-weight: 500;
-    transition: all 0.2s;
+    transition: var(--transition);
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   }
   .nav-tabs .nav-link:hover {
     background: var(--primary-light);
@@ -124,8 +140,8 @@
   }
   .badge-tab {
     margin-left: 0.5rem;
-    font-size: 0.7rem;
-    padding: 0.2rem 0.5rem;
+    font-size: clamp(0.6rem, 2vw, 0.7rem);
+    padding: clamp(0.1rem, 1vw, 0.2rem) clamp(0.3rem, 1.5vw, 0.5rem);
     border-radius: 50px;
   }
 
@@ -134,38 +150,53 @@
     background: white;
     border-left: 4px solid var(--primary-start);
     border-radius: 1.2rem;
-    padding: 1.2rem 1.5rem;
+    padding: clamp(1rem, 3vw, 1.2rem) clamp(1rem, 4vw, 1.5rem);
     margin-bottom: 2rem;
     box-shadow: 0 8px 20px rgba(0,0,0,0.03);
     display: flex;
     align-items: flex-start;
-    gap: 1rem;
+    gap: clamp(0.8rem, 3vw, 1rem);
   }
-  .panduan-icon { font-size: 2rem; color: var(--primary-start); flex-shrink: 0; }
-  .panduan-text strong { color: var(--primary-dark); display: block; margin-bottom: 0.3rem; }
-  .panduan-text ul { margin-bottom: 0; padding-left: 1.2rem; }
-  .panduan-text li { margin-bottom: 0.3rem; }
+  .panduan-icon { 
+    font-size: clamp(1.5rem, 5vw, 2rem); 
+    color: var(--primary-start); 
+    flex-shrink: 0; 
+  }
+  .panduan-text strong { 
+    color: var(--primary-dark); 
+    display: block; 
+    margin-bottom: 0.3rem; 
+    font-size: clamp(0.9rem, 2.5vw, 1rem);
+  }
+  .panduan-text ul { 
+    margin-bottom: 0; 
+    padding-left: 1.2rem; 
+  }
+  .panduan-text li { 
+    margin-bottom: 0.3rem; 
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+  }
 
   /* ===== INFO PEMBIMBING ===== */
   .info-pembimbing {
     background: #f8fafc;
     border-radius: 1rem;
-    padding: 1rem 1.5rem;
+    padding: clamp(0.8rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem);
     margin-bottom: 1.5rem;
     border: 1px solid #e2e8f0;
     display: flex;
     flex-wrap: wrap;
-    gap: 2rem;
+    gap: clamp(1rem, 3vw, 2rem);
   }
   .info-pembimbing-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.9rem;
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   }
   .info-pembimbing-item i {
     color: var(--primary-start);
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 3vw, 1.2rem);
   }
 
   /* ===== TABEL ===== */
@@ -173,7 +204,7 @@
     background: white;
     border-radius: 1.5rem;
     box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    padding: 1.5rem;
+    padding: clamp(1rem, 4vw, 1.5rem);
     margin-bottom: 2rem;
   }
   .logbook-table thead th {
@@ -181,10 +212,13 @@
     color: var(--primary-dark);
     font-weight: 600;
     text-transform: uppercase;
-    font-size: 0.85rem;
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
     letter-spacing: 0.5px;
     border-bottom: 2px solid var(--primary-start);
-    padding: 1rem 0.75rem;
+    padding: clamp(0.7rem, 2.5vw, 1rem) clamp(0.5rem, 2vw, 0.75rem);
+  }
+  .logbook-table tbody tr {
+    transition: var(--transition);
   }
   .logbook-table tbody tr:hover {
     background-color: var(--primary-light);
@@ -192,9 +226,10 @@
     box-shadow: 0 5px 15px rgba(30,58,138,0.1);
   }
   .logbook-table td {
-    padding: 1rem 0.75rem;
+    padding: clamp(0.7rem, 2.5vw, 1rem) clamp(0.5rem, 2vw, 0.75rem);
     vertical-align: middle;
     border-bottom: 1px solid #e9ecef;
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   }
 
   /* ===== BADGE STATUS ===== */
@@ -202,10 +237,10 @@
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.4rem 1rem;
+    padding: clamp(0.3rem, 1.5vw, 0.4rem) clamp(0.6rem, 2vw, 1rem);
     border-radius: 50px;
     font-weight: 500;
-    font-size: 0.85rem;
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
   }
   .badge-pending { background: var(--warning-bg); color: var(--warning-text); border: 1px solid #ffeeba; }
   .badge-approved { background: var(--success-bg); color: var(--success-text); border: 1px solid #c3e6cb; }
@@ -217,20 +252,22 @@
     border: none;
     color: white;
     font-weight: 500;
-    padding: 0.6rem 1.5rem;
+    padding: clamp(0.4rem, 2vw, 0.6rem) clamp(1rem, 3vw, 1.5rem);
     border-radius: 50px;
-    transition: all 0.3s;
+    transition: var(--transition);
     box-shadow: 0 5px 15px rgba(30,58,138,0.2);
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   }
-  .btn-gradient:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(30,58,138,0.4); color: white; }
+  .btn-gradient:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); color: white; }
   .btn-outline-gradient {
     background: transparent;
     border: 2px solid var(--primary-start);
     color: var(--primary-start);
     font-weight: 500;
-    padding: 0.5rem 1.5rem;
+    padding: clamp(0.4rem, 2vw, 0.5rem) clamp(1rem, 3vw, 1.5rem);
     border-radius: 50px;
-    transition: all 0.3s;
+    transition: var(--transition);
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   }
   .btn-outline-gradient:hover {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
@@ -239,32 +276,33 @@
     transform: translateY(-3px);
   }
   .btn-icon { display: inline-flex; align-items: center; gap: 0.5rem; }
+  .btn-sm { padding: clamp(0.2rem, 1.5vw, 0.3rem) clamp(0.5rem, 2vw, 0.8rem); font-size: clamp(0.7rem, 2vw, 0.8rem); }
 
   /* ===== GALLERY THUMBNAIL ===== */
   .gallery-thumb {
-    width: 60px;
-    height: 60px;
+    width: clamp(45px, 10vw, 60px);
+    height: clamp(45px, 10vw, 60px);
     object-fit: cover;
     border-radius: 10px;
     cursor: pointer;
     border: 2px solid transparent;
-    transition: all 0.2s;
+    transition: var(--transition);
   }
-  .gallery-thumb:hover { border-color: var(--primary-start); transform: scale(1.1); }
+  .gallery-thumb:hover { border-color: var(--primary-start); transform: scale(1.05); }
 
   /* ===== MODAL ===== */
-  .modal-content { border: none; border-radius: 1.5rem; overflow: hidden; }
+  .modal-content { border: none; border-radius: clamp(1rem, 4vw, 1.5rem); overflow: hidden; }
   .modal-header {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
     color: white;
     border-bottom: none;
-    padding: 1.5rem;
+    padding: clamp(1rem, 3vw, 1.5rem);
   }
-  .modal-header .btn-close { background: rgba(255,255,255,0.8); opacity: 0.8; transition: all 0.2s; }
+  .modal-header .btn-close { background: rgba(255,255,255,0.8); opacity: 0.8; transition: var(--transition); }
   .modal-header .btn-close:hover { opacity: 1; transform: rotate(90deg); }
-  .modal-body { padding: 2rem; }
-  .form-label { font-weight: 600; color: #2c3e50; margin-bottom: 0.5rem; }
-  .form-control, .form-select { border-radius: 1rem; border: 1px solid #dee2e6; padding: 0.6rem 1rem; }
+  .modal-body { padding: clamp(1rem, 4vw, 2rem); }
+  .form-label { font-weight: 600; color: #2c3e50; margin-bottom: 0.5rem; font-size: clamp(0.8rem, 2.5vw, 0.9rem); }
+  .form-control, .form-select { border-radius: 1rem; border: 1px solid #dee2e6; padding: clamp(0.5rem, 2vw, 0.6rem) clamp(0.8rem, 2.5vw, 1rem); font-size: clamp(0.85rem, 2.5vw, 1rem); }
   .form-control:focus, .form-select:focus { border-color: var(--primary-start); box-shadow: 0 0 0 0.25rem rgba(30,58,138,0.25); }
 
   /* ===== LIGHTBOX ===== */
@@ -272,40 +310,50 @@
   .lightbox-modal .carousel-item img { max-height: 80vh; object-fit: contain; width: 100%; }
   .lightbox-modal .carousel-control-prev, .lightbox-modal .carousel-control-next {
     background: rgba(0,0,0,0.3);
-    width: 50px;
-    height: 50px;
+    width: clamp(35px, 8vw, 50px);
+    height: clamp(35px, 8vw, 50px);
     border-radius: 50%;
     top: 50%;
     transform: translateY(-50%);
   }
 
   /* ===== EMPTY STATE ===== */
-  .empty-state { padding: 4rem 2rem; text-align: center; background: #f8f9fa; border-radius: 1.5rem; margin: 2rem 0; }
-  .empty-state i { font-size: 4rem; color: #adb5bd; margin-bottom: 1.5rem; }
-  .empty-state h4 { font-weight: 600; color: #495057; }
+  .empty-state { padding: clamp(1.5rem, 8vw, 4rem) clamp(1rem, 5vw, 2rem); text-align: center; background: #f8f9fa; border-radius: 1.5rem; margin: 2rem 0; }
+  .empty-state i { font-size: clamp(2.5rem, 10vw, 4rem); color: #adb5bd; margin-bottom: 1rem; }
+  .empty-state h4 { font-weight: 600; color: #495057; font-size: clamp(1rem, 4vw, 1.2rem); }
   .print-btn {
     background: #10b981;
     border-radius: 50px;
-    padding: 0.6rem 1.8rem;
+    padding: clamp(0.4rem, 2vw, 0.6rem) clamp(1rem, 4vw, 1.8rem);
     font-weight: 500;
     color: white;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    transition: all 0.3s;
+    transition: var(--transition);
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   }
   .print-btn:hover { background: #059669; transform: translateY(-3px); color: white; }
 
+  /* ===== RESPONSIVE LENGKAP (SESUAI LANDING) ===== */
   @media (max-width: 768px) {
-    html { font-size: 15px; }
     .gallery-thumb { width: 50px; height: 50px; }
+    .info-pembimbing { flex-direction: column; gap: 0.8rem; }
   }
   @media (max-width: 576px) {
     .table-container { padding: 1rem; }
-    .logbook-table thead th { font-size: 0.75rem; padding: 0.5rem; }
-    .logbook-table td { font-size: 0.85rem; padding: 0.5rem; }
-    .nav-tabs .nav-link { padding: 0.4rem 1rem; font-size: 0.8rem; }
+    .logbook-table thead th { font-size: 0.7rem; padding: 0.5rem; }
+    .logbook-table td { font-size: 0.75rem; padding: 0.5rem; }
+    .nav-tabs .nav-link { padding: 0.3rem 0.8rem; font-size: 0.75rem; }
+    .badge-tab { font-size: 0.6rem; }
+  }
+  @media (max-width: 400px) {
+    .magang-header h2 { font-size: 1.2rem; }
+    .magang-header p { font-size: 0.8rem; }
+    .panduan-card { flex-direction: column; }
+    .panduan-icon { text-align: center; }
+    .logbook-table thead th { white-space: nowrap; }
   }
 </style>
 

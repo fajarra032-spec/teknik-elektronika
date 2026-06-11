@@ -13,21 +13,32 @@
 %>
 
 <style>
-  /* ===== VARIABEL WARNA ===== */
+  /* ===== VARIABEL DARI LANDING + GAYA ASLI ===== */
   :root {
+    /* Tambahan dari landing */
+    --primary: #0d6efd;
+    --primary-dark: #0b5ed7;
+    --secondary: #0dcaf0;
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.12);
+    --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    
+    /* Variabel asli */
     --primary-start: #1e3a8a;
     --primary-end: #3b82f6;
     --primary-light: rgba(30,58,138,0.1);
     --primary-dark: #0f2b5c;
-    --font-base: 16px;
   }
 
+  /* ===== BASE FLUID FONT (SAMA PERSIS DENGAN LANDING) ===== */
   html {
-    font-size: 16px;
+    font-size: clamp(14px, 1vw + 10px, 16px);
   }
 
   body {
-    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-sans);
     background-color: #f8fafc;
   }
 
@@ -35,7 +46,7 @@
   .page-header {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
     border-radius: 1.2rem;
-    padding: 1.2rem;
+    padding: clamp(0.8rem, 3vw, 1.2rem);
     color: white;
     margin-bottom: 1.5rem;
     box-shadow: 0 10px 20px rgba(30,58,138,0.2);
@@ -49,14 +60,14 @@
   }
   .page-header h2 {
     font-weight: 700;
-    font-size: 1.4rem;
+    font-size: clamp(1.1rem, 4vw, 1.4rem);
     margin: 0;
     display: flex;
     align-items: center;
     gap: 0.4rem;
   }
   .page-header p {
-    font-size: 0.8rem;
+    font-size: clamp(0.7rem, 2.5vw, 0.8rem);
     opacity: 0.9;
     margin: 0.2rem 0 0;
   }
@@ -64,15 +75,15 @@
     background: rgba(255,255,255,0.2);
     backdrop-filter: blur(4px);
     border-radius: 50px;
-    padding: 0.4rem 1rem;
+    padding: clamp(0.3rem, 2vw, 0.4rem) clamp(0.6rem, 2.5vw, 1rem);
     font-weight: 500;
     color: white;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-    font-size: 0.8rem;
-    transition: 0.2s;
+    font-size: clamp(0.7rem, 2.5vw, 0.8rem);
+    transition: var(--transition);
   }
   .btn-back:hover {
     background: rgba(255,255,255,0.3);
@@ -84,38 +95,43 @@
   .table-wrapper {
     background: white;
     border-radius: 1.2rem;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-sm);
     overflow-x: auto;
     border: 1px solid rgba(30,58,138,0.1);
     -webkit-overflow-scrolling: touch;
   }
   .table-mk {
     width: 100%;
-    min-width: 500px; /* Agar tabel tidak terlalu sempit di hp, bisa di-scroll */
+    min-width: 480px; /* Agar tabel tidak terlalu sempit di hp, bisa di-scroll */
     margin-bottom: 0;
   }
   .table-mk th {
     background: #f8fafc;
     font-weight: 700;
     text-transform: uppercase;
-    font-size: 0.7rem;
-    padding: 0.7rem 0.5rem;
+    font-size: clamp(0.6rem, 2vw, 0.7rem);
+    padding: clamp(0.4rem, 2vw, 0.7rem) clamp(0.3rem, 1.5vw, 0.5rem);
     border-bottom: 2px solid #e2e8f0;
     text-align: center;
   }
   .table-mk td {
-    padding: 0.7rem 0.5rem;
+    padding: clamp(0.4rem, 2vw, 0.7rem) clamp(0.3rem, 1.5vw, 0.5rem);
     vertical-align: middle;
     border-bottom: 1px solid #f0f2f5;
-    font-size: 0.8rem;
+    font-size: clamp(0.7rem, 2.5vw, 0.8rem);
     text-align: center;
   }
   .table-mk td:first-child {
     text-align: left;
     font-weight: 500;
   }
+  .table-mk tr {
+    transition: var(--transition);
+  }
   .table-mk tr:hover {
     background: #fefce8;
+    transform: scale(1.01);
+    box-shadow: var(--shadow-sm);
   }
   .progress-bar-bg {
     background: #e2e8f0;
@@ -131,7 +147,7 @@
     border-radius: 3px;
   }
   .progress-text {
-    font-size: 0.7rem;
+    font-size: clamp(0.6rem, 2vw, 0.7rem);
     display: flex;
     justify-content: space-between;
     margin-bottom: 2px;
@@ -139,9 +155,9 @@
   .badge-tugas {
     background: #d1fae5;
     color: #065f46;
-    padding: 0.2rem 0.5rem;
+    padding: clamp(0.15rem, 1.5vw, 0.2rem) clamp(0.3rem, 1.5vw, 0.5rem);
     border-radius: 50px;
-    font-size: 0.65rem;
+    font-size: clamp(0.55rem, 2vw, 0.65rem);
     font-weight: 600;
     white-space: nowrap;
     display: inline-flex;
@@ -156,10 +172,10 @@
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
     border: none;
     color: white;
-    padding: 0.25rem 0.7rem;
+    padding: clamp(0.2rem, 1.5vw, 0.25rem) clamp(0.5rem, 2vw, 0.7rem);
     border-radius: 50px;
-    font-size: 0.7rem;
-    transition: 0.2s;
+    font-size: clamp(0.6rem, 2vw, 0.7rem);
+    transition: var(--transition);
     text-decoration: none;
     display: inline-block;
     white-space: nowrap;
@@ -173,42 +189,65 @@
   /* ===== EMPTY STATE ===== */
   .empty-state {
     text-align: center;
-    padding: 2rem;
+    padding: clamp(1rem, 5vw, 2rem);
   }
   .empty-state i {
-    font-size: 2.5rem;
+    font-size: clamp(1.8rem, 6vw, 2.5rem);
     color: #cbd5e1;
   }
   .empty-state h5 {
-    font-size: 1.1rem;
+    font-size: clamp(0.9rem, 4vw, 1.1rem);
     margin-top: 0.5rem;
   }
+  .empty-state p {
+    font-size: clamp(0.75rem, 2.5vw, 0.85rem);
+  }
 
-  /* ===== RESPONSIVE UNTUK HP ===== */
+  /* ===== RESPONSIVE LENGKAP (SESUAI LANDING) ===== */
   @media (max-width: 768px) {
-    html { font-size: 15px; }
-    .page-header { padding: 1rem; }
-    .page-header h2 { font-size: 1.3rem; }
-    .btn-back { padding: 0.3rem 0.8rem; font-size: 0.75rem; }
-    .table-mk th { font-size: 0.65rem; padding: 0.5rem 0.3rem; }
-    .table-mk td { padding: 0.5rem 0.3rem; font-size: 0.75rem; }
-    .badge-tugas { font-size: 0.6rem; padding: 0.15rem 0.4rem; }
-    .btn-detail { font-size: 0.65rem; padding: 0.2rem 0.6rem; }
-    .progress-text { font-size: 0.65rem; }
+    .table-mk {
+      min-width: 500px;
+    }
   }
 
   @media (max-width: 480px) {
-    .table-mk { min-width: 480px; }
-    .table-mk th { font-size: 0.6rem; }
-    .table-mk td { font-size: 0.7rem; }
-    .btn-detail { font-size: 0.6rem; padding: 0.2rem 0.5rem; }
-    .badge-tugas { font-size: 0.55rem; }
-    .progress-text { font-size: 0.6rem; }
+    .table-mk {
+      min-width: 450px;
+    }
+    .table-mk th {
+      font-size: 0.6rem;
+      padding: 0.4rem 0.3rem;
+    }
+    .table-mk td {
+      font-size: 0.7rem;
+      padding: 0.4rem 0.3rem;
+    }
+    .badge-tugas {
+      font-size: 0.55rem;
+    }
+    .btn-detail {
+      font-size: 0.6rem;
+      padding: 0.2rem 0.5rem;
+    }
   }
 
-  @media (max-width: 360px) {
-    .table-mk { min-width: 420px; }
-    .table-mk th, .table-mk td { padding: 0.4rem 0.2rem; }
+  @media (max-width: 400px) {
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .btn-back {
+      align-self: flex-start;
+    }
+    .table-mk {
+      min-width: 400px;
+    }
+    .table-mk th, .table-mk td {
+      padding: 0.35rem 0.25rem;
+    }
+    .progress-text {
+      font-size: 0.55rem;
+    }
   }
 </style>
 

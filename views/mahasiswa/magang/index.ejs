@@ -27,8 +27,19 @@
 %>
 
 <style>
-  /* ===== VARIABEL WARNA ===== */
+  /* ===== VARIABEL DARI LANDING + GAYA ASLI ===== */
   :root {
+    /* Tambahan dari landing */
+    --primary: #0d6efd;
+    --primary-dark: #0b5ed7;
+    --secondary: #0dcaf0;
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.12);
+    --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    
+    /* Variabel asli */
     --primary-start: #1e3a8a;
     --primary-end: #3b82f6;
     --primary-light: rgba(30,58,138,0.08);
@@ -44,9 +55,13 @@
     --gray-bg: #f8fafc;
   }
 
-  html { font-size: 16px; }
+  /* ===== BASE FLUID FONT (SAMA PERSIS DENGAN LANDING) ===== */
+  html {
+    font-size: clamp(14px, 1vw + 10px, 16px);
+  }
+
   body {
-    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-sans);
     background: linear-gradient(145deg, #f1f5f9 0%, #f8fafc 100%);
     min-height: 100vh;
   }
@@ -55,7 +70,7 @@
   .magang-header {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
     border-radius: 1.5rem;
-    padding: 2rem;
+    padding: clamp(1.2rem, 4vw, 2rem);
     color: white;
     margin-bottom: 2rem;
     box-shadow: 0 15px 30px rgba(30,58,138,0.25);
@@ -75,7 +90,7 @@
   }
   .magang-header h2 {
     font-weight: 700;
-    font-size: 1.8rem;
+    font-size: clamp(1.3rem, 5vw, 1.8rem);
     margin-bottom: 0.5rem;
     position: relative;
     z-index: 1;
@@ -84,7 +99,7 @@
     gap: 0.75rem;
   }
   .magang-header p {
-    font-size: 1rem;
+    font-size: clamp(0.85rem, 3vw, 1rem);
     opacity: 0.9;
     position: relative;
     z-index: 1;
@@ -92,9 +107,9 @@
   .badge-header {
     background: rgba(255,255,255,0.2);
     backdrop-filter: blur(4px);
-    padding: 0.5rem 1rem;
+    padding: clamp(0.3rem, 2vw, 0.5rem) clamp(0.8rem, 3vw, 1rem);
     border-radius: 50px;
-    font-size: 0.85rem;
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
   }
 
   /* ===== SECTION TITLE ===== */
@@ -104,11 +119,11 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    font-size: 1.3rem;
+    font-size: clamp(1rem, 4vw, 1.3rem);
     color: #1e293b;
   }
   .section-title i {
-    font-size: 1.5rem;
+    font-size: clamp(1.2rem, 4vw, 1.5rem);
   }
 
   /* ===== CARD MAGANG ===== */
@@ -118,12 +133,12 @@
     overflow: hidden;
     margin-bottom: 1rem;
     box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-    transition: all 0.3s;
+    transition: var(--transition);
     border: 1px solid var(--gray-border);
   }
   .card-magang:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-hover);
   }
   .card-magang.active {
     border-left: 5px solid var(--success);
@@ -137,18 +152,18 @@
     background: #fefefe;
   }
   .card-magang .card-header {
-    padding: 1rem 1.25rem;
+    padding: clamp(0.8rem, 3vw, 1rem) clamp(1rem, 3vw, 1.25rem);
     background: white;
     border-bottom: 1px solid var(--gray-border);
   }
   .card-magang .card-body {
-    padding: 1.25rem;
+    padding: clamp(1rem, 3vw, 1.25rem);
   }
 
   /* ===== INFO CARD STATUS (KONSISTEN) ===== */
   .info-card-status {
     border-radius: 1.2rem;
-    padding: 1.5rem;
+    padding: clamp(1rem, 4vw, 1.5rem);
     margin-bottom: 1.5rem;
     box-shadow: 0 5px 15px rgba(0,0,0,0.05);
   }
@@ -166,6 +181,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-size: clamp(0.9rem, 2.5vw, 1rem);
   }
   .info-card-status.waiting h6 {
     color: #b45309;
@@ -176,15 +192,15 @@
   .dosen-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: clamp(0.8rem, 3vw, 1rem);
     margin-top: 0.5rem;
   }
   .dosen-item {
     background: white;
     border-radius: 1rem;
-    padding: 0.75rem 1rem;
+    padding: clamp(0.5rem, 2vw, 0.75rem) clamp(0.8rem, 3vw, 1rem);
     flex: 1;
-    min-width: 200px;
+    min-width: clamp(150px, 40vw, 200px);
     border: 1px solid #e2e8f0;
   }
   .dosen-item i {
@@ -196,14 +212,14 @@
     border: none;
     color: white;
     border-radius: 50px;
-    padding: 0.4rem 1.2rem;
-    font-size: 0.8rem;
+    padding: clamp(0.3rem, 1.5vw, 0.4rem) clamp(0.8rem, 3vw, 1.2rem);
+    font-size: clamp(0.7rem, 2vw, 0.8rem);
     font-weight: 500;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    transition: all 0.3s;
+    transition: var(--transition);
   }
   .btn-hubungi:hover {
     background: #d97706;
@@ -215,13 +231,14 @@
     border: none;
     color: white;
     border-radius: 50px;
-    padding: 0.6rem 1.8rem;
+    padding: clamp(0.4rem, 2vw, 0.6rem) clamp(1rem, 4vw, 1.8rem);
     font-weight: 600;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
-    transition: all 0.3s;
+    transition: var(--transition);
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   }
   .btn-krs:hover {
     transform: translateY(-2px);
@@ -247,14 +264,14 @@
     border: none;
     color: white;
     border-radius: 50px;
-    padding: 0.45rem 1.2rem;
-    font-size: 0.85rem;
+    padding: clamp(0.35rem, 1.5vw, 0.45rem) clamp(0.8rem, 3vw, 1.2rem);
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
     font-weight: 500;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    transition: all 0.3s;
+    transition: var(--transition);
   }
   .btn-primary-custom:hover {
     transform: translateY(-2px);
@@ -266,14 +283,14 @@
     background: white;
     color: #1e293b;
     border-radius: 50px;
-    padding: 0.4rem 1rem;
-    font-size: 0.8rem;
+    padding: clamp(0.3rem, 1.5vw, 0.4rem) clamp(0.6rem, 2vw, 1rem);
+    font-size: clamp(0.7rem, 2vw, 0.8rem);
     font-weight: 500;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    transition: all 0.2s;
+    transition: var(--transition);
   }
   .btn-outline-secondary-custom:hover {
     background: var(--gray-bg);
@@ -283,14 +300,14 @@
     background: var(--warning-light);
     color: #c2410c;
     border-radius: 50px;
-    padding: 0.35rem 1rem;
-    font-size: 0.75rem;
+    padding: clamp(0.25rem, 1.5vw, 0.35rem) clamp(0.6rem, 2vw, 1rem);
+    font-size: clamp(0.65rem, 1.8vw, 0.75rem);
     font-weight: 500;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    transition: all 0.2s;
+    transition: var(--transition);
   }
   .btn-warning-custom:hover {
     background: #fed7aa;
@@ -301,9 +318,10 @@
     border: none;
     color: white;
     border-radius: 50px;
-    padding: 0.5rem 1.5rem;
+    padding: clamp(0.4rem, 2vw, 0.5rem) clamp(1rem, 4vw, 1.5rem);
     font-weight: 600;
-    transition: all 0.3s;
+    transition: var(--transition);
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   }
   .btn-success-custom:hover {
     background: #059669;
@@ -314,13 +332,13 @@
   /* ===== EMPTY STATE ===== */
   .empty-state {
     text-align: center;
-    padding: 3rem 2rem;
+    padding: clamp(1.5rem, 8vw, 3rem) clamp(1rem, 5vw, 2rem);
     background: white;
     border-radius: 1.5rem;
     border: 1px solid var(--gray-border);
   }
   .empty-state i {
-    font-size: 4rem;
+    font-size: clamp(2.5rem, 10vw, 4rem);
     color: #cbd5e1;
     margin-bottom: 1rem;
   }
@@ -328,6 +346,7 @@
     font-weight: 600;
     color: #495057;
     margin-bottom: 0.5rem;
+    font-size: clamp(1rem, 4vw, 1.2rem);
   }
 
   /* ===== ALERT ===== */
@@ -335,7 +354,7 @@
     background: var(--warning-light);
     border-left: 4px solid var(--warning);
     border-radius: 1rem;
-    padding: 1rem;
+    padding: clamp(0.8rem, 3vw, 1rem);
     margin-bottom: 1rem;
   }
 
@@ -343,7 +362,7 @@
   .info-section {
     background: white;
     border-radius: 1.5rem;
-    padding: 1.5rem;
+    padding: clamp(1rem, 4vw, 1.5rem);
     margin-top: 3rem;
     box-shadow: 0 5px 15px rgba(0,0,0,0.05);
     border: 1px solid var(--gray-border);
@@ -355,29 +374,60 @@
     padding: 0.75rem 0;
   }
   .info-icon {
-    width: 40px;
-    height: 40px;
+    width: clamp(30px, 8vw, 40px);
+    height: clamp(30px, 8vw, 40px);
     border-radius: 50%;
     background: var(--primary-light);
     color: var(--primary-start);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 3vw, 1.2rem);
   }
 
-  /* ===== RESPONSIVE ===== */
+  /* ===== RESPONSIVE LENGKAP (SESUAI LANDING) ===== */
   @media (max-width: 768px) {
-    html { font-size: 15px; }
-    .magang-header { padding: 1.5rem; }
-    .magang-header h2 { font-size: 1.5rem; }
-    .section-title { font-size: 1.2rem; }
-    .dosen-list { flex-direction: column; }
+    .dosen-list {
+      flex-direction: column;
+    }
   }
 
   @media (max-width: 576px) {
-    html { font-size: 14px; }
-    .empty-state { padding: 2rem 1rem; }
+    .empty-state {
+      padding: 1.5rem;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .magang-header h2 {
+      font-size: 1.2rem;
+    }
+    .badge-header {
+      font-size: 0.7rem;
+    }
+    .section-title {
+      font-size: 1rem;
+    }
+    .card-magang .card-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+  }
+
+  /* ===== STEP CARD (PANDUAN) - TETAP DIPERTAHANKAN ===== */
+  .step-card {
+    transition: var(--transition);
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+  .step-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1) !important;
+  }
+  .step-number {
+    font-weight: 700;
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   }
 </style>
 
@@ -622,7 +672,7 @@
     </div>
   <% } %>
 
-    <!-- ========== PANDUAN PROSEDUR MAGANG (LENGKAP) - DIPERCANTIK ========== -->
+  <!-- ========== PANDUAN PROSEDUR MAGANG (LENGKAP) - DIPERCANTIK ========== -->
   <div class="info-section">
     <div class="d-flex align-items-center gap-2 mb-4">
       <div class="rounded-circle bg-primary bg-opacity-10 p-2">
@@ -639,7 +689,7 @@
       <div class="col-md-6 col-lg-3">
         <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
           <div class="d-flex align-items-center gap-3 mb-2">
-            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">1</div>
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">1</div>
             <span class="badge bg-warning text-dark">Wajib</span>
           </div>
           <h6 class="fw-bold">Program PDK di KRS</h6>
@@ -650,7 +700,7 @@
       <div class="col-md-6 col-lg-3">
         <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
           <div class="d-flex align-items-center gap-3 mb-2">
-            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">2</div>
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">2</div>
             <span class="badge bg-info text-white">Dospim 2</span>
           </div>
           <h6 class="fw-bold">Aktivasi Periode</h6>
@@ -661,7 +711,7 @@
       <div class="col-md-6 col-lg-3">
         <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
           <div class="d-flex align-items-center gap-3 mb-2">
-            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">3</div>
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">3</div>
             <span class="badge bg-success text-white">Harian</span>
           </div>
           <h6 class="fw-bold">Isi Logbook Harian</h6>
@@ -672,7 +722,7 @@
       <div class="col-md-6 col-lg-3">
         <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
           <div class="d-flex align-items-center gap-3 mb-2">
-            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">4</div>
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">4</div>
             <span class="badge bg-secondary text-white">Otomatis</span>
           </div>
           <h6 class="fw-bold">Logbook Terkunci</h6>
@@ -683,7 +733,7 @@
       <div class="col-md-6 col-lg-3">
         <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
           <div class="d-flex align-items-center gap-3 mb-2">
-            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">5</div>
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">5</div>
             <span class="badge bg-warning text-dark">Nilai</span>
           </div>
           <h6 class="fw-bold">Penilaian Dospim 2</h6>
@@ -694,7 +744,7 @@
       <div class="col-md-6 col-lg-3">
         <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
           <div class="d-flex align-items-center gap-3 mb-2">
-            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">6</div>
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">6</div>
             <span class="badge bg-danger text-white">Revisi</span>
           </div>
           <h6 class="fw-bold">Upload Laporan & Revisi</h6>
@@ -705,7 +755,7 @@
       <div class="col-md-6 col-lg-3">
         <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
           <div class="d-flex align-items-center gap-3 mb-2">
-            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">7</div>
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">7</div>
             <span class="badge bg-success text-white">Final</span>
           </div>
           <h6 class="fw-bold">Finalisasi Kaprodi</h6>
@@ -716,7 +766,7 @@
       <div class="col-md-6 col-lg-3">
         <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
           <div class="d-flex align-items-center gap-3 mb-2">
-            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">8</div>
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">8</div>
             <span class="badge bg-info text-white">⭐ Ulasan</span>
           </div>
           <h6 class="fw-bold">Beri Ulasan Perusahaan</h6>
@@ -733,22 +783,6 @@
       </div>
     </div>
   </div>
-
-  <style>
-    .step-card {
-      transition: all 0.2s ease-in-out;
-      border: 1px solid rgba(0,0,0,0.05);
-    }
-    .step-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1) !important;
-    }
-    .step-number {
-      font-weight: 700;
-      font-size: 1.1rem;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-  </style>
 
 <script>
   function copyPesan() {
