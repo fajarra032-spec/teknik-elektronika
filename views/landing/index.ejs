@@ -20,8 +20,9 @@
     box-sizing: border-box;
 }
 
+/* ===== BASE FLUID FONT (SAMA PERSIS DENGAN LANDING) ===== */
 html {
-    font-size: 16px;
+    font-size: clamp(14px, 1vw + 10px, 16px);
 }
 
 /* ===== VARIABLES ===== */
@@ -144,11 +145,6 @@ body {
 /* ===== TYPOGRAPHY RESPONSIF ===== */
 
 /* Base Typography (Default untuk layar menengah ke atas) */
-html {
-    /* Menggunakan fluid typography dasar (opsional) atau fallback tetap */
-    font-size: clamp(14px, 1vw + 10px, 16px);
-}
-
 h1, .h1 { font-size: 2.5rem; font-weight: 800; line-height: 1.2; }
 h2, .h2 { font-size: 2rem; font-weight: 700; line-height: 1.25; }
 h3, .h3 { font-size: 1.75rem; font-weight: 700; line-height: 1.3; }
@@ -159,14 +155,12 @@ p, .text-body { line-height: 1.6; margin-bottom: 1rem; }
 
 /* Layar Sangat Besar (Monitor Ultra Wide) */
 @media (min-width: 1400px) {
-    html { font-size: 16.5px; }
     h1, .h1 { font-size: 2.8rem; }
     h2, .h2 { font-size: 2.2rem; }
 }
 
 /* Tablet Landscape & Laptop Kecil */
 @media (max-width: 992px) {
-    html { font-size: 15.5px; }
     h1, .h1 { font-size: 2.2rem; }
     h2, .h2 { font-size: 1.8rem; }
     h3, .h3 { font-size: 1.6rem; }
@@ -174,7 +168,6 @@ p, .text-body { line-height: 1.6; margin-bottom: 1rem; }
 
 /* Tablet Portrait */
 @media (max-width: 768px) {
-    html { font-size: 15px; }
     h1, .h1 { font-size: 2rem; }
     h2, .h2 { font-size: 1.6rem; }
     h3, .h3 { font-size: 1.4rem; }
@@ -184,7 +177,6 @@ p, .text-body { line-height: 1.6; margin-bottom: 1rem; }
 
 /* Smartphone Landscape & Phablet */
 @media (max-width: 576px) {
-    html { font-size: 14px; }
     h1, .h1 { font-size: 1.8rem; }
     h2, .h2 { font-size: 1.5rem; }
     h3, .h3 { font-size: 1.3rem; }
@@ -194,7 +186,6 @@ p, .text-body { line-height: 1.6; margin-bottom: 1rem; }
 
 /* Smartphone Portrait / Layar Sangat Kecil */
 @media (max-width: 400px) {
-    html { font-size: 13px; }
     h1, .h1 { font-size: 1.6rem; }
     h2, .h2 { font-size: 1.35rem; }
     h3, .h3 { font-size: 1.2rem; }
@@ -318,7 +309,7 @@ p, .text-body { line-height: 1.6; margin-bottom: 1rem; }
 
 .hero-overlay {
     position: absolute;
-    inset: 0; /* Menggantikan top, left, right, bottom 0 */
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -666,7 +657,7 @@ p, .text-body { line-height: 1.6; margin-bottom: 1rem; }
 
 /* ===== TABLE STYLING ===== */
 .table-schedule {
-    background: white; /* Tabel tetap putih untuk kontras data */
+    background: white;
     border-radius: var(--border-radius);
     overflow: hidden;
     box-shadow: var(--shadow-sm);
@@ -890,7 +881,104 @@ p, .text-body { line-height: 1.6; margin-bottom: 1rem; }
     font-size: 0.95rem;
     line-height: 1.6;
 }
+/* ===== VIDEO CAROUSEL (BERBAGAI ASPEK RASIO) ===== */
+.video-carousel {
+    position: relative;
+}
+.video-carousel .carousel-inner {
+    padding: 0 1rem;
+}
+.video-slide {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.video-wrapper {
+    width: 100%;
+    background: #000;
+    border-radius: 1rem;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-height: 70vh;
+    box-shadow: var(--shadow-sm);
+}
+.video-wrapper video {
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    object-fit: contain; /* penting: video tidak terpotong, sesuai rasio asli */
+    display: block;
+}
+.video-caption {
+    text-align: center;
+    margin-top: 1rem;
+    padding: 0.5rem;
+}
+.video-caption h5 {
+    font-weight: 700;
+    font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+    margin-bottom: 0.3rem;
+    color: var(--text-main);
+}
+.video-caption p {
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+    color: var(--text-muted);
+    margin-bottom: 0;
+}
+/* Tombol navigasi carousel */
+.video-carousel .carousel-control-prev,
+.video-carousel .carousel-control-next {
+    width: 5%;
+    opacity: 0.8;
+    transition: var(--transition);
+}
+.video-carousel .carousel-control-prev:hover,
+.video-carousel .carousel-control-next:hover {
+    opacity: 1;
+}
+.video-carousel .carousel-control-prev-icon,
+.video-carousel .carousel-control-next-icon {
+    background-color: var(--primary);
+    border-radius: 50%;
+    padding: 1rem;
+    background-size: 50%;
+}
+/* Indikator */
+.video-carousel .carousel-indicators {
+    position: relative;
+    margin-top: 1rem;
+    bottom: 0;
+}
+.video-carousel .carousel-indicators button {
+    background-color: var(--primary);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    opacity: 0.5;
+}
+.video-carousel .carousel-indicators button.active {
+    opacity: 1;
+}
+/* Responsif */
+@media (max-width: 768px) {
+    .video-wrapper video {
+        max-height: 50vh;
+    }
+}
 
+/* Responsif: di mobile */
+@media (max-width: 576px) {
+    .video-carousel .carousel-inner {
+        padding: 0 0.5rem;
+    }
+    .video-carousel .carousel-control-prev,
+    .video-carousel .carousel-control-next {
+        width: 8%;
+    }
+}
 /* ===== ANIMATIONS ===== */
 @keyframes float {
     0% { transform: translateY(0px); }
@@ -956,7 +1044,7 @@ p, .text-body { line-height: 1.6; margin-bottom: 1rem; }
     .search-form .btn {
         border-radius: 50px !important;
         margin-bottom: 0.5rem;
-        width: 100%; /* Full width di mobile */
+        width: 100%;
     }
 }
 
@@ -1030,36 +1118,40 @@ p, .text-body { line-height: 1.6; margin-bottom: 1rem; }
                     <div class="stat-label">Seminar Mendatang</div>
                 </div>
             </div>
+<!-- ===== PENCARIAN MAHASISWA (MODERN, TIDAK TERBAGI) ===== -->
 <div class="row mt-5 pt-2">
-    <div class="col-12">
-        <div class="search-hero-card">
-            <div class="text-center mb-4">
-
-                <p class="text-muted">Masukkan NIM atau Nama Mahasiswa untuk melihat progres akademik & magang</p>
-            </div>
-            <div class="search-wrapper">
-                <form action="/cekmahasiswa" method="GET" class="search-form">
-                    <div class="input-group input-group-lg">
-                        <span class="input-group-text bg-white border-end-0 rounded-start-pill ps-4">
-                            <i class="bi bi-search text-primary"></i>
-                        </span>
-                        <input type="text" class="form-control border-start-0 border-end-0" 
-                               name="search" placeholder="Cari berdasarkan NIM atau Nama..." 
-                               value="<%= typeof search !== 'undefined' ? search : '' %>">
-                        <button class="btn btn-primary rounded-end-pill px-4" type="submit">
-                            Cari <i class="bi bi-arrow-right-short"></i>
-                        </button>
-                    </div>
-                </form>
-                <div class="text-center mt-3">
-                    <small class="text-muted">
-                        Contoh: 20230101, Budi, atau langsung 
-                        <a href="/cekmahasiswa" class="text-decoration-none">Lihat semua mahasiswa →</a>
-                    </small>
-                </div>
-            </div>
+  <div class="col-12">
+    <div class="search-hero-card">
+      <div class="text-center mb-4">
+        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-4 py-2 mb-3">
+          <i class="bi bi-search-heart me-1"></i> Informasi Mahasiswa
+        </span>
+        <h3 class="fw-bold" style="color: #1e293b;">Cari Data Mahasiswa</h3>
+        <p class="text-muted">Masukkan NIM atau Nama Mahasiswa untuk melihat progres akademik & magang</p>
+      </div>
+      <div class="search-wrapper">
+        <form action="/cekmahasiswa" method="GET" class="search-form">
+          <div class="input-group input-group-lg">
+            <span class="input-group-text bg-white border-end-0 rounded-start-pill ps-4">
+              <i class="bi bi-search text-primary"></i>
+            </span>
+            <input type="text" class="form-control border-start-0 border-end-0" 
+                   name="search" placeholder="Cari NIM atau Nama..." 
+                   value="<%= typeof search !== 'undefined' ? search : '' %>">
+            <button class="btn btn-primary rounded-end-pill px-4" type="submit">
+              Cari <i class="bi bi-arrow-right-short"></i>
+            </button>
+          </div>
+        </form>
+        <div class="text-center mt-3">
+          <small class="text-muted">
+            Contoh: 20230101, Budi, atau langsung 
+            <a href="/cekmahasiswa" class="text-decoration-none">Lihat semua mahasiswa →</a>
+          </small>
         </div>
+      </div>
     </div>
+  </div>
 </div>
 
     <!-- VISI MISI -->
@@ -1394,30 +1486,74 @@ p, .text-body { line-height: 1.6; margin-bottom: 1rem; }
         </div>
     </section>
 
-    <!-- MITRA INDUSTRI - 3 card per baris -->
-    <section class="section-wrapper">
-        <h2 class="section-title">Mitra <span>Industri</span></h2>
-        <div class="row g-4 align-items-center">
-            <div class="col-4 col-md-2">
-                <div class="mitra-item"><img src="https://i.ibb.co.com/SDJ2YCbN/image.png" alt="Mitra"></div>
+<!-- VIDEO KONTEN - CAROUSEL MANUAL (tidak otomatis) -->
+<section class="section-wrapper">
+    <h2 class="section-title">Video <span>Konten</span></h2>
+    <div id="videoCarousel" class="carousel slide video-carousel">
+        <!-- Indikator slide -->
+        <div class="carousel-indicators">
+            <button type="button" data-bs-target="#videoCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+            <button type="button" data-bs-target="#videoCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+            <button type="button" data-bs-target="#videoCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        </div>
+        <div class="carousel-inner">
+            <!-- Slide 1 -->
+            <div class="carousel-item active">
+                <div class="video-slide">
+                    <div class="video-wrapper">
+                        <video controls preload="metadata">
+                            <source src="/videos/video1.mp4" type="video/mp4">
+                            Browser Anda tidak mendukung video.
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <h5>Judul Video 1</h5>
+                        <p>Deskripsi singkat video pertama.</p>
+                    </div>
+                </div>
             </div>
-            <div class="col-4 col-md-2">
-                <div class="mitra-item"><img src="https://image.indonetwork.co.id/companies/thumbs/400x300/2020/06/25/764823d5-147c-4a45-85ed-5123b5e766d8.jpeg" alt="Mitra"></div>
+            <!-- Slide 2 -->
+            <div class="carousel-item">
+                <div class="video-slide">
+                    <div class="video-wrapper">
+                        <video controls preload="metadata">
+                            <source src="/videos/video2.mp4" type="video/mp4">
+                            Browser Anda tidak mendukung video.
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <h5>Judul Video 2</h5>
+                        <p>Deskripsi video kedua.</p>
+                    </div>
+                </div>
             </div>
-            <div class="col-4 col-md-2">
-                <div class="mitra-item"><img src="https://i.ibb.co.com/m51k6j91/image.png" alt="Mitra"></div>
-            </div>
-            <div class="col-4 col-md-2">
-                <div class="mitra-item"><img src="https://i.ibb.co.com/pjqQkgbz/image.png" alt="Mitra"></div>
-            </div>
-            <div class="col-4 col-md-2">
-                <div class="mitra-item"><img src="https://i.ibb.co.com/1G8Xn9QR/image.png" alt="Mitra"></div>
-            </div>
-            <div class="col-4 col-md-2">
-                <div class="mitra-item"><img src="https://i.ibb.co.com/5h2FWN6F/image.png" alt="Mitra"></div>
+            <!-- Slide 3 -->
+            <div class="carousel-item">
+                <div class="video-slide">
+                    <div class="video-wrapper">
+                        <video controls preload="metadata">
+                            <source src="/videos/video3.mp4" type="video/mp4">
+                            Browser Anda tidak mendukung video.
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <h5>Judul Video 3</h5>
+                        <p>Deskripsi video ketiga.</p>
+                    </div>
+                </div>
             </div>
         </div>
-    </section>
+        <!-- Tombol navigasi -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#videoCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#videoCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+</section>
 
     <!-- TESTIMONI ALUMNI -->
     <section class="section-wrapper">

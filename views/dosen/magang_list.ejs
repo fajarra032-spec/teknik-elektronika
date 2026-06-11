@@ -24,8 +24,19 @@
 %>
 
 <style>
-  /* ===== VARIABEL WARNA ===== */
+  /* ===== VARIABEL DARI LANDING + GAYA ASLI ===== */
   :root {
+    /* Tambahan dari landing */
+    --primary: #0d6efd;
+    --primary-dark: #0b5ed7;
+    --secondary: #0dcaf0;
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.12);
+    --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    
+    /* Variabel asli */
     --primary-start: #1e3a8a;
     --primary-end: #3b82f6;
     --primary-light: rgba(30,58,138,0.1);
@@ -39,20 +50,23 @@
     --info-bg: #dbeafe;
     --info-text: #1e40af;
     --gray-border: #e2e8f0;
-    --font-base: 16px;
   }
 
-  html { font-size: 16px; }
+  /* ===== BASE FLUID FONT (SAMA PERSIS DENGAN LANDING) ===== */
+  html {
+    font-size: clamp(14px, 1vw + 10px, 16px);
+  }
+
   body {
-    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-sans);
     background-color: #f8fafc;
   }
 
   /* Page Header */
   .page-header {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border-radius: 1.5rem;
-    padding: 1.5rem 2rem;
+    border-radius: clamp(1rem, 4vw, 1.5rem);
+    padding: clamp(1rem, 4vw, 1.5rem) clamp(1rem, 4vw, 2rem);
     color: white;
     margin-bottom: 2rem;
     box-shadow: 0 15px 30px rgba(30,58,138,0.25);
@@ -61,6 +75,8 @@
     align-items: center;
     position: relative;
     overflow: hidden;
+    flex-wrap: wrap;
+    gap: clamp(0.8rem, 3vw, 1rem);
   }
   .page-header::before {
     content: '';
@@ -81,28 +97,28 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    font-size: 2rem;
+    font-size: clamp(1.3rem, 5vw, 2rem);
   }
   .page-header .btn-back {
     background: white;
     border: none;
     border-radius: 50px;
-    padding: 0.6rem 1.8rem;
+    padding: clamp(0.4rem, 2vw, 0.6rem) clamp(1rem, 4vw, 1.8rem);
     font-weight: 600;
     color: var(--primary-start);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    transition: all 0.3s;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
     position: relative;
     z-index: 1;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.95rem;
+    font-size: clamp(0.8rem, 2.5vw, 0.95rem);
   }
   .page-header .btn-back:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-hover);
     color: var(--primary-dark);
   }
 
@@ -111,10 +127,10 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
+    padding: clamp(0.3rem, 1.5vw, 0.5rem) clamp(0.6rem, 2vw, 1rem);
     border-radius: 50px;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
     margin-bottom: 1rem;
   }
   .role-pembimbing2 {
@@ -130,24 +146,29 @@
   /* Statistik Ringkasan */
   .stats-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: clamp(0.8rem, 3vw, 1rem);
     margin-bottom: 1.5rem;
   }
   .stat-card {
     background: white;
     border-radius: 1rem;
-    padding: 1rem;
+    padding: clamp(0.8rem, 3vw, 1rem);
     text-align: center;
     border: 1px solid var(--gray-border);
+    transition: var(--transition);
+  }
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-sm);
   }
   .stat-card .stat-value {
-    font-size: 1.8rem;
+    font-size: clamp(1.3rem, 5vw, 1.8rem);
     font-weight: 700;
     color: var(--primary-start);
   }
   .stat-card .stat-label {
-    font-size: 0.8rem;
+    font-size: clamp(0.7rem, 2vw, 0.8rem);
     color: #64748b;
   }
 
@@ -155,9 +176,9 @@
   .filter-section {
     background: white;
     border-radius: 1.2rem;
-    padding: 1rem 1.5rem;
+    padding: clamp(0.8rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem);
     margin-bottom: 1.5rem;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-sm);
     border: 1px solid var(--gray-border);
     display: flex;
     flex-wrap: wrap;
@@ -167,19 +188,21 @@
   .filter-section .form-control,
   .filter-section .form-select {
     border-radius: 50px;
-    padding: 0.5rem 1rem;
+    padding: clamp(0.4rem, 2vw, 0.5rem) clamp(0.8rem, 2.5vw, 1rem);
     border: 1px solid #cbd5e1;
-    min-width: 200px;
+    min-width: clamp(150px, 30vw, 200px);
     flex: 1 1 auto;
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   }
   .filter-section .btn-filter {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
     color: white;
     border: none;
     border-radius: 50px;
-    padding: 0.5rem 1.5rem;
+    padding: clamp(0.4rem, 2vw, 0.5rem) clamp(1rem, 3vw, 1.5rem);
     font-weight: 500;
-    transition: all 0.2s;
+    transition: var(--transition);
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   }
   .filter-section .btn-filter:hover {
     transform: translateY(-2px);
@@ -190,9 +213,10 @@
     border: 1.5px solid var(--primary-start);
     color: var(--primary-start);
     border-radius: 50px;
-    padding: 0.5rem 1.5rem;
+    padding: clamp(0.4rem, 2vw, 0.5rem) clamp(1rem, 3vw, 1.5rem);
     font-weight: 500;
-    transition: all 0.2s;
+    transition: var(--transition);
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   }
   .filter-section .btn-reset:hover {
     background: var(--primary-start);
@@ -204,7 +228,7 @@
   .table-container {
     background: white;
     border-radius: 1.5rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
     border: 1px solid var(--gray-border);
     padding: 0;
@@ -225,32 +249,34 @@
     color: #1e293b;
     font-weight: 600;
     text-transform: uppercase;
-    font-size: 0.8rem;
+    font-size: clamp(0.7rem, 2vw, 0.8rem);
     letter-spacing: 0.5px;
     border: 1px solid #dee2e6;
-    padding: 0.75rem 1rem;
+    padding: clamp(0.5rem, 2vw, 0.75rem) clamp(0.5rem, 2vw, 1rem);
     white-space: nowrap;
     text-align: center;
   }
   .magang-table tbody td {
     vertical-align: middle;
-    padding: 0.75rem 1rem;
+    padding: clamp(0.5rem, 2vw, 0.75rem) clamp(0.5rem, 2vw, 1rem);
     border: 1px solid #dee2e6;
-    font-size: 0.9rem;
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   }
   .magang-table tbody tr {
-    transition: background-color 0.2s;
+    transition: var(--transition);
   }
   .magang-table tbody tr:hover {
     background-color: #f2f2f2;
+    transform: scale(1.01);
+    box-shadow: var(--shadow-sm);
   }
 
   /* PDK Badges */
   .pdk-badge {
     display: inline-block;
-    padding: 0.2rem 0.6rem;
+    padding: clamp(0.15rem, 1vw, 0.2rem) clamp(0.4rem, 1.5vw, 0.6rem);
     border-radius: 50px;
-    font-size: 0.7rem;
+    font-size: clamp(0.6rem, 2vw, 0.7rem);
     font-weight: 600;
     margin-right: 0.3rem;
     margin-bottom: 0.2rem;
@@ -264,9 +290,9 @@
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-    padding: 0.3rem 0.8rem;
+    padding: clamp(0.2rem, 1.5vw, 0.3rem) clamp(0.5rem, 2vw, 0.8rem);
     border-radius: 50px;
-    font-size: 0.7rem;
+    font-size: clamp(0.65rem, 2vw, 0.7rem);
     font-weight: 600;
   }
   .status-success {
@@ -287,9 +313,9 @@
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-    padding: 0.3rem 0.8rem;
+    padding: clamp(0.2rem, 1.5vw, 0.3rem) clamp(0.5rem, 2vw, 0.8rem);
     border-radius: 50px;
-    font-size: 0.7rem;
+    font-size: clamp(0.65rem, 2vw, 0.7rem);
     font-weight: 600;
   }
   .role-pembimbing1-table {
@@ -307,8 +333,8 @@
 
   /* Avatar dan Foto */
   .avatar-circle {
-    width: 45px;
-    height: 45px;
+    width: clamp(35px, 8vw, 45px);
+    height: clamp(35px, 8vw, 45px);
     border-radius: 50%;
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
     color: white;
@@ -316,14 +342,14 @@
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 1.2rem;
+    font-size: clamp(0.9rem, 3vw, 1.2rem);
     text-transform: uppercase;
     box-shadow: 0 4px 10px rgba(30,58,138,0.3);
     flex-shrink: 0;
   }
   .foto-mahasiswa {
-    width: 45px;
-    height: 45px;
+    width: clamp(35px, 8vw, 45px);
+    height: clamp(35px, 8vw, 45px);
     object-fit: cover;
     border-radius: 50%;
     border: 3px solid white;
@@ -341,20 +367,21 @@
     font-weight: 700;
     color: #1e293b;
     margin-bottom: 0.2rem;
+    font-size: clamp(0.85rem, 2.5vw, 0.95rem);
   }
   .mahasiswa-info .nim {
-    font-size: 0.8rem;
+    font-size: clamp(0.7rem, 2vw, 0.8rem);
     color: #64748b;
   }
 
   /* Badge statistik */
   .badge-stat {
     display: inline-block;
-    padding: 0.4rem 1rem;
+    padding: clamp(0.2rem, 1.5vw, 0.4rem) clamp(0.6rem, 2vw, 1rem);
     border-radius: 50px;
     font-weight: 600;
-    font-size: 0.8rem;
-    min-width: 70px;
+    font-size: clamp(0.7rem, 2vw, 0.8rem);
+    min-width: 60px;
     text-align: center;
   }
   .badge-total {
@@ -373,10 +400,10 @@
   /* Tombol aksi */
   .btn-action {
     border-radius: 50px;
-    padding: 0.4rem 1.2rem;
-    font-size: 0.85rem;
+    padding: clamp(0.3rem, 1.5vw, 0.4rem) clamp(0.8rem, 2.5vw, 1.2rem);
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
     font-weight: 500;
-    transition: all 0.3s;
+    transition: var(--transition);
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -418,28 +445,29 @@
     border-radius: 1rem;
     border-left: 4px solid var(--primary-start);
     background: white;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-    padding: 1rem 1.5rem;
+    box-shadow: var(--shadow-sm);
+    padding: clamp(0.8rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem);
     margin-bottom: 2rem;
     border: 1px solid var(--gray-border);
     color: var(--primary-dark);
+    font-size: clamp(0.85rem, 2.5vw, 0.95rem);
   }
 
   /* Empty state */
   .empty-state {
-    padding: 4rem 2rem;
+    padding: clamp(1.5rem, 8vw, 4rem) clamp(1rem, 5vw, 2rem);
     text-align: center;
     background: #f8f9fa;
     border-radius: 1.5rem;
   }
   .empty-state i {
-    font-size: 4rem;
+    font-size: clamp(2rem, 8vw, 4rem);
     color: #adb5bd;
     margin-bottom: 1rem;
   }
   .empty-state p {
     color: #6c757d;
-    font-size: 1.1rem;
+    font-size: clamp(0.9rem, 3vw, 1.1rem);
   }
 
   /* No results message */
@@ -448,22 +476,39 @@
     padding: 2rem;
     color: #64748b;
     font-style: italic;
+    font-size: clamp(0.85rem, 2.5vw, 0.95rem);
   }
 
-  /* ===== RESPONSIVE ===== */
+  /* ===== RESPONSIVE LENGKAP (SESUAI LANDING) ===== */
   @media (max-width: 768px) {
-    html { font-size: 15px; }
-    .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
-    .page-header h2 { font-size: 1.6rem; }
-    .page-header .btn-back { width: 100%; justify-content: center; }
-    .filter-section { flex-direction: column; align-items: stretch; }
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .page-header .btn-back {
+      width: 100%;
+      justify-content: center;
+    }
+    .filter-section {
+      flex-direction: column;
+      align-items: stretch;
+    }
     .filter-section .form-control,
     .filter-section .form-select,
     .filter-section .btn-filter,
-    .filter-section .btn-reset { width: 100%; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); }
-    .btn-actions { flex-direction: column; align-items: stretch; }
-    .btn-action { justify-content: center; }
+    .filter-section .btn-reset {
+      width: 100%;
+    }
+    .stats-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .btn-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .btn-action {
+      justify-content: center;
+    }
 
     /* Card view untuk mobile */
     .magang-table thead {
@@ -497,13 +542,30 @@
       font-weight: 600;
       color: var(--primary-start);
       width: 40%;
+      font-size: clamp(0.75rem, 2vw, 0.85rem);
     }
   }
 
   @media (max-width: 576px) {
-    html { font-size: 14px; }
-    .page-header h2 { font-size: 1.4rem; }
-    .stats-row { grid-template-columns: 1fr; }
+    .stats-row {
+      grid-template-columns: 1fr;
+    }
+    .page-header h2 {
+      font-size: 1.3rem;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .page-header h2 {
+      font-size: 1.1rem;
+    }
+    .mahasiswa-info {
+      flex-wrap: wrap;
+    }
+    .btn-action {
+      padding: 0.25rem 0.6rem;
+      font-size: 0.7rem;
+    }
   }
 </style>
 
@@ -517,8 +579,6 @@
       <i class="bi bi-arrow-left"></i> Kembali ke Dashboard
     </a>
   </div>
-
-
 
   <!-- Statistik Ringkasan -->
   <% if (mahasiswaList.length > 0) { 
@@ -589,8 +649,8 @@
                   <p>Anda belum memiliki mahasiswa bimbingan.</p>
                   <p class="small text-muted mt-2">Silakan hubungi admin untuk menetapkan bimbingan.</p>
                 </div>
-              </td>
-            </tr>
+               </td>
+             </tr>
           <% } else { %>
             <% mahasiswaList.forEach((m, index) => { 
               const fotoUrl = m.foto ? getImageUrl(m.foto) : null;
@@ -618,7 +678,7 @@
                 data-angkatan="<%= angkatan %>"
                 data-total="<%= m.totalLogbook || 0 %>"
                 data-pending="<%= m.pendingCount || 0 %>">
-              <td data-label="No" style="text-align: center; font-weight: 600;"><%= index + 1 %></td>
+              <td data-label="No" style="text-align: center; font-weight: 600;"><%= index + 1 %> </td>
               <td data-label="Mahasiswa">
                 <div class="mahasiswa-info">
                   <% if (fotoUrl) { %>
@@ -635,13 +695,13 @@
                     <% } %>
                   </div>
                 </div>
-              </td>
+               </td>
               <td data-label="Role Anda" style="text-align: center;">
                 <span class="role-badge-table <%= roleBadgeClass %>">
                   <i class="bi <%= m.role === 'pembimbing2' ? 'bi-check-circle' : (m.role === 'pembimbing1' ? 'bi-eye' : 'bi-star') %>"></i>
                   <%= roleText %>
                 </span>
-              </td>
+               </td>
               <td data-label="PDK Diprogram">
                 <% if (m.enrolledPdks && m.enrolledPdks.length > 0) { %>
                   <% m.enrolledPdks.forEach(function(pdk) { %>
@@ -652,7 +712,7 @@
                 <% } else { %>
                   <span class="text-muted">-</span>
                 <% } %>
-              </td>
+               </td>
               <td data-label="Status" style="text-align: center;">
                 <% 
                   let statusClass = '';
@@ -675,17 +735,17 @@
                 <span class="status-badge status-<%= statusClass %>">
                   <i class="bi <%= statusIcon %>"></i> <%= statusText %>
                 </span>
-              </td>
+               </td>
               <td data-label="Total" style="text-align: center;">
                 <span class="badge-stat badge-total"><%= m.totalLogbook || 0 %></span>
-              </td>
+               </td>
               <td data-label="Pending" style="text-align: center;">
                 <% if ((m.pendingCount || 0) > 0) { %>
                   <span class="badge-stat badge-pending"><%= m.pendingCount %></span>
                 <% } else { %>
                   <span class="badge-stat badge-zero">0</span>
                 <% } %>
-              </td>
+               </td>
               <td data-label="Aksi" style="text-align: center;">
                 <div class="btn-actions">
                   <a href="/dosen/magang/<%= m.id %>" class="btn-action btn-view" title="Lihat Logbook">
@@ -695,7 +755,7 @@
                     <i class="bi bi-gear-fill"></i> Kelola
                   </a>
                 </div>
-              </td>
+               </td>
             </tr>
             <% }) %>
           <% } %>

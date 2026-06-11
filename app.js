@@ -10,7 +10,7 @@ const session = require('express-session');
 const { setFirebaseInstances } = require('./config/firebaseAdmin');
 
 const app = express();
-
+app.use(express.static(path.join(__dirname, 'public')));
 // ============================================================================
 // MIDDLEWARE GLOBAL (tidak butuh Firebase)
 // ============================================================================
