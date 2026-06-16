@@ -31,7 +31,40 @@ const upload = multer({ storage: multer.memoryStorage() });
 const DATA_WEB_FOLDER_ID = '17Z02_5zOImG1GYfi_5gvWL97-p6dW5t0';
 
 router.use(verifyToken);
+// ============================================================================
+// FUNGSI BANTU PROGRES 
+// ============================================================================
 
+/**
+ * Menghitung progres magang berdasarkan total logbook yang diisi dan total hari magang
+ * @param {number} totalLogbook - Jumlah logbook yang sudah diisi
+ * @param {string} startDate - Tanggal mulai magang (YYYY-MM-DD)
+ * @param {string} endDate - Tanggal selesai magang (YYYY-MM-DD) opsional
+ * @param {number} defaultDays - Default total hari (jika tidak ada tanggal)
+ * @returns {Object} { totalLogbook, totalDays, percentage }
+ */
+function calculateProgress(totalLogbook, startDate, endDate, defaultDays = 120) {
+  let totalDays = defaultDays;
+  
+  if (startDate && endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 agar termasuk hari pertama
+  } else if (startDate) {
+    // Jika hanya ada tanggal mulai, gunakan defaultDays
+    totalDays = defaultDays;
+  }
+  
+  // Batasi persentase maksimal 100%
+  const percentage = Math.min(100, Math.round((totalLogbook / totalDays) * 100));
+  
+  return {
+    totalLogbook,
+    totalDays,
+    percentage
+  };
+}
 // ============================================================================
 // FUNGSI BANTU UMUM
 // ============================================================================
@@ -328,23 +361,38 @@ router.get('/', async (req, res) => {
     const pembimbing = await getPembimbingMahasiswa(userId);
     
     // Ambil semua periode magang
-    const allPeriods = await getMagangPeriodsByMahasiswa(userId);
+// Ambil semua periode magang
+const allPeriods = await getMagangPeriodsByMahasiswa(userId);
+
+// Pisahkan berdasarkan status
+let activePeriod = null;
+const completedPeriods = [];
+const upcomingPeriods = [];
+
+for (const period of allPeriods) {
+  if (period.status === 'active') {
+    // Hitung total logbook yang sudah diisi (semua status)
+    const logbookSnapshot = await db.collection('logbookMagang')
+      .where('userId', '==', userId)
+      .where('pdkId', '==', period.pdkId)
+      .get();
+    const totalLogbook = logbookSnapshot.size;
     
-    // Pisahkan berdasarkan status
-    let activePeriod = null;
-    const completedPeriods = [];
-    const upcomingPeriods = [];
+    // Hitung progres berdasarkan hari
+    const progress = calculateProgress(
+      totalLogbook,
+      period.tanggalMulai,
+      period.tanggalSelesai,
+      120 // default 120 hari
+    );
     
-    for (const period of allPeriods) {
-      if (period.status === 'active') {
-        const progress = await getMagangProgress(userId, period.pdkId);
-        activePeriod = { ...period, progress };
-      } else if (period.status === 'completed') {
-        completedPeriods.push(period);
-      } else if (period.status === 'locked') {
-        upcomingPeriods.push(period);
-      }
-    }
+    activePeriod = { ...period, progress };
+  } else if (period.status === 'completed') {
+    completedPeriods.push(period);
+  } else if (period.status === 'locked') {
+    upcomingPeriods.push(period);
+  }
+}
     
     // Ambil PDK dari KRS (availablePdks) - hanya jika belum ada periode aktif
     let availablePdks = [];
@@ -422,11 +470,21 @@ router.get('/logbook', async (req, res) => {
       logbook = logbookSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
     
-    // Hitung progress
-    let progress = null;
-    if (selectedPeriod) {
-      progress = await getMagangProgress(userId, selectedPeriod.pdkId);
-    }
+// Hitung progress berdasarkan hari
+let progress = null;
+if (selectedPeriod) {
+  const logbookSnapshot = await db.collection('logbookMagang')
+    .where('userId', '==', userId)
+    .where('pdkId', '==', selectedPeriod.pdkId)
+    .get();
+  const totalLogbook = logbookSnapshot.size;
+  progress = calculateProgress(
+    totalLogbook,
+    selectedPeriod.tanggalMulai,
+    selectedPeriod.tanggalSelesai,
+    120
+  );
+}
     
     res.render('mahasiswa/magang/logbook', {
       title: 'Logbook Magang',
