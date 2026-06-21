@@ -10,6 +10,8 @@ const session = require('express-session');
 const { setFirebaseInstances } = require('./config/firebaseAdmin');
 
 const app = express();
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 // ============================================================================
 // MIDDLEWARE GLOBAL (tidak butuh Firebase)
@@ -76,6 +78,9 @@ async function startServer() {
     // ROUTES PUBLIK
     const landingRoutes = require('./routes/landing');
     app.use('/', landingRoutes);
+// ROUTES PORAL IC3 DIGITAL LITERACY (Baru)
+    const ic3Router = require('./routes/ic3');
+    app.use('/ic3', ic3Router);
 
     const authRoutes = require('./routes/auth');
     app.use('/auth', authRoutes);
