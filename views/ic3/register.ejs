@@ -252,6 +252,7 @@
                   <option value="Teknik Elektronika">Teknik Elektronika</option>
                 </optgroup>
               </select>
+              <!-- Tempat info kuota akan ditambahkan oleh JavaScript -->
             </div>
           </div>
 
@@ -615,17 +616,21 @@
                 </div>
                 <h3 class="text-lg font-display font-bold text-slate-800 mt-1">Dasbor Administrasi IC3 Kampus</h3>
               </div>
-              <div class="flex flex-wrap gap-2">
-                <button id="refreshAdminBtn" class="border border-slate-200 hover:bg-slate-50 text-slate-600 p-2 rounded-lg text-xs flex items-center gap-1 cursor-pointer">
-                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
-                </button>
-                <button id="downloadCsvBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
-                  <i data-lucide="download" class="w-3.5 h-3.5"></i> Unduh Rekap CSV
-                </button>
-                <button id="resetDbBtn" class="border border-red-200 hover:bg-red-50 text-red-600 px-3.5 py-2 rounded-lg text-xs font-medium cursor-pointer">
-                  Reset Demo
-                </button>
-              </div>
+<div class="flex flex-wrap gap-2">
+  <button id="refreshAdminBtn" class="border border-slate-200 hover:bg-slate-50 text-slate-600 p-2 rounded-lg text-xs flex items-center gap-1 cursor-pointer">
+    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
+  </button>
+  <button id="downloadCsvBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+    <i data-lucide="download" class="w-3.5 h-3.5"></i> Unduh Rekap CSV
+  </button>
+  <button id="importCsvBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+    <i data-lucide="upload" class="w-3.5 h-3.5"></i> Import CSV
+  </button>
+  <input type="file" id="csvFileInput" accept=".csv" class="hidden" />
+  <button id="resetDbBtn" class="border border-red-200 hover:bg-red-50 text-red-600 px-3.5 py-2 rounded-lg text-xs font-medium cursor-pointer">
+    Reset Demo
+  </button>
+</div>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-1.5">
@@ -841,6 +846,15 @@
         return;
       }
 
+      // ========== VALIDASI KUOTA JURUSAN ==========
+      if (quotaMap[prodi] !== undefined) {
+        const used = jurusanCounts[prodi] || 0;
+        if (used >= quotaMap[prodi]) {
+          showResult(false, 'Maaf, kuota untuk jurusan ' + prodi + ' telah penuh (20 slot). Silakan pilih jurusan lain.');
+          return;
+        }
+      }
+
       const formData = new FormData();
       formData.append('name', name);
       formData.append('nim', nim);
@@ -875,6 +889,7 @@
             defaultRadio.closest('.level-option')?.classList.add('border-dewantara-blue', 'bg-blue-50/50', 'shadow-sm');
           }
           fetchStats();
+          loadJurusanQuota(); // refresh kuota setelah pendaftaran
         } else {
           showResult(false, data.error || 'Gagal melakukan pendaftaran.');
         }
@@ -1068,6 +1083,7 @@
         if (res.ok) {
           loadAdminData();
           fetchStats();
+          loadJurusanQuota();
           alert('Database berhasil direset!');
         }
       } catch (err) {
@@ -1206,6 +1222,7 @@
           const value = sel.value;
           await updateRegistrant(id, { verificationStatus: value });
           loadAdminData();
+          loadJurusanQuota(); // refresh kuota
         });
       });
 
@@ -1227,6 +1244,7 @@
             if (res.ok) {
               loadAdminData();
               fetchStats();
+              loadJurusanQuota();
             }
           } catch (err) {
             alert('Gagal menghapus.');
@@ -1246,7 +1264,71 @@
         console.error('Gagal update:', err);
       }
     }
+// ============================================================
+// IMPORT CSV
+// ============================================================
+const importCsvBtn = document.getElementById('importCsvBtn');
+const csvFileInput = document.getElementById('csvFileInput');
 
+importCsvBtn.addEventListener('click', () => {
+  csvFileInput.click();
+});
+
+csvFileInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (!file.name.endsWith('.csv')) {
+    alert('Mohon pilih file dengan ekstensi .csv');
+    csvFileInput.value = '';
+    return;
+  }
+
+  if (!confirm(`Apakah Anda yakin ingin mengimpor data dari file "${file.name}"?`)) {
+    csvFileInput.value = '';
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('csvFile', file);
+
+  try {
+    importCsvBtn.disabled = true;
+    importCsvBtn.innerHTML = '<i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin inline"></i> Memproses...';
+    lucide.createIcons();
+
+    const res = await fetch('/ic3/api/registrants/import-csv', {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await res.json();
+
+    if (res.ok && result.success) {
+      let message = `✅ Import berhasil!\n\n`;
+      message += `📊 ${result.successCount} data berhasil ditambahkan.\n`;
+      if (result.errorCount > 0) {
+        message += `⚠️ ${result.errorCount} data gagal diimpor.\n\n`;
+        message += `📋 Detail error:\n${result.errors.join('\n')}`;
+      }
+      alert(message);
+      // Refresh data
+      loadAdminData();
+      fetchStats();
+      loadJurusanQuota();
+    } else {
+      alert('❌ Gagal mengimpor CSV:\n' + (result.error || 'Terjadi kesalahan.'));
+    }
+  } catch (err) {
+    console.error('Error import CSV:', err);
+    alert('❌ Terjadi kesalahan saat mengimpor CSV.');
+  } finally {
+    importCsvBtn.disabled = false;
+    importCsvBtn.innerHTML = '<i data-lucide="upload" class="w-3.5 h-3.5"></i> Import CSV';
+    csvFileInput.value = '';
+    lucide.createIcons();
+  }
+});
 // ------------------------------
 // 5. FETCH STATS (realtime)
 // ------------------------------
@@ -1352,6 +1434,126 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => lucide.createIcons(), 100);
       });
     });
+
+  // ============================================================
+  // FITUR KUOTA PER JURUSAN (TAMBAHAN)
+  // ============================================================
+  const quotaMap = {
+    'Teknik Elektronika': 20,
+    'Mesin Otomotif': 20,
+    'Arsitektur Bangunan Gedung': 20,
+    'Teknik Sipil': 20
+  };
+  let jurusanCounts = {};
+
+  async function loadJurusanQuota() {
+    try {
+      const res = await fetch('/ic3/api/registrants');
+      if (!res.ok) throw new Error('Gagal mengambil data');
+      const data = await res.json();
+      // Hitung jumlah per jurusan
+      jurusanCounts = {};
+      data.forEach(r => {
+        const prodi = r.prodi;
+        if (quotaMap[prodi] !== undefined) {
+          jurusanCounts[prodi] = (jurusanCounts[prodi] || 0) + 1;
+        }
+      });
+      updateDropdownQuota();
+    } catch (err) {
+      console.error('Gagal memuat kuota jurusan:', err);
+    }
+  }
+
+  function updateDropdownQuota() {
+    const select = document.getElementById('prodi');
+    const options = select.querySelectorAll('option');
+    options.forEach(opt => {
+      const val = opt.value;
+      if (quotaMap[val] !== undefined) {
+        const total = quotaMap[val];
+        const used = jurusanCounts[val] || 0;
+        const remaining = total - used;
+        // Simpan teks asli jika belum
+        let originalText = opt.getAttribute('data-original-text');
+        if (!originalText) {
+          originalText = opt.textContent.replace(/\s*\(sisa\s+\d+\)\s*$/, '').replace(/\s*\(penuh\)\s*$/, '').trim();
+          opt.setAttribute('data-original-text', originalText);
+        }
+        let displayText = originalText;
+        if (remaining > 0) {
+          displayText += ` (sisa ${remaining})`;
+          opt.disabled = false;
+        } else {
+          displayText += ` (penuh)`;
+          opt.disabled = true;
+        }
+        opt.textContent = displayText;
+        // Jika opsi ini sedang dipilih dan disabled, reset pilihan
+        if (opt.selected && opt.disabled) {
+          select.value = '';
+          select.dispatchEvent(new Event('change'));
+        }
+      } else {
+        // Hapus data-original-text jika ada
+        opt.removeAttribute('data-original-text');
+      }
+    });
+    // Perbarui info kuota untuk pilihan saat ini
+    updateKuotaInfo();
+  }
+
+  function updateKuotaInfo() {
+    const select = document.getElementById('prodi');
+    const selected = select.value;
+    const kuotaInfoDiv = document.getElementById('kuotaInfo');
+    if (!kuotaInfoDiv) return;
+    if (quotaMap[selected] !== undefined) {
+      const total = quotaMap[selected];
+      const used = jurusanCounts[selected] || 0;
+      const remaining = total - used;
+      if (remaining > 0) {
+        kuotaInfoDiv.innerHTML = `<span class="text-xs text-emerald-600">Kuota tersisa untuk jurusan ini: ${remaining} dari ${total} slot.</span>`;
+        kuotaInfoDiv.className = 'text-xs text-emerald-600 mt-1';
+      } else {
+        kuotaInfoDiv.innerHTML = `<span class="text-xs text-red-600 font-bold">Maaf, kuota untuk jurusan ini telah penuh (${total} slot). Silakan pilih jurusan lain.</span>`;
+        kuotaInfoDiv.className = 'text-xs text-red-600 font-bold mt-1';
+      }
+    } else {
+      kuotaInfoDiv.innerHTML = `<span class="text-xs text-slate-400">Jurusan ini tidak terbatas kuota.</span>`;
+      kuotaInfoDiv.className = 'text-xs text-slate-400 mt-1';
+    }
+    // Update tombol submit
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+      if (quotaMap[selected] !== undefined && (jurusanCounts[selected] || 0) >= quotaMap[selected]) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+  }
+
+  // Tambahkan elemen info kuota di bawah dropdown saat DOM siap
+  document.addEventListener('DOMContentLoaded', function() {
+    const prodiSelect = document.getElementById('prodi');
+    if (prodiSelect) {
+      const parentDiv = prodiSelect.closest('div');
+      if (parentDiv) {
+        const kuotaInfo = document.createElement('div');
+        kuotaInfo.id = 'kuotaInfo';
+        kuotaInfo.className = 'text-xs text-slate-400 mt-1';
+        parentDiv.appendChild(kuotaInfo);
+      }
+    }
+    // Muat kuota
+    loadJurusanQuota();
+    // Event listener perubahan prodi
+    document.getElementById('prodi')?.addEventListener('change', updateKuotaInfo);
+  });
+
   </script>
 </body>
 </html>

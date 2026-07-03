@@ -13,6 +13,7 @@ const path = require('path');
 const multer = require('multer');
 const sharp = require('sharp');
 const { Readable } = require('stream');
+const csv = require('csv-parser');
 const drive = require('../config/googleDrive');
 
 // ===== MIDDLEWARE PAYLOAD LIMIT =====
@@ -564,5 +565,327 @@ router.post('/api/registrants/reset', (req, res) => {
   saveRegistrants(resetData);
   res.json({ success: true, message: 'Database berhasil direset ke data contoh.' });
 });
+// ============================================================================
+// 9. API ADMIN: IMPORT CSV
+// ============================================================================
 
+const csvUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = [
+      'text/csv',
+      'application/vnd.ms-excel'
+    ];
+
+    const ext = path.extname(file.originalname).toLowerCase();
+
+    if (allowedMimes.includes(file.mimetype) || ext === '.csv') {
+      cb(null, true);
+    } else {
+      cb(new Error('Hanya file CSV yang diperbolehkan.'), false);
+    }
+  }
+});
+
+router.post(
+  '/api/registrants/import-csv',
+  csvUpload.single('csvFile'),
+  async (req, res) => {
+
+    try {
+
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'Tidak ada file CSV yang diupload'
+        });
+      }
+
+      const registrants = getRegistrants();
+
+      let successCount = 0;
+      let errorCount = 0;
+      let errors = [];
+
+      const existingNims = new Set(
+        registrants.map(r => r.nim?.toLowerCase())
+      );
+
+      // ==========================================
+      // PARSE CSV (menggunakan csv-parser)
+      // ==========================================
+
+      const rows = [];
+
+      const readable = Readable.from(req.file.buffer);
+
+      await new Promise((resolve, reject) => {
+
+        readable
+          .pipe(csv())
+          .on('data', (row) => {
+            rows.push(row);
+          })
+          .on('end', resolve)
+          .on('error', reject);
+
+      });
+
+      if (rows.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'File CSV kosong'
+        });
+      }
+
+      console.log("CSV DETECTED:");
+      console.log(rows[0]);
+
+      const results = [];
+
+      const validLevels = [
+        'Level 1',
+        'Level 2',
+        'Level 3'
+      ];
+
+      // ==========================================
+      // LOOP DATA CSV
+      // ==========================================
+
+      for (let i = 0; i < rows.length; i++) {
+
+        const row = rows[i];
+
+        try {
+
+          // Support berbagai nama header CSV
+
+          const name =
+            row["Nama"] ||
+            row["nama"] ||
+            row["Name"] ||
+            row["name"];
+
+          const nim =
+            row["NIM"] ||
+            row["nim"];
+
+          const prodi =
+            row["Prodi"] ||
+            row["prodi"];
+
+          const email =
+            row["Email"] ||
+            row["email"];
+
+          const whatsapp =
+            row["No WhatsApp"] ||
+            row["No HP"] ||
+            row["whatsapp"] ||
+            row["Whatsapp"];
+
+          let ic3Level =
+            row["IC3 Level"] ||
+            row["Level"] ||
+            row["ic3level"];
+
+          // ==========================
+          // VALIDASI DATA
+          // ==========================
+
+          if (
+            !name ||
+            !nim ||
+            !prodi ||
+            !email ||
+            !whatsapp ||
+            !ic3Level
+          ) {
+            errorCount++;
+            errors.push(
+              `Baris ${i + 2}: Data tidak lengkap`
+            );
+            continue;
+          }
+
+          // ==========================
+          // NORMALISASI LEVEL
+          // ==========================
+
+          ic3Level = ic3Level.trim();
+
+          if (/^[1-3]$/.test(ic3Level)) {
+            ic3Level = `Level ${ic3Level}`;
+          }
+
+          if (!validLevels.includes(ic3Level)) {
+            errorCount++;
+            errors.push(
+              `Baris ${i + 2}: Level salah (${ic3Level})`
+            );
+            continue;
+          }
+
+          // ==========================
+          // CEK DUPLIKAT NIM
+          // ==========================
+
+          if (existingNims.has(
+            nim.toLowerCase().trim()
+          )) {
+            errorCount++;
+            errors.push(
+              `Baris ${i + 2}: NIM ${nim} sudah terdaftar`
+            );
+            continue;
+          }
+
+          // ==========================
+          // BUAT DATA BARU
+          // ==========================
+
+          const registrationNo =
+            registrants.length +
+            successCount +
+            1;
+
+          const fee =
+            registrationNo <= 80
+              ? 0
+              : 700000;
+
+          const paymentStatus =
+            fee === 0
+              ? 'not_applicable'
+              : 'pending';
+
+          const newRegistrant = {
+
+            id:
+              'reg-' +
+              Date.now() +
+              '-' +
+              i,
+
+            name:
+              name.trim(),
+
+            nim:
+              nim.trim(),
+
+            prodi:
+              prodi.trim(),
+
+            email:
+              email
+                .trim()
+                .toLowerCase(),
+
+            whatsapp:
+              whatsapp.trim(),
+
+            ic3Level:
+
+              ic3Level,
+
+            registrationNo,
+
+            fee,
+
+            paymentStatus,
+
+            verificationStatus:
+              'pending',
+
+            verificationReason:
+              'Import CSV oleh admin',
+
+            ktmFileId:
+              null,
+
+            ktmFileUrl:
+              null,
+
+            createdAt:
+              new Date().toISOString()
+
+          };
+
+          results.push(newRegistrant);
+
+          existingNims.add(
+            nim.toLowerCase().trim()
+          );
+
+          successCount++;
+
+        } catch (err) {
+
+          errorCount++;
+
+          errors.push(
+            `Baris ${i + 2}: ${err.message}`
+          );
+
+        }
+      }
+
+      // ==========================================
+      // SIMPAN KE DATABASE JSON
+      // ==========================================
+
+      if (successCount > 0) {
+
+        const allRegistrants = [
+          ...registrants,
+          ...results
+        ];
+
+        saveRegistrants(allRegistrants);
+
+      }
+
+      // ==========================================
+      // RESPONSE
+      // ==========================================
+
+      return res.json({
+
+        success: true,
+
+        message:
+          `Import selesai. ${successCount} berhasil, ${errorCount} gagal.`,
+
+        successCount,
+
+        errorCount,
+
+        errors
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        "IMPORT CSV ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+
+        success: false,
+
+        error:
+          'Import gagal: ' +
+          error.message
+
+      });
+
+    }
+  }
+);
 module.exports = router;
