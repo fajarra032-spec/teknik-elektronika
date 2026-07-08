@@ -385,6 +385,19 @@
     font-size: clamp(1rem, 3vw, 1.2rem);
   }
 
+  /* ===== INFO PENDAMPING LAPANGAN (baru, dipakai di card selesai/akan datang) ===== */
+  .info-pendamping {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .info-pendamping i {
+    color: var(--primary-start);
+  }
+
   /* ===== RESPONSIVE LENGKAP (SESUAI LANDING) ===== */
   @media (max-width: 768px) {
     .dosen-list {
@@ -645,6 +658,10 @@
                   <i class="bi bi-calendar-week me-2"></i> 
                   <%= formatTanggal(period.tanggalMulai) %> s/d <%= formatTanggal(period.tanggalSelesai) || '-' %>
                 </p>
+                <p class="info-pendamping">
+                  <i class="bi bi-person-badge"></i>
+                  Pembimbing Lapangan: <%= (period.perusahaan && period.perusahaan.pembimbingLapangan) ? period.perusahaan.pembimbingLapangan : '-' %>
+                </p>
                 <p class="mb-3">
                   <i class="bi bi-star-fill text-warning me-1"></i> 
                   Nilai: <strong><%= (period.nilai && period.nilai.huruf) ? period.nilai.huruf : '-' %></strong> 
@@ -688,6 +705,14 @@
               <div class="card-body">
                 <p class="mb-2">
                   <i class="bi bi-calendar me-2"></i> Mulai: <%= formatTanggal(period.tanggalMulai) %>
+                </p>
+                <p class="mb-2">
+                  <i class="bi bi-building me-2"></i>
+                  Perusahaan: <%= (period.perusahaan && period.perusahaan.nama) ? period.perusahaan.nama : '-' %>
+                </p>
+                <p class="info-pendamping">
+                  <i class="bi bi-person-badge"></i>
+                  Pembimbing Lapangan: <%= (period.perusahaan && period.perusahaan.pembimbingLapangan) ? period.perusahaan.pembimbingLapangan : '-' %>
                 </p>
                 <p class="text-muted small mb-0">Belum dapat diakses. Tunggu jadwal magang dimulai.</p>
               </div>

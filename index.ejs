@@ -1,0 +1,846 @@
+<%- include('../../partials/header') %>
+
+<%
+  // ========== DEFAULT VALUES UNTUK MENCEGAH ERROR ==========
+  if (typeof activePeriod === 'undefined') activePeriod = null;
+  if (typeof completedPeriods === 'undefined') completedPeriods = [];
+  if (typeof upcomingPeriods === 'undefined') upcomingPeriods = [];
+  if (typeof availablePdks === 'undefined') availablePdks = [];
+  if (typeof pembimbing === 'undefined') pembimbing = null;
+  
+  // Helper untuk format tanggal
+  const formatTanggal = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+  
+  // Cek kondisi
+  const hasPembimbing = pembimbing && pembimbing.pembimbing1;
+  const hasKRS = availablePdks && availablePdks.length > 0;
+  const needPeriodActivation = hasPembimbing && hasKRS && !activePeriod;
+  const noKRS = !hasKRS && !activePeriod;
+%>
+
+<style>
+  /* ===== VARIABEL DARI LANDING + GAYA ASLI ===== */
+  :root {
+    /* Tambahan dari landing */
+    --primary: #0d6efd;
+    --primary-dark: #0b5ed7;
+    --secondary: #0dcaf0;
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.12);
+    --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    
+    /* Variabel asli */
+    --primary-start: #1e3a8a;
+    --primary-end: #3b82f6;
+    --primary-light: rgba(30,58,138,0.08);
+    --primary-dark: #0f2b5c;
+    --success: #10b981;
+    --success-light: #d1fae5;
+    --warning: #f59e0b;
+    --warning-light: #fef3c7;
+    --info: #0dcaf0;
+    --info-light: #dbeafe;
+    --danger: #ef4444;
+    --gray-border: #e2e8f0;
+    --gray-bg: #f8fafc;
+  }
+
+  /* ===== BASE FLUID FONT (SAMA PERSIS DENGAN LANDING) ===== */
+  html {
+    font-size: clamp(14px, 1vw + 10px, 16px);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: linear-gradient(145deg, #f1f5f9 0%, #f8fafc 100%);
+    min-height: 100vh;
+  }
+
+  /* ===== HEADER ===== */
+  .magang-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-radius: 1.5rem;
+    padding: clamp(1.2rem, 4vw, 2rem);
+    color: white;
+    margin-bottom: 2rem;
+    box-shadow: 0 15px 30px rgba(30,58,138,0.25);
+    position: relative;
+    overflow: hidden;
+  }
+  .magang-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    transform: rotate(25deg);
+  }
+  .magang-header h2 {
+    font-weight: 700;
+    font-size: clamp(1.3rem, 5vw, 1.8rem);
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .magang-header p {
+    font-size: clamp(0.85rem, 3vw, 1rem);
+    opacity: 0.9;
+    position: relative;
+    z-index: 1;
+  }
+  .badge-header {
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(4px);
+    padding: clamp(0.3rem, 2vw, 0.5rem) clamp(0.8rem, 3vw, 1rem);
+    border-radius: 50px;
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
+  }
+
+  /* ===== SECTION TITLE ===== */
+  .section-title {
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: clamp(1rem, 4vw, 1.3rem);
+    color: #1e293b;
+  }
+  .section-title i {
+    font-size: clamp(1.2rem, 4vw, 1.5rem);
+  }
+
+  /* ===== CARD MAGANG ===== */
+  .card-magang {
+    background: white;
+    border-radius: 1.2rem;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    transition: var(--transition);
+    border: 1px solid var(--gray-border);
+  }
+  .card-magang:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+  }
+  .card-magang.active {
+    border-left: 5px solid var(--success);
+  }
+  .card-magang.archived {
+    border-left: 5px solid #94a3b8;
+    opacity: 0.9;
+  }
+  .card-magang.locked {
+    border-left: 5px solid var(--info);
+    background: #fefefe;
+  }
+  .card-magang .card-header {
+    padding: clamp(0.8rem, 3vw, 1rem) clamp(1rem, 3vw, 1.25rem);
+    background: white;
+    border-bottom: 1px solid var(--gray-border);
+  }
+  .card-magang .card-body {
+    padding: clamp(1rem, 3vw, 1.25rem);
+  }
+
+  /* ===== INFO CARD STATUS (KONSISTEN) ===== */
+  .info-card-status {
+    border-radius: 1.2rem;
+    padding: clamp(1rem, 4vw, 1.5rem);
+    margin-bottom: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  }
+  .info-card-status.waiting {
+    background: linear-gradient(135deg, #fff9e6, #fffbf0);
+    border-left: 5px solid var(--warning);
+  }
+  .info-card-status.nokrs {
+    background: linear-gradient(135deg, #fef2f2, #fff5f5);
+    border-left: 5px solid var(--danger);
+  }
+  .info-card-status h6 {
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: clamp(0.9rem, 2.5vw, 1rem);
+  }
+  .info-card-status.waiting h6 {
+    color: #b45309;
+  }
+  .info-card-status.nokrs h6 {
+    color: #dc2626;
+  }
+  .dosen-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(0.8rem, 3vw, 1rem);
+    margin-top: 0.5rem;
+  }
+  .dosen-item {
+    background: white;
+    border-radius: 1rem;
+    padding: clamp(0.5rem, 2vw, 0.75rem) clamp(0.8rem, 3vw, 1rem);
+    flex: 1;
+    min-width: clamp(150px, 40vw, 200px);
+    border: 1px solid #e2e8f0;
+  }
+  .dosen-item i {
+    color: var(--warning);
+    margin-right: 0.5rem;
+  }
+  .btn-hubungi {
+    background: var(--warning);
+    border: none;
+    color: white;
+    border-radius: 50px;
+    padding: clamp(0.3rem, 1.5vw, 0.4rem) clamp(0.8rem, 3vw, 1.2rem);
+    font-size: clamp(0.7rem, 2vw, 0.8rem);
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+  }
+  .btn-hubungi:hover {
+    background: #d97706;
+    transform: translateY(-2px);
+    color: white;
+  }
+  .btn-krs {
+    background: linear-gradient(135deg, #f97316, #fbbf24);
+    border: none;
+    color: white;
+    border-radius: 50px;
+    padding: clamp(0.4rem, 2vw, 0.6rem) clamp(1rem, 4vw, 1.8rem);
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    transition: var(--transition);
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+  }
+  .btn-krs:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(249,115,22,0.4);
+    color: white;
+  }
+
+  /* ===== PROGRESS BAR ===== */
+  .progress-custom {
+    height: 8px;
+    border-radius: 10px;
+    background-color: #e2e8f0;
+  }
+  .progress-bar-custom {
+    background: linear-gradient(90deg, var(--primary-start), var(--primary-end));
+    border-radius: 10px;
+    height: 100%;
+  }
+
+  /* ===== TOMBOL ===== */
+  .btn-primary-custom {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border: none;
+    color: white;
+    border-radius: 50px;
+    padding: clamp(0.35rem, 1.5vw, 0.45rem) clamp(0.8rem, 3vw, 1.2rem);
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+  }
+  .btn-primary-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(30,58,138,0.3);
+    color: white;
+  }
+  .btn-outline-secondary-custom {
+    border: 1px solid var(--gray-border);
+    background: white;
+    color: #1e293b;
+    border-radius: 50px;
+    padding: clamp(0.3rem, 1.5vw, 0.4rem) clamp(0.6rem, 2vw, 1rem);
+    font-size: clamp(0.7rem, 2vw, 0.8rem);
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: var(--transition);
+  }
+  .btn-outline-secondary-custom:hover {
+    background: var(--gray-bg);
+    border-color: #94a3b8;
+  }
+  .btn-warning-custom {
+    background: var(--warning-light);
+    color: #c2410c;
+    border-radius: 50px;
+    padding: clamp(0.25rem, 1.5vw, 0.35rem) clamp(0.6rem, 2vw, 1rem);
+    font-size: clamp(0.65rem, 1.8vw, 0.75rem);
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: var(--transition);
+  }
+  .btn-warning-custom:hover {
+    background: #fed7aa;
+    color: #9a3412;
+  }
+  .btn-success-custom {
+    background: var(--success);
+    border: none;
+    color: white;
+    border-radius: 50px;
+    padding: clamp(0.4rem, 2vw, 0.5rem) clamp(1rem, 4vw, 1.5rem);
+    font-weight: 600;
+    transition: var(--transition);
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+  }
+  .btn-success-custom:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(16,185,129,0.3);
+  }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    text-align: center;
+    padding: clamp(1.5rem, 8vw, 3rem) clamp(1rem, 5vw, 2rem);
+    background: white;
+    border-radius: 1.5rem;
+    border: 1px solid var(--gray-border);
+  }
+  .empty-state i {
+    font-size: clamp(2.5rem, 10vw, 4rem);
+    color: #cbd5e1;
+    margin-bottom: 1rem;
+  }
+  .empty-state h5 {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-size: clamp(1rem, 4vw, 1.2rem);
+  }
+
+  /* ===== ALERT ===== */
+  .alert-warning-custom {
+    background: var(--warning-light);
+    border-left: 4px solid var(--warning);
+    border-radius: 1rem;
+    padding: clamp(0.8rem, 3vw, 1rem);
+    margin-bottom: 1rem;
+  }
+
+  /* ===== INFO PANDUAN ===== */
+  .info-section {
+    background: white;
+    border-radius: 1.5rem;
+    padding: clamp(1rem, 4vw, 1.5rem);
+    margin-top: 3rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    border: 1px solid var(--gray-border);
+  }
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+  }
+  .info-icon {
+    width: clamp(30px, 8vw, 40px);
+    height: clamp(30px, 8vw, 40px);
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary-start);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1rem, 3vw, 1.2rem);
+  }
+
+  /* ===== INFO PENDAMPING LAPANGAN (baru, dipakai di card selesai/akan datang) ===== */
+  .info-pendamping {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .info-pendamping i {
+    color: var(--primary-start);
+  }
+
+  /* ===== RESPONSIVE LENGKAP (SESUAI LANDING) ===== */
+  @media (max-width: 768px) {
+    .dosen-list {
+      flex-direction: column;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .empty-state {
+      padding: 1.5rem;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .magang-header h2 {
+      font-size: 1.2rem;
+    }
+    .badge-header {
+      font-size: 0.7rem;
+    }
+    .section-title {
+      font-size: 1rem;
+    }
+    .card-magang .card-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+  }
+
+  /* ===== STEP CARD (PANDUAN) - TETAP DIPERTAHANKAN ===== */
+  .step-card {
+    transition: var(--transition);
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+  .step-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1) !important;
+  }
+  .step-number {
+    font-weight: 700;
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+</style>
+
+<div class="container mt-4">
+  <!-- Header -->
+  <div class="magang-header d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+      <h2>
+        <i class="bi bi-briefcase-fill me-2"></i>ELK-Magang
+      </h2>
+      <p class="mb-0">Kelola seluruh aktivitas magang Anda dalam satu tempat</p>
+      
+      <!-- Tampilkan nama pembimbing dari data bimbingan -->
+      <% if (hasPembimbing) { %>
+        <div class="mt-3 pt-1">
+          <div class="small text-white-50">
+            <i class="bi bi-person-badge me-1"></i> Pembimbing 1: 
+            <span class="fw-semibold text-white"><%= pembimbing.pembimbing1.nama %></span>
+          </div>
+          <% if (pembimbing.pembimbing2) { %>
+            <div class="small text-white-50 mt-1">
+              <i class="bi bi-person-badge me-1"></i> Pembimbing 2: 
+              <span class="fw-semibold text-white"><%= pembimbing.pembimbing2.nama %></span>
+            </div>
+          <% } %>
+        </div>
+      <% } else { %>
+        <div class="mt-3 small text-warning">
+          <i class="bi bi-exclamation-triangle me-1"></i> Belum ditetapkan dosen pembimbing. Hubungi admin.
+        </div>
+      <% } %>
+    </div>
+    <span class="badge-header mt-2 mt-sm-0">
+      <i class="bi bi-info-circle me-1"></i> Magang
+    </span>
+  </div>
+
+  <!-- ========== KARTU STATUS (KONDISI BELUM KRS) ========== -->
+  <% if (noKRS) { %>
+    <div class="info-card-status nokrs">
+      <h6>
+        <i class="bi bi-exclamation-triangle-fill"></i> 
+        Belum mengambil mata kuliah PDK
+      </h6>
+      <p class="small mb-3">Anda belum mengambil mata kuliah Praktik Dunia Kerja (PDK) di KRS.</p>
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="small">
+          <i class="bi bi-info-circle me-1"></i> Silakan buat KRS terlebih dahulu pada menu Akademik.
+        </div>
+        <a href="/mahasiswa/akademik/krs" class="btn-krs">
+          <i class="bi bi-pencil-square me-2"></i> Buat KRS Sekarang
+        </a>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- ========== KARTU STATUS (KONDISI MENUNGGU AKTIVASI) ========== -->
+  <% if (needPeriodActivation) { %>
+    <div class="info-card-status waiting">
+      <h6>
+        <i class="bi bi-clock-history"></i> 
+        Status: Menunggu Aktivasi Magang
+      </h6>
+      <p class="small mb-2">Anda telah memiliki dosen pembimbing dan telah mengambil mata kuliah PDK, namun periode magang belum dimulai.</p>
+      <div class="dosen-list">
+        <div class="dosen-item">
+          <i class="bi bi-person-check-fill"></i>
+          <strong>Pembimbing 1:</strong> <%= pembimbing.pembimbing1.nama %>
+        </div>
+        <% if (pembimbing.pembimbing2) { %>
+          <div class="dosen-item">
+            <i class="bi bi-person-plus-fill"></i>
+            <strong>Pembimbing 2:</strong> <%= pembimbing.pembimbing2.nama %>
+          </div>
+        <% } %>
+      </div>
+      <div class="alert-warning-custom mt-3 small">
+        <i class="bi bi-envelope-paper me-2"></i>
+        <strong>Silakan hubungi dosen pembimbing 2 atau Kaprodi</strong> untuk memulai periode magang Anda.
+      </div>
+      <div class="mt-3">
+        <a href="#" class="btn-hubungi" onclick="copyPesan()">
+          <i class="bi bi-chat-dots"></i> Kirim Pesan ke Dosen
+        </a>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- ========== MAGANG AKTIF ========== -->
+  <div class="section-active">
+    <div class="section-title">
+      <i class="bi bi-play-circle-fill text-success"></i>
+      <span>Magang Aktif</span>
+    </div>
+    <div class="row">
+      <% if (activePeriod) { %>
+        <div class="col-lg-8">
+          <div class="card-magang active">
+            <div class="card-header">
+              <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                  <span class="badge bg-success me-2">AKTIF</span>
+                  <strong><%= activePeriod.pdkKode %> - <%= activePeriod.pdkNama %></strong>
+                </div>
+                <small class="text-muted">
+                  <%= (activePeriod.perusahaan && activePeriod.perusahaan.nama) ? activePeriod.perusahaan.nama : 'Perusahaan belum diisi' %>
+                </small>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <p class="mb-2">
+                    <i class="bi bi-calendar3 me-2 text-primary"></i>
+                    Periode: <%= formatTanggal(activePeriod.tanggalMulai) %> 
+                    <%= activePeriod.tanggalSelesai ? `s/d ${formatTanggal(activePeriod.tanggalSelesai)}` : '(Berlangsung)' %>
+                  </p>
+                  <p class="mb-2">
+                    <i class="bi bi-building me-2 text-primary"></i>
+                    Perusahaan: <%= (activePeriod.perusahaan && activePeriod.perusahaan.nama) ? activePeriod.perusahaan.nama : '-' %>
+                  </p>
+                  <p class="mb-2">
+                    <i class="bi bi-person-badge me-2 text-primary"></i>
+                    Pembimbing Lapangan: <%= (activePeriod.perusahaan && activePeriod.perusahaan.pembimbingLapangan) ? activePeriod.perusahaan.pembimbingLapangan : '-' %>
+                  </p>
+                </div>
+                <div class="col-md-6">
+  <!-- Card Statistik -->
+  <div class="row g-2 mb-3">
+    <div class="col-4">
+      <div class="bg-light p-2 rounded-4 text-center">
+        <div class="fw-bold fs-5">
+          <%= (activePeriod.progress && typeof activePeriod.progress.totalLogbook !== 'undefined') ? activePeriod.progress.totalLogbook : 0 %>
+        </div>
+        <div class="small text-muted">Total Logbook</div>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="bg-light p-2 rounded-4 text-center">
+        <div class="fw-bold fs-5">
+          <%= (activePeriod.progress && typeof activePeriod.progress.totalDays !== 'undefined') ? activePeriod.progress.totalDays : 120 %>
+        </div>
+        <div class="small text-muted">Total Hari</div>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="bg-light p-2 rounded-4 text-center">
+        <div class="fw-bold fs-5 text-primary">
+          <%= (activePeriod.progress && typeof activePeriod.progress.percentage !== 'undefined') ? activePeriod.progress.percentage : 0 %>%</div>
+        <div class="small text-muted">Persentase</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Progress Bar -->
+  <div class="progress-custom mb-3">
+    <div class="progress-bar-custom" style="width: <%= (activePeriod.progress && typeof activePeriod.progress.percentage !== 'undefined') ? activePeriod.progress.percentage : 0 %>%"></div>
+  </div>
+  
+  <!-- Tombol Aksi -->
+  <div class="d-flex flex-wrap gap-2">
+    <a href="/mahasiswa/magang/logbook?periodId=<%= activePeriod.id %>" class="btn-primary-custom">
+      <i class="bi bi-journal-bookmark-fill"></i> Kelola Logbook
+    </a>
+    <a href="/mahasiswa/magang/laporan" class="btn-outline-secondary-custom">
+      <i class="bi bi-file-earmark-pdf"></i> Laporan
+    </a>
+  </div>
+</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="col-12">
+          <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h5>Belum Ada Magang Aktif</h5>
+            <p class="text-muted">Anda belum memiliki periode magang yang sedang berjalan.</p>
+            <% if (!noKRS && !needPeriodActivation && hasKRS) { %>
+              <div class="alert-warning-custom mt-3 mx-auto" style="max-width: 450px; text-align: left;">
+                <i class="bi bi-clock-history me-2"></i>
+                <strong>Menunggu Aktivasi Dosen</strong><br>
+                <small>Silakan hubungi dosen pembimbing untuk memulai periode magang.</small>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- ========== RIWAYAT MAGANG SELESAI ========== -->
+  <% if (completedPeriods && completedPeriods.length > 0) { %>
+    <div class="mt-5">
+      <div class="section-title">
+        <i class="bi bi-archive-fill text-secondary"></i>
+        <span>Riwayat Magang Selesai</span>
+      </div>
+      <div class="row g-4">
+        <% completedPeriods.forEach(period => { %>
+          <div class="col-md-6 col-lg-4">
+            <div class="card-magang archived">
+              <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <span class="badge bg-secondary me-2">SELESAI</span>
+                    <strong><%= period.pdkKode %></strong>
+                  </div>
+                  <small class="text-muted"><%= (period.perusahaan && period.perusahaan.nama) ? period.perusahaan.nama : '-' %></small>
+                </div>
+              </div>
+              <div class="card-body">
+                <p class="mb-2">
+                  <i class="bi bi-calendar-week me-2"></i> 
+                  <%= formatTanggal(period.tanggalMulai) %> s/d <%= formatTanggal(period.tanggalSelesai) || '-' %>
+                </p>
+                <p class="info-pendamping">
+                  <i class="bi bi-person-badge"></i>
+                  Pembimbing Lapangan: <%= (period.perusahaan && period.perusahaan.pembimbingLapangan) ? period.perusahaan.pembimbingLapangan : '-' %>
+                </p>
+                <p class="mb-3">
+                  <i class="bi bi-star-fill text-warning me-1"></i> 
+                  Nilai: <strong><%= (period.nilai && period.nilai.huruf) ? period.nilai.huruf : '-' %></strong> 
+                  (<%= (period.nilai && period.nilai.angka) ? period.nilai.angka : '-' %>)
+                </p>
+                <div class="d-flex gap-2 flex-wrap">
+                  <a href="/mahasiswa/magang/arsip/<%= period.id %>" class="btn-outline-secondary-custom btn-sm">
+                    <i class="bi bi-eye"></i> Lihat Arsip
+                  </a>
+                  <% if (!period.ulasan || !period.ulasan.isFilled) { %>
+                    <a href="/mahasiswa/magang/ulasan/<%= period.id %>" class="btn-warning-custom">
+                      <i class="bi bi-star"></i> Beri Ulasan
+                    </a>
+                  <% } else { %>
+                    <span class="badge bg-info px-2 py-1">✓ Ulasan sudah diberikan</span>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- ========== MAGANG YANG AKAN DATANG ========== -->
+  <% if (upcomingPeriods && upcomingPeriods.length > 0) { %>
+    <div class="mt-5">
+      <div class="section-title">
+        <i class="bi bi-clock-history text-info"></i>
+        <span>Magang yang Akan Datang</span>
+      </div>
+      <div class="row g-4">
+        <% upcomingPeriods.forEach(period => { %>
+          <div class="col-md-6 col-lg-3">
+            <div class="card-magang locked">
+              <div class="card-header">
+                <span class="badge bg-info px-3 py-1">AKAN DATANG</span>
+                <h6 class="mt-2 mb-0"><%= period.pdkKode %> - <%= period.pdkNama %></h6>
+              </div>
+              <div class="card-body">
+                <p class="mb-2">
+                  <i class="bi bi-calendar me-2"></i> Mulai: <%= formatTanggal(period.tanggalMulai) %>
+                </p>
+                <p class="mb-2">
+                  <i class="bi bi-building me-2"></i>
+                  Perusahaan: <%= (period.perusahaan && period.perusahaan.nama) ? period.perusahaan.nama : '-' %>
+                </p>
+                <p class="info-pendamping">
+                  <i class="bi bi-person-badge"></i>
+                  Pembimbing Lapangan: <%= (period.perusahaan && period.perusahaan.pembimbingLapangan) ? period.perusahaan.pembimbingLapangan : '-' %>
+                </p>
+                <p class="text-muted small mb-0">Belum dapat diakses. Tunggu jadwal magang dimulai.</p>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- ========== PANDUAN PROSEDUR MAGANG (LENGKAP) - DIPERCANTIK ========== -->
+  <div class="info-section">
+    <div class="d-flex align-items-center gap-2 mb-4">
+      <div class="rounded-circle bg-primary bg-opacity-10 p-2">
+        <i class="bi bi-question-circle-fill fs-3 text-primary"></i>
+      </div>
+      <div>
+        <h5 class="fw-bold mb-0">📋 Panduan & Alur Magang</h5>
+        <p class="text-muted small mb-0">Ikuti 8 langkah berikut untuk menyelesaikan magang dengan baik</p>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- Step 1 -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">1</div>
+            <span class="badge bg-warning text-dark">Wajib</span>
+          </div>
+          <h6 class="fw-bold">Program PDK di KRS</h6>
+          <p class="small text-muted mb-0">Ambil PDK 1/2/3 melalui KRS, tunggu ACC Kaprodi. Menu magang baru terbuka setelah ini.</p>
+        </div>
+      </div>
+      <!-- Step 2 -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">2</div>
+            <span class="badge bg-info text-white">Dospim 2</span>
+          </div>
+          <h6 class="fw-bold">Aktivasi Periode</h6>
+          <p class="small text-muted mb-0">Dosen Pembimbing 2 mengaktifkan periode magang (contoh: 4 bulan) dengan tanggal mulai & selesai.</p>
+        </div>
+      </div>
+      <!-- Step 3 -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">3</div>
+            <span class="badge bg-success text-white">Harian</span>
+          </div>
+          <h6 class="fw-bold">Isi Logbook Harian</h6>
+          <p class="small text-muted mb-0">Selama periode aktif, isi logbook setiap hari kerja. Progress = hari diisi / total hari.</p>
+        </div>
+      </div>
+      <!-- Step 4 -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">4</div>
+            <span class="badge bg-secondary text-white">Otomatis</span>
+          </div>
+          <h6 class="fw-bold">Logbook Terkunci</h6>
+          <p class="small text-muted mb-0">Setelah periode berakhir, logbook terkunci otomatis (bisa diperpanjang dosen).</p>
+        </div>
+      </div>
+      <!-- Step 5 -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">5</div>
+            <span class="badge bg-warning text-dark">Nilai</span>
+          </div>
+          <h6 class="fw-bold">Penilaian Dospim 2</h6>
+          <p class="small text-muted mb-0">Dospim 2 memberi nilai logbook & seminar. Setelah itu fitur upload laporan terbuka.</p>
+        </div>
+      </div>
+      <!-- Step 6 -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">6</div>
+            <span class="badge bg-danger text-white">Revisi</span>
+          </div>
+          <h6 class="fw-bold">Upload Laporan & Revisi</h6>
+          <p class="small text-muted mb-0">Unggah laporan PDF, Dospim 1 bisa ACC/Reject + komentar. Mahasiswa perbaiki hingga disetujui.</p>
+        </div>
+      </div>
+      <!-- Step 7 -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">7</div>
+            <span class="badge bg-success text-white">Final</span>
+          </div>
+          <h6 class="fw-bold">Finalisasi Kaprodi</h6>
+          <p class="small text-muted mb-0">Kaprodi input nilai pembimbing lapangan, sistem hitung nilai akhir (3 komponen).</p>
+        </div>
+      </div>
+      <!-- Step 8 -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">8</div>
+            <span class="badge bg-info text-white">⭐ Ulasan</span>
+          </div>
+          <h6 class="fw-bold">Beri Ulasan Perusahaan</h6>
+          <p class="small text-muted mb-0">Setelah dapat nilai, isi ulasan (pengalaman, rekomendasi, rating bintang) untuk referensi mahasiswa lain.</p>
+        </div>
+      </div>
+    </div>
+
+    <hr class="my-4">
+    <div class="alert alert-primary bg-opacity-10 border-0 rounded-4 d-flex align-items-center gap-3">
+      <i class="bi bi-info-circle-fill fs-4 text-primary"></i>
+      <div class="small">
+        <strong>Catatan Penting:</strong> Dosen Pembimbing 2 dapat memperpanjang periode magang. Semua proses tercatat dan dapat dipantau oleh Kaprodi & admin.
+      </div>
+    </div>
+  </div>
+
+<script>
+  function copyPesan() {
+    const pesan = "Yth. Bapak/Ibu Dosen Pembimbing,\n\nSaya ingin meminta bantuan untuk memulai periode magang saya. Saat ini saya sudah mengambil mata kuliah PDK di KRS dan sudah memiliki dosen pembimbing, namun periode magang belum aktif.\n\nTerima kasih atas bantuannya.";
+    navigator.clipboard.writeText(pesan);
+    alert('✓ Pesan telah disalin ke clipboard.\n\nSilakan tempelkan ke WhatsApp atau email dosen.');
+  }
+</script>
+
+<%- include('../../partials/footer') %>

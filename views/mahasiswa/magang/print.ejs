@@ -7,110 +7,153 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
   <style>
-    /* Pengaturan Kertas Default */
+    /* ===== RESET & BASE ===== */
+    * {
+      box-sizing: border-box;
+    }
     @page {
       size: A4;
-      margin: 1.5cm;
+      margin: 1.8cm 1.5cm;
     }
-
-    /* Gaya Umum Dokumen Formal */
     body {
       font-family: 'Times New Roman', Times, serif;
+      background: #fff;
       color: #000;
-      background-color: #fff;
-      font-size: 10pt; /* Ukuran dasar diperkecil */
+      font-size: 10.5pt;
+      line-height: 1.5;
+      margin: 0;
+      padding: 0;
+    }
+    .container-fluid {
+      max-width: 100%;
+      padding: 0 0.2in;
     }
 
+    /* ===== BUTTON CETAK ===== */
     .print-btn {
-      margin: 20px 0;
       font-family: Arial, sans-serif;
+      margin-bottom: 25px;
     }
 
-    /* === KOP SURAT (Diterapkan dari EDOM) === */
+    /* ===== KOP SURAT ===== */
     .kop-surat {
       display: flex;
       align-items: center;
-      margin-bottom: 20px;
       border-bottom: 3px double #000;
-      padding-bottom: 10px;
+      padding-bottom: 8px;
+      margin-bottom: 18px;
     }
-
     .logo-kop {
-      width: 90px;
+      width: 80px;
       height: auto;
-      margin-right: 20px;
+      margin-right: 18px;
+      flex-shrink: 0;
     }
-
     .teks-kop {
       flex: 1;
-      font-family: Arial, Helvetica, sans-serif; /* Menggunakan Arial khusus untuk Kop */
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.3;
     }
-
     .teks-kop .nama-kampus {
-      font-size: 27pt;
+      font-size: 24pt;
       font-weight: bold;
       margin: 0;
-      color: #3b60a3;
+      color: #1a3a6b;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-
-    .teks-kop .alamat, 
+    .teks-kop .alamat,
     .teks-kop .kontak {
-      font-size: 13pt;
+      font-size: 10.5pt;
       margin: 0;
-      color: #333;
+      color: #222;
     }
 
-    /* === INFORMASI MAHASISWA & MAGANG (Dalam Kotak) === */
+    /* ===== JUDUL ===== */
     .judul-dokumen {
       text-align: center;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
     }
     .judul-dokumen h4 {
-      font-size: 14pt; /* Ukuran judul diperkecil */
+      font-size: 13pt;
       font-weight: bold;
       text-decoration: underline;
-      margin-bottom: 0;
+      margin: 0;
+      letter-spacing: 1px;
     }
 
+    /* ===== INFO MAHASISWA ===== */
     .info-box {
       border: 1px solid #000;
-      padding: 10px 15px;
-      margin-bottom: 20px;
-      background-color: #fff;
+      padding: 8px 14px;
+      margin-bottom: 18px;
+      background: #fafafa;
     }
     .info-table {
       width: 100%;
-      font-size: 10pt; /* Diperkecil dari 11pt */
+      font-size: 10pt;
+      border-collapse: collapse;
     }
     .info-table td {
-      padding: 3px 5px;
+      padding: 2px 6px 2px 0;
       vertical-align: top;
       border: none;
     }
     .info-table td:first-child {
       font-weight: bold;
+      width: 22%;
+    }
+    .info-table td:nth-child(2) {
+      width: 2%;
+      text-align: center;
     }
 
-    /* === TABEL LOGBOOK === */
-    .table {
-      font-size: 10pt; /* Diperkecil dari 11pt */
-      border-color: #000;
-      margin-bottom: 10px;
+    /* ===== BLOK MINGGU ===== */
+    .minggu-block {
+      margin-bottom: 20px;
+      page-break-inside: avoid;
     }
-    .table-bordered th, 
+    .minggu-header {
+      background: #dfe7f5;
+      border: 1px solid #000;
+      border-bottom: none;
+      padding: 4px 12px;
+      font-weight: bold;
+      font-size: 10pt;
+      display: flex;
+      justify-content: space-between;
+      page-break-after: avoid;
+    }
+
+    /* ===== TABEL LOGBOOK ===== */
+    .table {
+      font-size: 9pt;
+      border-color: #000;
+      margin-bottom: 0;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .table-bordered th,
     .table-bordered td {
       border: 1px solid #000;
       vertical-align: middle;
-      padding: 6px; /* Padding dikurangi agar baris lebih rapat */
+      padding: 4px 5px;
     }
     .table thead th {
       background-color: #e9ecef;
       text-align: center;
       vertical-align: middle;
-      font-weight: bold;
+      font-weight: 700;
+      font-size: 8.5pt;
     }
-    
+    .table tbody td {
+      font-size: 9pt;
+    }
+    .table tfoot td {
+      font-size: 9.5pt;
+      font-weight: 700;
+      background: #f0f3f8;
+    }
     tr {
       page-break-inside: avoid;
     }
@@ -118,63 +161,226 @@
       display: table-header-group;
     }
 
-    /* === GALERI & THUMBNAIL === */
+    /* ===== GALERI FOTO ===== */
     .thumbnail {
-      width: 80px; /* Diperkecil dari 100px */
-      height: 80px;
+      width: 64px;
+      height: 64px;
       object-fit: cover;
-      border-radius: 4px;
-      margin: 2px;
-      border: 1px solid #999;
+      border-radius: 3px;
+      border: 1px solid #aaa;
+      margin: 1px;
     }
     .gallery {
       display: flex;
-      gap: 4px;
+      gap: 3px;
       flex-wrap: wrap;
       justify-content: center;
     }
+    .foto-lainnya {
+      font-size: 7pt;
+      color: #666;
+      font-style: italic;
+      margin-top: 2px;
+    }
 
-    /* === TANDA TANGAN (3 Kolom) === */
+    /* ===== MASUKAN / SARAN ===== */
+    .masukan-box {
+      border: 1px solid #000;
+      border-top: none;
+      padding: 6px 12px;
+      background: #fcfcfc;
+      font-size: 9pt;
+    }
+    .masukan-box .masukan-label {
+      font-weight: 700;
+      margin-bottom: 1px;
+      font-size: 8.5pt;
+    }
+    .masukan-box .masukan-isi {
+      min-height: 22px;
+      white-space: pre-wrap;
+      padding: 2px 0;
+    }
+    .masukan-box .masukan-kosong {
+      color: #888;
+      font-style: italic;
+    }
+    .masukan-box .masukan-meta {
+      font-size: 7.5pt;
+      color: #555;
+      margin-top: 1px;
+    }
+    .masukan-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .masukan-col {
+      flex: 1 1 45%;
+      min-width: 200px;
+    }
+
+    /* ===== TANDA TANGAN ===== */
     .tanda-tangan-container {
       page-break-inside: avoid;
-      margin-top: 30px;
-      width: 100%;
-      font-size: 9pt; /* Ukuran font TTD */
+      margin-top: 40px;
+      font-size: 10pt;
     }
     .tiga-kolom {
       display: flex;
       justify-content: space-between;
       text-align: left;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
+      gap: 15px;
     }
     .kolom-tanda {
-      width: 32%;
+      width: 30%;
     }
     .area-ttd {
-      height: 70px; /* Diperkecil ruang ttd-nya */
+      height: 75px;
+      margin: 10px 0;
     }
     .kaprodi {
       text-align: center;
-      margin-top: 20px;
+      margin-top: 30px;
+      width: 40%;
+      margin-left: auto;
+      margin-right: auto;
     }
     .nama-ttd {
-      font-weight: bold;
+      font-weight: 700;
       text-decoration: underline;
       margin-bottom: 0;
+      font-size: 10.5pt;
     }
     .nip-ttd {
       margin-top: 0;
+      font-size: 9.5pt;
     }
 
-    /* === PENGATURAN CETAK (PRINT) === */
+    /* ===== DAFTAR HADIR ===== */
+    .kehadiran-page {
+      page-break-before: always;
+      padding-top: 6px;
+    }
+    .kehadiran-kop {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .kehadiran-kop h5 {
+      font-size: 13pt;
+      font-weight: 700;
+      margin-bottom: 2px;
+      text-decoration: underline;
+    }
+    .kehadiran-kop p {
+      font-size: 11pt;
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+    .kehadiran-info {
+      font-size: 10pt;
+      margin-bottom: 12px;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .kehadiran-info td {
+      padding: 3px 6px 3px 0;
+      border: none;
+    }
+    .kehadiran-info td:first-child {
+      font-weight: 700;
+      width: 18%;
+    }
+    .kehadiran-info td:nth-child(2) {
+      width: 2%;
+    }
+
+    .table-kehadiran {
+      font-size: 9pt;
+      border-collapse: collapse;
+      width: 100%;
+      border: 1px solid #000;
+    }
+    .table-kehadiran th,
+    .table-kehadiran td {
+      border: 1px solid #000;
+      text-align: center;
+      vertical-align: middle;
+      padding: 4px;
+    }
+    .table-kehadiran thead th {
+      background-color: #e9ecef;
+      font-weight: 700;
+      font-size: 8.5pt;
+    }
+    .table-kehadiran td.hari-tanggal {
+      text-align: left;
+      padding-left: 8px;
+    }
+    .table-kehadiran .baris-kosong {
+      color: #bbb;
+    }
+    /* Kolom TTD hijau jika hadir */
+    .table-kehadiran td.ttd-hadir {
+      background-color: #c8e6c9 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .table-kehadiran td.ttd-kosong {
+      background-color: transparent;
+    }
+    
+    /* Wrapper untuk membuat posisi kanan bawah tapi rata kiri teksnya */
+    .kehadiran-ttd-wrapper {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 30px;
+    }
+    .kehadiran-ttd {
+      text-align: left;
+      font-size: 10pt;
+      width: 260px;
+    }
+    .kehadiran-ttd .area-ttd-kecil {
+      height: 65px;
+      margin: 8px 0;
+    }
+
+    /* ===== FOOTER ===== */
+    .footer-cetak {
+      font-size: 8pt;
+      color: #666;
+      margin: 20px 0 5px 0;
+      border-top: 1px solid #ddd;
+      padding-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .kode-validasi {
+      font-size: 7.5pt;
+      color: #999;
+    }
+
+    /* ===== PRINT STYLE ===== */
     @media print {
       body {
         margin: 0;
+        background: #fff;
       }
-      .btn, .print-btn { 
-        display: none !important; 
+      .btn,
+      .print-btn,
+      .no-print {
+        display: none !important;
       }
-      .table thead th {
+      .container-fluid {
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+      .table thead th,
+      .minggu-header,
+      .table-kehadiran thead th {
         background-color: #e9ecef !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
@@ -183,186 +389,402 @@
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
+      .info-box {
+        background: #fafafa !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .table-kehadiran td.ttd-hadir {
+        background-color: #c8e6c9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .masukan-box {
+        background: #fcfcfc !important;
+      }
+    }
+
+    /* ===== RESPONSIVE UNTUK LAYAR ===== */
+    @media screen and (max-width: 768px) {
+      .container-fluid {
+        padding: 0 10px;
+      }
+      .teks-kop .nama-kampus {
+        font-size: 18pt;
+      }
+      .tiga-kolom {
+        flex-direction: column;
+        gap: 15px;
+      }
+      .kolom-tanda {
+        width: 100%;
+      }
+      .kaprodi {
+        width: 100%;
+      }
+      .masukan-row {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .masukan-col {
+        flex: 1 1 100%;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container-fluid px-4 py-3">
-    <div class="text-end">
+  <div class="container-fluid px-3 py-2">
+    <div class="text-end no-print">
       <button onclick="window.print()" class="btn btn-primary btn-sm print-btn shadow-sm">
-        <i class="bi bi-printer-fill"></i> Cetak Dokumen / PDF
+        <i class="bi bi-printer-fill"></i> Cetak / PDF
       </button>
     </div>
 
-    <!-- KOP SURAT BARU -->
     <div class="kop-surat">
-      <img src="https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png" 
+      <img src="https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png"
            alt="Logo Politeknik Dewantara" class="logo-kop">
       <div class="teks-kop">
         <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
-        <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo. Sulawesi Selatan</p>
+        <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo, Sulawesi Selatan</p>
         <p class="kontak">E-mail: sdm@polidewa.ac.id | Website: polidewa.ac.id</p>
       </div>
     </div>
-    <!-- AKHIR KOP SURAT -->
 
     <div class="judul-dokumen">
-      <h4>LOGBOOK  MAGANG</h4>
-    </div>
-    
-    <div class="info-box">
-      <table class="info-table">
-        <tr>
-          <td width="20%">Nama Mahasiswa</td>
-          <td width="2%">:</td>
-          <td width="78%"><%= mahasiswa.nama %></td>
-        </tr>
-        <tr>
-          <td>NIM</td>
-          <td>:</td>
-          <td><%= mahasiswa.nim %></td>
-        </tr>
-        <% if (pdkInfo && pdkInfo.perusahaan && pdkInfo.perusahaan.nama) { %>
-        <tr>
-          <td>Perusahaan </td>
-          <td>:</td>
-          <td><%= pdkInfo.perusahaan.nama %></td>
-        </tr>
-        <% } else { %>
-        <tr>
-          <td>Perusahaan </td>
-          <td>:</td>
-          <td>-</td>
-        </tr>
-        <% } %>
-        
-        <% if (pdkInfo && pdkInfo.tanggalMulai) { %>
-        <tr>
-          <td>Periode Magang</td>
-          <td>:</td>
-          <td><%= pdkInfo.tanggalMulai %> s/d <%= pdkInfo.tanggalSelesai || 'Berlangsung' %></td>
-        </tr>
-        <% } else { %>
-        <tr>
-          <td>Periode Magang</td>
-          <td>:</td>
-          <td>-</td>
-        </tr>
-        <% } %>
-      </table>
+      <h4>LOGBOOK MAGANG</h4>
     </div>
 
+<!-- ==================== INFO MAHASISWA ==================== -->
+<div class="info-box" style="position: relative;">
+  <table class="info-table">
+    <tr><td>Nama Mahasiswa</td><td>:</td><td><%= mahasiswa.nama %></td></tr>
+    <tr><td>NIM</td><td>:</td><td><%= mahasiswa.nim %></td></tr>
+    <tr><td>Prodi</td><td>:</td><td><%= prodi %></td></tr>
+    <tr><td>Semester</td><td>:</td><td><%= semester %></td></tr>
+    <% if (pdkInfo && pdkInfo.perusahaan && pdkInfo.perusahaan.nama) { %>
+    <tr><td>Tempat Magang</td><td>:</td><td><%= pdkInfo.perusahaan.nama %></td></tr>
+    <% } else { %>
+    <tr><td>Tempat Magang</td><td>:</td><td>-</td></tr>
+    <% } %>
+    <% if (pdkInfo && pdkInfo.tanggalMulai) { %>
+    <tr><td>Periode Magang</td><td>:</td><td><%= pdkInfo.tanggalMulai %> s/d <%= pdkInfo.tanggalSelesai || 'Berlangsung' %></td></tr>
+    <% } else { %>
+    <tr><td>Periode Magang</td><td>:</td><td>-</td></tr>
+    <% } %>
+    <tr><td>Pendamping Lapangan</td><td>:</td><td>
+      <% if (pdkInfo && pdkInfo.perusahaan && pdkInfo.perusahaan.pembimbingLapangan) { %>
+        <%= pdkInfo.perusahaan.pembimbingLapangan %><% if (pdkInfo.perusahaan.jabatanPembimbingLapangan) { %> (<%= pdkInfo.perusahaan.jabatanPembimbingLapangan %>)<% } %>
+      <% } else { %>-<% } %>
+    </td></tr>
+  </table>
+
+  <!-- ========== STEMPEL PROGRESS (MELAYANG / OVERLAY) ========== -->
+  <% if (progress) { %>
+  <div style="position: absolute; top: 15px; right: 25px; z-index: 10; border: 3px double #d32f2f; padding: 6px 20px; text-align: center; color: #d32f2f; transform: rotate(-8deg); font-family: 'Times New Roman', Times, serif; background-color: rgba(255, 255, 255, 0.85); pointer-events: none; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+    <div style="font-size: 9.5pt; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #d32f2f; padding-bottom: 2px; margin-bottom: 4px; letter-spacing: 1px;">
+      Telah Diverifikasi
+    </div>
+    <div style="font-size: 32pt; font-weight: bold; line-height: 1;">
+      <%= progress.percentage %>%
+    </div>
+    <div style="font-size: 8.5pt; margin-top: 4px; font-weight: bold;">
+      Kelengkapan: <%= progress.totalLogbook %> / <%= progress.totalDays %> Hari
+    </div>
+  </div>
+  <% } %>
+</div>
+
+    <% if (!mingguGroups || mingguGroups.length === 0) { %>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th width="5%">No</th>
+            <th width="12%">Tanggal</th>
+            <th width="23%">Kegiatan</th>
+            <th width="12%">Lokasi</th>
+            <th width="8%">Durasi<br>(Jam)</th>
+            <th width="15%">Keterangan</th>
+            <th width="25%">Dokumentasi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="7" class="text-center py-4 fst-italic">Belum ada entri logbook.</td></tr>
+        </tbody>
+      </table>
+    <% } else { %>
+      <% mingguGroups.forEach((grup) => { %>
+        <div class="minggu-block">
+          <div class="minggu-header">
+            <span>
+              Minggu Ke : <%= grup.mingguKe %>,
+              <%= new Date(grup.tanggalAwal).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) %>
+              s/d <%= new Date(grup.tanggalAkhir).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) %>
+            </span>
+            <span>Bulan Ke : <%= grup.bulanKe %></span>
+          </div>
+
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th width="5%">No</th>
+                <th width="12%">Hari/Tanggal</th>
+                <th width="23%">Kegiatan</th>
+                <th width="12%">Lokasi</th>
+                <th width="8%">Jam</th>
+                <th width="15%">Keterangan</th>
+                <th width="25%">Dokumentasi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% grup.entries.forEach((item, index) => { %>
+                <tr>
+                  <td class="text-center"><%= index + 1 %></td>
+                  <td class="text-center"><%= new Date(item.tanggal).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) %></td>
+                  <td class="text-justify"><%= item.kegiatan %></td>
+                  <td class="text-center"><%= item.lokasi || '-' %></td>
+                  <td class="text-center fw-bold"><%= item.durasi || '-' %></td>
+                  <td class="text-center"><%= item.keterangan || (item.status === 'approved' ? 'Disetujui' : item.status === 'rejected' ? 'Ditolak' : 'Menunggu') %></td>
+                  <td class="text-center">
+                    <% if (item.imageUrls && item.imageUrls.length > 0) {
+                         const MAX_FOTO = 4;
+                         const tampil = item.imageUrls.slice(0, MAX_FOTO);
+                         const sisa = item.imageUrls.length - tampil.length;
+                    %>
+                      <div class="gallery">
+                        <% tampil.forEach(url => {
+                          let fileId = '';
+                          if (url.includes('id=')) fileId = url.split('id=')[1].split('&')[0];
+                          else if (url.includes('/d/')) fileId = url.split('/d/')[1].split('/')[0];
+                          else fileId = url.split('/').pop();
+                        %>
+                          <a href="<%= url %>" target="_blank">
+                            <img src="https://drive.google.com/thumbnail?id=<%= fileId %>&sz=w600"
+                                 class="thumbnail" alt="dokumentasi"
+                                 onerror="this.onerror=null; this.src='https://drive.google.com/uc?export=view&id=<%= fileId %>';">
+                          </a>
+                        <% }) %>
+                      </div>
+                      <% if (sisa > 0) { %>
+                        <div class="foto-lainnya">+<%= sisa %> foto lainnya (lihat online)</div>
+                      <% } %>
+                    <% } else { %>
+                      <span class="text-muted fst-italic" style="font-size:8pt;">Tidak ada foto</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+              <tr class="bg-light fw-bold">
+                <td colspan="4" class="text-end pe-2">Subtotal Jam Minggu Ini:</td>
+                <td class="text-center"><%= grup.totalDurasi.toFixed(1) %></td>
+                <td colspan="2"></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="masukan-box">
+            <div class="masukan-row">
+              <div class="masukan-col">
+                <div class="masukan-label">Masukan/Saran Pendamping Lapangan:</div>
+                <% const mp = masukanMap[grup.mingguKe + '_pendamping']; %>
+                <% if (mp && mp.isi) { %>
+                  <div class="masukan-isi"><%= mp.isi %></div>
+                  <div class="masukan-meta">— <%= mp.penulisNama || 'Pendamping Lapangan' %>, <%= mp.updatedAt ? new Date(mp.updatedAt).toLocaleDateString('id-ID') : '' %></div>
+                <% } else { %>
+                  <div class="masukan-isi masukan-kosong">Belum ada masukan untuk minggu ini.</div>
+                <% } %>
+              </div>
+              <div class="masukan-col">
+                <div class="masukan-label">Masukan/Saran Dosen Pembimbing:</div>
+                <%
+                  const m1 = masukanMap[grup.mingguKe + '_pembimbing1'];
+                  const m2 = masukanMap[grup.mingguKe + '_pembimbing2'];
+                %>
+                <% if (m1 && m1.isi) { %>
+                  <div class="masukan-isi"><%= m1.isi %></div>
+                  <div class="masukan-meta">— <%= m1.penulisNama || 'Pembimbing 1' %>, <%= m1.updatedAt ? new Date(m1.updatedAt).toLocaleDateString('id-ID') : '' %></div>
+                <% } %>
+                <% if (m2 && m2.isi) { %>
+                  <div class="masukan-isi"><%= m2.isi %></div>
+                  <div class="masukan-meta">— <%= m2.penulisNama || 'Pembimbing 2' %>, <%= m2.updatedAt ? new Date(m2.updatedAt).toLocaleDateString('id-ID') : '' %></div>
+                <% } %>
+                <% if ((!m1 || !m1.isi) && (!m2 || !m2.isi)) { %>
+                  <div class="masukan-isi masukan-kosong">Belum ada masukan untuk minggu ini.</div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+
     <table class="table table-bordered">
-      <thead>
-        <tr>
-          <th width="5%">No</th>
-          <th width="12%">Tanggal</th>
-          <th width="28%">Kegiatan</th>
-          <th width="15%">Lokasi</th>
-          <th width="10%">Durasi<br>(Jam)</th>
-          <th width="30%">Dokumentasi</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if (logbook.length === 0) { %>
-          <tr>
-            <td colspan="6" class="text-center py-4 fst-italic">Belum ada entri logbook.</td>
-          </tr>
-        <% } %>
-        <% logbook.forEach((item, index) => { %>
-          <tr>
-            <td class="text-center"><%= index + 1 %></td>
-            <td class="text-center"><%= new Date(item.tanggal).toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'}) %></td>
-            <td class="text-justify"><%= item.kegiatan %></td>
-            <td class="text-center"><%= item.lokasi || '-' %></td>
-            <td class="text-center fw-bold"><%= item.durasi || '-' %></td>
-            <td class="text-center">
-              <% if (item.imageUrls && item.imageUrls.length > 0) { %>
-                <div class="gallery">
-                  <% item.imageUrls.forEach(url => { 
-                    let fileId = '';
-                    if (url.includes('id=')) {
-                      fileId = url.split('id=')[1].split('&')[0];
-                    } else if (url.includes('/d/')) {
-                      fileId = url.split('/d/')[1].split('/')[0];
-                    } else {
-                      fileId = url.split('/').pop();
-                    }
-                  %>
-                    <a href="<%= url %>" target="_blank">
-                      <img src="https://drive.google.com/thumbnail?id=<%= fileId %>&sz=w600" 
-                           class="thumbnail" alt="dokumentasi"
-                           onerror="this.onerror=null; this.src='https://drive.google.com/uc?export=view&id=<%= fileId %>';">
-                    </a>
-                  <% }) %>
-                </div>
-              <% } else { %>
-                <span class="text-muted fst-italic">Tidak ada foto</span>
-              <% } %>
-            </td>
-          </tr>
-        <% }) %>
-      </tbody>
       <tfoot>
         <tr class="bg-light fw-bold">
-          <td colspan="4" class="text-end pe-3">Total Jam Kegiatan:</td>
-          <td class="text-center"><%= totalDurasi.toFixed(1) %></td>
-          <td class="text-center"><%= totalEntries %> Entri</td>
+          <td class="text-end pe-3" style="width:70%">Total Jam Kegiatan Keseluruhan:</td>
+          <td class="text-center" style="width:15%"><%= totalDurasi.toFixed(1) %></td>
+          <td class="text-center" style="width:15%"><%= totalEntries %> Entri</td>
         </tr>
       </tfoot>
     </table>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <small class="text-muted fst-italic">Logbook ini dicetak di Web Portal Elektronika Polidewa: <%= generatedAt %></small>
+<div class="tanda-tangan-container">
+  <div class="tiga-kolom">
+    <!-- Dosen Pembimbing 1 -->
+    <div class="kolom-tanda">
+      <p class="mb-0">Mengetahui,</p>
+      <p>Dosen Pembimbing 1</p>
+      <div class="area-ttd"></div>
+      <% if (pembimbing && pembimbing.pembimbing1) { %>
+        <p class="nama-ttd"><%= pembimbing.pembimbing1.nama %></p>
+        <p class="nip-ttd">NUPTK. <%= pembimbing.pembimbing1.nuptk || '' %></p>
+      <% } else { %>
+        <p class="nama-ttd">( ____________________ )</p>
+        <p class="nip-ttd">NUPTK.</p>
+      <% } %>
     </div>
 
-    <div class="tanda-tangan-container">
-      <div class="tiga-kolom">
-        
-        <div class="kolom-tanda">
-          <p class="mb-0">Mengetahui,</p>
-          <p>Dosen Pembimbing 1</p>
-          <div class="area-ttd"></div>
-          <% if (pembimbing && pembimbing.pembimbing1) { %>
-            <p class="nama-ttd"><%= pembimbing.pembimbing1.nama %></p>
-            <p class="nip-ttd">NUPTK/NIDN.</p>
-          <% } else { %>
-            <p class="nama-ttd">( ____________________ )</p>
-            <p class="nip-ttd">NIP/NIDN.</p>
-          <% } %>
-        </div>
-
-        <div class="kolom-tanda">
-          <p class="mb-0"><br></p>
-          <p>Dosen Pembimbing 2</p>
-          <div class="area-ttd"></div>
-          <% if (pembimbing && pembimbing.pembimbing2) { %>
-            <p class="nama-ttd"><%= pembimbing.pembimbing2.nama %></p>
-            <p class="nip-ttd">NUPTK/NIDN. </p>
-          <% } else { %>
-            <p class="nama-ttd">( ____________________ )</p>
-            <p class="nip-ttd">NUPTK/NIDN.</p>
-          <% } %>
-        </div>
-
-        <div class="kolom-tanda">
-          <p class="mb-0">Palopo, <%= new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %></p>
-          <p>Pendamping Lapangan</p>
-          <div class="area-ttd"></div>
-          <p class="nama-ttd">( ____________________ )</p>
-        </div>
-
-      </div>
-
-      <div class="kaprodi">
-        <p class="mb-0">Mengesahkan,</p>
-        <p>Ketua Program Studi Teknik Elektronika</p>
-        <div class="area-ttd"></div>
-        <p class="nama-ttd">Fajar Ramadhan, S.Pd., M.T</p>
-        <p class="nip-ttd">NUPTK. 8559777678130153</p>
-      </div>
+    <!-- Dosen Pembimbing 2 -->
+    <div class="kolom-tanda">
+      <p class="mb-0"><br></p>
+      <p>Dosen Pembimbing 2</p>
+      <div class="area-ttd"></div>
+      <% if (pembimbing && pembimbing.pembimbing2) { %>
+        <p class="nama-ttd"><%= pembimbing.pembimbing2.nama %></p>
+        <p class="nip-ttd">NUPTK. <%= pembimbing.pembimbing2.nuptk || '' %></p>
+      <% } else { %>
+        <p class="nama-ttd">( ____________________ )</p>
+        <p class="nip-ttd">NUPTK.</p>
+      <% } %>
     </div>
 
+    <!-- Pendamping Lapangan -->
+    <div class="kolom-tanda">
+      <p class="mb-0">Palopo, <%= new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) %></p>
+      <p>Pendamping Lapangan</p>
+      <div class="area-ttd"></div>
+      <% if (pdkInfo && pdkInfo.perusahaan && pdkInfo.perusahaan.pembimbingLapangan) { %>
+        <p class="nama-ttd"><%= pdkInfo.perusahaan.pembimbingLapangan %></p>
+        <% if (pdkInfo.perusahaan.jabatanPembimbingLapangan) { %>
+          <p class="nip-ttd"><%= pdkInfo.perusahaan.jabatanPembimbingLapangan %></p>
+        <% } %>
+      <% } else { %>
+        <p class="nama-ttd">( ____________________ )</p>
+        <p class="nip-ttd"><br></p>
+      <% } %>
+    </div>
   </div>
-</body>
+
+  <div class="kaprodi">
+    <p class="mb-0">Mengesahkan,</p>
+    <p>Ketua Program Studi Teknik Elektronika (D3)</p>
+    <div class="area-ttd"></div>
+    <p class="nama-ttd">Fajar Ramadhan, S.Pd., M.T</p>
+    <p class="nip-ttd">NUPTK. 8559777678130153</p>
+  </div>
+</div>
+
+<div class="footer-cetak">
+  <span>Logbook dicetak dari Web Portal Elektronika Polidewa: <%= generatedAt %></span>
+  <span class="kode-validasi"><%= kodeValidasi %></span>
+</div>
+
+    <% if (!kehadiranGroups || kehadiranGroups.length === 0) { %>
+      <div class="kehadiran-page">
+        <div class="kehadiran-kop">
+          <h5>DAFTAR HADIR MAGANG MAHASISWA</h5>
+          <p>PROGRAM STUDI TEKNIK ELEKTRONIKA (D3)</p>
+          <p>TAHUN AKADEMIK <%= tahunAjaran %></p>
+        </div>
+        <p class="text-center fst-italic text-muted py-4">
+          Belum ada entri logbook, sehingga Daftar Hadir belum dapat dibuat.
+        </p>
+      </div>
+    <% } else { %>
+      <% kehadiranGroups.forEach((bulan) => { %>
+        <div class="kehadiran-page">
+          <div class="kehadiran-kop">
+            <h5>DAFTAR HADIR MAGANG MAHASISWA</h5>
+            <p>PROGRAM STUDI TEKNIK ELEKTRONIKA (D3)</p>
+            <p>TAHUN AKADEMIK <%= tahunAjaran %> &mdash; <%= bulan.monthLabel.toUpperCase() %></p>
+          </div>
+
+          <table class="kehadiran-info">
+            <tr><td>Nama Mahasiswa</td><td>:</td><td><%= mahasiswa.nama %></td></tr>
+            <tr><td>NIM</td><td>:</td><td><%= mahasiswa.nim %></td></tr>
+            <tr><td>Tempat Magang</td><td>:</td>
+              <td><%= (pdkInfo && pdkInfo.perusahaan && pdkInfo.perusahaan.nama) ? pdkInfo.perusahaan.nama : '-' %></td>
+            </tr>
+          </table>
+
+          <table class="table-kehadiran">
+            <thead>
+              <tr>
+                <th rowspan="2" width="5%">No.</th>
+                <th rowspan="2" width="18%">Hari/Tanggal</th>
+                <th colspan="2">Datang</th>
+                <th colspan="2">Pulang</th>
+                <th rowspan="2" width="17%">Keterangan</th>
+              </tr>
+              <tr>
+                <th width="12%">Jam</th>
+                <th width="10%">Ttd</th>
+                <th width="12%">Jam</th>
+                <th width="10%">Ttd</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% for (let tgl = 1; tgl <= bulan.daysInMonth; tgl++) {
+                   const hadir = bulan.entriesByTanggal[tgl];
+                   const tanggalObj = new Date(bulan.year, bulan.month - 1, tgl);
+                   const namaHari = ['Minggu','Senin','Selasa','Rabu','Kamis',"Jum'at",'Sabtu'][tanggalObj.getDay()];
+              %>
+                <tr>
+                  <td><%= tgl %>.</td>
+                  <td class="hari-tanggal"><%= namaHari %>, <%= String(tgl).padStart(2,'0') %>-<%= String(bulan.month).padStart(2,'0') %>-<%= bulan.year %></td>
+                  <% if (hadir) { %>
+                    <td><%= hadir.jamDatang %></td>
+                    <td class="ttd-hadir"></td>   <td><%= hadir.jamPulang %></td>
+                    <td class="ttd-hadir"></td>   <td><%= hadir.keterangan %></td>
+                  <% } else { %>
+                    <td class="baris-kosong">-</td>
+                    <td class="ttd-kosong"></td>
+                    <td class="baris-kosong">-</td>
+                    <td class="ttd-kosong"></td>
+                    <td></td>
+                  <% } %>
+                </tr>
+              <% } %>
+              <tr class="fw-bold">
+                <td colspan="2">Jumlah Kehadiran</td>
+                <td colspan="4"><%= Object.keys(bulan.entriesByTanggal).length %> Hari</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="kehadiran-ttd-wrapper">
+            <div class="kehadiran-ttd">
+              <p class="mb-0">Palopo, <%= new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) %></p>
+              <p>Pendamping Lapangan</p>
+              <div class="area-ttd-kecil"></div>
+              <% if (pdkInfo && pdkInfo.perusahaan && pdkInfo.perusahaan.pembimbingLapangan) { %>
+                <p class="nama-ttd"><%= pdkInfo.perusahaan.pembimbingLapangan %></p>
+                <% if (pdkInfo.perusahaan.jabatanPembimbingLapangan) { %>
+                  <p class="nip-ttd"><%= pdkInfo.perusahaan.jabatanPembimbingLapangan %></p>
+                <% } %>
+              <% } else { %>
+                <p class="nama-ttd">( ____________________ )</p>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="footer-cetak">
+            <span>Logbook dicetak dari Web Portal Elektronika Polidewa: <%= generatedAt %></span>
+            <span class="kode-validasi">Kode Validasi</span>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+
+  </div> </body>
 </html>
