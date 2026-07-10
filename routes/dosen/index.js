@@ -14,7 +14,7 @@ const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
-const { saveNilai } = require('../../helpers/nilaiHelper');
+const { saveNilai, getPeriodeAktif } = require('../../helpers/nilaiHelper');
 
 // Import sub‑modul
 const laporanMagangRouter = require('./laporanMagang');
@@ -28,6 +28,8 @@ const kurikulumRouter = require('./kurikulum');
 const nilaiRouter = require('./nilai');
 const mahasiswaRouter = require('./mahasiswa');
 const magangPeriodRouter = require('./magangPeriod');
+const chatRouter = require('./chat');
+const sertifikatRouter = require('./sertifikat');
 // ============================================================================
 // KONSTANTA FOLDER UTAMA (Data WEB)
 // ============================================================================
@@ -96,6 +98,9 @@ router.use('/seminar', seminarRouter);
 router.use('/magang', magangRouter);
 router.use('/biodata', biodataRouter);
 router.use('/magang-period', magangPeriodRouter);
+router.use('/chat', chatRouter);
+router.use('/sertifikat', sertifikatRouter);
+router.use('/kelas-chat', require('./kelasChat'));
 
 router.use('/mk', mkRouter);
 router.use('/kurikulum', kurikulumRouter);
@@ -117,12 +122,15 @@ router.get('/', (req, res) => {
 // Daftar semua tugas yang dibuat dosen ini
 router.get('/tugas', async (req, res) => {
   try {
+    const periodeAktif = getPeriodeAktif();
     const snapshot = await db.collection('tugas')
       .where('dosenId', '==', req.dosen.id)
       .orderBy('deadline', 'desc')
       .get();
 
-    const tugasList = snapshot.docs.map(doc => {
+    const tugasList = snapshot.docs
+      .filter(doc => (doc.data().periode || periodeAktif) === periodeAktif) // data lama tanpa periode dianggap periode aktif
+      .map(doc => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -218,6 +226,7 @@ router.post('/tugas', upload.single('file'), async (req, res) => {
       mkKode: mkData.kode,
       mkNama: mkData.nama,
       dosenId: req.dosen.id,
+      periode: getPeriodeAktif(),
       judul,
       deskripsi: deskripsi || '',
       deadline: new Date(deadline).toISOString(),
@@ -278,7 +287,7 @@ router.get('/tugas/:id', async (req, res) => {
     // ✅ AMBIL SEMUA NILAI DARI COLLECTION 'nilai' SEKALIGUS
     const nilaiSnapshot = await db.collection('nilai')
       .where('mkId', '==', tugas.mkId)
-      .where('tipe', '==', tugas.judul)
+      .where('tipe', '==', `tugas_${tugas.id}`)
       .get();
     
     // Buat map nilai berdasarkan mahasiswaId
@@ -373,36 +382,8 @@ router.post('/pengumpulan/nilai', async (req, res) => {
       dinilaiPada: new Date().toISOString()
     });
 
-    // 4. UPDATE atau CREATE di collection 'nilai'
-    const existingNilai = await db.collection('nilai')
-      .where('mahasiswaId', '==', mahasiswaId)
-      .where('mkId', '==', tugas.mkId)
-      .where('tipe', '==', tugas.judul)
-      .limit(1)
-      .get();
-
-    const nilaiAngka = parseFloat(nilai);
-    const now = new Date().toISOString();
-
-    if (existingNilai.empty) {
-      // Buat baru di collection nilai
-      await db.collection('nilai').add({
-        mahasiswaId,
-        mkId: tugas.mkId,
-        tipe: tugas.judul,
-        nilai: nilaiAngka,
-        komentar: komentar || '',
-        createdAt: now,
-        updatedAt: now
-      });
-    } else {
-      // Update existing di collection nilai
-      await existingNilai.docs[0].ref.update({
-        nilai: nilaiAngka,
-        komentar: komentar || '',
-        updatedAt: now
-      });
-    }
+    // 4. UPDATE atau CREATE di collection 'nilai' (pakai helper bersama, sudah periode-aware)
+    await saveNilai(mahasiswaId, tugas.mkId, tugasId, tugas.judul, nilai, undefined, komentar || '');
 
     console.log(`✅ Nilai ${nilai} untuk ${mahasiswaId} pada tugas ${tugasId} berhasil disimpan di kedua collection`);
 

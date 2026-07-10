@@ -1,0 +1,268 @@
+<%- include('../../partials/header') %>
+
+<style>
+  :root {
+    --primary-start: #1e3a8a;
+    --primary-end: #3b82f6;
+  }
+  .form-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .question-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e2e8f0;
+    transition: 0.2s;
+  }
+  .question-card:hover {
+    border-color: var(--primary-start);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  }
+  .rating-scale {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+  .rating-option {
+    text-align: center;
+    min-width: 50px;
+  }
+  .rating-option input {
+    display: block;
+    margin: 0 auto;
+  }
+  .btn-submit {
+    background: linear-gradient(105deg, var(--primary-start), var(--primary-end));
+    border: none;
+    border-radius: 60px;
+    padding: 0.6rem 2rem;
+    font-weight: 600;
+  }
+  .required-field::after {
+    content: " *";
+    color: red;
+  }
+  .dosen-select {
+    background: #f8fafc;
+    border-radius: 1rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e2e8f0;
+  }
+  .dosen-select select:focus {
+    border-color: var(--primary-start);
+    box-shadow: 0 0 0 0.2rem rgba(30,58,138,0.25);
+  }
+  /* Info anonim */
+  .info-anonim {
+    background: #fef9e3;
+    border-left: 5px solid #eab308;
+    border-radius: 1rem;
+    padding: 0.8rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #854d0e;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .info-anonim i {
+    font-size: 1.2rem;
+  }
+  /* Panduan skala */
+  .scale-guide {
+    background: #eef2ff;
+    border-radius: 1rem;
+    padding: 0.8rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+    color: #1e3a8a;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .scale-guide-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .scale-number {
+    font-weight: 800;
+    background: white;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 60px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  @media (max-width: 576px) {
+    .info-anonim {
+      font-size: 0.75rem;
+      padding: 0.6rem;
+    }
+    .scale-guide {
+      font-size: 0.7rem;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .rating-option {
+      min-width: 40px;
+    }
+  }
+</style>
+
+<div class="container mt-4 form-container">
+  <% if (typeof message !== 'undefined' && message) { %>
+    <div class="alert alert-<%= message.type === 'success' ? 'success' : (message.type === 'error' ? 'danger' : 'info') %> alert-dismissible fade show">
+      <%= message.text %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% } %>
+
+  <div class="card shadow-sm border-0 rounded-4">
+    <div class="card-header bg-white py-3 border-0">
+      <h4 class="mb-0"><i class="bi bi-pencil-square me-2 text-primary"></i>Evaluasi Dosen: <%= mk.kode %> - <%= mk.nama %></h4>
+      <p class="text-muted mt-2">Periode: <%= activePeriod.nama %> (sampai <%= activePeriod.tanggalSelesai %>)</p>
+    </div>
+    <div class="card-body">
+      <!-- PENGINGAT ANONIM & KEJUJURAN -->
+      <div class="info-anonim">
+        <i class="bi bi-shield-lock-fill"></i>
+        <span><strong>Identitas Anda dirahasiakan.</strong> Jawablah dengan jujur dan sesuai pengalaman selama mengikuti perkuliahan. Penilaian ini sangat membantu meningkatkan kualitas pembelajaran di Program Studi Elektronika.</span>
+      </div>
+
+      <!-- PANDUAN SKALA 1-5 -->
+      <div class="scale-guide">
+        <span><i class="bi bi-info-circle-fill"></i> <strong>Panduan Skala:</strong></span>
+        <span class="scale-guide-item"><span class="scale-number">1</span> Sangat Buruk</span>
+        <span class="scale-guide-item"><span class="scale-number">2</span> Kurang</span>
+        <span class="scale-guide-item"><span class="scale-number">3</span> Cukup</span>
+        <span class="scale-guide-item"><span class="scale-number">4</span> Baik</span>
+        <span class="scale-guide-item"><span class="scale-number">5</span> Sangat Baik</span>
+      </div>
+
+      <form method="POST" action="/mahasiswa/edom/mk/<%= mkId %>" id="edomForm" onsubmit="return validateForm()">
+        <!-- Dropdown Pilih Dosen -->
+        <div class="dosen-select">
+          <label class="form-label fw-bold">Pilih Dosen yang Akan Dievaluasi <span class="text-danger">*</span></label>
+          <select name="dosenId" class="form-select" required>
+            <option value="">-- Pilih Dosen --</option>
+            <% dosenList.forEach(dosen => { %>
+              <option value="<%= dosen.id %>"><%= dosen.nama %></option>
+            <% }) %>
+          </select>
+          <small class="text-muted">Jika mata kuliah diampu lebih dari satu dosen, pilih dosen yang akan dievaluasi.</small>
+        </div>
+
+        <!-- Pertanyaan Rating -->
+        <% const ratingQuestions = questions.filter(q => q.tipe === 'rating'); %>
+        <% const textQuestions = questions.filter(q => q.tipe === 'text'); %>
+        
+        <% if (ratingQuestions.length) { %>
+          <div class="mb-2">
+            <h5 class="fw-semibold"><i class="bi bi-star-fill me-1"></i> Penilaian Skala</h5>
+          </div>
+          <% ratingQuestions.forEach((q, idx) => { %>
+            <div class="question-card">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h6 class="fw-bold"><%= idx+1 %>. <%= q.pertanyaan %></h6>
+                  <small class="text-muted">Skala 1 - <%= q.skala || 5 %></small>
+                </div>
+                <% if (q.bobot) { %>
+                  <span class="badge bg-secondary">Bobot: <%= q.bobot %></span>
+                <% } %>
+              </div>
+              <div class="rating-scale mt-2">
+                <% for (let i = 1; i <= (q.skala || 5); i++) { %>
+                  <label class="rating-option">
+                    <input type="radio" name="nilai_<%= q.id %>" value="<%= i %>" required> 
+                    <span><%= i %></span>
+                  </label>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+
+        <!-- Pertanyaan Teks (di bagian akhir) -->
+        <% if (textQuestions.length) { %>
+          <div class="mt-4 mb-2">
+            <hr>
+            <h5 class="text-muted"><i class="bi bi-chat-text-fill me-1"></i> Jawaban Teks</h5>
+            <small class="text-muted">Isikan jawaban sesuai dengan pertanyaan di bawah ini (wajib diisi)</small>
+          </div>
+          <% textQuestions.forEach((q, idx) => { %>
+            <div class="question-card">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h6 class="fw-bold"><%= (ratingQuestions.length + idx + 1) %>. <%= q.pertanyaan %></h6>
+                  <small class="text-danger required-field">Wajib diisi</small>
+                </div>
+              </div>
+              <div class="mt-2">
+                <textarea name="jawaban_teks_<%= q.id %>" class="form-control" rows="3" required placeholder="Tulis jawaban Anda di sini..."></textarea>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+
+        <div class="d-flex justify-content-between mt-4">
+          <a href="/mahasiswa/edom" class="btn btn-outline-secondary rounded-pill px-4">Batal</a>
+          <button type="submit" class="btn btn-submit text-white px-5">Kirim Evaluasi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function validateForm() {
+    // Validasi dropdown dosen
+    const dosenSelect = document.querySelector('select[name="dosenId"]');
+    if (!dosenSelect.value) {
+      alert('Silakan pilih dosen yang akan dievaluasi.');
+      dosenSelect.focus();
+      return false;
+    }
+    
+    // Validasi semua radio rating harus terisi
+    const radioGroups = {};
+    const allRadios = document.querySelectorAll('input[type="radio"]');
+    if (allRadios.length > 0) {
+      allRadios.forEach(radio => {
+        const name = radio.name;
+        if (!radioGroups[name]) radioGroups[name] = false;
+        if (radio.checked) radioGroups[name] = true;
+      });
+      for (let name in radioGroups) {
+        if (!radioGroups[name]) {
+          alert('Harap pilih skala untuk semua pertanyaan rating.');
+          return false;
+        }
+      }
+    }
+    
+    // Validasi textarea teks wajib diisi
+    const textareas = document.querySelectorAll('textarea[required]');
+    for (let ta of textareas) {
+      if (!ta.value.trim()) {
+        alert('Harap isi semua jawaban teks (pertanyaan dengan tanda *).');
+        ta.focus();
+        return false;
+      }
+    }
+    
+    return confirm('Pastikan semua penilaian sudah sesuai. Kirim evaluasi?');
+  }
+</script>
+
+<%- include('../../partials/footer') %>

@@ -16,6 +16,7 @@ const {
   getAngkatanFromNim,
   getStudentCurrentSemester
 } = require('../../helpers/academicHelper');
+const { getTranskripMahasiswa } = require('../../helpers/nilaiHelper');
 
 // Semua route memerlukan autentikasi
 router.use(verifyToken);
@@ -325,22 +326,8 @@ router.get('/krs/krs_print/:id', async (req, res) => {
     // 3. MENGHITUNG IPK & SKS SEBELUMNYA
     // ========================================================================
     try {
-      const gradesSnapshot = await db.collection('grades')
-        .where('userId', '==', req.user.id)
-        .get(); 
-
-      let totalSKS = 0;
-      let totalNilai = 0;
-
-      gradesSnapshot.docs.forEach(doc => {
-        const g = doc.data();
-        const sks = parseFloat(g.sks) || 0;
-        const nilai = parseFloat(g.nilai) || 0;
-        totalSKS += sks;
-        totalNilai += (sks * nilai);
-      });
-
-      krsData.ipk = totalSKS > 0 ? (totalNilai / totalSKS).toFixed(2) : "0.00";
+      const { totalSKS, ipk } = await getTranskripMahasiswa(req.user.id);
+      krsData.ipk = ipk;
       krsData.sksSebelumnya = totalSKS;
     } catch (gradeError) {
       console.error('Gagal menghitung IPK/SKS untuk cetak KRS:', gradeError);
@@ -498,24 +485,12 @@ router.get('/khs/:id', async (req, res) => {
  */
 router.get('/transkrip', async (req, res) => {
   try {
-    const gradesSnapshot = await db.collection('grades')
-      .where('userId', '==', req.user.id)
-      .orderBy('semester', 'asc')
-      .get();
-
-    const grades = gradesSnapshot.docs.map(doc => doc.data());
-
-    let totalSKS = 0, totalNilai = 0;
-    grades.forEach(g => {
-      totalSKS += g.sks;
-      totalNilai += g.sks * g.nilai;
-    });
-    const ipk = totalSKS > 0 ? (totalNilai / totalSKS).toFixed(2) : 0;
+    const { items, ipk } = await getTranskripMahasiswa(req.user.id);
 
     res.render('mahasiswa/transkrip', {
       title: 'Transkrip Nilai',
       user: req.user,
-      grades,
+      grades: items, // nama variabel view tetap 'grades' agar template EJS tidak perlu diubah
       ipk
     });
   } catch (error) {

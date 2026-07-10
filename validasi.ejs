@@ -1,0 +1,76 @@
+<%- include('partials/header-landing') %>
+
+<style>
+  .validasi-hero {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    padding: 4rem 0;
+    color: white;
+    margin-bottom: 3rem;
+  }
+  .validasi-hero h1 { font-size: 2.5rem; font-weight: 700; }
+  .validasi-card {
+    max-width: 560px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    padding: 2rem;
+  }
+  .result-valid {
+    border-left: 5px solid #16a34a;
+    background: #f0fdf4;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+  .result-invalid {
+    border-left: 5px solid #dc2626;
+    background: #fef2f2;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+</style>
+
+<div class="validasi-hero text-center">
+  <div class="container">
+    <h1><i class="bi bi-patch-check-fill me-2"></i>Validasi Surat</h1>
+    <p class="mb-0">Cek keaslian dokumen resmi Teknik Elektronika Politeknik Dewantara</p>
+  </div>
+</div>
+
+<div class="container mb-5">
+  <div class="validasi-card">
+    <form method="GET" action="/validasi" class="mb-4">
+      <label class="form-label fw-semibold">Kode Validasi</label>
+      <div class="input-group">
+        <input type="text" name="kode" class="form-control" placeholder="Masukkan kode validasi" value="<%= kode %>" required>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Cek</button>
+      </div>
+    </form>
+
+    <% if (sudahDicari) { %>
+      <% if (hasil) { %>
+        <div class="result-valid">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-check-circle-fill text-success fs-4 me-2"></i>
+            <strong class="text-success">Dokumen Valid</strong>
+          </div>
+          <div class="row mb-1"><div class="col-5 text-muted">Jenis</div><div class="col-7"><%= hasil.jenis %></div></div>
+          <div class="row mb-1"><div class="col-5 text-muted">Nama</div><div class="col-7"><%= hasil.nama %></div></div>
+          <div class="row mb-1"><div class="col-5 text-muted">Jenis Surat</div><div class="col-7"><%= hasil.jenisSurat %></div></div>
+          <div class="row mb-1"><div class="col-5 text-muted">Status</div><div class="col-7"><%= hasil.status || '-' %></div></div>
+          <div class="row"><div class="col-5 text-muted">Tanggal Terbit</div><div class="col-7"><%= hasil.tanggal ? new Date(hasil.tanggal).toLocaleDateString('id-ID') : '-' %></div></div>
+        </div>
+      <% } else { %>
+        <div class="result-invalid">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-x-circle-fill text-danger fs-4 me-2"></i>
+            <strong class="text-danger">Kode validasi tidak ditemukan</strong>
+          </div>
+          <p class="mb-0 mt-2 text-muted">Pastikan kode yang dimasukkan sesuai dengan yang tertera di dokumen.</p>
+        </div>
+      <% } %>
+    <% } %>
+  </div>
+</div>
+
+<%- include('partials/footer-landing') %>

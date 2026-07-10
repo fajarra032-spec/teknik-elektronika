@@ -1,0 +1,184 @@
+<%- include('../partials/header') %>
+
+<style>
+  .kelas-chat-wrap { display: flex; gap: 1rem; height: calc(100vh - 180px); min-height: 500px; }
+  .peserta-panel {
+    width: 280px; flex-shrink: 0; background: white; border-radius: 1rem;
+    box-shadow: var(--shadow-sm, 0 0.5rem 1rem rgba(0,0,0,0.05)); overflow-y: auto; padding: 0.75rem;
+  }
+  .peserta-item {
+    display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.6rem;
+    border-radius: 0.75rem; cursor: pointer; transition: background 0.2s;
+  }
+  .peserta-item:hover { background: #f1f5f9; }
+  .peserta-avatar {
+    width: 38px; height: 38px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+    background: var(--primary-light, #eef2ff);
+  }
+  .peserta-avatar-placeholder {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    background: var(--primary-light, #eef2ff); color: var(--primary-start, #1e3a8a);
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+  }
+  .peserta-nama { font-size: 0.85rem; font-weight: 600; color: #1e293b; margin: 0; line-height: 1.2; }
+  .peserta-role { font-size: 0.7rem; color: #64748b; }
+  .chat-panel {
+    flex: 1; display: flex; flex-direction: column; background: white;
+    border-radius: 1rem; box-shadow: var(--shadow-sm, 0 0.5rem 1rem rgba(0,0,0,0.05)); overflow: hidden;
+  }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 10px; }
+  .bubble-wrap { max-width: 78%; }
+  .bubble-wrap.me { align-self: flex-end; }
+  .bubble-sender { font-size: 0.7rem; color: #64748b; margin-bottom: 2px; padding: 0 4px; }
+  .bubble { padding: 8px 12px; border-radius: 12px; font-size: 0.9rem; word-break: break-word; }
+  .bubble.me { background: var(--primary-start, #1e3a8a); color: white; border-bottom-right-radius: 3px; }
+  .bubble.other { background: #f1f5f9; color: #0f172a; border-bottom-left-radius: 3px; }
+  .bubble.role-dosen:not(.me) { background: #fef3c7; color: #92400e; }
+  .bubble-time { font-size: 0.65rem; opacity: 0.7; display: block; margin-top: 3px; }
+  .chat-input-row { border-top: 1px solid #e2e8f0; padding: 0.75rem; display: flex; gap: 0.5rem; }
+  @media (max-width: 768px) {
+    .kelas-chat-wrap { flex-direction: column; height: auto; }
+    .peserta-panel { width: 100%; max-height: 180px; }
+    .chat-panel { height: 60vh; }
+  }
+</style>
+
+<div class="container-fluid mt-4" style="max-width: 1100px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0"><i class="bi bi-chat-square-text me-2"></i><%= title %></h5>
+    <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Kembali
+    </a>
+  </div>
+
+  <div class="kelas-chat-wrap">
+    <div class="peserta-panel">
+      <h6 class="text-muted small fw-bold mb-2 px-1"><i class="bi bi-people me-1"></i> PESERTA KELAS (<%= peserta.length %>)</h6>
+      <% peserta.forEach(function(p) { %>
+        <div class="peserta-item" onclick="bukaProfil('<%= p.id %>')">
+          <% if (p.foto) { %>
+            <img src="<%= p.foto %>" class="peserta-avatar">
+          <% } else { %>
+            <div class="peserta-avatar-placeholder"><%= (p.nama || '?').charAt(0).toUpperCase() %></div>
+          <% } %>
+          <div>
+            <p class="peserta-nama"><%= p.nama %></p>
+            <span class="peserta-role"><%= p.role === 'dosen' ? 'Dosen' : 'Mahasiswa' %></span>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <div class="chat-panel">
+      <div id="chat-messages" class="chat-messages">
+        <p class="text-muted text-center small">Memuat pesan...</p>
+      </div>
+      <form id="chat-form" class="chat-input-row">
+        <input type="text" id="chat-input" class="form-control" placeholder="Tulis pesan ke kelas..." autocomplete="off" required>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i></button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Kartu Profil -->
+<div class="modal fade" id="profilModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 1.2rem; overflow: hidden;">
+      <div id="profil-body"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const mkId = <%- JSON.stringify(mk.id) %>;
+  const currentUserId = <%- JSON.stringify(currentUserId) %>;
+  const pesertaData = <%- JSON.stringify(peserta) %>;
+  const chatMessages = document.getElementById('chat-messages');
+  const chatForm = document.getElementById('chat-form');
+  const chatInput = document.getElementById('chat-input');
+  const profilModal = new bootstrap.Modal(document.getElementById('profilModal'));
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  function bukaProfil(userId) {
+    const p = pesertaData.find(x => x.id === userId);
+    if (!p) return;
+    const fotoHtml = p.foto
+      ? `<img src="${p.foto}" style="width:100%;height:220px;object-fit:cover;">`
+      : `<div style="width:100%;height:220px;display:flex;align-items:center;justify-content:center;background:var(--primary-light,#eef2ff);color:var(--primary-start,#1e3a8a);font-size:3rem;font-weight:700;">${escapeHtml((p.nama || '?').charAt(0).toUpperCase())}</div>`;
+    const roleBadge = p.role === 'dosen'
+      ? '<span class="badge bg-warning text-dark">Dosen</span>'
+      : '<span class="badge bg-primary">Mahasiswa</span>';
+    const extraFields = p.role === 'mahasiswa'
+      ? `<div class="row mb-1"><div class="col-5 text-muted">Angkatan</div><div class="col-7">${escapeHtml(p.angkatan)}</div></div>`
+      : '';
+    document.getElementById('profil-body').innerHTML = `
+      ${fotoHtml}
+      <div class="p-3">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h5 class="mb-0">${escapeHtml(p.nama)}</h5>
+          ${roleBadge}
+        </div>
+        <div class="row mb-1"><div class="col-5 text-muted">${p.role === 'dosen' ? 'NIP' : 'NIM'}</div><div class="col-7">${escapeHtml(p.identitas)}</div></div>
+        ${extraFields}
+        <div class="row mb-1"><div class="col-5 text-muted">Email</div><div class="col-7">${escapeHtml(p.email) || '-'}</div></div>
+        <div class="row"><div class="col-5 text-muted">Kontak</div><div class="col-7">${escapeHtml(p.kontak) || '-'}</div></div>
+      </div>
+    `;
+    profilModal.show();
+  }
+
+  function renderMessages(messages) {
+    if (!messages.length) {
+      chatMessages.innerHTML = '<p class="text-muted text-center small">Belum ada pesan. Mulai diskusi kelas!</p>';
+      return;
+    }
+    chatMessages.innerHTML = messages.map(m => {
+      const isMe = m.senderId === currentUserId;
+      const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+      const roleClass = m.senderRole === 'dosen' ? 'role-dosen' : '';
+      return `<div class="bubble-wrap ${isMe ? 'me' : ''}">
+                ${!isMe ? `<div class="bubble-sender">${escapeHtml(m.senderNama)}${m.senderRole === 'dosen' ? ' 👨‍🏫' : ''}</div>` : ''}
+                <div class="bubble ${isMe ? 'me' : 'other'} ${roleClass}">${escapeHtml(m.pesan)}<span class="bubble-time">${time}</span></div>
+              </div>`;
+    }).join('');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  async function loadMessages() {
+    try {
+      const res = await fetch(`/dosen/kelas-chat/${mkId}/messages`);
+      const messages = await res.json();
+      renderMessages(Array.isArray(messages) ? messages : []);
+    } catch (err) {
+      console.error('Gagal memuat pesan kelas:', err);
+    }
+  }
+
+  chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pesan = chatInput.value.trim();
+    if (!pesan) return;
+    chatInput.value = '';
+    try {
+      await fetch(`/dosen/kelas-chat/${mkId}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pesan })
+      });
+      await loadMessages();
+    } catch (err) {
+      console.error('Gagal mengirim pesan kelas:', err);
+    }
+  });
+
+  loadMessages();
+  setInterval(loadMessages, 4000);
+</script>
+
+<%- include('../partials/footer') %>

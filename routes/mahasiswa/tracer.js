@@ -96,17 +96,18 @@ router.post('/', async (req, res) => {
     const userId = req.user.id;
     const {
       pekerjaan, tempatKerja, alamatKerja, gaji,
-      tanggalMulai, statusPekerjaan, bidang, namaPerusahaan
+      tanggalMulai, statusPekerjaan, bidang, namaPerusahaan, tahunLulus
     } = req.body;
 
-    if (!pekerjaan || !tempatKerja || !statusPekerjaan) {
-      return res.status(400).send('Pekerjaan, tempat kerja, dan status pekerjaan wajib diisi');
+    if (!pekerjaan || !tempatKerja || !statusPekerjaan || !tahunLulus) {
+      return res.status(400).send('Pekerjaan, tempat kerja, tahun lulus, dan status pekerjaan wajib diisi');
     }
 
     const data = {
       userId,
       nim: req.user.nim,
       nama: req.user.nama,
+      tahunLulus: parseInt(tahunLulus),
       pekerjaan,
       tempatKerja,
       alamatKerja: alamatKerja || '',
@@ -115,6 +116,7 @@ router.post('/', async (req, res) => {
       statusPekerjaan,
       bidang: bidang || '',
       namaPerusahaan: namaPerusahaan || tempatKerja,
+      isPublic: false, // admin harus meninjau & menyetujui dulu sebelum tampil publik
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -241,14 +243,15 @@ router.post('/edit', async (req, res) => {
     const userId = req.user.id;
     const {
       pekerjaan, tempatKerja, alamatKerja, gaji,
-      tanggalMulai, statusPekerjaan, bidang, namaPerusahaan
+      tanggalMulai, statusPekerjaan, bidang, namaPerusahaan, tahunLulus
     } = req.body;
 
-    if (!pekerjaan || !tempatKerja || !statusPekerjaan) {
-      return res.status(400).send('Pekerjaan, tempat kerja, dan status pekerjaan wajib diisi');
+    if (!pekerjaan || !tempatKerja || !statusPekerjaan || !tahunLulus) {
+      return res.status(400).send('Pekerjaan, tempat kerja, tahun lulus, dan status pekerjaan wajib diisi');
     }
 
     const updateData = {
+      tahunLulus: parseInt(tahunLulus),
       pekerjaan,
       tempatKerja,
       alamatKerja: alamatKerja || '',
@@ -257,6 +260,7 @@ router.post('/edit', async (req, res) => {
       statusPekerjaan,
       bidang: bidang || '',
       namaPerusahaan: namaPerusahaan || tempatKerja,
+      isPublic: false, // data berubah, perlu ditinjau admin lagi sebelum tampil publik
       updatedAt: new Date().toISOString()
     };
 

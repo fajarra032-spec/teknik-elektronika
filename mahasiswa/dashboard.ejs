@@ -1,0 +1,628 @@
+<%- include('../partials/header') %>
+
+<%
+  // ========== DEFAULT VALUES UNTUK MENCEGAH ERROR ==========
+  if (typeof user === 'undefined') user = { nama: 'Mahasiswa', email: '', nim: '-', foto: null };
+  if (typeof tagihan === 'undefined') tagihan = [];
+  if (typeof upcomingEvents === 'undefined') upcomingEvents = [];
+  if (typeof tugasAktif === 'undefined') tugasAktif = [];
+  if (typeof totalSks === 'undefined') totalSks = 0;
+  if (typeof semesterSekarang === 'undefined') semesterSekarang = 'Genap 2025/2026';
+  if (typeof uploadSuccess === 'undefined') uploadSuccess = false;
+
+  const getFileIdFromUrl = (url) => {
+    if (!url) return null;
+    let match = url.match(/[?&]id=([^&]+)/);
+    if (match) return match[1];
+    match = url.match(/\/d\/([^\/]+)/);
+    if (match) return match[1];
+    return null;
+  };
+
+  const tagihanList = Array.isArray(tagihan) ? tagihan : [];
+  const totalBelumLunas = tagihanList.reduce((sum, t) => {
+    return sum + (t.status !== 'lunas' ? (Number(t.jumlah) || 0) : 0);
+  }, 0);
+  const isLunas = totalBelumLunas <= 0;
+  const unpaidTagihan = tagihanList.filter(t => t.status !== 'lunas');
+  const tugasAktifList = Array.isArray(tugasAktif) ? tugasAktif : [];
+%>
+
+<style>
+  /* ===== VARIABEL DARI LANDING + GAYA ASLI ===== */
+  :root {
+    /* Tambahan dari landing */
+    --primary: #0d6efd;
+    --primary-dark: #0b5ed7;
+    --secondary: #0dcaf0;
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.12);
+    --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    
+    /* Variabel asli */
+    --primary-start: #1e3a8a;
+    --primary-end: #3b82f6;
+    --primary-light: rgba(30,58,138,0.1);
+    --primary-dark: #0f2b5c;
+    --warning-gradient: linear-gradient(135deg, #f97316, #fbbf24);
+  }
+
+  /* ===== BASE FLUID FONT (SAMA PERSIS DENGAN LANDING) ===== */
+  html {
+    font-size: clamp(14px, 1vw + 10px, 16px);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #f8fafc;
+  }
+
+  .edom-announcement-card {
+    background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+    color: #ffffff;
+    border-radius: 1rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);
+  }
+  
+  .edom-announcement-card::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -20px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    z-index: 0;
+  }
+
+  .edom-announcement-card::after {
+    content: '';
+    position: absolute;
+    bottom: -40px;
+    left: -40px;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    z-index: 0;
+  }
+
+  .edom-content-wrapper {
+    position: relative;
+    z-index: 1;
+  }
+
+  .edom-date-badge {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0.75rem;
+    padding: clamp(0.6rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.25rem);
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .btn-edom {
+    background-color: #ffc107;
+    color: #000;
+    transition: var(--transition);
+  }
+
+  .btn-edom:hover {
+    background-color: #ffca2c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(255, 193, 7, 0.4);
+  }
+
+  /* ===== PROFILE CARD ===== */
+  .profile-card {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-radius: 1.5rem;
+    padding: clamp(1rem, 4vw, 1.5rem);
+    color: white;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 15px 30px rgba(30,58,138,0.3);
+    position: relative;
+    overflow: hidden;
+  }
+  .profile-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    transform: rotate(25deg);
+  }
+  .profile-card h2 {
+    font-size: clamp(1.2rem, 5vw, 1.6rem);
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 0.5rem;
+  }
+  .profile-avatar {
+    width: clamp(50px, 15vw, 70px);
+    height: clamp(50px, 15vw, 70px);
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid rgba(255,255,255,0.5);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    transition: var(--transition);
+  }
+  .profile-avatar:hover {
+    transform: scale(1.05);
+  }
+  .profile-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(0.5rem, 2vw, 1rem) clamp(1rem, 3vw, 1.5rem);
+    margin-top: 0.5rem;
+    font-size: clamp(0.75rem, 2.5vw, 0.9rem);
+    background: rgba(255,255,255,0.15);
+    padding: clamp(0.4rem, 2vw, 0.6rem) clamp(0.8rem, 3vw, 1rem);
+    border-radius: 50px;
+    backdrop-filter: blur(4px);
+  }
+  .profile-stats span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .profile-stats i {
+    font-size: clamp(0.8rem, 2vw, 1rem);
+  }
+
+  /* ===== BADGE TOTAL TAGIHAN ===== */
+  .badge-total-tagihan {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    padding: clamp(0.2rem, 1.5vw, 0.3rem) clamp(0.6rem, 2vw, 1rem);
+    border-radius: 50px;
+    font-size: clamp(0.7rem, 2vw, 0.8rem);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    backdrop-filter: blur(2px);
+    text-decoration: none;
+    transition: var(--transition);
+  }
+  .badge-total-tagihan:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+  }
+
+  /* ===== BADGE STATUS ===== */
+  .badge-lunas {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    color: white;
+    padding: clamp(0.2rem, 1.5vw, 0.3rem) clamp(0.5rem, 2vw, 0.8rem);
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: clamp(0.65rem, 2vw, 0.8rem);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border: none;
+    box-shadow: 0 4px 10px rgba(16,185,129,0.2);
+  }
+  .badge-warning {
+    background: #ffc107;
+    color: #212529;
+    padding: clamp(0.2rem, 1.5vw, 0.3rem) clamp(0.5rem, 2vw, 0.8rem);
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: clamp(0.65rem, 2vw, 0.8rem);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border: none;
+  }
+
+  /* ===== CARD RINGKASAN ===== */
+  .ringkasan-card {
+    background: white;
+    border-radius: 1.2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    overflow: hidden;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(30,58,138,0.1);
+  }
+  .ringkasan-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    color: white;
+    padding: clamp(0.8rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem);
+  }
+  .ringkasan-header h5 {
+    font-size: clamp(0.95rem, 3vw, 1.1rem);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .ringkasan-header .badge-tugas {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    padding: clamp(0.2rem, 1.5vw, 0.3rem) clamp(0.6rem, 2vw, 1rem);
+    border-radius: 50px;
+    font-size: clamp(0.65rem, 2vw, 0.8rem);
+    font-weight: 600;
+  }
+
+  /* ===== TAGIHAN CARD ===== */
+  .tagihan-card {
+    background: white;
+    border-radius: 1.2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    overflow: hidden;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(30,58,138,0.1);
+  }
+  .tagihan-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    color: white;
+    padding: clamp(0.8rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem);
+  }
+  .tagihan-header h5 {
+    font-size: clamp(0.95rem, 3vw, 1.1rem);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .tagihan-header .btn-light {
+    border-radius: 50px;
+    padding: clamp(0.2rem, 1.5vw, 0.3rem) clamp(0.8rem, 2.5vw, 1.2rem);
+    font-size: clamp(0.75rem, 2vw, 0.9rem);
+    font-weight: 500;
+    background: rgba(255,255,255,0.9);
+    border: none;
+    transition: var(--transition);
+  }
+  .tagihan-header .btn-light:hover {
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+  }
+  .tagihan-item {
+    padding: clamp(0.8rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem);
+    border-bottom: 1px solid #e9ecef;
+    transition: var(--transition);
+  }
+  .tagihan-item:hover {
+    background: #f8f9fa;
+  }
+  .tagihan-item:last-child {
+    border-bottom: none;
+  }
+
+  /* ===== MENU CARDS ===== */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: clamp(0.8rem, 3vw, 1.2rem);
+    margin-top: 1rem;
+  }
+  .menu-card {
+    background: white;
+    border-radius: 1.2rem;
+    padding: clamp(0.8rem, 3vw, 1.2rem) clamp(0.5rem, 2vw, 0.8rem);
+    text-align: center;
+    text-decoration: none;
+    transition: var(--transition);
+    border: 1px solid rgba(30,58,138,0.1);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+    display: block;
+    height: 100%;
+  }
+  .menu-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 30px rgba(30,58,138,0.15);
+    border-color: transparent;
+  }
+  .menu-icon {
+    width: clamp(45px, 15vw, 60px);
+    height: clamp(45px, 15vw, 60px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1.4rem, 5vw, 2rem);
+    margin: 0 auto clamp(0.5rem, 2vw, 0.8rem);
+    transition: var(--transition);
+  }
+  .menu-card:hover .menu-icon {
+    transform: scale(1.1);
+  }
+  .menu-title {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: clamp(0.8rem, 2.5vw, 1rem);
+    margin-bottom: 0.3rem;
+  }
+  .menu-desc {
+    color: #64748b;
+    font-size: clamp(0.6rem, 2vw, 0.75rem);
+    line-height: 1.3;
+  }
+
+  /* ===== UTILITY ===== */
+  .section-title {
+    font-size: clamp(1.1rem, 4vw, 1.4rem);
+    font-weight: 700;
+    color: #1e293b;
+    margin: 1.5rem 0 1rem;
+    position: relative;
+    padding-left: 1rem;
+  }
+  .section-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.2rem;
+    bottom: 0.2rem;
+    width: 5px;
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-radius: 5px;
+  }
+
+  /* ===== MEDIA QUERY LENGKAP (SESUAI LANDING) ===== */
+  @media (max-width: 768px) {
+    .menu-grid {
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+  }
+
+  @media (max-width: 576px) {
+    .profile-card {
+      padding: 1rem;
+    }
+    .profile-stats {
+      flex-direction: column;
+      gap: 0.4rem;
+      border-radius: 20px;
+    }
+    .menu-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.8rem;
+    }
+    .tagihan-header .btn-light {
+      padding: 0.2rem 0.8rem;
+      font-size: 0.75rem;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .menu-grid {
+      grid-template-columns: 1fr;
+    }
+    .profile-card h2 {
+      font-size: 1.1rem;
+    }
+    .profile-avatar {
+      width: 45px;
+      height: 45px;
+    }
+    .profile-stats span {
+      font-size: 0.7rem;
+    }
+  }
+</style>
+
+<div class="container mt-4">
+  <!-- Notifikasi Upload Sukses -->
+  <% if (uploadSuccess) { %>
+    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+      <i class="bi bi-check-circle-fill me-2"></i>File KRS berhasil diupload ke Google Drive!
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% } %>
+
+  <!-- Profile Card dengan Foto + Statistik -->
+  <div class="profile-card">
+    <div class="d-flex align-items-center flex-wrap">
+      <div class="flex-shrink-0">
+        <% if (user.foto) { 
+          const fileId = getFileIdFromUrl(user.foto);
+        %>
+          <img src="https://drive.google.com/thumbnail?id=<%= fileId %>&sz=w200" 
+               alt="foto profil" 
+               class="profile-avatar"
+               onerror="this.onerror=null; this.src='<%= user.foto %>'; this.onerror=null;">
+        <% } else { %>
+          <div class="profile-avatar bg-white d-flex align-items-center justify-content-center">
+            <i class="bi bi-person-circle text-primary fs-1"></i>
+          </div>
+        <% } %>
+      </div>
+      <div class="flex-grow-1 ms-3 mt-2 mt-sm-0">
+        <h2 class="fw-bold mb-1"><%= user.nama || user.email %></h2>
+        <div class="profile-stats">
+          <span><i class="bi bi-qr-code"></i> NIM: <%= user.nim || '-' %></span>
+          <span><i class="bi bi-book"></i> SKS: <%= totalSks %></span>
+          <span><i class="bi bi-calendar-week"></i> <%= semesterSekarang %></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card Ringkasan (Jadwal Penting + Tugas Aktif) -->
+  <div class="ringkasan-card">
+    <div class="ringkasan-header d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0"><i class="bi bi-mortarboard me-2"></i>Informasi Mahasiswa</h5>
+      <span class="badge-tugas"><i class="bi bi-file-earmark-text me-1"></i><%= tugasAktifList.length %> tugas</span>
+    </div>
+    <div class="card-body p-4">
+      <!-- Jadwal Penting Mendatang -->
+      <% if (upcomingEvents && upcomingEvents.length > 0) { %>
+        <div class="mb-4">
+          <h6 class="fw-semibold mb-3"><i class="bi bi-calendar-event me-2"></i>Jadwal Penting</h6>
+          <div class="d-flex flex-wrap gap-3">
+            <% upcomingEvents.forEach(event => { %>
+              <div class="flex-grow-1" style="min-width: 150px;">
+                <div class="p-3 rounded-3" style="background: rgba(30,58,138,0.05); border-left: 3px solid var(--primary-start);">
+                  <div class="fw-semibold"><%= event.judul %></div>
+                  <div class="small text-muted">
+                    <i class="bi bi-calendar3 me-1"></i><%= new Date(event.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' }) %>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Daftar Tugas Aktif -->
+      <h6 class="fw-semibold mb-3"><i class="bi bi-list-task me-2"></i>Tugas Aktif</h6>
+      <% if (tugasAktifList.length === 0) { %>
+        <div class="text-center py-3">
+          <i class="bi bi-check-circle-fill fs-1 text-success mb-2"></i>
+          <p class="text-muted mb-0">Tidak ada tugas aktif saat ini.</p>
+        </div>
+      <% } else { %>
+        <div style="max-height: 300px; overflow-y: auto; padding-right: 8px;">
+          <% tugasAktifList.slice(0, 5).forEach(t => { 
+            const deadline = new Date(t.deadline);
+            const now = new Date();
+            const deadlineLewat = deadline < now;
+          %>
+            <div class="d-flex flex-wrap justify-content-between align-items-center py-3 border-bottom border-light">
+              <div style="min-width: 0; flex: 1;">
+                <strong class="fs-6"><%= t.judul %></strong>
+                <p class="mb-0 text-muted small">
+                  <i class="bi bi-journal-bookmark-fill me-1"></i><%= t.mkKode || '-' %> <%= t.mkNama ? '- ' + t.mkNama : '' %>
+                </p>
+                <p class="mb-0 text-muted small <%= deadlineLewat ? 'text-danger' : '' %>">
+                  <i class="bi bi-calendar3 me-1"></i>Deadline: <%= deadline.toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                </p>
+              </div>
+              <div class="mt-2 mt-sm-0 ms-2">
+                <a href="/mahasiswa/elearning/tugas/<%= t.id %>" class="btn btn-sm btn-warning rounded-pill px-3">
+                  <i class="bi bi-cloud-upload me-1"></i>Kumpul
+                </a>
+              </div>
+            </div>
+          <% }) %>
+          <% if (tugasAktifList.length > 5) { %>
+            <div class="text-center mt-3">
+              <a href="/mahasiswa/elearning/tugas-aktif" class="btn btn-sm btn-outline-secondary rounded-pill px-4">
+                Lihat <%= tugasAktifList.length - 5 %> tugas lainnya
+              </a>
+            </div>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- EDOM Banner Gambar PNG --
+  <a href="/mahasiswa/edom" class="d-block mb-4">
+    <img src="/images/edom-banner.png" alt="EDOM - Evaluasi Dosen oleh Mahasiswa" class="img-fluid rounded-4 shadow-sm" style="width: 100%; object-fit: cover; transition: var(--transition);" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+  </a>
+
+  <!-- Tagihan SPP (dikomentari di kode asli, tetap dipertahankan) -->
+  <!--  <div class="tagihan-card">
+    <div class="tagihan-header d-flex flex-wrap justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0"><i class="bi bi-cash-coin me-2"></i>Tagihan SPP</h5>
+      <div class="d-flex align-items-center gap-3 mt-2 mt-sm-0">
+        <a href="/mahasiswa/tagihan" class="text-decoration-none">
+          <span class="badge-total-tagihan">
+            <i class="bi bi-<%= isLunas ? 'check-circle-fill' : 'wallet2' %> me-1"></i>
+            <% if (isLunas) { %> Lunas <% } else { %> Rp <%= new Intl.NumberFormat('id-ID').format(totalBelumLunas) %> <% } %>
+          </span>
+        </a>
+      </div>
+    </div>
+    <div class="card-body p-4">
+      <% if (unpaidTagihan.length === 0) { %>
+        <div class="text-center py-4">
+          <i class="bi bi-check-circle-fill fs-1 text-success mb-3 d-block"></i>
+          <p class="text-muted mb-0">Tidak ada tagihan aktif.</p>
+        </div>
+      <% } else { %>
+        <div style="max-height: 400px; overflow-y: auto; padding-right: 8px;">
+          <% unpaidTagihan.forEach(t => { %>
+            <div class="d-flex flex-wrap justify-content-between align-items-center py-3 border-bottom border-light">
+              <div>
+                <strong class="fs-6"><%= t.semester || 'Semester ' + t.semester %></strong>
+                <p class="mb-0 text-muted small">
+                  <i class="bi bi-calendar3 me-1"></i>Jatuh tempo: 
+                  <%= t.jatuhTempo ? new Date(t.jatuhTempo).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-' %>
+                </p>
+              </div>
+              <div class="text-end mt-2 mt-sm-0">
+                <span class="fw-bold fs-5 d-block">Rp <%= new Intl.NumberFormat('id-ID').format(t.jumlah) %></span>
+                <span class="<%= t.status === 'lunas' ? 'badge-lunas' : 'badge-warning' %> mt-1">
+                  <i class="bi bi-<%= t.status === 'lunas' ? 'check-circle-fill' : 'hourglass-split' %> me-1"></i>
+                  <%= t.status === 'lunas' ? 'Lunas' : 'Belum Lunas' %>
+                </span>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+  </div> -->
+
+  <!-- Menu Akses Cepat -->
+  <h4 class="section-title">Layanan Mahasiswa</h4>
+  <div class="menu-grid">
+    <a href="/mahasiswa/akademik" class="menu-card">
+      <div class="menu-icon" style="background: rgba(30,58,138,0.1); color: var(--primary-start);"><i class="bi bi-journal-bookmark-fill"></i></div>
+      <h6 class="menu-title">Akademik</h6>
+      <p class="menu-desc">KRS, KHS, Transkrip</p>
+    </a>
+    <a href="/mahasiswa/kalender" class="menu-card">
+      <div class="menu-icon" style="background: rgba(30,58,138,0.1); color: var(--primary-end);"><i class="bi bi-calendar-event"></i></div>
+      <h6 class="menu-title">Kalender</h6>
+      <p class="menu-desc">Jadwal penting, libur</p>
+    </a>
+    <a href="/mahasiswa/elearning" class="menu-card">
+      <div class="menu-icon" style="background: rgba(30,58,138,0.1); color: var(--primary-start);"><i class="bi bi-laptop"></i></div>
+      <h6 class="menu-title">ELK-Learning</h6>
+      <p class="menu-desc">Tugas, kuliah online</p>
+    </a>
+    <a href="/mahasiswa/magang" class="menu-card">
+      <div class="menu-icon" style="background: rgba(30,58,138,0.1); color: var(--primary-end);"><i class="bi bi-briefcase"></i></div>
+      <h6 class="menu-title">ELK-Magang</h6>
+      <p class="menu-desc">Logbook, seminar</p>
+    </a>
+    <a href="/mahasiswa/persuratan" class="menu-card">
+      <div class="menu-icon" style="background: rgba(30,58,138,0.1); color: var(--primary-start);"><i class="bi bi-envelope-paper"></i></div>
+      <h6 class="menu-title">Persuratan</h6>
+      <p class="menu-desc">Surat aktif kuliah</p>
+    </a>
+    <a href="/mahasiswa/tracer" class="menu-card">
+      <div class="menu-icon" style="background: rgba(30,58,138,0.1); color: var(--primary-end);"><i class="bi bi-bar-chart-line"></i></div>
+      <h6 class="menu-title">Tracer Study</h6>
+      <p class="menu-desc">Survei alumni</p>
+    </a>
+    <a href="/mahasiswa/edom" class="menu-card">
+      <div class="menu-icon" style="background: rgba(30,58,138,0.1); color: #f59e0b;"><i class="bi bi-star-fill"></i></div>
+      <h6 class="menu-title">EDOM</h6>
+      <p class="menu-desc">Evaluasi Dosen</p>
+    </a>
+    <a href="/mahasiswa/biodata" class="menu-card">
+      <div class="menu-icon" style="background: rgba(30,58,138,0.1); color: var(--primary-start);"><i class="bi bi-person-circle"></i></div>
+      <h6 class="menu-title">Biodata</h6>
+      <p class="menu-desc">Profil, password</p>
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <div class="text-center text-muted mt-5 mb-3">
+    <small><i class="bi bi-shield-check me-1"></i> Sistem Informasi Mahasiswa Elektronika - Politeknik Dewantara 2025</small>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

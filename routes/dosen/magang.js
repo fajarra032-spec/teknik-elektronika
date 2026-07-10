@@ -467,7 +467,6 @@ router.post('/logbook/:id/reject', async (req, res) => {
 // ============================================================================
 // CETAK LOGBOOK
 // ============================================================================
-
 router.get('/print/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
@@ -477,34 +476,6 @@ router.get('/print/:userId', async (req, res) => {
       return res.status(403).send('Anda tidak memiliki akses ke logbook mahasiswa ini.');
     }
     const mahasiswa = await getMahasiswa(userId);
-    
-    // --- Ambil data bimbingan dan dosen pembimbing ---
-    const bimbinganSnapshot = await db.collection('bimbingan')
-      .where('mahasiswaId', '==', userId)
-      .where('status', '==', 'active')
-      .limit(1)
-      .get();
-    
-    let pembimbing = { pembimbing1: null, pembimbing2: null };
-    if (!bimbinganSnapshot.empty) {
-      const bimbinganData = bimbinganSnapshot.docs[0].data();
-      // Pembimbing 1
-      if (bimbinganData.pembimbing1Id) {
-        const dosen1Doc = await db.collection('users').doc(bimbinganData.pembimbing1Id).get();
-        if (dosen1Doc.exists) {
-          pembimbing.pembimbing1 = { id: dosen1Doc.id, ...dosen1Doc.data() };
-        }
-      }
-      // Pembimbing 2
-      if (bimbinganData.pembimbing2Id) {
-        const dosen2Doc = await db.collection('users').doc(bimbinganData.pembimbing2Id).get();
-        if (dosen2Doc.exists) {
-          pembimbing.pembimbing2 = { id: dosen2Doc.id, ...dosen2Doc.data() };
-        }
-      }
-    }
-    // --- selesai ambil pembimbing ---
-
     let query = db.collection('logbookMagang').where('userId', '==', userId).orderBy('tanggal', 'asc');
     if (periodId) {
       const periodDoc = await db.collection('magangPeriod').doc(periodId).get();
@@ -534,7 +505,6 @@ router.get('/print/:userId', async (req, res) => {
       totalEntries: logbookList.length,
       filterInfo: filterText,
       pdkInfo,
-      pembimbing,               // <-- dikirim ke template
       selectedSemester: semester || '',
       generatedAt: formatDateTime(new Date().toISOString()),
       user: req.user

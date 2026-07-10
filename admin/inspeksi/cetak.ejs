@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Laporan Inspeksi - <%= data.pemilikRumah %></title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @page { size: A4 landscape; margin: 1cm 1.2cm; }
+    :root {
+      --primary: #1e3a8a;
+      --border: #cbd5e1;
+      --bg-alt: #f8fafc;
+    }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 10pt;
+      line-height: 1.35;
+      color: #1e293b;
+      background: #fff;
+    }
+    /* Kop surat */
+    .kop-surat {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 3px solid var(--primary);
+    }
+    .logo-kop { width: 65px; margin-right: 18px; }
+    .teks-kop .nama-kampus {
+      font-size: 18pt;
+      font-weight: 800;
+      margin: 0;
+      color: var(--primary);
+      text-transform: uppercase;
+    }
+    .teks-kop .alamat { font-size: 9pt; margin-top: 2px; color: #475569; }
+    .judul { text-align: center; margin-bottom: 15px; }
+    .judul h3 { font-size: 13pt; font-weight: 700; margin: 0; text-transform: uppercase; }
+    
+    /* Grid utama */
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px; }
+    
+    /* Baris grafik + rekomendasi: menggunakan flex agar tidak timpa */
+    .row-grafik-kesimpulan {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .col-grafik { flex: 1.6; min-width: 55%; }
+    .col-kesimpulan { flex: 1; min-width: 35%; }
+    
+    /* Card */
+    .card { border: 1px solid var(--border); border-radius: 6px; background: #fff; display: flex; flex-direction: column; break-inside: avoid; }
+    .card-header { background: var(--primary); color: #fff; font-weight: 700; padding: 5px 10px; text-transform: uppercase; }
+    .card-body { padding: 8px 10px; background: var(--bg-alt); flex: 1; }
+    
+    /* Tabel data list */
+    table.data-list { width: 100%; border-collapse: collapse; }
+    table.data-list td { padding: 3px 2px; border-bottom: 1px dashed #e2e8f0; }
+    table.data-list tr:last-child td { border-bottom: none; }
+    table.data-list td:first-child { width: 45%; font-weight: 600; }
+    
+    /* Tabel beban */
+    table.main-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    table.main-table th, table.main-table td { border: 1px solid var(--border); padding: 5px; vertical-align: middle; }
+    table.main-table th { background: #e2e8f0; text-align: center; }
+    
+    /* Grafik */
+    .chart-container { height: 200px; background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 5px; margin-top: 5px; }
+    
+    .highlight-text { color: #dc2626; font-weight: 700; }
+    .highlight-green { color: #16a34a; font-weight: 700; }
+    .badge-status { display: inline-block; padding: 2px 6px; border-radius: 4px; background: #e0e7ff; color: var(--primary); font-weight: 700; }
+    
+    .footer { margin-top: 15px; font-size: 8pt; text-align: center; color: #64748b; border-top: 1px dashed var(--border); padding-top: 5px; }
+    .btn { padding: 6px 12px; margin: 5px; cursor: pointer; font-size: 12px; border: none; border-radius: 4px; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-secondary { background: #64748b; color: #fff; }
+    
+    /* Media print */
+    @media print {
+      body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-print { display: none !important; }
+      .row-grafik-kesimpulan { display: flex !important; flex-direction: row !important; break-inside: avoid; }
+      .col-grafik, .col-kesimpulan { width: auto !important; }
+      .chart-container { height: 190px !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="kop-surat">
+  <img src="/images/logo.png" alt="Logo" class="logo-kop">
+  <div class="teks-kop">
+    <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
+    <p class="alamat">Program Studi Teknik Elektronika – Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo</p>
+  </div>
+</div>
+
+<div class="judul">
+  <h3>LEMBAR HASIL INSPEKSI INSTALASI LISTRIK (ELECTRO CARE C4S)</h3>
+</div>
+
+<!-- BARIS 1: IDENTITAS, INFO DASAR, PENGUKURAN dalam lenglkapi indtruksi pemakaian dalam interpretaso simia -->
+<div class="grid-3">
+  <!-- Panel A - Identitas -->
+  <div class="card">
+    <div class="card-header">A. Identitas & Lokasi</div>
+    <div class="card-body">
+      <table class="data-list">
+        <tr><td>Pemilik Rumah</td><td>: <strong><%= data.pemilikRumah %></strong></td></tr>
+        <tr><td>Kelompok</td><td>: <%= data.kelompok %></td></tr>
+        <tr><td>Tanggal Inspeksi</td><td>: <%= new Date(data.tanggal).toLocaleDateString('id-ID') %></td></tr>
+        <tr><td>Desa / Dusun</td><td>: <%= data.desa %>, <%= data.dusunRt %></td></tr>
+        <tr><td>Alamat Lengkap</td><td>: <%= data.alamat %></td></tr>
+        <tr><td>Petugas Inspeksi</td><td>: <strong><%= data.petugasNama %></strong></td></tr>
+      </table>
+    </div>
+  </div>
+  <!-- Panel B - Informasi Dasar -->
+  <div class="card">
+    <div class="card-header">B. Informasi Dasar Listrik</div>
+    <div class="card-body">
+      <table class="data-list">
+        <tr><td>Daya Terpasang PLN</td><td>: <strong><%= data.dayaTerpasang %> VA</strong></td></tr>
+        <tr><td>Jumlah Penghuni</td><td>: <%= data.jumlahPenghuni %> orang</td></tr>
+        <tr><td>Riwayat Korsleting</td><td>: <% if(data.pernahKorsleting === 'Ya') { %><span class="highlight-text">Ya (<%= data.keteranganKorsleting %>)</span><% } else { %><span class="highlight-green">Tidak Pernah</span><% } %></td></tr>
+      </table>
+    </div>
+  </div>
+  <!-- Panel C - Pengukuran Aktual -->
+  <div class="card">
+    <div class="card-header">C. Pengukuran Aktual</div>
+    <div class="card-body">
+      <table class="data-list">
+        <tr><td>Tegangan Terukur (V)</td><td>: <strong><%= data.tegangan %> V</strong></td></tr>
+        <tr><td>Arus Total (A)</td><td>: <%= data.arusTotal || '0' %> A</td></tr>
+        <tr><td>Beban Aktual (W)</td><td>: <strong><%= data.bebanTerpasang || '0' %> W</strong></td></tr>
+        <tr><td colspan="2"><hr style="margin:4px 0;"></td></tr>
+        <% 
+          let totalDayaList = 0, totalEnergiList = 0;
+          (data.bebanList || []).forEach(b => {
+            const ttl = (b.jml || 0) * (b.daya || 0);
+            totalDayaList += ttl;
+            let durasi = 0;
+            if(b.mulai && b.selesai) {
+              const toMin = t => { let [h,m] = t.split(':').map(Number); return h*60 + (m||0); };
+              let start = toMin(b.mulai), end = toMin(b.selesai);
+              if(end < start) end += 24*60;
+              durasi = (end - start)/60;
+            }
+            totalEnergiList += ttl * durasi;
+          });
+          let biayaBulan = 0;
+          if (data.dayaTerpasang) {
+            let tarif = 0;
+            if (data.dayaTerpasang <= 450) tarif = 415;
+            else if (data.dayaTerpasang <= 900) tarif = 1352;
+            else tarif = 1444.7;
+            biayaBulan = (totalEnergiList / 1000) * 30 * tarif;
+          }
+        %>
+        <tr><td>Estimasi Beban Maks.</td><td>: <strong><%= totalDayaList.toLocaleString() %> W</strong></td></tr>
+        <tr><td>Estimasi Energi Harian</td><td>: <strong><%= totalEnergiList.toLocaleString() %> Wh</strong> (<%= (totalEnergiList/1000).toFixed(1) %> kWh)</td></tr>
+        <tr><td>Estimasi Biaya Listrik per Bulan</td><td>: <strong>Rp <%= biayaBulan.toLocaleString('id-ID', {minimumFractionDigits:0}) %></strong></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- DAFTAR BEBAN -->
+<div class="card" style="margin-bottom:12px;">
+  <div class="card-header">D. Inventarisasi Beban Listrik Terpasang</div>
+  <table class="main-table">
+    <thead><tr><th>No</th><th>Jenis Peralatan</th><th>Jml</th><th>Daya(W)</th><th>Total(W)</th><th>Mulai</th><th>Selesai</th><th>Dur(Jam)</th><th>Energi(Wh)</th><th>Keterangan</th></tr></thead>
+    <tbody>
+    <% (data.bebanList || []).forEach((b, idx) => {
+         const ttl = (b.jml || 0) * (b.daya || 0);
+         let durasi = 0;
+         if(b.mulai && b.selesai) {
+           const toMin = t => { let [h,m] = t.split(':').map(Number); return h*60 + (m||0); };
+           let start = toMin(b.mulai), end = toMin(b.selesai);
+           if(end < start) end += 24*60;
+           durasi = (end - start)/60;
+         }
+    %>
+      <tr>
+        <td style="text-align:center"><%= idx+1 %></td>
+        <td><strong><%= b.jenis || '-' %></strong></td>
+        <td style="text-align:center"><%= b.jml %></td>
+        <td style="text-align:center"><%= b.daya %></td>
+        <td style="text-align:center"><%= ttl %></td>
+        <td style="text-align:center"><%= b.mulai || '-' %></td>
+        <td style="text-align:center"><%= b.selesai || '-' %></td>
+        <td style="text-align:center"><%= durasi.toFixed(1) %></td>
+        <td style="text-align:center"><%= Math.round(ttl * durasi) %></td>
+        <td><%= b.ket || '-' %></td>
+      </tr>
+    <% }); %>
+    </tbody>
+  </table>
+</div>
+
+<!-- MCB & INSTALASI (2 kolom) -->
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">E. Pemeriksaan Sistem Proteksi (MCB)</div>
+    <div class="card-body">
+      <table class="data-list">
+        <tr><td>MCB PLN</td><td>: <%= data.mcbUtamaAda === 'Y' ? 'Ada' : 'Tidak Ada' %> | Ukuran: <strong><%= data.mcbUtamaUkuran || '-' %> A</strong> | <%- data.mcbUtamaSesuai === 'Y' ? '<span class="highlight-green">Sesuai</span>' : '<span class="highlight-text">Tdk Sesuai</span>' %></td></tr>
+        <tr><td>Rekom. MCB PLN</td><td>: <%= data.mcbUtamaRekomendasi || '-' %></td></tr>
+        <tr><td colspan="2"><hr style="margin:2px 0;"></td></tr>
+        <tr><td>MCB Cabang</td><td>: <%= data.mcbCabangAda === 'Y' ? 'Ada' : 'Tidak Ada' %> | Ukuran: <strong><%= data.mcbCabangUkuran || '-' %> A</strong> | <%- data.mcbCabangSesuai === 'Y' ? '<span class="highlight-green">Sesuai</span>' : '<span class="highlight-text">Tdk Sesuai</span>' %></td></tr>
+        <tr><td>Rekom. Cabang</td><td>: <%= data.mcbCabangRekomendasi || '-' %></td></tr>
+        <tr><td colspan="2"><hr style="margin:2px 0;"></td></tr>
+        <tr><td>Riwayat MCB Trip</td><td>: <strong style="color:<%= data.mcbPernahTrip === 'Ya' ? '#dc2626' : '#16a34a' %>;"><%= data.mcbPernahTrip %></strong></td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">F. Pemeriksaan Fisik Instalasi</div>
+    <div class="card-body">
+      <table class="data-list">
+        <tr><td>Kabel Utama (<%= data.kabelUtamaUkuran || '-' %> mm²)</td><td>: <%- data.kabelUtamaSesuai === 'Y' ? '<span class="highlight-green">Standar</span>' : '<span class="highlight-text">Tidak Standar</span>' %></td></tr>
+        <tr><td>Kabel Cabang (<%= data.kabelCabangUkuran || '-' %> mm²)</td><td>: <%- data.kabelCabangSesuai === 'Y' ? '<span class="highlight-green">Standar</span>' : '<span class="highlight-text">Tidak Standar</span>' %></td></tr>
+        <tr><td>Kondisi Fisik Kabel</td><td>: <%= data.kabelTerbuka === 'Bahaya' ? 'Terkelupas' : 'Aman' %></td></tr>
+        <tr><td>Sambungan Listrik</td><td>: <%= data.sambunganRapi === 'Ya' ? 'Rapi' : 'Tidak Rapi' %></td></tr>
+        <tr><td>Stop Kontak Longgar</td><td>: <%- data.stopKontakLonggar === 'Ya' ? '<span class="highlight-text">Ya (' + (data.jumlahStopKontakLonggar || 0) + ' titik)</span>' : 'Tidak' %></td></tr>
+        <tr><td>Sistem Grounding</td><td>: <%= data.adaGrounding === 'Ya' ? 'Ada' : 'Tidak Ada' %></td></tr>
+        <tr><td>Lingkungan Sekitar</td><td>: <%= data.lembab === 'Ya' ? 'Lembab/Basah' : 'Kering' %></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- GRAFIK & KESIMPULAN - menggunakan flex agar tidak timpa -->
+<div class="row-grafik-kesimpulan">
+  <div class="col-grafik">
+    <div class="card">
+      <div class="card-header">G. Profil Beban Harian <span style="font-size:8pt;">Puncak: <strong id="teksBebanPuncak" style="color:#ffeb3b;">0</strong> W (Jam <span id="teksJamPuncak">-</span>)</span></div>
+      <div class="card-body" style="padding:5px;">
+        <div class="chart-container"><canvas id="cetakBebanChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-kesimpulan">
+    <div class="card">
+      <div class="card-header" style="background:#0f172a;">H. Kesimpulan & Rekomendasi</div>
+      <div class="card-body">
+        <div style="margin-bottom:8px;"><strong>Status Keseluruhan:</strong> <div class="badge-status"><%= data.kesimpulan %></div></div>
+        <% if(data.rekomendasiOtomatis && data.rekomendasiOtomatis.trim() !== '') { %>
+          <div style="font-weight:600; margin:8px 0 4px;">Rekomendasi Otomatis Sistem:</div>
+          <ul style="margin-left:18px; margin-bottom:12px;">
+            <% data.rekomendasiOtomatis.split('; ').forEach(item => { %>
+              <li style="margin-bottom:2px;"><%= item %></li>
+            <% }); %>
+          </ul>
+        <% } %>
+        <div style="font-weight:600; margin:8px 0 4px;">Rekomendasi Perbaikan (Manual):</div>
+        <ul style="margin-left:18px;">
+          <% if(data.rekomendasiList && data.rekomendasiList.length) { %>
+            <% data.rekomendasiList.forEach(r => { %>
+              <li style="margin-bottom:2px;">[<span style="color:#dc2626;"><%= r.prioritas %></span>] <%= r.deskripsi %></li>
+            <% }); %>
+          <% } else { %>
+            <li>Tidak ada rekomendasi manual.</li>
+          <% } %>
+        </ul>
+        <% if(data.komentarInspeksi && data.komentarInspeksi.trim() !== '') { %>
+          <div style="font-weight:600; margin:8px 0 4px;">Komentar Inspeksi:</div>
+          <p style="font-style:italic;"><%= data.komentarInspeksi %></p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer (tanpa TTD) -->
+<div class="footer">
+  <p>Laporan Resmi ELECTRO CARE C4S - Politeknik Dewantara</p>
+  <p>Dicetak dari sistem pada: <%= new Date().toLocaleString() %></p>
+</div>
+
+<div class="no-print" style="text-align:center; margin-top:20px;">
+  <button onclick="window.print();" class="btn btn-primary">🖨️ Cetak PDF</button>
+  <button onclick="window.close();" class="btn btn-secondary">Tutup Tab</button>
+</div>
+
+<script>
+  const bebanList = <%- JSON.stringify(data.bebanList || []) %>;
+  function timeToMinutes(t) { if (!t) return 0; let [h,m] = t.split(':').map(Number); return (h||0)*60 + (m||0); }
+  let bebanPerJam = new Array(24).fill(0);
+  for (let b of bebanList) {
+    if (!b.mulai || !b.selesai) continue;
+    if ((b.jml||0)===0 || (b.daya||0)===0) continue;
+    let total = (b.jml||0)*(b.daya||0);
+    let start = timeToMinutes(b.mulai), end = timeToMinutes(b.selesai);
+    if(end<start) end+=24*60;
+    let startHour = Math.floor(start/60), endHour = Math.floor(end/60);
+    for(let h=startHour; h<=endHour; h++) bebanPerJam[h%24] += total;
+  }
+  window.addEventListener('load',()=>{
+    let maxBeban=0, jamPuncak=[];
+    for(let i=0;i<24;i++) {
+      if(bebanPerJam[i]>maxBeban) { maxBeban=bebanPerJam[i]; jamPuncak=[i]; }
+      else if(bebanPerJam[i]===maxBeban && maxBeban>0) jamPuncak.push(i);
+    }
+    document.getElementById('teksBebanPuncak').innerText = maxBeban.toLocaleString();
+    document.getElementById('teksJamPuncak').innerText = jamPuncak.length ? jamPuncak.map(j=>j.toString().padStart(2,'0')+':00').join(', ') : '-';
+    new Chart(document.getElementById('cetakBebanChart').getContext('2d'),{
+      type:'bar', data:{ labels:Array.from({length:24},(_,i)=>i.toString().padStart(2,'0')+':00'), datasets:[{ data:bebanPerJam, backgroundColor:'rgba(30,58,138,0.8)', borderWidth:0, borderRadius:3 }] },
+      options:{ responsive:true, maintainAspectRatio:false, animation:false, layout:{ padding:{ bottom:15, top:10 } }, scales:{ y:{ beginAtZero:true, grid:{ color:'#e2e8f0' }, ticks:{ font:{ size:9 } } }, x:{ grid:{ display:false }, ticks:{ maxRotation:45, minRotation:45, font:{ size:8.5 } } } }, plugins:{ legend:{ display:false } } }
+    });
+  });
+</script>
+</body>
+</html>

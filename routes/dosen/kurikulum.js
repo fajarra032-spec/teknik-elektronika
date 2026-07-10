@@ -15,6 +15,7 @@ const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
+const { getPeriodeAktif } = require('../../helpers/nilaiHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -300,8 +301,11 @@ router.get('/:id', async (req, res) => {
 
     let tugasList = [];
     try {
+      const periodeAktif = getPeriodeAktif();
       const tugasSnapshot = await db.collection('tugas').where('mkId', '==', mkId).orderBy('deadline', 'asc').get();
-      tugasList = tugasSnapshot.docs.map(doc => ({ id: doc.id, judul: doc.data().judul, deadline: doc.data().deadline, tipe: doc.data().tipe }));
+      tugasList = tugasSnapshot.docs
+        .filter(doc => (doc.data().periode || periodeAktif) === periodeAktif) // data lama tanpa periode dianggap periode aktif
+        .map(doc => ({ id: doc.id, judul: doc.data().judul, deadline: doc.data().deadline, tipe: doc.data().tipe }));
     } catch (err) { console.error('Gagal ambil tugas:', err.message); }
 
     res.render('dosen/kurikulum/detail', {

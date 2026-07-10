@@ -1,0 +1,68 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4" style="max-width: 720px;">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-journal-text me-2"></i><%= title %></h4>
+    <a href="javascript:history.back()" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i> Kembali
+    </a>
+  </div>
+
+  <div class="info-card mb-3">
+    <div class="card-body">
+      <div class="row mb-2">
+        <div class="col-sm-3 text-muted">Mahasiswa</div>
+        <div class="col-sm-9"><%= mahasiswa.nama || '-' %> (<%= mahasiswa.nim || '-' %>)</div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 text-muted">Tanggal</div>
+        <div class="col-sm-9"><%= tanggalWaktuFormatted || tanggalFormatted %></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 text-muted">Lokasi</div>
+        <div class="col-sm-9"><%= logbook.lokasi || '-' %></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 text-muted">Durasi</div>
+        <div class="col-sm-9"><%= logbook.durasi ? logbook.durasi + ' jam' : '-' %></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 text-muted">Status</div>
+        <div class="col-sm-9">
+          <span class="badge bg-<%= logbook.status === 'approved' ? 'success' : logbook.status === 'rejected' ? 'danger' : 'warning' %>">
+            <%= logbook.status %>
+          </span>
+        </div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 text-muted">Deskripsi Kegiatan</div>
+        <div class="col-sm-9"><%= logbook.kegiatan || '-' %></div>
+      </div>
+
+      <% if (logbook.imageUrls && logbook.imageUrls.length > 0) { %>
+        <div class="row">
+          <div class="col-sm-3 text-muted">Dokumentasi</div>
+          <div class="col-sm-9 d-flex gap-2 flex-wrap">
+            <% logbook.imageUrls.forEach(function(url) { %>
+              <a href="<%= url %>" target="_blank">
+                <img src="<%= url %>" width="90" height="90" class="rounded" style="object-fit:cover;">
+              </a>
+            <% }); %>
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+    <% if (canApprove) { %>
+      <div class="card-footer">
+        <form method="POST" action="/dosen/magang/logbook/<%= logbook.id %>/approve" onsubmit="return confirm('Setujui logbook ini?')">
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-circle me-1"></i> Setujui Logbook
+          </button>
+        </form>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

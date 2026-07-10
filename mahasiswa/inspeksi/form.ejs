@@ -1,0 +1,1110 @@
+<%- include('../../partials/header') %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  .form-section { background: white; border-radius: 1rem; padding: 2rem; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .section-title { font-weight: 700; margin-bottom: 1.5rem; border-left: 5px solid #1e3a8a; padding-left: 1rem; color: #1e3a8a; text-transform: uppercase; }
+  .beban-row { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border: 1px solid #dee2e6; }
+  .standard-text { font-size: 0.85rem; color: #6c757d; font-style: italic; display: block; margin-top: 4px; }
+  @media (max-width: 768px) { .beban-row { flex-direction: column; align-items: stretch; } }
+  .alert { font-size: 0.9rem; }
+  .readonly-status { background-color: #e9ecef; cursor: not-allowed; }
+</style>
+
+<div class="container mt-4 mb-5">
+  <div class="form-section">
+    <div class="text-center mb-4">
+      <h2 class="fw-bold">FORMULIR INSPEKSI INSTALASI LISTRIK RUMAH TANGGA</h2>
+      <p class="text-muted">Hari Ke-1 — ELECTRO CARE – C4S DESA CIMPU<br>Politeknik Dewantara – Prodi Teknik Elektronika</p>
+    </div>
+
+    <form method="POST" id="inspeksiForm">
+      <!-- IDENTITAS -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <label class="form-label fw-bold">Kelompok</label>
+          <select name="kelompok" id="kelompokSelect" class="form-select" required>
+            <option value="1">Kelompok 1</option>
+            <option value="2">Kelompok 2</option>
+            <option value="3">Kelompok 3</option>
+            <option value="4">Kelompok 4</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold">Tanggal</label>
+          <input type="date" name="tanggal" class="form-control" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold">Desa</label>
+          <input type="text" name="desa" class="form-control" value="Cimpu" readonly>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold">Dusun/RT</label>
+          <select name="dusunRt" id="dusunSelect" class="form-select" required>
+            <option value="Dusun Cimpu">Dusun Buntu Siapa</option>
+            <option value="Dusun Balemping">Dusun Tondo Tangnga</option>
+            <option value="Dusun Cimpu Muara Utara">Dusun Lagoari</option>
+            <option value="Dusun Cimpu Muara Utara">Dusun Cimpu Muara Selatan</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Pemilik Rumah</label>
+          <input type="text" name="pemilikRumah" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Alamat</label>
+          <input type="text" name="alamat" class="form-control" required>
+        </div>
+      </div>
+      <hr>
+
+      <!-- A. INFORMASI AWAL -->
+      <h4 class="section-title">A. Informasi Awal</h4>
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <label class="form-label">Daya Terpasang (VA)</label>
+          <select name="dayaTerpasang" id="dayaTerpasangSelect" class="form-select" required>
+            <option value="450">450 VA (MCB C2)</option>
+            <option value="900">900 VA (MCB C4)</option>
+            <option value="1300">1300 VA (MCB C6)</option>
+            <option value="2200">2200 VA (MCB C10)</option>
+            <option value="3500">3500 VA (MCB C16)</option>
+            <option value="4400">4400 VA (MCB C20)</option>
+            <option value="5500">5500 VA (MCB C25)</option>
+            <option value="7700">7700 VA (MCB C32)</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Jumlah Penghuni</label>
+          <input type="number" name="jumlahPenghuni" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Pernah korsleting/kebakaran?</label>
+          <select name="pernahKorsleting" id="pernahKorsleting" class="form-select" required>
+            <option value="Tidak">Tidak</option>
+            <option value="Ya">Ya</option>
+          </select>
+          <input type="text" name="keteranganKorsleting" class="form-control mt-2" placeholder="Jika ya, jelaskan penyebabnya">
+        </div>
+      </div>
+
+      <!-- B. PENGUKURAN LISTRIK -->
+      <h4 class="section-title">B. Pengukuran Listrik</h4>
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label">Tegangan (Volt)</label>
+          <input type="number" step="0.1" name="tegangan" id="tegangan" class="form-control" required>
+          <small class="standard-text">Standar: 198-242 V (220V ±10%)</small>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Arus Total (Ampere)</label>
+          <input type="number" step="0.01" name="arusTotal" id="arusTotal" class="form-control">
+          <small class="standard-text">Standar: < Kapasitas MCB</small>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Beban Terukur (Watt)</label>
+          <input type="number" name="bebanTerpasang" id="bebanTerpasang" class="form-control" readonly placeholder="Otomatis V x I">
+          <small class="standard-text">Gunakan untuk perhitungan beban</small>
+        </div>
+      </div>
+
+      <!-- C. DAFTAR BEBAN LISTRIK -->
+      <h4 class="section-title">C. Daftar Beban Listrik Terpasang</h4>
+      <p class="text-muted small mb-3">
+        <strong>Daya Aktif (Watt)</strong> = daya saat alat menyala. <br>
+        <strong>Estimasi Energi per Hari (Wh)</strong> = (Jml × Daya) × Jam/hari. <br>
+        <em>Catatan: Total daya terpasang adalah beban maksimum jika semua alat menyala bersamaan. Total energi harian lebih mencerminkan pemakaian riil.</em>
+      </p>
+      <div id="bebanContainer">
+        <div class="d-none d-md-flex gap-2 mb-2 px-3 fw-bold text-secondary small">
+          <div style="flex: 2;">Jenis Peralatan</div>
+          <div style="flex: 0.5;">Jml</div>
+          <div style="flex: 1;">Daya (W)</div>
+          <div style="flex: 1;">Total Daya (W)</div>
+          <div style="flex: 1.2;">Mulai (HH:MM)</div>
+          <div style="flex: 1.2;">Selesai (HH:MM)</div>
+          <div style="flex: 0.8;">Durasi (jam)</div>
+          <div style="flex: 1.5;">Energi / Hari (Wh)</div>
+          <div style="flex: 2;">Keterangan</div>
+          <div style="flex: 0.3;"></div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="addBeban">+ Tambah Baris Peralatan</button>
+
+      <div class="row mb-4">
+        <div class="col-md-6 offset-md-6">
+<div class="card card-body bg-light shadow-sm text-end">
+  <div class="mb-2">
+    <label class="fw-bold">Total Daya Terpasang (Watt):</label>
+    <h3 class="mb-0 text-primary fw-bold" id="totalDayaDisplay">0</h3>
+    <small class="text-muted">Beban maksimum jika semua aktif bersamaan</small>
+    <input type="hidden" name="totalBeban" id="totalBeban">
+  </div>
+  <div>
+    <label class="fw-bold">Estimasi Energi per Hari (Wh):</label>
+    <h4 class="mb-0 text-success fw-bold" id="totalEnergiDisplay">0</h4>
+    <small class="text-muted">~ <span id="totalKwhDisplay">0</span> kWh/hari</small>
+  </div>
+  <div class="mt-2">
+    <label class="fw-bold">Estimasi Biaya Listrik per Bulan:</label>
+    <h4 class="mb-0 text-info fw-bold" id="estimasiBiaya">Rp 0</h4>
+    <small class="text-muted">Tarif PLN sesuai daya terpasang (30 hari)</small>
+  </div>
+</div>
+        </div>
+      </div>
+
+      <!-- REKOMENDASI MCB & KABEL -->
+      <div class="row mb-3">
+        <div class="col-md-6 offset-md-6">
+          <div class="alert alert-info" id="rekomendasiMCBContainer">
+            <strong>💡 Rekomendasi MCB Berdasarkan Total Daya:</strong><br>
+            <span id="rekomendasiMCB">-</span>
+          </div>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-6 offset-md-6">
+          <div class="alert alert-success" id="rekomendasiKabelContainer">
+            <strong>🔌 Rekomendasi Ukuran Kabel (Penampang):</strong><br>
+            <span id="rekomendasiKabel">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANALISIS BEBAN PUNCAK (GRAFIK) -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card bg-light">
+            <div class="card-header bg-primary text-white fw-bold">
+              ⚡ Analisis Beban Puncak (Perkiraan per Jam)
+            </div>
+            <div class="card-body">
+              <canvas id="bebanChart" width="400" height="200" style="max-height: 300px; width: 100%;"></canvas>
+              <div class="row mt-3">
+                <div class="col-md-6">
+                  <div class="alert alert-info">
+                    <strong>🏆 Jam Puncak:</strong> <span id="jamPuncak">-</span><br>
+                    <strong>Beban Puncak:</strong> <span id="bebanPuncak">0</span> Watt
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="alert alert-warning small">
+                    <strong>💡 Rekomendasi:</strong> <span id="rekomendasiBeban">Isi data beban dan jadwal untuk melihat analisis.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- D. PEMERIKSAAN MCB -->
+      <h4 class="section-title">D. Pemeriksaan MCB</h4>
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label">Apakah ada MCB Utama?</label>
+          <select name="mcbUtamaAda" class="form-select">
+            <option value="Y">Ya</option>
+            <option value="T">Tidak</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Ukuran MCB Utama (Ampere)</label>
+          <select name="mcbUtamaUkuran" id="mcbUtamaSelect" class="form-select">
+            <option value="2">C2 (2A)</option>
+            <option value="4">C4 (4A)</option>
+            <option value="6">C6 (6A)</option>
+            <option value="10">C10 (10A)</option>
+            <option value="16">C16 (16A)</option>
+            <option value="20">C20 (20A)</option>
+            <option value="25">C25 (25A)</option>
+            <option value="32">C32 (32A)</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Apakah ukuran MCB Utama sesuai?</label>
+          <input type="text" class="form-control readonly-status" id="mcbUtamaSesuaiDisplay" readonly value="Ya">
+          <input type="hidden" name="mcbUtamaSesuai" id="mcbUtamaSesuaiHidden" value="Y">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">Rekomendasi untuk MCB Utama</label>
+          <input type="text" name="mcbUtamaRekomendasi" class="form-control" placeholder="Contoh: Ganti dengan 10A">
+        </div>
+      </div>
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label">Apakah ada MCB Cabang?</label>
+          <select name="mcbCabangAda" class="form-select">
+            <option value="Y">Ya</option>
+            <option value="T">Tidak</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Ukuran MCB Cabang (Ampere)</label>
+          <select name="mcbCabangUkuran" id="mcbCabangSelect" class="form-select">
+            <option value="2">C2 (2A)</option>
+            <option value="4">C4 (4A)</option>
+            <option value="6">C6 (6A)</option>
+            <option value="10">C10 (10A)</option>
+            <option value="16">C16 (16A)</option>
+            <option value="20">C20 (20A)</option>
+            <option value="25">C25 (25A)</option>
+            <option value="32">C32 (32A)</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Apakah ukuran MCB Cabang sesuai?</label>
+          <input type="text" class="form-control readonly-status" id="mcbCabangSesuaiDisplay" readonly value="Ya">
+          <input type="hidden" name="mcbCabangSesuai" id="mcbCabangSesuaiHidden" value="Y">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">Rekomendasi untuk MCB Cabang</label>
+          <input type="text" name="mcbCabangRekomendasi" class="form-control" placeholder="Contoh: Tambah MCB untuk grup stop kontak">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Pernah MCB trip (jatuh)?</label>
+          <select name="mcbPernahTrip" id="mcbPernahTrip" class="form-select">
+            <option value="Tidak">Tidak</option>
+            <option value="Ya">Ya</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- E. PEMERIKSAAN KABEL, STOP KONTAK, GROUNDING -->
+      <h4 class="section-title">E. Pemeriksaan Instalasi</h4>
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label">Ukuran Kabel Utama (mm²)</label>
+          <input type="number" step="0.1" name="kabelUtamaUkuran" class="form-control" id="kabelUtamaUkuran">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Apakah ukuran kabel utama sesuai?</label>
+          <input type="text" class="form-control readonly-status" id="kabelUtamaSesuaiDisplay" readonly value="Ya">
+          <input type="hidden" name="kabelUtamaSesuai" id="kabelUtamaSesuaiHidden" value="Y">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Ukuran Kabel Cabang (mm²)</label>
+          <input type="number" step="0.1" name="kabelCabangUkuran" class="form-control" id="kabelCabangUkuran">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Apakah ukuran kabel cabang sesuai?</label>
+          <input type="text" class="form-control readonly-status" id="kabelCabangSesuaiDisplay" readonly value="Ya">
+          <input type="hidden" name="kabelCabangSesuai" id="kabelCabangSesuaiHidden" value="Y">
+        </div>
+<div class="col-md-4">
+  <label class="form-label">Kondisi kabel (terkelupas?)</label>
+  <select name="kabelTerbuka" id="kabelTerbuka" class="form-select">
+    <option value="Aman">Aman</option>
+    <option value="Bahaya">Bahaya (terkelupas)</option>
+  </select>
+</div>
+<div class="col-md-8" id="divKabelTerkelupas" style="display:none;">
+  <label class="form-label">Lokasi / titik kabel terkelupas</label>
+  <textarea name="kabelTerkelupasLokasi" class="form-control" rows="2" placeholder="Contoh: Di loteng dekat stop kontak dapur, kabel menuju pompa air, dll."></textarea>
+</div>
+<div class="col-md-4">
+  <label class="form-label">Sambungan listrik rapi?</label>
+  <select name="sambunganRapi" id="sambunganRapi" class="form-select">
+    <option value="Ya">Ya</option>
+    <option value="Tidak">Tidak</option>
+  </select>
+</div>
+<div class="col-md-8" id="divSambunganTidakRapi" style="display:none;">
+  <label class="form-label">Lokasi sambungan yang tidak rapi</label>
+  <textarea name="sambunganTidakRapiLokasi" class="form-control" rows="2" placeholder="Contoh: Sambungan di stop kontak ruang tamu longgar, lasdop terbuka di dekat MCB."></textarea>
+</div>
+        <div class="col-md-4">
+          <label class="form-label">Stop kontak longgar?</label>
+          <select name="stopKontakLonggar" id="stopKontakLonggar" class="form-select">
+            <option value="Tidak">Tidak</option>
+            <option value="Ya">Ya</option>
+          </select>
+        </div>
+        <div class="col-md-4" id="jumlahStopKontakLonggarDiv" style="display:none;">
+          <label class="form-label">Jumlah stop kontak longgar</label>
+          <input type="number" name="jumlahStopKontakLonggar" id="jumlahStopLonggar" class="form-control" value="0" min="0">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Ada grounding (pentanahan)?</label>
+          <select name="adaGrounding" id="adaGrounding" class="form-select">
+            <option value="Ya">Ya</option>
+            <option value="Tidak">Tidak</option>
+          </select>
+        </div>
+<div class="col-md-4">
+  <label class="form-label">Lingkungan lembab / basah?</label>
+  <select name="lembab" id="lembab" class="form-select">
+    <option value="Tidak">Tidak</option>
+    <option value="Ya">Ya</option>
+  </select>
+</div>
+<div class="col-md-8" id="divLembabLokasi" style="display:none;">
+  <label class="form-label">Lokasi / area yang lembab</label>
+  <textarea name="lembabLokasi" class="form-control" rows="2" placeholder="Contoh: Di belakang mesin cuci, tembok kamar mandi, sekitar kran air."></textarea>
+</div>
+      </div>
+
+      <!-- F. REKOMENDASI & KESIMPULAN -->
+      <h4 class="section-title">F. Rekomendasi & Kesimpulan</h4>
+      
+      <!-- REKOMENDASI OTOMATIS DARI SISTEM -->
+      <div class="alert alert-warning" id="autoRekomendasiArea">
+        <strong>📋 Rekomendasi Otomatis (Berdasarkan Analisis Sistem):</strong><br>
+        <ul id="autoRekomendasiList" style="margin-top: 10px; margin-bottom: 0;">
+          <li>Belum ada analisis. Lengkapi data beban dan instalasi.</li>
+        </ul>
+      </div>
+      <input type="hidden" name="rekomendasiOtomatis" id="rekomendasiOtomatis">
+
+      <div id="rekomendasiContainer"></div>
+      <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="addRekomendasi">+ Tambah Rekomendasi Manual</button>
+
+      <div class="row mb-3">
+        <div class="col-12">
+          <label class="form-label">Komentar Inspeksi (catatan tambahan)</label>
+          <textarea name="komentarInspeksi" class="form-control" rows="3" placeholder="Isi dengan catatan khusus hasil inspeksi, misal: 'Stop kontak dapur banyak yang longgar', 'Kabel di loteng sudah getas', dsb."></textarea>
+        </div>
+      </div>
+
+      <div class="row mb-4 mt-2">
+        <div class="col-md-12">
+          <label class="form-label fw-bold">Kesimpulan Umum</label>
+          <select name="kesimpulan" class="form-select form-select-lg border-primary">
+            <option value="Instalasi aman">Instalasi aman</option>
+            <option value="Perbaikan ringan">Perbaikan ringan</option>
+            <option value="Perbaikan sedang">Perbaikan sedang</option>
+            <option value="Berbahaya">Berbahaya</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- TANDA TANGAN -->
+      <div class="row g-4 mt-5">
+        <div class="col-6 text-center border-top pt-3">
+          <p class="mb-5 small">Petugas Inspeksi (Mahasiswa)</p>
+          <p class="fw-bold text-decoration-underline mb-0"><%= user.nama %></p>
+          <input type="hidden" name="petugasNama" value="<%= user.nama %>">
+        </div>
+        <div class="col-6 text-center border-top pt-3">
+          <p class="mb-2 small">Pemilik Rumah</p>
+          <input type="text" name="pemilikNama" class="form-control text-center" placeholder="Nama pemilik" required>
+        </div>
+      </div>
+
+      <div class="text-center mt-5">
+        <button type="submit" class="btn btn-primary btn-lg px-5">Simpan Data Inspeksi</button>
+        <button type="button" id="btnCetak" class="btn btn-secondary btn-lg px-5 ms-2">
+          <i class="bi bi-printer"></i> Cetak Pratinjau
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // ---------- DATA DEFAULT ----------
+  const defaultBeban = [
+
+  { jenis: "Lampu LED", jml: 0, daya: 0, mulai: "18:00", selesai: "22:00", ket: "Pemakaian malam hari" },
+
+  { jenis: "Lampu pijar / neon", jml: 0, daya: 0, mulai: "18:00", selesai: "22:00", ket: "Penerangan malam" },
+
+  { jenis: "Kulkas", jml: 0, daya: 0, mulai: "00:00", selesai: "23:59", ket: "Menyala 24 jam" },
+
+  { jenis: "Mesin cuci", jml: 0, daya: 0, mulai: "09:00", selesai: "11:00", ket: "Umumnya pagi/siang" },
+
+  { jenis: "Setrika", jml: 0, daya: 0, mulai: "07:00", selesai: "08:00", ket: "Biasanya pagi hari" },
+
+  { jenis: "Rice cooker", jml: 0, daya: 0, mulai: "05:00", selesai: "19:00", ket: "Masak dan menghangatkan nasi" },
+
+  { jenis: "Kipas angin", jml: 0, daya: 0, mulai: "12:00", selesai: "05:00", ket: "Siang hingga malam" },
+
+  { jenis: "TV", jml: 0, daya: 0, mulai: "18:00", selesai: "22:00", ket: "Jam santai keluarga" },
+
+  { jenis: "Pompa air", jml: 0, daya: 0, mulai: "06:00", selesai: "07:00", ket: "Pengisian tandon pagi" },
+
+  { jenis: "Dispenser", jml: 0, daya: 0, mulai: "00:00", selesai: "23:59", ket: "Standby 24 jam" },
+
+  { jenis: "Charger HP/Powerbank", jml: 0, daya: 0, mulai: "20:00", selesai: "23:00", ket: "Pengisian malam" },
+
+  { jenis: "Komputer / laptop", jml: 0, daya: 0, mulai: "19:00", selesai: "23:00", ket: "Belajar/kerja malam" }
+
+  ];
+
+  let bebanList = [...defaultBeban];
+  let rekomendasiList = [{ deskripsi: '', prioritas: 'Segera' }];
+
+  // ---------- FUNGSI BANTU ----------
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+
+  function timeToMinutes(timeStr) {
+    if (!timeStr || typeof timeStr !== 'string') return 0;
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return 0;
+    let h = parseInt(parts[0], 10);
+    let m = parseInt(parts[1], 10);
+    if (isNaN(h)) h = 0;
+    if (isNaN(m)) m = 0;
+    return h * 60 + m;
+  }
+
+  function hitungDurasi(mulai, selesai) {
+    if (!mulai || !selesai) return 0;
+    let start = timeToMinutes(mulai);
+    let end = timeToMinutes(selesai);
+    if (end < start) end += 24 * 60;
+    let durasiJam = (end - start) / 60;
+    return durasiJam > 0 ? durasiJam : 0;
+  }
+
+  // ---------- RENDER TABEL BEBAN ----------
+function renderBeban() {
+  const container = document.getElementById('bebanContainer');
+  const rows = container.querySelectorAll('.beban-row');
+  rows.forEach(r => r.remove());
+
+  // Helper: buat dropdown jam (00-23) dan menit (00-59)
+  const jamOptions = () => {
+    let opts = '';
+    for (let h = 0; h <= 23; h++) opts += `<option value="${h.toString().padStart(2,'0')}">${h.toString().padStart(2,'0')}</option>`;
+    return opts;
+  };
+  const menitOptions = () => {
+    let opts = '';
+    for (let m = 0; m <= 59; m++) opts += `<option value="${m.toString().padStart(2,'0')}">${m.toString().padStart(2,'0')}</option>`;
+    return opts;
+  };
+  const jamHtml = jamOptions();
+  const menitHtml = menitOptions();
+
+  bebanList.forEach((b, i) => {
+    const row = document.createElement('div');
+    row.className = 'beban-row';
+    row.setAttribute('data-index', i);
+    const totalDayaBaris = (b.jml || 0) * (b.daya || 0);
+    const durasi = hitungDurasi(b.mulai, b.selesai);
+    const energiBaris = totalDayaBaris * durasi;
+
+    // Pisahkan mulai dan selesai
+    let mulaiJam = '', mulaiMenit = '', selesaiJam = '', selesaiMenit = '';
+    if (b.mulai && b.mulai.includes(':')) [mulaiJam, mulaiMenit] = b.mulai.split(':');
+    if (b.selesai && b.selesai.includes(':')) [selesaiJam, selesaiMenit] = b.selesai.split(':');
+
+    // Buat select dengan nilai terpilih
+    const buatSelectJam = (selected) => jamHtml.replace(`value="${selected}"`, `value="${selected}" selected`);
+    const buatSelectMenit = (selected) => menitHtml.replace(`value="${selected}"`, `value="${selected}" selected`);
+
+    row.innerHTML = `
+      <div style="flex: 2; min-width: 130px;"><input type="text" class="form-control form-control-sm field-jenis" value="${escapeHtml(b.jenis)}"></div>
+      <div style="flex: 0.5; min-width: 60px;"><input type="number" class="form-control form-control-sm field-jml" value="${b.jml}"></div>
+      <div style="flex: 1; min-width: 80px;"><input type="number" class="form-control form-control-sm field-daya" value="${b.daya}"></div>
+      <div style="flex: 1; min-width: 80px;"><input type="number" class="form-control form-control-sm bg-light fw-bold total-daya-row" value="${totalDayaBaris}" readonly></div>
+      
+      <!-- Dropdown mulai -->
+      <div style="flex: 1.2; min-width: 100px; display: flex; gap: 4px;">
+        <select class="form-control form-control-sm jam-mulai" data-index="${i}" style="width: 55px;">${buatSelectJam(mulaiJam)}</select>
+        <select class="form-control form-control-sm menit-mulai" data-index="${i}" style="width: 55px;">${buatSelectMenit(mulaiMenit)}</select>
+      </div>
+      
+      <!-- Dropdown selesai -->
+      <div style="flex: 1.2; min-width: 100px; display: flex; gap: 4px;">
+        <select class="form-control form-control-sm jam-selesai" data-index="${i}" style="width: 55px;">${buatSelectJam(selesaiJam)}</select>
+        <select class="form-control form-control-sm menit-selesai" data-index="${i}" style="width: 55px;">${buatSelectMenit(selesaiMenit)}</select>
+      </div>
+      
+      <div style="flex: 0.8; min-width: 60px;"><input type="text" class="form-control form-control-sm bg-light durasi-row" value="${durasi.toFixed(1)}" readonly></div>
+      <div style="flex: 1.5; min-width: 100px;"><input type="number" class="form-control form-control-sm bg-light energi-row" value="${energiBaris.toFixed(0)}" readonly></div>
+      <div style="flex: 2; min-width: 150px;"><input type="text" class="form-control form-control-sm field-ket" value="${escapeHtml(b.ket)}" placeholder="Kondisi alat"></div>
+      <button type="button" class="btn btn-sm text-danger btn-remove">✕</button>
+    `;
+    container.appendChild(row);
+  });
+
+  // Pasang event listener untuk setiap baris
+  document.querySelectorAll('.beban-row').forEach(row => {
+    const idx = parseInt(row.getAttribute('data-index'));
+    
+    // Jenis
+    const inputJenis = row.querySelector('.field-jenis');
+    if (inputJenis) inputJenis.addEventListener('change', (e) => { bebanList[idx].jenis = e.target.value; hitungTotal(); });
+    
+    // Jumlah & daya
+    const inputJml = row.querySelector('.field-jml');
+    if (inputJml) inputJml.addEventListener('input', (e) => { bebanList[idx].jml = parseFloat(e.target.value) || 0; updateRowTotal(idx); });
+    const inputDaya = row.querySelector('.field-daya');
+    if (inputDaya) inputDaya.addEventListener('input', (e) => { bebanList[idx].daya = parseFloat(e.target.value) || 0; updateRowTotal(idx); });
+    
+    // Dropdown mulai
+    const jamMulai = row.querySelector('.jam-mulai');
+    const menitMulai = row.querySelector('.menit-mulai');
+    if (jamMulai && menitMulai) {
+      const updateMulai = () => {
+        bebanList[idx].mulai = `${jamMulai.value}:${menitMulai.value}`;
+        updateRowDurasiEnergi(idx);
+      };
+      jamMulai.addEventListener('change', updateMulai);
+      menitMulai.addEventListener('change', updateMulai);
+    }
+    
+    // Dropdown selesai
+    const jamSelesai = row.querySelector('.jam-selesai');
+    const menitSelesai = row.querySelector('.menit-selesai');
+    if (jamSelesai && menitSelesai) {
+      const updateSelesai = () => {
+        bebanList[idx].selesai = `${jamSelesai.value}:${menitSelesai.value}`;
+        updateRowDurasiEnergi(idx);
+      };
+      jamSelesai.addEventListener('change', updateSelesai);
+      menitSelesai.addEventListener('change', updateSelesai);
+    }
+    
+    // Keterangan
+    const inputKet = row.querySelector('.field-ket');
+    if (inputKet) inputKet.addEventListener('change', (e) => { bebanList[idx].ket = e.target.value; });
+    
+    // Tombol hapus
+    const btnRemove = row.querySelector('.btn-remove');
+    if (btnRemove) btnRemove.addEventListener('click', () => { bebanList.splice(idx, 1); renderBeban(); });
+  });
+}
+
+  function updateRowTotal(index) {
+    const b = bebanList[index];
+    const totalDayaBaris = (b.jml || 0) * (b.daya || 0);
+    const row = document.querySelector(`.beban-row[data-index='${index}']`);
+    if (row) {
+      const totalDayaCell = row.querySelector('.total-daya-row');
+      if (totalDayaCell) totalDayaCell.value = totalDayaBaris;
+    }
+    updateRowDurasiEnergi(index);
+  }
+
+  function updateRowDurasiEnergi(index) {
+    const b = bebanList[index];
+    const totalDayaBaris = (b.jml || 0) * (b.daya || 0);
+    const durasi = hitungDurasi(b.mulai, b.selesai);
+    const energiBaris = totalDayaBaris * durasi;
+    const row = document.querySelector(`.beban-row[data-index='${index}']`);
+    if (row) {
+      const durasiCell = row.querySelector('.durasi-row');
+      const energiCell = row.querySelector('.energi-row');
+      if (durasiCell) durasiCell.value = durasi.toFixed(1);
+      if (energiCell) energiCell.value = energiBaris.toFixed(0);
+    }
+    hitungTotal();
+  }
+
+  // ---------- PERHITUNGAN TOTAL ----------
+  function hitungTotal() {
+    let totalDaya = 0;
+    let totalEnergi = 0;
+    for (let b of bebanList) {
+      const daya = (b.jml || 0) * (b.daya || 0);
+      totalDaya += daya;
+      const durasi = hitungDurasi(b.mulai, b.selesai);
+      totalEnergi += daya * durasi;
+    }
+    document.getElementById('totalDayaDisplay').innerText = totalDaya.toLocaleString();
+    document.getElementById('totalBeban').value = totalDaya;
+    document.getElementById('totalEnergiDisplay').innerText = totalEnergi.toLocaleString();
+    const totalKwh = (totalEnergi / 1000).toFixed(1);
+    document.getElementById('totalKwhDisplay').innerText = totalKwh;
+
+    hitungBebanPuncak();
+    hitungRekomendasiMCB();
+    hitungRekomendasiKabel();
+    updateStatusKesesuaian();
+    generateAutoRekomendasi(); 
+    hitungBiayaListrik();
+  }
+
+  // ---------- REKOMENDASI ----------
+  function renderRekomendasi() {
+    const container = document.getElementById('rekomendasiContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    rekomendasiList.forEach((r, i) => {
+      const row = document.createElement('div');
+      row.className = 'row g-2 mb-2';
+      row.innerHTML = `
+        <div class="col-8"><input type="text" class="form-control" placeholder="Rekomendasi perbaikan..." value="${escapeHtml(r.deskripsi)}" onchange="rekomendasiList[${i}].deskripsi = this.value"></div>
+        <div class="col-3"><select class="form-select" onchange="rekomendasiList[${i}].prioritas = this.value"><option value="Segera" ${r.prioritas === 'Segera' ? 'selected' : ''}>Segera</option><option value="Berkala" ${r.prioritas === 'Berkala' ? 'selected' : ''}>Berkala</option></select></div>
+        <div class="col-1"><button type="button" class="btn text-danger" onclick="rekomendasiList.splice(${i}, 1); renderRekomendasi();">✕</button></div>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  function hitungRekomendasiMCB() {
+    const totalDaya = parseFloat(document.getElementById('totalDayaDisplay').innerText.replace(/,/g, '')) || 0;
+    const tegangan = 220;
+    const arus = totalDaya / tegangan;
+    const arusRekomendasi = arus * 1.25;
+    const mcbStandar = [2, 4, 6, 10, 16, 20, 25, 32];
+    let mcbRekomendasi = 2;
+    for (let i = 0; i < mcbStandar.length; i++) {
+      if (arusRekomendasi <= mcbStandar[i]) {
+        mcbRekomendasi = mcbStandar[i];
+        break;
+      }
+      if (arusRekomendasi > mcbStandar[mcbStandar.length-1]) mcbRekomendasi = mcbStandar[mcbStandar.length-1];
+    }
+    const mcbTerpasang = parseInt(document.getElementById('mcbUtamaSelect').value) || 0;
+    let pesan = `Daya total: ${totalDaya} W → Arus estimasi: ${arus.toFixed(1)} A + safety 125%: ${arusRekomendasi.toFixed(1)} A.<br>`;
+    pesan += `📌 **Rekomendasi MCB Utama: C${mcbRekomendasi} (${mcbRekomendasi}A)**.`;
+    if (mcbTerpasang > 0) {
+      if (mcbTerpasang < mcbRekomendasi) {
+        pesan += `<br><span class="text-danger">⚠️ MCB terpasang terlalu kecil (${mcbTerpasang}A). Berisiko trip berulang!</span>`;
+      } else if (mcbTerpasang > mcbRekomendasi * 1.2) {
+        pesan += `<br><span class="text-warning">⚠️ MCB terpasang terlalu besar (${mcbTerpasang}A). Tidak protektif terhadap kelebihan beban.</span>`;
+      } else {
+        pesan += `<br><span class="text-success">✅ MCB terpasang (${mcbTerpasang}A) sudah sesuai.</span>`;
+      }
+    }
+    document.getElementById('rekomendasiMCB').innerHTML = pesan;
+  }
+
+  function hitungRekomendasiKabel() {
+    const totalDaya = parseFloat(document.getElementById('totalDayaDisplay').innerText.replace(/,/g, '')) || 0;
+    const tegangan = 220;
+    const arus = totalDaya / tegangan;
+    const arusRekomendasi = arus * 1.25;
+    let rekomendasiKabel = 1.5;
+    if (arusRekomendasi <= 10) rekomendasiKabel = 1.5;
+    else if (arusRekomendasi <= 16) rekomendasiKabel = 2.5;
+    else if (arusRekomendasi <= 25) rekomendasiKabel = 4;
+    else if (arusRekomendasi <= 35) rekomendasiKabel = 6;
+    else if (arusRekomendasi <= 50) rekomendasiKabel = 10;
+    else rekomendasiKabel = 16;
+    let pesan = `Daya total: ${totalDaya} W → Arus desain: ${arusRekomendasi.toFixed(1)} A.<br>`;
+    pesan += `📌 **Rekomendasi kabel (tembaga) minimal: ${rekomendasiKabel} mm²** untuk kabel utama.<br>`;
+    pesan += `<small class="text-muted">Standar PUIL: 1.5mm² (max 10A), 2.5mm² (max 16A), 4mm² (max 25A), 6mm² (max 35A), 10mm² (max 50A), 16mm² (max 70A).</small>`;
+    document.getElementById('rekomendasiKabel').innerHTML = pesan;
+  }
+
+  function updateStatusKesesuaian() {
+    const totalDaya = parseFloat(document.getElementById('totalDayaDisplay').innerText.replace(/,/g, '')) || 0;
+    const tegangan = 220;
+    const arusBeban = totalDaya / tegangan;
+    const arusRekomendasi = arusBeban * 1.25;
+    const mcbStandar = [2, 4, 6, 10, 16, 20, 25, 32];
+    let mcbRekomendasi = 2;
+    for (let i = 0; i < mcbStandar.length; i++) {
+      if (arusRekomendasi <= mcbStandar[i]) { mcbRekomendasi = mcbStandar[i]; break; }
+      if (arusRekomendasi > mcbStandar[mcbStandar.length-1]) mcbRekomendasi = mcbStandar[mcbStandar.length-1];
+    }
+    // MCB Utama
+    const mcbUtama = parseInt(document.getElementById('mcbUtamaSelect').value) || 0;
+    const mcbUtamaSesuai = (mcbUtama >= mcbRekomendasi && mcbUtama <= mcbRekomendasi * 1.2) ? 'Y' : 'T';
+    document.getElementById('mcbUtamaSesuaiDisplay').value = mcbUtamaSesuai === 'Y' ? 'Ya' : 'Tidak';
+    document.getElementById('mcbUtamaSesuaiHidden').value = mcbUtamaSesuai;
+    // MCB Cabang
+    const mcbCabang = parseInt(document.getElementById('mcbCabangSelect').value) || 0;
+    let mcbCabangSesuai = 'T';
+    if (mcbCabang > 0) {
+      mcbCabangSesuai = (mcbCabang >= mcbRekomendasi && mcbCabang <= mcbRekomendasi * 1.2) ? 'Y' : 'T';
+    }
+    document.getElementById('mcbCabangSesuaiDisplay').value = mcbCabangSesuai === 'Y' ? 'Ya' : 'Tidak';
+    document.getElementById('mcbCabangSesuaiHidden').value = mcbCabangSesuai;
+    // Kabel
+    let rekomendasiKabel = 1.5;
+    if (arusRekomendasi <= 10) rekomendasiKabel = 1.5;
+    else if (arusRekomendasi <= 16) rekomendasiKabel = 2.5;
+    else if (arusRekomendasi <= 25) rekomendasiKabel = 4;
+    else if (arusRekomendasi <= 35) rekomendasiKabel = 6;
+    else if (arusRekomendasi <= 50) rekomendasiKabel = 10;
+    else rekomendasiKabel = 16;
+    const kabelUtama = parseFloat(document.getElementById('kabelUtamaUkuran').value) || 0;
+    const kabelUtamaSesuai = (kabelUtama >= rekomendasiKabel) ? 'Y' : 'T';
+    document.getElementById('kabelUtamaSesuaiDisplay').value = kabelUtamaSesuai === 'Y' ? 'Ya' : 'Tidak';
+    document.getElementById('kabelUtamaSesuaiHidden').value = kabelUtamaSesuai;
+    const kabelCabang = parseFloat(document.getElementById('kabelCabangUkuran').value) || 0;
+    const kabelCabangSesuai = (kabelCabang >= rekomendasiKabel) ? 'Y' : 'T';
+    document.getElementById('kabelCabangSesuaiDisplay').value = kabelCabangSesuai === 'Y' ? 'Ya' : 'Tidak';
+    document.getElementById('kabelCabangSesuaiHidden').value = kabelCabangSesuai;
+  }
+
+function generateAutoRekomendasi() {
+  const totalDaya = parseFloat(document.getElementById('totalDayaDisplay').innerText.replace(/,/g, '')) || 0;
+  const dayaTerpasangVA = parseInt(document.getElementById('dayaTerpasangSelect').value) || 450;
+  const dayaTerpasangWatt = dayaTerpasangVA * 0.8;
+  const mcbUtama = parseInt(document.getElementById('mcbUtamaSelect').value) || 0;
+  const mcbCabang = parseInt(document.getElementById('mcbCabangSelect').value) || 0;
+  const kabelUtama = parseFloat(document.getElementById('kabelUtamaUkuran').value) || 0;
+  const kabelCabang = parseFloat(document.getElementById('kabelCabangUkuran').value) || 0;
+  const stopKontakLonggar = document.getElementById('stopKontakLonggar').value === 'Ya';
+  const jumlahStopLonggar = parseInt(document.getElementById('jumlahStopLonggar').value) || 0;
+  const kabelTerbuka = document.getElementById('kabelTerbuka').value === 'Bahaya';
+  const sambunganRapi = document.getElementById('sambunganRapi').value === 'Ya';
+  const adaGrounding = document.getElementById('adaGrounding').value === 'Ya';
+  const lembab = document.getElementById('lembab').value === 'Ya';
+  const pernahKorsleting = document.getElementById('pernahKorsleting').value === 'Ya';
+  const mcbTrip = document.getElementById('mcbPernahTrip').value === 'Ya';
+  const maxBebanPuncak = parseInt(document.getElementById('bebanPuncak').innerText) || 0;
+  const jamPuncak = document.getElementById('jamPuncak').innerText;
+  const rekomList = [];
+
+  // 1. Daya terpasang vs total beban
+  if (totalDaya > dayaTerpasangWatt) {
+    rekomList.push(`⚠️ Total beban (${totalDaya} W) melebihi daya terpasang ${dayaTerpasangVA} VA (≈${dayaTerpasangWatt} W). Segera tambah daya PLN atau kurangi pemakaian bersamaan.`);
+  } else if (totalDaya > dayaTerpasangWatt * 0.9) {
+    rekomList.push(`📈 Total beban mendekati batas daya terpasang (${Math.round(totalDaya/dayaTerpasangWatt*100)}%). Pertimbangkan tambah daya atau atur jadwal pemakaian.`);
+  }
+
+  // 2. MCB tidak sesuai
+  const mcbUtamaSesuai = document.getElementById('mcbUtamaSesuaiHidden').value === 'Y';
+  if (!mcbUtamaSesuai && mcbUtama > 0) {
+    rekomList.push(`🔌 MCB utama (${mcbUtama}A) tidak sesuai rekomendasi. Ganti dengan ukuran yang tepat.`);
+  }
+  const mcbCabangSesuai = document.getElementById('mcbCabangSesuaiHidden').value === 'Y';
+  if (!mcbCabangSesuai && mcbCabang > 0) {
+    rekomList.push(`🔌 MCB cabang (${mcbCabang}A) tidak sesuai. Sesuaikan dengan beban atau tambah grup MCB.`);
+  }
+
+  // 3. Kabel tidak sesuai
+  const kabelUtamaSesuai = document.getElementById('kabelUtamaSesuaiHidden').value === 'Y';
+  if (!kabelUtamaSesuai && kabelUtama > 0) {
+    rekomList.push(`⚡ Ukuran kabel utama (${kabelUtama} mm²) terlalu kecil. Ganti dengan minimal sesuai rekomendasi.`);
+  }
+  const kabelCabangSesuai = document.getElementById('kabelCabangSesuaiHidden').value === 'Y';
+  if (!kabelCabangSesuai && kabelCabang > 0) {
+    rekomList.push(`⚡ Ukuran kabel cabang (${kabelCabang} mm²) terlalu kecil. Ganti untuk keamanan.`);
+  }
+
+  // 4. Beban puncak
+  if (maxBebanPuncak > dayaTerpasangWatt) {
+    rekomList.push(`🏆 Beban puncak (${maxBebanPuncak} W) melebihi daya terpasang. Hindari menyalakan banyak alat bersamaan pada jam ${jamPuncak}.`);
+  } else if (maxBebanPuncak > dayaTerpasangWatt * 0.85) {
+    rekomList.push(`📊 Beban puncak cukup tinggi (${maxBebanPuncak} W). Sebarkan penggunaan alat berat ke jam lain.`);
+  }
+
+  // 5. Stop kontak longgar
+  if (stopKontakLonggar) {
+    rekomList.push(`🔌 Terdapat ${jumlahStopLonggar} stop kontak longgar. Segera perbaiki untuk mencegah percikan api dan risiko kebakaran.`);
+  }
+
+  // 6. Kabel terkelupas + lokasi (hanya satu)
+  if (kabelTerbuka) {
+    let lokasi = document.getElementById('kabelTerkelupasLokasi')?.value.trim();
+    let teks = `⚠️ Kabel instalasi terkelupas. Segera isolasi atau ganti kabel untuk mencegah korsleting.`;
+    if (lokasi) teks += ` Lokasi: ${lokasi}`;
+    rekomList.push(teks);
+  }
+
+  // 7. Sambungan tidak rapi + lokasi (hanya satu)
+  if (!sambunganRapi) {
+    let lokasi = document.getElementById('sambunganTidakRapiLokasi')?.value.trim();
+    let teks = `🔧 Sambungan listrik tidak rapi. Rapi dan kencangkan sambungan untuk menghindari panas berlebih.`;
+    if (lokasi) teks += ` Lokasi: ${lokasi}`;
+    rekomList.push(teks);
+  }
+
+  // 8. Tidak ada grounding
+  if (!adaGrounding) {
+    rekomList.push(`⛔ Tidak ada sistem grounding. Pasang grounding untuk perlindungan dari kebocoran arus dan petir.`);
+  }
+
+  // 9. Lingkungan lembab + lokasi (hanya satu)
+  if (lembab) {
+    let lokasi = document.getElementById('lembabLokasi')?.value.trim();
+    let teks = `💧 Lingkungan lembab/basah. Pastikan stop kontak dan kabel tahan air atau diberi pelindung. Hindari kabel terkena air.`;
+    if (lokasi) teks += ` Area: ${lokasi}`;
+    rekomList.push(teks);
+  }
+
+  // 10. Riwayat korsleting / trip
+  if (pernahKorsleting) {
+    rekomList.push(`🔥 Pernah terjadi korsleting/kebakaran. Periksa ulang seluruh instalasi oleh teknisi.`);
+  }
+  if (mcbTrip) {
+    rekomList.push(`⚡ MCB sering trip. Ini menandakan kelebihan beban atau ada gangguan hubung singkat. Lakukan pemeriksaan menyeluruh.`);
+  }
+
+  // 11. Saran tambah daya
+  if (totalDaya > dayaTerpasangWatt) {
+    const dayaDibutuhkan = Math.ceil(totalDaya / 0.8 / 100) * 100;
+    rekomList.push(`💡 Saran tambah daya PLN menjadi minimal ${dayaDibutuhkan} VA (saat ini ${dayaTerpasangVA} VA).`);
+  }
+
+  // 12. Atur beban agar tidak puncak
+  if (jamPuncak !== '-') {
+    rekomList.push(`📅 Kurangi penggunaan alat listrik berat pada jam ${jamPuncak}. Gunakan timer atau jadwal bergantian.`);
+  }
+
+  // Tampilkan di UI
+  const ul = document.getElementById('autoRekomendasiList');
+  ul.innerHTML = '';
+  if (rekomList.length === 0) {
+    ul.innerHTML = '<li>✅ Instalasi listrik dalam kondisi baik. Tidak ada rekomendasi khusus.</li>';
+    document.getElementById('rekomendasiOtomatis').value = '';
+  } else {
+    rekomList.forEach(r => {
+      const li = document.createElement('li');
+      li.innerHTML = r;
+      ul.appendChild(li);
+    });
+    document.getElementById('rekomendasiOtomatis').value = rekomList.join('; ');
+  }
+}
+
+  // ---------- GRAFIK BEBAN PUNCAK ----------
+  let bebanChart = null;
+  function initChart() {
+    const ctx = document.getElementById('bebanChart').getContext('2d');
+    bebanChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Array.from({length: 24}, (_, i) => i.toString().padStart(2,'0') + ':00'),
+        datasets: [{
+          label: 'Beban (Watt)',
+          data: new Array(24).fill(0),
+          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: 'Watt' } },
+          x: { title: { display: true, text: 'Jam' }, ticks: { stepSize: 1, autoSkip: true, maxRotation: 45 } }
+        },
+        plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.raw} Watt` } } }
+      }
+    });
+  }
+  function updateChart(bebanPerJam) {
+    if (!bebanChart) initChart();
+    bebanChart.data.datasets[0].data = bebanPerJam;
+    bebanChart.update();
+  }
+  function hitungBebanPuncak() {
+    let bebanPerJam = new Array(24).fill(0);
+    for (let b of bebanList) {
+      if (!b.mulai || !b.selesai) continue;
+      if ((b.jml || 0) === 0 || (b.daya || 0) === 0) continue;
+      const totalDayaBaris = (b.jml || 0) * (b.daya || 0);
+      let start = timeToMinutes(b.mulai);
+      let end = timeToMinutes(b.selesai);
+      if (end < start) end += 24 * 60;
+      let startHour = Math.floor(start / 60);
+      let endHour = Math.floor(end / 60);
+      for (let h = startHour; h <= endHour; h++) {
+        let hourMod = h % 24;
+        bebanPerJam[hourMod] += totalDayaBaris;
+      }
+    }
+    updateChart(bebanPerJam);
+    let maxBeban = 0, jamPuncakArray = [];
+    for (let i = 0; i < 24; i++) {
+      if (bebanPerJam[i] > maxBeban) { maxBeban = bebanPerJam[i]; jamPuncakArray = [i]; }
+      else if (bebanPerJam[i] === maxBeban && maxBeban > 0) { jamPuncakArray.push(i); }
+    }
+    document.getElementById('jamPuncak').innerText = jamPuncakArray.length ? jamPuncakArray.map(j => j.toString().padStart(2,'0')+':00').join(', ') : '-';
+    document.getElementById('bebanPuncak').innerText = maxBeban;
+    let rekomTeks = '';
+    if (maxBeban > 0) {
+      if (maxBeban > 900) rekomTeks = '⚠️ Beban puncak cukup tinggi (>900W). Sebarkan penggunaan alat berat ke jam lain.';
+      else if (maxBeban > 450) rekomTeks = '📊 Beban puncak sedang. Hindari menyalakan banyak alat bersamaan.';
+      else rekomTeks = '✅ Beban puncak aman. Tetap pantau.';
+    } else {
+      rekomTeks = '📝 Isi data beban dan jadwal (mulai & selesai) untuk melihat analisis.';
+    }
+    document.getElementById('rekomendasiBeban').innerText = rekomTeks;
+  }
+function hitungBiayaListrik() {
+  const totalEnergiPerHariWh = parseFloat(document.getElementById('totalEnergiDisplay').innerText.replace(/,/g, '')) || 0;
+  const totalKwhPerHari = totalEnergiPerHariWh / 1000;
+  const totalKwhPerBulan = totalKwhPerHari * 30; // estimasi 30 hari
+
+  // Tarif PLN (Rp/kWh) berdasarkan daya terpasang (VA) – Data per Maret 2025 (non-subsidi)
+  const dayaVA = parseInt(document.getElementById('dayaTerpasangSelect').value) || 450;
+  let tarif = 0;
+  
+  if (dayaVA === 450) tarif = 415;       // subsidi, tidak berubah
+  else if (dayaVA === 900) tarif = 1352; // subsidi? untuk akurasi, bisa disesuaikan
+  else if (dayaVA === 1300) tarif = 1444.7;
+  else if (dayaVA === 2200) tarif = 1444.7;
+  else if (dayaVA === 3500) tarif = 1444.7;
+  else if (dayaVA === 4400) tarif = 1444.7;
+  else if (dayaVA === 5500) tarif = 1444.7;
+  else tarif = 1699.53; // >6600 VA
+  
+  const biaya = totalKwhPerBulan * tarif;
+  
+  // Format ke Rupiah
+  const formatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
+  document.getElementById('estimasiBiaya').innerText = formatter.format(biaya);
+}
+  // ---------- PERHITUNGAN TEGANGAN x ARUS ----------
+  const teganganInput = document.getElementById('tegangan');
+  const arusInput = document.getElementById('arusTotal');
+  const bebanTerpasangInput = document.getElementById('bebanTerpasang');
+  function hitungBebanTerpasang() {
+    const teg = parseFloat(teganganInput.value) || 0;
+    const arus = parseFloat(arusInput.value) || 0;
+    bebanTerpasangInput.value = Math.round(teg * arus);
+  }
+  teganganInput.addEventListener('input', hitungBebanTerpasang);
+  arusInput.addEventListener('input', hitungBebanTerpasang);
+
+  // ---------- DEFAULT KELOMPOK ----------
+  const defaultByKelompok = { 1: { daya: 450, mcb: 2 }, 2: { daya: 900, mcb: 4 }, 3: { daya: 1300, mcb: 6 }, 4: { daya: 2200, mcb: 10 } };
+  function setDefaultByKelompok() {
+    const kelompok = parseInt(document.getElementById('kelompokSelect').value);
+    const defaults = defaultByKelompok[kelompok];
+    if (defaults) {
+      document.getElementById('dayaTerpasangSelect').value = defaults.daya.toString();
+      document.getElementById('mcbUtamaSelect').value = defaults.mcb.toString();
+    }
+  }
+  document.getElementById('kelompokSelect').addEventListener('change', setDefaultByKelompok);
+  setDefaultByKelompok();
+
+  // ---------- TAMBAH BEBAN / REKOMENDASI ----------
+  document.getElementById('addBeban').addEventListener('click', () => {
+    bebanList.push({ jenis: '', jml: 0, daya: 0, mulai: '', selesai: '', ket: '' });
+    renderBeban();
+  });
+  document.getElementById('addRekomendasi').addEventListener('click', () => {
+    rekomendasiList.push({ deskripsi: '', prioritas: 'Segera' });
+    renderRekomendasi();
+  });
+
+  // ---------- STOP KONTAK LONGGAR - TAMPILKAN INPUT JUMLAH ----------
+  const stopKontakSelect = document.getElementById('stopKontakLonggar');
+  const jumlahDiv = document.getElementById('jumlahStopKontakLonggarDiv');
+  function toggleJumlahStopKontak() {
+    if (stopKontakSelect.value === 'Ya') {
+      jumlahDiv.style.display = 'block';
+    } else {
+      jumlahDiv.style.display = 'none';
+      document.getElementById('jumlahStopLonggar').value = 0;
+    }
+  }
+  stopKontakSelect.addEventListener('change', toggleJumlahStopKontak);
+  toggleJumlahStopKontak();
+  // Toggle lokasi kabel terkelupas
+const kabelTerbuka = document.getElementById('kabelTerbuka');
+const divKabel = document.getElementById('divKabelTerkelupas');
+if (kabelTerbuka && divKabel) {
+  kabelTerbuka.addEventListener('change', () => divKabel.style.display = kabelTerbuka.value === 'Bahaya' ? 'block' : 'none');
+  divKabel.style.display = kabelTerbuka.value === 'Bahaya' ? 'block' : 'none';
+}
+
+// Toggle sambungan tidak rapi
+const sambungan = document.getElementById('sambunganRapi');
+const divSambungan = document.getElementById('divSambunganTidakRapi');
+if (sambungan && divSambungan) {
+  sambungan.addEventListener('change', () => divSambungan.style.display = sambungan.value === 'Tidak' ? 'block' : 'none');
+  divSambungan.style.display = sambungan.value === 'Tidak' ? 'block' : 'none';
+}
+
+// Toggle lembab
+const lembab = document.getElementById('lembab');
+const divLembab = document.getElementById('divLembabLokasi');
+if (lembab && divLembab) {
+  lembab.addEventListener('change', () => divLembab.style.display = lembab.value === 'Ya' ? 'block' : 'none');
+  divLembab.style.display = lembab.value === 'Ya' ? 'block' : 'none';
+}
+
+  // ---------- CETAK PRATINJAU ----------
+  document.getElementById('btnCetak').addEventListener('click', function() {
+    const formData = {
+      kelompok: document.getElementById('kelompokSelect').value,
+      tanggal: document.querySelector('input[name="tanggal"]').value,
+      desa: document.querySelector('input[name="desa"]').value,
+      dusunRt: document.getElementById('dusunSelect').value,
+      pemilikRumah: document.querySelector('input[name="pemilikRumah"]').value,
+      alamat: document.querySelector('input[name="alamat"]').value,
+      dayaTerpasang: document.getElementById('dayaTerpasangSelect').value,
+      jumlahPenghuni: document.querySelector('input[name="jumlahPenghuni"]').value,
+      pernahKorsleting: document.getElementById('pernahKorsleting').value,
+      keteranganKorsleting: document.querySelector('input[name="keteranganKorsleting"]').value,
+      tegangan: document.getElementById('tegangan').value,
+      arusTotal: document.getElementById('arusTotal').value,
+      bebanTerpasang: document.getElementById('bebanTerpasang').value,
+      totalDaya: document.getElementById('totalDayaDisplay').innerText.replace(/,/g, ''),
+      totalEnergi: document.getElementById('totalEnergiDisplay').innerText.replace(/,/g, ''),
+      bebanList: bebanList,
+      mcbUtamaAda: document.querySelector('select[name="mcbUtamaAda"]').value,
+      mcbUtamaUkuran: document.getElementById('mcbUtamaSelect').value,
+      mcbUtamaSesuai: document.getElementById('mcbUtamaSesuaiHidden').value,
+      mcbUtamaRekomendasi: document.querySelector('input[name="mcbUtamaRekomendasi"]').value,
+      mcbCabangAda: document.querySelector('select[name="mcbCabangAda"]').value,
+      mcbCabangUkuran: document.getElementById('mcbCabangSelect').value,
+      mcbCabangSesuai: document.getElementById('mcbCabangSesuaiHidden').value,
+      mcbCabangRekomendasi: document.querySelector('input[name="mcbCabangRekomendasi"]').value,
+      mcbPernahTrip: document.getElementById('mcbPernahTrip').value,
+      kabelUtamaUkuran: document.getElementById('kabelUtamaUkuran').value,
+      kabelUtamaSesuai: document.getElementById('kabelUtamaSesuaiHidden').value,
+      kabelCabangUkuran: document.getElementById('kabelCabangUkuran').value,
+      kabelCabangSesuai: document.getElementById('kabelCabangSesuaiHidden').value,
+      kabelTerbuka: document.getElementById('kabelTerbuka').value,
+      sambunganRapi: document.getElementById('sambunganRapi').value,
+      stopKontakLonggar: stopKontakSelect.value,
+      jumlahStopKontakLonggar: document.getElementById('jumlahStopLonggar').value,
+      adaGrounding: document.getElementById('adaGrounding').value,
+      lembab: document.getElementById('lembab').value,
+      kesimpulan: document.querySelector('select[name="kesimpulan"]').value,
+      komentarInspeksi: document.querySelector('textarea[name="komentarInspeksi"]').value,
+      petugasNama: document.querySelector('input[name="petugasNama"]').value,
+      pemilikNama: document.querySelector('input[name="pemilikNama"]').value,
+      rekomendasiList: rekomendasiList,
+      rekomendasiOtomatis: document.getElementById('rekomendasiOtomatis').value
+    };
+    const formCetak = document.createElement('form');
+    formCetak.method = 'POST';
+    formCetak.action = '/mahasiswa/inspeksi/cetak';
+    formCetak.target = '_blank';
+    const inputData = document.createElement('input');
+    inputData.type = 'hidden';
+    inputData.name = 'data';
+    inputData.value = JSON.stringify(formData);
+    formCetak.appendChild(inputData);
+    document.body.appendChild(formCetak);
+    formCetak.submit();
+    document.body.removeChild(formCetak);
+  });
+
+  // ---------- SUBMIT SERIALISASI ----------
+  document.getElementById('inspeksiForm').addEventListener('submit', function(e) {
+    const oldBeban = document.querySelector('input[name="bebanList"]');
+    if (oldBeban) oldBeban.remove();
+    const oldRekom = document.querySelector('input[name="rekomendasiList"]');
+    if (oldRekom) oldRekom.remove();
+    const inputB = document.createElement('input');
+    inputB.type = 'hidden';
+    inputB.name = 'bebanList';
+    inputB.value = JSON.stringify(bebanList);
+    this.appendChild(inputB);
+    const inputR = document.createElement('input');
+    inputR.type = 'hidden';
+    inputR.name = 'rekomendasiList';
+    inputR.value = JSON.stringify(rekomendasiList);
+    this.appendChild(inputR);
+    // rekomendasi otomatis sudah ada hidden input-nya
+  });
+
+  // ---------- EVENT LISTENER UNTUK PERUBAHAN MCB/KABEL (UPDATE STATUS) ----------
+  document.getElementById('mcbUtamaSelect').addEventListener('change', updateStatusKesesuaian);
+  document.getElementById('mcbCabangSelect').addEventListener('change', updateStatusKesesuaian);
+  document.getElementById('kabelUtamaUkuran').addEventListener('input', updateStatusKesesuaian);
+  document.getElementById('kabelCabangUkuran').addEventListener('input', updateStatusKesesuaian);
+
+  // ---------- INISIALISASI ----------
+  renderBeban();
+  initChart();
+  renderRekomendasi();
+  hitungTotal();
+</script>
+<%- include('../../partials/footer') %>

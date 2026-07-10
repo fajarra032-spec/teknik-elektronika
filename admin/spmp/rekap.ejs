@@ -1,0 +1,43 @@
+<%- include('../../partials/header') %>
+<div class="container mt-4">
+  <h2><%= title %></h2>
+
+  <form method="GET" class="mb-3">
+    <select name="periodeId" class="form-select w-auto d-inline-block" onchange="this.form.submit()">
+      <option value="">Pilih Periode</option>
+      <% periods.forEach(function(p) { %>
+        <option value="<%= p.id %>" <%= selectedPeriode === p.id ? 'selected' : '' %>><%= p.nama %></option>
+      <% }); %>
+    </select>
+  </form>
+
+  <% if (!selectedPeriode) { %>
+    <p class="text-muted">Pilih periode terlebih dahulu.</p>
+  <% } else if (data.length === 0) { %>
+    <p class="text-muted">Belum ada respon dosen untuk periode ini.</p>
+  <% } else { %>
+    <table class="table table-bordered align-middle">
+      <thead><tr><th>Dosen</th><th>Skor Capaian</th><th>Detail per Indikator</th></tr></thead>
+      <tbody>
+        <% data.forEach(function(d) { %>
+          <tr>
+            <td><%= d.nama %></td>
+            <td><span class="badge bg-<%= d.skor >= 80 ? 'success' : d.skor >= 60 ? 'warning' : 'danger' %> fs-6"><%= d.skor %>%</span></td>
+            <td>
+              <% indiList.forEach(function(ind) { %>
+                <% const resp = d.responses.find(function(r) { return r.indikatorId === ind.id; }); %>
+                <div class="small">
+                  <%= ind.nama %>: <%= resp ? resp.capaian : '-' %> / <%= ind.target %> <%= ind.satuan %>
+                  <% if (resp && resp.fileUrl) { %>
+                    <a href="<%= resp.fileUrl %>" target="_blank" title="Bukti"><i class="bi bi-paperclip"></i></a>
+                  <% } %>
+                </div>
+              <% }); %>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+<%- include('../../partials/footer') %>

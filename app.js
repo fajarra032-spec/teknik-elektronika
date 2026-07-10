@@ -117,9 +117,7 @@ async function startServer() {
       res.render('dosen/kurikulum/my_rps');
     });
 
-    // Berita
-    const beritaPublicRoutes = require('./routes/berita');
-    app.use('/berita', beritaPublicRoutes);
+    // Berita (catatan: rute publik /berita/:id sudah ditangani di routes/landing.js)
     const adminBeritaRoutes = require('./routes/admin/berita');
     app.use('/admin/berita', adminBeritaRoutes);
 

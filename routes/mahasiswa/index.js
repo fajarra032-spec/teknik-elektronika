@@ -15,6 +15,7 @@ router.use('/akademik', akademikRouter);
 
 const elearningRouter = require('./elearning');
 router.use('/elearning', elearningRouter);
+router.use('/kelas-chat', require('./kelasChat'));
 
 const magangRouter = require('./magang');
 router.use('/magang', magangRouter);

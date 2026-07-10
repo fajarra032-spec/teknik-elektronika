@@ -1,0 +1,1560 @@
+<%- include('../partials/header-landing') %>
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* Custom theme */
+    :root {
+      --color-dewantara-blue: #0d529f;
+      --color-dewantara-navy: #093c75;
+      --color-dewantara-gold: #f2a900;
+    }
+    body {
+      font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+    .font-display { font-family: 'Outfit', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .bg-dewantara-blue { background-color: var(--color-dewantara-blue); }
+    .bg-dewantara-navy { background-color: var(--color-dewantara-navy); }
+    .text-dewantara-blue { color: var(--color-dewantara-blue); }
+    .text-dewantara-gold { color: var(--color-dewantara-gold); }
+    .border-dewantara-blue { border-color: var(--color-dewantara-blue); }
+    .from-dewantara-blue { --tw-gradient-from: var(--color-dewantara-blue); }
+    .to-dewantara-navy { --tw-gradient-to: var(--color-dewantara-navy); }
+    .bg-dewantara-gold { background-color: var(--color-dewantara-gold); }
+    .border-dewantara-gold { border-color: var(--color-dewantara-gold); }
+    .hover\:bg-dewantara-blue:hover { background-color: var(--color-dewantara-blue); }
+    .focus\:ring-dewantara-blue:focus { --tw-ring-color: var(--color-dewantara-blue); }
+    .bg-radial-gradient {
+      background-image: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+    }
+    @keyframes ping {
+      75%, 100% { transform: scale(2); opacity: 0; }
+    }
+    .animate-ping {
+      animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    .drag-active {
+      border-color: var(--color-dewantara-blue) !important;
+      background-color: #eff6ff !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- ============================================================ -->
+  <!-- BANNER IC3 DIGITAL LITERACY (tambahan)                       -->
+  <!-- ============================================================ -->
+  <div class="max-w-7xl mx-auto px-4 pt-4 sm:px-6 lg:px-8">
+    <img 
+      src="/images/banneric3.png" 
+      alt="Banner IC3 Digital Literacy" 
+      class="w-full rounded-xl shadow-md"
+    />
+  </div>
+  <!-- ============================================================ -->
+  <!-- CARD BIRU (HEADER + FLASH + STATS)                           -->
+  <!-- ============================================================ -->
+  <%
+    const totalReg = (typeof stats !== 'undefined' && stats.totalRegistrants) || 0;
+    const freeSlotsUsed = (typeof stats !== 'undefined' && stats.freeSlotsUsed) || 0;
+    const freeSlotsRemaining = (typeof stats !== 'undefined' && stats.freeSlotsRemaining) || 80;
+    const paidSlotsCount = (typeof stats !== 'undefined' && stats.paidSlotsCount) || 0;
+  %>
+
+<!-- ============================================================ -->
+<!-- CARD HEADER (CANTIK + FLASH PROMO)                          -->
+<!-- ============================================================ -->
+<div class="max-w-7xl mx-auto px-4 pt-6 sm:px-6 lg:px-8">
+  <div class="relative bg-gradient-to-r from-blue-600 via-dewantara-blue to-dewantara-navy rounded-2xl shadow-xl overflow-hidden border border-blue-400/20">
+    <!-- Background pattern -->
+    <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48cGF0aCBkPSJNMzAgMTBhMjAgMjAgMCAxIDAgMCA0MCAyMCAyMCAwIDAgMCAwLTQweiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=')]"></div>
+    
+    <div class="relative z-10 p-6 md:p-8">
+      <!-- Baris atas: Judul + Statistik -->
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-display font-bold text-white flex items-center gap-2 drop-shadow-md">
+            <span> Pendaftaran IC3 Digital Literacy
+          </h1>
+          <p class="text-sm text-blue-100 mt-1 drop-shadow-sm">
+            Program sertifikasi internasional untuk mahasiswa Politeknik Dewantara
+          </p>
+        </div>
+        <div class="flex items-center gap-6 bg-white/10 backdrop-blur-sm rounded-xl px-5 py-2.5 border border-white/10 shadow-inner">
+          <div class="text-center">
+            <span class="text-[10px] uppercase tracking-wider text-blue-200">Pendaftar</span>
+            <div class="text-2xl font-mono font-bold text-white" id="totalRegDisplay"><%= totalReg %></div>
+          </div>
+          <div class="w-px h-10 bg-white/20"></div>
+          <div class="text-center">
+            <span class="text-[10px] uppercase tracking-wider text-blue-200">Sisa Kuota Gratis</span>
+            <div class="text-2xl font-mono font-bold text-yellow-300" id="freeSlotsDisplay"><%= freeSlotsRemaining %></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flash Promo -->
+      <div class="mt-4 bg-white/15 backdrop-blur-sm border border-white/10 rounded-xl p-3.5 text-center text-sm shadow-inner">
+        <span class="font-bold text-white drop-shadow">Penawaran Prioritas:</span>
+        <span class="text-white drop-shadow">80 pendaftar pertama mendapatkan lisensi sertifikasi senilai <strong class="text-yellow-300">Rp 700.000</strong> secara <strong class="text-emerald-300">GRATIS!</strong></span>
+        <span class="inline-block ml-2 bg-yellow-400/30 text-yellow-200 text-[11px] px-3 py-1 rounded-full border border-yellow-400/40 font-medium shadow-sm">
+          Urutan Ditentukan Waktu Kirim
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- ============================================================ -->
+  <!-- MAIN CONTENT                                                 -->
+  <!-- ============================================================ -->
+  <main class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+
+    <!-- ROW 1: METRICS (Progress & Tarif) -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="quick-indicators">
+      <!-- Progress Card -->
+      <div class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-200 p-5 col-span-1 md:col-span-2 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Pendaftar Sertifikasi IC3 Digital Literacy </span>
+            <span class="text-xs font-mono font-bold text-dewantara-blue bg-blue-50 px-2 py-0.5 rounded">
+              <%= freeSlotsUsed %> / 80 Slot Terisi
+            </span>
+          </div>
+<div class="w-full bg-slate-100 h-3.5 rounded-full overflow-hidden mt-1 relative">
+<div 
+  id="progressBar"
+  class="bg-gradient-to-r from-dewantara-blue to-blue-500 h-full rounded-full transition-all duration-500"
+  style="width: <%= Math.min(100, (freeSlotsUsed / 80) * 100) %>%; min-width: 4px;"
+></div>
+</div>
+          <div class="flex justify-between text-[11px] text-slate-400 font-mono mt-1.5">
+<span class="text-xs font-mono font-bold text-dewantara-blue bg-blue-50 px-2 py-0.5 rounded">
+  <span id="slotUsed"><%= freeSlotsUsed %></span> / 80
+</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-4 items-center justify-between text-xs text-slate-500">
+          <% if (totalReg < 80) { %>
+            <div class="flex items-center gap-1.5 text-emerald-600 font-medium">
+              <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping"></span>
+              Slot Gratis Aktif: Pendaftar selanjutnya tidak dikenakan biaya apapun!
+            </div>
+          <% } else { %>
+            <div class="flex items-center gap-1.5 text-amber-600 font-semibold">
+              <span class="w-2.5 h-2.5 bg-amber-500 rounded-full"></span>
+              Kuota Gratis Habis: Pendaftar ke-81+ dikenakan biaya voucher prodi Rp 700.000.
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Pricing Card -->
+      <div class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-200 p-5 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Tarif Registrasi Saat Ini</span>
+          <i data-lucide="building" class="w-4 h-4 text-slate-400"></i>
+        </div>
+        <div class="my-1.5">
+          <% if (totalReg < 80) { %>
+            <div>
+              <div class="text-3xl font-display font-black text-emerald-600 flex items-center gap-1">
+                GRATIS
+                <span class="text-sm font-sans font-normal text-slate-400 line-through">Rp 700k</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">
+                Biaya ditanggung penuh oleh subsidi hibah IC3 Digital Literacy Politeknik Dewantara.
+              </p>
+            </div>
+          <% } else { %>
+            <div>
+              <div class="text-2xl font-mono font-black text-amber-600">
+                Rp 700.000
+              </div>
+              <p class="text-xs text-slate-400 mt-1">
+                Dikenakan biaya mandiri khusus untuk pendaftar di luar kuota 80 pertama subsidi prodi.
+              </p>
+            </div>
+          <% } %>
+        </div>
+        <div class="bg-slate-50 rounded-lg p-2 flex items-center justify-between text-[11px] text-slate-500">
+          <span>Registrasi Terkini:</span>
+          <span class="font-mono font-bold text-slate-700" id="nextRegNo">Pendaftar ke-<%= totalReg + 1 %></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROW 2: FORM + TABS (INFO / SEARCH / ADMIN) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+      <!-- LEFT: FORM -->
+      <section class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 relative">
+        <div class="absolute top-4 right-4 text-emerald-500 bg-emerald-50 p-1.5 rounded-lg text-xs flex items-center gap-1 font-mono font-bold">
+          <i data-lucide="shield-check" class="w-4 h-4"></i> SSL SECURE
+        </div>
+
+        <div class="border-b border-slate-100 pb-4 mb-6">
+          <h2 class="text-xl font-display font-semibold text-slate-800 flex items-center gap-2">
+            <i data-lucide="file-text" class="w-5 h-5 text-dewantara-blue"></i>
+            Formulir Pendaftaran
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Kirimkan formulir minat hari ini. KTM wajib disertakan untuk auto-verifikasi NIM oleh AI.
+          </p>
+        </div>
+
+        <div id="submitResult" class="hidden p-4 rounded-xl mb-6 flex items-start gap-3 border"></div>
+
+        <form id="registrationForm" enctype="multipart/form-data" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">
+              Nama Lengkap Mahasiswa <span class="text-red-500">*</span>
+            </label>
+            <input type="text" name="name" id="name" required
+              placeholder="Contoh:  Fajar Ramadhan"
+              class="w-full text-sm px-3.5 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-dewantara-blue focus:border-transparent transition-all" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">
+                NIM <span class="text-red-500">*</span>
+              </label>
+              <input type="text" name="nim" id="nim" required
+                placeholder="Contoh: 202401032"
+                class="w-full text-sm px-3.5 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-dewantara-blue font-mono" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">
+                Program Studi <span class="text-red-500">*</span>
+              </label>
+              <select name="prodi" id="prodi" required
+                class="w-full text-sm px-3.5 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-dewantara-blue">
+                <option value="">-- Pilih Prodi --</option>
+                <optgroup label="Sarjana Terapan (D4)">
+                  <option value="Teknologi Rekayasa Multimedia">Teknologi Rekayasa Multimedia </option>
+                  <option value="Teknologi Rekayasa Pangan">Teknologi Rekayasa Pangan </option>
+                  <option value="Arsitektur Bangunan Gedung">Arsitektur Bangunan Gedung </option>
+                  <option value="Teknologi Pertambangan">Teknologi Pertambangan / Metalurgi</option>
+                </optgroup>
+                <optgroup label="Diploma Tiga (D3)">
+                  <option value="Teknik Sipil">Teknik Sipil</option>
+                  <option value="Mesin Otomotif">Mesin Otomotif</option>
+                  <option value="Teknik Elektronika">Teknik Elektronika</option>
+                </optgroup>
+              </select>
+              <!-- Tempat info kuota akan ditambahkan oleh JavaScript -->
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">
+                Email Aktif <span class="text-red-500">*</span>
+              </label>
+              <input type="email" name="email" id="email" required
+                placeholder="fajar@student.polidewa.ac.id"
+                class="w-full text-sm px-3.5 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-dewantara-blue" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">
+                No. WhatsApp <span class="text-red-500">*</span>
+              </label>
+              <input type="text" name="whatsapp" id="whatsapp" required
+                placeholder="08xxxxxxxxxx"
+                class="w-full text-sm px-3.5 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-dewantara-blue" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-2">
+              Pilihan Tingkatan IC3 Digital Literacy <span class="text-red-500">*</span>
+            </label>
+            <div class="grid grid-cols-1 gap-2.5" id="ic3LevelGroup">
+              <% 
+                const levels = [
+                  { value: 'Level 1', title: 'Level 1: Knowing (Dasar)', desc: 'Literasi dasar teknologi: Perangkat fisik, sistem operasi, serta pemahaman kewarganegaraan digital pemula.' },
+                  { value: 'Level 2', title: 'Level 2: Doing (Menengah)', desc: 'Aplikasi praktis: Pembuatan konten, pengolahan berkas, pemecahan masalah digital serta privasi data dasar.' },
+                  { value: 'Level 3', title: 'Level 3: Leading (Mahir)', desc: 'Kapabilitas tingkat lanjut: Komunikasi kolaboratif, jejaring profesional, keamanan tingkat mahir & kerja tim digital.' }
+                ];
+                levels.forEach(lvl => { 
+              %>
+                <label 
+                  class="block border rounded-xl p-3 cursor-pointer transition-all level-option"
+                  data-value="<%= lvl.value %>"
+                >
+                  <div class="flex items-start gap-2.5">
+                    <input type="radio" name="ic3Level" value="<%= lvl.value %>" 
+                      <%= lvl.value === 'Level 1' ? 'checked' : '' %>
+                      class="mt-1 text-dewantara-blue focus:ring-dewantara-blue" />
+                    <div>
+                      <span class="text-xs font-bold text-slate-800 block"><%= lvl.title %></span>
+                      <span class="text-[11px] text-slate-500 block leading-relaxed mt-0.5"><%= lvl.desc %></span>
+                    </div>
+                  </div>
+                </label>
+              <% }); %>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5 flex items-center justify-between">
+              <span>Unggah KTM <span class="text-red-500">*</span></span>
+              <span class="text-[10px] text-dewantara-blue bg-blue-50 px-2 py-0.5 rounded font-mono font-semibold">
+                AUTO-VERIFIED BY AI
+              </span>
+            </label>
+
+            <div id="dropzone" 
+                 class="border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all duration-200 border-slate-300 hover:border-slate-400 bg-slate-50">
+              <input type="file" id="ktmFileInput" name="ktmFile" accept="image/*" class="hidden" />
+              <div id="uploadPlaceholder" class="space-y-2">
+                <div class="w-10 h-10 bg-slate-200 text-slate-600 rounded-full mx-auto flex items-center justify-center">
+                  <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+                </div>
+                <div class="text-xs">
+                  <p class="font-medium text-slate-700">Klik untuk mencari, atau seret & jatuhkan berkas gambar KTM</p>
+                  <p class="text-slate-400 text-[10px] font-light mt-1">Format JPG, PNG, atau WEBP maksimal 10MB</p>
+                </div>
+              </div>
+              <div id="uploadPreview" class="hidden space-y-2">
+                <div class="w-16 h-12 bg-emerald-100 text-emerald-700 rounded-lg mx-auto flex items-center justify-center p-1 overflow-hidden">
+                  <img id="ktmPreviewImg" src="" alt="KTM Preview" class="object-cover w-full h-full rounded" />
+                </div>
+                <div class="text-xs">
+                  <p class="font-bold text-slate-700">Berkas Terpilih</p>
+                  <p id="fileName" class="text-slate-400 text-[10px] font-mono mt-0.5"></p>
+                </div>
+                <button type="button" id="removeFileBtn" class="text-[10px] font-bold text-red-500 hover:underline inline-block mt-1 cursor-pointer">
+                  Ganti Berkas / Hapus
+                </button>
+              </div>
+            </div>
+
+            <div class="mt-2 bg-slate-50 border border-slate-100 p-2.5 rounded-lg flex items-start gap-1.5 text-[10px] text-slate-500">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-dewantara-blue shrink-0 mt-0.5"></i>
+              <p class="leading-normal">
+                <strong>Pemeriksa AI Pintar:</strong> Sistem memindai nama, dan NIM di kartu Anda secara otomatis. KTM harus bertuliskan <strong>Politeknik Dewantara</strong>.
+              </p>
+            </div>
+          </div>
+
+          <!-- Tombol Kirim -->
+          <div class="pt-2">
+            <button type="submit" id="submitBtn"
+              class="w-full py-3 rounded-xl font-medium tracking-wide shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-all 
+                <% if (totalReg < 80) { %>
+                  bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:shadow-md hover:brightness-105
+                <% } else { %>
+                  bg-gradient-to-r from-amber-600 to-amber-500 text-white hover:shadow-md hover:brightness-105
+                <% } %>"
+            >
+              <span id="submitBtnText">
+                <% if (totalReg < 80) { %>
+                  <i data-lucide="gift" class="w-5 h-5 inline"></i> Kirim Pendaftaran GRATIS
+                <% } else { %>
+                  <i data-lucide="credit-card" class="w-5 h-5 inline"></i> Kirim Pendaftaran Rp 700k
+                <% } %>
+              </span>
+              <span id="submitBtnLoading" class="hidden">
+                <i data-lucide="refresh-cw" class="w-5 h-5 animate-spin inline"></i> Memverifikasi Berkas...
+              </span>
+            </button>
+          </div>
+          <div class="text-center text-[10px] text-slate-400">
+            Wajib Upload KTM untuk tujuan  validasi kepesertaan Ujian / Tes IC3 Digital Literacy.
+          </div>
+        </form>
+      </section>
+
+      <!-- RIGHT: TABS -->
+      <section class="lg:col-span-7 space-y-6">
+
+        <div class="bg-slate-200 p-1 rounded-xl flex gap-1">
+          <button class="tab-btn flex-1 py-2.5 px-3.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all bg-white text-dewantara-blue shadow-sm font-semibold" data-tab="info">
+            <i data-lucide="award" class="w-4 h-4"></i> Informasi Program
+          </button>
+          <button class="tab-btn flex-1 py-2.5 px-3.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all text-slate-600 hover:bg-white/40 hover:text-slate-900" data-tab="search">
+            <i data-lucide="search" class="w-4 h-4"></i> Cek Status Saya
+          </button>
+          <button class="tab-btn flex-1 py-2.5 px-3.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all text-slate-600 hover:bg-white/40 hover:text-slate-900" data-tab="admin">
+            <i data-lucide="lock" class="w-4 h-4"></i> Admin Prodi Hub
+          </button>
+        </div>
+
+        <!-- TAB INFO -->
+        <div id="tab-info" class="tab-content bg-white rounded-2xl border border-slate-200 p-6 space-y-6 shadow-sm">
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="bg-blue-100 text-blue-800 text-[10px] uppercase font-mono px-2 py-0.5 rounded font-bold">ABOUT CERTIFICATION</span>
+              <span class="text-slate-300">|</span>
+              <a href="https://www.certiport.com/IC3" target="_blank" rel="noreferrer" class="text-xs text-dewantara-blue hover:underline font-mono">www.certiport.com/IC3</a>
+            </div>
+            <h3 class="text-lg font-display font-bold text-slate-800">Mengenal IC3 Digital Literacy Global Standard 6</h3>
+            <p class="text-slate-600 text-xs sm:text-sm leading-relaxed font-light">
+              Sertifikasi <strong>IC3 (Internet Computing Core Certification)</strong> dari <strong>Certiport VUE Pearson</strong> diperoleh melalui <strong>Ujian Kompetensi (Tes CBT)</strong> berstandar internasional yang dirancang khusus untuk mengukur kemampuan literasi digital akademisi secara akseptabel global. Ujian berbasis CBT ini berlangsung selama 50 menit dengan skor kelulusan minimal 700 dari 1000.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 text-center">
+              <div class="w-8 h-8 rounded-full bg-blue-100 text-dewantara-blue flex items-center justify-center mx-auto mb-2">
+                <i data-lucide="award" class="w-4.5 h-4.5"></i>
+              </div>
+              <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Sertifikat Digital</h4>
+              <p class="text-[10px] text-slate-600 mt-1.5 leading-relaxed">Dikeluarkan langsung oleh Certiport diakui di lebih dari 150 negara bagi peserta yang lulus.</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 text-center">
+              <div class="w-8 h-8 rounded-full bg-blue-100 text-dewantara-blue flex items-center justify-center mx-auto mb-2">
+                <i data-lucide="file-check" class="w-4.5 h-4.5"></i>
+              </div>
+              <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Score Report</h4>
+              <p class="text-[10px] text-slate-600 mt-1.5 leading-relaxed">Detail pencapaian 7 objektif penunjang transkrip akademik portofolio kelulusan kompeten.</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 text-center">
+              <div class="w-8 h-8 rounded-full bg-blue-100 text-dewantara-blue flex items-center justify-center mx-auto mb-2">
+                <i data-lucide="shield-check" class="w-4.5 h-4.5"></i>
+              </div>
+              <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Digital Badge</h4>
+              <p class="text-[10px] text-slate-600 mt-1.5 leading-relaxed">Lencana digital resmi siap dipasang di akun media sosial profesional LinkedIn.</p>
+            </div>
+          </div>
+
+          <div class="border-t border-slate-100 pt-5">
+            <h4 class="text-sm font-display font-bold text-slate-800 flex items-center gap-1.5 mb-4">
+              <i data-lucide="clock" class="w-4 h-4 text-dewantara-blue"></i>
+              Timeline Implementasi Program (Juni - Agustus 2026)
+            </h4>
+            <div class="space-y-3 font-sans">
+              <% 
+                const timeline = [
+                  { date: '10 Juni 2026', event: 'Audiensi Pimpinan Kampus', status: 'completed', desc: 'Penandatanganan & koordinasi program hibah sertifikasi IC3.' },
+                  { date: '11 – 23 Juni 2026', event: 'Pendaftaran Sertifikasi IC 3', status: 'active', desc: 'Pendataan minat mahasiswa & pengumpulan berkas KTM secara online otomatis.' },
+                  { date: '23 Juni 2026', event: 'Sosialisasi Modul & Simulasi Tes', status: 'upcoming', desc: 'Tips trik menghadapi soal-soal ujian CBT berdurasi 50 menit.' },
+                  { date: '23 – 25 Juni 2026', event: 'Kesiapan Lab Komputer (Lab.lt2)', status: 'upcoming', desc: 'Pemasangan instansi secure browser Compass atau Compass Cloud.' },
+                  { date: '26 Juni 2026', event: 'Pelaksanaan Ujian / Tes CBT IC3', status: 'upcoming', desc: 'Ujian serentak di labkom lt 2 Politeknik Dewantara.' },
+                  { date: 'Agustus 2026', event: 'Laporan Hasil & Penyerahan Sertifikasi', status: 'upcoming', desc: 'Pencetakan sertifikat digital resmi dari Certiport bagi yang lulus tes.' }
+                ];
+                timeline.forEach((step, idx) => { 
+              %>
+                <div class="flex gap-3 relative">
+                  <% if (idx !== timeline.length - 1) { %>
+                    <div class="absolute left-[9px] top-6 bottom-[-20px] w-0.5 bg-slate-200"></div>
+                  <% } %>
+                  <div class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center mt-1 z-10 
+                    <%= step.status === 'completed' ? 'bg-slate-400 text-white' : 
+                        step.status === 'active' ? 'bg-dewantara-blue text-white ring-4 ring-blue-100' : 
+                        'bg-slate-100 border border-slate-300 text-slate-400' %>">
+                    <% if (step.status === 'completed') { %>
+                      <i data-lucide="check" class="w-3 h-3"></i>
+                    <% } else { %>
+                      <span class="text-[10px] font-bold"><%= idx + 1 %></span>
+                    <% } %>
+                  </div>
+                  <div class="text-xs">
+                    <span class="font-mono text-[10px] text-slate-400 block"><%= step.date %></span>
+                    <span class="font-bold text-slate-800"><%= step.event %></span>
+                    <span class="text-slate-500 block font-light mt-0.5 leading-relaxed"><%= step.desc %></span>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+
+          <div class="border-t border-slate-100 pt-5 space-y-4">
+            <h4 class="text-sm font-display font-bold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="building" class="w-4 h-4 text-dewantara-blue"></i>
+              Informasi PMB & Biaya Kuliah Politeknik Dewantara (Palopo)
+            </h4>
+            <div class="bg-gradient-to-br from-dewantara-blue/5 to-dewantara-navy/5 rounded-2xl p-5 border border-dewantara-blue/10 space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-dewantara-blue/10">
+                <div>
+                  <span class="text-[10px] text-dewantara-blue font-bold uppercase tracking-wide">Penerimaan Mahasiswa Baru</span>
+                  <h5 class="text-base font-bold text-slate-800 font-display">Gelombang IV - Juni 2026</h5>
+                </div>
+                <div class="bg-dewantara-gold/20 text-amber-800 border border-dewantara-gold/30 text-xs py-1 px-3 rounded-full font-bold flex items-center gap-1">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                  "Kuliah Langsung Kerja"
+                </div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <h6 class="font-bold text-slate-700 mb-2 flex items-center gap-1">
+                    <i data-lucide="book-open" class="w-3.5 h-3.5 text-dewantara-blue"></i>
+                    Rincian Biaya SPP per Semester:
+                  </h6>
+                  <ul class="space-y-1.5 text-slate-600 font-mono text-[11px]">
+                    <li class="flex justify-between border-b border-dashed border-slate-200 pb-1">
+                      <span>S1 Terapan (D4) - TR Multimedia:</span>
+                      <span class="font-bold text-slate-800">Rp 2.000.000</span>
+                    </li>
+                    <li class="flex justify-between border-b border-dashed border-slate-200 pb-1">
+                      <span>S1 Terapan (D4) - TR Pangan:</span>
+                      <span class="font-bold text-slate-800">Rp 2.000.000</span>
+                    </li>
+                    <li class="flex justify-between border-b border-dashed border-slate-200 pb-1">
+                      <span>S1 Terapan (D4) - Arsitektur BG:</span>
+                      <span class="font-bold text-slate-800">Rp 2.000.000</span>
+                    </li>
+                    <li class="flex justify-between border-b border-dashed border-slate-200 pb-1">
+                      <span>S1 Terapan (D4) - TR Pertambangan:</span>
+                      <span class="font-bold text-slate-800">Rp 2.500.000</span>
+                    </li>
+                    <li class="flex justify-between border-b border-dashed border-slate-200 pb-1">
+                      <span>Diploma 3 (D3) - Teknik Sipil/Elektronika:</span>
+                      <span class="font-bold text-slate-800">Rp 2.000.000</span>
+                    </li>
+                    <li class="flex justify-between border-b border-dashed border-slate-200 pb-1">
+                      <span>Diploma 3 (D3) - Mesin Otomotif:</span>
+                      <span class="font-bold text-slate-800">Rp 2.000.000</span>
+                    </li>
+                  </ul>
+                </div>
+                <div class="flex flex-col justify-between space-y-4">
+                  <div class="bg-white/80 p-3 rounded-xl border border-slate-100">
+                    <div class="text-[11px] text-slate-500">Biaya Formulir Pendaftaran:</div>
+                    <div class="text-xl font-bold font-display text-dewantara-blue mt-0.5">Rp 200.000</div>
+                    <p class="text-[10px] text-slate-400 mt-1">Tersedia beasiswa bagi calon mahasiswa baru kurang mampu & berprestasi.</p>
+                  </div>
+                  <div class="space-y-1.5 text-[11px] text-slate-600">
+                    <div class="flex items-start gap-1.5">
+                      <i data-lucide="building" class="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5"></i>
+                      <span><strong>Alamat:</strong> Jl. KH Ahmad Razak, Lorong 2 No 7, Palopo</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                      <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                      <span><strong>WhatsApp:</strong> 085242459746</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                      <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                      <span><strong>Link PMB:</strong> <a href="https://elektronika-polidewa.up.railway.app/pmb" target="_blank" rel="noreferrer" class="text-dewantara-blue hover:underline font-mono">https://elektronika-polidewa.up.railway.app/pmb</a></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="border-t border-slate-100 pt-5 bg-gradient-to-r from-blue-50/20 to-transparent p-4 rounded-xl">
+            <h4 class="text-sm font-display font-bold text-slate-800 flex items-center gap-2 mb-3">
+              <i data-lucide="help-circle" class="w-4.5 h-4.5 text-dewantara-blue"></i>
+              FAQ - Sisa Kuota & Cara Pembayaran Mandiri
+            </h4>
+            <ul class="space-y-3.5 text-xs text-slate-600 leading-normal">
+              <li>
+                <p class="font-bold text-slate-800">Bagaimana jika registrasi saya masuk ke urutan 81 atau lebih?</p>
+                <p class="font-light mt-0.5">Sesuai peraturan prodi, Lisensi 80 pertama didanai penuh (Gratis). Jika Anda mendaftar di urutan 81 ke atas, sistem secara otomatis menerbitkan tagihan normal lisensi Certiport yaitu Rp 700.000 rupiah.</p>
+              </li>
+              <li>
+                <p class="font-bold text-slate-800">Ke mana saya harus menyetor biaya apabila berada di luar kuota gratis?</p>
+                <p class="font-light mt-0.5">Biaya pendaftaran Rp 700.000 disetorkan ke rekening resmi operasional program kampus Politeknik Dewantara, kemudian unggah bukti transfer di panel pencarian, atau datangi Admin Prodi untuk validasi status bayar manual.</p>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- TAB SEARCH -->
+        <div id="tab-search" class="tab-content hidden bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+          <div>
+            <h3 class="text-lg font-display font-bold text-slate-800">Cek Kelayakan & Status Pendaftaran</h3>
+            <p class="text-xs text-slate-400 mt-1">Cukup masukkan NIM Anda untuk mendeteksi status pendaftaran.</p>
+          </div>
+
+          <form id="searchForm" class="flex gap-2">
+            <input type="text" id="searchNimInput" required
+              placeholder="Masukkan NIM Anda (contoh: 202401042)"
+              class="flex-1 text-sm px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-dewantara-blue font-mono" />
+            <button type="submit" id="searchBtn"
+              class="bg-dewantara-blue hover:bg-blue-700 text-white font-medium text-xs sm:text-sm px-5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer">
+              <i data-lucide="search" class="w-4 h-4"></i> Cari
+            </button>
+          </form>
+
+          <div id="searchResult" class="hidden"></div>
+        </div>
+
+        <!-- TAB ADMIN -->
+        <div id="tab-admin" class="tab-content hidden bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+          <div id="adminAuth" class="space-y-4 py-8 text-center max-w-sm mx-auto">
+            <div class="w-12 h-12 bg-blue-100 text-dewantara-blue rounded-full mx-auto flex items-center justify-center">
+              <i data-lucide="lock" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-display font-bold text-slate-800">Otorisasi Admin Prodi Hub</h3>
+              
+            </div>
+            <form id="adminAuthForm" class="space-y-3">
+              <div>
+                <input type="password" id="adminPinInput" required
+                  placeholder="Masukkan PIN Admin"
+                  class="w-full text-center text-sm px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-dewantara-blue" />
+               
+              </div>
+              <div id="adminAuthError" class="hidden text-[11px] text-red-500 font-bold"></div>
+              <button type="submit" class="w-full bg-dewantara-blue hover:bg-blue-700 text-white py-2 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer">
+                Buka Panel Kontrol Admin
+              </button>
+            </form>
+          </div>
+
+          <div id="adminDashboard" class="hidden space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="bg-emerald-100 text-emerald-800 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">ADMIN PERMITTED</span>
+                  <span class="text-slate-300">|</span>
+                  <span class="text-slate-500 text-xs">Politeknik Dewantara</span>
+                </div>
+                <h3 class="text-lg font-display font-bold text-slate-800 mt-1">Dasbor Administrasi IC3 Kampus</h3>
+              </div>
+<div class="flex flex-wrap gap-2">
+  <button id="refreshAdminBtn" class="border border-slate-200 hover:bg-slate-50 text-slate-600 p-2 rounded-lg text-xs flex items-center gap-1 cursor-pointer">
+    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
+  </button>
+  <button id="downloadCsvBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+    <i data-lucide="download" class="w-3.5 h-3.5"></i> Unduh Rekap CSV
+  </button>
+  <button id="importCsvBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+    <i data-lucide="upload" class="w-3.5 h-3.5"></i> Import CSV
+  </button>
+  <input type="file" id="csvFileInput" accept=".csv" class="hidden" />
+  <button id="resetDbBtn" class="border border-red-200 hover:bg-red-50 text-red-600 px-3.5 py-2 rounded-lg text-xs font-medium cursor-pointer">
+    Reset Demo
+  </button>
+</div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-1.5">
+              <div>
+                <span class="text-slate-400 text-[10px] uppercase">Total Mendaftar</span>
+                <span class="text-lg font-mono font-bold text-slate-800 block mt-0.5" id="adminTotalReg"><%= totalReg %></span>
+              </div>
+              <div>
+                <span class="text-slate-400 text-[10px] uppercase">Lolos Beasiswa Gratis</span>
+                <span class="text-lg font-mono font-bold text-emerald-600 block mt-0.5" id="adminFreeUsed"><%= freeSlotsUsed %> / 80</span>
+              </div>
+              <div>
+                <span class="text-slate-400 text-[10px] uppercase">Mandiri Berbayar</span>
+                <span class="text-lg font-mono font-bold text-slate-800 block mt-0.5" id="adminPaid"><%= paidSlotsCount %></span>
+              </div>
+              <div>
+                <span class="text-slate-400 text-[10px] uppercase">Sisa Kuota Gratis</span>
+                <span class="text-lg font-mono font-bold text-indigo-600 block mt-0.5" id="adminFreeRemain"><%= freeSlotsRemaining %></span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <div class="relative flex-1">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                <input type="text" id="adminSearchInput"
+                  placeholder="Cari pendaftar berdasarkan Nama, NIM, atau Prodi..."
+                  class="w-full text-xs pl-9 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-dewantara-blue" />
+              </div>
+              <button id="clearAdminSearch" class="text-[11px] text-slate-500 hover:underline cursor-pointer hidden">Hapus Filter</button>
+            </div>
+
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-slate-50 text-[10px] font-semibold text-slate-500 uppercase border-b border-slate-200 font-mono">
+                    <th class="py-2.5 px-3">No Urut</th>
+                    <th class="py-2.5 px-3">Mahasiswa</th>
+                    <th class="py-2.5 px-3">Prodi & IC3 Level</th>
+                    <th class="py-2.5 px-3">Verifikasi KTM</th>
+                    <th class="py-2.5 px-3">Biaya & Bayar</th>
+                    <th class="py-2.5 px-3 text-center">Tindakan</th>
+                  </tr>
+                </thead>
+                <tbody id="adminTableBody" class="divide-y divide-slate-100 text-xs text-slate-700">
+                </tbody>
+              </table>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 font-mono bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+              <span id="adminRowCount">Total Data Tampil: 0 Pendaftar</span>
+              <span>Default PIN Demo Admin: <strong>dewantara</strong></span>
+            </div>
+
+            <div class="pt-3 text-right">
+              <button id="adminLogoutBtn" class="text-xs text-slate-500 hover:text-slate-800 hover:underline flex items-center gap-1 ml-auto cursor-pointer">
+                <i data-lucide="unlock" class="w-3.5 h-3.5"></i> Keluar / Kunci Dasbor
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- PENUTUP HALAMAN - DUKUNGAN SERTIFIKASI                       -->
+  <!-- ============================================================ -->
+  <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 text-center border-t border-slate-200 mt-12">
+    <p class="text-xs text-slate-500 font-medium">Didukung oleh penyedia layanan sertifikasi resmi:</p>
+    <div class="flex justify-center gap-6 mt-2">
+      <span class="bg-slate-100 text-slate-700 text-[11px] font-mono px-4 py-1.5 rounded border border-slate-200 font-semibold">CERTI PORT</span>
+      <span class="bg-slate-100 text-slate-700 text-[11px] font-mono px-4 py-1.5 rounded border border-slate-200 font-semibold">ITC INDONESIA</span>
+    </div>
+    
+  <!-- ============================================================ -->
+  <!-- SCRIPTS (JavaScript tetap sama)                              -->
+  <!-- ============================================================ -->
+  <script>
+    // Inisialisasi icon Lucide
+    lucide.createIcons();
+
+    // ------------------------------
+    // 1. TAB SWITCHING
+    // ------------------------------
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = {
+      info: document.getElementById('tab-info'),
+      search: document.getElementById('tab-search'),
+      admin: document.getElementById('tab-admin'),
+    };
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabButtons.forEach(b => {
+          b.classList.remove('bg-white', 'text-dewantara-blue', 'shadow-sm', 'font-semibold');
+          b.classList.add('text-slate-600', 'hover:bg-white/40', 'hover:text-slate-900');
+        });
+        btn.classList.add('bg-white', 'text-dewantara-blue', 'shadow-sm', 'font-semibold');
+        btn.classList.remove('text-slate-600', 'hover:bg-white/40', 'hover:text-slate-900');
+
+        Object.values(tabContents).forEach(el => el.classList.add('hidden'));
+        const tab = btn.dataset.tab;
+        if (tabContents[tab]) tabContents[tab].classList.remove('hidden');
+      });
+    });
+
+    // ------------------------------
+    // 2. REGISTRATION FORM
+    // ------------------------------
+    const form = document.getElementById('registrationForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitBtnText = document.getElementById('submitBtnText');
+    const submitBtnLoading = document.getElementById('submitBtnLoading');
+    const submitResult = document.getElementById('submitResult');
+    const fileInput = document.getElementById('ktmFileInput');
+    const dropzone = document.getElementById('dropzone');
+    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+    const uploadPreview = document.getElementById('uploadPreview');
+    const ktmPreviewImg = document.getElementById('ktmPreviewImg');
+    const fileName = document.getElementById('fileName');
+    const removeFileBtn = document.getElementById('removeFileBtn');
+
+    // Pilih level dengan klik pada label
+    document.querySelectorAll('.level-option').forEach(label => {
+      label.addEventListener('click', function(e) {
+        const radio = this.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+        document.querySelectorAll('.level-option').forEach(l => {
+          l.classList.remove('border-dewantara-blue', 'bg-blue-50/50', 'shadow-sm');
+        });
+        this.classList.add('border-dewantara-blue', 'bg-blue-50/50', 'shadow-sm');
+      });
+    });
+    document.querySelector('.level-option input[checked]')?.closest('.level-option')?.classList.add('border-dewantara-blue', 'bg-blue-50/50', 'shadow-sm');
+
+    // Drag & Drop
+    dropzone.addEventListener('click', () => fileInput.click());
+
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('drag-active');
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('drag-active');
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('drag-active');
+      if (e.dataTransfer.files.length) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    function handleFile(file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Mohon unggah hanya berkas gambar (JPG/PNG).');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Ukuran berkas melebihi 10MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        // Tampilkan preview
+        uploadPlaceholder.classList.add('hidden');
+        uploadPreview.classList.remove('hidden');
+        ktmPreviewImg.src = ev.target.result;
+        fileName.textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    removeFileBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetFileUpload();
+    });
+
+    function resetFileUpload() {
+      fileInput.value = '';
+      uploadPlaceholder.classList.remove('hidden');
+      uploadPreview.classList.add('hidden');
+      ktmPreviewImg.src = '';
+      fileName.textContent = '';
+    }
+
+    // ============================================================
+    // SUBMIT DENGAN FormData
+    // ============================================================
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('name').value.trim();
+      const nim = document.getElementById('nim').value.trim();
+      const prodi = document.getElementById('prodi').value;
+      const email = document.getElementById('email').value.trim();
+      const whatsapp = document.getElementById('whatsapp').value.trim();
+      const ic3Level = document.querySelector('input[name="ic3Level"]:checked')?.value;
+
+      if (!name || !nim || !prodi || !email || !whatsapp || !ic3Level) {
+        showResult(false, 'Mohon lengkapi semua bidang isian formulir.');
+        return;
+      }
+      if (!fileInput.files || fileInput.files.length === 0) {
+        showResult(false, 'Mohon unggah foto Kartu Tanda Mahasiswa (KTM).');
+        return;
+      }
+
+      // ========== VALIDASI KUOTA JURUSAN ==========
+      if (quotaMap[prodi] !== undefined) {
+        const used = jurusanCounts[prodi] || 0;
+        if (used >= quotaMap[prodi]) {
+          showResult(false, 'Maaf, kuota untuk jurusan ' + prodi + ' telah penuh (20 slot). Silakan pilih jurusan lain.');
+          return;
+        }
+      }
+
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('nim', nim);
+      formData.append('prodi', prodi);
+      formData.append('email', email);
+      formData.append('whatsapp', whatsapp);
+      formData.append('ic3Level', ic3Level);
+      formData.append('ktmFile', fileInput.files[0]);
+
+      submitBtnText.classList.add('hidden');
+      submitBtnLoading.classList.remove('hidden');
+      submitBtn.disabled = true;
+      submitResult.classList.add('hidden');
+
+      try {
+        const response = await fetch('/ic3/register', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showResult(true, data.message, data.registrant);
+          form.reset();
+          resetFileUpload();
+          document.querySelectorAll('.level-option').forEach(l => {
+            l.classList.remove('border-dewantara-blue', 'bg-blue-50/50', 'shadow-sm');
+          });
+          const defaultRadio = document.querySelector('input[name="ic3Level"][value="Level 1"]');
+          if (defaultRadio) {
+            defaultRadio.checked = true;
+            defaultRadio.closest('.level-option')?.classList.add('border-dewantara-blue', 'bg-blue-50/50', 'shadow-sm');
+          }
+          fetchStats();
+          loadJurusanQuota(); // refresh kuota setelah pendaftaran
+        } else {
+          showResult(false, data.error || 'Gagal melakukan pendaftaran.');
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        showResult(false, 'Terjadi kesalahan koneksi server saat mengirim pendaftaran.');
+      } finally {
+        submitBtnText.classList.remove('hidden');
+        submitBtnLoading.classList.add('hidden');
+        submitBtn.disabled = false;
+      }
+    });
+
+    function showResult(success, message, registrant) {
+      submitResult.classList.remove('hidden');
+      submitResult.className = `p-4 rounded-xl mb-6 flex items-start gap-3 border ${success ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`;
+      let html = `<div class="text-xs">`;
+      html += `<h3 class="font-bold">${success ? 'Berhasil Mendaftar!' : 'Gagal Mendaftar'}</h3>`;
+      html += `<p class="mt-1 font-light leading-relaxed">${message}</p>`;
+      if (success && registrant) {
+        html += `<div class="mt-3 pt-3 border-t border-emerald-100 text-[11px] text-emerald-700 font-mono space-y-1">`;
+        html += `<div>No Registrasi: #${registrant.registrationNo}</div>`;
+        html += `<div>Kelayakan Biaya: ${registrant.fee === 0 ? 'GRATIS (Rp 0)' : 'Biaya Mandiri Rp ' + registrant.fee.toLocaleString()}</div>`;
+        html += `<div>Status Verifikasi: <span class="font-bold">${registrant.verificationStatus === 'approved' ? 'Terverifikasi Sangat Layak' : 'Proses Verifikasi'}</span></div>`;
+        html += `</div>`;
+        html += `<button onclick="document.getElementById('submitResult').classList.add('hidden')" class="mt-3.5 font-bold underline hover:text-slate-900 block cursor-pointer transition-colors">Tutup Notifikasi & Kirim Data Baru</button>`;
+      } else {
+        html += `<button onclick="document.getElementById('submitResult').classList.add('hidden')" class="mt-3.5 font-bold underline hover:text-slate-900 block cursor-pointer transition-colors">Tutup</button>`;
+      }
+      html += `</div>`;
+      submitResult.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    // ------------------------------
+    // 3. SEARCH
+    // ------------------------------
+    const searchForm = document.getElementById('searchForm');
+    const searchNimInput = document.getElementById('searchNimInput');
+    const searchResultDiv = document.getElementById('searchResult');
+
+    searchForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nim = searchNimInput.value.trim();
+      if (!nim) return;
+
+      searchResultDiv.classList.remove('hidden');
+      searchResultDiv.innerHTML = '<div class="text-center py-4"><i data-lucide="refresh-cw" class="w-5 h-5 animate-spin inline text-dewantara-blue"></i> Mencari...</div>';
+      lucide.createIcons();
+
+      try {
+        const res = await fetch('/ic3/status/' + encodeURIComponent(nim));
+        const data = await res.json();
+        if (res.ok && data.success) {
+          renderSearchResult(data.data);
+        } else {
+          searchResultDiv.innerHTML = `
+            <div class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl flex items-start gap-2.5 text-xs">
+              <i data-lucide="alert-circle" class="w-5 h-5 shrink-0 text-amber-600 mt-0.5"></i>
+              <div>
+                <p class="font-bold">NIM Tidak Ditemukan</p>
+                <p class="mt-1 font-light">NIM <strong>${nim}</strong> tidak terdaftar di sistem. Mohon cek kembali atau silakan mengisi formulir di sebelah kiri.</p>
+              </div>
+            </div>
+          `;
+          lucide.createIcons();
+        }
+      } catch (err) {
+        searchResultDiv.innerHTML = `<div class="text-red-500 text-xs">Gagal melakukan pencarian.</div>`;
+      }
+    });
+
+    function renderSearchResult(r) {
+      const isFree = r.registrationNo <= 80;
+      const isPaid = r.fee > 0;
+      let html = `
+        <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+          <div class="bg-slate-50 border-b border-slate-200 p-4 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+            <div>
+              <span class="font-mono text-[10px] text-slate-400 uppercase tracking-wide">Nomor Urut Pendaftaran</span>
+              <div class="text-lg font-bold text-slate-800">#${r.registrationNo}</div>
+            </div>
+            <div class="flex gap-1.5">
+              <span class="${isFree ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'} border text-xs py-1 px-3 rounded-full font-bold">
+                ${isFree ? 'Subsidi Gratis Rp 0' : 'Biaya Mandiri 700k'}
+              </span>
+            </div>
+          </div>
+          <div class="p-5 space-y-4 text-xs font-sans">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-3.5 gap-x-5">
+              <div><span class="text-slate-400 block text-[10px] uppercase">Nama Mahasiswa</span><span class="font-semibold text-slate-800 text-sm mt-0.5 block">${r.name}</span></div>
+              <div><span class="text-slate-400 block text-[10px] uppercase">NIM</span><span class="font-mono font-semibold text-slate-800 text-sm mt-0.5 block">${r.nim}</span></div>
+              <div><span class="text-slate-400 block text-[10px] uppercase">Program Studi</span><span class="font-semibold text-slate-800 block mt-0.5">${r.prodi}</span></div>
+              <div><span class="text-slate-400 block text-[10px] uppercase">Ujian Target IC3</span><span class="font-bold text-slate-800 block mt-0.5 bg-blue-50 text-dewantara-blue px-2 py-0.5 rounded-md inline-block">${r.ic3Level}</span></div>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-150 rounded-xl p-4 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-semibold text-slate-700 block">Hasil Pemeriksaan Dokumen KTM</span>
+                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full
+                  ${r.verificationStatus === 'approved' ? 'bg-emerald-100 text-emerald-800' :
+                    r.verificationStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'}">
+                  ${r.verificationStatus === 'approved' ? 'TERVERIFIKASI LANJUT' :
+                    r.verificationStatus === 'rejected' ? 'TER TOLAK BUKTI' :
+                    'DALAM ANTRIAN'}
+                </span>
+              </div>
+              <p class="text-slate-600 font-light leading-relaxed font-sans text-xs">${r.verificationReason || 'Tidak ada alasan.'}</p>
+              ${r.verificationStatus === 'rejected' ? `
+                <p class="text-[11px] text-amber-700 bg-amber-50 rounded p-2 border border-amber-100 mt-1">
+                  <strong>Saran Perbaikan:</strong> Gambar KTM yang Anda unggah ditolak atau buram. Silakan hubungi admin prodi atau lakukan pendaftaran ulang dengan mengunggah gambar KTM Politeknik Dewantara yang jernih.
+                </p>
+              ` : ''}
+            </div>
+
+            ${isPaid ? `
+              <div class="border border-indigo-150 bg-indigo-50/50 rounded-xl p-4 space-y-2">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <span class="font-bold text-slate-800 block">Biaya Lisensi IC3: Rp 700.000</span>
+                    <span class="text-[10px] text-slate-400 block mt-0.5 font-sans font-light">Urutan pendaftar #${r.registrationNo} (melampaui kuota beasiswa gratis 80 prodi)</span>
+                  </div>
+                  <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${r.paymentStatus === 'verified' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+                    ${r.paymentStatus === 'verified' ? 'LUNAS DIKONFIRMASI' : 'MENUNGGU TRANSFER'}
+                  </span>
+                </div>
+                ${r.paymentStatus !== 'verified' ? `
+                  <div class="text-[11px] text-slate-600 space-y-1 bg-white p-2.5 rounded-lg border border-slate-200">
+                    <p class="font-bold text-slate-800">Petunjuk Pembayaran:</p>
+                    <p>Transfer ke Rekening Resmi Kampus:</p>
+                    <p class="font-mono font-bold text-indigo-700">Bank Mandiri: 122-00-987654-3 (a.n. Politeknik Dewantara)</p>
+                    <p>Setelah transfer, harap melapor ke Admin Prodi dengan membawa berkas/KTM Anda agar status pembayaran dapat divalidasi dan diubah menjadi <strong>LUNAS</strong>.</p>
+                  </div>
+                ` : `
+                  <p class="text-[11px] text-emerald-700 font-medium">Terima kasih, pembayaran telah divalidasi oleh Program Studi. Silakan ikuti sosialisasi online pada tanggal 23 Juni 2026.</p>
+                `}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+      searchResultDiv.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    // ------------------------------
+    // 4. ADMIN
+    // ------------------------------
+    const adminAuthForm = document.getElementById('adminAuthForm');
+    const adminPinInput = document.getElementById('adminPinInput');
+    const adminAuthError = document.getElementById('adminAuthError');
+    const adminAuthDiv = document.getElementById('adminAuth');
+    const adminDashboardDiv = document.getElementById('adminDashboard');
+    const adminTableBody = document.getElementById('adminTableBody');
+    const adminSearchInput = document.getElementById('adminSearchInput');
+    const clearAdminSearch = document.getElementById('clearAdminSearch');
+    const adminRowCount = document.getElementById('adminRowCount');
+
+    let adminAuthenticated = false;
+    let allRegistrants = [];
+
+    adminAuthForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const pin = adminPinInput.value.trim();
+      if (pin === 'dewantara' || pin === '101001') {
+        adminAuthenticated = true;
+        adminAuthError.classList.add('hidden');
+        adminAuthDiv.classList.add('hidden');
+        adminDashboardDiv.classList.remove('hidden');
+        loadAdminData();
+      } else {
+        adminAuthError.textContent = 'PIN salah';
+        adminAuthError.classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('adminLogoutBtn').addEventListener('click', () => {
+      adminAuthenticated = false;
+      adminDashboardDiv.classList.add('hidden');
+      adminAuthDiv.classList.remove('hidden');
+      adminPinInput.value = '';
+    });
+
+    document.getElementById('refreshAdminBtn').addEventListener('click', loadAdminData);
+
+    document.getElementById('resetDbBtn').addEventListener('click', async () => {
+      if (!confirm('Apakah Anda yakin ingin mereset seluruh database pendaftaran ke data bawaan simulasi prodi?')) return;
+      try {
+        const res = await fetch('/ic3/api/registrants/reset', { method: 'POST' });
+        if (res.ok) {
+          loadAdminData();
+          fetchStats();
+          loadJurusanQuota();
+          alert('Database berhasil direset!');
+        }
+      } catch (err) {
+        alert('Gagal reset database.');
+      }
+    });
+
+    document.getElementById('downloadCsvBtn').addEventListener('click', () => {
+      if (allRegistrants.length === 0) return;
+      let csv = 'data:text/csv;charset=utf-8,';
+      csv += 'No Registrasi,Nama,NIM,Prodi,Email,No WhatsApp,IC3 Level,Biaya (Rp),Status Pembayaran,Verifikasi KTM,Tanggal Pendaftaran\n';
+      allRegistrants.forEach(r => {
+        const row = [
+          r.registrationNo,
+          `"${r.name.replace(/"/g, '""')}"`,
+          `"${r.nim}"`,
+          `"${r.prodi}"`,
+          `"${r.email}"`,
+          `"${r.whatsapp}"`,
+          `"${r.ic3Level}"`,
+          r.fee,
+          r.paymentStatus === 'not_applicable' ? 'Gratis' : r.paymentStatus,
+          r.verificationStatus,
+          `"${new Date(r.createdAt).toLocaleString('id-ID')}"`
+        ].join(',');
+        csv += row + '\n';
+      });
+      const link = document.createElement('a');
+      link.href = encodeURI(csv);
+      link.download = `rekap_pendaftar_ic3_dewantara_${Date.now()}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    adminSearchInput.addEventListener('input', renderAdminTable);
+    clearAdminSearch.addEventListener('click', () => {
+      adminSearchInput.value = '';
+      renderAdminTable();
+    });
+
+    async function loadAdminData() {
+      try {
+        const res = await fetch('/ic3/api/registrants');
+        if (res.ok) {
+          allRegistrants = await res.json();
+          renderAdminTable();
+          const statsRes = await fetch('/ic3/stats-summary');
+          if (statsRes.ok) {
+            const stats = await statsRes.json();
+            document.getElementById('adminTotalReg').textContent = stats.totalRegistrants;
+            document.getElementById('adminFreeUsed').textContent = stats.freeSlotsUsed + ' / 80';
+            document.getElementById('adminPaid').textContent = stats.paidSlotsCount;
+            document.getElementById('adminFreeRemain').textContent = stats.freeSlotsRemaining;
+          }
+        }
+      } catch (err) {
+        console.error('Gagal memuat data admin:', err);
+      }
+    }
+
+    function renderAdminTable() {
+      const q = adminSearchInput.value.toLowerCase().trim();
+      let filtered = allRegistrants;
+      if (q) {
+        filtered = filtered.filter(r =>
+          r.name.toLowerCase().includes(q) ||
+          r.nim.includes(q) ||
+          r.prodi.toLowerCase().includes(q)
+        );
+      }
+      clearAdminSearch.classList.toggle('hidden', !q);
+
+      if (filtered.length === 0) {
+        adminTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">Tidak ada data pendaftar.</td></tr>`;
+        adminRowCount.textContent = 'Total Data Tampil: 0 Pendaftar';
+        return;
+      }
+
+      let html = '';
+      filtered.forEach(r => {
+        html += `
+          <tr class="hover:bg-slate-50/50 transition-colors">
+            <td class="py-2.5 px-3 font-mono font-bold text-slate-500">#${r.registrationNo}</td>
+            <td class="py-2.5 px-3">
+              <div>
+                <p class="font-bold text-slate-800">${r.name}</p>
+                <p class="text-[10px] text-slate-500 font-mono mt-0.5">${r.nim}</p>
+                <p class="text-[10px] text-slate-400 flex items-center gap-1 font-mono mt-0.2">
+                  <i data-lucide="phone" class="w-2.5 h-2.5"></i> ${r.whatsapp}
+                </p>
+              </div>
+            </td>
+            <td class="py-2.5 px-3">
+              <div class="space-y-0.5">
+                <span class="text-slate-600 block">${r.prodi}</span>
+                <span class="bg-blue-50 text-dewantara-blue text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md inline-block">${r.ic3Level}</span>
+              </div>
+            </td>
+            <td class="py-2.5 px-3">
+              <div class="space-y-1">
+                <select class="admin-verif-select text-[10px] font-semibold py-1 px-1.5 rounded focus:outline-none" data-id="${r.id}">
+                  <option value="pending" ${r.verificationStatus === 'pending' ? 'selected' : ''}>🟡 Menunggu</option>
+                  <option value="approved" ${r.verificationStatus === 'approved' ? 'selected' : ''}>🟢 Disetujui</option>
+                  <option value="rejected" ${r.verificationStatus === 'rejected' ? 'selected' : ''}>🔴 Ditolak</option>
+                </select>
+                <p class="text-[9px] text-slate-400 leading-tight max-w-[150px] whitespace-normal italic">${r.verificationReason || ''}</p>
+              </div>
+            </td>
+            <td class="py-2.5 px-3">
+              <div>
+                <p class="font-bold text-slate-700">${r.fee === 0 ? 'Gratis (Rp 0)' : 'Rp 700.000'}</p>
+                ${r.fee > 0 ? `
+                  <select class="admin-payment-select text-[9px] font-semibold mt-1 py-0.5 px-1 rounded block" data-id="${r.id}">
+                    <option value="pending" ${r.paymentStatus === 'pending' ? 'selected' : ''}>Menunggu Transfer</option>
+                    <option value="verified" ${r.paymentStatus === 'verified' ? 'selected' : ''}>LUNAS</option>
+                  </select>
+                ` : `
+                  <span class="text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded mt-1 inline-block">Beasiswa Subsidi</span>
+                `}
+              </div>
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              <button class="admin-delete-btn text-red-500 hover:text-red-700 font-medium hover:underline text-[10px] px-2 py-1 cursor-pointer" data-id="${r.id}">Hapus</button>
+            </td>
+          </tr>
+        `;
+      });
+      adminTableBody.innerHTML = html;
+      adminRowCount.textContent = `Total Data Tampil: ${filtered.length} Pendaftar`;
+      lucide.createIcons();
+
+      document.querySelectorAll('.admin-verif-select').forEach(sel => {
+        sel.addEventListener('change', async (e) => {
+          const id = sel.dataset.id;
+          const value = sel.value;
+          await updateRegistrant(id, { verificationStatus: value });
+          loadAdminData();
+          loadJurusanQuota(); // refresh kuota
+        });
+      });
+
+      document.querySelectorAll('.admin-payment-select').forEach(sel => {
+        sel.addEventListener('change', async (e) => {
+          const id = sel.dataset.id;
+          const value = sel.value;
+          await updateRegistrant(id, { paymentStatus: value });
+          loadAdminData();
+        });
+      });
+
+      document.querySelectorAll('.admin-delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          if (!confirm('Apakah Anda yakin ingin menghapus pendaftaran ini?')) return;
+          try {
+            const res = await fetch('/ic3/api/registrants/' + id, { method: 'DELETE' });
+            if (res.ok) {
+              loadAdminData();
+              fetchStats();
+              loadJurusanQuota();
+            }
+          } catch (err) {
+            alert('Gagal menghapus.');
+          }
+        });
+      });
+    }
+
+    async function updateRegistrant(id, fields) {
+      try {
+        await fetch('/ic3/api/registrants/update-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, ...fields })
+        });
+      } catch (err) {
+        console.error('Gagal update:', err);
+      }
+    }
+// ============================================================
+// IMPORT CSV
+// ============================================================
+const importCsvBtn = document.getElementById('importCsvBtn');
+const csvFileInput = document.getElementById('csvFileInput');
+
+importCsvBtn.addEventListener('click', () => {
+  csvFileInput.click();
+});
+
+csvFileInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (!file.name.endsWith('.csv')) {
+    alert('Mohon pilih file dengan ekstensi .csv');
+    csvFileInput.value = '';
+    return;
+  }
+
+  if (!confirm(`Apakah Anda yakin ingin mengimpor data dari file "${file.name}"?`)) {
+    csvFileInput.value = '';
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('csvFile', file);
+
+  try {
+    importCsvBtn.disabled = true;
+    importCsvBtn.innerHTML = '<i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin inline"></i> Memproses...';
+    lucide.createIcons();
+
+    const res = await fetch('/ic3/api/registrants/import-csv', {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await res.json();
+
+    if (res.ok && result.success) {
+      let message = `✅ Import berhasil!\n\n`;
+      message += `📊 ${result.successCount} data berhasil ditambahkan.\n`;
+      if (result.errorCount > 0) {
+        message += `⚠️ ${result.errorCount} data gagal diimpor.\n\n`;
+        message += `📋 Detail error:\n${result.errors.join('\n')}`;
+      }
+      alert(message);
+      // Refresh data
+      loadAdminData();
+      fetchStats();
+      loadJurusanQuota();
+    } else {
+      alert('❌ Gagal mengimpor CSV:\n' + (result.error || 'Terjadi kesalahan.'));
+    }
+  } catch (err) {
+    console.error('Error import CSV:', err);
+    alert('❌ Terjadi kesalahan saat mengimpor CSV.');
+  } finally {
+    importCsvBtn.disabled = false;
+    importCsvBtn.innerHTML = '<i data-lucide="upload" class="w-3.5 h-3.5"></i> Import CSV';
+    csvFileInput.value = '';
+    lucide.createIcons();
+  }
+});
+// ------------------------------
+// 5. FETCH STATS (realtime)
+// ------------------------------
+async function fetchStats() {
+  try {
+    console.log('🔄 Fetching stats...');
+    const res = await fetch('/ic3/stats-summary');
+    if (!res.ok) {
+      console.error('❌ Response not OK:', res.status);
+      return;
+    }
+    const stats = await res.json();
+    console.log('📊 Stats updated:', stats);
+
+    // ========== UPDATE PROGRESS BAR ==========
+    const used = stats.freeSlotsUsed || 0;
+    const pct = Math.min(100, (used / 80) * 100);
+
+    // Update angka slot terisi
+    const slotUsedEl = document.getElementById('slotUsed');
+    if (slotUsedEl) {
+      slotUsedEl.textContent = used;
+      console.log('✅ slotUsed updated to:', used);
+    } else {
+      console.warn('⚠️ slotUsed element not found!');
+    }
+
+    // Update lebar progress bar
+    const progressBar = document.getElementById('progressBar');
+    if (progressBar) {
+      progressBar.style.width = pct + '%';
+      console.log('📊 Progress bar width set to:', pct + '%');
+    } else {
+      console.warn('⚠️ Progress bar element not found!');
+    }
+
+    // ========== UPDATE ELEMEN LAIN ==========
+    // Header stats
+    const totalDisplay = document.getElementById('totalRegDisplay');
+    if (totalDisplay) totalDisplay.textContent = stats.totalRegistrants;
+    const freeDisplay = document.getElementById('freeSlotsDisplay');
+    if (freeDisplay) freeDisplay.textContent = stats.freeSlotsRemaining;
+
+    // Elemen standar
+    const totalRegEl = document.getElementById('totalRegistrants');
+    if (totalRegEl) totalRegEl.textContent = stats.totalRegistrants;
+    const freeSlotsEl = document.getElementById('freeSlotsRemaining');
+    if (freeSlotsEl) freeSlotsEl.innerHTML = stats.freeSlotsRemaining + ' <span class="text-xs font-sans text-slate-300 font-normal">Sisa</span>';
+    const nextRegEl = document.getElementById('nextRegNo');
+    if (nextRegEl) nextRegEl.textContent = 'Pendaftar ke-' + (stats.totalRegistrants + 1);
+
+    // ========== UPDATE TOMBOL & STATUS SLOT ==========
+    const isFree = stats.totalRegistrants < 80;
+    const submitText = document.getElementById('submitBtnText');
+    if (submitText) {
+      if (isFree) {
+        submitText.innerHTML = '<i data-lucide="gift" class="w-5 h-5 inline"></i> Kirim Pendaftaran GRATIS';
+        document.getElementById('submitBtn').className = 'w-full py-3 rounded-xl font-medium tracking-wide shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-all bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:shadow-md hover:brightness-105';
+      } else {
+        submitText.innerHTML = '<i data-lucide="credit-card" class="w-5 h-5 inline"></i> Daftar - Bayar Voucher Mandiri Rp 700k';
+        document.getElementById('submitBtn').className = 'w-full py-3 rounded-xl font-medium tracking-wide shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-all bg-gradient-to-r from-amber-600 to-amber-500 text-white hover:shadow-md hover:brightness-105';
+      }
+    }
+
+    // Update slot info di bawah progress
+    const slotInfo = document.querySelector('.mt-4.pt-4.border-t.border-slate-100');
+    if (slotInfo) {
+      if (isFree) {
+        slotInfo.innerHTML = `<div class="flex items-center gap-1.5 text-emerald-600 font-medium">
+          <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping"></span>
+          Slot Gratis Aktif: Pendaftar selanjutnya tidak dikenakan biaya apapun!
+        </div>`;
+      } else {
+        slotInfo.innerHTML = `<div class="flex items-center gap-1.5 text-amber-600 font-semibold">
+          <span class="w-2.5 h-2.5 bg-amber-500 rounded-full"></span>
+          Kuota Gratis Habis: Pendaftar ke-81+ dikenakan biaya voucher prodi Rp 700.000.
+        </div>`;
+      }
+    }
+
+    lucide.createIcons();
+  } catch (err) {
+    console.error('❌ Gagal fetch stats:', err);
+  }
+}
+
+// Panggil fetchStats saat halaman dimuat
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('✅ DOM loaded');
+  lucide.createIcons();
+  fetchStats(); // <-- KUNCI
+});
+
+// Polling setiap 15 detik
+setInterval(fetchStats, 15000);
+document.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+  fetchStats();
+});
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setTimeout(() => lucide.createIcons(), 100);
+      });
+    });
+
+  // ============================================================
+  // FITUR KUOTA PER JURUSAN (TAMBAHAN)
+  // ============================================================
+  const quotaMap = {
+    'Teknik Elektronika': 20,
+    'Mesin Otomotif': 20,
+    'Arsitektur Bangunan Gedung': 20,
+    'Teknik Sipil': 20
+  };
+  let jurusanCounts = {};
+
+  async function loadJurusanQuota() {
+    try {
+      const res = await fetch('/ic3/api/registrants');
+      if (!res.ok) throw new Error('Gagal mengambil data');
+      const data = await res.json();
+      // Hitung jumlah per jurusan
+      jurusanCounts = {};
+      data.forEach(r => {
+        const prodi = r.prodi;
+        if (quotaMap[prodi] !== undefined) {
+          jurusanCounts[prodi] = (jurusanCounts[prodi] || 0) + 1;
+        }
+      });
+      updateDropdownQuota();
+    } catch (err) {
+      console.error('Gagal memuat kuota jurusan:', err);
+    }
+  }
+
+  function updateDropdownQuota() {
+    const select = document.getElementById('prodi');
+    const options = select.querySelectorAll('option');
+    options.forEach(opt => {
+      const val = opt.value;
+      if (quotaMap[val] !== undefined) {
+        const total = quotaMap[val];
+        const used = jurusanCounts[val] || 0;
+        const remaining = total - used;
+        // Simpan teks asli jika belum
+        let originalText = opt.getAttribute('data-original-text');
+        if (!originalText) {
+          originalText = opt.textContent.replace(/\s*\(sisa\s+\d+\)\s*$/, '').replace(/\s*\(penuh\)\s*$/, '').trim();
+          opt.setAttribute('data-original-text', originalText);
+        }
+        let displayText = originalText;
+        if (remaining > 0) {
+          displayText += ` (sisa ${remaining})`;
+          opt.disabled = false;
+        } else {
+          displayText += ` (penuh)`;
+          opt.disabled = true;
+        }
+        opt.textContent = displayText;
+        // Jika opsi ini sedang dipilih dan disabled, reset pilihan
+        if (opt.selected && opt.disabled) {
+          select.value = '';
+          select.dispatchEvent(new Event('change'));
+        }
+      } else {
+        // Hapus data-original-text jika ada
+        opt.removeAttribute('data-original-text');
+      }
+    });
+    // Perbarui info kuota untuk pilihan saat ini
+    updateKuotaInfo();
+  }
+
+  function updateKuotaInfo() {
+    const select = document.getElementById('prodi');
+    const selected = select.value;
+    const kuotaInfoDiv = document.getElementById('kuotaInfo');
+    if (!kuotaInfoDiv) return;
+    if (quotaMap[selected] !== undefined) {
+      const total = quotaMap[selected];
+      const used = jurusanCounts[selected] || 0;
+      const remaining = total - used;
+      if (remaining > 0) {
+        kuotaInfoDiv.innerHTML = `<span class="text-xs text-emerald-600">Kuota tersisa untuk jurusan ini: ${remaining} dari ${total} slot.</span>`;
+        kuotaInfoDiv.className = 'text-xs text-emerald-600 mt-1';
+      } else {
+        kuotaInfoDiv.innerHTML = `<span class="text-xs text-red-600 font-bold">Maaf, kuota untuk jurusan ini telah penuh (${total} slot). Silakan pilih jurusan lain.</span>`;
+        kuotaInfoDiv.className = 'text-xs text-red-600 font-bold mt-1';
+      }
+    } else {
+      kuotaInfoDiv.innerHTML = `<span class="text-xs text-slate-400">Jurusan ini tidak terbatas kuota.</span>`;
+      kuotaInfoDiv.className = 'text-xs text-slate-400 mt-1';
+    }
+    // Update tombol submit
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+      if (quotaMap[selected] !== undefined && (jurusanCounts[selected] || 0) >= quotaMap[selected]) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+  }
+
+  // Tambahkan elemen info kuota di bawah dropdown saat DOM siap
+  document.addEventListener('DOMContentLoaded', function() {
+    const prodiSelect = document.getElementById('prodi');
+    if (prodiSelect) {
+      const parentDiv = prodiSelect.closest('div');
+      if (parentDiv) {
+        const kuotaInfo = document.createElement('div');
+        kuotaInfo.id = 'kuotaInfo';
+        kuotaInfo.className = 'text-xs text-slate-400 mt-1';
+        parentDiv.appendChild(kuotaInfo);
+      }
+    }
+    // Muat kuota
+    loadJurusanQuota();
+    // Event listener perubahan prodi
+    document.getElementById('prodi')?.addEventListener('change', updateKuotaInfo);
+  });
+
+  </script>
+</body>
+</html>
+<%- include('../partials/footer-landing') %>

@@ -1,0 +1,257 @@
+<%- include('../partials/header') %>
+
+<style>
+  @media (max-width: 480px) {
+    body {
+        zoom: 0.82; 
+    }
+  }
+  .login-page {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    padding: 2rem 0;
+  }
+  .login-card {
+    border: none;
+    border-radius: 1.5rem;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    background: rgba(255,255,255,0.95);
+  }
+  .login-header {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6); /* warna baru sesuai navbar */
+    padding: 2rem;
+    text-align: center;
+    border-bottom: none;
+  }
+  .login-header h4 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+  }
+  .login-header p {
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 0;
+  }
+  .login-body {
+    padding: 2.5rem;
+  }
+  .form-label {
+    font-weight: 600;
+    color: #1e293b;
+  }
+  .form-control {
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #cbd5e1;
+    transition: all 0.3s;
+  }
+  .form-control:focus {
+    border-color: #3b82f6; /* warna baru */
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+  }
+  .input-group {
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+  .input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  .input-group .btn-outline-secondary {
+    border: 1px solid #cbd5e1;
+    border-left: none;
+    border-radius: 0 0.75rem 0.75rem 0;
+    background: white;
+    color: #6c757d;
+    transition: all 0.2s;
+  }
+  .input-group .btn-outline-secondary:hover {
+    background: #f8f9fa;
+    color: #3b82f6; /* warna baru */
+  }
+  .btn-login {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6); /* warna baru */
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: white;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(30, 58, 138, 0.4); /* warna baru */
+  }
+  .btn-login:active {
+    transform: translateY(0);
+  }
+  .form-text {
+    color: #475569;
+    font-size: 0.85rem;
+  }
+  .alert {
+    border-radius: 0.75rem;
+  }
+  @media (max-width: 768px) {
+    .login-card {
+      margin: 0 1rem;
+    }
+    .login-header h4 {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+
+<div class="login-page">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6 col-lg-5">
+        <div class="login-card">
+          <div class="login-header">
+            <h4>Selamat Datang</h4>
+            <p>Dosen & Mahasiswa Teknik Elektronika</p>
+          </div>
+          <div class="login-body">
+            <div id="errorAlert" class="alert alert-danger alert-dismissible fade show" role="alert" style="display: none;">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i><span id="errorMessage"></span>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <% if (error) { %>
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i><%= error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            <% } %>
+            <form id="loginForm">
+              <div class="mb-4">
+                <label for="nim" class="form-label">Username Mahasiswa dan Dosen</label>
+                <input type="text" class="form-control" id="nim" placeholder="Contoh: 24100200 atau admin@polidewa.ac.id" required>
+                <div class="form-text">Username dan Password dari kaprodi (Mahasiswa: NIM@polidewa.elk, Dosen: uname@elektronika.com)</div>
+              </div>
+              <div class="mb-4">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-group">
+                  <input type="password" class="form-control" id="password" placeholder="••••••••" required>
+                  <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                    <i class="bi bi-eye" id="toggleIcon"></i>
+                  </button>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-login w-100">Login</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase Client SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script>
+  // Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDT4IVvCSpmYRxUiLVlJhGWFZtR9HwVbgw",
+    authDomain: "elk-polidewa.firebaseapp.com",
+    projectId: "elk-polidewa"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  console.log('Firebase initialized');
+
+  // Toggle show/hide password
+  const togglePassword = document.getElementById('togglePassword');
+  const passwordInput = document.getElementById('password');
+  const toggleIcon = document.getElementById('toggleIcon');
+
+  togglePassword.addEventListener('click', function() {
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    toggleIcon.classList.toggle('bi-eye');
+    toggleIcon.classList.toggle('bi-eye-slash');
+  });
+
+  // Fungsi untuk menampilkan error di alert
+  function showError(message) {
+    const errorAlert = document.getElementById('errorAlert');
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = message;
+    errorAlert.style.display = 'block';
+    // Auto-hide setelah 5 detik
+    setTimeout(() => {
+      errorAlert.style.display = 'none';
+    }, 5000);
+  }
+
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    console.log('Form submitted');
+
+    // Sembunyikan alert sebelumnya
+    document.getElementById('errorAlert').style.display = 'none';
+
+    const nim = document.getElementById('nim').value.trim();
+    const password = document.getElementById('password').value;
+
+    // Tentukan email: jika mengandung '@', anggap email; jika tidak, tambahkan domain mahasiswa
+    const email = nim.includes('@') ? nim : nim + '@teknik-elektronika.ac.id';
+    console.log('Email untuk login:', email);
+
+    try {
+      const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+      console.log('Login Firebase sukses, UID:', userCredential.user.uid);
+
+      const idToken = await userCredential.user.getIdToken();
+
+      // Kirim token ke server via POST
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/auth/login';
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'idToken';
+      input.value = idToken;
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
+    } catch (error) {
+      console.error('Error Firebase:', error);
+      
+      // Tangani berbagai kode error
+      let errorMessage = 'Login gagal. ';
+      
+      // Firebase error codes
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        errorMessage = 'Username atau password salah.';
+      } 
+      // Untuk error INVALID_LOGIN_CREDENTIALS (sering muncul di versi terbaru)
+      else if (error.message && error.message.includes('INVALID_LOGIN_CREDENTIALS')) {
+        errorMessage = 'Username atau password salah.';
+      }
+      else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Format email tidak valid.';
+      }
+      else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Terlalu banyak percobaan. Coba lagi nanti.';
+      }
+      else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Koneksi internet bermasalah.';
+      }
+      else {
+        // Fallback ke pesan asli
+        errorMessage += error.message;
+      }
+      
+      showError(errorMessage);
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>

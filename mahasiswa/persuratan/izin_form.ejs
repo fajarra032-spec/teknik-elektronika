@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title><%= judulSurat || 'Surat Izin' %> - <%= namaMahasiswa %></title>
+  <style>
+    /* Pengaturan Kertas Default */
+    @page {
+      size: A4;
+      margin: 2cm;
+    }
+    
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      color: #000;
+      background-color: #fff;
+      position: relative;
+    }
+
+    /* === KOP SURAT STANDAR === */
+    .kop-surat {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 3px double #000;
+      padding-bottom: 10px;
+    }
+    .logo-kop {
+      width: 90px;
+      height: auto;
+      margin-right: 20px;
+    }
+    .teks-kop {
+      flex: 1;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .teks-kop .nama-kampus {
+      font-size: 27pt;
+      font-weight: bold;
+      margin: 0;
+      color: #3b60a3;
+      text-transform: uppercase;
+    }
+    .teks-kop .alamat, 
+    .teks-kop .kontak {
+      font-size: 13pt;
+      margin: 0;
+      color: #333;
+    }
+
+    /* === JUDUL SURAT === */
+    .judul-surat {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .judul-surat h3 {
+      font-size: 14pt;
+      font-weight: bold;
+      text-decoration: underline;
+      margin: 0;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* === INFO SURAT (Nomor, Perihal, Tujuan) === */
+    .info-surat table {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .info-surat td {
+      vertical-align: top;
+      padding-bottom: 3px;
+    }
+    .tujuan-surat {
+      margin-top: 15px;
+    }
+
+    /* === ISI SURAT === */
+    .isi {
+      text-align: justify;
+    }
+    
+    .tabel-data {
+      width: 100%;
+      margin: 10px 0 10px 30px;
+      border-collapse: collapse;
+    }
+    .tabel-data td {
+      padding: 3px 0;
+      vertical-align: top;
+    }
+    .col-label {
+      width: 180px;
+    }
+    .col-titik {
+      width: 15px;
+    }
+
+    /* === TANDA TANGAN & STEMPEL === */
+    .tanda-tangan-wrapper {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 40px;
+    }
+    .tanda-tangan {
+      width: 320px;
+      text-align: left;
+    }
+    
+    /* Area TTD dengan Stempel (Overlap) */
+    .area-ttd-stempel {
+      position: relative; 
+      height: 80px; 
+      margin-top: 10px;
+    }
+    
+    .img-stempel {
+      position: absolute;
+      left: -80px; 
+      top: -20px; 
+      width: 130px; 
+      height: auto;
+      z-index: 5; 
+      mix-blend-mode: multiply; 
+    }
+
+    .img-ttd {
+      position: absolute;
+      top: -45px; 
+      left: 10px; 
+      height: 160px; 
+      width: auto;
+      z-index: 10; 
+      mix-blend-mode: multiply; 
+    }
+
+    .nama-ttd {
+      font-weight: bold;
+      text-decoration: underline;
+      margin-bottom: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .nip-ttd {
+      margin-top: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* === FOOTER VALIDASI === */
+    .footer {
+      margin-top: 40px;
+      font-size: 10pt;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      color: #555;
+      border-top: 1px dashed #ccc;
+      padding-top: 10px;
+    }
+    .kode-validasi-print {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      font-size: 8pt;
+      color: #999;
+      font-family: Arial, sans-serif;
+    }
+
+    /* === PENGATURAN CETAK === */
+    @media print {
+      body {
+        margin: 0;
+      }
+      .footer {
+        position: fixed;
+        bottom: 20px;
+        width: 100%;
+      }
+      .img-ttd, .img-stempel {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .kode-validasi-print {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        display: block !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- KOP SURAT -->
+  <div class="kop-surat">
+    <img src="/images/logo.png" alt="Logo Politeknik Dewantara" class="logo-kop">
+    <div class="teks-kop">
+      <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
+      <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo. Sulawesi Selatan</p>
+      <p class="kontak">E-mail: sdm@polidewa.ac.id | Website: polidewa.ac.id</p>
+    </div>
+  </div>
+
+  <!-- INFO SURAT (Kiri Atas) -->
+  <div class="info-surat">
+    <div class="judul-surat">
+      <!-- Variabel dinamis untuk jenis surat (misal: SURAT IZIN OBSERVASI) -->
+      <h3><%= judulSurat || 'SURAT PENGANTAR IZIN' %></h3>
+    </div>
+    
+    <table style="width: 60%; float: left;">
+      <tr>
+        <td style="width: 80px;">Nomor</td>
+        <td style="width: 10px;">:</td>
+        <td><%= nomorSurat %></td>
+      </tr>
+      <tr>
+        <td>Lampiran</td>
+        <td>:</td>
+        <td><%= lampiran || '-' %></td>
+      </tr>
+      <tr>
+        <td>Perihal</td>
+        <td>:</td>
+        <td><strong><%= perihal %></strong></td>
+      </tr>
+    </table>
+
+    <div style="clear: both;"></div>
+
+    <div class="tujuan-surat">
+      <p style="margin-bottom: 0;">Kepada Yth.<br>
+      <strong><%= pihakTujuan %></strong><br>
+      <%= instansiTujuan %><br>
+      di tempat</p>
+    </div>
+  </div>
+
+  <!-- ISI SURAT -->
+  <div class="isi">
+    <p>Dengan hormat,<br>
+    Yang bertanda tangan di bawah ini:</p>
+    
+    <table class="tabel-data">
+      <tr>
+        <td class="col-label">Nama</td>
+        <td class="col-titik">:</td>
+        <td>Fajar Ramadhan, S.Pd., M.T</td>
+      </tr>
+      <tr>
+        <td class="col-label">Jabatan</td>
+        <td class="col-titik">:</td>
+        <td>Ketua Program Studi Teknik Elektronika</td>
+      </tr>
+    </table>
+
+    <p>Menerangkan bahwa mahasiswa di bawah ini:</p>
+    
+    <table class="tabel-data">
+      <tr>
+        <td class="col-label">Nama</td>
+        <td class="col-titik">:</td>
+        <td><strong><%= namaMahasiswa %></strong></td>
+      </tr>
+      <tr>
+        <td class="col-label">NIM</td>
+        <td class="col-titik">:</td>
+        <td><%= nimMahasiswa %></td>
+      </tr>
+      <tr>
+        <td class="col-label">Program Studi</td>
+        <td class="col-titik">:</td>
+        <td>Teknik Elektronika</td>
+      </tr>
+      <tr>
+        <td class="col-label">Semester</td>
+        <td class="col-titik">:</td>
+        <td><%= semester %></td>
+      </tr>
+    </table>
+
+    <!-- Variabel pengantar Izin, misal: "Dengan ini memohonkan izin bagi mahasiswa tersebut untuk..." -->
+    <p><%= teksPengantarIzin %></p>
+
+    <table class="tabel-data">
+      <tr>
+        <td class="col-label">Hari / Tanggal</td>
+        <td class="col-titik">:</td>
+        <td><strong><%= waktuKegiatan %></strong></td>
+      </tr>
+      <tr>
+        <td class="col-label">Keperluan / Keterangan</td>
+        <td class="col-titik">:</td>
+        <td style="text-align: justify;"><%= keperluanKegiatan %></td>
+      </tr>
+    </table>
+    
+    <!-- Penutup dinamis atau default -->
+    <p><%= teksPenutup || 'Demikian surat permohonan izin ini kami sampaikan. Atas perhatian dan kerjasamanya, kami ucapkan terima kasih.' %></p>
+  </div>
+
+  <!-- TANDA TANGAN -->
+  <div class="tanda-tangan-wrapper">
+    <div class="tanda-tangan">
+      <p style="position: relative; z-index: 1;">Palopo, <%= tanggalSurat %><br>
+      Ketua Program Studi,<br>
+      Teknik Elektronika</p>
+      
+      <div class="area-ttd-stempel">
+        <img src="/images/stempel.png" alt="Stempel Polidewa" class="img-stempel">
+        <img src="/images/ttd.png" alt="Tanda Tangan Kaprodi" class="img-ttd">
+      </div>
+      
+      <p class="nama-ttd">Fajar Ramadhan, S.Pd., M.T</p>
+      <p class="nip-ttd">NUPTK. 8559777678130153</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <p>Dokumen ini dicetak dan disahkan secara digital oleh Sistem Informasi Akademik.<br>
+    Periksa keaslian dokumen di: <em>https://elektronika-polidewa.up.railway.app</em></p>
+  </div>
+
+  <!-- KODE VALIDASI -->
+  <div class="kode-validasi-print print-only">
+    Kode Validasi: <strong><%= surat.kodeValidasi %></strong>
+  </div>
+
+</body>
+</html>

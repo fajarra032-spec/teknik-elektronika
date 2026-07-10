@@ -1,0 +1,225 @@
+<%- include('../../partials/header') %>
+
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    --glass-bg: rgba(255, 255, 255, 0.95);
+  }
+
+  .detail-header {
+    background: var(--primary-gradient);
+    border-radius: 1.25rem;
+    padding: 2.5rem 2rem;
+    color: white;
+    margin-bottom: 2rem;
+    position: relative;
+    box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.3);
+  }
+
+  .detail-header h2 { font-weight: 700; letter-spacing: -0.5px; }
+
+  .info-card {
+    background: var(--glass-bg);
+    border-radius: 1rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    transition: transform 0.2s ease;
+  }
+
+  .info-card:hover { transform: translateY(-3px); }
+
+  .section-title {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #64748b;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+  }
+
+  /* Badge Styling */
+  .badge-status {
+    padding: 0.5rem 1.25rem;
+    border-radius: 99px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-block;
+  }
+  .badge-pending { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+  .badge-completed { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+  .badge-rejected { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+  .badge-cancelled { background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; }
+
+  /* Button Customization */
+  .btn-action {
+    border-radius: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+  
+  .data-label { color: #64748b; font-size: 0.85rem; margin-bottom: 0.2rem; }
+  .data-value { color: #1e293b; font-weight: 600; }
+</style>
+
+<div class="container mt-5">
+  <div class="detail-header d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+    <div>
+      <span class="badge bg-white text-primary mb-2 px-3 py-2 rounded-pill shadow-sm">ID Jurnal: #<%= surat.id %></span>
+      <h2><i class="bi bi-envelope-paper-fill me-2"></i>Detail Surat Tugas</h2>
+    </div>
+    <a href="/admin/surat" class="btn btn-light btn-action mt-3 mt-md-0">
+      <i class="bi bi-arrow-left me-2"></i>Kembali
+    </a>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      
+      <div class="info-card">
+        <div class="section-title"><i class="bi bi-person-badge-fill me-2"></i>Profil Penerima Tugas</div>
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="data-label">Nama Dosen</div>
+            <div class="data-value fs-5"><%= surat.dosenNama %></div>
+          </div>
+          <div class="col-md-6">
+            <div class="data-label">NIDN / NIP</div>
+            <div class="data-value fs-5"><%= surat.nip %></div>
+          </div>
+          <div class="col-md-6">
+            <div class="data-label">Jabatan Struktural</div>
+            <div class="data-value"><%= surat.jabatan %></div>
+          </div>
+          <div class="col-md-6">
+            <div class="data-label">Nomor Surat Resmi</div>
+            <div class="data-value text-muted"><%= surat.nomorSurat || 'Belum Terbit' %></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="section-title"><i class="bi bi-calendar-event-fill me-2"></i>Rincian Agenda Kegiatan</div>
+        <div class="row g-3 mb-4">
+          <div class="col-12">
+            <div class="data-label">Nama Kegiatan / Tugas resmi</div>
+            <div class="data-value text-primary fs-5 fw-bold"><%= surat.namaKegiatan %></div>
+          </div>
+        </div>
+        
+        <div class="p-3 bg-light rounded-3 mb-3 row g-3">
+          <div class="col-md-6">
+            <div class="data-label">Penyelenggara</div>
+            <div class="data-value text-dark" style="font-weight: 500;"><%= surat.penyelenggara %></div>
+          </div>
+          <div class="col-md-6">
+            <div class="data-label">Tanggal Pelaksanaan</div>
+            <div class="data-value text-dark" style="font-weight: 500;"><%= surat.tanggalPelaksanaan %></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-lg-4">
+      
+      <div class="info-card">
+        <div class="section-title"><i class="bi bi-hdd-stack-fill me-2"></i>Metadata Dokumen</div>
+        <div class="mb-3">
+          <div class="data-label">Status Verifikasi</div>
+          <div class="mt-1">
+            <% if (surat.status === 'pending') { %>
+              <span class="badge-status badge-pending">Menunggu Dokumen</span>
+            <% } else if (surat.status === 'completed') { %>
+              <span class="badge-status badge-completed">Selesai Diproses</span>
+            <% } else if (surat.status === 'rejected') { %>
+              <span class="badge-status badge-rejected">Ditolak Admin</span>
+            <% } else { %>
+              <span class="badge-status badge-cancelled">Dibatalkan</span>
+            <% } %>
+          </div>
+        </div>
+        
+        <ul class="list-unstyled mb-0 border-top pt-3">
+          <li class="d-flex justify-content-between mb-2">
+            <span class="text-muted small">Waktu Pengajuan:</span>
+            <span class="fw-bold small text-end"><%= new Date(surat.createdAt).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}) %></span>
+          </li>
+          <li class="d-flex justify-content-between">
+            <span class="text-muted small">Kode Validasi:</span>
+            <code class="fw-bold"><%= surat.kodeValidasi %></code>
+          </li>
+        </ul>
+      </div>
+
+      <% if (surat.status === 'completed' && surat.fileUrl) { %>
+        <div class="info-card bg-primary text-white">
+          <div class="section-title text-white opacity-75 mb-3"><i class="bi bi-file-pdf-fill me-2"></i>Dokumen Terbit</div>
+          <p class="small text-white-50">Surat tugas elektronik valid terlampir di bawah ini:</p>
+          <a href="<%= surat.fileUrl %>" target="_blank" class="btn btn-light w-100 btn-action shadow-sm text-dark">
+            <i class="bi bi-download text-success me-2"></i>Lihat / Unduh PDF
+          </a>
+        </div>
+      <% } %>
+
+    </div>
+  </div>
+
+  <div class="row mt-2">
+    <% if (surat.status === 'pending') { %>
+      <div class="col-12 mb-4">
+        <div class="info-card border-primary border-top border-4">
+          <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-patch-check-fill me-2"></i>Generate Surat Tugas Digital</h5>
+          <form method="POST" action="/admin/surat/tugas/<%= surat.id %>/generate">
+            <div class="mb-4">
+              <label class="form-label text-muted small fw-bold">Nomor Surat Masuk</label>
+              <input type="text" name="nomorSurat" class="form-control form-control-lg fs-6" 
+                     placeholder="Contoh: 614/ELK/Polidewa/TV/2026"
+                     value="<%= surat.nomorSurat && !surat.nomorSurat.startsWith('TUGAS/') ? surat.nomorSurat : '' %>">
+              <div class="form-text text-muted mt-2">
+                <i class="bi bi-info-circle me-1"></i> Kosongkan pilihan jika ingin menerapkan format otomatis <code>(TUGAS/kode_validasi)</code>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-action px-4">
+              <i class="bi bi-cpu-fill me-2"></i>Proses & Generate PDF
+            </button>
+          </form>
+        </div>
+      </div>
+    <% } else if (surat.status === 'completed') { %>
+      <div class="col-12 mb-4">
+        <div class="info-card border-success border-top border-4 bg-light bg-opacity-50">
+          <h5 class="fw-bold mb-3 text-success"><i class="bi bi-check-circle-fill me-2"></i>Surat Berhasil Diterbitkan</h5>
+          <p class="text-muted small">Dokumen arsip ini sudah berada pada fasa finalisasi penomoran surat otomatis.</p>
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <a href="<%= surat.fileUrl %>" target="_blank" class="btn btn-success btn-action">
+              <i class="bi bi-cloud-arrow-down me-2"></i>Unduh PDF Fisik
+            </a>
+            <form method="POST" action="/admin/surat/tugas/<%= surat.id %>/generate" class="d-inline">
+              <input type="hidden" name="nomorSurat" value="<%= surat.nomorSurat %>">
+              <button type="submit" class="btn btn-outline-warning btn-action" onclick="return confirm('Generate ulang akan mengganti file PDF yang lama. Lanjutkan?')">
+                <i class="bi bi-arrow-repeat me-2"></i>Ambil Ulang Template PDF
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="d-flex flex-wrap justify-content-end align-items-center gap-3 pt-3 border-top mb-5">
+    <a href="/admin/surat/tugas/<%= surat.id %>/generate" class="btn btn-link text-secondary text-decoration-none small" onclick="return confirm('Generate ulang PDF surat tugas?')">
+      <i class="bi bi-gear-fill me-1"></i>Paksa Sinkronisasi Ulang PDF
+    </a>
+    <form method="POST" action="/admin/surat/tugas/<%= surat.id %>/delete" class="d-inline" onsubmit="return confirm('Yakin hapus surat tugas ini?')">
+      <button class="btn btn-link text-danger text-decoration-none small fw-bold">
+        <i class="bi bi-trash3-fill me-1"></i>Hapus Selamanya
+      </button>
+    </form>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

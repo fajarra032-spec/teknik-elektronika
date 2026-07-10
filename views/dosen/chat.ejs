@@ -1,0 +1,88 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4" style="max-width: 720px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0"><i class="bi bi-chat-dots me-2"></i><%= title %></h5>
+    <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Kembali
+    </a>
+  </div>
+
+  <div class="info-card">
+    <div class="card-body">
+      <div id="chat-box" class="mb-3" style="height: 400px; overflow-y: auto; display:flex; flex-direction:column; gap:8px;">
+        <p class="text-muted text-center small">Memuat percakapan...</p>
+      </div>
+      <form id="chat-form" class="d-flex gap-2">
+        <input type="text" id="chat-input" class="form-control" placeholder="Tulis pesan..." autocomplete="off" required>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i></button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .bubble { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 0.9rem; }
+  .bubble-me { align-self: flex-end; background: #3b82f6; color: #fff; }
+  .bubble-other { align-self: flex-start; background: #f1f5f9; color: #0f172a; }
+  .bubble-time { font-size: 0.7rem; opacity: 0.7; display:block; margin-top:2px; }
+</style>
+
+<script>
+  const dosenId = <%- JSON.stringify(dosenId) %>;
+  const mahasiswaId = <%- JSON.stringify(mahasiswaId) %>;
+  const chatBox = document.getElementById('chat-box');
+  const chatForm = document.getElementById('chat-form');
+  const chatInput = document.getElementById('chat-input');
+
+  function renderMessages(messages) {
+    if (!messages.length) {
+      chatBox.innerHTML = '<p class="text-muted text-center small">Belum ada pesan. Mulai percakapan!</p>';
+      return;
+    }
+    chatBox.innerHTML = messages.map(m => {
+      const isMe = m.senderId === dosenId;
+      const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+      return `<div class="bubble ${isMe ? 'bubble-me' : 'bubble-other'}">${escapeHtml(m.message)}<span class="bubble-time">${time}</span></div>`;
+    }).join('');
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function loadMessages() {
+    try {
+      const res = await fetch(`/dosen/chat/messages/${mahasiswaId}`);
+      const messages = await res.json();
+      renderMessages(Array.isArray(messages) ? messages : []);
+    } catch (err) {
+      console.error('Gagal memuat pesan:', err);
+    }
+  }
+
+  chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = chatInput.value.trim();
+    if (!message) return;
+    chatInput.value = '';
+    try {
+      await fetch('/dosen/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ receiverId: mahasiswaId, message })
+      });
+      await loadMessages();
+    } catch (err) {
+      console.error('Gagal mengirim pesan:', err);
+    }
+  });
+
+  loadMessages();
+  setInterval(loadMessages, 5000); // polling sederhana tiap 5 detik
+</script>
+
+<%- include('../partials/footer') %>

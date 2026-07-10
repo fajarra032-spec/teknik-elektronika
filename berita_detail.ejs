@@ -1,0 +1,274 @@
+<%- include('partials/header-landing') %>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+
+  /* ===== VARIABEL DARI LANDING + GAYA ASLI ===== */
+  :root {
+    /* Tambahan dari landing */
+    --primary: #0d6efd;
+    --primary-dark: #0b5ed7;
+    --secondary: #0dcaf0;
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.12);
+    --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  /* ===== BASE FLUID FONT (SAMA PERSIS DENGAN LANDING) ===== */
+  html {
+    font-size: clamp(14px, 1vw + 10px, 16px);
+  }
+  
+  body {
+    font-family: var(--font-sans);
+    background: #f7f9fc;
+  }
+
+  /* Container card utama */
+  .berita-card {
+    max-width: 900px;
+    margin: 2rem auto;
+    background: white;
+    border-radius: 28px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.05);
+    overflow: hidden;
+    padding: clamp(1.2rem, 5vw, 2rem) clamp(1.2rem, 5vw, 2rem);
+    transition: var(--transition);
+  }
+  .berita-card:hover {
+    box-shadow: var(--shadow-hover);
+  }
+
+  /* Breadcrumb */
+  .breadcrumb-custom {
+    font-size: clamp(0.75rem, 2vw, 0.85rem);
+    margin-bottom: 1.5rem;
+    color: #6c757d;
+  }
+  .breadcrumb-custom a {
+    color: #1e6f9f;
+    text-decoration: none;
+    transition: var(--transition);
+  }
+  .breadcrumb-custom a:hover {
+    text-decoration: underline;
+    color: var(--primary);
+  }
+  .breadcrumb-custom i {
+    font-size: 0.7rem;
+    margin: 0 4px;
+  }
+
+  /* Judul berita */
+  .judul-berita {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    font-weight: 700;
+    line-height: 1.3;
+    color: #0f2b5c;
+    margin-bottom: 1rem;
+    letter-spacing: -0.2px;
+  }
+
+  /* Meta info (tanggal, penulis, views) */
+  .meta-berita {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(0.8rem, 3vw, 1.5rem);
+    padding-bottom: 1.2rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+    color: #4a5b6e;
+  }
+  .meta-berita i {
+    margin-right: 0.4rem;
+    color: #1e6f9f;
+  }
+
+  /* Gambar utama */
+  .gambar-berita {
+    margin-bottom: 2rem;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .gambar-berita img {
+    width: 100%;
+    max-height: 450px;
+    object-fit: cover;
+    transition: var(--transition);
+  }
+  .gambar-berita img:hover {
+    transform: scale(1.02);
+  }
+
+  /* Isi berita */
+  .isi-berita {
+    font-size: clamp(0.9rem, 2.5vw, 1.05rem);
+    line-height: 1.7;
+    color: #1e293b;
+  }
+  .isi-berita p {
+    margin-bottom: 1.3rem;
+  }
+  .isi-berita h2 {
+    font-size: clamp(1.3rem, 4vw, 1.6rem);
+    font-weight: 600;
+    margin: 1.8rem 0 0.8rem;
+    color: #0f2b5c;
+  }
+  .isi-berita h3 {
+    font-size: clamp(1.1rem, 3vw, 1.3rem);
+    font-weight: 600;
+    margin: 1.5rem 0 0.6rem;
+  }
+  .isi-berita ul, .isi-berita ol {
+    margin: 1rem 0 1rem 1.5rem;
+  }
+  .isi-berita li {
+    margin-bottom: 0.3rem;
+  }
+  .isi-berita blockquote {
+    border-left: 4px solid #1e6f9f;
+    background: #f1f5f9;
+    padding: clamp(0.6rem, 2vw, 0.8rem) clamp(1rem, 3vw, 1.2rem);
+    border-radius: 16px;
+    margin: 1.5rem 0;
+    font-style: italic;
+    color: #2c3e50;
+  }
+  .isi-berita img {
+    max-width: 100%;
+    border-radius: 16px;
+    margin: 1.2rem 0;
+  }
+
+  /* Tombol kembali */
+  .btn-kembali {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    border: 1px solid #cbd5e1;
+    padding: clamp(0.5rem, 2vw, 0.6rem) clamp(1.2rem, 3vw, 1.6rem);
+    border-radius: 40px;
+    color: #1e3a8a;
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition);
+    margin-top: 2rem;
+    font-size: clamp(0.85rem, 2vw, 0.95rem);
+  }
+  .btn-kembali:hover {
+    background: #f1f5f9;
+    border-color: #1e6f9f;
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ===== MEDIA QUERY LENGKAP (SESUAI LANDING) ===== */
+  @media (max-width: 768px) {
+    .berita-card {
+      margin: 1rem;
+      padding: 1.2rem;
+    }
+    .judul-berita {
+      font-size: 1.5rem;
+    }
+    .meta-berita {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .judul-berita {
+      font-size: 1.3rem;
+    }
+    .isi-berita {
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .berita-card {
+      padding: 1rem;
+    }
+    .judul-berita {
+      font-size: 1.1rem;
+    }
+    .breadcrumb-custom {
+      font-size: 0.7rem;
+    }
+    .meta-berita {
+      font-size: 0.75rem;
+    }
+    .isi-berita {
+      font-size: 0.85rem;
+    }
+    .btn-kembali {
+      padding: 0.4rem 1rem;
+      font-size: 0.8rem;
+    }
+  }
+</style>
+
+<div class="container">
+  <div class="berita-card">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-custom">
+      <a href="/">Beranda</a> <i class="bi bi-chevron-right"></i>
+      <a href="/#berita">Berita</a> <i class="bi bi-chevron-right"></i>
+      <span><%= berita.judul.length > 45 ? berita.judul.substring(0,45)+'...' : berita.judul %></span>
+    </div>
+
+    <!-- Judul -->
+    <h1 class="judul-berita"><%= berita.judul %></h1>
+
+    <!-- Meta info -->
+    <div class="meta-berita">
+      <span><i class="bi bi-calendar3"></i> <%= new Date(berita.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %></span>
+      <span><i class="bi bi-person-circle"></i> <%= berita.penulis || 'Admin' %></span>
+      <span><i class="bi bi-eye"></i> <%= berita.dilihat || 0 %> kali dibaca</span>
+    </div>
+
+    <!-- Gambar (jika ada) -->
+    <% if (berita.gambar) { 
+      const fileId = berita.gambar.match(/[?&]id=([^&]+)/)?.[1] || berita.gambar.split('/').pop();
+    %>
+      <div class="gambar-berita">
+        <img src="https://drive.google.com/thumbnail?id=<%= fileId %>&sz=w1000" 
+             alt="<%= berita.judul %>"
+             onerror="this.onerror=null; this.src='<%= berita.gambar %>';">
+      </div>
+    <% } %>
+
+    <!-- Isi berita (dengan paragraf rapi) -->
+    <div class="isi-berita">
+      <% 
+        let isiHTML = berita.isi;
+        // Jika isi hanya teks biasa (tanpa tag HTML), ubah newline menjadi paragraf/br
+        if (isiHTML && !isiHTML.includes('<p') && !isiHTML.includes('<br')) {
+          let paragraphs = isiHTML.split(/\n\s*\n/);
+          if (paragraphs.length > 1) {
+            isiHTML = paragraphs.map(p => p.replace(/\n/g, '<br>')).map(p => `<p>${p}</p>`).join('');
+          } else {
+            isiHTML = isiHTML.replace(/\n/g, '<br>');
+            if (!isiHTML.startsWith('<p>')) isiHTML = `<p>${isiHTML}</p>`;
+          }
+        }
+      %>
+      <%- isiHTML %>
+    </div>
+
+    <!-- Tombol kembali -->
+    <div class="text-center">
+      <a href="/#berita" class="btn-kembali">
+        <i class="bi bi-arrow-left"></i> Kembali ke Berita
+      </a>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer-landing') %>

@@ -79,9 +79,11 @@ router.get('/rekap', async (req, res) => {
   const { periodeId } = req.query;
   const periods = (await db.collection('spmp_periode').get()).docs.map(d => ({ id: d.id, ...d.data() }));
   let data = [];
+  let indiList = [];
   if (periodeId) {
     const indicators = await db.collection('spmp_indikator').where('periodeId', '==', periodeId).get();
-    const indiList = indicators.docs.map(d => ({ id: d.id, ...d.data() }));
+    const indiListDocs = indicators.docs.map(d => ({ id: d.id, ...d.data() }));
+    indiList = indiListDocs;
     const responses = await db.collection('spmp_respon').where('periodeId', '==', periodeId).get();
     const dosenMap = new Map();
     for (const resp of responses.docs) {
@@ -94,7 +96,7 @@ router.get('/rekap', async (req, res) => {
     }
     for (const [dosenId, dosen] of dosenMap) {
       let totalBobot = 0, totalWeighted = 0;
-      for (const ind of indiList) {
+      for (const ind of indiListDocs) {
         const resp = dosen.responses.find(r => r.indikatorId === ind.id);
         const capaian = resp ? parseFloat(resp.capaian) || 0 : 0;
         const target = parseFloat(ind.target) || 1;
@@ -108,7 +110,7 @@ router.get('/rekap', async (req, res) => {
     }
     data.sort((a,b) => b.skor - a.skor);
   }
-  res.render('admin/spmp/rekap', { title: 'Rekap Capaian Dosen', periods, selectedPeriode: periodeId, data, indiList: indicators.docs.map(d => d.data()) });
+  res.render('admin/spmp/rekap', { title: 'Rekap Capaian Dosen', periods, selectedPeriode: periodeId, data, indiList });
 });
 
 // Verifikasi bukti (tandai sudah dicek)

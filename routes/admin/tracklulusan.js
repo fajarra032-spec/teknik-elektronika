@@ -64,6 +64,56 @@ async function getLulusanFotoFolder(tahunLulus, nim) {
 }
 
 // ============================================================================
+// TINJAU SURVEI MANDIRI (tracerStudy - diisi sendiri oleh mahasiswa/lulusan)
+// ============================================================================
+
+/**
+ * GET /admin/tracklulusan/survey
+ * Menampilkan daftar isian tracer study mandiri dari mahasiswa/lulusan,
+ * untuk ditinjau dan ditentukan tampil publik atau tidak.
+ */
+router.get('/survey', async (req, res) => {
+  try {
+    const { status } = req.query; // 'public' | 'pending' | undefined (semua)
+    let query = db.collection('tracerStudy').orderBy('updatedAt', 'desc');
+    const snapshot = await query.get();
+    let survei = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    if (status === 'public') survei = survei.filter(s => s.isPublic === true);
+    if (status === 'pending') survei = survei.filter(s => s.isPublic !== true);
+
+    res.render('admin/tracklulusan_survey_list', {
+      title: 'Tinjau Survei Tracer Study',
+      survei,
+      filterStatus: status || ''
+    });
+  } catch (error) {
+    console.error('Error mengambil survei tracer study:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal mengambil data survei tracer study' });
+  }
+});
+
+/**
+ * POST /admin/tracklulusan/survey/:userId/toggle
+ * Menyalakan/mematikan status tampil publik untuk satu isian survei
+ */
+router.post('/survey/:userId/toggle', async (req, res) => {
+  try {
+    const docRef = db.collection('tracerStudy').doc(req.params.userId);
+    const doc = await docRef.get();
+    if (!doc.exists) {
+      return res.status(404).send('Data survei tidak ditemukan');
+    }
+    const isPublicSekarang = doc.data().isPublic === true;
+    await docRef.update({ isPublic: !isPublicSekarang, updatedAt: new Date().toISOString() });
+    res.redirect('/admin/tracklulusan/survey');
+  } catch (error) {
+    console.error('Error mengubah status publik survei:', error);
+    res.status(500).send('Gagal mengubah status publik');
+  }
+});
+
+// ============================================================================
 // DAFTAR LULUSAN
 // ============================================================================
 

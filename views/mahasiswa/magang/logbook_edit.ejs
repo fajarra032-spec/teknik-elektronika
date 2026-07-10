@@ -1,0 +1,63 @@
+<%- include('../../partials/header') %>
+
+<style>
+  .form-label { font-weight: 600; color: #2c3e50; margin-bottom: 0.5rem; }
+  .form-control, .form-select { border-radius: 1rem; border: 1px solid #dee2e6; padding: 0.6rem 1rem; }
+  .form-control:focus, .form-select:focus { border-color: #1e3a8a; box-shadow: 0 0 0 0.25rem rgba(30,58,138,0.25); }
+</style>
+
+<div class="container mt-4" style="max-width: 640px;">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-journal-text me-2"></i><%= title %></h4>
+    <a href="javascript:history.back()" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i> Kembali
+    </a>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <form method="POST" action="/mahasiswa/magang/logbook/<%= logbook.id %>/edit" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label for="tanggal" class="form-label">Tanggal Kegiatan <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" id="tanggal" name="tanggal" value="<%= logbook.tanggal %>" required>
+        </div>
+        <div class="mb-3">
+          <label for="lokasi" class="form-label">Lokasi</label>
+          <input type="text" class="form-control" id="lokasi" name="lokasi" value="<%= logbook.lokasi || '' %>">
+        </div>
+        <div class="mb-3">
+          <label for="durasi" class="form-label">Durasi (jam)</label>
+          <input type="number" class="form-control" id="durasi" name="durasi" step="0.5" min="0" value="<%= logbook.durasi || '' %>">
+        </div>
+        <div class="mb-3">
+          <label for="kegiatan" class="form-label">Deskripsi Kegiatan <span class="text-danger">*</span></label>
+          <textarea class="form-control" id="kegiatan" name="kegiatan" rows="4" required><%= logbook.kegiatan || '' %></textarea>
+        </div>
+
+        <% if (logbook.imageUrls && logbook.imageUrls.length > 0) { %>
+          <div class="mb-3">
+            <label class="form-label">Dokumentasi Saat Ini</label>
+            <div class="d-flex gap-2 flex-wrap">
+              <% logbook.imageUrls.forEach(function(url) { %>
+                <img src="<%= url %>" width="70" height="70" class="rounded" style="object-fit:cover;">
+              <% }); %>
+            </div>
+          </div>
+        <% } %>
+
+        <div class="mb-3">
+          <label for="images" class="form-label">Tambah Dokumentasi Baru (Maks 5 gambar)</label>
+          <input type="file" class="form-control" id="images" name="images" accept="image/*" multiple>
+          <div class="form-text">Gambar baru akan ditambahkan ke dokumentasi yang sudah ada.</div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Simpan Perubahan</button>
+          <a href="javascript:history.back()" class="btn btn-light">Batal</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

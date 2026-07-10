@@ -1,0 +1,285 @@
+<%- include('../partials/header-landing') %>
+
+<style>
+  /* ===== VARIABEL CSS LENGKAP (MENGADOPSI DARI LANDING) ===== */
+  :root {
+    --primary: #0d6efd;
+    --primary-dark: #0b5ed7;
+    --secondary: #0dcaf0;
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    
+    --text-main: #1e293b;
+    --text-muted: #475569;
+    --bg-card: #ffffff;
+    --border-color: #e2e8f0;
+    
+    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.12);
+    --border-radius: 1rem;
+    --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  /* ===== BASE FLUID FONT (SAMA PERSIS DENGAN LANDING) ===== */
+  html {
+    font-size: clamp(14px, 1vw + 10px, 16px);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #f8fafc;
+    color: var(--text-main);
+  }
+
+  /* ===== GAYA ASLI (DIADAPTASI DENGAN CLAMP & FLUID) ===== */
+  .detail-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 clamp(1rem, 4vw, 2rem);
+  }
+  
+  /* HEADER CARD BERWARNA BIRU */
+  .header-card {
+    background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+    border-radius: 1.5rem;
+    padding: clamp(2rem, 5vw, 2.5rem) clamp(1.5rem, 4vw, 2rem);
+    color: white;
+    box-shadow: 0 10px 30px rgba(13, 110, 253, 0.2);
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  .header-card h2 {
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-size: clamp(1.5rem, 5vw, 2rem);
+  }
+  .header-card p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: clamp(0.85rem, 3vw, 1.1rem);
+    margin: 0;
+  }
+
+  .profile-card {
+    background: var(--bg-card);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+    transition: var(--transition);
+  }
+  .profile-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+  }
+  .profile-header {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    padding: clamp(1rem, 3vw, 1.5rem) clamp(1.2rem, 4vw, 2rem);
+    color: white;
+  }
+  .profile-header h3 {
+    margin: 0;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: clamp(1.1rem, 3vw, 1.3rem);
+  }
+  .profile-body {
+    padding: clamp(1.2rem, 4vw, 2rem);
+  }
+  .photo-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+  .photo-frame {
+    width: clamp(100px, 25vw, 150px);
+    height: clamp(100px, 25vw, 150px);
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--primary);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+  }
+  .photo-frame:hover {
+    transform: scale(1.05);
+    border-color: var(--secondary);
+    box-shadow: var(--shadow-hover);
+  }
+  .dosen-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .photo-placeholder {
+    width: 100%;
+    height: 100%;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(2rem, 8vw, 3rem);
+    color: #94a3b8;
+  }
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: clamp(1rem, 3vw, 1.5rem);
+  }
+  .info-item {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+  }
+  .info-label {
+    font-size: clamp(0.7rem, 2vw, 0.8rem);
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .info-value {
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    font-weight: 600;
+    color: var(--text-main);
+    margin-top: 0.2rem;
+    word-break: break-word;
+  }
+  .info-value ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.2rem;
+  }
+  .btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    border: 1px solid var(--border-color);
+    padding: clamp(0.4rem, 2vw, 0.5rem) clamp(1rem, 3vw, 1.2rem);
+    border-radius: 50px;
+    text-decoration: none;
+    color: var(--text-main);
+    margin-bottom: 1rem;
+    transition: var(--transition);
+    font-size: clamp(0.85rem, 2vw, 0.95rem);
+  }
+  .btn-back:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateX(-4px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  /* ===== MEDIA QUERY LENGKAP (SESUAI LANDING) ===== */
+  @media (max-width: 576px) {
+    .header-card h2 {
+      font-size: 1.3rem;
+    }
+    .profile-header h3 {
+      font-size: 1rem;
+    }
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+    .photo-frame {
+      width: 100px;
+      height: 100px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .header-card {
+      padding: 1.5rem 1rem;
+    }
+    .header-card h2 {
+      font-size: 1.2rem;
+    }
+    .profile-body {
+      padding: 1rem;
+    }
+    .info-value {
+      font-size: 0.85rem;
+    }
+  }
+</style>
+
+<div class="detail-container">
+  <a href="/cekmahasiswa" class="btn-back">
+    <i class="bi bi-arrow-left"></i> Kembali ke Daftar
+  </a>
+
+  <div class="header-card">
+    <h2>Profil Dosen</h2>
+    <p>Informasi akademik dan riwayat mengajar</p>
+  </div>
+
+  <div class="profile-card">
+    <div class="profile-header">
+      <h3><i class="bi bi-person-badge"></i> Detail Dosen</h3>
+    </div>
+    <div class="profile-body">
+      <div class="photo-wrapper">
+        <div class="photo-frame">
+          <% 
+            const getFileIdFromUrl = (url) => {
+              if (!url) return null;
+              let match = url.match(/[?&]id=([^&]+)/);
+              if (match) return match[1];
+              match = url.match(/\/d\/([^\/]+)/);
+              if (match) return match[1];
+              return null;
+            };
+            const fotoUrl = dosen.foto;
+            const fileId = getFileIdFromUrl(fotoUrl);
+            let fotoSrc = '';
+            if (fileId) fotoSrc = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
+            else if (fotoUrl && fotoUrl.startsWith('http')) fotoSrc = fotoUrl;
+          %>
+          <% if (fotoSrc) { %>
+            <img src="<%= fotoSrc %>" class="dosen-photo" alt="Foto <%= dosen.nama %>" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=No+Image';">
+          <% } else { %>
+            <div class="photo-placeholder"><i class="bi bi-person-circle"></i></div>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">NUPTK</div>
+          <div class="info-value"><%= dosen.nuptk || '-' %></div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Nama Lengkap</div>
+          <div class="info-value"><%= dosen.nama || '-' %></div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Bidang / Keahlian</div>
+          <div class="info-value"><%= dosen.bidang || dosen.keahlian || '-' %></div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">Pendidikan Terakhir</div>
+          <div class="info-value"><%= dosen.pendidikan || '-' %></div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Mata Kuliah Diampu</div>
+          <div class="info-value">
+            <% if (mkList && mkList.length) { %>
+              <ul class="mb-0">
+                <% mkList.forEach(mk => { %>
+                  <li><%= mk.kode %> - <%= mk.nama %></li>
+                <% }) %>
+              </ul>
+            <% } else { %>
+              -
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer-landing') %>

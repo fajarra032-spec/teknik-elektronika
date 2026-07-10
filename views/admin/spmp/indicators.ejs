@@ -1,0 +1,46 @@
+<%- include('../../partials/header') %>
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><%= title %></h2>
+    <% if (selectedPeriode) { %>
+      <a href="/admin/spmp/indicators/create?periodeId=<%= selectedPeriode %>" class="btn btn-primary">+ Indikator</a>
+    <% } %>
+  </div>
+
+  <form method="GET" class="mb-3">
+    <select name="periodeId" class="form-select w-auto d-inline-block" onchange="this.form.submit()">
+      <option value="">Pilih Periode</option>
+      <% periods.forEach(function(p) { %>
+        <option value="<%= p.id %>" <%= selectedPeriode === p.id ? 'selected' : '' %>><%= p.nama %></option>
+      <% }); %>
+    </select>
+  </form>
+
+  <% if (!selectedPeriode) { %>
+    <p class="text-muted">Pilih periode terlebih dahulu untuk melihat indikator.</p>
+  <% } else if (indicators.length === 0) { %>
+    <p class="text-muted">Belum ada indikator untuk periode ini.</p>
+  <% } else { %>
+    <table class="table table-bordered">
+      <thead><tr><th>Urutan</th><th>Nama Indikator</th><th>Target</th><th>Satuan</th><th>Bobot</th><th>Aksi</th></tr></thead>
+      <tbody>
+        <% indicators.forEach(function(ind) { %>
+          <tr>
+            <td><%= ind.urutan %></td>
+            <td><%= ind.nama %></td>
+            <td><%= ind.target %></td>
+            <td><%= ind.satuan %></td>
+            <td><%= ind.bobot %></td>
+            <td>
+              <a href="/admin/spmp/indicators/<%= ind.id %>/edit" class="btn btn-sm btn-warning">Edit</a>
+              <form method="POST" action="/admin/spmp/indicators/<%= ind.id %>/delete" style="display:inline">
+                <button class="btn btn-sm btn-danger">Hapus</button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+<%- include('../../partials/footer') %>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulir Pengajuan Izin Dosen - <%= nama %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <style>
+    /* Pengaturan Kertas Ketat untuk Garansi Pas 1 Halaman */
+    @page {
+      size: A4;
+      margin: 1.2cm 1.5cm;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #000;
+      background-color: #fff;
+      font-size: 9.5pt;
+      line-height: 1.3;
+      position: relative;
+    }
+
+    .print-btn-container {
+      margin-bottom: 15px;
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 10px;
+    }
+
+    /* === KOP SURAT (tanpa garis bawah) === */
+    .kop-surat {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+    }
+
+    .logo-kop {
+      width: 90px;
+      height: auto;
+      margin-right: 20px;
+    }
+
+    .teks-kop {
+      flex: 1;
+    }
+
+    .teks-kop .nama-kampus {
+      font-size: 27pt;
+      font-weight: bold;
+      margin: 0;
+      color: #3b60a3;
+      text-transform: uppercase;
+    }
+
+    .teks-kop .alamat, 
+    .teks-kop .kontak {
+      font-size: 13pt;
+      margin: 0;
+      color: #333;
+    }
+
+    /* === JUDUL & STRUKTUR FORM === */
+    .judul-dokumen {
+      text-align: center;
+      font-size: 12pt;
+      font-weight: bold;
+      margin-top: 15px;
+      margin-bottom: 15px;
+      letter-spacing: 0.5px;
+    }
+
+    .section-title {
+      font-weight: bold;
+      margin-top: 10px;
+      margin-bottom: 4px;
+      font-size: 9.5pt;
+      border-bottom: 1px solid #000;
+      padding-bottom: 1px;
+      text-transform: uppercase;
+    }
+
+    .form-table {
+      width: 100%;
+      margin-bottom: 2px;
+      border-collapse: collapse;
+    }
+
+    .form-table td {
+      padding: 2px 0;
+      vertical-align: top;
+    }
+
+    .label-col {
+      width: 20px;
+    }
+
+    .text-label {
+      width: 150px;
+    }
+
+    .titik-dua {
+      width: 12px;
+    }
+
+    .checkbox-item {
+      margin-bottom: 2px;
+    }
+
+    .inline-checkbox-container {
+      display: flex;
+      gap: 25px;
+    }
+
+    /* === STRUKTUR AREA TANDA TANGAN (KIRI & BAWAH) === */
+    .area-ttd-dosen {
+      width: 250px;
+      text-align: left;
+      margin-top: 5px;
+    }
+    
+    .area-ttd-kaprodi {
+      width: 320px;
+      text-align: left;
+      margin-top: 10px;
+    }
+
+    .space-ttd {
+      height: 40px;
+      position: relative;
+    }
+    
+    .img-ttd {
+      position: absolute;
+      top: -45px;
+      left: -15px;
+      height: 155px;
+      width: auto;
+      z-index: 10;
+      mix-blend-mode: multiply;
+    }
+
+    .nama-ttd {
+      font-weight: bold;
+      text-decoration: underline;
+      margin-bottom: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .nip-ttd {
+      margin-top: 0;
+      font-size: 8.5pt;
+    }
+
+    /* === FOOTER DOKUMEN (PORTAL & KODE VALIDASI) === */
+    .dokumen-footer {
+      margin-top: 20px;
+      padding-top: 8px;
+      border-top: 1px solid #ccc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8pt;
+      font-family: Arial, sans-serif;
+      color: #555;
+    }
+    .portal-info {
+      text-align: left;
+    }
+    .kode-validasi-box {
+      background: #f0f0f0;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    @media print {
+      .print-btn-container {
+        display: none !important;
+      }
+      body {
+        margin: 0;
+      }
+      .img-ttd {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .kode-validasi-box {
+        background: #eee;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container-fluid px-4 py-3">
+  
+  <div class="d-flex justify-content-between align-items-center print-btn-container">
+    <button onclick="history.back()" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Kembali
+    </button>
+    <button onclick="window.print()" class="btn btn-primary btn-sm shadow-sm">
+      <i class="bi bi-printer-fill"></i> Cetak Formulir
+    </button>
+  </div>
+
+  <div class="kop-surat">
+    <img src="https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png" 
+         alt="Logo Politeknik Dewantara" class="logo-kop">
+    <div class="teks-kop">
+      <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
+      <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo. Sulawesi Selatan</p>
+      <p class="kontak">E-mail: sdm@polidewa.ac.id | Website: polidewa.ac.id</p>
+    </div>
+  </div>
+
+  <div class="judul-dokumen">FORMULIR PENGAJUAN IZIN DOSEN</div>
+
+  <div class="section-title">A. IDENTITAS</div>
+  <table class="form-table" style="margin-left: 15px; width: calc(100% - 15px);">
+    <tr><td class="label-col">1.</td><td class="text-label">Nama Lengkap</td><td class="titik-dua">:</td><td><strong><%= nama %></strong></td></tr>
+    <tr><td class="label-col">2.</td><td class="text-label">NIDN / NUPTK</td><td class="titik-dua">:</td><td><%= nidn %></td></tr>
+    <tr><td class="label-col">3.</td><td class="text-label">Status Kepegawaian</td><td class="titik-dua">:</td><td>Dosen Tetap Yayasan</td></tr>
+    <tr><td class="label-col">4.</td><td class="text-label">Nomor HP</td><td class="titik-dua">:</td><td><%= noHp %></td></tr>
+  </table>
+
+  <div class="section-title">B. JENIS IZIN</div>
+  <div style="margin-left: 15px;">
+    <% const izinListOpt = ['Acara Keluarga (Menikah/Aqiqah/Wisuda)', 'Mendampingi Keluarga Berobat', 'Kedukaan']; %>
+    <% izinListOpt.forEach(izin => { %>
+      <div class="checkbox-item">
+        <%= (typeof jenisIzin !== 'undefined' && jenisIzin && jenisIzin.includes(izin)) ? '✓' : '❑' %> &nbsp;<%= izin %>
+      </div>
+    <% }) %>
+  </div>
+
+  <div class="section-title">C. WAKTU IZIN</div>
+  <table class="form-table" style="margin-left: 15px; width: calc(100% - 15px);">
+    <tr><td class="text-label">Tanggal Mulai Izin</td><td class="titik-dua">:</td><td><%= tanggalMulai %></td></tr>
+    <tr><td class="text-label">Tanggal Selesai Izin</td><td class="titik-dua">:</td><td><%= tanggalSelesai %></td></tr>
+    <tr><td class="text-label">Jumlah Hari Izin</td><td class="titik-dua">:</td><td><strong><%= jumlahHari %></strong> Hari</td></tr>
+  </table>
+
+  <div class="section-title">D. PENGALIHAN TUGAS SELAMA IZIN</div>
+  <div style="margin-left: 15px;">
+    <p style="margin: 1px 0 2px 0;">Selama menjalankan izin, tugas akademik dan non-akademik dialihkan kepada:</p>
+    <table class="form-table">
+      <tr><td class="label-col">1.</td><td class="text-label">Nama Pengganti</td><td class="titik-dua">:</td><td><%= namaPengganti || '-' %></td></tr>
+      <tr><td class="label-col">2.</td><td class="text-label">Tugas yang Dialihkan</td><td class="titik-dua">:</td><td><%= tugasPengganti || '-' %></td></tr>
+      <tr><td class="label-col">3.</td><td class="text-label">Bentuk Pengalihan</td><td class="titik-dua">:</td>
+        <td>
+          <div class="inline-checkbox-container">
+            <span><%= (typeof bentukPengalihan !== 'undefined' && bentukPengalihan && bentukPengalihan.includes('Team Teaching')) ? '✓' : '❑' %> Team Teaching</span>
+            <span><%= (typeof bentukPengalihan !== 'undefined' && bentukPengalihan && bentukPengalihan.includes('Pengganti Sementara')) ? '✓' : '❑' %> Pengganti Sementara</span>
+            <span><%= (typeof bentukPengalihan !== 'undefined' && bentukPengalihan && bentukPengalihan.includes('Penjadwalan Ulang')) ? '✓' : '❑' %> Penjadwalan Ulang</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section-title">E. PERNYATAAN DOSEN</div>
+  <div style="margin-left: 15px;">
+    <p style="margin: 2px 0; text-align: justify;">Saya menyatakan bahwa data yang saya isikan adalah benar dan selama masa izin saya telah mengatur seluruh kewajiban akademik dan administrasi sesuai ketentuan Politeknik Dewantara.</p>
+    
+    <div class="area-ttd-dosen">
+      <p style="margin: 4px 0 0 0;">Palopo, <%= tanggalPengajuan %><br>Pemohon Dosen,</p>
+      <div class="space-ttd"></div>
+      <p class="nama-ttd"><%= nama %></p>
+      <p class="nip-ttd">NIDN/NUPTK. <%= nidn %></p>
+    </div>
+  </div>
+  
+  <div class="section-title" style="margin-top: 10px; clear: both;">F. PERSETUJUAN ATASAN LANGSUNG</div>
+  <div style="margin-left: 15px;">
+    <div class="inline-checkbox-container" style="margin-top: 2px;">
+      <span><%= persetujuan === 'Disetujui' ? '✓' : '❑' %> Disetujui</span>
+      <span><%= persetujuan === 'Tidak Disetujui' ? '✓' : '❑' %> Tidak Disetujui</span>
+    </div>
+    <div style="margin-top: 2px; margin-bottom: 5px;">Catatan Atasan: <em><%= catatanPersetujuan || '-' %></em></div>
+    
+    <div class="area-ttd-kaprodi">
+      <p style="margin: 0;">Ketua Program Studi Teknik Elektronika,</p>
+      <div class="space-ttd">
+        <% if (persetujuan === 'Disetujui') { %>
+          <img src="/images/ttd.png" alt="Tanda Tangan & Stempel Kaprodi" class="img-ttd">
+        <% } %>
+      </div>
+      <p class="nama-ttd">Fajar Ramadhan, S.Pd., M.T.</p>
+      <p class="nip-ttd">NUPTK. 8559777678130153</p>
+      <p style="margin: 0; font-size: 8pt; color: #444;">Tanggal Setuju: <%= tanggalPersetujuan || '-' %></p>
+    </div>
+  </div>
+
+  <!-- FOOTER PORTAL & KODE VALIDASI -->
+  <div class="dokumen-footer">
+    <div class="portal-info">
+      Portal Elektronika: <strong>elektronika.polidewa.ac.id</strong><br>
+      Keaslian dokumen dapat diverifikasi dengan kode validasi.
+    </div>
+    <div class="kode-validasi-box">
+      Kode Validasi: <strong><%= kodeValidasi %></strong>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

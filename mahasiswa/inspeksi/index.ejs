@@ -1,0 +1,31 @@
+<%- include('../../partials/header') %>
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Riwayat Inspeksi Listrik</h2>
+    <a href="/mahasiswa/inspeksi" class="btn btn-primary">+ Inspeksi Baru</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped">
+      <thead class="table-dark">
+        <tr><th>No</th><th>Tanggal</th><th>Pemilik Rumah</th><th>Desa/Dusun</th><th>Daya (VA)</th><th>Kesimpulan</th><th>Aksi</th></tr>
+      </thead>
+      <tbody>
+        <% data.forEach((item, idx) => { %>
+        <tr>
+          <td><%= idx+1 %></td>
+          <td><%= new Date(item.tanggal).toLocaleDateString('id-ID') %></td>
+          <td><%= item.pemilikRumah %></td>
+          <td><%= item.desa %> - <%= item.dusunRt %></td>
+          <td><%= item.dayaTerpasang %></td>
+          <td><span class="badge bg-<%= item.kesimpulan === 'Instalasi aman' ? 'success' : (item.kesimpulan === 'Berbahaya' ? 'danger' : 'warning') %>"><%= item.kesimpulan %></span></td>
+          <td>
+            <a href="/mahasiswa/inspeksi/edit/<%= item.id %>" class="btn btn-sm btn-warning">Edit</a>
+            <a href="/mahasiswa/inspeksi/cetak/<%= item.id %>" class="btn btn-sm btn-info" target="_blank">Cetak</a>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../../partials/footer') %>

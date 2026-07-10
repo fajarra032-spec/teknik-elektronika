@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { hitungNilaiAkhir, saveGradeFinal, getTranskripMahasiswa, getPeriodeAktif } = require('../../helpers/nilaiHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -30,36 +31,6 @@ async function getMahasiswaById(uid) {
     console.error('Error getMahasiswaById:', error);
     return { id: uid, nama: 'Error', nim: '-' };
   }
-}
-
-/**
- * Menghitung nilai akhir berdasarkan bobot
- * Bobot: rata-rata tugas 40%, UTS 30%, UAS 30%
- * @param {Object} nilaiMap - map nilai dengan key tipe (misal 'Tugas 1', 'UTS', 'UAS')
- * @returns {number|null} nilai akhir
- */
-function hitungNilaiAkhir(nilaiMap) {
-  // Kumpulkan semua nilai tugas
-  const tugasValues = [];
-  let uts = null, uas = null;
-
-  for (const [tipe, data] of Object.entries(nilaiMap)) {
-    if (tipe.toLowerCase().includes('tugas')) {
-      tugasValues.push(data.nilai);
-    } else if (tipe.toUpperCase() === 'UTS') {
-      uts = data.nilai;
-    } else if (tipe.toUpperCase() === 'UAS') {
-      uas = data.nilai;
-    }
-  }
-
-  if (tugasValues.length === 0 || uts === null || uas === null) {
-    return null; // belum lengkap
-  }
-
-  const rataTugas = tugasValues.reduce((a, b) => a + b, 0) / tugasValues.length;
-  const nilaiAkhir = (rataTugas * 0.4) + (uts * 0.3) + (uas * 0.3);
-  return Math.round(nilaiAkhir * 100) / 100; // dua desimal
 }
 
 // ============================================================================
@@ -85,6 +56,62 @@ router.get('/', async (req, res) => {
 });
 
 // ============================================================================
+// INPUT NILAI AKHIR (FINAL) PER MAHASISWA -> koleksi 'grades'
+// Sebelumnya view ini (nilai_form.ejs) sudah ada tapi tidak punya rute sama
+// sekali, sehingga tidak bisa diakses dan koleksi 'grades' tidak pernah terisi.
+// ============================================================================
+
+/**
+ * GET /admin/nilai/mahasiswa/:userId/tambah
+ * Menampilkan form untuk menambah/mengubah nilai akhir seorang mahasiswa
+ */
+router.get('/mahasiswa/:userId/tambah', async (req, res) => {
+  try {
+    const mahasiswa = await getMahasiswaById(req.params.userId);
+
+    const mkSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
+    const courses = mkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    const { items } = await getTranskripMahasiswa(req.params.userId);
+
+    res.render('admin/nilai_form', {
+      title: `Input Nilai - ${mahasiswa.nama || mahasiswa.id}`,
+      mahasiswa,
+      courses,
+      grades: items
+    });
+  } catch (error) {
+    console.error('Error menampilkan form nilai:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat form input nilai' });
+  }
+});
+
+/**
+ * POST /admin/nilai
+ * Menyimpan nilai akhir mahasiswa untuk satu mata kuliah ke koleksi 'grades'
+ */
+router.post('/', async (req, res) => {
+  const { userId, kodeMk, namaMk, sks, nilai, semester } = req.body;
+  try {
+    await saveGradeFinal({ userId, kodeMk, namaMk, sks, nilai, semester });
+    res.redirect(`/admin/nilai/mahasiswa/${userId}/tambah`);
+  } catch (error) {
+    console.error('Error menyimpan nilai akhir:', error);
+    const mahasiswa = await getMahasiswaById(userId);
+    const mkSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
+    const courses = mkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const { items } = await getTranskripMahasiswa(userId);
+    res.status(400).render('admin/nilai_form', {
+      title: `Input Nilai - ${mahasiswa.nama || mahasiswa.id}`,
+      mahasiswa,
+      courses,
+      grades: items,
+      error: error.message
+    });
+  }
+});
+
+// ============================================================================
 // DETAIL NILAI PER MATA KULIAH
 // ============================================================================
 
@@ -95,15 +122,17 @@ router.get('/', async (req, res) => {
 router.get('/:mkId', async (req, res) => {
   try {
     const mkId = req.params.mkId;
+    const periode = req.query.periode || getPeriodeAktif();
     const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
     if (!mkDoc.exists) {
       return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Mata kuliah tidak ditemukan' });
     }
     const mk = { id: mkId, ...mkDoc.data() };
 
-    // Ambil semua mahasiswa yang terdaftar di MK ini (dari enrollment aktif)
+    // Ambil semua mahasiswa yang terdaftar di MK ini pada periode yang dipilih
     const enrollmentSnapshot = await db.collection('enrollment')
       .where('mkId', '==', mkId)
+      .where('semester', '==', periode)
       .where('status', '==', 'active')
       .get();
 
@@ -112,7 +141,7 @@ router.get('/:mkId', async (req, res) => {
 
     for (const uid of mahasiswaIds) {
       const mahasiswa = await getMahasiswaById(uid);
-      // Ambil semua nilai untuk MK dan mahasiswa ini
+      // Ambil semua nilai untuk MK dan mahasiswa ini (data lama tanpa periode dianggap periode ini)
       const nilaiSnapshot = await db.collection('nilai')
         .where('mkId', '==', mkId)
         .where('mahasiswaId', '==', uid)
@@ -121,6 +150,7 @@ router.get('/:mkId', async (req, res) => {
       const nilaiMap = {};
       nilaiSnapshot.docs.forEach(doc => {
         const data = doc.data();
+        if ((data.periode || periode) !== periode) return;
         nilaiMap[data.tipe] = data.nilai;
       });
 
@@ -145,10 +175,11 @@ router.get('/:mkId', async (req, res) => {
     const tipeList = Array.from(tipeSet).sort();
 
     res.render('admin/nilai_detail', {
-      title: `Rekap Nilai - ${mk.kode} ${mk.nama}`,
+      title: `Rekap Nilai - ${mk.kode} ${mk.nama} (${periode})`,
       mk,
       mahasiswaList,
-      tipeList
+      tipeList,
+      periode
     });
   } catch (error) {
     console.error('Error detail nilai:', error);

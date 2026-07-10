@@ -340,9 +340,14 @@
           <span><i class="bi bi-clock"></i> <%= mk.jadwal || 'Jadwal belum diatur' %></span>
         </p>
       </div>
-      <a href="/dosen/mk" class="btn-light btn">
-        <i class="bi bi-arrow-left"></i> Kembali
-      </a>
+      <div class="d-flex gap-2">
+        <a href="/dosen/kelas-chat/<%= mk.id %>" class="btn-light btn">
+          <i class="bi bi-chat-dots"></i> Chat Kelas
+        </a>
+        <a href="/dosen/mk" class="btn-light btn">
+          <i class="bi bi-arrow-left"></i> Kembali
+        </a>
+      </div>
     </div>
   </div>
 

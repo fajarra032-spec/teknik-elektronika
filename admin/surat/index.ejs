@@ -1,0 +1,418 @@
+<%- include('../../partials/header') %>
+
+<%
+  // Default values
+  if (typeof suratList === 'undefined') suratList = [];
+  if (typeof filters === 'undefined') filters = { status: '', role: '', search: '' };
+%>
+
+<style>
+  /* ===== VARIABEL WARNA (sesuai navbar) ===== */
+  :root {
+    --primary-start: #1e3a8a;
+    --primary-end: #3b82f6;
+    --primary-light: rgba(30,58,138,0.1);
+    --primary-dark: #0f2b5c;
+    --warning-bg: #fef3c7;
+    --warning-text: #92400e;
+    --success-bg: #d1fae5;
+    --success-text: #065f46;
+    --danger-bg: #fee2e2;
+    --danger-text: #991b1b;
+    --info-bg: #dbeafe;
+    --info-text: #1e40af;
+    --secondary-bg: #e9ecef;
+    --secondary-text: #6c757d;
+    --tugas-bg: #f3e8ff;
+    --tugas-text: #6b21a5;
+    --font-base: 16px;
+  }
+
+  html { font-size: 16px; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f8fafc;
+  }
+
+  /* Page Header */
+  .page-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-radius: 1.5rem;
+    padding: 1.5rem 2rem;
+    color: white;
+    margin-bottom: 2rem;
+    box-shadow: 0 15px 30px rgba(30,58,138,0.25);
+    position: relative;
+    overflow: hidden;
+  }
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    transform: rotate(25deg);
+  }
+  .page-header h2 {
+    font-weight: 700;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    font-size: 2rem;
+  }
+
+  /* Filter Card */
+  .filter-card {
+    background: white;
+    border-radius: 1.2rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    border: 1px solid rgba(30,58,138,0.1);
+  }
+  .filter-card .form-label {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+  .filter-card .form-select,
+  .filter-card .form-control {
+    border-radius: 50px;
+    border: 1px solid #cbd5e1;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s;
+  }
+  .filter-card .form-select:focus,
+  .filter-card .form-control:focus {
+    border-color: var(--primary-start);
+    box-shadow: 0 0 0 0.2rem rgba(30,58,138,0.25);
+  }
+  .btn-filter {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border: none;
+    color: white;
+    font-weight: 500;
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    transition: all 0.2s;
+    width: 100%;
+  }
+  .btn-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(30,58,138,0.3);
+  }
+  .btn-reset {
+    background: transparent;
+    border: 1.5px solid var(--primary-start);
+    color: var(--primary-start);
+    font-weight: 500;
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    transition: all 0.2s;
+    width: 100%;
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+  }
+  .btn-reset:hover {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-color: transparent;
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  /* Table Container */
+  .table-container {
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    overflow: hidden;
+    border: 1px solid rgba(30,58,138,0.1);
+    padding: 1rem 0;
+  }
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .surat-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0;
+  }
+  .surat-table thead th {
+    background: #f8f9fa;
+    color: #1e293b;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    border: 1px solid #dee2e6;
+    padding: 0.75rem 1rem;
+    white-space: nowrap;
+    text-align: left;
+  }
+  .surat-table tbody td {
+    vertical-align: middle;
+    padding: 0.75rem 1rem;
+    border: 1px solid #dee2e6;
+    font-size: 0.95rem;
+  }
+  .surat-table tbody tr:hover td {
+    background-color: #f8fafc;
+  }
+
+  /* Badge Status */
+  .badge-status {
+    padding: 0.3rem 1rem;
+    border-radius: 50px;
+    font-weight: 500;
+    font-size: 0.8rem;
+    display: inline-block;
+  }
+  .badge-pending {
+    background: var(--warning-bg);
+    color: var(--warning-text);
+    border: 1px solid #fde68a;
+  }
+  .badge-approved,
+  .badge-completed {
+    background: var(--success-bg);
+    color: var(--success-text);
+    border: 1px solid #a7f3d0;
+  }
+  .badge-rejected {
+    background: var(--danger-bg);
+    color: var(--danger-text);
+    border: 1px solid #fecaca;
+  }
+  .badge-cancelled {
+    background: var(--secondary-bg);
+    color: var(--secondary-text);
+    border: 1px solid #ced4da;
+  }
+
+  /* Custom Buttons */
+  .btn-detail {
+    background: transparent;
+    border: 1.5px solid var(--primary-start);
+    color: var(--primary-start);
+    border-radius: 50px;
+    padding: 0.25rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .btn-detail:hover {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-color: transparent;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(30,58,138,0.3);
+  }
+  .btn-generate {
+    border-color: #10b981;
+    color: #10b981;
+  }
+  .btn-generate:hover {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    border-color: transparent;
+    color: white;
+  }
+  .btn-download {
+    border-color: #0d6efd;
+    color: #0d6efd;
+  }
+  .btn-download:hover {
+    background: linear-gradient(135deg, #0d6efd, #3b82f6);
+    border-color: transparent;
+    color: white;
+  }
+
+  .empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8f9fa;
+    border-radius: 1.5rem;
+  }
+  .empty-state i {
+    font-size: 4rem;
+    color: #adb5bd;
+    margin-bottom: 1rem;
+  }
+  .role-badge {
+    background: #e9ecef;
+    color: #495057;
+    padding: 0.2rem 0.6rem;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .role-badge-tugas {
+    background: var(--tugas-bg);
+    color: var(--tugas-text);
+  }
+
+  @media (max-width: 768px) {
+    html { font-size: 15px; }
+    .page-header h2 { font-size: 1.6rem; }
+    .page-header { padding: 1.2rem; }
+    .filter-card .row { flex-direction: column; }
+    .btn-filter, .btn-reset { width: 100%; margin-bottom: 0.5rem; }
+    .surat-table thead th { font-size: 0.8rem; padding: 0.5rem; }
+    .surat-table tbody td { font-size: 0.9rem; padding: 0.5rem; }
+  }
+  @media (max-width: 576px) {
+    html { font-size: 14px; }
+    .badge-status { font-size: 0.7rem; padding: 0.2rem 0.6rem; }
+  }
+</style>
+
+<div class="container mt-4">
+  <div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+      <h2><i class="bi bi-envelope-paper me-2"></i>Manajemen Surat (Mahasiswa, Dosen, & Tugas)</h2>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="/admin/surat/create" class="btn btn-light rounded-pill px-4">
+        <i class="bi bi-plus-circle me-2"></i>Kirim Surat ke Dosen
+      </a>
+      <a href="/admin/surat/create-tugas" class="btn btn-outline-light rounded-pill px-4">
+        <i class="bi bi-file-text me-2"></i>Buat Surat Tugas
+      </a>
+    </div>
+  </div>
+
+  <div class="filter-card">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-md-2">
+        <label class="form-label fw-semibold"><i class="bi bi-person-badge me-1"></i>Role</label>
+        <select name="role" class="form-select">
+          <option value="">Semua</option>
+          <option value="mahasiswa" <%= filters.role === 'mahasiswa' ? 'selected' : '' %>>Mahasiswa</option>
+          <option value="dosen" <%= filters.role === 'dosen' ? 'selected' : '' %>>Dosen (Izin)</option>
+          <option value="tugas" <%= filters.role === 'tugas' ? 'selected' : '' %>>Surat Tugas</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold"><i class="bi bi-funnel me-1"></i>Status</label>
+        <select name="status" class="form-select">
+          <option value="">Semua</option>
+          <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+          <option value="completed" <%= filters.status === 'completed' ? 'selected' : '' %>>Selesai</option>
+          <option value="rejected" <%= filters.status === 'rejected' ? 'selected' : '' %>>Ditolak</option>
+          <option value="cancelled" <%= filters.status === 'cancelled' ? 'selected' : '' %>>Dibatalkan</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold"><i class="bi bi-search me-1"></i>Cari (Nama / Identitas / Keperluan)</label>
+        <input type="text" class="form-control" name="search" value="<%= filters.search || '' %>" placeholder="Nama, NIM/NIP, keperluan...">
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn-filter">Filter</button>
+      </div>
+      <div class="col-md-1">
+        <a href="/admin/surat" class="btn-reset">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="table-container">
+    <div class="table-responsive">
+      <table class="table surat-table">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Role</th>
+            <th>Pemohon</th>
+            <th>Jenis Surat</th>
+            <th>Keperluan / Keterangan</th>
+            <th>Tgl Pengajuan</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (suratList.length === 0) { %>
+            <tr>
+              <td colspan="8" class="text-center py-5">
+                <div class="empty-state">
+                  <i class="bi bi-inbox"></i>
+                  <p>Tidak ada surat.</p>
+                </div>
+                </td>
+            </tr>
+          <% } else { %>
+            <% suratList.forEach((surat, idx) => { 
+               // Tentukan teks keperluan yang lebih informatif untuk surat tugas
+               let keperluanText = surat.keperluan || '';
+               if (surat.role === 'tugas' && surat.namaKegiatan) {
+                 keperluanText = `${surat.namaKegiatan} - ${surat.penyelenggara || ''} (${surat.tanggalPelaksanaan || ''})`;
+               }
+            %>
+              <tr>
+                <td class="text-center"><%= idx+1 %></td>
+                <td class="text-center">
+                  <% if (surat.role === 'mahasiswa') { %>
+                    <span class="role-badge"><i class="bi bi-mortarboard"></i> Mahasiswa</span>
+                  <% } else if (surat.role === 'tugas') { %>
+                    <span class="role-badge role-badge-tugas"><i class="bi bi-file-text"></i> Surat Tugas</span>
+                  <% } else { %>
+                    <span class="role-badge"><i class="bi bi-person-badge"></i> Dosen</span>
+                  <% } %>
+                 </td>
+                <td>
+                  <strong><%= surat.pemohon %></strong><br>
+                  <small class="text-muted"><%= surat.identitas %></small>
+                 </td>
+                <td><%= surat.jenis || surat.jenisSurat || 'Surat' %> </td>
+                <td><%= keperluanText.length > 60 ? keperluanText.substring(0,60)+'...' : keperluanText %> </td>
+                <td><%= new Date(surat.createdAt).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) %> </td>
+                <td>
+                  <% if (surat.status === 'pending') { %>
+                    <span class="badge-status badge-pending">Pending</span>
+                  <% } else if (surat.status === 'completed') { %>
+                    <span class="badge-status badge-completed">Selesai</span>
+                  <% } else if (surat.status === 'rejected') { %>
+                    <span class="badge-status badge-rejected">Ditolak</span>
+                  <% } else if (surat.status === 'cancelled') { %>
+                    <span class="badge-status badge-cancelled">Dibatalkan</span>
+                  <% } %>
+                 </td>
+                <td>
+                  <div class="d-flex gap-1 flex-wrap">
+                    <a href="/admin/surat/<%= surat.id %>/<%= surat.role %>" class="btn-detail">
+                      <i class="bi bi-eye"></i> Detail
+                    </a>
+                    <% if (surat.role === 'tugas' && surat.status === 'pending') { %>
+                      <a href="/admin/surat/tugas/<%= surat.id %>/generate" class="btn-detail btn-generate">
+                        <i class="bi bi-gear"></i> Generate
+                      </a>
+                    <% } %>
+                    <% if (surat.status === 'completed' && surat.fileUrl) { %>
+                      <a href="<%= surat.fileUrl %>" target="_blank" class="btn-detail btn-download">
+                        <i class="bi bi-download"></i> Unduh
+                      </a>
+                    <% } %>
+                  </div>
+                 </td>
+               </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

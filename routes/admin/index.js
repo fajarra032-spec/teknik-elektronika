@@ -15,7 +15,6 @@ const { db } = require('../../config/firebaseAdmin');
 // IMPORT SUB‑MODUL
 // ============================================================================
 const usersRoutes = require('./users');
-const laporanMagangRouter = require('./elkLibrary');
 const seminarRouter = require('./seminar');          // pastikan file seminar.js ada di folder admin
 const dashboardRouter = require('./dashboard');
 // ============================================================================
@@ -65,6 +64,12 @@ router.use('/krs', require('./krs'));
 
 // Kelola KHS (Kartu Hasil Studi)
 router.use('/khs', require('./khs'));
+
+// Rekap Nilai (per MK) – sebelumnya tidak pernah termuat karena nama file salah (nilai,js)
+router.use('/nilai', require('./nilai'));
+
+// Sertifikat Dosen
+router.use('/sertifikat', require('./sertifikat'));
 
 // Berkas Akademik – lihat KRS & KHS per mahasiswa / angkatan
 router.use('/berkas', require('./berkas'));

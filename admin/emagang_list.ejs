@@ -1,0 +1,568 @@
+<%- include('../partials/header') %>
+
+<%
+  // Helper untuk mendapatkan angkatan dari NIM
+  const getAngkatan = (nim) => {
+    if (!nim || nim.length < 2) return '';
+    return '20' + nim.substring(0, 2);
+  };
+  
+  // Hitung statistik keseluruhan
+  const totalMahasiswa = mahasiswaList ? mahasiswaList.length : 0;
+  const totalLogbook = mahasiswaList ? mahasiswaList.reduce((s, m) => s + (m.totalLogbook || 0), 0) : 0;
+  const totalPending = mahasiswaList ? mahasiswaList.reduce((s, m) => s + (m.pendingCount || 0), 0) : 0;
+  const totalApproved = mahasiswaList ? mahasiswaList.reduce((s, m) => s + (m.approvedCount || 0), 0) : 0;
+  const totalRejected = mahasiswaList ? mahasiswaList.reduce((s, m) => s + (m.rejectedCount || 0), 0) : 0;
+%>
+
+<style>
+  /* ===== VARIABEL WARNA ===== */
+  :root {
+    --primary-start: #1e3a8a;
+    --primary-end: #3b82f6;
+    --primary-light: rgba(30,58,138,0.1);
+    --primary-dark: #0f2b5c;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #0dcaf0;
+    --gray-border: #e2e8f0;
+    --gray-bg: #f8fafc;
+  }
+
+  /* Page Header */
+  .page-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-radius: 1.5rem;
+    padding: 2rem;
+    color: white;
+    margin-bottom: 2rem;
+    box-shadow: 0 15px 30px rgba(30,58,138,0.25);
+    position: relative;
+    overflow: hidden;
+  }
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    transform: rotate(25deg);
+  }
+  .page-header h2 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 2rem;
+  }
+  .page-header p {
+    margin-bottom: 0;
+    opacity: 0.9;
+    position: relative;
+    z-index: 1;
+    font-size: 1rem;
+  }
+
+  /* Statistik Cards */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1rem;
+    text-align: center;
+    border: 1px solid var(--gray-border);
+    transition: all 0.3s;
+  }
+  .stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  }
+  .stat-card .stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-start);
+  }
+  .stat-card .stat-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+  }
+
+  /* Filter Section */
+  .filter-section {
+    background: white;
+    border-radius: 1rem;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    border: 1px solid var(--gray-border);
+  }
+  .filter-section .form-control,
+  .filter-section .form-select {
+    border-radius: 50px;
+    padding: 0.5rem 1rem;
+    border: 1px solid #cbd5e1;
+    min-width: 180px;
+    flex: 1;
+    font-size: 0.9rem;
+  }
+  .filter-section .btn-filter {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .filter-section .btn-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(30,58,138,0.3);
+  }
+  .filter-section .btn-reset {
+    background: transparent;
+    border: 1.5px solid var(--primary-start);
+    color: var(--primary-start);
+    border-radius: 50px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .filter-section .btn-reset:hover {
+    background: var(--primary-start);
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  /* Table Container */
+  .table-container {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    border: 1px solid var(--gray-border);
+  }
+  .table-responsive {
+    overflow-x: auto;
+  }
+  .magang-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0;
+  }
+  .magang-table thead th {
+    background: var(--gray-bg);
+    color: #1e293b;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 2px solid var(--gray-border);
+    white-space: nowrap;
+  }
+  .magang-table tbody td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+    font-size: 0.9rem;
+  }
+  .magang-table tbody tr:hover {
+    background-color: var(--gray-bg);
+  }
+
+  /* Avatar */
+  .avatar-circle {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    box-shadow: 0 4px 10px rgba(30,58,138,0.2);
+  }
+  .foto-mahasiswa {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  .mahasiswa-info {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .mahasiswa-info .nama {
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.2rem;
+  }
+  .mahasiswa-info .nim {
+    font-size: 0.7rem;
+    color: #64748b;
+  }
+
+  /* PDK Badges */
+  .pdk-badge {
+    display: inline-block;
+    padding: 0.25rem 0.7rem;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-right: 0.3rem;
+    margin-bottom: 0.2rem;
+  }
+  .pdk-badge-1 { background: #dbeafe; color: #1e40af; }
+  .pdk-badge-2 { background: #d1fae5; color: #065f46; }
+  .pdk-badge-3 { background: #fef3c7; color: #92400e; }
+
+  /* Badge Stats */
+  .badge-stat {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-align: center;
+    min-width: 60px;
+  }
+  .badge-total {
+    background: var(--primary-light);
+    color: var(--primary-start);
+  }
+  .badge-pending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  .badge-approved {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  .badge-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  /* Action Buttons */
+  .btn-view {
+    background: transparent;
+    border: 1px solid var(--primary-start);
+    color: var(--primary-start);
+    border-radius: 50px;
+    padding: 0.3rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .btn-view:hover {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-color: transparent;
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    background: var(--gray-bg);
+    border-radius: 1rem;
+  }
+  .empty-state i {
+    font-size: 4rem;
+    color: #adb5bd;
+    margin-bottom: 1rem;
+  }
+  .empty-state h4 {
+    font-size: 1.2rem;
+    color: #495057;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .filter-section { flex-direction: column; align-items: stretch; }
+    .filter-section .form-control,
+    .filter-section .form-select,
+    .filter-section .btn-filter,
+    .filter-section .btn-reset { width: 100%; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    
+    .magang-table thead { display: none; }
+    .magang-table, .magang-table tbody, .magang-table tr, .magang-table td {
+      display: block;
+      width: 100%;
+    }
+    .magang-table tr {
+      margin-bottom: 1rem;
+      border: 1px solid var(--gray-border);
+      border-radius: 0.75rem;
+      padding: 0.75rem;
+      background: white;
+    }
+    .magang-table td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px dashed #e9ecef;
+    }
+    .magang-table td:last-child { border-bottom: none; }
+    .magang-table td::before {
+      content: attr(data-label);
+      font-weight: 600;
+      color: var(--primary-start);
+      width: 45%;
+      font-size: 0.8rem;
+    }
+  }
+</style>
+
+<div class="container mt-4">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h2><i class="bi bi-journal-bookmark-fill"></i> Monitoring Magang</h2>
+    <p class="mb-0">Kelola dan pantau logbook magang mahasiswa</p>
+  </div>
+
+  <!-- Statistik Cards -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value"><%= totalMahasiswa %></div>
+      <div class="stat-label">Mahasiswa PDK</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value"><%= totalLogbook %></div>
+      <div class="stat-label">Total Logbook</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value"><%= totalPending %></div>
+      <div class="stat-label">Pending</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value"><%= totalApproved %></div>
+      <div class="stat-label">Disetujui</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value"><%= totalRejected %></div>
+      <div class="stat-label">Ditolak</div>
+    </div>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="filter-section">
+    <input type="text" id="searchInput" class="form-control" placeholder="🔍 Cari nama atau NIM...">
+    <select id="angkatanFilter" class="form-select">
+      <option value="">📅 Semua Angkatan</option>
+      <% if (angkatanList && angkatanList.length > 0) { %>
+        <% angkatanList.forEach(function(a) { %>
+          <option value="<%= a %>" <%= (filters && filters.angkatan === a) ? 'selected' : '' %>><%= a %></option>
+        <% }); %>
+      <% } %>
+    </select>
+    <button class="btn-filter" id="applyFilter">
+      <i class="bi bi-funnel"></i> Terapkan
+    </button>
+    <button class="btn-reset" id="resetFilter">
+      <i class="bi bi-arrow-repeat"></i> Reset
+    </button>
+  </div>
+
+  <!-- Table Container -->
+  <div class="table-container">
+    <div class="table-responsive">
+      <table class="magang-table" id="magangTable">
+        <thead>
+          <tr>
+            <th style="width: 50px;">No</th>
+            <th>Mahasiswa</th>
+            <th>PDK Diprogram</th>
+            <th style="width: 80px;">Total</th>
+            <th style="width: 80px;">Pending</th>
+            <th style="width: 80px;">Disetujui</th>
+            <th style="width: 80px;">Ditolak</th>
+            <th style="width: 100px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (mahasiswaList && mahasiswaList.length > 0) { %>
+            <% mahasiswaList.forEach(function(m, index) { 
+              const fotoUrl = m.foto ? m.foto : null;
+              const angkatan = getAngkatan(m.nim);
+            %>
+              <tr data-nama="<%= (m.nama || '').toLowerCase() %>" 
+                  data-nim="<%= m.nim || '' %>" 
+                  data-angkatan="<%= angkatan %>">
+                <td data-label="No" class="fw-bold text-center"><%= index + 1 %></td>
+                <td data-label="Mahasiswa">
+                  <div class="mahasiswa-info">
+                    <% if (fotoUrl) { %>
+                      <img src="<%= fotoUrl %>" class="foto-mahasiswa" 
+                           onerror="this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(m.nama) %>&background=1e3a8a&color=fff&size=45'">
+                    <% } else { %>
+                      <div class="avatar-circle"><%= (m.nama || '?').charAt(0).toUpperCase() %></div>
+                    <% } %>
+                    <div>
+                      <div class="nama"><%= m.nama %></div>
+                      <div class="nim"><%= m.nim || '-' %></div>
+                      <% if (angkatan) { %>
+                        <div class="small text-muted">Angkatan <%= angkatan %></div>
+                      <% } %>
+                    </div>
+                  </div>
+                </td>
+                <td data-label="PDK Diprogram">
+                  <% if (m.enrolledPdks && m.enrolledPdks.length > 0) { %>
+                    <% m.enrolledPdks.forEach(function(pdk) { %>
+                      <span class="pdk-badge pdk-badge-<%= pdk.urutan %>"><%= pdk.kode %> (PDK <%= pdk.urutan %>)</span>
+                    <% }); %>
+                  <% } else { %>
+                    <span class="text-muted">-</span>
+                  <% } %>
+                </td>
+                <td data-label="Total" class="text-center">
+                  <span class="badge-stat badge-total"><%= m.totalLogbook || 0 %></span>
+                </td>
+                <td data-label="Pending" class="text-center">
+                  <span class="badge-stat badge-pending"><%= m.pendingCount || 0 %></span>
+                </td>
+                <td data-label="Disetujui" class="text-center">
+                  <span class="badge-stat badge-approved"><%= m.approvedCount || 0 %></span>
+                </td>
+                <td data-label="Ditolak" class="text-center">
+                  <span class="badge-stat badge-rejected"><%= m.rejectedCount || 0 %></span>
+                </td>
+                <td data-label="Aksi" class="text-center">
+                  <a href="/admin/emagang/mahasiswa/<%= m.id %>" class="btn-view" title="Lihat Detail">
+                    <i class="bi bi-eye"></i> Detail
+                  </a>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="8" class="text-center py-5">
+                <div class="empty-state">
+                  <i class="bi bi-inbox"></i>
+                  <h4>Belum Ada Data</h4>
+                  <p class="text-muted">Belum ada mahasiswa yang memprogram mata kuliah PDK.</p>
+                </div>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+      <div id="noFilterResult" class="text-center py-3 text-muted" style="display: none;">
+        <i class="bi bi-search"></i> Tidak ada mahasiswa yang cocok dengan filter.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // Fungsi untuk mendapatkan daftar angkatan unik dari baris tabel
+    function getUniqueAngkatan() {
+      var rows = document.querySelectorAll('#magangTable tbody tr');
+      var angkatanSet = new Set();
+      rows.forEach(function(row) {
+        var angkatan = row.getAttribute('data-angkatan');
+        if (angkatan && angkatan !== '') angkatanSet.add(angkatan);
+      });
+      return Array.from(angkatanSet).sort().reverse();
+    }
+
+    // Isi dropdown angkatan jika kosong
+    var angkatanFilter = document.getElementById('angkatanFilter');
+    if (angkatanFilter && angkatanFilter.options.length <= 1) {
+      var angkatanList = getUniqueAngkatan();
+      angkatanList.forEach(function(angkatan) {
+        var option = document.createElement('option');
+        option.value = angkatan;
+        option.textContent = angkatan;
+        angkatanFilter.appendChild(option);
+      });
+    }
+
+    function filterTable() {
+      var searchInput = document.getElementById('searchInput').value.toLowerCase().trim();
+      var angkatanValue = document.getElementById('angkatanFilter').value;
+      var rows = document.querySelectorAll('#magangTable tbody tr');
+      var visibleCount = 0;
+
+      rows.forEach(function(row) {
+        var nama = row.getAttribute('data-nama') || '';
+        var nim = row.getAttribute('data-nim') || '';
+        var angkatan = row.getAttribute('data-angkatan') || '';
+
+        var matchSearch = true;
+        if (searchInput !== '') {
+          matchSearch = nama.indexOf(searchInput) !== -1 || nim.indexOf(searchInput) !== -1;
+        }
+
+        var matchAngkatan = true;
+        if (angkatanValue !== '') {
+          matchAngkatan = angkatan === angkatanValue;
+        }
+
+        if (matchSearch && matchAngkatan) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      var noResultDiv = document.getElementById('noFilterResult');
+      if (noResultDiv) {
+        noResultDiv.style.display = visibleCount === 0 ? 'block' : 'none';
+      }
+    }
+
+    function resetFilter() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('angkatanFilter').value = '';
+      var rows = document.querySelectorAll('#magangTable tbody tr');
+      rows.forEach(function(row) { row.style.display = ''; });
+      var noResultDiv = document.getElementById('noFilterResult');
+      if (noResultDiv) noResultDiv.style.display = 'none';
+    }
+
+    // Event listeners
+    var applyBtn = document.getElementById('applyFilter');
+    var resetBtn = document.getElementById('resetFilter');
+    var searchInput = document.getElementById('searchInput');
+    var angkatanFilterEl = document.getElementById('angkatanFilter');
+    
+    if (applyBtn) applyBtn.addEventListener('click', filterTable);
+    if (resetBtn) resetBtn.addEventListener('click', resetFilter);
+    if (searchInput) searchInput.addEventListener('keyup', filterTable);
+    if (angkatanFilterEl) angkatanFilterEl.addEventListener('change', filterTable);
+  })();
+</script>
+
+<%- include('../partials/footer') %>

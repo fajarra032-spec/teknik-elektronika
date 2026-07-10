@@ -12,6 +12,7 @@ const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
+const { getPeriodeAktif } = require('../../helpers/nilaiHelper');
 
 // ============================================================================
 // KONSTANTA FOLDER UTAMA (Data WEB)
@@ -246,6 +247,7 @@ router.get('/mk/:id', async (req, res) => {
       .get();
     const jumlahMahasiswa = countSnapshot.data().count;
 
+    const periodeAktif = getPeriodeAktif();
     const tugasSnapshot = await db.collection('tugas')
       .where('mkId', '==', mkId)
       .orderBy('deadline', 'asc')
@@ -253,6 +255,7 @@ router.get('/mk/:id', async (req, res) => {
     const tugasList = [];
     for (const doc of tugasSnapshot.docs) {
       const tugas = { id: doc.id, ...doc.data() };
+      if ((tugas.periode || periodeAktif) !== periodeAktif) continue; // data lama tanpa periode dianggap periode aktif
       const pengumpulan = await getPengumpulan(tugas.id, req.user.id);
       tugas.pengumpulan = pengumpulan;
       tugasList.push(tugas);

@@ -466,7 +466,7 @@ router.get('/aktivitas', async (req, res) => {
     }
     const snapshot = await query.get();
     const aktivitas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    res.render('aktivitas/index', {
+    res.render('landing/aktivitas/aktivitas', {
       title: 'Aktivitas Prodi',
       aktivitas,
       kategoriAktif: kategori || 'semua',
@@ -483,7 +483,7 @@ router.get('/aktivitas/:id', async (req, res) => {
     const doc = await db.collection('aktivitas').doc(req.params.id).get();
     if (!doc.exists) return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Aktivitas tidak ditemukan' });
     const aktivitas = { id: doc.id, ...doc.data() };
-    res.render('aktivitas/detail', { title: aktivitas.judul, aktivitas, user: req.user || null });
+    res.render('landing/aktivitas/detail', { title: aktivitas.judul, aktivitas, user: req.user || null });
   } catch (error) {
     console.error('Error detail aktivitas:', error);
     res.status(500).render('error', { title: 'Error', message: 'Gagal memuat detail aktivitas' });
@@ -506,41 +506,141 @@ router.get('/berita/:id', async (req, res) => {
 // ============================================================================
 // VALIDASI SURAT
 // ============================================================================
-router.get('/validasi', (req, res) => {
+router.get('/validasi', async (req, res) => {
   const { kode } = req.query;
-  res.render('validasi', { title: 'Validasi Surat', kode, user: req.user || null });
+  let hasil = null;
+  let sudahDicari = false;
+
+  if (kode && kode.trim() !== '') {
+    sudahDicari = true;
+    try {
+      const kodeTrim = kode.trim();
+
+      const suratSnap = await db.collection('surat').where('kodeValidasi', '==', kodeTrim).limit(1).get();
+      if (!suratSnap.empty) {
+        const d = suratSnap.docs[0].data();
+        hasil = { jenis: 'Surat Mahasiswa', nama: d.nama || d.dosenNama || '-', jenisSurat: d.jenisSurat || '-', tanggal: d.createdAt, status: d.status };
+      }
+
+      if (!hasil) {
+        const suratDosenSnap = await db.collection('surat_dosen').where('kodeValidasi', '==', kodeTrim).limit(1).get();
+        if (!suratDosenSnap.empty) {
+          const d = suratDosenSnap.docs[0].data();
+          hasil = { jenis: 'Surat Izin Dosen', nama: d.dosenNama || '-', jenisSurat: 'Izin Dosen', tanggal: d.createdAt, status: d.status };
+        }
+      }
+
+      if (!hasil) {
+        const suratTugasSnap = await db.collection('surat_tugas').where('kodeValidasi', '==', kodeTrim).limit(1).get();
+        if (!suratTugasSnap.empty) {
+          const d = suratTugasSnap.docs[0].data();
+          hasil = { jenis: 'Surat Tugas Dosen', nama: d.dosenNama || '-', jenisSurat: 'Surat Tugas', tanggal: d.createdAt, status: d.status };
+        }
+      }
+    } catch (error) {
+      console.error('Error validasi surat:', error);
+    }
+  }
+
+  res.render('validasi', { title: 'Validasi Surat', kode: kode || '', hasil, sudahDicari, user: req.user || null });
 });
 
 // ============================================================================
-// LULUSAN (TRACER STUDY)
+// LULUSAN (TRACER STUDY) - gabungan dari 2 sumber:
+//   1) tracerStudy: isian mandiri mahasiswa/lulusan yang sudah disetujui admin (isPublic=true)
+//   2) lulusan: data yang diinput/dikurasi langsung oleh admin (selalu dianggap publik)
 // ============================================================================
+
+// Normalisasi status pekerjaan ke satu set nilai baku, karena kedua koleksi
+// sumber memakai istilah yang berbeda-beda.
+function normalisasiStatus(rawStatus) {
+  const map = {
+    'kuliah': 'melanjutkan_studi',
+    'melanjutkan_studi': 'melanjutkan_studi',
+    'belum bekerja': 'belum_bekerja',
+    'belum_bekerja': 'belum_bekerja',
+    'bekerja': 'bekerja',
+    'wirausaha': 'wirausaha'
+  };
+  return map[rawStatus] || rawStatus || 'belum_bekerja';
+}
+
+async function getGabunganLulusan() {
+  const [tracerSnap, lulusanSnap] = await Promise.all([
+    db.collection('tracerStudy').where('isPublic', '==', true).get(),
+    db.collection('lulusan').get()
+  ]);
+
+  const dariSurvei = tracerSnap.docs.map(doc => {
+    const d = doc.data();
+    return {
+      id: `survei_${doc.id}`,
+      sumber: 'survei',
+      nama: d.nama || '-',
+      nim: d.nim || '-',
+      tahunLulus: d.tahunLulus || null,
+      status: normalisasiStatus(d.statusPekerjaan),
+      pekerjaan: d.pekerjaan || '',
+      tempatKerja: d.namaPerusahaan || d.tempatKerja || '',
+      alamatKerja: d.alamatKerja || '',
+      gaji: d.gaji || '',
+      email: '',
+      noHp: '',
+      foto: d.fotoUrl || null
+    };
+  });
+
+  const dariAdmin = lulusanSnap.docs.map(doc => {
+    const d = doc.data();
+    return {
+      id: `manual_${doc.id}`,
+      sumber: 'manual',
+      nama: d.nama || '-',
+      nim: d.nim || '-',
+      tahunLulus: d.tahunLulus || null,
+      status: normalisasiStatus(d.status),
+      pekerjaan: d.pekerjaan || '',
+      tempatKerja: d.tempatKerja || '',
+      alamatKerja: d.alamatKerja || '',
+      gaji: d.gaji || '',
+      email: d.email || '',
+      noHp: d.noHp || '',
+      foto: d.foto || null
+    };
+  });
+
+  return [...dariSurvei, ...dariAdmin];
+}
+
 router.get('/lulusan', async (req, res) => {
   try {
     const { angkatan, status } = req.query;
-    let query = db.collection('tracerStudy')
-      .where('isPublic', '==', true)
-      .orderBy('tahunLulus', 'desc')
-      .orderBy('nama');
-    if (angkatan) query = query.where('tahunLulus', '==', parseInt(angkatan));
-    if (status && status !== 'semua') query = query.where('status', '==', status);
+    let gabungan = await getGabunganLulusan();
 
-    const snapshot = await query.get();
-    const lulusan = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (angkatan) gabungan = gabungan.filter(l => String(l.tahunLulus) === String(angkatan));
+    if (status && status !== 'semua') gabungan = gabungan.filter(l => l.status === status);
 
-    const statSnapshot = await db.collection('tracerStudy').where('isPublic', '==', true).get();
-    const total = statSnapshot.size;
-    const bekerja = statSnapshot.docs.filter(d => d.data().status === 'bekerja').length;
-    const wirausaha = statSnapshot.docs.filter(d => d.data().status === 'wirausaha').length;
-    const kuliah = statSnapshot.docs.filter(d => d.data().status === 'kuliah').length;
+    gabungan.sort((a, b) => {
+      const tahunDiff = (b.tahunLulus || 0) - (a.tahunLulus || 0);
+      if (tahunDiff !== 0) return tahunDiff;
+      return String(a.nama).localeCompare(String(b.nama));
+    });
+
+    // Statistik dihitung dari keseluruhan data gabungan (sebelum difilter tahun/status)
+    const semuaGabungan = await getGabunganLulusan();
+    const total = semuaGabungan.length;
+    const bekerja = semuaGabungan.filter(l => l.status === 'bekerja').length;
+    const wirausaha = semuaGabungan.filter(l => l.status === 'wirausaha').length;
+    const kuliah = semuaGabungan.filter(l => l.status === 'melanjutkan_studi').length;
     const stats = { total, bekerja, wirausaha, kuliah };
 
     const angkatanSet = new Set();
-    statSnapshot.docs.forEach(d => angkatanSet.add(d.data().tahunLulus));
+    semuaGabungan.forEach(l => { if (l.tahunLulus) angkatanSet.add(l.tahunLulus); });
     const angkatanList = Array.from(angkatanSet).sort((a, b) => b - a);
 
-    res.render('lulusan/index', {
+    res.render('landing/lulusan/index', {
       title: 'Lulusan',
-      lulusan,
+      lulusan: gabungan,
       stats,
       angkatanList,
       filterAngkatan: angkatan || '',
@@ -555,10 +655,49 @@ router.get('/lulusan', async (req, res) => {
 
 router.get('/lulusan/:id', async (req, res) => {
   try {
-    const doc = await db.collection('tracerStudy').doc(req.params.id).get();
-    if (!doc.exists) return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Data tidak ditemukan' });
-    const lulusan = { id: doc.id, ...doc.data() };
-    res.render('lulusan/detail', { title: lulusan.nama, lulusan, user: req.user || null });
+    const rawId = req.params.id;
+    let doc, lulusan;
+
+    if (rawId.startsWith('survei_')) {
+      doc = await db.collection('tracerStudy').doc(rawId.replace('survei_', '')).get();
+      if (!doc.exists || doc.data().isPublic !== true) {
+        return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Data tidak ditemukan' });
+      }
+      const d = doc.data();
+      lulusan = {
+        id: rawId, nama: d.nama, nim: d.nim, tahunLulus: d.tahunLulus,
+        status: normalisasiStatus(d.statusPekerjaan), pekerjaan: d.pekerjaan,
+        tempatKerja: d.namaPerusahaan || d.tempatKerja, alamatKerja: d.alamatKerja,
+        gaji: d.gaji, email: '', noHp: '', foto: d.fotoUrl || null
+      };
+    } else if (rawId.startsWith('manual_')) {
+      doc = await db.collection('lulusan').doc(rawId.replace('manual_', '')).get();
+      if (!doc.exists) {
+        return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Data tidak ditemukan' });
+      }
+      const d = doc.data();
+      lulusan = {
+        id: rawId, nama: d.nama, nim: d.nim, tahunLulus: d.tahunLulus,
+        status: normalisasiStatus(d.status), pekerjaan: d.pekerjaan,
+        tempatKerja: d.tempatKerja, alamatKerja: d.alamatKerja,
+        gaji: d.gaji, email: d.email || '', noHp: d.noHp || '', foto: d.foto || null
+      };
+    } else {
+      // Kompatibilitas mundur: tautan lama tanpa prefix, coba tracerStudy dulu
+      doc = await db.collection('tracerStudy').doc(rawId).get();
+      if (!doc.exists || doc.data().isPublic !== true) {
+        return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Data tidak ditemukan' });
+      }
+      const d = doc.data();
+      lulusan = {
+        id: rawId, nama: d.nama, nim: d.nim, tahunLulus: d.tahunLulus,
+        status: normalisasiStatus(d.statusPekerjaan), pekerjaan: d.pekerjaan,
+        tempatKerja: d.namaPerusahaan || d.tempatKerja, alamatKerja: d.alamatKerja,
+        gaji: d.gaji, email: '', noHp: '', foto: d.fotoUrl || null
+      };
+    }
+
+    res.render('landing/lulusan/detail', { title: lulusan.nama, lulusan, user: req.user || null });
   } catch (error) {
     console.error('Error detail lulusan:', error);
     res.status(500).render('error', { title: 'Error', message: 'Gagal memuat detail lulusan' });

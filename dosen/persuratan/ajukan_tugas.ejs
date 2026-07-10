@@ -1,0 +1,44 @@
+<%- include('../../partials/header') %>
+
+<style>
+  .form-card { background: white; border-radius: 1.2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(30,58,138,0.1); overflow: hidden; }
+  .form-card .card-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; padding: 1rem 1.5rem; font-weight: 600; }
+  .btn-primary-custom { background: linear-gradient(105deg, #1e3a8a, #3b82f6); border: none; border-radius: 60px; padding: 0.5rem 1.5rem; }
+  .required:after { content: " *"; color: red; }
+</style>
+
+<div class="container mt-4">
+  <div class="page-header">
+    <h2><i class="bi bi-file-text me-2"></i>Ajukan Surat Tugas</h2>
+    <p>Isi form berikut untuk mengajukan surat tugas. Admin akan memproses dan menerbitkan surat tugas.</p>
+  </div>
+  <div class="form-card">
+    <div class="card-header"><h5 class="mb-0">Form Surat Tugas</h5></div>
+    <div class="card-body p-4">
+      <form method="POST" action="/dosen/surat/ajukan-tugas">
+        <div class="mb-3">
+          <label class="form-label required fw-semibold">Nama Kegiatan</label>
+          <input type="text" name="namaKegiatan" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label required fw-semibold">Penyelenggara</label>
+          <input type="text" name="penyelenggara" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label required fw-semibold">Tanggal Pelaksanaan</label>
+          <input type="text" name="tanggalPelaksanaan" class="form-control" placeholder="Contoh: 08-11 April 2026" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Jabatan (opsional)</label>
+          <input type="text" name="jabatan" class="form-control" value="Dosen Teknik Elektronika">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary-custom"><i class="bi bi-send me-2"></i>Kirim Pengajuan</button>
+          <a href="/dosen/surat" class="btn btn-secondary">Batal</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { getPeriodeAktif } = require('../../helpers/nilaiHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -199,6 +200,7 @@ router.get('/:id', async (req, res) => {
 
     // Ambil nilai untuk setiap MK
     const nilaiList = [];
+    const periodeAktif = getPeriodeAktif();
     for (const mk of mkDiambil) {
       const nilaiSnapshot = await db.collection('nilai')
         .where('mahasiswaId', '==', mahasiswaId)
@@ -207,6 +209,7 @@ router.get('/:id', async (req, res) => {
       const nilaiMap = {};
       nilaiSnapshot.docs.forEach(doc => {
         const data = doc.data();
+        if ((data.periode || periodeAktif) !== periodeAktif) return; // data lama tanpa periode dianggap periode aktif
         nilaiMap[data.tipe] = data.nilai;
       });
       nilaiList.push({

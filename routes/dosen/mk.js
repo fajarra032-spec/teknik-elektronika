@@ -14,6 +14,7 @@ const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
+const { getPeriodeAktif } = require('../../helpers/nilaiHelper');
 
 console.log('mk.js loaded');
 
@@ -391,11 +392,14 @@ router.get('/:id', async (req, res) => {
     // ===== TUGAS (opsional) =====
     let tugasList = [];
     try {
+      const periodeAktif = getPeriodeAktif();
       const tugasSnapshot = await db.collection('tugas')
         .where('mkId', '==', req.params.id)
         .orderBy('deadline', 'asc')
         .get();
-      tugasList = tugasSnapshot.docs.map(doc => ({
+      tugasList = tugasSnapshot.docs
+        .filter(doc => (doc.data().periode || periodeAktif) === periodeAktif) // data lama tanpa periode dianggap periode aktif
+        .map(doc => ({
         id: doc.id,
         judul: doc.data().judul,
         deadline: doc.data().deadline,
