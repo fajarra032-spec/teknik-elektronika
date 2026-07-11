@@ -13,6 +13,7 @@ const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif } = require('../../helpers/nilaiHelper');
+const { mataKuliahCache, tugasAktifCache } = require('../../helpers/cache');
 
 // ============================================================================
 // KONSTANTA FOLDER UTAMA (Data WEB)
@@ -47,21 +48,27 @@ async function getMataKuliahDiambil(userId) {
       .where('userId', '==', userId)
       .where('status', '==', 'active')
       .get();
-    const mkList = [];
-    for (const doc of enrollmentSnapshot.docs) {
+
+    // Ambil data mata kuliah lewat cache (mataKuliah jarang berubah, jadi
+    // tidak perlu baca ulang ke Firestore di setiap kunjungan dashboard oleh
+    // setiap mahasiswa). Dijalankan paralel, bukan satu-satu berurutan.
+    const mkList = await Promise.all(enrollmentSnapshot.docs.map(async (doc) => {
       const mkId = doc.data().mkId;
-      const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
-      if (mkDoc.exists) {
-        mkList.push({
-          id: mkId,
-          ...mkDoc.data(),
-          enrollmentId: doc.id,
-          semester: doc.data().semester,
-          tahunAjaran: doc.data().tahunAjaran
-        });
-      }
-    }
-    return mkList;
+      const mkData = await mataKuliahCache.getOrFetch(mkId, async () => {
+        const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
+        return mkDoc.exists ? mkDoc.data() : null;
+      });
+      if (!mkData) return null;
+      return {
+        id: mkId,
+        ...mkData,
+        enrollmentId: doc.id,
+        semester: doc.data().semester,
+        tahunAjaran: doc.data().tahunAjaran
+      };
+    }));
+
+    return mkList.filter(Boolean);
   } catch (error) {
     console.error('Error getMataKuliahDiambil:', error);
     return [];
@@ -161,9 +168,10 @@ router.get('/', async (req, res) => {
     mkList = mkList.filter(mk => !mk.isPDK);
     
     const now = new Date();
-    
-    for (let mk of mkList) {
-      // Hitung jumlah mahasiswa terdaftar di MK ini
+
+    await Promise.all(mkList.map(async (mk) => {
+      // Hitung jumlah mahasiswa terdaftar di MK ini (query count() sudah murah,
+      // dibilling sebagai 1 read terlepas dari jumlah dokumen yang cocok)
       const countSnapshot = await db.collection('enrollment')
         .where('mkId', '==', mk.id)
         .where('status', '==', 'active')
@@ -180,14 +188,18 @@ router.get('/', async (req, res) => {
         persen: Math.round((terlaksana / 16) * 100)
       };
 
-      // Cek apakah ada tugas aktif (deadline > sekarang)
-      const tugasSnapshot = await db.collection('tugas')
-        .where('mkId', '==', mk.id)
-        .where('deadline', '>', now.toISOString())
-        .limit(1)
-        .get();
-      mk.adaTugasAktif = !tugasSnapshot.empty;
-    }
+      // Cek apakah ada tugas aktif (deadline > sekarang) - di-cache singkat (3
+      // menit) karena hasil ini sama untuk semua mahasiswa di MK yang sama,
+      // jadi tidak perlu query ulang setiap kali dashboard dibuka.
+      mk.adaTugasAktif = await tugasAktifCache.getOrFetch(`ada-tugas-aktif:${mk.id}`, async () => {
+        const tugasSnapshot = await db.collection('tugas')
+          .where('mkId', '==', mk.id)
+          .where('deadline', '>', now.toISOString())
+          .limit(1)
+          .get();
+        return !tugasSnapshot.empty;
+      });
+    }));
 
     res.render('mahasiswa/elearning/index', { title: 'ELK‑Learning', mkList });
   } catch (error) {
@@ -203,9 +215,12 @@ router.get('/', async (req, res) => {
 router.get('/mk/:id', async (req, res) => {
   try {
     const mkId = req.params.id;
-    const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
-    if (!mkDoc.exists) return res.status(404).send('Mata kuliah tidak ditemukan');
-    const mk = { id: mkId, ...mkDoc.data() };
+    const mkData = await mataKuliahCache.getOrFetch(mkId, async () => {
+      const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
+      return mkDoc.exists ? mkDoc.data() : null;
+    });
+    if (!mkData) return res.status(404).send('Mata kuliah tidak ditemukan');
+    const mk = { id: mkId, ...mkData };
 
     const enrollmentSnapshot = await db.collection('enrollment')
       .where('userId', '==', req.user.id)
@@ -230,15 +245,13 @@ router.get('/mk/:id', async (req, res) => {
       });
     }
 
-    const dosenList = [];
-    if (mk.dosenIds && mk.dosenIds.length > 0) {
-      for (const dId of mk.dosenIds) {
+    const dosenList = (await Promise.all((mk.dosenIds || []).map(async (dId) => {
+      const dData = await dosenCache.getOrFetch(dId, async () => {
         const dDoc = await db.collection('dosen').doc(dId).get();
-        if (dDoc.exists) {
-          dosenList.push({ id: dId, nama: dDoc.data().nama });
-        }
-      }
-    }
+        return dDoc.exists ? dDoc.data() : null;
+      });
+      return dData ? { id: dId, nama: dData.nama } : null;
+    }))).filter(Boolean);
 
     const countSnapshot = await db.collection('enrollment')
       .where('mkId', '==', mkId)
@@ -248,10 +261,22 @@ router.get('/mk/:id', async (req, res) => {
     const jumlahMahasiswa = countSnapshot.data().count;
 
     const periodeAktif = getPeriodeAktif();
-    const tugasSnapshot = await db.collection('tugas')
+    let tugasSnapshot = await db.collection('tugas')
       .where('mkId', '==', mkId)
+      .where('periode', '==', periodeAktif)
       .orderBy('deadline', 'asc')
       .get();
+
+    if (tugasSnapshot.empty) {
+      // Fallback + self-heal: data lama mungkin belum ditandai periode
+      const semuaSnapshot = await db.collection('tugas').where('mkId', '==', mkId).orderBy('deadline', 'asc').get();
+      const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
+      if (perluDitandai.length > 0) {
+        await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode: periodeAktif }).catch(() => {})));
+      }
+      tugasSnapshot = semuaSnapshot;
+    }
+
     const tugasList = [];
     for (const doc of tugasSnapshot.docs) {
       const tugas = { id: doc.id, ...doc.data() };
@@ -302,16 +327,19 @@ router.get('/tugas-aktif', async (req, res) => {
         .orderBy('deadline', 'asc')
         .get();
 
+      if (tugasSnapshot.empty) continue;
+
+      // Ambil sekali saja per mkId (sebelumnya diambil ulang untuk setiap
+      // tugas walau mkId-nya sama), dan pakai cache karena datanya jarang berubah
+      const mkData = await mataKuliahCache.getOrFetch(mkId, async () => {
+        const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
+        return mkDoc.exists ? mkDoc.data() : null;
+      });
+
       for (const doc of tugasSnapshot.docs) {
         const tugas = { id: doc.id, ...doc.data() };
-        const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
-        if (mkDoc.exists) {
-          tugas.mkKode = mkDoc.data().kode;
-          tugas.mkNama = mkDoc.data().nama;
-        } else {
-          tugas.mkKode = '-';
-          tugas.mkNama = '-';
-        }
+        tugas.mkKode = mkData ? mkData.kode : '-';
+        tugas.mkNama = mkData ? mkData.nama : '-';
         const pengumpulan = await getPengumpulan(tugas.id, userId);
         tugas.pengumpulan = pengumpulan;
         tugasList.push(tugas);
@@ -354,8 +382,11 @@ router.get('/tugas/:id', async (req, res) => {
       return res.status(403).send('Anda tidak terdaftar di mata kuliah tugas ini');
     }
 
-    const mkDoc = await db.collection('mataKuliah').doc(tugas.mkId).get();
-    const mk = mkDoc.exists ? { id: mkDoc.id, ...mkDoc.data() } : { kode: '-', nama: '-' };
+    const mkData = await mataKuliahCache.getOrFetch(tugas.mkId, async () => {
+      const mkDoc = await db.collection('mataKuliah').doc(tugas.mkId).get();
+      return mkDoc.exists ? mkDoc.data() : null;
+    });
+    const mk = mkData ? { id: tugas.mkId, ...mkData } : { kode: '-', nama: '-' };
 
     const pengumpulan = await getPengumpulan(tugasId, req.user.id);
     const deadline = new Date(tugas.deadline);
@@ -422,8 +453,10 @@ router.post('/tugas/:id/kumpul', upload.single('file'), async (req, res) => {
     }
 
     // ========== PROSES UPLOAD ==========
-    const mkDoc = await db.collection('mataKuliah').doc(tugas.mkId).get();
-    const mk = mkDoc.data();
+    const mk = await mataKuliahCache.getOrFetch(tugas.mkId, async () => {
+      const mkDoc = await db.collection('mataKuliah').doc(tugas.mkId).get();
+      return mkDoc.exists ? mkDoc.data() : null;
+    });
     const enrollment = enrollmentSnapshot.docs[0].data();
     const tahunAjaran = enrollment.tahunAjaran || '2025/2026';
     const nim = req.user.nim;
@@ -528,8 +561,10 @@ router.post('/tugas/:id/revisi', upload.single('file'), async (req, res) => {
     }
 
     // ========== UPLOAD FILE BARU ==========
-    const mkDoc = await db.collection('mataKuliah').doc(tugas.mkId).get();
-    const mk = mkDoc.data();
+    const mk = await mataKuliahCache.getOrFetch(tugas.mkId, async () => {
+      const mkDoc = await db.collection('mataKuliah').doc(tugas.mkId).get();
+      return mkDoc.exists ? mkDoc.data() : null;
+    });
     const enrollment = enrollmentSnapshot.docs[0].data();
     const tahunAjaran = enrollment.tahunAjaran || '2025/2026';
     const nim = req.user.nim;

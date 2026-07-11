@@ -202,10 +202,24 @@ router.get('/:id', async (req, res) => {
     const nilaiList = [];
     const periodeAktif = getPeriodeAktif();
     for (const mk of mkDiambil) {
-      const nilaiSnapshot = await db.collection('nilai')
+      let nilaiSnapshot = await db.collection('nilai')
         .where('mahasiswaId', '==', mahasiswaId)
         .where('mkId', '==', mk.id)
+        .where('periode', '==', periodeAktif)
         .get();
+
+      if (nilaiSnapshot.empty) {
+        const semuaSnapshot = await db.collection('nilai')
+          .where('mahasiswaId', '==', mahasiswaId)
+          .where('mkId', '==', mk.id)
+          .get();
+        const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
+        if (perluDitandai.length > 0) {
+          await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode: periodeAktif }).catch(() => {})));
+        }
+        nilaiSnapshot = semuaSnapshot;
+      }
+
       const nilaiMap = {};
       nilaiSnapshot.docs.forEach(doc => {
         const data = doc.data();

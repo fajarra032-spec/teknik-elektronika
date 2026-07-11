@@ -9,6 +9,7 @@ const { db } = require('../config/firebaseAdmin');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { getProgressMagangHarian } = require('../helpers/magangHelper');
 
 // ============================================================================
 // FUNGSI BANTU
@@ -168,32 +169,7 @@ router.get('/', async (req, res) => {
         const progressKey = `${log.userId}_${log.pdkId}`;
         let progress = progressCache.get(progressKey);
         if (!progress) {
-          const periodSnap = await db.collection('magangPeriod')
-            .where('mahasiswaId', '==', log.userId)
-            .where('pdkId', '==', log.pdkId)
-            .where('status', '==', 'active')
-            .limit(1)
-            .get();
-          if (!periodSnap.empty) {
-            const period = periodSnap.docs[0].data();
-            const start = new Date(period.tanggalMulai);
-            const end = period.tanggalSelesai ? new Date(period.tanggalSelesai) : new Date();
-            const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-            const logSnap = await db.collection('logbookMagang')
-              .where('userId', '==', log.userId)
-              .where('pdkId', '==', log.pdkId)
-              .where('status', '==', 'approved')
-              .get();
-            const uniqueDates = new Set();
-            logSnap.docs.forEach(doc => {
-              if (doc.data().tanggal) uniqueDates.add(doc.data().tanggal);
-            });
-            const uploadedDays = uniqueDates.size;
-            const percentage = totalDays > 0 ? Math.min(100, Math.round((uploadedDays / totalDays) * 100)) : 0;
-            progress = { uploadedDays, totalDays, percentage };
-          } else {
-            progress = { uploadedDays: 0, totalDays: 0, percentage: 0 };
-          }
+          progress = await getProgressMagangHarian(log.userId, log.pdkId);
           progressCache.set(progressKey, progress);
         }
 

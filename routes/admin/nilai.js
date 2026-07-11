@@ -141,11 +141,25 @@ router.get('/:mkId', async (req, res) => {
 
     for (const uid of mahasiswaIds) {
       const mahasiswa = await getMahasiswaById(uid);
-      // Ambil semua nilai untuk MK dan mahasiswa ini (data lama tanpa periode dianggap periode ini)
-      const nilaiSnapshot = await db.collection('nilai')
+      // Jalur murah: query terfilter periode. Kalau kosong, kemungkinan data
+      // lama belum ditandai - ambil semua & tandai otomatis (self-heal).
+      let nilaiSnapshot = await db.collection('nilai')
         .where('mkId', '==', mkId)
         .where('mahasiswaId', '==', uid)
+        .where('periode', '==', periode)
         .get();
+
+      if (nilaiSnapshot.empty) {
+        const semuaSnapshot = await db.collection('nilai')
+          .where('mkId', '==', mkId)
+          .where('mahasiswaId', '==', uid)
+          .get();
+        const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
+        if (perluDitandai.length > 0) {
+          await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode }).catch(() => {})));
+        }
+        nilaiSnapshot = semuaSnapshot;
+      }
 
       const nilaiMap = {};
       nilaiSnapshot.docs.forEach(doc => {

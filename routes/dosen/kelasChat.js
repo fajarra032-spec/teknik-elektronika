@@ -55,7 +55,7 @@ router.get('/:mkId/messages', async (req, res) => {
     const boleh = await isDosenPengampuMk(mkId, req.dosen.id);
     if (!boleh) return res.status(403).json({ error: 'Akses ditolak' });
 
-    const pesan = await getPesanKelas(mkId);
+    const pesan = await getPesanKelas(mkId, req.query.sejak || null);
     res.json(pesan);
   } catch (error) {
     console.error('Error mengambil pesan kelas:', error);

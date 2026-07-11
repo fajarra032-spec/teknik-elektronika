@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../config/firebaseAdmin');
+const { getProgressMagangHarian } = require('../helpers/magangHelper');
 
 // Cache dengan TTL (50 menit)
 const cache = {
   mahasiswa: new Map(),
   pembimbing: new Map(),
-  progress: new Map(),
   stats: null,
   statsExpiry: 0
 };
@@ -54,43 +54,9 @@ async function getPembimbingMahasiswa(mahasiswaId) {
   }
 }
 
-async function getProgressMagang(mahasiswaId, pdkId) {
-  const key = `${mahasiswaId}_${pdkId}`;
-  if (cache.progress.has(key)) return cache.progress.get(key);
-  try {
-    const periodSnap = await db.collection('magangPeriod')
-      .where('mahasiswaId', '==', mahasiswaId)
-      .where('pdkId', '==', pdkId)
-      .where('status', '==', 'active')
-      .limit(1)
-      .get();
-    if (periodSnap.empty) {
-      const result = { uploadedDays: 0, totalDays: 0, percentage: 0 };
-      setCache(cache.progress, key, result);
-      return result;
-    }
-    const period = periodSnap.docs[0].data();
-    const start = new Date(period.tanggalMulai);
-    const end = period.tanggalSelesai ? new Date(period.tanggalSelesai) : new Date();
-    const totalDays = Math.ceil((end - start) / (1000*60*60*24)) + 1;
-    const logSnap = await db.collection('logbookMagang')
-      .where('userId', '==', mahasiswaId)
-      .where('pdkId', '==', pdkId)
-      .where('status', '==', 'approved')
-      .get();
-    const uniqueDates = new Set();
-    logSnap.docs.forEach(doc => {
-      if (doc.data().tanggal) uniqueDates.add(doc.data().tanggal);
-    });
-    const uploadedDays = uniqueDates.size;
-    const percentage = totalDays > 0 ? Math.min(100, Math.round((uploadedDays / totalDays) * 100)) : 0;
-    const result = { uploadedDays, totalDays, percentage };
-    setCache(cache.progress, key, result);
-    return result;
-  } catch {
-    return { uploadedDays: 0, totalDays: 0, percentage: 0 };
-  }
-}
+// Progress magang sekarang dihitung lewat helpers/magangHelper.js
+// (getProgressMagangHarian, sudah punya cache sendiri) supaya tidak ada
+// logika yang terduplikasi/berpotensi drift dari versi di routes/landing.js.
 
 async function getStatistikProdi() {
   const now = Date.now();
@@ -136,7 +102,7 @@ router.get('/', async (req, res) => {
       if (imageUrls.length === 0) continue;
       const { nama, nim } = await getMahasiswaInfo(data.userId);
       const { pembimbing1, pembimbing2 } = await getPembimbingMahasiswa(data.userId);
-      const progress = await getProgressMagang(data.userId, data.pdkId);
+      const progress = await getProgressMagangHarian(data.userId, data.pdkId);
       for (const rawUrl of imageUrls) {
         let imageUrl = rawUrl;
         if (imageUrl.includes('drive.google.com')) {

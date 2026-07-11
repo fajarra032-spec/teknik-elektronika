@@ -49,15 +49,27 @@ router.post('/send', async (req, res) => {
 });
 
 // GET /dosen/chat/messages/:userId - ambil pesan dengan mahasiswa tertentu
+// ?sejak=<timestamp ISO> - jika diisi, hanya ambil pesan yang lebih baru dari
+// itu (dipakai saat polling berkala supaya tidak baca ulang seluruh riwayat)
 router.get('/messages/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const messages = await db.collection('chats')
+    const { sejak } = req.query;
+
+    let query = db.collection('chats')
       .where('senderId', 'in', [req.user.id, userId])
-      .where('receiverId', 'in', [req.user.id, userId])
-      .orderBy('timestamp', 'asc')
-      .get();
-    const messageList = messages.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      .where('receiverId', 'in', [req.user.id, userId]);
+
+    if (sejak) {
+      query = query.where('timestamp', '>', sejak).orderBy('timestamp', 'asc');
+      const messages = await query.get();
+      return res.json(messages.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }
+
+    // Pemuatan pertama: batasi ke 50 pesan terakhir saja
+    query = query.orderBy('timestamp', 'desc').limit(50);
+    const messages = await query.get();
+    const messageList = messages.docs.map(doc => ({ id: doc.id, ...doc.data() })).reverse();
     res.json(messageList);
   } catch (error) {
     console.error('Error get messages:', error);

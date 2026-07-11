@@ -393,10 +393,21 @@ router.get('/:id', async (req, res) => {
     let tugasList = [];
     try {
       const periodeAktif = getPeriodeAktif();
-      const tugasSnapshot = await db.collection('tugas')
+      let tugasSnapshot = await db.collection('tugas')
         .where('mkId', '==', req.params.id)
+        .where('periode', '==', periodeAktif)
         .orderBy('deadline', 'asc')
         .get();
+
+      if (tugasSnapshot.empty) {
+        const semuaSnapshot = await db.collection('tugas').where('mkId', '==', req.params.id).orderBy('deadline', 'asc').get();
+        const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
+        if (perluDitandai.length > 0) {
+          await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode: periodeAktif }).catch(() => {})));
+        }
+        tugasSnapshot = semuaSnapshot;
+      }
+
       tugasList = tugasSnapshot.docs
         .filter(doc => (doc.data().periode || periodeAktif) === periodeAktif) // data lama tanpa periode dianggap periode aktif
         .map(doc => ({

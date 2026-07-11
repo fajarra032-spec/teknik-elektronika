@@ -1,60 +1,77 @@
 {
   "indexes": [
     {
-      "collectionId": "magangPeriod",
+      "collectionGroup": "logbookMagang",
+      "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "mahasiswaId",
-          "mode": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "mode": "ASCENDING"
-        }
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "pdkId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionId": "magangPeriod",
+      "collectionGroup": "logbookMagang",
+      "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "mahasiswaId",
-          "mode": "ASCENDING"
-        },
-        {
-          "fieldPath": "pdkId",
-          "mode": "ASCENDING"
-        }
+        { "fieldPath": "mahasiswaId", "order": "ASCENDING" },
+        { "fieldPath": "pdkId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionId": "magangPeriod",
+      "collectionGroup": "magangPeriod",
+      "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "status",
-          "mode": "ASCENDING"
-        },
-        {
-          "fieldPath": "pdkKode",
-          "mode": "ASCENDING"
-        }
+        { "fieldPath": "mahasiswaId", "order": "ASCENDING" },
+        { "fieldPath": "pdkId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionId": "logbookMagang",
+      "collectionGroup": "tugas",
+      "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "userId",
-          "mode": "ASCENDING"
-        },
-        {
-          "fieldPath": "pdkId",
-          "mode": "ASCENDING"
-        },
-        {
-          "fieldPath": "tanggal",
-          "mode": "DESCENDING"
-        }
+        { "fieldPath": "mkId", "order": "ASCENDING" },
+        { "fieldPath": "periode", "order": "ASCENDING" },
+        { "fieldPath": "deadline", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tugas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "dosenId", "order": "ASCENDING" },
+        { "fieldPath": "periode", "order": "ASCENDING" },
+        { "fieldPath": "deadline", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "nilai",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "mkId", "order": "ASCENDING" },
+        { "fieldPath": "mahasiswaId", "order": "ASCENDING" },
+        { "fieldPath": "periode", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "enrollment",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "mkId", "order": "ASCENDING" },
+        { "fieldPath": "semester", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "kelasChat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "mkId", "order": "ASCENDING" },
+        { "fieldPath": "periode", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "ASCENDING" }
       ]
     }
-  ]
+  ],
+  "fieldOverrides": []
 }

@@ -1,6 +1,64 @@
 // helpers/magangHelper.js
 const { db } = require('../config/firebaseAdmin');
 const { getActiveMagangPeriods } = require('../models/magangPeriodModel');
+const { TTLCache } = require('./cache');
+
+// Cache 15 menit: dipakai untuk konteks publik (beranda, papan display) yang
+// tidak butuh akurasi real-time detik-per-detik. Sebelumnya logika ini
+// terduplikasi di routes/display.js (sudah benar di-cache per-modul) dan
+// routes/landing.js (cache-nya dibuat ulang setiap request, jadi tidak
+// pernah benar-benar tersimpan antar kunjungan) - sekarang disatukan di sini.
+const progressHarianCache = new TTLCache(15 * 60 * 1000);
+
+/**
+ * Menghitung progres magang berbasis HARI (jumlah hari logbook disetujui
+ * dibagi total hari periode magang), dipakai untuk tampilan publik
+ * (beranda, papan display). Hasilnya di-cache 15 menit karena tidak perlu
+ * real-time untuk konteks publik ini.
+ * @param {string} mahasiswaId
+ * @param {string} pdkId
+ * @returns {Promise<{uploadedDays: number, totalDays: number, percentage: number}>}
+ */
+async function getProgressMagangHarian(mahasiswaId, pdkId) {
+  const key = `${mahasiswaId}_${pdkId}`;
+  return progressHarianCache.getOrFetch(key, async () => {
+    try {
+      const periodSnap = await db.collection('magangPeriod')
+        .where('mahasiswaId', '==', mahasiswaId)
+        .where('pdkId', '==', pdkId)
+        .where('status', '==', 'active')
+        .limit(1)
+        .get();
+
+      if (periodSnap.empty) {
+        return { uploadedDays: 0, totalDays: 0, percentage: 0 };
+      }
+
+      const period = periodSnap.docs[0].data();
+      const start = new Date(period.tanggalMulai);
+      const end = period.tanggalSelesai ? new Date(period.tanggalSelesai) : new Date();
+      const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+      const logSnap = await db.collection('logbookMagang')
+        .where('userId', '==', mahasiswaId)
+        .where('pdkId', '==', pdkId)
+        .where('status', '==', 'approved')
+        .get();
+
+      const uniqueDates = new Set();
+      logSnap.docs.forEach(doc => {
+        if (doc.data().tanggal) uniqueDates.add(doc.data().tanggal);
+      });
+      const uploadedDays = uniqueDates.size;
+      const percentage = totalDays > 0 ? Math.min(100, Math.round((uploadedDays / totalDays) * 100)) : 0;
+
+      return { uploadedDays, totalDays, percentage };
+    } catch (error) {
+      console.error('Error getProgressMagangHarian:', error);
+      return { uploadedDays: 0, totalDays: 0, percentage: 0 };
+    }
+  });
+}
 
 /**
  * Cek apakah mahasiswa bisa submit logbook untuk PDK tertentu
@@ -196,6 +254,7 @@ module.exports = {
   getActivePdkList,
   getActivePdkWithPeriod,
   getMagangProgress,
+  getProgressMagangHarian,
   formatTanggal,
   getNilaiHuruf
 };

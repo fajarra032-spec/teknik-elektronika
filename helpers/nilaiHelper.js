@@ -72,17 +72,28 @@ async function saveNilai(mahasiswaId, mkId, tugasId, judulTugas, nilai, periode 
  * @returns {Promise<Object>} Map mahasiswaId -> { tugasId: nilai }
  */
 async function getNilaiByMkId(mkId, periode = getPeriodeAktif()) {
-  const snapshot = await db.collection('nilai')
+  // Jalur murah: query terfilter periode langsung di Firestore (cuma baca
+  // dokumen yang benar-benar cocok, bukan seluruh riwayat).
+  let snapshot = await db.collection('nilai')
     .where('mkId', '==', mkId)
+    .where('periode', '==', periode)
     .get();
+
+  if (snapshot.empty) {
+    // Kemungkinan data lama belum ditandai `periode` (migrasi belum jalan).
+    // Ambil semua utk MK ini sekali, lalu tandai otomatis (self-heal) supaya
+    // panggilan berikutnya bisa lewat jalur murah di atas lagi.
+    const semuaSnapshot = await db.collection('nilai').where('mkId', '==', mkId).get();
+    const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
+    if (perluDitandai.length > 0) {
+      await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode }).catch(() => {})));
+    }
+    snapshot = semuaSnapshot;
+  }
 
   const result = {};
   snapshot.docs.forEach(doc => {
     const data = doc.data();
-    // Data lama (sebelum fitur pemisahan periode) tidak punya field `periode`
-    // sama sekali. Perlakukan sebagai milik periode aktif (bukan disembunyikan)
-    // supaya tugas/nilai lama tidak mendadak hilang jika skrip migrasi belum
-    // sempat dijalankan.
     const periodeData = data.periode || periode;
     if (periodeData !== periode) return;
 
@@ -110,10 +121,21 @@ async function getNilaiByMkId(mkId, periode = getPeriodeAktif()) {
  * @returns {Promise<Array>} Daftar tugas
  */
 async function getTugasByMkId(mkId, periode = getPeriodeAktif()) {
-  const snapshot = await db.collection('tugas')
+  let snapshot = await db.collection('tugas')
     .where('mkId', '==', mkId)
+    .where('periode', '==', periode)
     .orderBy('deadline', 'asc')
     .get();
+
+  if (snapshot.empty) {
+    // Fallback + self-heal: data lama mungkin belum ditandai periode
+    const semuaSnapshot = await db.collection('tugas').where('mkId', '==', mkId).orderBy('deadline', 'asc').get();
+    const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
+    if (perluDitandai.length > 0) {
+      await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode }).catch(() => {})));
+    }
+    snapshot = semuaSnapshot;
+  }
 
   return snapshot.docs
     .filter(doc => (doc.data().periode || periode) === periode) // data lama tanpa periode dianggap periode aktif

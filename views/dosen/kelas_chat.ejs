@@ -99,6 +99,10 @@
   const chatInput = document.getElementById('chat-input');
   const profilModal = new bootstrap.Modal(document.getElementById('profilModal'));
 
+  let lastTimestamp = null;
+  let pollTimer = null;
+  const POLL_INTERVAL_MS = 8000;
+
   function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str || '';
@@ -133,28 +137,37 @@
     profilModal.show();
   }
 
-  function renderMessages(messages) {
-    if (!messages.length) {
-      chatMessages.innerHTML = '<p class="text-muted text-center small">Belum ada pesan. Mulai diskusi kelas!</p>';
-      return;
-    }
-    chatMessages.innerHTML = messages.map(m => {
-      const isMe = m.senderId === currentUserId;
-      const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
-      const roleClass = m.senderRole === 'dosen' ? 'role-dosen' : '';
-      return `<div class="bubble-wrap ${isMe ? 'me' : ''}">
-                ${!isMe ? `<div class="bubble-sender">${escapeHtml(m.senderNama)}${m.senderRole === 'dosen' ? ' 👨‍🏫' : ''}</div>` : ''}
-                <div class="bubble ${isMe ? 'me' : 'other'} ${roleClass}">${escapeHtml(m.pesan)}<span class="bubble-time">${time}</span></div>
-              </div>`;
-    }).join('');
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+  function bubbleHtml(m) {
+    const isMe = m.senderId === currentUserId;
+    const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+    const roleClass = m.senderRole === 'dosen' ? 'role-dosen' : '';
+    return `<div class="bubble-wrap ${isMe ? 'me' : ''}">
+              ${!isMe ? `<div class="bubble-sender">${escapeHtml(m.senderNama)}${m.senderRole === 'dosen' ? ' 👨‍🏫' : ''}</div>` : ''}
+              <div class="bubble ${isMe ? 'me' : 'other'} ${roleClass}">${escapeHtml(m.pesan)}<span class="bubble-time">${time}</span></div>
+            </div>`;
   }
 
   async function loadMessages() {
     try {
-      const res = await fetch(`/dosen/kelas-chat/${mkId}/messages`);
+      const url = lastTimestamp
+        ? `/dosen/kelas-chat/${mkId}/messages?sejak=${encodeURIComponent(lastTimestamp)}`
+        : `/dosen/kelas-chat/${mkId}/messages`;
+      const res = await fetch(url);
       const messages = await res.json();
-      renderMessages(Array.isArray(messages) ? messages : []);
+      if (!Array.isArray(messages) || messages.length === 0) {
+        if (lastTimestamp === null) {
+          chatMessages.innerHTML = '<p class="text-muted text-center small">Belum ada pesan. Mulai diskusi kelas!</p>';
+        }
+        return;
+      }
+
+      if (lastTimestamp === null) {
+        chatMessages.innerHTML = messages.map(bubbleHtml).join('');
+      } else {
+        chatMessages.insertAdjacentHTML('beforeend', messages.map(bubbleHtml).join(''));
+      }
+      lastTimestamp = messages[messages.length - 1].timestamp;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     } catch (err) {
       console.error('Gagal memuat pesan kelas:', err);
     }
@@ -177,8 +190,27 @@
     }
   });
 
+  function startPolling() {
+    if (pollTimer) return;
+    pollTimer = setInterval(loadMessages, POLL_INTERVAL_MS);
+  }
+  function stopPolling() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopPolling();
+    } else {
+      loadMessages();
+      startPolling();
+    }
+  });
+
   loadMessages();
-  setInterval(loadMessages, 4000);
+  if (!document.hidden) startPolling();
 </script>
 
 <%- include('../partials/footer') %>

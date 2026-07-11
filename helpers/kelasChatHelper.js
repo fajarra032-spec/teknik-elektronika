@@ -95,17 +95,38 @@ async function isDosenPengampuMk(mkId, dosenId) {
 }
 
 /**
- * Mengambil seluruh pesan chat kelas untuk satu MK pada periode aktif,
- * diurutkan dari yang paling lama ke yang terbaru.
+ * Mengambil pesan chat kelas untuk satu MK pada periode aktif.
+ *
+ * PENTING (biaya baca Firestore): jika `sejak` diisi, hanya pesan yang lebih
+ * baru dari timestamp itu yang dibaca — dipakai untuk polling berkala supaya
+ * tidak membaca ulang SELURUH riwayat pesan setiap beberapa detik. Tanpa
+ * `sejak` (pemuatan pertama kali), dibatasi ke 50 pesan terakhir saja supaya
+ * kelas dengan riwayat panjang tidak membaca ratusan dokumen sekaligus.
+ *
+ * @param {string} mkId
+ * @param {string} [sejak] - ISO timestamp; jika diisi hanya ambil pesan setelah ini
  */
-async function getPesanKelas(mkId) {
+async function getPesanKelas(mkId, sejak = null) {
   const periode = getPeriodeAktif();
+
+  if (sejak) {
+    const snapshot = await db.collection('kelasChat')
+      .where('mkId', '==', mkId)
+      .where('periode', '==', periode)
+      .where('timestamp', '>', sejak)
+      .orderBy('timestamp', 'asc')
+      .get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  }
+
+  // Pemuatan pertama: batasi ke 50 pesan terakhir saja
   const snapshot = await db.collection('kelasChat')
     .where('mkId', '==', mkId)
     .where('periode', '==', periode)
-    .orderBy('timestamp', 'asc')
+    .orderBy('timestamp', 'desc')
+    .limit(50)
     .get();
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).reverse();
 }
 
 /**

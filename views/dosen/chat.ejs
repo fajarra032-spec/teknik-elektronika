@@ -35,17 +35,14 @@
   const chatForm = document.getElementById('chat-form');
   const chatInput = document.getElementById('chat-input');
 
-  function renderMessages(messages) {
-    if (!messages.length) {
-      chatBox.innerHTML = '<p class="text-muted text-center small">Belum ada pesan. Mulai percakapan!</p>';
-      return;
-    }
-    chatBox.innerHTML = messages.map(m => {
-      const isMe = m.senderId === dosenId;
-      const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
-      return `<div class="bubble ${isMe ? 'bubble-me' : 'bubble-other'}">${escapeHtml(m.message)}<span class="bubble-time">${time}</span></div>`;
-    }).join('');
-    chatBox.scrollTop = chatBox.scrollHeight;
+  let lastTimestamp = null;
+  let pollTimer = null;
+  const POLL_INTERVAL_MS = 8000; // dinaikkan dari 5 detik -> 8 detik untuk kurangi beban baca
+
+  function bubbleHtml(m) {
+    const isMe = m.senderId === dosenId;
+    const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+    return `<div class="bubble ${isMe ? 'bubble-me' : 'bubble-other'}">${escapeHtml(m.message)}<span class="bubble-time">${time}</span></div>`;
   }
 
   function escapeHtml(str) {
@@ -54,11 +51,29 @@
     return div.innerHTML;
   }
 
+  // Muat pesan. Pemuatan pertama ambil 50 pesan terakhir; setelahnya hanya
+  // minta pesan yang lebih baru dari pesan terakhir yang sudah dimuat, bukan
+  // baca ulang seluruh riwayat percakapan setiap kali polling.
   async function loadMessages() {
     try {
-      const res = await fetch(`/dosen/chat/messages/${mahasiswaId}`);
+      const url = lastTimestamp
+        ? `/dosen/chat/messages/${mahasiswaId}?sejak=${encodeURIComponent(lastTimestamp)}`
+        : `/dosen/chat/messages/${mahasiswaId}`;
+      const res = await fetch(url);
       const messages = await res.json();
-      renderMessages(Array.isArray(messages) ? messages : []);
+      if (!Array.isArray(messages) || messages.length === 0) {
+        if (lastTimestamp === null) {
+          chatBox.innerHTML = '<p class="text-muted text-center small">Belum ada pesan. Mulai percakapan!</p>';
+        }
+        return;
+      }
+      if (lastTimestamp === null) {
+        chatBox.innerHTML = messages.map(bubbleHtml).join('');
+      } else {
+        chatBox.insertAdjacentHTML('beforeend', messages.map(bubbleHtml).join(''));
+      }
+      lastTimestamp = messages[messages.length - 1].timestamp;
+      chatBox.scrollTop = chatBox.scrollHeight;
     } catch (err) {
       console.error('Gagal memuat pesan:', err);
     }
@@ -81,8 +96,29 @@
     }
   });
 
+  // Jeda polling saat tab tidak terlihat, supaya tidak terus membaca
+  // Firestore saat halaman ditinggal terbuka di background/tab lain.
+  function startPolling() {
+    if (pollTimer) return;
+    pollTimer = setInterval(loadMessages, POLL_INTERVAL_MS);
+  }
+  function stopPolling() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopPolling();
+    } else {
+      loadMessages();
+      startPolling();
+    }
+  });
+
   loadMessages();
-  setInterval(loadMessages, 5000); // polling sederhana tiap 5 detik
+  if (!document.hidden) startPolling();
 </script>
 
 <%- include('../partials/footer') %>

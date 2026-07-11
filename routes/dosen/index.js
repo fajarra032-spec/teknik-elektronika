@@ -123,10 +123,24 @@ router.get('/', (req, res) => {
 router.get('/tugas', async (req, res) => {
   try {
     const periodeAktif = getPeriodeAktif();
-    const snapshot = await db.collection('tugas')
+    let snapshot = await db.collection('tugas')
       .where('dosenId', '==', req.dosen.id)
+      .where('periode', '==', periodeAktif)
       .orderBy('deadline', 'desc')
       .get();
+
+    if (snapshot.empty) {
+      // Fallback + self-heal: data lama mungkin belum ditandai periode
+      const semuaSnapshot = await db.collection('tugas')
+        .where('dosenId', '==', req.dosen.id)
+        .orderBy('deadline', 'desc')
+        .get();
+      const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
+      if (perluDitandai.length > 0) {
+        await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode: periodeAktif }).catch(() => {})));
+      }
+      snapshot = semuaSnapshot;
+    }
 
     const tugasList = snapshot.docs
       .filter(doc => (doc.data().periode || periodeAktif) === periodeAktif) // data lama tanpa periode dianggap periode aktif
