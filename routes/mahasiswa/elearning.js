@@ -13,7 +13,7 @@ const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif } = require('../../helpers/nilaiHelper');
-const { mataKuliahCache, tugasAktifCache } = require('../../helpers/cache');
+const { mataKuliahCache, tugasAktifCache, dosenCache } = require('../../helpers/cache');
 
 // ============================================================================
 // KONSTANTA FOLDER UTAMA (Data WEB)
@@ -261,15 +261,22 @@ router.get('/mk/:id', async (req, res) => {
     const jumlahMahasiswa = countSnapshot.data().count;
 
     const periodeAktif = getPeriodeAktif();
-    let tugasSnapshot = await db.collection('tugas')
-      .where('mkId', '==', mkId)
-      .where('periode', '==', periodeAktif)
-      .orderBy('deadline', 'asc')
-      .get();
+    let tugasSnapshot;
+    try {
+      tugasSnapshot = await db.collection('tugas')
+        .where('mkId', '==', mkId)
+        .where('periode', '==', periodeAktif)
+        .orderBy('deadline', 'asc')
+        .get();
+    } catch (indexError) {
+      // Index composite belum siap di Firestore - mundur ke query aman
+      console.error('Index tugas(mkId,periode,deadline) belum siap, fallback:', indexError.message);
+      tugasSnapshot = await db.collection('tugas').where('mkId', '==', mkId).get();
+    }
 
     if (tugasSnapshot.empty) {
       // Fallback + self-heal: data lama mungkin belum ditandai periode
-      const semuaSnapshot = await db.collection('tugas').where('mkId', '==', mkId).orderBy('deadline', 'asc').get();
+      const semuaSnapshot = await db.collection('tugas').where('mkId', '==', mkId).get();
       const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
       if (perluDitandai.length > 0) {
         await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode: periodeAktif }).catch(() => {})));
@@ -285,6 +292,7 @@ router.get('/mk/:id', async (req, res) => {
       tugas.pengumpulan = pengumpulan;
       tugasList.push(tugas);
     }
+    tugasList.sort((a, b) => (a.deadline || '').localeCompare(b.deadline || ''));
 
     res.render('mahasiswa/elearning/mk_detail', {
       title: `${mk.kode} - ${mk.nama}`,

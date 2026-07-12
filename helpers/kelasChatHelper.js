@@ -110,23 +110,43 @@ async function getPesanKelas(mkId, sejak = null) {
   const periode = getPeriodeAktif();
 
   if (sejak) {
-    const snapshot = await db.collection('kelasChat')
-      .where('mkId', '==', mkId)
-      .where('periode', '==', periode)
-      .where('timestamp', '>', sejak)
-      .orderBy('timestamp', 'asc')
-      .get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    try {
+      const snapshot = await db.collection('kelasChat')
+        .where('mkId', '==', mkId)
+        .where('periode', '==', periode)
+        .where('timestamp', '>', sejak)
+        .orderBy('timestamp', 'asc')
+        .get();
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (indexError) {
+      // Index belum siap - mundur ke query aman (mkId saja), saring & urutkan di JS
+      console.error('Index kelasChat belum siap, fallback:', indexError.message);
+      const snapshot = await db.collection('kelasChat').where('mkId', '==', mkId).get();
+      return snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(m => (m.periode || periode) === periode && m.timestamp > sejak)
+        .sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
+    }
   }
 
   // Pemuatan pertama: batasi ke 50 pesan terakhir saja
-  const snapshot = await db.collection('kelasChat')
-    .where('mkId', '==', mkId)
-    .where('periode', '==', periode)
-    .orderBy('timestamp', 'desc')
-    .limit(50)
-    .get();
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).reverse();
+  try {
+    const snapshot = await db.collection('kelasChat')
+      .where('mkId', '==', mkId)
+      .where('periode', '==', periode)
+      .orderBy('timestamp', 'desc')
+      .limit(50)
+      .get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).reverse();
+  } catch (indexError) {
+    console.error('Index kelasChat belum siap, fallback:', indexError.message);
+    const snapshot = await db.collection('kelasChat').where('mkId', '==', mkId).get();
+    return snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(m => (m.periode || periode) === periode)
+      .sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''))
+      .slice(-50);
+  }
 }
 
 /**

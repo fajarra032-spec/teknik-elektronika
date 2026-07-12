@@ -123,17 +123,25 @@ router.get('/', (req, res) => {
 router.get('/tugas', async (req, res) => {
   try {
     const periodeAktif = getPeriodeAktif();
-    let snapshot = await db.collection('tugas')
-      .where('dosenId', '==', req.dosen.id)
-      .where('periode', '==', periodeAktif)
-      .orderBy('deadline', 'desc')
-      .get();
+    let snapshot;
+    try {
+      snapshot = await db.collection('tugas')
+        .where('dosenId', '==', req.dosen.id)
+        .where('periode', '==', periodeAktif)
+        .orderBy('deadline', 'desc')
+        .get();
+    } catch (indexError) {
+      // Index composite belum siap di Firestore - mundur ke query paling
+      // sederhana (satu filter saja, tanpa orderBy) yang tidak pernah butuh
+      // index gabungan, lalu urutkan manual di JS.
+      console.error('Index tugas(dosenId,periode,deadline) belum siap, fallback:', indexError.message);
+      snapshot = await db.collection('tugas').where('dosenId', '==', req.dosen.id).get();
+    }
 
     if (snapshot.empty) {
       // Fallback + self-heal: data lama mungkin belum ditandai periode
       const semuaSnapshot = await db.collection('tugas')
         .where('dosenId', '==', req.dosen.id)
-        .orderBy('deadline', 'desc')
         .get();
       const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
       if (perluDitandai.length > 0) {
@@ -144,6 +152,7 @@ router.get('/tugas', async (req, res) => {
 
     const tugasList = snapshot.docs
       .filter(doc => (doc.data().periode || periodeAktif) === periodeAktif) // data lama tanpa periode dianggap periode aktif
+      .sort((a, b) => (b.data().deadline || '').localeCompare(a.data().deadline || ''))
       .map(doc => {
       const data = doc.data();
       return {

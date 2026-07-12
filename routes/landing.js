@@ -10,6 +10,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { getProgressMagangHarian } = require('../helpers/magangHelper');
+const { getGabunganLulusan, normalisasiStatus } = require('../helpers/lulusanHelper');
 
 // ============================================================================
 // FUNGSI BANTU
@@ -525,68 +526,9 @@ router.get('/validasi', async (req, res) => {
 // LULUSAN (TRACER STUDY) - gabungan dari 2 sumber:
 //   1) tracerStudy: isian mandiri mahasiswa/lulusan yang sudah disetujui admin (isPublic=true)
 //   2) lulusan: data yang diinput/dikurasi langsung oleh admin (selalu dianggap publik)
+// Logika gabungannya sekarang di helpers/lulusanHelper.js (dipakai bersama
+// dengan panel admin Track Lulusan supaya kedua sisi selalu sinkron).
 // ============================================================================
-
-// Normalisasi status pekerjaan ke satu set nilai baku, karena kedua koleksi
-// sumber memakai istilah yang berbeda-beda.
-function normalisasiStatus(rawStatus) {
-  const map = {
-    'kuliah': 'melanjutkan_studi',
-    'melanjutkan_studi': 'melanjutkan_studi',
-    'belum bekerja': 'belum_bekerja',
-    'belum_bekerja': 'belum_bekerja',
-    'bekerja': 'bekerja',
-    'wirausaha': 'wirausaha'
-  };
-  return map[rawStatus] || rawStatus || 'belum_bekerja';
-}
-
-async function getGabunganLulusan() {
-  const [tracerSnap, lulusanSnap] = await Promise.all([
-    db.collection('tracerStudy').where('isPublic', '==', true).get(),
-    db.collection('lulusan').get()
-  ]);
-
-  const dariSurvei = tracerSnap.docs.map(doc => {
-    const d = doc.data();
-    return {
-      id: `survei_${doc.id}`,
-      sumber: 'survei',
-      nama: d.nama || '-',
-      nim: d.nim || '-',
-      tahunLulus: d.tahunLulus || null,
-      status: normalisasiStatus(d.statusPekerjaan),
-      pekerjaan: d.pekerjaan || '',
-      tempatKerja: d.namaPerusahaan || d.tempatKerja || '',
-      alamatKerja: d.alamatKerja || '',
-      gaji: d.gaji || '',
-      email: '',
-      noHp: '',
-      foto: d.fotoUrl || null
-    };
-  });
-
-  const dariAdmin = lulusanSnap.docs.map(doc => {
-    const d = doc.data();
-    return {
-      id: `manual_${doc.id}`,
-      sumber: 'manual',
-      nama: d.nama || '-',
-      nim: d.nim || '-',
-      tahunLulus: d.tahunLulus || null,
-      status: normalisasiStatus(d.status),
-      pekerjaan: d.pekerjaan || '',
-      tempatKerja: d.tempatKerja || '',
-      alamatKerja: d.alamatKerja || '',
-      gaji: d.gaji || '',
-      email: d.email || '',
-      noHp: d.noHp || '',
-      foto: d.foto || null
-    };
-  });
-
-  return [...dariSurvei, ...dariAdmin];
-}
 
 router.get('/lulusan', async (req, res) => {
   try {

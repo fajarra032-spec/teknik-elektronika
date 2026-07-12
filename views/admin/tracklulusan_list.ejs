@@ -31,6 +31,13 @@
         <option value="belum_bekerja" <%= filterStatus === 'belum_bekerja' ? 'selected' : '' %>>Belum Bekerja</option>
       </select>
     </div>
+    <div class="col-auto">
+      <select name="sumber" class="form-select" onchange="this.form.submit()">
+        <option value="">Semua Sumber</option>
+        <option value="manual" <%= filterSumber === 'manual' ? 'selected' : '' %>>Input Admin</option>
+        <option value="survei" <%= filterSumber === 'survei' ? 'selected' : '' %>>Survei Mandiri</option>
+      </select>
+    </div>
   </form>
 
   <div class="info-card">
@@ -47,6 +54,7 @@
                 <th>Tahun Lulus</th>
                 <th>Status</th>
                 <th>Tempat Kerja</th>
+                <th>Sumber</th>
                 <th></th>
               </tr>
             </thead>
@@ -55,12 +63,29 @@
                 <tr>
                   <td><%= l.nama %></td>
                   <td><%= l.nim %></td>
-                  <td><%= l.tahunLulus %></td>
+                  <td><%= l.tahunLulus || '-' %></td>
                   <td><span class="badge bg-info-subtle text-info-emphasis"><%= l.status %></span></td>
                   <td><%= l.tempatKerja || '-' %></td>
+                  <td>
+                    <% if (l.sumber === 'manual') { %>
+                      <span class="badge bg-secondary">Input Admin</span>
+                    <% } else { %>
+                      <span class="badge bg-<%= l.isPublic ? 'success' : 'warning' %>">
+                        Survei &middot; <%= l.isPublic ? 'Publik' : 'Menunggu' %>
+                      </span>
+                    <% } %>
+                  </td>
                   <td class="text-nowrap">
-                    <a href="/admin/tracklulusan/<%= l.id %>" class="btn btn-icon-sm btn-detail" title="Detail"><i class="bi bi-eye"></i></a>
-                    <a href="/admin/tracklulusan/<%= l.id %>/edit" class="btn btn-icon-sm btn-edit" title="Edit"><i class="bi bi-pencil"></i></a>
+                    <% if (l.sumber === 'manual') { %>
+                      <a href="/admin/tracklulusan/<%= l.rawId %>" class="btn btn-icon-sm btn-detail" title="Detail"><i class="bi bi-eye"></i></a>
+                      <a href="/admin/tracklulusan/<%= l.rawId %>/edit" class="btn btn-icon-sm btn-edit" title="Edit"><i class="bi bi-pencil"></i></a>
+                    <% } else { %>
+                      <form method="POST" action="/admin/tracklulusan/survey/<%= l.rawId %>/toggle" style="display:inline">
+                        <button type="submit" class="btn btn-sm <%= l.isPublic ? 'btn-outline-danger' : 'btn-outline-success' %>">
+                          <%= l.isPublic ? 'Sembunyikan' : 'Tampilkan' %>
+                        </button>
+                      </form>
+                    <% } %>
                   </td>
                 </tr>
               <% }); %>

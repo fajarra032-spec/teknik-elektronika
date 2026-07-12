@@ -121,15 +121,22 @@ async function getNilaiByMkId(mkId, periode = getPeriodeAktif()) {
  * @returns {Promise<Array>} Daftar tugas
  */
 async function getTugasByMkId(mkId, periode = getPeriodeAktif()) {
-  let snapshot = await db.collection('tugas')
-    .where('mkId', '==', mkId)
-    .where('periode', '==', periode)
-    .orderBy('deadline', 'asc')
-    .get();
+  let snapshot;
+  try {
+    snapshot = await db.collection('tugas')
+      .where('mkId', '==', mkId)
+      .where('periode', '==', periode)
+      .orderBy('deadline', 'asc')
+      .get();
+  } catch (indexError) {
+    // Index composite (mkId, periode, deadline) belum siap di Firestore - mundur ke query aman
+    console.error('Index tugas belum siap, fallback ke query tanpa periode:', indexError.message);
+    snapshot = await db.collection('tugas').where('mkId', '==', mkId).get();
+  }
 
   if (snapshot.empty) {
     // Fallback + self-heal: data lama mungkin belum ditandai periode
-    const semuaSnapshot = await db.collection('tugas').where('mkId', '==', mkId).orderBy('deadline', 'asc').get();
+    const semuaSnapshot = await db.collection('tugas').where('mkId', '==', mkId).get();
     const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
     if (perluDitandai.length > 0) {
       await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode }).catch(() => {})));
@@ -139,6 +146,7 @@ async function getTugasByMkId(mkId, periode = getPeriodeAktif()) {
 
   return snapshot.docs
     .filter(doc => (doc.data().periode || periode) === periode) // data lama tanpa periode dianggap periode aktif
+    .sort((a, b) => (a.data().deadline || '').localeCompare(b.data().deadline || ''))
     .map(doc => ({
       id: doc.id,
       judul: doc.data().judul,

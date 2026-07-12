@@ -13,6 +13,7 @@ const { Readable } = require('stream');
 const multer = require('multer');
 const sharp = require('sharp'); // untuk kompresi gambar
 const upload = multer({ storage: multer.memoryStorage() });
+const { getGabunganLulusan } = require('../../helpers/lulusanHelper');
 
 // ============================================================================
 // KONSTANTA FOLDER UTAMA (Data WEB)
@@ -123,23 +124,27 @@ router.post('/survey/:userId/toggle', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    const { tahun, status } = req.query;
-    let query = db.collection('lulusan').orderBy('tahunLulus', 'desc').orderBy('nama');
+    const { tahun, status, sumber } = req.query;
 
-    if (tahun) {
-      query = query.where('tahunLulus', '==', parseInt(tahun));
-    }
-    if (status) {
-      query = query.where('status', '==', status);
-    }
+    // Gabungan dari kedua sumber (manual admin + survei mandiri mahasiswa),
+    // termasuk yang masih menunggu tinjauan, supaya admin melihat SATU daftar
+    // lengkap - bukan dua daftar terpisah yang terasa tidak nyambung.
+    let lulusan = await getGabunganLulusan({ hanyaPublik: false });
 
-    const snapshot = await query.get();
-    const lulusan = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (tahun) lulusan = lulusan.filter(l => String(l.tahunLulus) === String(tahun));
+    if (status) lulusan = lulusan.filter(l => l.status === status);
+    if (sumber) lulusan = lulusan.filter(l => l.sumber === sumber);
 
-    // Ambil daftar tahun unik untuk filter
-    const semua = await db.collection('lulusan').get();
+    lulusan.sort((a, b) => {
+      const tahunDiff = (b.tahunLulus || 0) - (a.tahunLulus || 0);
+      if (tahunDiff !== 0) return tahunDiff;
+      return String(a.nama).localeCompare(String(b.nama));
+    });
+
+    // Ambil daftar tahun unik untuk filter (dari gabungan, bukan cuma 'lulusan')
+    const semuaGabungan = await getGabunganLulusan({ hanyaPublik: false });
     const tahunSet = new Set();
-    semua.docs.forEach(doc => tahunSet.add(doc.data().tahunLulus));
+    semuaGabungan.forEach(l => { if (l.tahunLulus) tahunSet.add(l.tahunLulus); });
     const tahunList = Array.from(tahunSet).sort().reverse();
 
     res.render('admin/tracklulusan_list', {
@@ -147,7 +152,8 @@ router.get('/', async (req, res) => {
       lulusan,
       tahunList,
       filterTahun: tahun || '',
-      filterStatus: status || ''
+      filterStatus: status || '',
+      filterSumber: sumber || ''
     });
   } catch (error) {
     console.error('Error mengambil data lulusan:', error);

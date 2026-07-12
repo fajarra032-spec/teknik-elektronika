@@ -302,9 +302,15 @@ router.get('/:id', async (req, res) => {
     let tugasList = [];
     try {
       const periodeAktif = getPeriodeAktif();
-      let tugasSnapshot = await db.collection('tugas').where('mkId', '==', mkId).where('periode', '==', periodeAktif).orderBy('deadline', 'asc').get();
+      let tugasSnapshot;
+      try {
+        tugasSnapshot = await db.collection('tugas').where('mkId', '==', mkId).where('periode', '==', periodeAktif).orderBy('deadline', 'asc').get();
+      } catch (indexError) {
+        console.error('Index tugas belum siap, fallback:', indexError.message);
+        tugasSnapshot = await db.collection('tugas').where('mkId', '==', mkId).get();
+      }
       if (tugasSnapshot.empty) {
-        const semuaSnapshot = await db.collection('tugas').where('mkId', '==', mkId).orderBy('deadline', 'asc').get();
+        const semuaSnapshot = await db.collection('tugas').where('mkId', '==', mkId).get();
         const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
         if (perluDitandai.length > 0) {
           await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode: periodeAktif }).catch(() => {})));
@@ -313,6 +319,7 @@ router.get('/:id', async (req, res) => {
       }
       tugasList = tugasSnapshot.docs
         .filter(doc => (doc.data().periode || periodeAktif) === periodeAktif) // data lama tanpa periode dianggap periode aktif
+        .sort((a, b) => (a.data().deadline || '').localeCompare(b.data().deadline || ''))
         .map(doc => ({ id: doc.id, judul: doc.data().judul, deadline: doc.data().deadline, tipe: doc.data().tipe }));
     } catch (err) { console.error('Gagal ambil tugas:', err.message); }
 
