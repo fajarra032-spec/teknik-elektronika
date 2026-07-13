@@ -245,6 +245,9 @@
     <a class="nav-link <%= currentType === 'pengabdian' ? 'active' : '' %>" href="/admin/elk-library?type=pengabdian&status=<%= currentStatus || 'all' %>">
       <i class="bi bi-people-fill me-1"></i> Pengabdian
     </a>
+    <a class="nav-link <%= currentType === 'buku' ? 'active' : '' %>" href="/admin/elk-library?type=buku&status=<%= currentStatus || 'all' %>">
+      <i class="bi bi-book-fill me-1"></i> Buku
+    </a>
   </div>
 
   <div class="filter-bar fade-in" style="animation-delay: 0.1s;">
@@ -486,6 +489,72 @@
               <% }) %>
             <% } else { %>
                <tr><td colspan="6" class="empty-state"><i class="bi bi-box-seam"></i> Belum ada data pengabdian.</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% } %>
+  <% if (currentType === 'all' || currentType === 'buku') { %>
+    <div class="section-title fade-in d-flex justify-content-between align-items-center" style="animation-delay: 0.2s;">
+      <span><i class="bi bi-book-fill"></i> Buku</span>
+    </div>
+    <div class="d-flex justify-content-end mb-3 fade-in" style="animation-delay: 0.25s;">
+      <a href="/admin/elk-library/buku/tambah" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Tambah Buku
+      </a>
+    </div>
+    <div class="table-container fade-in" style="animation-delay: 0.3s;">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Judul Buku</th>
+              <th>Penulis</th>
+              <th>Tahun</th>
+              <th>Sumber</th>
+              <th>Status</th>
+              <th class="text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (bukuList && bukuList.length === 0) { %>
+               <tr><td colspan="6" class="empty-state"><i class="bi bi-book"></i> Belum ada data buku.</td></tr>
+            <% } else if (bukuList && bukuList.length > 0) { %>
+              <% bukuList.forEach(b => { %>
+                 <tr>
+                   <td>
+                     <strong><%= b.judul %></strong><br>
+                     <small class="text-muted"><i class="bi bi-calendar3 me-1"></i><%= b.createdAt ? new Date(b.createdAt).toLocaleDateString() : '' %></small>
+                   </td>
+                   <td><%= b.penulis || '-' %></td>
+                   <td><%= b.tahun %></td>
+                   <td>
+                     <span class="badge bg-<%= b.sumber === 'admin' ? 'secondary' : 'info' %> bg-opacity-75">
+                       <%= b.sumber === 'admin' ? 'Admin' : 'Dosen' %>
+                     </span>
+                   </td>
+                   <td><span class="badge-status badge-<%= b.status %>"><%= b.status === 'pending' ? 'Pending' : (b.status === 'approved' ? 'Disetujui' : 'Ditolak') %></span></td>
+                   <td>
+                     <div class="d-flex flex-wrap gap-2 justify-content-center">
+                       <a href="/admin/elk-library/buku/<%= b.id %>/edit" class="btn btn-sm btn-warning text-dark"><i class="bi bi-pencil-square"></i> Edit</a>
+                       <% if (b.status === 'pending') { %>
+                         <form method="POST" action="/admin/elk-library/buku/<%= b.id %>/approve" style="display:inline" onsubmit="return confirm('Setujui buku ini?')">
+                           <button class="btn btn-sm btn-success" title="Approve"><i class="bi bi-check-lg"></i></button>
+                         </form>
+                         <form method="POST" action="/admin/elk-library/buku/<%= b.id %>/reject" style="display:inline" onsubmit="return confirm('Tolak buku ini?')">
+                           <button class="btn btn-sm btn-danger" title="Reject"><i class="bi bi-x-lg"></i></button>
+                         </form>
+                       <% } %>
+                       <form method="POST" action="/admin/elk-library/buku/<%= b.id %>/delete" style="display:inline" onsubmit="return confirm('Hapus buku ini secara permanen?')">
+                         <button class="btn btn-sm btn-outline-danger" title="Hapus"><i class="bi bi-trash"></i></button>
+                       </form>
+                     </div>
+                   </td>
+                 </tr>
+              <% }) %>
+            <% } else { %>
+               <tr><td colspan="6" class="empty-state"><i class="bi bi-book"></i> Belum ada data buku.</td></tr>
             <% } %>
           </tbody>
         </table>

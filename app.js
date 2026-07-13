@@ -140,8 +140,10 @@ async function startServer() {
     app.use('/dosen/surat', dosenSuratRouter);
     const penelitianRouter = require('./routes/dosen/penelitian');
     const pengabdianRouter = require('./routes/dosen/pengabdian');
+    const bukuRouter = require('./routes/dosen/buku');
     app.use('/dosen/penelitian', penelitianRouter);
     app.use('/dosen/pengabdian', pengabdianRouter);
+    app.use('/dosen/buku', bukuRouter);
     const dosenSkRouter = require('./routes/dosen/sk');
     app.use('/dosen/sk', dosenSkRouter);
     const dosenRoutes = require('./routes/dosen/index');

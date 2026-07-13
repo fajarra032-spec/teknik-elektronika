@@ -1,0 +1,41 @@
+<%- include('../../partials/header') %>
+<div class="container mt-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Tambah Buku</h4>
+    </div>
+    <div class="card-body">
+      <form method="POST" enctype="multipart/form-data">
+        <div class="row">
+          <div class="col-12 mb-3">
+            <label class="form-label">Judul Buku *</label>
+            <input type="text" name="judul" class="form-control" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Penerbit</label>
+            <input type="text" name="penerbit" class="form-control">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">ISBN</label>
+            <input type="text" name="isbn" class="form-control">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Tahun *</label>
+            <input type="number" name="tahun" class="form-control" value="<%= new Date().getFullYear() %>" required>
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label">Deskripsi / Sinopsis</label>
+            <textarea name="deskripsi" class="form-control" rows="4"></textarea>
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label">File Buku (PDF maks 5MB)</label>
+            <input type="file" name="file" class="form-control" accept=".pdf">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+        <a href="/dosen/buku" class="btn btn-secondary">Batal</a>
+      </form>
+    </div>
+  </div>
+</div>
+<%- include('../../partials/footer') %>

@@ -237,8 +237,8 @@
   <!-- Hero Header -->
   <header class="detail-hero">
     <% 
-      const judul = item.judulPublik || item.title || '(Judul tidak tersedia)';
-      const penulis = item.nama || item.penulis || 'Anonim';
+      const judul = item.judulPublik || item.title || item.judul || '(Judul tidak tersedia)';
+      const penulis = item.nama || item.penulis || item.dosenNama || 'Anonim';
     %>
     <h1><%= judul %></h1>
     
@@ -265,7 +265,7 @@
           <i class="bi bi-text-paragraph"></i> Abstrak
         </h5>
         <div class="abstract-text">
-          <%= item.abstrak || item.abstract || 'Abstrak tidak tersedia untuk dokumen ini.' %>
+          <%= item.abstrak || item.abstract || item.deskripsi || 'Deskripsi tidak tersedia untuk dokumen ini.' %>
         </div>
 
         <hr class="my-5 opacity-50">
@@ -324,7 +324,8 @@
         <h6 class="fw-bold mb-3 border-bottom pb-2">Detail Publikasi</h6>
         <div class="d-flex justify-content-between mb-2">
           <span class="text-muted small">Tipe Dokumen</span>
-          <span class="badge bg-primary rounded-pill small"><%= item._type === 'laporan' ? 'Laporan Magang' : 'Artikel Ilmiah' %></span>
+          <% const tipeLabelMap = { laporan: 'Laporan Magang', artikel: 'Artikel Ilmiah', penelitian: 'Penelitian', pengabdian: 'Pengabdian', buku: 'Buku' }; %>
+          <span class="badge bg-primary rounded-pill small"><%= tipeLabelMap[item._type] || 'Artikel Ilmiah' %></span>
         </div>
         <div class="d-flex justify-content-between">
           <span class="text-muted small">ID Arsip</span>

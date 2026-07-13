@@ -196,6 +196,15 @@
     .badge-artikel {
         background: linear-gradient(135deg, #0d6efd, #0dcaf0);
     }
+    .badge-penelitian {
+        background: linear-gradient(135deg, #6f42c1, #a78bfa);
+    }
+    .badge-pengabdian {
+        background: linear-gradient(135deg, #fd7e14, #ffb26b);
+    }
+    .badge-buku {
+        background: linear-gradient(135deg, #d97706, #f59e0b);
+    }
     .item-year {
         font-size: clamp(0.7rem, 2vw, 0.8rem);
         color: #94a3b8;
@@ -356,6 +365,9 @@
                     <option value="all" <%= filters.type==='all' ? 'selected' : '' %>>Semua</option>
                     <option value="laporan" <%= filters.type==='laporan' ? 'selected' : '' %>>Laporan Magang</option>
                     <option value="artikel" <%= filters.type==='artikel' ? 'selected' : '' %>>Artikel Dosen</option>
+                    <option value="penelitian" <%= filters.type==='penelitian' ? 'selected' : '' %>>Penelitian</option>
+                    <option value="pengabdian" <%= filters.type==='pengabdian' ? 'selected' : '' %>>Pengabdian</option>
+                    <option value="buku" <%= filters.type==='buku' ? 'selected' : '' %>>Buku</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -392,16 +404,24 @@
             </div>
             <% } else { %>
                 <% items.forEach(item=> {
-                    const judul = item.judulPublik || item.title || '(Judul tidak tersedia)';
-                    const penulis = item.nama || item.penulis || 'Anonim';
+                    const judul = item.judulPublik || item.title || item.judul || '(Judul tidak tersedia)';
+                    const penulis = item.nama || item.penulis || item.dosenNama || 'Anonim';
                     const tahun = item.tahun || '-';
-                    const abstrak = item.abstrak || item.abstract || '';
+                    const abstrak = item.abstrak || item.abstract || item.deskripsi || '';
+                    const typeBadgeMap = {
+                        laporan: { cls: 'badge-laporan', label: '📄 Laporan' },
+                        artikel: { cls: 'badge-artikel', label: '📝 Artikel' },
+                        penelitian: { cls: 'badge-penelitian', label: '🔬 Penelitian' },
+                        pengabdian: { cls: 'badge-pengabdian', label: '🤝 Pengabdian' },
+                        buku: { cls: 'badge-buku', label: '📚 Buku' }
+                    };
+                    const typeBadge = typeBadgeMap[item._type] || typeBadgeMap.artikel;
                     %>
                     <div class="col-md-6 col-lg-4">
                         <div class="item-card">
                             <div class="item-header">
-                                <span class="item-badge <%= item._type==='laporan' ? 'badge-laporan' : 'badge-artikel' %>">
-                                    <%= item._type==='laporan' ? '📄 Laporan' : '📝 Artikel' %>
+                                <span class="item-badge <%= typeBadge.cls %>">
+                                    <%= typeBadge.label %>
                                 </span>
                                 <span class="item-year">
                                     <i class="bi bi-calendar3"></i> <%= tahun %>

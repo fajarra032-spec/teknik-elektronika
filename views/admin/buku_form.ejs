@@ -1,0 +1,51 @@
+<%- include('../partials/header') %>
+<div class="container mt-4" style="max-width: 720px;">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0"><i class="bi bi-book"></i> <%= title %></h4>
+    </div>
+    <div class="card-body">
+      <form method="POST" enctype="multipart/form-data">
+        <div class="row">
+          <div class="col-12 mb-3">
+            <label class="form-label">Judul Buku *</label>
+            <input type="text" name="judul" class="form-control" value="<%= item ? item.judul : '' %>" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Penulis</label>
+            <input type="text" name="penulis" class="form-control" value="<%= item ? item.penulis : '' %>" placeholder="Nama penulis">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Penerbit</label>
+            <input type="text" name="penerbit" class="form-control" value="<%= item ? item.penerbit : '' %>">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">ISBN</label>
+            <input type="text" name="isbn" class="form-control" value="<%= item ? item.isbn : '' %>">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Tahun *</label>
+            <input type="number" name="tahun" class="form-control" value="<%= item ? item.tahun : new Date().getFullYear() %>" required>
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label">Deskripsi / Sinopsis</label>
+            <textarea name="deskripsi" class="form-control" rows="4"><%= item ? item.deskripsi : '' %></textarea>
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label">File Buku (PDF maks 5MB)</label>
+            <% if (item && item.fileUrl) { %>
+              <div class="mb-2">
+                <a href="<%= item.fileUrl %>" target="_blank"><i class="bi bi-file-earmark-pdf"></i> File saat ini</a>
+              </div>
+            <% } %>
+            <input type="file" name="file" class="form-control" accept=".pdf">
+            <div class="form-text">Kosongkan jika tidak ingin mengubah file.</div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+        <a href="/admin/elk-library?type=buku" class="btn btn-secondary">Batal</a>
+      </form>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>

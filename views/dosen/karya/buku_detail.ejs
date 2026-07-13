@@ -1,0 +1,31 @@
+<%- include('../../partials/header') %>
+<div class="container mt-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-info text-white">
+      <h4 class="mb-0">Detail Buku</h4>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-12 mb-2"><strong>Judul:</strong> <%= data.judul %></div>
+        <div class="col-md-6 mb-2"><strong>Penerbit:</strong> <%= data.penerbit || '-' %></div>
+        <div class="col-md-6 mb-2"><strong>ISBN:</strong> <%= data.isbn || '-' %></div>
+        <div class="col-md-6 mb-2"><strong>Tahun:</strong> <%= data.tahun %></div>
+        <div class="col-12 mb-2"><strong>Deskripsi:</strong> <%= data.deskripsi || '-' %></div>
+        <div class="col-12 mb-2"><strong>Status Verifikasi:</strong> <span class="badge bg-<%= data.status === 'pending' ? 'warning' : (data.status === 'approved' ? 'success' : 'danger') %>"><%= data.status %></span></div>
+        <% if (data.fileUrl) { %>
+          <div class="col-12 mb-2"><strong>File Buku:</strong> <a href="<%= data.fileUrl %>" target="_blank">Buka PDF</a></div>
+        <% } %>
+      </div>
+      <hr>
+      <div class="mt-3">
+        <a href="/dosen/buku" class="btn btn-secondary">Kembali</a>
+        <% if (data.status === 'pending') { %>
+          <form method="POST" action="/dosen/buku/<%= data.id %>/hapus" style="display:inline" onsubmit="return confirm('Hapus?')">
+            <button class="btn btn-danger">Hapus</button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../../partials/footer') %>

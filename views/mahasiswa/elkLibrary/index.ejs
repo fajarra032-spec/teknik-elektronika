@@ -1,0 +1,184 @@
+<%- include('../../partials/header') %>
+
+<style>
+    .repository-header {
+        position: relative;
+        border-radius: 2rem;
+        overflow: hidden;
+        margin-bottom: 2rem;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
+        height: clamp(140px, 30vh, 240px);
+        background: linear-gradient(135deg, #d97706, #f59e0b);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-align: center;
+        padding: 1.5rem;
+    }
+    .repository-header h1 {
+        font-weight: 800;
+        font-size: clamp(1.4rem, 5vw, 2.2rem);
+        margin-bottom: 0.5rem;
+    }
+    .repository-header p {
+        opacity: 0.9;
+        margin: 0;
+        font-size: clamp(0.85rem, 2vw, 1rem);
+    }
+
+    .search-card {
+        background: white;
+        border-radius: 1.5rem;
+        padding: clamp(1.2rem, 4vw, 1.8rem);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2.5rem;
+        border: 1px solid rgba(217, 119, 6, 0.15);
+    }
+    .search-card .form-select,
+    .search-card .form-control {
+        border-radius: 50px;
+        border: 1px solid #dee2e6;
+        padding: 0.5rem 1rem;
+    }
+    .btn-filter {
+        background: linear-gradient(135deg, #d97706, #f59e0b);
+        border: none;
+        color: white;
+        font-weight: 500;
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        width: 100%;
+    }
+    .btn-filter:hover { color: white; opacity: 0.9; }
+
+    .item-card {
+        border: none;
+        border-radius: 1.2rem;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        height: 100%;
+        background: white;
+        display: flex;
+        flex-direction: column;
+    }
+    .item-card:hover { transform: translateY(-6px); box-shadow: 0 1rem 2rem rgba(217,119,6,0.15); }
+    .item-header {
+        padding: 1rem 1.2rem 0 1.2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .item-badge {
+        padding: 0.3rem 0.9rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: white;
+        background: linear-gradient(135deg, #d97706, #f59e0b);
+    }
+    .item-year { font-size: 0.8rem; color: #94a3b8; }
+    .item-body { padding: 0.5rem 1.2rem 1rem 1.2rem; flex: 1; }
+    .item-title { font-weight: 700; font-size: 1.1rem; color: #1e293b; margin-bottom: 0.4rem; }
+    .item-author { color: #b45309; font-size: 0.85rem; margin-bottom: 0.6rem; }
+    .item-abstract { color: #64748b; font-size: 0.85rem; margin-bottom: 1rem; }
+    .item-footer { padding: 0 1.2rem 1.2rem 1.2rem; margin-top: auto; }
+    .btn-outline-buku {
+        border: 2px solid #d97706;
+        color: #d97706;
+        border-radius: 50px;
+        padding: 0.4rem 1rem;
+        font-weight: 500;
+        width: 100%;
+        text-align: center;
+        display: inline-block;
+        text-decoration: none;
+    }
+    .btn-outline-buku:hover { background: linear-gradient(135deg, #d97706, #f59e0b); color: white; }
+
+    .empty-state {
+        padding: 3rem 1.5rem;
+        text-align: center;
+        background: #fffbeb;
+        border-radius: 1.5rem;
+        border: 1px dashed rgba(217, 119, 6, 0.25);
+    }
+    .empty-state i { font-size: 3rem; color: #f59e0b; margin-bottom: 1rem; display: block; }
+</style>
+
+<div class="container mt-4">
+    <div class="repository-header">
+        <div>
+            <h1><i class="bi bi-book-fill me-2"></i>ELK Library</h1>
+            <p>Koleksi buku (<%= totalBuku %> judul tersedia)</p>
+        </div>
+    </div>
+
+    <div class="search-card">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="tahun" class="form-label"><i class="bi bi-calendar"></i> Tahun</label>
+                <select class="form-select" id="tahun" name="tahun">
+                    <option value="">Semua Tahun</option>
+                    <% tahunList.forEach(t => { %>
+                        <option value="<%= t %>" <%= String(filters.tahun) === String(t) ? 'selected' : '' %>><%= t %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="search" class="form-label"><i class="bi bi-search"></i> Cari</label>
+                <input type="text" class="form-control" id="search" name="search" placeholder="Judul, penulis..." value="<%= filters.search %>">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn-filter"><i class="bi bi-funnel"></i> Cari</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="row g-4">
+        <% if (items.length === 0) { %>
+            <div class="col-12">
+                <div class="empty-state">
+                    <i class="bi bi-book"></i>
+                    <h5>Belum Ada Buku</h5>
+                    <p class="text-muted mb-0">Tidak ditemukan buku yang sesuai dengan pencarian Anda.</p>
+                </div>
+            </div>
+        <% } else { %>
+            <% items.forEach(item => { %>
+                <div class="col-md-6 col-lg-4">
+                    <div class="item-card">
+                        <div class="item-header">
+                            <span class="item-badge"><i class="bi bi-book"></i> Buku</span>
+                            <span class="item-year"><i class="bi bi-calendar3"></i> <%= item.tahun || '-' %></span>
+                        </div>
+                        <div class="item-body">
+                            <h5 class="item-title"><%= item.judul %></h5>
+                            <div class="item-author"><i class="bi bi-person-circle"></i> <%= item.penulis || item.dosenNama || 'Anonim' %></div>
+                            <% const deskripsi = item.deskripsi || ''; %>
+                            <p class="item-abstract"><%= deskripsi.substring(0, 100) %><%= deskripsi.length > 100 ? '...' : '' %></p>
+                        </div>
+                        <div class="item-footer">
+                            <a href="/mahasiswa/elk-library/<%= item.id %>" class="btn-outline-buku">Lihat Detail</a>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        <% } %>
+    </div>
+
+    <% if (totalPages > 1) { %>
+        <nav class="mt-5">
+            <ul class="pagination justify-content-center">
+                <% for (let p = 1; p <= totalPages; p++) { %>
+                    <li class="page-item <%= p === currentPage ? 'active' : '' %>">
+                        <a class="page-link" href="?<%= new URLSearchParams({ ...filters, page: p }).toString() %>"><%= p %></a>
+                    </li>
+                <% } %>
+            </ul>
+        </nav>
+    <% } %>
+</div>
+
+<%- include('../../partials/footer') %>

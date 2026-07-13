@@ -63,14 +63,33 @@ router.get('/', async (req, res) => {
       };
     });
 
+    // Ambil buku yang sudah disetujui
+    const bukuSnapshot = await db.collection('buku')
+      .where('status', '==', 'approved')
+      .orderBy('createdAt', 'desc')
+      .get();
+    const bukuList = bukuSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        _type: 'buku',
+        tahun: data.tahun || null,
+        judulPencarian: data.judul || '',
+        penulisPencarian: data.penulis || data.dosenNama || '',
+        abstrakPencarian: data.deskripsi || ''
+      };
+    });
+
     // Statistik global
     const totalLaporanGlobal = laporanList.length;
     const totalPenelitianGlobal = penelitianList.length;
     const totalPengabdianGlobal = pengabdianList.length;
-    const totalItemsGlobal = totalLaporanGlobal + totalPenelitianGlobal + totalPengabdianGlobal;
+    const totalBukuGlobal = bukuList.length;
+    const totalItemsGlobal = totalLaporanGlobal + totalPenelitianGlobal + totalPengabdianGlobal + totalBukuGlobal;
 
     // Gabungkan semua
-    let allItems = [...laporanList, ...penelitianList, ...pengabdianList];
+    let allItems = [...laporanList, ...penelitianList, ...pengabdianList, ...bukuList];
 
     // Filter berdasarkan search
     if (search && search.trim() !== '') {
@@ -118,6 +137,7 @@ router.get('/', async (req, res) => {
     laporanList.forEach(item => { if (item.tahun) tahunSet.add(item.tahun); });
     penelitianList.forEach(item => { if (item.tahun) tahunSet.add(item.tahun); });
     pengabdianList.forEach(item => { if (item.tahun) tahunSet.add(item.tahun); });
+    bukuList.forEach(item => { if (item.tahun) tahunSet.add(item.tahun); });
     const tahunList = Array.from(tahunSet).sort((a, b) => b - a);
 
     // Hapus field sementara
@@ -141,7 +161,8 @@ router.get('/', async (req, res) => {
       totalItems: totalItemsGlobal,
       totalLaporan: totalLaporanGlobal,
       totalPenelitian: totalPenelitianGlobal,
-      totalPengabdian: totalPengabdianGlobal
+      totalPengabdian: totalPengabdianGlobal,
+      totalBuku: totalBukuGlobal
     });
 
   } catch (error) {
@@ -171,6 +192,10 @@ router.get('/:id', async (req, res) => {
     if (!doc.exists) {
       doc = await db.collection('pengabdian').doc(req.params.id).get();
       if (doc.exists) type = 'pengabdian';
+    }
+    if (!doc.exists) {
+      doc = await db.collection('buku').doc(req.params.id).get();
+      if (doc.exists) type = 'buku';
     }
     if (!doc.exists) {
       return res.status(404).render('error', { 
