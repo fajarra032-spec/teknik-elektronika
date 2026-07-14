@@ -117,9 +117,12 @@ app.get('/sitemap.xml', async (req, res) => {
   // ============================================
   try {
     const { getFirebaseInstances } = require('./config/firebaseAdmin');
-    const { db } = getFirebaseInstances();
+    const instances = getFirebaseInstances();
+    const db = instances.db;
 
-    if (db) {
+    if (!db) {
+      console.warn('⚠️ Firestore tidak tersedia, sitemap hanya berisi URL statis.');
+    } else {
       const beritaSnapshot = await db.collection('berita')
         .orderBy('createdAt', 'desc')
         .limit(1000)
@@ -131,10 +134,24 @@ app.get('/sitemap.xml', async (req, res) => {
           const slug = data.slug || doc.id;
           let lastmod = today;
           
-          if (data.updatedAt) {
-            lastmod = new Date(data.updatedAt.seconds * 1000).toISOString().split('T')[0];
-          } else if (data.createdAt) {
-            lastmod = new Date(data.createdAt.seconds * 1000).toISOString().split('T')[0];
+          // ============================================
+          // VALIDASI TANGGAL YANG AMAN
+          // ============================================
+          try {
+            if (data.updatedAt) {
+              const date = new Date(data.updatedAt.seconds * 1000);
+              if (!isNaN(date.getTime())) {
+                lastmod = date.toISOString().split('T')[0];
+              }
+            } else if (data.createdAt) {
+              const date = new Date(data.createdAt.seconds * 1000);
+              if (!isNaN(date.getTime())) {
+                lastmod = date.toISOString().split('T')[0];
+              }
+            }
+          } catch (e) {
+            console.warn('⚠️ Gagal parsing tanggal untuk berita:', slug);
+            // Gunakan today jika parsing gagal
           }
 
           xml += '  <url>\n';
@@ -144,10 +161,13 @@ app.get('/sitemap.xml', async (req, res) => {
           xml += '    <priority>0.8</priority>\n';
           xml += '  </url>\n';
         });
+      } else {
+        console.log('ℹ️ Tidak ada berita ditemukan di Firebase');
       }
     }
   } catch (error) {
     console.error('❌ Gagal ambil berita untuk sitemap:', error.message);
+    // Jangan kirim error, lanjutkan dengan sitemap statis
   }
 
   xml += '</urlset>';
@@ -179,7 +199,6 @@ async function startServer() {
 
     // Simpan instance ke firebaseAdmin.js (sinkron)
     setFirebaseInstances({ admin, db, auth });
-
     // ============================================================================
     // ROUTES (semua require setelah Firebase siap)
     // ============================================================================
