@@ -1,11 +1,28 @@
 <%- include('partials/header-landing') %>
 
+<!-- ============================================ -->
+<!-- OPEN GRAPH TAGS - Untuk Preview di Medsos   -->
+<!-- ============================================ -->
+<meta property="og:title" content="<%= berita.judul || 'Berita Teknik Elektronika' %>" />
+<meta property="og:description" content="<%= berita.deskripsi || berita.ringkasan || 'Baca berita terbaru dari Teknik Elektronika Politeknik Dewantara' %>" />
+<meta property="og:image" content="<%= berita.gambar ? `https://drive.google.com/thumbnail?id=${berita.gambar.match(/[?&]id=([^&]+)/)?.[1] || berita.gambar.split('/').pop()}&sz=w1200` : 'https://elektronika.polidewa.ac.id/images/default-og.jpg' %>" />
+<meta property="og:url" content="<%= `https://elektronika.polidewa.ac.id/berita/${berita.slug || berita.id}` %>" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="Teknik Elektronika - Politeknik Dewantara" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="<%= berita.judul || 'Berita Teknik Elektronika' %>" />
+<meta name="twitter:description" content="<%= berita.deskripsi || berita.ringkasan || 'Baca berita terbaru dari Teknik Elektronika Politeknik Dewantara' %>" />
+<meta name="twitter:image" content="<%= berita.gambar ? `https://drive.google.com/thumbnail?id=${berita.gambar.match(/[?&]id=([^&]+)/)?.[1] || berita.gambar.split('/').pop()}&sz=w1200` : 'https://elektronika.polidewa.ac.id/images/default-og.jpg' %>" />
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
 
   /* ===== VARIABEL DARI LANDING + GAYA ASLI ===== */
   :root {
-    /* Tambahan dari landing */
     --primary: #0d6efd;
     --primary-dark: #0b5ed7;
     --secondary: #0dcaf0;
@@ -16,7 +33,7 @@
     --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   }
 
-  /* ===== BASE FLUID FONT (SAMA PERSIS DENGAN LANDING) ===== */
+  /* ===== BASE FLUID FONT ===== */
   html {
     font-size: clamp(14px, 1vw + 10px, 16px);
   }
@@ -167,7 +184,7 @@
     box-shadow: var(--shadow-sm);
   }
 
-  /* ===== MEDIA QUERY LENGKAP (SESUAI LANDING) ===== */
+  /* ===== MEDIA QUERY ===== */
   @media (max-width: 768px) {
     .berita-card {
       margin: 1rem;

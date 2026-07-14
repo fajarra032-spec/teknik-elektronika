@@ -1,7 +1,6 @@
 /**
  * app.js - Entry point aplikasi Teknik Elektronika
- * Dengan inisialisasi Firebase async agar kompatibel dengan firebase-admin v13+
- * + Sitemap & SEO optimization
+ * Dengan inisialisasi Firebase async, Sitemap, SEO, dan Webhook
  */
 require('dotenv').config();
 const express = require('express');
@@ -45,7 +44,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // ============================================================================
-// SEO & SITEMAP (Tanpa Firebase)
+// SEO, SITEMAP & WEBHOOK (Tanpa Firebase)
 // ============================================================================
 
 /**
@@ -62,13 +61,33 @@ Sitemap: https://casaos.polidewa.ac.id/sitemap.xml
 });
 
 /**
- * Sitemap Generator - Daftar semua URL yang ingin diindeks Google
+ * Webhook - Auto deploy dari GitHub
  */
-app.get('/sitemap.xml', (req, res) => {
+app.post('/webhook', (req, res) => {
+  const exec = require('child_process').exec;
+  console.log('🔔 Webhook diterima! Memulai deploy...');
+  
+  exec('cd /DATA/teknik-elektronika && git pull origin main && npm install && pm2 restart teknik-elektronika', 
+    (error, stdout, stderr) => {
+      if (error) {
+        console.error('❌ Deploy error:', error);
+        return res.status(500).send('Deploy failed');
+      }
+      console.log('✅ Deploy berhasil!');
+      console.log(stdout);
+      res.send('OK');
+    }
+  );
+});
+
+/**
+ * Sitemap Generator - Statis + Dinamis dari Firebase
+ */
+app.get('/sitemap.xml', async (req, res) => {
   const baseUrl = 'https://elektronika.polidewa.ac.id';
   const today = new Date().toISOString().split('T')[0];
 
-  // Daftar URL statis (tambahkan sesuai kebutuhan)
+  // URL Statis
   const staticUrls = [
     { url: '/', changefreq: 'daily', priority: 1.0 },
     { url: '/panduan', changefreq: 'monthly', priority: 0.7 },
@@ -79,10 +98,11 @@ app.get('/sitemap.xml', (req, res) => {
     { url: '/auth/register', changefreq: 'yearly', priority: 0.3 },
   ];
 
-  // Build XML
+  // Mulai XML
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
+  // URL Statis
   staticUrls.forEach(item => {
     xml += '  <url>\n';
     xml += `    <loc>${baseUrl}${item.url}</loc>\n`;
@@ -92,11 +112,45 @@ app.get('/sitemap.xml', (req, res) => {
     xml += '  </url>\n';
   });
 
-  // Jika ada rute dinamis dari database (misal berita), bisa ditambahkan di sini
-  // Contoh: ambil daftar berita dari Firebase dan tambahkan ke sitemap
+  // ============================================
+  // URL DINAMIS DARI FIREBASE (Berita)
+  // ============================================
+  try {
+    const { getFirebaseInstances } = require('./config/firebaseAdmin');
+    const { db } = getFirebaseInstances();
+
+    if (db) {
+      const beritaSnapshot = await db.collection('berita')
+        .orderBy('createdAt', 'desc')
+        .limit(1000)
+        .get();
+
+      if (!beritaSnapshot.empty) {
+        beritaSnapshot.forEach(doc => {
+          const data = doc.data();
+          const slug = data.slug || doc.id;
+          let lastmod = today;
+          
+          if (data.updatedAt) {
+            lastmod = new Date(data.updatedAt.seconds * 1000).toISOString().split('T')[0];
+          } else if (data.createdAt) {
+            lastmod = new Date(data.createdAt.seconds * 1000).toISOString().split('T')[0];
+          }
+
+          xml += '  <url>\n';
+          xml += `    <loc>${baseUrl}/berita/${slug}</loc>\n`;
+          xml += `    <lastmod>${lastmod}</lastmod>\n`;
+          xml += '    <changefreq>weekly</changefreq>\n';
+          xml += '    <priority>0.8</priority>\n';
+          xml += '  </url>\n';
+        });
+      }
+    }
+  } catch (error) {
+    console.error('❌ Gagal ambil berita untuk sitemap:', error.message);
+  }
 
   xml += '</urlset>';
-
   res.header('Content-Type', 'application/xml');
   res.send(xml);
 });
