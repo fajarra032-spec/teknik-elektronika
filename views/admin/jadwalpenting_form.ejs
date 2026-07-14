@@ -98,12 +98,14 @@
         <div class="mb-3">
           <label for="kategori" class="form-label">Kategori</label>
           <select class="form-select" id="kategori" name="kategori">
+            <option value="rapat" <%= jadwal && jadwal.kategori === 'rapat' ? 'selected' : '' %>>Rapat</option>
             <option value="seminar" <%= jadwal && jadwal.kategori === 'seminar' ? 'selected' : '' %>>Seminar</option>
             <option value="wisuda" <%= jadwal && jadwal.kategori === 'wisuda' ? 'selected' : '' %>>Wisuda</option>
             <option value="libur" <%= jadwal && jadwal.kategori === 'libur' ? 'selected' : '' %>>Libur Akademik</option>
             <option value="pendaftaran" <%= jadwal && jadwal.kategori === 'pendaftaran' ? 'selected' : '' %>>Pendaftaran</option>
             <option value="umum" <%= jadwal && jadwal.kategori === 'umum' ? 'selected' : '' %>>Umum</option>
           </select>
+          <div class="form-text">Hanya kategori <strong>Rapat</strong> dan <strong>Seminar</strong> yang akan tampil di halaman publik (landing page). Kategori lain hanya terlihat di kalender akademik internal (dosen &amp; mahasiswa).</div>
         </div>
         <div class="d-flex justify-content-between mt-4">
           <a href="/admin/jadwalpenting" class="btn-outline-gradient">

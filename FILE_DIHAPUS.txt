@@ -1,0 +1,2 @@
+=== File dihapus (jangan lupa dihapus manual juga di project Anda) ===
+routes/admin/dashboard.js  <- hapus file ini, sudah digabung ke routes/admin/index.js

@@ -16,7 +16,6 @@ const { db } = require('../../config/firebaseAdmin');
 // ============================================================================
 const usersRoutes = require('./users');
 const seminarRouter = require('./seminar');          // pastikan file seminar.js ada di folder admin
-const dashboardRouter = require('./dashboard');
 // ============================================================================
 // MIDDLEWARE UMUM (semua rute di bawah ini hanya untuk admin yang login)
 // ============================================================================
@@ -39,7 +38,6 @@ router.use('/rps', rpsRouter);
 router.use('/bimbingan', bimbinganRouter);
 // Kelola Pengguna (users) – CRUD akun
 router.use('/users', usersRoutes);
-router.use('/dashboard', dashboardRouter);
 // Laporan Magang
 router.use('/laporan-magang', require('./laporanMagang'));   // untuk persetujuan laporan
 router.use('/elk-library', require('./elkLibrary'));        // untuk kelola konten library
@@ -115,10 +113,37 @@ router.get('/', async (req, res) => {
       .limit(5)
       .get();
 
+    // KRS Pending
+    const krsPending = (await db.collection('krs').where('status', '==', 'pending').count().get()).data().count;
+    // Logbook Pending
+    const logbookPending = (await db.collection('logbookMagang').where('status', '==', 'pending').count().get()).data().count;
+    // Laporan Magang Pending
+    const laporanPending = (await db.collection('laporanMagang').where('status', '==', 'submitted').count().get()).data().count;
+    // Surat Pending (mahasiswa + dosen)
+    const suratMahasiswaPending = (await db.collection('surat').where('status', '==', 'pending').count().get()).data().count;
+    const suratDosenPending = (await db.collection('surat_dosen').where('status', '==', 'pending').count().get()).data().count;
+    const suratPending = suratMahasiswaPending + suratDosenPending;
+
+    // Acara mendatang - sumber tunggal: koleksi jadwalPenting yang dikelola
+    // di /admin/jadwalpenting (sebelumnya widget ini tidak pernah mengambil
+    // data apa pun sehingga selalu kosong/tidak sinkron dengan menu Kelola
+    // Jadwal Penting).
+    const today = new Date().toISOString().split('T')[0];
+    const eventsSnapshot = await db.collection('jadwalPenting')
+      .where('tanggal', '>=', today)
+      .orderBy('tanggal', 'asc')
+      .limit(5)
+      .get();
+    const events = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
     res.render('admin/dashboard', {
       title: 'Dashboard Admin',
-      stats: { dosenCount, mahasiswaCount, mkCount },
-      beritaBaru: beritaBaru.docs.map(d => d.data())
+      stats: {
+        dosenCount, mahasiswaCount, mkCount,
+        krsPending, logbookPending, laporanPending, suratPending
+      },
+      beritaBaru: beritaBaru.docs.map(d => d.data()),
+      events
     });
   } catch (error) {
     console.error('Gagal memuat dashboard admin:', error);

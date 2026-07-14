@@ -91,7 +91,7 @@
           </div>
         </div>
         <div class="mb-3 form-check form-switch">
-          <input class="form-check-input" type="checkbox" role="switch" name="aktif" id="aktif" <%= question && question.aktif === true ? 'checked' : '' %>>
+          <input class="form-check-input" type="checkbox" role="switch" name="aktif" id="aktif" <%= (!question || question.aktif === true) ? 'checked' : '' %>>
           <label class="form-check-label" for="aktif">Aktif (ditampilkan saat evaluasi)</label>
         </div>
         <div class="d-flex justify-content-between mt-4">

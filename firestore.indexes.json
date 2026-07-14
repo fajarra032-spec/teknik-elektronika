@@ -1,6 +1,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "jadwalPenting",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "kategori", "order": "ASCENDING" },
+        { "fieldPath": "tanggal", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "logbookMagang",
       "queryScope": "COLLECTION",
       "fields": [

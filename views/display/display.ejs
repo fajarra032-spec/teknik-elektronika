@@ -9,7 +9,7 @@
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap');
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+
     body {
       font-family: 'Poppins', sans-serif;
       background: radial-gradient(circle at top right, #1a3a4a, #030a10);
@@ -23,9 +23,9 @@
     }
 
     .tv-screen {
-      width: 100%;
-      max-width: 1600px;
-      height: 92vh;
+      width: min(100% , calc((100vh - 30px) * 16 / 9));
+      height: min(calc(100vh - 30px), calc((100vw - 30px) * 9 / 16));
+      aspect-ratio: 16 / 9;
       background: rgba(255, 255, 255, 0.03);
       border-radius: 24px;
       backdrop-filter: blur(10px);
@@ -46,8 +46,9 @@
       padding: 15px 30px;
       border-radius: 20px;
       border: 1px solid rgba(255, 217, 102, 0.3);
-      margin-bottom: 25px;
+      margin-bottom: 16px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      flex-shrink: 0;
     }
 
     .logo-area { display: flex; align-items: center; gap: 15px; }
@@ -74,15 +75,70 @@
       text-shadow: 0 0 15px rgba(255, 217, 102, 0.5);
     }
 
-    /* Layout Main */
-    .main-content {
-      flex: 1;
+    /* ===== Indikator halaman (channel TV) ===== */
+    .page-indicator {
       display: flex;
-      gap: 20px;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+    .page-indicator .pi-item {
+      flex: 1;
+      text-align: center;
+      padding: 8px 6px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: rgba(255,255,255,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.4s ease;
+    }
+    .page-indicator .pi-item.active {
+      background: rgba(255, 217, 102, 0.15);
+      border-color: rgba(255, 217, 102, 0.5);
+      color: #ffd966;
+      font-weight: 600;
+    }
+
+    /* ===== Stage: tempat halaman-halaman bergantian tampil ===== */
+    .stage {
+      flex: 1;
+      position: relative;
       min-height: 0;
     }
 
-    /* Side Panels */
+    .page {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s ease;
+      min-height: 0;
+    }
+    .page.active { opacity: 1; pointer-events: auto; }
+
+    .page-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #ffd966;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    /* Panel generik */
     .panel {
       background: rgba(0, 0, 0, 0.3);
       border-radius: 24px;
@@ -91,8 +147,28 @@
       overflow-y: auto;
     }
 
+    /* ===== HALAMAN 1: DOKUMENTASI MAGANG ===== */
+    .magang-row { flex: 1; display: flex; gap: 20px; min-height: 0; }
+
     .col-left { flex: 1.3; border-left: 4px solid #ffd966; }
-    .col-right { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+    .col-right { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 15px; }
+
+    .stats-mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .stats-mini-grid .stat-card { padding: 18px; }
+    .stats-mini-grid .stat-number { font-size: 1.8rem; }
+    .stats-mini-grid .stat-label { font-size: 0.65rem; }
+
+    .stat-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(0,0,0,0.2));
+      padding: 15px;
+      border-radius: 18px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.05);
+      position: relative;
+    }
+    .stat-card i { color: #ffd966; font-size: 1.3rem; margin-bottom: 6px; display: block; }
+    .stat-number { font-family: 'Orbitron', sans-serif; font-size: 2rem; color: #fff; }
+    .stat-label { font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; }
 
     /* Student Info Card */
     .info-group { margin-bottom: 20px; transition: all 0.5s ease; }
@@ -107,7 +183,6 @@
     .info-value { font-size: 1rem; color: #eee; }
     .name-value { font-size: 1.6rem; font-weight: 700; color: #fff; margin-bottom: 10px; }
 
-    /* Middle Slide */
     .col-middle {
       flex: 2.5;
       position: relative;
@@ -116,41 +191,135 @@
       box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
       border: 1px solid rgba(255,255,255,0.1);
     }
-    .slide-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 1s ease;
-    }
+    .slide-image { width: 100%; height: 100%; object-fit: cover; transition: transform 1s ease; }
     .active .slide-image { transform: scale(1.05); }
 
-    /* Stats Cards */
-    .stat-card {
-      background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(0,0,0,0.2));
-      padding: 15px;
-      border-radius: 18px;
-      text-align: center;
-      border: 1px solid rgba(255,255,255,0.05);
-      position: relative;
-    }
-    .stat-card i { color: #ffd966; font-size: 1.2rem; margin-bottom: 5px; }
-    .stat-number { font-family: 'Orbitron', sans-serif; font-size: 2rem; color: #fff; }
-    .stat-label { font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; }
-
-    /* Progress Bar */
     .progress-wrapper { margin-top: 15px; }
     .progress-bg { height: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
     .progress-fill { height: 100%; background: linear-gradient(90deg, #ffd966, #ffb700); box-shadow: 0 0 10px #ffd966; transition: width 1s ease; }
 
+    /* ===== HALAMAN 2: BERITA ===== */
+    .berita-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-auto-rows: min-content;
+      gap: 16px;
+      align-content: start;
+      overflow-y: auto;
+    }
+    .berita-card {
+      background: rgba(255,255,255,0.04);
+      border-left: 4px solid #ffd966;
+      border-radius: 14px;
+      padding: 20px 24px;
+    }
+    .berita-card .bc-title { font-size: 1.25rem; font-weight: 600; color: #fff; margin-bottom: 10px; line-height: 1.3; }
+    .berita-card .bc-date { font-size: 0.85rem; color: #ffd966; display: flex; align-items: center; gap: 6px; }
+
+    /* ===== HALAMAN 3: STATISTIK ===== */
+    .stat-tiles {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-auto-rows: min-content;
+      gap: 18px;
+      align-content: center;
+    }
+    .tile {
+      background: linear-gradient(145deg, rgba(255,255,255,0.06), rgba(0,0,0,0.25));
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 26px 16px;
+      text-align: center;
+    }
+    .tile i { font-size: 2.1rem; color: #ffd966; margin-bottom: 10px; display: block; }
+    .tile .tile-num { font-family: 'Orbitron', sans-serif; font-size: 2.6rem; color: #fff; }
+    .tile .tile-lbl { font-size: 0.75rem; text-transform: uppercase; opacity: 0.65; margin-top: 8px; letter-spacing: 0.5px; }
+    .tile.warn i, .tile.warn .tile-num { color: #ff6b6b; }
+
+    /* ===== HALAMAN 4: PROGRESS PERKULIAHAN ===== */
+    .progress-list { flex: 1; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; justify-content: center; }
+    .progress-item {
+      background: rgba(255,255,255,0.04);
+      border-radius: 14px;
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .progress-item .pi-kode { font-family: 'Orbitron', sans-serif; font-weight: 700; color: #ffd966; font-size: 1rem; flex-shrink: 0; width: 80px; }
+    .progress-item .pi-nama { flex: 1.2; font-size: 1rem; color: #eee; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .progress-item .pi-bar-bg { flex: 2; height: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+    .progress-item .pi-bar-fill { height: 100%; background: linear-gradient(90deg, #ffd966, #ffb700); }
+    .progress-item .pi-percent { font-family: 'Orbitron', sans-serif; color: #ffd966; font-size: 1.1rem; width: 60px; text-align: right; flex-shrink: 0; }
+
+    /* ===== HALAMAN: JADWAL HARI INI ===== */
+    .today-banner { text-align: center; margin-bottom: 20px; flex-shrink: 0; }
+    .today-day {
+      font-family: 'Orbitron', sans-serif; font-size: 2.2rem; color: #ffd966;
+      text-transform: uppercase; letter-spacing: 3px;
+    }
+    .today-date { font-size: 1rem; opacity: 0.7; margin-top: 4px; }
+
+    .today-list { flex: 1; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+    .today-item {
+      display: flex; gap: 22px; align-items: center;
+      background: rgba(255,255,255,0.04); border-radius: 16px;
+      padding: 16px 24px; border-left: 4px solid #ffd966;
+    }
+    .ti-jam {
+      font-family: 'Orbitron', sans-serif; font-size: 1.25rem; color: #ffd966;
+      width: 140px; flex-shrink: 0; text-align: center;
+    }
+    .ti-jam span { opacity: 0.4; margin: 0 4px; }
+    .ti-body { flex: 1; min-width: 0; }
+    .ti-mk { font-size: 1.1rem; font-weight: 600; color: #fff; margin-bottom: 6px; }
+    .ti-meta { font-size: 0.85rem; color: rgba(255,255,255,0.65); display: flex; gap: 18px; flex-wrap: wrap; }
+    .ti-meta span { display: flex; align-items: center; gap: 6px; }
+
+    .today-empty {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; text-align: center; gap: 14px;
+    }
+    .today-empty i { font-size: 3.2rem; color: #ffd966; opacity: 0.6; }
+    .te-title { font-size: 1.7rem; font-weight: 700; color: #fff; }
+    .te-sub { font-size: 1rem; color: rgba(255,255,255,0.6); max-width: 640px; line-height: 1.5; }
+
+
+    .jadwal-split { flex: 1; display: flex; gap: 20px; min-height: 0; }
+    .jadwal-col { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .jadwal-col .page-subtitle {
+      font-size: 0.9rem; font-weight: 600; color: #ffd966; text-transform: uppercase;
+      letter-spacing: 1px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+    .jadwal-list { list-style: none; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1; }
+    .jadwal-list li {
+      background: rgba(255,255,255,0.04);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 0.9rem;
+    }
+    .jadwal-list .jl-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .jadwal-list .jl-title { color: #fff; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .jadwal-list .jl-meta { color: #ffd966; font-size: 0.75rem; white-space: nowrap; flex-shrink: 0; }
+    .jadwal-list .jl-sub { color: rgba(255,255,255,0.6); font-size: 0.8rem; }
+    .jadwal-list .jl-badge {
+      font-size: 0.6rem; text-transform: uppercase; padding: 2px 8px; border-radius: 20px;
+      background: rgba(255,217,102,0.15); color: #ffd966; flex-shrink: 0;
+    }
+    .list-empty { color: rgba(255,255,255,0.4); font-size: 0.9rem; text-align: center; padding: 20px; }
+
     /* Footer */
     .footer-ticker {
-      margin-top: 20px;
+      margin-top: 16px;
       background: rgba(255, 217, 102, 0.1);
       border: 1px solid rgba(255, 217, 102, 0.3);
       padding: 10px 20px;
       border-radius: 50px;
       font-size: 0.85rem;
       font-weight: 500;
+      flex-shrink: 0;
     }
 
     /* Animation */
@@ -159,6 +328,10 @@
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
   </style>
 </head>
 <body>
@@ -173,96 +346,300 @@
       </div>
     </div>
     <div class="center-title">
-      <h2>DASHBOARD MONITORING MAGANG</h2>
+      <h2>DASHBOARD INFORMASI PRODI</h2>
     </div>
     <div class="clock-container">
       <div class="clock" id="liveClock">00:00:00</div>
     </div>
   </header>
 
-  <div class="main-content">
-    <aside class="panel col-left" id="infoMahasiswa">
-      <div class="info-group fade-up">
-        <div class="info-row">
-            <span class="info-label"><i class="fas fa-user-graduate"></i> Nama Mahasiswa</span>
-            <span class="name-value" id="slideNama">-</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label"><i class="fas fa-id-badge"></i> Nomor Induk Mahasiswa</span>
-            <span class="info-value" id="slideNim">-</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label"><i class="fas fa-building"></i> Penempatan Perusahaan</span>
-            <span class="info-value" id="slidePerusahaan">-</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label"><i class="fas fa-chalkboard-teacher"></i> Dosen Pembimbing</span>
-            <span class="info-value" id="slidePembimbing1">-</span>
-            <span class="info-value" id="slidePembimbing2">-</span>
-        </div>
-        
-        <div class="progress-wrapper">
-            <span class="info-label"><i class="fas fa-chart-line"></i> Progress Logbook: <span id="slideProgress">-</span></span>
-            <div class="progress-bg">
-                <div id="slideProgressBar" class="progress-fill" style="width: 0%"></div>
+  <div class="page-indicator" id="pageIndicator">
+    <div class="pi-item" data-page="magang"><i class="fas fa-images"></i> Magang</div>
+    <div class="pi-item" data-page="berita"><i class="fas fa-newspaper"></i> Berita</div>
+    <div class="pi-item" data-page="statistik"><i class="fas fa-chart-pie"></i> Statistik</div>
+    <div class="pi-item" data-page="progress"><i class="fas fa-graduation-cap"></i> Progress MK</div>
+    <div class="pi-item" data-page="hariini"><i class="fas fa-calendar-day"></i> Hari Ini</div>
+    <div class="pi-item" data-page="referensi"><i class="fas fa-calendar-alt"></i> Referensi</div>
+  </div>
+
+  <div class="stage" id="stage">
+
+    <!-- ===== HALAMAN 1: DOKUMENTASI MAGANG ===== -->
+    <section class="page active" data-page="magang">
+      <div class="magang-row">
+        <aside class="panel col-left" id="infoMahasiswa">
+          <div class="info-group fade-up">
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-user-graduate"></i> Nama Mahasiswa</span>
+                <span class="name-value" id="slideNama">-</span>
             </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-id-badge"></i> Nomor Induk Mahasiswa</span>
+                <span class="info-value" id="slideNim">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-building"></i> Penempatan Perusahaan</span>
+                <span class="info-value" id="slidePerusahaan">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-chalkboard-teacher"></i> Dosen Pembimbing</span>
+                <span class="info-value" id="slidePembimbing1">-</span>
+                <span class="info-value" id="slidePembimbing2">-</span>
+            </div>
+
+            <div class="progress-wrapper">
+                <span class="info-label"><i class="fas fa-chart-line"></i> Progress Logbook: <span id="slideProgress">-</span></span>
+                <div class="progress-bg">
+                    <div id="slideProgressBar" class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="info-row" style="margin-top: 20px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px;">
+                <span class="info-label">Kegiatan Hari Ini:</span>
+                <span class="info-value" id="slideKegiatan">-</span>
+            </div>
+          </div>
+        </aside>
+
+        <main class="col-middle" id="slidesWrapper"></main>
+
+        <aside class="panel col-right">
+          <div class="stats-mini-grid">
+            <div class="stat-card">
+              <i class="fas fa-folder-open"></i>
+              <div class="stat-number"><%= stats.totalLogbook %></div>
+              <div class="stat-label">Total Logbook</div>
+            </div>
+            <div class="stat-card" style="border-color: #ff444455;">
+              <i class="fas fa-hourglass-half" style="color: #ff4444;"></i>
+              <div class="stat-number"><%= stats.logbookPending %></div>
+              <div class="stat-label">Pending Approval</div>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-users"></i>
+              <div class="stat-number"><%= stats.totalMahasiswaMagangAktif %></div>
+              <div class="stat-label">Mahasiswa Aktif</div>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-clipboard-check"></i>
+              <div class="stat-number"><%= stats.tugasAktif %></div>
+              <div class="stat-label">Tugas Perlu Dinilai</div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ===== HALAMAN 2: BERITA & PENGUMUMAN ===== -->
+    <section class="page" data-page="berita">
+      <div class="page-title"><i class="fas fa-newspaper"></i> Berita &amp; Pengumuman Terbaru</div>
+      <div class="berita-grid">
+        <% if (beritaTerbaru && beritaTerbaru.length > 0) { %>
+          <% beritaTerbaru.forEach(function(b) { %>
+            <div class="berita-card">
+              <div class="bc-title"><%= b.judul || '-' %></div>
+              <div class="bc-date"><i class="fas fa-calendar-day"></i> <%= b.tanggal ? new Date(b.tanggal).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) : '-' %></div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div class="list-empty" style="grid-column: 1 / -1;">Belum ada berita terbaru.</div>
+        <% } %>
+      </div>
+    </section>
+
+    <!-- ===== HALAMAN 3: STATISTIK PROGRAM STUDI ===== -->
+    <section class="page" data-page="statistik">
+      <div class="page-title"><i class="fas fa-chart-pie"></i> Statistik Program Studi</div>
+      <div class="stat-tiles">
+        <div class="tile">
+          <i class="fas fa-user-graduate"></i>
+          <div class="tile-num"><%= jumlahMahasiswa || 0 %></div>
+          <div class="tile-lbl">Total Mahasiswa</div>
         </div>
-
-        <div class="info-row" style="margin-top: 20px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px;">
-            <span class="info-label">Kegiatan Hari Ini:</span>
-            <span class="info-value" id="slideKegiatan">-</span>
+        <div class="tile">
+          <i class="fas fa-chalkboard-teacher"></i>
+          <div class="tile-num"><%= jumlahDosen || 0 %></div>
+          <div class="tile-lbl">Total Dosen</div>
+        </div>
+        <div class="tile">
+          <i class="fas fa-book"></i>
+          <div class="tile-num"><%= jumlahMK || 0 %></div>
+          <div class="tile-lbl">Total Mata Kuliah</div>
+        </div>
+        <div class="tile">
+          <i class="fas fa-users"></i>
+          <div class="tile-num"><%= stats.totalMahasiswaMagangAktif %></div>
+          <div class="tile-lbl">Mahasiswa Magang Aktif</div>
+        </div>
+        <div class="tile">
+          <i class="fas fa-folder-open"></i>
+          <div class="tile-num"><%= stats.totalLogbook %></div>
+          <div class="tile-lbl">Total Logbook</div>
+        </div>
+        <div class="tile warn">
+          <i class="fas fa-hourglass-half"></i>
+          <div class="tile-num"><%= stats.logbookPending %></div>
+          <div class="tile-lbl">Logbook Pending</div>
+        </div>
+        <div class="tile">
+          <i class="fas fa-clipboard-check"></i>
+          <div class="tile-num"><%= stats.tugasAktif %></div>
+          <div class="tile-lbl">Tugas Perlu Dinilai</div>
         </div>
       </div>
-    </aside>
+    </section>
 
-    <main class="col-middle" id="slidesWrapper">
-      </main>
+    <!-- ===== HALAMAN 4: PROGRESS PERKULIAHAN ===== -->
+    <section class="page" data-page="progress">
+      <div class="page-title"><i class="fas fa-graduation-cap"></i> Progress Perkuliahan</div>
+      <div class="progress-list">
+        <% if (mkProgress && mkProgress.length > 0) { %>
+          <% mkProgress.forEach(function(mk) { %>
+            <div class="progress-item">
+              <span class="pi-kode"><%= mk.kode || '-' %></span>
+              <span class="pi-nama"><%= mk.nama || '-' %></span>
+              <div class="pi-bar-bg"><div class="pi-bar-fill" style="width: <%= mk.persen || 0 %>%;"></div></div>
+              <span class="pi-percent"><%= mk.persen || 0 %>%</span>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div class="list-empty">Belum ada data progress mata kuliah.</div>
+        <% } %>
+      </div>
+    </section>
 
-    <aside class="panel col-right">
-      <div class="stat-card">
-        <i class="fas fa-folder-open"></i>
-        <div class="stat-number"><%= stats.totalLogbook %></div>
-        <div class="stat-label">Total Logbook</div>
+    <!-- ===== HALAMAN: JADWAL PERKULIAHAN HARI INI ===== -->
+    <section class="page" data-page="hariini">
+      <div class="page-title"><i class="fas fa-calendar-day"></i> Jadwal Perkuliahan Hari Ini</div>
+      <div class="today-banner">
+        <div class="today-day"><%= hariIniNama %></div>
+        <div class="today-date"><%= tanggalHariIniText %></div>
       </div>
-      <div class="stat-card" style="border-color: #ff444455;">
-        <i class="fas fa-hourglass-half" style="color: #ff4444;"></i>
-        <div class="stat-number"><%= stats.logbookPending %></div>
-        <div class="stat-label">Pending Approval</div>
+      <% if (jadwalHariIni && jadwalHariIni.length > 0) { %>
+        <div class="today-list">
+          <% jadwalHariIni.forEach(function(jh) { %>
+            <div class="today-item">
+              <div class="ti-jam"><%= jh.jamMulai %><span>&ndash;</span><%= jh.jamSelesai %></div>
+              <div class="ti-body">
+                <div class="ti-mk"><%= jh.kode %> &middot; <%= jh.nama %></div>
+                <div class="ti-meta">
+                  <span><i class="fas fa-chalkboard-teacher"></i> <%= jh.dosen %></span>
+                  <span><i class="fas fa-users"></i> Angkatan <%= jh.angkatan %></span>
+                  <% if (jh.ruangan) { %><span><i class="fas fa-map-marker-alt"></i> <%= jh.ruangan %></span><% } %>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <div class="today-empty">
+          <i class="fas fa-mug-hot"></i>
+          <div class="te-title">Tidak Ada Perkuliahan Hari Ini</div>
+          <div class="te-sub">Program Studi Teknik Elektronika tidak memiliki jadwal kelas pada hari <%= hariIniNama %>. Cek menu Kelola Mata Kuliah bila ada jadwal yang belum tercatat.</div>
+        </div>
+      <% } %>
+    </section>
+
+    <!-- ===== HALAMAN: JADWAL LENGKAP & AGENDA ===== -->
+    <section class="page" data-page="referensi">
+      <div class="page-title"><i class="fas fa-calendar-alt"></i> Jadwal &amp; Agenda</div>
+      <div class="jadwal-split">
+        <div class="jadwal-col">
+          <div class="page-subtitle"><i class="fas fa-chalkboard-teacher"></i> Jadwal Perkuliahan Dosen</div>
+          <ul class="jadwal-list">
+            <% if (jadwalKuliah && jadwalKuliah.length > 0) { %>
+              <% jadwalKuliah.forEach(function(jk) { %>
+                <li>
+                  <div class="jl-top">
+                    <span class="jl-title"><%= jk.kode %> &middot; <%= jk.nama %></span>
+                    <span class="jl-meta"><%= jk.jadwal %></span>
+                  </div>
+                  <div class="jl-sub"><i class="fas fa-user"></i> <%= jk.dosen %></div>
+                </li>
+              <% }); %>
+            <% } else { %>
+              <li class="list-empty">Belum ada jadwal perkuliahan yang diisi di menu Kelola Mata Kuliah.</li>
+            <% } %>
+          </ul>
+        </div>
+        <div class="jadwal-col">
+          <div class="page-subtitle"><i class="fas fa-star"></i> Agenda Penting Mendatang</div>
+          <ul class="jadwal-list">
+            <% if (jadwalPenting && jadwalPenting.length > 0) { %>
+              <% jadwalPenting.forEach(function(j) { %>
+                <li>
+                  <div class="jl-top">
+                    <span class="jl-badge"><%= j.kategori || 'umum' %></span>
+                    <span class="jl-meta"><%= j.tanggal ? new Date(j.tanggal).toLocaleDateString('id-ID') : '' %></span>
+                  </div>
+                  <div class="jl-sub" style="margin-top:6px; color:#eee;"><%= j.judul || '-' %></div>
+                </li>
+              <% }); %>
+            <% } else { %>
+              <li class="list-empty">Belum ada agenda mendatang.</li>
+            <% } %>
+          </ul>
+        </div>
       </div>
-      <div class="stat-card">
-        <i class="fas fa-users"></i>
-        <div class="stat-number"><%= stats.totalMahasiswaMagangAktif %></div>
-        <div class="stat-label">Mahasiswa Aktif</div>
-      </div>
-      <div class="stat-card">
-        <i class="fas fa-clipboard-check"></i>
-        <div class="stat-number"><%= stats.tugasAktif %></div>
-        <div class="stat-label">Tugas Perlu Dinilai</div>
-      </div>
-    </aside>
+    </section>
+
   </div>
 
   <footer class="footer-ticker">
     <marquee scrollamount="6">
-      <i class="fas fa-info-circle"></i> Sistem Monitoring Real-time Magang Program Studi Teknik Elektronika (D3) • 
-      Akses Logbook Digital: elk-magang.polidewa.ac.id • 
-      Powered by Fajar Elektrik v.2.0 • Data diperbarui setiap 8 detik secara otomatis.
+      <i class="fas fa-info-circle"></i> Sistem Monitoring Real-time Magang Program Studi Teknik Elektronika (D3) &bull;
+      Akses Logbook Digital: elk-magang.polidewa.ac.id &bull;
+      <% if (beritaTerbaru && beritaTerbaru.length > 0) { %>
+        <% beritaTerbaru.forEach(function(b) { %> Info: <%= b.judul %> &bull; <% }); %>
+      <% } %>
+      <% if (jadwalPenting && jadwalPenting.length > 0) { %>
+        <% jadwalPenting.forEach(function(j) { %> Agenda: <%= j.judul %> (<%= j.tanggal ? new Date(j.tanggal).toLocaleDateString('id-ID') : '' %>) &bull; <% }); %>
+      <% } %>
+      Powered by Fajar Elektrik v.2.0 &bull; Data diperbarui otomatis.
     </marquee>
   </footer>
 </div>
 
 <script>
-  const slides = <%- JSON.stringify(slides) %>;
+  // ================= DATA DARI SERVER =================
+  const rawSlides = <%- JSON.stringify(slides) %>;
+
+  // Sebar slide biar tidak numpuk di satu mahasiswa: round-robin per NIM/nama,
+  // jadi urutan tampil bergantian antar-mahasiswa dulu, baru mengulang.
+  function diversifySlides(items) {
+    const groups = {};
+    const order = [];
+    items.forEach(item => {
+      const key = item.nim || item.mahasiswa || 'unknown';
+      if (!groups[key]) { groups[key] = []; order.push(key); }
+      groups[key].push(item);
+    });
+    const result = [];
+    let round = 0;
+    let added = true;
+    while (added) {
+      added = false;
+      for (const key of order) {
+        if (groups[key][round]) {
+          result.push(groups[key][round]);
+          added = true;
+        }
+      }
+      round++;
+    }
+    return result;
+  }
+
+  const slides = diversifySlides(rawSlides);
   let currentIndex = 0;
 
   function updateDisplay(index) {
     const data = slides[index];
     if (!data) return;
 
-    // Update Text with simple animation reset
     const panel = document.getElementById('infoMahasiswa');
     panel.style.opacity = 0;
-    
+
     setTimeout(() => {
       document.getElementById('slideNama').innerText = data.mahasiswa || '-';
       document.getElementById('slideNim').innerText = data.nim || '-';
@@ -270,39 +647,61 @@
       document.getElementById('slidePembimbing1').innerText = `1. ${data.pembimbing1 || '-'}`;
       document.getElementById('slidePembimbing2').innerText = `2. ${data.pembimbing2 || '-'}`;
       document.getElementById('slideKegiatan').innerText = data.caption || '-';
-      
+
       const percent = data.progressPercent || 0;
       document.getElementById('slideProgress').innerText = `${percent}% (${data.progressUploaded}/${data.progressTotal} Hari)`;
       document.getElementById('slideProgressBar').style.width = `${percent}%`;
-      
+
       panel.style.opacity = 1;
     }, 400);
 
-    // Update Image
     const wrapper = document.getElementById('slidesWrapper');
     wrapper.innerHTML = `
-      <img src="${data.imageUrl}" class="slide-image fade-up" 
+      <img src="${data.imageUrl}" class="slide-image fade-up"
            onerror="this.src='https://via.placeholder.com/1200x800?text=Dokumentasi+Magang'">
     `;
   }
 
-  function rotate() {
+  function rotateSlide() {
+    if (slides.length === 0) return;
     currentIndex = (currentIndex + 1) % slides.length;
     updateDisplay(currentIndex);
   }
 
   function updateClock() {
     const now = new Date();
-    document.getElementById('liveClock').innerText = now.toLocaleTimeString('id-ID', { 
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false 
+    document.getElementById('liveClock').innerText = now.toLocaleTimeString('id-ID', {
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
     });
   }
 
+  // ================= ROTASI HALAMAN (seperti ganti channel) =================
+  const pageOrder = ['magang', 'berita', 'statistik', 'progress', 'hariini', 'referensi'];
+  const pageDurations = { magang: 24000, berita: 10000, statistik: 10000, progress: 10000, hariini: 12000, referensi: 12000 };
+  let pageCursor = 0;
+  let pageTimer = null;
+
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.dataset.page === name));
+    document.querySelectorAll('.pi-item').forEach(p => p.classList.toggle('active', p.dataset.page === name));
+  }
+
+  function nextPage() {
+    pageCursor = (pageCursor + 1) % pageOrder.length;
+    const name = pageOrder[pageCursor];
+    showPage(name);
+    clearTimeout(pageTimer);
+    pageTimer = setTimeout(nextPage, pageDurations[name] || 10000);
+  }
+
   window.onload = () => {
-    if(slides.length > 0) updateDisplay(0);
-    setInterval(rotate, 8000);
+    if (slides.length > 0) updateDisplay(0);
+    setInterval(rotateSlide, 8000);
     setInterval(updateClock, 1000);
     updateClock();
+
+    showPage(pageOrder[0]);
+    pageTimer = setTimeout(nextPage, pageDurations[pageOrder[0]]);
   };
 </script>
 </body>

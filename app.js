@@ -1,6 +1,7 @@
 /**
  * app.js - Entry point aplikasi Teknik Elektronika
  * Dengan inisialisasi Firebase async agar kompatibel dengan firebase-admin v13+
+ * + Sitemap & SEO optimization
  */
 require('dotenv').config();
 const express = require('express');
@@ -10,20 +11,18 @@ const session = require('express-session');
 const { setFirebaseInstances } = require('./config/firebaseAdmin');
 
 const app = express();
+
+// ============================================================================
+// MIDDLEWARE GLOBAL
+// ============================================================================
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
-// ============================================================================
-// MIDDLEWARE GLOBAL (tidak butuh Firebase)
-// ============================================================================
-app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ============================================================================
 // SESSION CONFIGURATION
 // ============================================================================
+app.use(cookieParser());
 app.use(session({
   secret: process.env.SESSION_SECRET || 'rahasia-super-secret',
   resave: false,
@@ -44,6 +43,63 @@ app.use((req, res, next) => {
 // ============================================================================
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// ============================================================================
+// SEO & SITEMAP (Tanpa Firebase)
+// ============================================================================
+
+/**
+ * robots.txt - Memberi tahu crawler mana yang diizinkan
+ */
+app.get('/robots.txt', (req, res) => {
+  const robots = `User-agent: *
+Allow: /
+Sitemap: https://elektronika.polidewa.ac.id/sitemap.xml
+Sitemap: https://casaos.polidewa.ac.id/sitemap.xml
+`;
+  res.type('text/plain');
+  res.send(robots);
+});
+
+/**
+ * Sitemap Generator - Daftar semua URL yang ingin diindeks Google
+ */
+app.get('/sitemap.xml', (req, res) => {
+  const baseUrl = 'https://elektronika.polidewa.ac.id';
+  const today = new Date().toISOString().split('T')[0];
+
+  // Daftar URL statis (tambahkan sesuai kebutuhan)
+  const staticUrls = [
+    { url: '/', changefreq: 'daily', priority: 1.0 },
+    { url: '/panduan', changefreq: 'monthly', priority: 0.7 },
+    { url: '/display', changefreq: 'weekly', priority: 0.6 },
+    { url: '/ic3', changefreq: 'weekly', priority: 0.7 },
+    { url: '/elk-library', changefreq: 'weekly', priority: 0.7 },
+    { url: '/auth/login', changefreq: 'yearly', priority: 0.3 },
+    { url: '/auth/register', changefreq: 'yearly', priority: 0.3 },
+  ];
+
+  // Build XML
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+
+  staticUrls.forEach(item => {
+    xml += '  <url>\n';
+    xml += `    <loc>${baseUrl}${item.url}</loc>\n`;
+    xml += `    <lastmod>${today}</lastmod>\n`;
+    xml += `    <changefreq>${item.changefreq}</changefreq>\n`;
+    xml += `    <priority>${item.priority}</priority>\n`;
+    xml += '  </url>\n';
+  });
+
+  // Jika ada rute dinamis dari database (misal berita), bisa ditambahkan di sini
+  // Contoh: ambil daftar berita dari Firebase dan tambahkan ke sitemap
+
+  xml += '</urlset>';
+
+  res.header('Content-Type', 'application/xml');
+  res.send(xml);
+});
 
 // ============================================================================
 // INISIALISASI FIREBASE (ASYNC) DAN START SERVER
@@ -78,7 +134,8 @@ async function startServer() {
     // ROUTES PUBLIK
     const landingRoutes = require('./routes/landing');
     app.use('/', landingRoutes);
-// ROUTES PORAL IC3 DIGITAL LITERACY (Baru)
+
+    // ROUTES PORAL IC3 DIGITAL LITERACY
     const ic3Router = require('./routes/ic3');
     app.use('/ic3', ic3Router);
 
@@ -117,7 +174,7 @@ async function startServer() {
       res.render('dosen/kurikulum/my_rps');
     });
 
-    // Berita (catatan: rute publik /berita/:id sudah ditangani di routes/landing.js)
+    // Berita
     const adminBeritaRoutes = require('./routes/admin/berita');
     app.use('/admin/berita', adminBeritaRoutes);
 
@@ -203,11 +260,14 @@ async function startServer() {
       });
     });
 
+    // ============================================================================
     // START SERVER
+    // ============================================================================
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
+
   } catch (error) {
     console.error('❌ Gagal inisialisasi Firebase:', error);
     process.exit(1);

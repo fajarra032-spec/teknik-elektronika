@@ -3,6 +3,31 @@ const router = express.Router();
 const { db } = require('../config/firebaseAdmin');
 const { getProgressMagangHarian } = require('../helpers/magangHelper');
 
+// Nama hari, index harus sama dengan Date.getDay() (0=Minggu ... 6=Sabtu)
+const HARI_LIST = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+// Angkatan dari 2 digit awal NIM, konsisten dengan routes/admin/mahasiswa.js
+function getAngkatanFromNim(nim) {
+  if (nim && nim.length >= 2) return '20' + nim.substring(0, 2);
+  return null;
+}
+
+// Best-effort parse teks jadwal bebas isian admin, contoh: "Senin 08:00-10:30, Ruang A101"
+function parseJadwalText(text) {
+  if (!text) return null;
+  const lower = text.toLowerCase();
+  const hari = HARI_LIST.find(h => lower.includes(h.toLowerCase()));
+  const jamMatch = text.match(/(\d{1,2}[.:]\d{2})\s*-\s*(\d{1,2}[.:]\d{2})/);
+  if (!hari || !jamMatch) return null;
+  const ruangMatch = text.match(/ruang\s*\S+/i);
+  return {
+    hari,
+    jamMulai: jamMatch[1].replace('.', ':'),
+    jamSelesai: jamMatch[2].replace('.', ':'),
+    ruangan: ruangMatch ? ruangMatch[0] : ''
+  };
+}
+
 // Cache dengan TTL (50 menit)
 const cache = {
   mahasiswa: new Map(),
@@ -169,9 +194,74 @@ router.get('/', async (req, res) => {
     }));
 
     // Statistik umum prodi
-    const jumlahMahasiswa = (await db.collection('users').where('role', '==', 'mahasiswa').get()).size;
-    const jumlahDosen = (await db.collection('dosen').get()).size;
-    const jumlahMK = (await db.collection('mataKuliah').get()).size;
+    const mahasiswaSnapshot = await db.collection('users').where('role', '==', 'mahasiswa').get();
+    const jumlahMahasiswa = mahasiswaSnapshot.size;
+    // Peta userId -> NIM, dipakai untuk menghitung angkatan tanpa query berulang
+    const nimMap = {};
+    mahasiswaSnapshot.docs.forEach(doc => { nimMap[doc.id] = doc.data().nim || ''; });
+
+    // Ambil semua dosen sekali saja, dipakai untuk hitung jumlah & memetakan nama dosen pengampu
+    const dosenSnapshot = await db.collection('dosen').get();
+    const jumlahDosen = dosenSnapshot.size;
+    const dosenMap = {};
+    dosenSnapshot.docs.forEach(doc => { dosenMap[doc.id] = doc.data().nama || 'Dosen'; });
+
+    // Ambil semua mata kuliah sekali saja, dipakai untuk jumlah MK & jadwal perkuliahan
+    const mkAllSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
+    const jumlahMK = mkAllSnapshot.size;
+    const mkAllList = mkAllSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Jadwal perkuliahan dosen - daftar lengkap (diisi lewat menu Kelola Mata Kuliah > field "Jadwal")
+    const jadwalKuliah = mkAllList
+      .filter(mk => mk.jadwal && mk.jadwal.trim() !== '')
+      .map(mk => ({
+        kode: mk.kode,
+        nama: mk.nama,
+        jadwal: mk.jadwal,
+        dosen: (mk.dosenIds || []).map(id => dosenMap[id] || 'Unknown').join(', ') || '-'
+      }))
+      .slice(0, 8);
+
+    // Jadwal HARI INI - filter MK yang jadwalnya jatuh pada hari ini, lengkap dengan
+    // angkatan mahasiswa pengontrak (dihitung dari NIM lewat data enrollment aktif)
+    const now = new Date();
+    const hariIniNama = HARI_LIST[now.getDay()];
+    const tanggalHariIniText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    const mkHariIni = mkAllList
+      .map(mk => ({ mk, jadwalParsed: parseJadwalText(mk.jadwal) }))
+      .filter(x => x.jadwalParsed && x.jadwalParsed.hari === hariIniNama);
+
+    const jadwalHariIni = [];
+    for (const { mk, jadwalParsed } of mkHariIni) {
+      let angkatanText = '-';
+      try {
+        const enrollSnapshot = await db.collection('enrollment')
+          .where('mkId', '==', mk.id)
+          .where('status', '==', 'active')
+          .limit(60)
+          .get();
+        const angkatanSet = new Set();
+        enrollSnapshot.docs.forEach(e => {
+          const angkatan = getAngkatanFromNim(nimMap[e.data().userId]);
+          if (angkatan) angkatanSet.add(angkatan);
+        });
+        if (angkatanSet.size > 0) angkatanText = Array.from(angkatanSet).sort().join(', ');
+      } catch (err) {
+        console.error('Gagal menghitung angkatan untuk MK', mk.id, err);
+      }
+
+      jadwalHariIni.push({
+        jamMulai: jadwalParsed.jamMulai,
+        jamSelesai: jadwalParsed.jamSelesai,
+        ruangan: jadwalParsed.ruangan,
+        kode: mk.kode,
+        nama: mk.nama,
+        dosen: (mk.dosenIds || []).map(id => dosenMap[id] || 'Unknown').join(', ') || '-',
+        angkatan: angkatanText
+      });
+    }
+    jadwalHariIni.sort((a, b) => a.jamMulai.localeCompare(b.jamMulai));
 
     // Progress perkuliahan (5 MK dengan progress terbaru)
     const mkSnapshot = await db.collection('mataKuliah')
@@ -199,6 +289,10 @@ router.get('/', async (req, res) => {
       jumlahMahasiswa,
       jumlahDosen,
       jumlahMK,
+      jadwalKuliah,
+      hariIniNama,
+      tanggalHariIniText,
+      jadwalHariIni,
       mkProgress
     });
   } catch (error) {

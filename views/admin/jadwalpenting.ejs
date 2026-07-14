@@ -31,6 +31,7 @@
     font-weight: 500;
     font-size: 0.8rem;
   }
+  .kategori-rapat { background: #0d6efd; color: white; }
   .kategori-seminar { background: #28a745; color: white; }
   .kategori-wisuda { background: #dc3545; color: white; }
   .kategori-libur { background: #ffc107; color: #212529; }
@@ -102,6 +103,7 @@
             <td><%= j.tempat || '-' %></td>
             <td>
               <span class="badge-kategori 
+                <%= j.kategori === 'rapat' ? 'kategori-rapat' : '' %>
                 <%= j.kategori === 'seminar' ? 'kategori-seminar' : '' %>
                 <%= j.kategori === 'wisuda' ? 'kategori-wisuda' : '' %>
                 <%= j.kategori === 'libur' ? 'kategori-libur' : '' %>

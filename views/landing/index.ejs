@@ -1369,6 +1369,7 @@
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
+                        <th>Kategori</th>
                         <th>Judul</th>
                         <th>Tanggal</th>
                         <th>Waktu</th>
@@ -1377,18 +1378,33 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <% if (!seminar || seminar.length === 0) { %>
-                        <tr><td colspan="5" class="text-center py-4">Belum ada jadwal seminar.</td></tr>
+                    <% if ((!jadwalPenting || jadwalPenting.length === 0) && (!seminar || seminar.length === 0)) { %>
+                        <tr><td colspan="6" class="text-center py-4">Belum ada jadwal.</td></tr>
                     <% } else { %>
-                        <% seminar.forEach(s => { %>
-                            <tr>
-                                <td><strong><%= s.judul || '-' %></strong></td>
-                                <td><%= s.tanggal ? new Date(s.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-' %></td>
-                                <td><%= s.waktu || '-' %></td>
-                                <td><%= s.tempat || '-' %></td>
-                                <td><%= s.pemateri || '-' %></td>
-                            </tr>
-                        <% }) %>
+                        <% if (jadwalPenting && jadwalPenting.length > 0) { %>
+                            <% jadwalPenting.forEach(j => { %>
+                                <tr>
+                                    <td><span class="badge" style="background: <%= j.kategori === 'rapat' ? '#0d6efd' : '#28a745' %>;"><%= j.kategori === 'rapat' ? 'Rapat' : 'Seminar' %></span></td>
+                                    <td><strong><%= j.judul || '-' %></strong></td>
+                                    <td><%= j.tanggal ? new Date(j.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-' %></td>
+                                    <td><%= j.waktu || '-' %></td>
+                                    <td><%= j.tempat || '-' %></td>
+                                    <td>-</td>
+                                </tr>
+                            <% }) %>
+                        <% } %>
+                        <% if (seminar && seminar.length > 0) { %>
+                            <% seminar.forEach(s => { %>
+                                <tr>
+                                    <td><span class="badge bg-secondary">Sidang</span></td>
+                                    <td><strong><%= s.judul || '-' %></strong></td>
+                                    <td><%= s.tanggal ? new Date(s.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-' %></td>
+                                    <td><%= s.waktu || '-' %></td>
+                                    <td><%= s.tempat || '-' %></td>
+                                    <td><%= s.pemateri || '-' %></td>
+                                </tr>
+                            <% }) %>
+                        <% } %>
                     <% } %>
                 </tbody>
             </table>

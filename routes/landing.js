@@ -54,14 +54,33 @@ router.get('/', async (req, res) => {
       .get();
     const berita = beritaSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    // 3. Jadwal penting (event mendatang)
+    // 3. Jadwal penting (event mendatang) - HANYA kategori yang boleh tampil
+    // ke publik (rapat & seminar). Kategori lain (libur, pendaftaran, umum,
+    // dll) tetap dikelola di /admin/jadwalpenting dan tetap muncul di
+    // kalender akademik internal dosen/mahasiswa, tapi tidak untuk publik.
     const today = new Date().toISOString().split('T')[0];
-    const jadwalSnapshot = await db.collection('jadwalPenting')
-      .where('tanggal', '>=', today)
-      .orderBy('tanggal', 'asc')
-      .limit(5)
-      .get();
-    const jadwal = jadwalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    let jadwal;
+    try {
+      const jadwalSnapshot = await db.collection('jadwalPenting')
+        .where('tanggal', '>=', today)
+        .where('kategori', 'in', ['rapat', 'seminar'])
+        .orderBy('tanggal', 'asc')
+        .limit(5)
+        .get();
+      jadwal = jadwalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (indexError) {
+      // Index composite (kategori, tanggal) belum siap di Firestore - mundur
+      // ke query aman lalu saring kategori di JS, supaya beranda publik tidak crash.
+      console.error('Index jadwalPenting(kategori,tanggal) belum siap, fallback:', indexError.message);
+      const semuaSnapshot = await db.collection('jadwalPenting')
+        .where('tanggal', '>=', today)
+        .orderBy('tanggal', 'asc')
+        .get();
+      jadwal = semuaSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(item => item.kategori === 'rapat' || item.kategori === 'seminar')
+        .slice(0, 5);
+    }
 
     // 4. Jadwal seminar
     const seminarSnapshot = await db.collection('seminar')

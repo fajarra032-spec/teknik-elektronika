@@ -2,14 +2,22 @@ const { db } = require('../config/firebaseAdmin');
 
 async function getActiveEdomPeriod() {
   const now = new Date().toISOString().split('T')[0];
+  // Catatan: Firestore tidak mengizinkan filter rentang (<=, >=) pada dua
+  // field berbeda dalam satu query (tanggalMulai dan tanggalSelesai).
+  // Query semacam itu akan selalu gagal (invalid argument), sehingga periode
+  // aktif tidak pernah ditemukan. Solusinya: ambil yang berstatus 'active'
+  // saja (equality, aman), lalu saring rentang tanggalnya di JS.
   const snapshot = await db.collection('edom_periode')
     .where('status', '==', 'active')
-    .where('tanggalMulai', '<=', now)
-    .where('tanggalSelesai', '>=', now)
-    .limit(1)
     .get();
-  if (snapshot.empty) return null;
-  return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+
+  const periodeAktif = snapshot.docs.find(doc => {
+    const d = doc.data();
+    return d.tanggalMulai <= now && d.tanggalSelesai >= now;
+  });
+
+  if (!periodeAktif) return null;
+  return { id: periodeAktif.id, ...periodeAktif.data() };
 }
 
 async function getActiveQuestions() {
