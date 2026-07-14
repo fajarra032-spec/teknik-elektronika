@@ -61,9 +61,29 @@ Sitemap: https://casaos.polidewa.ac.id/sitemap.xml
 });
 
 /**
- * Webhook - Auto deploy dari GitHub
+ * Webhook - Auto deploy dari GitHub dengan security
  */
 app.post('/webhook', (req, res) => {
+  const crypto = require('crypto');
+  const signature = req.headers['x-hub-signature-256'];
+  
+  // Verifikasi webhook signature (jika WEBHOOK_SECRET di-set)
+  if (process.env.WEBHOOK_SECRET) {
+    const payload = JSON.stringify(req.body);
+    const expectedSignature = 'sha256=' + 
+      crypto.createHmac('sha256', process.env.WEBHOOK_SECRET)
+        .update(payload)
+        .digest('hex');
+    
+    if (!signature || !crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    )) {
+      console.warn('⚠️ Webhook signature tidak valid');
+      return res.status(401).send('Unauthorized');
+    }
+  }
+  
   const exec = require('child_process').exec;
   console.log('🔔 Webhook diterima! Memulai deploy...');
   
@@ -87,13 +107,16 @@ app.get('/sitemap.xml', async (req, res) => {
   const baseUrl = 'https://elektronika.polidewa.ac.id';
   const today = new Date().toISOString().split('T')[0];
 
-  // URL Statis
+  // URL Statis - Gabungan dari kedua versi
   const staticUrls = [
     { url: '/', changefreq: 'daily', priority: 1.0 },
     { url: '/panduan', changefreq: 'monthly', priority: 0.7 },
     { url: '/display', changefreq: 'weekly', priority: 0.6 },
     { url: '/ic3', changefreq: 'weekly', priority: 0.7 },
     { url: '/elk-library', changefreq: 'weekly', priority: 0.7 },
+    { url: '/berita', changefreq: 'daily', priority: 0.8 }, // Baru dari versi 2
+    { url: '/lulusan', changefreq: 'weekly', priority: 0.6 }, // Baru dari versi 2
+    { url: '/validasi', changefreq: 'monthly', priority: 0.3 }, // Baru dari versi 2
     { url: '/auth/login', changefreq: 'yearly', priority: 0.3 },
     { url: '/auth/register', changefreq: 'yearly', priority: 0.3 },
   ];
@@ -131,20 +154,36 @@ app.get('/sitemap.xml', async (req, res) => {
       if (!beritaSnapshot.empty) {
         beritaSnapshot.forEach(doc => {
           const data = doc.data();
+          // Catatan: berita di aplikasi ini tidak punya field 'slug', URL
+          // publiknya (routes/landing.js) memang memakai ID dokumen langsung
+          // (/berita/:id), jadi doc.id di sini SUDAH benar, bukan sekadar fallback.
           const slug = data.slug || doc.id;
           let lastmod = today;
-          
+
           // ============================================
           // VALIDASI TANGGAL YANG AMAN
+          // Mendukung dua format: Firestore Timestamp dan String ISO
           // ============================================
           try {
             if (data.updatedAt) {
-              const date = new Date(data.updatedAt.seconds * 1000);
+              let date;
+              // Cek apakah Firestore Timestamp
+              if (data.updatedAt.seconds !== undefined) {
+                date = new Date(data.updatedAt.seconds * 1000);
+              } else {
+                // String ISO
+                date = new Date(data.updatedAt);
+              }
               if (!isNaN(date.getTime())) {
                 lastmod = date.toISOString().split('T')[0];
               }
             } else if (data.createdAt) {
-              const date = new Date(data.createdAt.seconds * 1000);
+              let date;
+              if (data.createdAt.seconds !== undefined) {
+                date = new Date(data.createdAt.seconds * 1000);
+              } else {
+                date = new Date(data.createdAt);
+              }
               if (!isNaN(date.getTime())) {
                 lastmod = date.toISOString().split('T')[0];
               }
@@ -180,6 +219,13 @@ app.get('/sitemap.xml', async (req, res) => {
 // ============================================================================
 async function startServer() {
   try {
+    // Validasi environment variables
+    const requiredEnv = ['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY'];
+    const missingEnv = requiredEnv.filter(key => !process.env[key]);
+    if (missingEnv.length > 0) {
+      throw new Error(`Missing required environment variables: ${missingEnv.join(', ')}`);
+    }
+
     // Import dinamis firebase-admin (ESM)
     const firebaseAdmin = await import('firebase-admin');
     const admin = firebaseAdmin.default;
@@ -199,6 +245,7 @@ async function startServer() {
 
     // Simpan instance ke firebaseAdmin.js (sinkron)
     setFirebaseInstances({ admin, db, auth });
+    
     // ============================================================================
     // ROUTES (semua require setelah Firebase siap)
     // ============================================================================
@@ -314,6 +361,20 @@ async function startServer() {
     const displayRoutes = require('./routes/display');
     app.use('/display', displayRoutes);
 
+    // Health Check Endpoint
+    app.get('/health', (req, res) => {
+      const health = {
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        firebase: {
+          initialized: true
+        }
+      };
+      res.json(health);
+    });
+
     // ============================================================================
     // HANDLE 404 & ERROR HANDLER
     // ============================================================================
@@ -337,8 +398,25 @@ async function startServer() {
     // START SERVER
     // ============================================================================
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, '0.0.0.0', () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT}`);
+    });
+
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('🛑 SIGTERM received, shutting down gracefully...');
+      server.close(() => {
+        console.log('✅ Process terminated');
+        process.exit(0);
+      });
+    });
+
+    process.on('SIGINT', () => {
+      console.log('🛑 SIGINT received, shutting down gracefully...');
+      server.close(() => {
+        console.log('✅ Process terminated');
+        process.exit(0);
+      });
     });
 
   } catch (error) {

@@ -47,25 +47,29 @@ router.get('/', async (req, res) => {
     const dosenSnapshot = await db.collection('dosen').get();
     const jumlahDosen = dosenSnapshot.size;
 
-    // 2. Berita terbaru
+    // 2. Berita terbaru (dibatasi 4 untuk landing page; semua berita bisa
+    // dilihat di halaman khusus /berita)
     const beritaSnapshot = await db.collection('berita')
       .orderBy('tanggal', 'desc')
-      .limit(6)
+      .limit(4)
       .get();
     const berita = beritaSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    // 3. Jadwal penting (event mendatang) - HANYA kategori yang boleh tampil
-    // ke publik (rapat & seminar). Kategori lain (libur, pendaftaran, umum,
-    // dll) tetap dikelola di /admin/jadwalpenting dan tetap muncul di
-    // kalender akademik internal dosen/mahasiswa, tapi tidak untuk publik.
-    const today = new Date().toISOString().split('T')[0];
+    // 3. Jadwal penting - HANYA kategori yang boleh tampil ke publik (rapat &
+    // seminar). Kategori lain (libur, pendaftaran, umum, dll) tetap dikelola
+    // di /admin/jadwalpenting dan tetap muncul di kalender akademik internal
+    // dosen/mahasiswa, tapi tidak untuk publik.
+    //
+    // Catatan: sengaja TIDAK difilter berdasarkan tanggal (beda dengan widget
+    // "agenda mendatang" di dashboard dosen/mahasiswa yang hanya menampilkan
+    // yang akan datang). Di landing page, jadwal yang sudah lewat tetap
+    // ditampilkan sebagai arsip sampai admin menghapusnya sendiri.
     let jadwal;
     try {
       const jadwalSnapshot = await db.collection('jadwalPenting')
-        .where('tanggal', '>=', today)
         .where('kategori', 'in', ['rapat', 'seminar'])
-        .orderBy('tanggal', 'asc')
-        .limit(5)
+        .orderBy('tanggal', 'desc')
+        .limit(20)
         .get();
       jadwal = jadwalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (indexError) {
@@ -73,13 +77,12 @@ router.get('/', async (req, res) => {
       // ke query aman lalu saring kategori di JS, supaya beranda publik tidak crash.
       console.error('Index jadwalPenting(kategori,tanggal) belum siap, fallback:', indexError.message);
       const semuaSnapshot = await db.collection('jadwalPenting')
-        .where('tanggal', '>=', today)
-        .orderBy('tanggal', 'asc')
+        .orderBy('tanggal', 'desc')
         .get();
       jadwal = semuaSnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
         .filter(item => item.kategori === 'rapat' || item.kategori === 'seminar')
-        .slice(0, 5);
+        .slice(0, 20);
     }
 
     // 4. Jadwal seminar
@@ -489,13 +492,66 @@ router.get('/aktivitas/:id', async (req, res) => {
 // ============================================================================
 // BERITA
 // ============================================================================
+// GET /berita - halaman khusus menampilkan SEMUA berita (landing page hanya
+// menampilkan 4 berita terbaru; di sini pengunjung bisa lihat semuanya)
+router.get('/berita', async (req, res) => {
+  try {
+    const { search, page = 1 } = req.query;
+    const currentPage = parseInt(page) || 1;
+    const PER_PAGE = 9;
+
+    const snapshot = await db.collection('berita').orderBy('tanggal', 'desc').get();
+    let allBerita = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    if (search && search.trim() !== '') {
+      const lowerSearch = search.toLowerCase();
+      allBerita = allBerita.filter(item =>
+        (item.judul || '').toLowerCase().includes(lowerSearch) ||
+        (item.isi || '').toLowerCase().includes(lowerSearch)
+      );
+    }
+
+    const totalBerita = allBerita.length;
+    const totalPages = Math.max(1, Math.ceil(totalBerita / PER_PAGE));
+    const startIndex = (currentPage - 1) * PER_PAGE;
+    const items = allBerita.slice(startIndex, startIndex + PER_PAGE);
+
+    res.render('berita_list', {
+      title: 'Semua Berita',
+      description: `Kumpulan berita dan kegiatan Program Studi Teknik Elektronika Politeknik Dewantara (${totalBerita} berita tersedia).`,
+      items,
+      search: search || '',
+      currentPage,
+      totalPages,
+      totalBerita
+    });
+  } catch (error) {
+    console.error('Error memuat daftar berita:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat daftar berita' });
+  }
+});
+
 router.get('/berita/:id', async (req, res) => {
   try {
-    const berita = await db.collection('berita').doc(req.params.id).get();
-    if (!berita.exists) return res.status(404).send('Berita tidak ditemukan');
-    res.render('berita_detail', { berita: berita.data() });
+    const doc = await db.collection('berita').doc(req.params.id).get();
+    if (!doc.exists) {
+      return res.status(404).render('404', { title: 'Berita Tidak Ditemukan', user: req.user || null });
+    }
+    const berita = doc.data();
+    const isiPolos = (berita.isi || '').replace(/<[^>]*>?/gm, '').trim();
+    const description = isiPolos.length > 160 ? isiPolos.substring(0, 157) + '...' : (isiPolos || 'Berita Program Studi Teknik Elektronika Politeknik Dewantara.');
+
+    res.render('berita_detail', {
+      title: berita.judul || 'Detail Berita',
+      description,
+      ogImage: berita.gambar || null,
+      ogType: 'article',
+      berita,
+      user: req.user || null
+    });
   } catch (error) {
-    res.status(500).send('Error');
+    console.error('Error memuat detail berita:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat berita', user: req.user || null });
   }
 });
 

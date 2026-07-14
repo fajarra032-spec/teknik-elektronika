@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Teknik Elektronika - Politeknik Dewantara</title>
+    <title><%= typeof title !== 'undefined' && title ? title + ' - Teknik Elektronika Politeknik Dewantara' : 'Teknik Elektronika - Politeknik Dewantara' %></title>
+    <meta name="description" content="<%= typeof description !== 'undefined' && description ? description : 'Program Studi Teknik Elektronika Politeknik Dewantara - informasi akademik, berita, dan kegiatan kampus.' %>">
+    <!-- Open Graph (pratinjau saat dibagikan ke WhatsApp/Facebook/dll) -->
+    <meta property="og:title" content="<%= typeof title !== 'undefined' && title ? title : 'Teknik Elektronika - Politeknik Dewantara' %>">
+    <meta property="og:description" content="<%= typeof description !== 'undefined' && description ? description : 'Program Studi Teknik Elektronika Politeknik Dewantara' %>">
+    <meta property="og:type" content="<%= typeof ogType !== 'undefined' ? ogType : 'website' %>">
+    <% if (typeof ogImage !== 'undefined' && ogImage) { %>
+    <meta property="og:image" content="<%= ogImage %>">
+    <% } %>
     <link rel="icon" type="image/png" href="https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png">
     <!-- Bootstrap 5.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
