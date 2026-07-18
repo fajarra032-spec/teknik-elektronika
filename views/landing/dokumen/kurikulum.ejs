@@ -1,772 +1,405 @@
 <%- include('../../partials/header-landing') %>
 
-<%
-  // ==================== DATA KURIKULUM (dari PDF) ====================
-  const tahunKurikulum = 2026;
-  const totalSks = 120;
-  const totalSemester = 6;
-
-  // Profil Lulusan (Tabel 1)
-  const profilLulusan = [
-    { nama: 'Teknisi Elektronika-Listrik Terpadu', deskripsi: 'Lulusan mampu berperan sebagai teknisi lapangan yang mampu mengoperasikan, merawat, dan memperbaiki perangkat elektronika, alat ukur, sistem kendali, perangkat telekomunikasi, dan peralatan listrik industri dasar. Lulusan mampu membaca nilai komponen, skema elektronika, diagram kelistrikan, gambar teknik, serta melakukan identifikasi kerusakan dan troubleshooting dengan memperhatikan prosedur K3.' },
-    { nama: 'Praktisi Instrumentasi dan Kendali Industri', deskripsi: 'Lulusan mampu berperan sebagai teknisi instrumentasi dan otomasi yang mampu mengoperasikan, memprogram, dan merawat sistem kendali berbasis PLC, mikrokontroler, sensor, transducer, dan aktuator; membaca diagram blok sistem kendali, ladder diagram, dan diagram pengawatan; serta melakukan kalibrasi dan pengujian peralatan instrumentasi sesuai standar prosedur.' },
-    { nama: 'Teknisi Pemeliharaan Perangkat Elektronik', deskripsi: 'Lulusan mampu melaksanakan perawatan preventif dan korektif pada peralatan elektronik di laboratorium, industri, dan fasilitas umum; membaca dokumentasi teknis, manual peralatan, dan SOP; serta menerapkan K3 dan penggunaan alat pelindung diri dalam setiap pekerjaan.' },
-    { nama: 'Wirausaha Bidang Elektronika', deskripsi: 'Lulusan mampu merintis dan mengelola usaha jasa perbaikan, instalasi, atau produksi perangkat elektronika; memahami peluang pasar, pemasaran, dan manajemen usaha kecil; serta bekerja mandiri maupun dalam tim dengan menerapkan etika profesi dan kewirausahaan.' }
-  ];
-
-  // CPL (Tabel 2)
-  const cpl = [
-    { kode: 'CPL-1', deskripsi: 'Mampu menerapkan konsep matematika teknik, fisika terapan, dan prinsip dasar teknik elektro-elektronika untuk mengidentifikasi, merumuskan, dan menganalisis permasalahan teknis sederhana pada perangkat elektronika, sistem instrumentasi, dan instalasi listrik dengan sikap bertanggung jawab, jujur, dan disiplin.' },
-    { kode: 'CPL-2', deskripsi: 'Mampu membaca, memahami, dan mendokumentasikan nilai komponen, skema elektronika, diagram kelistrikan, gambar teknik, serta dokumentasi teknis lainnya; mampu menggunakan perangkat lunak teknik modern dan peralatan laboratorium dalam praktik pekerjaan dengan teliti, cermat, dan bertanggung jawab.' },
-    { kode: 'CPL-3', deskripsi: 'Mampu mengidentifikasi, menganalisis, dan memperbaiki kerusakan pada perangkat elektronika, sistem instrumentasi, dan sistem kelistrikan/otomasi industri, termasuk PLC, dengan pendekatan sistematis, pengukuran, pengujian sesuai prosedur, serta penerapan K3 secara konsisten.' },
-    { kode: 'CPL-4', deskripsi: 'Mampu merancang dan mengimplementasikan sistem elektronika sederhana berbasis mikrokontroler, PLC, atau rangkaian diskrit untuk memenuhi kebutuhan spesifik dengan mempertimbangkan aspek teknis, ekonomi, efisiensi, dan keselamatan kerja, serta mampu melakukan pengujian dan evaluasi kinerja sistem.' },
-    { kode: 'CPL-5', deskripsi: 'Mampu berkomunikasi secara efektif secara lisan dan tulisan, menyusun laporan teknis dan dokumentasi pekerjaan, bekerja sama dalam tim lintas fungsi dan budaya, serta merencanakan, melaksanakan, dan mengevaluasi tugas sesuai target, jadwal, dan prosedur dengan menjunjung etika profesi, norma, dan peraturan yang berlaku.' },
-    { kode: 'CPL-6', deskripsi: 'Mampu mengakses, memahami, dan memanfaatkan sumber belajar seperti manual, dokumentasi teknis, literatur, dan tutorial daring untuk pengembangan diri secara mandiri dan berkelanjutan serta menunjukkan tanggung jawab, kejujuran, disiplin, integritas, dan adaptasi terhadap perkembangan teknologi dan kebutuhan industri.' }
-  ];
-
-  // Standar Kompetensi Lulusan
-  const standarKompetensi = [
-    'Menguasai konsep dasar matematika, fisika, dan teknik elektro-elektronika yang mendukung pemahaman komponen, rangkaian, dan sistem elektronika.',
-    'Mampu menggunakan alat ukur dan peralatan laboratorium seperti multimeter, osiloskop, function generator, power supply, solder, dan peralatan uji lainnya secara benar dan akurat.',
-    'Mampu membaca, memahami, dan menggambar skema elektronika, diagram kelistrikan, gambar teknik, dan layout PCB.',
-    'Mampu melakukan pengukuran besaran listrik dan elektronika serta menginterpretasikan data hasil pengukuran untuk kebutuhan analisis dan perbaikan.',
-    'Mampu memprogram mikrokontroler dan PLC dasar untuk aplikasi kendali sederhana, termasuk integrasi sensor dan aktuator.',
-    'Mampu melakukan perawatan preventif dan korektif pada perangkat elektronika dan sistem kendali/otomasi.',
-    'Mampu mendiagnosis kerusakan pada perangkat elektronika dan sistem kelistrikan, serta melakukan perbaikan dasar.',
-    'Mampu menerapkan prinsip Keselamatan dan Kesehatan Kerja (K3) dan prosedur tanggap darurat di laboratorium dan tempat kerja.',
-    'Mampu menyusun laporan teknis dan dokumentasi pekerjaan secara sistematis serta mempresentasikan hasil kerja secara komunikatif.',
-    'Mampu merintis usaha di bidang elektronika seperti jasa perbaikan, instalasi, atau produksi perangkat dengan menerapkan prinsip kewirausahaan dan etika profesi.'
-  ];
-
-  // Data mata kuliah per semester
-  const semesterData = [
-    {
-      semester: 1,
-      courses: [
-        { kode: 'WUD2201-5', nama: 'Pendidikan Agama', sks: 2, jenis: 'Wajib Umum' },
-        { kode: 'WUD3208', nama: 'Bahasa Indonesia', sks: 3, jenis: 'Wajib Umum' },
-        { kode: 'WUD3209', nama: 'Bahasa Inggris', sks: 3, jenis: 'Wajib Umum' },
-        { kode: 'PD3201', nama: 'Etika Kerja', sks: 3, jenis: 'Penciri Dewantara' },
-        { kode: 'PD3202', nama: 'Standardisasi', sks: 3, jenis: 'Penciri Dewantara' },
-        { kode: 'PD3203', nama: 'Matematika Teknik', sks: 3, jenis: 'Penciri Dewantara' },
-        { kode: 'PD3204', nama: 'Perangkat Lunak Aplikasi', sks: 3, jenis: 'Penciri Dewantara' }
-      ]
-    },
-    {
-      semester: 2,
-      courses: [
-        { kode: 'WUD2206', nama: 'Pendidikan Kewarganegaraan', sks: 2, jenis: 'Wajib Umum' },
-        { kode: 'PD3205', nama: 'Keselamatan dan Kesehatan Kerja (K3)', sks: 3, jenis: 'Penciri Dewantara' },
-        { kode: 'PD3206', nama: 'Aplikasi Komputer', sks: 3, jenis: 'Penciri Dewantara' },
-        { kode: 'PD3207', nama: 'Teknik Pengukuran', sks: 3, jenis: 'Penciri Dewantara' },
-        { kode: 'PD3208', nama: 'Peralatan Teknik', sks: 3, jenis: 'Penciri Dewantara' },
-        { kode: 'PD3209', nama: 'Menggambar Teknik', sks: 3, jenis: 'Penciri Dewantara' },
-        { kode: 'PD3210', nama: 'Data dan Sistem Informasi', sks: 3, jenis: 'Penciri Dewantara' }
-      ]
-    },
-    {
-      semester: 3,
-      isConcentration: true,
-      concentrations: [
-        {
-          name: 'Instrumentasi',
-          courses: [
-            { kode: 'WUD2207', nama: 'Pendidikan Pancasila', sks: 2, jenis: 'Wajib Umum' },
-            { kode: 'PEK3201', nama: 'Dasar Sistem Tenaga Listrik', sks: 3, jenis: 'Inti Keahlian' },
-            { kode: 'PEK3202', nama: 'Elektronika Digital', sks: 3, jenis: 'Inti Keahlian' },
-            { kode: 'PEK3203', nama: 'Mikrokontroler', sks: 3, jenis: 'Inti Keahlian' },
-            { kode: 'PEK3204', nama: 'Rangkaian Elektronika', sks: 3, jenis: 'Inti Keahlian' },
-            { kode: 'PEK3205', nama: 'Perawatan dan Perbaikan', sks: 3, jenis: 'Inti Keahlian' },
-            { kode: 'PEK3206', nama: 'Programmable Logic Control (PLC)', sks: 3, jenis: 'Inti Keahlian' }
-          ]
-        },
-        {
-          name: 'Telekomunikasi',
-          courses: [
-            { kode: 'WUD2207', nama: 'Pendidikan Pancasila', sks: 2, jenis: 'Wajib Umum' },
-            { kode: 'PEK3207', nama: 'Komunikasi Data dan Jaringan', sks: 3, jenis: 'Inti Keahlian' },
-            { kode: 'PEK3208', nama: 'Elektronika Digital', sks: 3, jenis: 'Inti Keahlian' },
-            { kode: 'PEK3209', nama: 'Antena dan Propagasi', sks: 3, jenis: 'Inti Keahlian' },
-            { kode: 'PEK3210', nama: 'Keamanan Siber', sks: 3, jenis: 'Inti Keahlian' },
-            { kode: 'PEK3205', nama: 'Perawatan dan Perbaikan', sks: 3, jenis: 'Inti Keahlian' },
-            { kode: 'PEK3206', nama: 'Programmable Logic Control (PLC)', sks: 3, jenis: 'Inti Keahlian' }
-          ]
-        }
-      ]
-    },
-    {
-      semester: 4,
-      courses: [
-        { kode: 'WP2021', nama: 'Praktik Dunia Kerja I', sks: 20, jenis: 'Wajib Polidewa' }
-      ]
-    },
-    {
-      semester: 5,
-      courses: [
-        { kode: 'WP2022', nama: 'Praktik Dunia Kerja II', sks: 20, jenis: 'Wajib Polidewa' }
-      ]
-    },
-    {
-      semester: 6,
-      courses: [
-        { kode: 'WP2023', nama: 'Praktik Dunia Kerja III', sks: 20, jenis: 'Wajib Polidewa' }
-      ]
-    }
-  ];
-
-  function countCourses(data) {
-    let count = 0;
-    data.forEach(item => {
-      if (item.isConcentration && item.concentrations && item.concentrations.length) {
-        count += item.concentrations[0].courses.length;
-      } else if (item.courses) {
-        count += item.courses.length;
-      }
-    });
-    return count;
-  }
-  const totalMk = countCourses(semesterData);
-
-  function getSemesterTotal(courses) {
-    return courses.reduce((sum, c) => sum + c.sks, 0);
-  }
-
-  const fileKurikulum = '/uploads/kurikulum-elk-2026.pdf';
-%>
-
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
-
 <style>
-  /* ===== RESET & BASE ===== */
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html { font-size: clamp(14px, 1vw + 10px, 16px); }
-
   :root {
-    --primary: #0d6efd;
-    --primary-dark: #0b5ed7;
-    --secondary: #0dcaf0;
-    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
-    --bg-body: #f8fafc;
-    --bg-card: #ffffff;
-    --text-main: #1e293b;
-    --text-muted: #475569;
-    --text-light: #64748b;
-    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
-    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.12);
-    --border-radius: 1rem;
-    --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-    --font-heading: 'Montserrat', var(--font-sans);
+    --k-primary: #2147b0;
+    --k-primary-dark: #1a3a8f;
+    --k-primary-light: rgba(33,71,176,0.08);
+    --k-gradient: linear-gradient(135deg, #2147b0, #6d8bed);
+    --k-shadow-sm: 0 5px 15px rgba(0,0,0,0.05);
+    --k-shadow-hover: 0 15px 30px rgba(33,71,176,0.15);
+    --k-radius: 1.5rem;
   }
 
-  body {
-    font-family: var(--font-sans);
-    background-color: var(--bg-body);
-    color: var(--text-main);
+  .kur-header {
+    background: var(--k-gradient); border-radius: var(--k-radius); padding: 3rem 2rem;
+    color: #fff; margin-bottom: 1.2rem; text-align: center; box-shadow: 0 15px 30px rgba(33,71,176,0.25);
+  }
+  .kur-header h1 { font-weight: 800; font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: .5rem; }
+  .kur-header p { opacity: .9; font-size: 1.05rem; margin: 0; }
+
+  .status-badge {
+    display: inline-flex; align-items: center; gap: .4rem; background: #fffbeb; border: 1px solid #fde68a;
+    color: #92400e; font-weight: 700; font-size: .82rem; padding: .4rem 1rem; border-radius: 50px; margin-bottom: 2rem;
   }
 
-  .section-wrapper {
-    background: var(--bg-card);
-    border-radius: var(--border-radius);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-  }
+  .kur-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.2rem; margin-bottom: 2.5rem; }
+  .kur-summary .box { background: #fff; border-radius: 1.2rem; padding: 1.4rem; text-align: center; box-shadow: var(--k-shadow-sm); border: 1px solid rgba(33,71,176,0.1); }
+  .kur-summary .box .num { font-size: 1.7rem; font-weight: 800; color: var(--k-primary); }
+  .kur-summary .box .lbl { font-size: .8rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
 
   .section-title {
-    position: relative;
-    margin-bottom: 2rem;
-    font-weight: 700;
-    font-size: clamp(1.3rem, 4vw, 1.8rem);
-    color: var(--text-main);
-    text-align: center;
+    font-size: 1.5rem; font-weight: 700; margin: 2.5rem 0 1.2rem; color: #1e293b;
+    display: flex; align-items: center; gap: .7rem; border-bottom: 3px solid var(--k-primary); padding-bottom: .7rem;
   }
-  .section-title span {
-    background: var(--gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .section-title::after {
-    content: '';
-    display: block;
-    width: 80px;
-    height: 4px;
-    background: var(--gradient);
-    margin: 0.6rem auto 0;
-    border-radius: 50px;
-  }
+  .section-title i { color: var(--k-primary); font-size: 1.6rem; }
+  .sub-title { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin: 1.5rem 0 .8rem; }
 
-  /* ===== STATISTICS ===== */
-  .stat-card {
-    background: linear-gradient(135deg, rgba(13,110,253,0.02), rgba(13,202,240,0.02));
-    border: 1px solid rgba(13,110,253,0.08);
-    border-radius: var(--border-radius);
-    padding: 1.5rem 1rem;
-    text-align: center;
-    height: 100%;
-    transition: var(--transition);
-    backdrop-filter: blur(4px);
-  }
-  .stat-card:hover {
-    transform: translateY(-8px);
-    border-color: rgba(13,110,253,0.25);
-    box-shadow: var(--shadow-hover);
-  }
-  .stat-icon {
-    font-size: 2.2rem;
-    background: var(--gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 0.5rem;
-  }
-  .stat-number {
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: var(--text-main);
-    line-height: 1.2;
-  }
-  .stat-label {
-    font-size: 0.75rem;
-    color: var(--text-light);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
+  .id-table { width: 100%; background: #fff; border-radius: 1.2rem; overflow: hidden; box-shadow: var(--k-shadow-sm); border: 1px solid rgba(33,71,176,0.1); border-collapse: collapse; font-size: .9rem; }
+  .id-table td { padding: .65rem 1rem; border-top: 1px solid #eef1f8; }
+  .id-table td:first-child { font-weight: 600; color: #475569; width: 40%; }
+  .id-table tr:first-child td { border-top: none; }
 
-  /* ===== TABEL KURIKULUM ===== */
-  .table-kurikulum {
-    background: white;
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid rgba(13,110,253,0.1);
-    transition: var(--transition);
-  }
-  .table-kurikulum:hover {
-    border-color: rgba(13,110,253,0.3);
-    box-shadow: var(--shadow-hover);
-  }
-  .table-kurikulum thead {
-    background: var(--gradient);
-    color: white;
-  }
-  .table-kurikulum th {
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border: none;
-    font-size: clamp(0.75rem, 1.8vw, 0.85rem);
-    padding: 0.8rem 1rem;
-  }
-  .table-kurikulum td {
-    vertical-align: middle;
-    border-color: #f1f5f9;
-    font-size: clamp(0.85rem, 2vw, 0.95rem);
-    padding: 0.75rem 1rem;
-  }
-  .table-kurikulum tbody tr:hover {
-    background-color: var(--bg-body);
-  }
+  .info-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .7rem; }
+  .info-list.two-col { grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); }
+  .info-list li { background: #fff; border-left: 4px solid var(--k-primary); border-radius: .8rem; padding: .9rem 1.1rem; box-shadow: var(--k-shadow-sm); font-size: .9rem; color: #334155; display: flex; gap: .6rem; }
+  .info-list li i { color: var(--k-primary); margin-top: .15rem; flex-shrink: 0; }
 
-  .badge-sks {
-    background: var(--gradient);
-    color: white;
-    padding: 0.2rem 0.7rem;
-    border-radius: 50px;
-    font-weight: 600;
-    font-size: clamp(0.65rem, 1.5vw, 0.75rem);
-  }
+  .profil-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); }
+  .profil-card { background: #fff; border-radius: 1.1rem; padding: 1.3rem; box-shadow: var(--k-shadow-sm); border: 1px solid rgba(33,71,176,0.1); }
+  .profil-card .no { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--k-gradient); color: #fff; font-weight: 800; font-size: .85rem; margin-bottom: .6rem; }
+  .profil-card h5 { font-weight: 700; color: #1e293b; margin-bottom: .4rem; font-size: 1rem; }
+  .profil-card p { font-size: .85rem; color: #64748b; margin: 0; }
 
-  .badge-jenis {
-    padding: 0.2rem 0.7rem;
-    border-radius: 50px;
-    font-weight: 500;
-    font-size: clamp(0.65rem, 1.5vw, 0.75rem);
+  .cpl-table-wrap, .mk-table-wrap, .desk-table-wrap { background: #fff; border-radius: 1.2rem; box-shadow: var(--k-shadow-sm); overflow: hidden; border: 1px solid rgba(33,71,176,0.1); }
+  .cpl-table, .mk-table, .desk-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  .cpl-table thead th, .mk-table thead th, .desk-table thead th {
+    background: var(--k-primary-light); color: var(--k-primary-dark); font-weight: 700; padding: .8rem 1rem; text-align: left; white-space: nowrap;
   }
-  .badge-wajib-umum { background: #e3f2fd; color: #0d6efd; }
-  .badge-penciri { background: #fce4ec; color: #d63384; }
-  .badge-keahlian { background: #e8f5e9; color: #198754; }
-  .badge-polidewa { background: #fff3e0; color: #fd7e14; }
+  .cpl-table tbody td, .mk-table tbody td, .desk-table tbody td { padding: .75rem 1rem; border-top: 1px solid #eef1f8; color: #334155; vertical-align: top; }
+  .cpl-table tbody tr:hover, .mk-table tbody tr:hover, .desk-table tbody tr:hover { background: #f8faff; }
+  .cpl-kode { font-weight: 700; color: var(--k-primary-dark); white-space: nowrap; }
 
-  .semester-total {
-    text-align: right;
-    padding: 0.8rem 1rem;
-    font-weight: 700;
-    color: var(--text-main);
-    background: #f8fafc;
-    border-top: 1px solid #eef1f8;
-  }
+  .badge-sks { background: var(--k-primary-light); color: var(--k-primary-dark); font-weight: 700; padding: .2rem .6rem; border-radius: 50px; font-size: .78rem; white-space: nowrap; }
+  .badge-jenis { background: #f1f5f9; color: #475569; font-weight: 600; padding: .2rem .6rem; border-radius: 50px; font-size: .76rem; white-space: nowrap; }
 
-  /* ===== NAVIGASI SEMESTER ===== */
-  .semester-nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    justify-content: center;
-  }
-  .semester-nav button {
-    border: 1.5px solid var(--primary);
-    background: #fff;
-    color: var(--primary);
-    font-weight: 600;
-    padding: 0.5rem 1.1rem;
-    border-radius: 50px;
-    cursor: pointer;
-    transition: var(--transition);
-    font-size: clamp(0.8rem, 2vw, 0.95rem);
-  }
-  .semester-nav button:hover {
-    background: rgba(13,110,253,0.08);
-  }
-  .semester-nav button.active {
-    background: var(--gradient);
-    color: #fff;
-    border-color: transparent;
-    box-shadow: 0 4px 12px rgba(13,110,253,0.3);
-  }
+  .sks-table-wrap { background: #fff; border-radius: 1.2rem; box-shadow: var(--k-shadow-sm); overflow: hidden; border: 1px solid rgba(33,71,176,0.1); margin-bottom: 1rem; }
+  .sks-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  .sks-table thead th { background: var(--k-primary-light); color: var(--k-primary-dark); font-weight: 700; padding: .8rem 1rem; text-align: left; }
+  .sks-table tbody td { padding: .7rem 1rem; border-top: 1px solid #eef1f8; }
+  .sks-table tfoot td { padding: .8rem 1rem; font-weight: 700; background: #f8faff; color: var(--k-primary-dark); }
 
-  /* ===== SUB NAV KONSENTRASI ===== */
-  .sub-nav {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    justify-content: center;
-  }
-  .sub-nav button {
-    border: 1px solid #cbd5e1;
-    background: #f8fafc;
-    color: #475569;
-    padding: 0.3rem 1rem;
-    border-radius: 30px;
-    font-weight: 600;
-    font-size: clamp(0.75rem, 1.8vw, 0.85rem);
-    cursor: pointer;
-    transition: var(--transition);
-  }
-  .sub-nav button:hover {
-    background: rgba(13,110,253,0.08);
-  }
-  .sub-nav button.active {
-    background: var(--gradient);
-    color: #fff;
-    border-color: transparent;
-  }
+  .semester-nav { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.2rem; }
+  .semester-nav button { border: 1.5px solid var(--k-primary); background: #fff; color: var(--k-primary); font-weight: 600; padding: .5rem 1.1rem; border-radius: 50px; cursor: pointer; transition: .2s; }
+  .semester-nav button:hover { background: var(--k-primary-light); }
+  .semester-nav button.active { background: var(--k-gradient); color: #fff; border-color: transparent; }
 
+  .konsentrasi-nav { display: flex; gap: .5rem; margin-bottom: 1rem; }
+  .konsentrasi-nav button { border: 1.5px dashed var(--k-primary); background: #fff; color: var(--k-primary-dark); font-weight: 600; padding: .4rem 1rem; border-radius: 50px; cursor: pointer; font-size: .85rem; transition: .2s; }
+  .konsentrasi-nav button.active { background: var(--k-primary-light); border-style: solid; }
+
+  .semester-total { text-align: right; padding: .8rem 1rem; font-weight: 700; color: var(--k-primary-dark); background: #f8faff; }
   .semester-panel { display: none; }
-  .semester-panel.active { display: block; animation: fadeIn 0.3s ease; }
-  .concentration-panel { display: none; }
-  .concentration-panel.active { display: block; animation: fadeIn 0.3s ease; }
+  .semester-panel.active { display: block; animation: fadeIn .3s ease; }
+  .konsentrasi-panel { display: none; }
+  .konsentrasi-panel.active { display: block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  .accordion-desk { display: grid; gap: .6rem; }
+  .accordion-desk details { background: #fff; border-radius: .9rem; box-shadow: var(--k-shadow-sm); border: 1px solid rgba(33,71,176,0.1); padding: .9rem 1.1rem; }
+  .accordion-desk summary { cursor: pointer; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: .6rem; }
+  .accordion-desk summary .kode { color: var(--k-primary-dark); font-weight: 700; }
+  .accordion-desk p { margin: .6rem 0 0; color: #64748b; font-size: .88rem; }
 
-  /* ===== CPL LIST ===== */
-  .cpl-list, .kompetensi-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    gap: 0.8rem;
-  }
-  .cpl-list li, .kompetensi-list li {
-    background: #fff;
-    border-left: 4px solid var(--primary);
-    border-radius: 0.8rem;
-    padding: 1rem 1.2rem;
-    box-shadow: var(--shadow-sm);
-    font-size: clamp(0.85rem, 2vw, 0.95rem);
-    color: #334155;
-  }
+  .penilaian-table-wrap { background: #fff; border-radius: 1.2rem; box-shadow: var(--k-shadow-sm); overflow: hidden; border: 1px solid rgba(33,71,176,0.1); margin-bottom: 1.5rem; }
+  .penilaian-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  .penilaian-table thead th { background: var(--k-primary-light); color: var(--k-primary-dark); font-weight: 700; padding: .8rem 1rem; text-align: left; }
+  .penilaian-table tbody td { padding: .7rem 1rem; border-top: 1px solid #eef1f8; color: #334155; }
 
-  /* ===== CARD PROFIL ===== */
-  .profil-card {
-    background: #fff;
-    border-radius: 0.8rem;
-    padding: 1.2rem;
-    border-left: 4px solid var(--primary);
-    box-shadow: var(--shadow-sm);
-    margin-bottom: 0.8rem;
-  }
-  .profil-card h5 {
-    font-weight: 700;
-    color: var(--text-main);
-    font-size: clamp(0.95rem, 2.5vw, 1.05rem);
-  }
-  .profil-card p {
-    color: var(--text-muted);
-    font-size: clamp(0.85rem, 2vw, 0.95rem);
-    margin: 0;
-  }
+  .ref-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .6rem; counter-reset: ref; }
+  .ref-list li { counter-increment: ref; background: #fff; border-radius: .8rem; padding: .8rem 1.1rem; box-shadow: var(--k-shadow-sm); border: 1px solid rgba(33,71,176,0.1); font-size: .87rem; color: #475569; display: flex; gap: .7rem; }
+  .ref-list li::before { content: counter(ref) "."; font-weight: 700; color: var(--k-primary); flex-shrink: 0; }
 
-  /* ===== DOWNLOAD BUTTON ===== */
+  .penetapan-box {
+    background: #fff; border-radius: var(--k-radius); box-shadow: var(--k-shadow-sm); border: 1px solid rgba(33,71,176,0.1);
+    padding: 1.8rem; margin-top: 2.5rem; display: flex; flex-wrap: wrap; gap: 2rem; justify-content: space-between;
+  }
+  .penetapan-box .ttd { text-align: center; min-width: 220px; }
+  .penetapan-box .ttd .nama { font-weight: 700; text-decoration: underline; margin-top: 3rem; color: #1e293b; }
+  .penetapan-box .ttd .jabatan { color: #64748b; font-size: .85rem; }
+
+  .download-box {
+    background: #fff; border-radius: var(--k-radius); box-shadow: var(--k-shadow-sm); border: 1px solid rgba(33,71,176,0.1);
+    padding: 1.8rem; margin-top: 2rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;
+  }
+  .download-box .txt h3 { font-weight: 700; font-size: 1.1rem; margin-bottom: .2rem; color: #1e293b; }
+  .download-box .txt p { margin: 0; color: #64748b; font-size: .88rem; }
   .btn-download {
-    background: var(--gradient);
-    color: #fff;
-    border: none;
-    padding: 0.7rem 1.5rem;
-    border-radius: 50px;
-    font-weight: 600;
-    text-decoration: none;
-    box-shadow: 0 8px 16px rgba(13,110,253,0.25);
-    transition: var(--transition);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
+    background: var(--k-gradient); color: #fff; border: none; padding: .7rem 1.5rem; border-radius: 50px; font-weight: 600;
+    text-decoration: none; white-space: nowrap; box-shadow: 0 8px 16px rgba(33,71,176,0.25); transition: .2s;
   }
-  .btn-download:hover {
-    color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 12px 20px rgba(13,110,253,0.3);
-  }
+  .btn-download:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 12px 20px rgba(33,71,176,0.3); }
 </style>
 
-<div class="container">
+<div class="kur-header">
+  <h1><i class="bi bi-journal-bookmark-fill me-2"></i>Kurikulum</h1>
+  <p>Program Studi D3 Teknik Elektronika &mdash; Politeknik Dewantara &mdash; Tahun <%= dokumenInfo.tahunKurikulum %></p>
+</div>
 
-  <!-- ===== HEADER KURIKULUM ===== -->
-  <div class="section-wrapper" style="background: var(--gradient); color: #fff; text-align: center; padding: 2.5rem 1.5rem;">
-    <h1 style="font-family: var(--font-heading); font-weight: 800; font-size: clamp(1.8rem, 5vw, 2.8rem);">
-      <i class="bi bi-journal-bookmark-fill me-2"></i>Kurikulum Teknik Elektronika
-    </h1>
-    <p style="opacity: 0.9; font-size: clamp(1rem, 2.5vw, 1.2rem); margin: 0;">
-      Program Studi D3 Teknik Elektronika – Politeknik Dewantara Tahun <%= tahunKurikulum %>
-    </p>
-  </div>
+<div class="text-center">
+  <span class="status-badge"><i class="bi bi-exclamation-triangle-fill"></i><%= dokumenInfo.status %> &mdash; <%= dokumenInfo.catatanStatus %></span>
+</div>
 
-  <!-- ===== RINGKASAN STATISTIK ===== -->
-  <div class="row g-4 mb-4">
-    <div class="col-6 col-md-3">
-      <div class="stat-card">
-        <div class="stat-icon"><i class="bi bi-calendar-range"></i></div>
-        <div class="stat-number"><%= totalSemester %></div>
-        <div class="stat-label">Semester</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="stat-card">
-        <div class="stat-icon"><i class="bi bi-book"></i></div>
-        <div class="stat-number"><%= totalSks %></div>
-        <div class="stat-label">Total SKS</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="stat-card">
-        <div class="stat-icon"><i class="bi bi-list-ul"></i></div>
-        <div class="stat-number"><%= totalMk %></div>
-        <div class="stat-label">Mata Kuliah</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="stat-card">
-        <div class="stat-icon"><i class="bi bi-calendar3"></i></div>
-        <div class="stat-number"><%= tahunKurikulum %></div>
-        <div class="stat-label">Tahun Kurikulum</div>
-      </div>
-    </div>
-  </div>
+<!-- Ringkasan -->
+<div class="kur-summary">
+  <div class="box"><div class="num">6</div><div class="lbl">Semester</div></div>
+  <div class="box"><div class="num"><%= totalSks %></div><div class="lbl">Total SKS</div></div>
+  <div class="box"><div class="num">2</div><div class="lbl">Konsentrasi</div></div>
+  <div class="box"><div class="num"><%= dokumenInfo.tahunKurikulum %></div><div class="lbl">Tahun Kurikulum</div></div>
+</div>
 
-  <!-- ===== IDENTITAS PRODI ===== -->
-  <div class="section-wrapper">
-    <h2 class="section-title">Identitas <span>Program Studi</span></h2>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1.5rem; font-size: clamp(0.85rem, 2vw, 0.95rem);">
-      <div><strong>Unit Pengelola</strong> Politeknik Dewantara</div>
-      <div><strong>Jenis Program Studi</strong> Diploma III (D3)</div>
-      <div><strong>Nama Program Studi</strong> Teknik Elektronika</div>
-      <div><strong>Gelar Lulusan</strong> A.Md.T.</div>
-      <div style="grid-column: span 2;"><strong>Alamat</strong> Jl. K.H. Ahmad Razak Lr. 2 No. 7, Kel. Binturu, Kec. Wara Selatan, Kota Palopo, Sulawesi Selatan 91911</div>
-      <div><strong>Telepon</strong> 081239108105</div>
-      <div><strong>Email</strong> elektronika@polidewa.ac.id</div>
-      <div style="grid-column: span 2;"><strong>Website</strong> <a href="https://polidewa.ac.id" target="_blank">polidewa.ac.id</a></div>
+<!-- Identitas Program Studi -->
+<div class="section-title"><i class="bi bi-card-heading"></i>Identitas Program Studi</div>
+<table class="id-table">
+  <tr><td>Unit Pengelola Program Studi</td><td><%= identitas.unitPengelola %></td></tr>
+  <tr><td>Jenis Program Studi</td><td><%= identitas.jenisProdi %></td></tr>
+  <tr><td>Nama Program Studi</td><td><%= identitas.namaProdi %></td></tr>
+  <tr><td>Gelar yang Diberikan</td><td><%= identitas.gelar %></td></tr>
+  <tr><td>Alamat</td><td><%= identitas.alamat %></td></tr>
+  <tr><td>Nomor Telepon</td><td><%= identitas.telepon %></td></tr>
+  <tr><td>E-mail</td><td><%= identitas.email %></td></tr>
+  <tr><td>Website</td><td><%= identitas.website %></td></tr>
+  <tr><td>No. SK Pendirian PT</td><td><%= identitas.noSkPendirian %></td></tr>
+  <tr><td>Tanggal SK Pendirian PT</td><td><%= identitas.tglSkPendirian %></td></tr>
+  <tr><td>Akreditasi</td><td><%= identitas.akreditasi %></td></tr>
+</table>
+
+<!-- Visi Misi Tujuan -->
+<div class="section-title"><i class="bi bi-flag-fill"></i>Visi, Misi, Tujuan &amp; Strategi Program Studi</div>
+<p class="sub-title">Visi</p>
+<p style="color:#475569;"><%= visiMisi.visi %></p>
+
+<p class="sub-title">Misi</p>
+<ul class="info-list">
+  <% visiMisi.misi.forEach(function(m){ %><li><i class="bi bi-dot"></i><span><%= m %></span></li><% }) %>
+</ul>
+
+<p class="sub-title">Tujuan</p>
+<ul class="info-list">
+  <% visiMisi.tujuan.forEach(function(t){ %><li><i class="bi bi-check-circle-fill"></i><span><%= t %></span></li><% }) %>
+</ul>
+
+<p class="sub-title">Strategi</p>
+<ul class="info-list">
+  <% visiMisi.strategi.forEach(function(s){ %><li><i class="bi bi-arrow-right-circle-fill"></i><span><%= s %></span></li><% }) %>
+</ul>
+
+<!-- Profil Lulusan -->
+<div class="section-title"><i class="bi bi-mortarboard-fill"></i>Profil Lulusan</div>
+<div class="profil-grid">
+  <% profilLulusan.forEach(function(p){ %>
+    <div class="profil-card">
+      <div class="no"><%= p.no %></div>
+      <h5><%= p.judul %></h5>
+      <p><%= p.deskripsi %></p>
     </div>
-  </div>
+  <% }) %>
+</div>
 
-  <!-- ===== PROFIL LULUSAN ===== -->
-  <div class="section-wrapper">
-    <h2 class="section-title">Profil <span>Lulusan</span></h2>
-    <% profilLulusan.forEach(function(pl, idx){ %>
-      <div class="profil-card">
-        <h5><%= idx+1 %>. <%= pl.nama %></h5>
-        <p><%= pl.deskripsi %></p>
-      </div>
-    <% }) %>
-  </div>
-
-  <!-- ===== CPL ===== -->
-  <div class="section-wrapper">
-    <h2 class="section-title">Capaian Pembelajaran <span>Lulusan</span></h2>
-    <ul class="cpl-list">
-      <% cpl.forEach(function(item){ %>
-        <li><strong><%= item.kode %></strong> – <%= item.deskripsi %></li>
+<!-- CPL -->
+<div class="section-title"><i class="bi bi-check2-circle"></i>Capaian Pembelajaran Lulusan (CPL)</div>
+<div class="cpl-table-wrap">
+  <table class="cpl-table">
+    <thead><tr><th style="width:90px;">Kode</th><th>Deskripsi CPL</th></tr></thead>
+    <tbody>
+      <% cpl.forEach(function(c){ %>
+        <tr><td class="cpl-kode"><%= c.kode %></td><td><%= c.deskripsi %></td></tr>
       <% }) %>
-    </ul>
-  </div>
+    </tbody>
+  </table>
+</div>
 
-  <!-- ===== STANDAR KOMPETENSI ===== -->
-  <div class="section-wrapper">
-    <h2 class="section-title">Standar <span>Kompetensi</span> Lulusan</h2>
-    <ul class="kompetensi-list">
-      <% standarKompetensi.forEach(function(sk){ %>
-        <li><i class="bi bi-check-lg text-success me-2"></i><%= sk %></li>
+<!-- Standar Kompetensi Lulusan -->
+<div class="section-title"><i class="bi bi-award-fill"></i>Standar Kompetensi Lulusan</div>
+<ul class="info-list">
+  <% standarKompetensi.forEach(function(s, i){ %>
+    <li><i class="bi bi-check-lg"></i><span><%= s %></span></li>
+  <% }) %>
+</ul>
+
+<!-- Jumlah SKS -->
+<div class="section-title"><i class="bi bi-calculator-fill"></i>Jumlah SKS</div>
+<div class="sks-table-wrap">
+  <table class="sks-table">
+    <thead><tr><th>Jenis Mata Kuliah</th><th>Jumlah SKS</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <% jumlahSks.forEach(function(j){ %>
+        <tr><td><%= j.jenis %></td><td><span class="badge-sks"><%= j.sks %> SKS</span></td><td><%= j.keterangan %></td></tr>
       <% }) %>
-    </ul>
-  </div>
+    </tbody>
+    <tfoot><tr><td>Total</td><td><%= totalSks %> SKS</td><td>20 SKS x 6 semester</td></tr></tfoot>
+  </table>
+</div>
 
-  <!-- ===== STRUKTUR KURIKULUM ===== -->
-  <div class="section-wrapper">
-    <h2 class="section-title">Struktur <span>Mata Kuliah</span></h2>
+<!-- Struktur Mata Kuliah -->
+<div class="section-title"><i class="bi bi-diagram-3-fill"></i>Struktur Mata Kuliah per Semester</div>
 
-    <!-- Navigasi Semester -->
-    <div class="semester-nav" id="semesterNav">
-      <% semesterData.forEach(function(smt, idx){ %>
-        <button type="button" data-target="smt-<%= smt.semester %>" class="<%= idx === 0 ? 'active' : '' %>">
-          Semester <%= smt.semester %>
-        </button>
-      <% }) %>
-    </div>
+<div class="semester-nav" id="semesterNav">
+  <% strukturSemester.forEach(function(smt, idx){ %>
+    <button type="button" data-target="smt-<%= smt.semester %>" class="<%= idx === 0 ? 'active' : '' %>">Semester <%= smt.semester %></button>
+  <% }) %>
+</div>
 
-    <!-- Panel Semester -->
-    <% semesterData.forEach(function(smt, idx){ %>
-      <div class="semester-panel <%= idx === 0 ? 'active' : '' %>" id="smt-<%= smt.semester %>">
+<% strukturSemester.forEach(function(smt, idx){ %>
+  <div class="semester-panel <%= idx === 0 ? 'active' : '' %>" id="smt-<%= smt.semester %>">
 
-        <% if (smt.isConcentration) { %>
-          <!-- Semester dengan konsentrasi -->
-          <div class="sub-nav" id="subNav-<%= smt.semester %>">
-            <% smt.concentrations.forEach(function(conc, ci){ %>
-              <button type="button" data-target="conc-<%= smt.semester %>-<%= ci %>" class="<%= ci === 0 ? 'active' : '' %>">
-                <%= conc.name %>
-              </button>
-            <% }) %>
-          </div>
+    <% if (smt.varian) { %>
+      <div class="konsentrasi-nav" id="konsNav-<%= smt.semester %>">
+        <% smt.varian.forEach(function(v, vIdx){ %>
+          <button type="button" data-target="smt-<%= smt.semester %>-kons-<%= vIdx %>" class="<%= vIdx === 0 ? 'active' : '' %>">
+            <i class="bi bi-diagram-2 me-1"></i>Konsentrasi <%= v.nama %>
+          </button>
+        <% }) %>
+      </div>
 
-          <% smt.concentrations.forEach(function(conc, ci){ %>
-            <div class="concentration-panel <%= ci === 0 ? 'active' : '' %>" id="conc-<%= smt.semester %>-<%= ci %>">
-              <div class="table-responsive table-kurikulum">
-                <table class="table table-hover align-middle mb-0">
-                  <thead>
-                    <tr>
-                      <th>No</th>
-                      <th>Kode</th>
-                      <th>Mata Kuliah</th>
-                      <th>SKS</th>
-                      <th>Jenis</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% conc.courses.forEach(function(mk, i){ %>
-                      <tr>
-                        <td><%= i+1 %></td>
-                        <td><%= mk.kode %></td>
-                        <td><%= mk.nama %></td>
-                        <td><span class="badge-sks"><%= mk.sks %> SKS</span></td>
-                        <td>
-                          <% 
-                            let badgeClass = 'badge-jenis';
-                            if (mk.jenis === 'Wajib Umum') badgeClass += ' badge-wajib-umum';
-                            else if (mk.jenis === 'Penciri Dewantara') badgeClass += ' badge-penciri';
-                            else if (mk.jenis === 'Inti Keahlian') badgeClass += ' badge-keahlian';
-                            else if (mk.jenis === 'Wajib Polidewa') badgeClass += ' badge-polidewa';
-                          %>
-                          <span class="<%= badgeClass %>"><%= mk.jenis %></span>
-                        </td>
-                      </tr>
-                    <% }) %>
-                  </tbody>
-                </table>
-                <div class="semester-total">
-                  Total SKS Semester <%= smt.semester %> (Konsentrasi <%= conc.name %>):
-                  <%= getSemesterTotal(conc.courses) %> SKS
-                </div>
-              </div>
-            </div>
-          <% }) %>
-
-        <% } else { %>
-          <!-- Semester biasa -->
-          <div class="table-responsive table-kurikulum">
-            <table class="table table-hover align-middle mb-0">
-              <thead>
-                <tr>
-                  <th>No</th>
-                  <th>Kode</th>
-                  <th>Mata Kuliah</th>
-                  <th>SKS</th>
-                  <th>Jenis</th>
-                </tr>
-              </thead>
+      <% smt.varian.forEach(function(v, vIdx){
+           var totalTeori = v.matkul.reduce(function(a,m){return a+m.teori;},0);
+           var totalPraktik = v.matkul.reduce(function(a,m){return a+m.praktik;},0);
+           var totalSksSmt = v.matkul.reduce(function(a,m){return a+m.sks;},0);
+      %>
+        <div class="konsentrasi-panel <%= vIdx === 0 ? 'active' : '' %>" id="smt-<%= smt.semester %>-kons-<%= vIdx %>">
+          <div class="mk-table-wrap">
+            <table class="mk-table">
+              <thead><tr><th>No</th><th>Kode</th><th>Mata Kuliah</th><th>Teori</th><th>Praktik</th><th>SKS</th><th>Jenis MK</th></tr></thead>
               <tbody>
-                <% smt.courses.forEach(function(mk, i){ %>
+                <% v.matkul.forEach(function(mk, i){ %>
                   <tr>
-                    <td><%= i+1 %></td>
-                    <td><%= mk.kode %></td>
-                    <td><%= mk.nama %></td>
+                    <td><%= i + 1 %></td><td><%= mk.kode %></td><td><%= mk.nama %></td>
+                    <td><%= mk.teori %></td><td><%= mk.praktik %></td>
                     <td><span class="badge-sks"><%= mk.sks %> SKS</span></td>
-                    <td>
-                      <% 
-                        let badgeClass = 'badge-jenis';
-                        if (mk.jenis === 'Wajib Umum') badgeClass += ' badge-wajib-umum';
-                        else if (mk.jenis === 'Penciri Dewantara') badgeClass += ' badge-penciri';
-                        else if (mk.jenis === 'Inti Keahlian') badgeClass += ' badge-keahlian';
-                        else if (mk.jenis === 'Wajib Polidewa') badgeClass += ' badge-polidewa';
-                      %>
-                      <span class="<%= badgeClass %>"><%= mk.jenis %></span>
-                    </td>
+                    <td><span class="badge-jenis"><%= mk.jenis %></span></td>
                   </tr>
                 <% }) %>
               </tbody>
             </table>
-            <div class="semester-total">
-              Total SKS Semester <%= smt.semester %>:
-              <%= getSemesterTotal(smt.courses) %> SKS
-            </div>
+            <div class="semester-total">Total: <%= totalTeori %> Teori + <%= totalPraktik %> Praktik = <%= totalSksSmt %> SKS</div>
           </div>
-        <% } %>
-      </div>
-    <% }) %>
-  </div>
-
-  <!-- ===== PELAKSANAAN PEMBELAJARAN ===== -->
-  <div class="section-wrapper">
-    <h2 class="section-title">Pelaksanaan <span>Proses Pembelajaran</span></h2>
-    <div class="row g-4">
-      <div class="col-md-6">
-        <h5 style="font-weight: 700; color: var(--text-main);"><i class="bi bi-mortarboard text-primary me-2"></i>Metode Pembelajaran</h5>
-        <ul style="list-style: none; padding: 0;">
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Ceramah interaktif</li>
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Diskusi kelompok</li>
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Praktikum terbimbing</li>
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Praktikum mandiri</li>
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Project-Based Learning</li>
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Studi kasus</li>
-          <li style="padding: 0.3rem 0;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Magang industri</li>
-        </ul>
-      </div>
-      <div class="col-md-6">
-        <h5 style="font-weight: 700; color: var(--text-main);"><i class="bi bi-laptop text-primary me-2"></i>Bentuk Pembelajaran</h5>
-        <ul style="list-style: none; padding: 0;">
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Kuliah tatap muka</li>
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Praktikum laboratorium</li>
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Seminar dan presentasi</li>
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Magang / praktik kerja</li>
-          <li style="padding: 0.3rem 0;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Pembelajaran daring sinkron & asinkron</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== PENILAIAN ===== -->
-  <div class="section-wrapper">
-    <h2 class="section-title">Penilaian & <span>Evaluasi</span></h2>
-    <div class="row g-4">
-      <div class="col-md-4">
-        <h5 style="font-weight: 700; color: var(--text-main);">Prinsip Penilaian</h5>
-        <ul style="list-style: none; padding: 0;">
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Valid</li>
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Reliabel</li>
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Transparan</li>
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Akuntabel</li>
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Berkeadilan</li>
-          <li style="padding: 0.3rem 0; border-bottom: 1px solid #eef1f8;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Objektif</li>
-          <li style="padding: 0.3rem 0;"><i class="bi bi-check-circle-fill text-primary me-2"></i>Edukatif</li>
-        </ul>
-      </div>
-      <div class="col-md-4">
-        <h5 style="font-weight: 700; color: var(--text-main);">Komponen & Bobot</h5>
-        <div class="table-responsive">
-          <table class="table table-sm table-borderless" style="font-size: clamp(0.85rem, 2vw, 0.95rem);">
-            <tr><td>Sikap, kehadiran, keaktifan</td><td class="text-end fw-bold">10–20%</td></tr>
-            <tr><td>Tugas dan praktikum (formatif)</td><td class="text-end fw-bold">20–30%</td></tr>
-            <tr><td>Ujian Tengah Semester (UTS)</td><td class="text-end fw-bold">20–25%</td></tr>
-            <tr><td>UAS / Proyek Akhir</td><td class="text-end fw-bold">25–35%</td></tr>
-          </table>
         </div>
-      </div>
-      <div class="col-md-4">
-        <h5 style="font-weight: 700; color: var(--text-main);">Penilaian Magang</h5>
-        <div class="table-responsive">
-          <table class="table table-sm table-borderless" style="font-size: clamp(0.85rem, 2vw, 0.95rem);">
-            <tr><td>Laporan Harian</td><td class="text-end fw-bold">15%</td></tr>
-            <tr><td>Laporan Akhir Magang</td><td class="text-end fw-bold">25%</td></tr>
-            <tr><td>Penilaian Pembimbing Industri</td><td class="text-end fw-bold">30%</td></tr>
-            <tr><td>Presentasi Seminar Magang</td><td class="text-end fw-bold">30%</td></tr>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
+      <% }) %>
 
-  <!-- ===== UNDUH DOKUMEN ===== -->
-  <div class="section-wrapper" style="text-align: center;">
-    <h2 class="section-title">Unduh <span>Dokumen</span> Kurikulum</h2>
-    <p style="color: var(--text-muted); font-size: clamp(0.9rem, 2vw, 1rem); margin-bottom: 1.2rem;">
-      Dokumen lengkap kurikulum Program Studi D3 Teknik Elektronika tahun <%= tahunKurikulum %> dalam format PDF.
+    <% } else {
+         var totalTeori = smt.matkul.reduce(function(a,m){return a+m.teori;},0);
+         var totalPraktik = smt.matkul.reduce(function(a,m){return a+m.praktik;},0);
+         var totalSksSmt = smt.matkul.reduce(function(a,m){return a+m.sks;},0);
+    %>
+      <div class="mk-table-wrap">
+        <table class="mk-table">
+          <thead><tr><th>No</th><th>Kode</th><th>Mata Kuliah</th><th>Teori</th><th>Praktik</th><th>SKS</th><th>Jenis MK</th></tr></thead>
+          <tbody>
+            <% smt.matkul.forEach(function(mk, i){ %>
+              <tr>
+                <td><%= i + 1 %></td><td><%= mk.kode %></td><td><%= mk.nama %></td>
+                <td><%= mk.teori %></td><td><%= mk.praktik %></td>
+                <td><span class="badge-sks"><%= mk.sks %> SKS</span></td>
+                <td><span class="badge-jenis"><%= mk.jenis %></span></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <div class="semester-total">Total: <%= totalTeori %> Teori + <%= totalPraktik %> Praktik = <%= totalSksSmt %> SKS</div>
+      </div>
+    <% } %>
+
+  </div>
+<% }) %>
+
+<!-- Rekognisi Kredit Praktik Dunia Kerja -->
+<div class="section-title"><i class="bi bi-briefcase-fill"></i>Rekognisi Kredit Praktik Dunia Kerja (MBKM)</div>
+<div class="sks-table-wrap">
+  <table class="sks-table">
+    <thead><tr><th>Kegiatan</th><th>Semester</th><th>SKS</th><th>Fokus Kegiatan</th></tr></thead>
+    <tbody>
+      <% rekognisiMagang.forEach(function(r){ %>
+        <tr><td><%= r.kegiatan %></td><td><%= r.semester %></td><td><span class="badge-sks"><%= r.sks %> SKS</span></td><td><%= r.fokus %></td></tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<!-- Deskripsi Mata Kuliah -->
+<div class="section-title"><i class="bi bi-card-list"></i>Deskripsi Mata Kuliah</div>
+<div class="accordion-desk">
+  <% deskripsiMatkul.forEach(function(mk){ %>
+    <details>
+      <summary><span class="kode"><%= mk.kode %></span> &mdash; <%= mk.nama %></summary>
+      <p><%= mk.deskripsi %></p>
+    </details>
+  <% }) %>
+</div>
+
+<!-- Penilaian -->
+<div class="section-title"><i class="bi bi-clipboard2-data-fill"></i>Penilaian &amp; Evaluasi Pembelajaran</div>
+<p class="sub-title">Prinsip Penilaian</p>
+<ul class="info-list two-col">
+  <% penilaian.prinsip.forEach(function(p){ %><li><i class="bi bi-dot"></i><span><%= p %></span></li><% }) %>
+</ul>
+
+<p class="sub-title">Komponen Penilaian &amp; Bobot</p>
+<div class="penilaian-table-wrap">
+  <table class="penilaian-table">
+    <thead><tr><th>Komponen Penilaian</th><th>Bobot</th></tr></thead>
+    <tbody>
+      <% penilaian.komponen.forEach(function(k){ %><tr><td><%= k.komponen %></td><td><%= k.bobot %></td></tr><% }) %>
+    </tbody>
+  </table>
+</div>
+
+<p class="sub-title">Penilaian Magang</p>
+<div class="penilaian-table-wrap">
+  <table class="penilaian-table">
+    <thead><tr><th>Komponen</th><th>Bobot</th><th>Indikator</th></tr></thead>
+    <tbody>
+      <% penilaian.magang.forEach(function(m){ %><tr><td><%= m.komponen %></td><td><%= m.bobot %></td><td><%= m.indikator %></td></tr><% }) %>
+    </tbody>
+  </table>
+</div>
+
+<!-- Referensi -->
+<div class="section-title"><i class="bi bi-bookshelf"></i>Daftar Referensi</div>
+<ul class="ref-list">
+  <% referensi.forEach(function(r){ %><li><span><%= r %></span></li><% }) %>
+</ul>
+
+<!-- Penetapan -->
+<div class="penetapan-box">
+  <div>
+    <p style="color:#64748b; font-size:.9rem; max-width:520px;">
+      Kurikulum ini merupakan dokumen hidup yang dievaluasi dan diperbaiki secara berkala sesuai perkembangan
+      ilmu pengetahuan, teknologi, kebutuhan dunia kerja, dan kebijakan pendidikan tinggi.
     </p>
-    <a href="<%= fileKurikulum %>" class="btn-download" target="_blank" rel="noopener">
-      <i class="bi bi-download"></i> Unduh PDF
-    </a>
+    <p style="color:#94a3b8; font-size:.82rem;">Palopo, <%= dokumenInfo.tanggalPenetapan %></p>
   </div>
+  <div class="ttd">
+    <div class="jabatan">Mengetahui,<br>Direktur Politeknik Dewantara</div>
+    <div class="nama"><%= dokumenInfo.direktur %></div>
+  </div>
+  <div class="ttd">
+    <div class="jabatan">Ketua Program Studi Teknik Elektronika</div>
+    <div class="nama"><%= dokumenInfo.kaprodi %></div>
+  </div>
+</div>
 
-</div> <!-- penutup container -->
+<!-- Unduh Dokumen -->
+<div class="download-box">
+  <div class="txt">
+    <h3><i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i>Dokumen Kurikulum Lengkap (PDF)</h3>
+    <p>Unduh dokumen kurikulum resmi untuk referensi lengkap, termasuk matriks CPL dengan mata kuliah.</p>
+  </div>
+  <a href="<%= fileKurikulum || '#' %>" class="btn-download" target="_blank" rel="noopener">
+    <i class="bi bi-download me-1"></i>Unduh PDF
+  </a>
+</div>
 
-<!-- ===== SCRIPT TAB ===== -->
 <script>
-  (function() {
-    // Navigasi semester utama
-    const semesterBtns = document.querySelectorAll('#semesterNav button');
-    const semesterPanels = document.querySelectorAll('.semester-panel');
+  document.querySelectorAll('#semesterNav button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('#semesterNav button').forEach(function (b) { b.classList.remove('active'); });
+      document.querySelectorAll('.semester-panel').forEach(function (p) { p.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.target).classList.add('active');
+    });
+  });
 
-    function activateSemester(targetId) {
-      semesterBtns.forEach(b => b.classList.remove('active'));
-      semesterPanels.forEach(p => p.classList.remove('active'));
-      const activeBtn = Array.from(semesterBtns).find(b => b.dataset.target === targetId);
-      if (activeBtn) activeBtn.classList.add('active');
-      const panel = document.getElementById(targetId);
-      if (panel) panel.classList.add('active');
-
-      // Reset sub-nav (aktifkan konsentrasi pertama)
-      const subNav = panel ? panel.querySelector('.sub-nav') : null;
-      if (subNav) {
-        const subBtns = subNav.querySelectorAll('button');
-        const subPanels = panel.querySelectorAll('.concentration-panel');
-        subBtns.forEach((b, i) => b.classList.toggle('active', i === 0));
-        subPanels.forEach((p, i) => p.classList.toggle('active', i === 0));
-      }
-    }
-
-    semesterBtns.forEach(btn => {
-      btn.addEventListener('click', function() {
-        activateSemester(this.dataset.target);
+  document.querySelectorAll('[id^="konsNav-"]').forEach(function (nav) {
+    nav.querySelectorAll('button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        nav.querySelectorAll('button').forEach(function (b) { b.classList.remove('active'); });
+        nav.parentElement.querySelectorAll('.konsentrasi-panel').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.target).classList.add('active');
       });
     });
-
-    // Sub-navigasi konsentrasi
-    document.querySelectorAll('.sub-nav').forEach(subNav => {
-      const btns = subNav.querySelectorAll('button');
-      const parentPanel = subNav.closest('.semester-panel');
-      const concPanels = parentPanel ? parentPanel.querySelectorAll('.concentration-panel') : [];
-
-      btns.forEach((btn, idx) => {
-        btn.addEventListener('click', function() {
-          btns.forEach(b => b.classList.remove('active'));
-          this.classList.add('active');
-          concPanels.forEach(p => p.classList.remove('active'));
-          const targetId = this.dataset.target;
-          const targetPanel = document.getElementById(targetId);
-          if (targetPanel) targetPanel.classList.add('active');
-        });
-      });
-    });
-
-    // Aktifkan semester pertama jika tidak ada yang aktif
-    if (!document.querySelector('#semesterNav .active')) {
-      const firstBtn = document.querySelector('#semesterNav button');
-      if (firstBtn) activateSemester(firstBtn.dataset.target);
-    }
-  })();
+  });
 </script>
 
 <%- include('../../partials/footer-landing') %>

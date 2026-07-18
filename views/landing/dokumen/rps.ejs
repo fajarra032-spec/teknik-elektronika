@@ -1,0 +1,178 @@
+<%- include('../../partials/header-landing') %>
+
+<style>
+  :root {
+    --r-primary: #0e7490;
+    --r-primary-dark: #0b5563;
+    --r-primary-light: rgba(14,116,144,0.08);
+    --r-gradient: linear-gradient(135deg, #0e7490, #22d3ee);
+    --r-shadow-sm: 0 5px 15px rgba(0,0,0,0.05);
+    --r-shadow-hover: 0 15px 30px rgba(14,116,144,0.15);
+    --r-radius: 1.5rem;
+  }
+
+  .rps-header {
+    background: var(--r-gradient); border-radius: var(--r-radius); padding: 3rem 2rem;
+    color: #fff; margin-bottom: 2rem; text-align: center; box-shadow: 0 15px 30px rgba(14,116,144,0.25);
+  }
+  .rps-header h1 { font-weight: 800; font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: .5rem; }
+  .rps-header p { opacity: .9; font-size: 1.05rem; margin: 0; }
+
+  .note-box {
+    background: #ecfeff; border: 1px solid #a5f3fc; border-radius: 1rem; padding: 1.1rem 1.3rem;
+    color: #155e75; font-size: .9rem; margin-bottom: 2rem; display: flex; gap: .7rem;
+  }
+
+  .semester-nav { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.5rem; }
+  .semester-nav button {
+    border: 1.5px solid var(--r-primary); background: #fff; color: var(--r-primary);
+    font-weight: 600; padding: .5rem 1.1rem; border-radius: 50px; cursor: pointer; transition: .2s;
+  }
+  .semester-nav button:hover { background: var(--r-primary-light); }
+  .semester-nav button.active { background: var(--r-gradient); color: #fff; border-color: transparent; }
+
+  .konsentrasi-nav { display: flex; gap: .5rem; margin-bottom: 1.2rem; }
+  .konsentrasi-nav button {
+    border: 1.5px dashed var(--r-primary); background: #fff; color: var(--r-primary-dark);
+    font-weight: 600; padding: .4rem 1rem; border-radius: 50px; cursor: pointer; font-size: .85rem; transition: .2s;
+  }
+  .konsentrasi-nav button.active { background: var(--r-primary-light); border-style: solid; }
+
+  .rps-table-wrap { background: #fff; border-radius: 1.2rem; box-shadow: var(--r-shadow-sm); overflow: hidden; border: 1px solid rgba(14,116,144,0.1); }
+  .rps-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  .rps-table thead th {
+    background: var(--r-primary-light); color: var(--r-primary-dark); font-weight: 700;
+    padding: .8rem 1rem; text-align: left; white-space: nowrap;
+  }
+  .rps-table tbody td { padding: .75rem 1rem; border-top: 1px solid #eef1f8; color: #334155; vertical-align: middle; }
+  .rps-table tbody tr:hover { background: #f6fdff; }
+  .badge-jenis {
+    background: var(--r-primary-light); color: var(--r-primary-dark); font-weight: 600;
+    padding: .2rem .6rem; border-radius: 50px; font-size: .78rem; white-space: nowrap;
+  }
+  .btn-rps {
+    background: var(--r-gradient); color: #fff; border: none; padding: .45rem 1rem;
+    border-radius: 50px; font-weight: 600; font-size: .82rem; text-decoration: none;
+    white-space: nowrap; display: inline-flex; align-items: center; gap: .3rem; transition: .2s;
+  }
+  .btn-rps:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 8px 16px rgba(14,116,144,0.25); }
+
+  .semester-panel { display: none; }
+  .semester-panel.active { display: block; animation: fadeIn .3s ease; }
+  .konsentrasi-panel { display: none; }
+  .konsentrasi-panel.active { display: block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="rps-header">
+  <h1><i class="bi bi-file-earmark-ruled-fill me-2"></i>RPS</h1>
+  <p>Rencana Pembelajaran Semester &mdash; Program Studi Teknik Elektronika, Kurikulum <%= tahunKurikulum %></p>
+</div>
+
+<div class="note-box">
+  <i class="bi bi-info-circle-fill"></i>
+  <div>RPS disusun dan diunggah oleh dosen pengampu masing-masing mata kuliah mengacu pada struktur kurikulum yang berlaku. Jika tombol "Lihat RPS" belum aktif, berarti berkas untuk mata kuliah tersebut belum tersedia/diunggah.</div>
+</div>
+
+<div class="semester-nav" id="rpsSemesterNav">
+  <% rpsSemester.forEach(function(smt, idx){ %>
+    <button type="button" data-target="rps-smt-<%= smt.semester %>" class="<%= idx === 0 ? 'active' : '' %>">
+      Semester <%= smt.semester %>
+    </button>
+  <% }) %>
+</div>
+
+<% rpsSemester.forEach(function(smt, idx){ %>
+  <div class="semester-panel <%= idx === 0 ? 'active' : '' %>" id="rps-smt-<%= smt.semester %>">
+
+    <% if (smt.varian) { %>
+      <!-- Semester dengan pilihan konsentrasi (mis. Semester III) -->
+      <div class="konsentrasi-nav" id="rpsKonsNav-<%= smt.semester %>">
+        <% smt.varian.forEach(function(v, vIdx){ %>
+          <button type="button" data-target="rps-smt-<%= smt.semester %>-kons-<%= vIdx %>" class="<%= vIdx === 0 ? 'active' : '' %>">
+            <i class="bi bi-diagram-2 me-1"></i>Konsentrasi <%= v.nama %>
+          </button>
+        <% }) %>
+      </div>
+
+      <% smt.varian.forEach(function(v, vIdx){ %>
+        <div class="konsentrasi-panel <%= vIdx === 0 ? 'active' : '' %>" id="rps-smt-<%= smt.semester %>-kons-<%= vIdx %>">
+          <div class="rps-table-wrap">
+            <table class="rps-table">
+              <thead>
+                <tr><th>No</th><th>Kode</th><th>Mata Kuliah</th><th>Jenis</th><th>RPS</th></tr>
+              </thead>
+              <tbody>
+                <% v.matkul.forEach(function(mk, i){ %>
+                  <tr>
+                    <td><%= i + 1 %></td>
+                    <td><%= mk.kode %></td>
+                    <td><%= mk.nama %></td>
+                    <td><span class="badge-jenis"><%= mk.jenis %></span></td>
+                    <td>
+                      <a class="btn-rps" href="<%= mk.url || '#' %>" target="_blank" rel="noopener">
+                        <i class="bi bi-eye-fill"></i>Lihat RPS
+                      </a>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      <% }) %>
+
+    <% } else { %>
+      <!-- Semester reguler tanpa konsentrasi -->
+      <div class="rps-table-wrap">
+        <table class="rps-table">
+          <thead>
+            <tr><th>No</th><th>Kode</th><th>Mata Kuliah</th><th>Jenis</th><th>RPS</th></tr>
+          </thead>
+          <tbody>
+            <% smt.matkul.forEach(function(mk, i){ %>
+              <tr>
+                <td><%= i + 1 %></td>
+                <td><%= mk.kode %></td>
+                <td><%= mk.nama %></td>
+                <td><span class="badge-jenis"><%= mk.jenis %></span></td>
+                <td>
+                  <a class="btn-rps" href="<%= mk.url || '#' %>" target="_blank" rel="noopener">
+                    <i class="bi bi-eye-fill"></i>Lihat RPS
+                  </a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+
+  </div>
+<% }) %>
+
+<script>
+  // Navigasi antar semester
+  document.querySelectorAll('#rpsSemesterNav button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('#rpsSemesterNav button').forEach(function (b) { b.classList.remove('active'); });
+      document.querySelectorAll('.semester-panel').forEach(function (p) { p.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.target).classList.add('active');
+    });
+  });
+
+  // Navigasi antar konsentrasi (untuk semester yang punya varian)
+  document.querySelectorAll('[id^="rpsKonsNav-"]').forEach(function (nav) {
+    nav.querySelectorAll('button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        nav.querySelectorAll('button').forEach(function (b) { b.classList.remove('active'); });
+        nav.parentElement.querySelectorAll('.konsentrasi-panel').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.target).classList.add('active');
+      });
+    });
+  });
+</script>
+
+<%- include('../../partials/footer-landing') %>

@@ -756,95 +756,424 @@ router.post('/pmb/submit', upload.single('bukti_pembayaran'), async (req, res) =
 // ============================================================================
 // DOKUMEN - KURIKULUM
 // ============================================================================
-// Catatan: data kurikulum di bawah ini masih statis (custom), silakan
-// disesuaikan oleh admin prodi sesuai kurikulum resmi yang berlaku.
-// Jika suatu saat ingin dihubungkan ke Firestore (mis. koleksi
-// 'kurikulumPublik'), cukup ganti bagian ini dengan query db.collection(...).
+// Data di bawah ini diambil dari dokumen resmi "Kurikulum Program Studi D3
+// Teknik Elektronika Politeknik Dewantara" (cover: Tahun 2023, isi disusun
+// tahun 2026). PENTING: dokumen sumber masih berstatus DRAFT - mencantumkan
+// catatan eksplisit "Dokumen ini belum disahkan, direvisi dan belum berlaku".
+// Jika dokumen final/SK penetapan sudah terbit, perbarui field
+// `dokumenInfo.status` di bawah dan (opsional) pindahkan ke Firestore.
 router.get('/dokumen/kurikulum', (req, res) => {
-  const kurikulum = [
+  const identitas = {
+    unitPengelola: 'Politeknik Dewantara',
+    jenisProdi: 'Diploma III (D3)',
+    namaProdi: 'Teknik Elektronika',
+    gelar: 'A.Md.T. (Ahli Madya Teknik)',
+    alamat: 'Jl. K.H. Ahmad Razak Lr. 2 No. 7, Kel. Binturu, Kec. Wara Selatan, Kota Palopo, Sulawesi Selatan 91911',
+    telepon: '081239108105',
+    email: 'elektronika@polidewa.ac.id',
+    website: 'polidewa.ac.id',
+    noSkPendirian: '334/D/OT/2023',
+    tglSkPendirian: '30 November 2023',
+    akreditasi: 'Baik'
+  };
+
+  const visiMisi = {
+    visi: 'Menjadi program studi yang unggul dan inovatif dalam bidang teknik elektronika terapan yang adaptif terhadap perkembangan teknologi, kebutuhan industri, dan kearifan lokal pada tahun 2030.',
+    misi: [
+      'Menyelenggarakan pendidikan vokasi dalam bidang teknik elektronika yang efektif, inovatif, dan kolaboratif dengan dunia industri dan dunia kerja.',
+      'Melaksanakan penelitian terapan dan pengabdian kepada masyarakat dalam bidang elektronika, instrumentasi, otomasi, dan energi terbarukan.',
+      'Menjalin kerja sama berkelanjutan dengan dunia usaha dan dunia industri dalam pengembangan kurikulum, praktik kerja, dan penempatan lulusan.',
+      'Menghasilkan lulusan yang kompeten di bidang teknik elektronika, beretika, profesional, dan berjiwa wirausaha.'
+    ],
+    tujuan: [
+      'Terwujudnya proses pembelajaran yang berkualitas dengan keseimbangan antara penguasaan teori dan keterampilan praktik dalam bidang teknik elektronika.',
+      'Terciptanya lulusan yang mampu mengoperasikan, merawat, dan memperbaiki perangkat elektronika serta sistem kendali dan otomasi sederhana.',
+      'Terciptanya lulusan yang memiliki pemahaman dasar sistem tenaga listrik dan PLC sesuai kebutuhan industri di wilayah Sulawesi dan sekitarnya.',
+      'Terciptanya lulusan yang adaptif terhadap perkembangan teknologi, mampu berwirausaha di bidang elektronika, dan memiliki kesadaran tinggi terhadap K3.',
+      'Terwujudnya lulusan yang mampu berkomunikasi efektif, bekerja sama dalam tim lintas disiplin, dan memiliki etika profesi yang kuat.'
+    ],
+    strategi: [
+      'Peningkatan mutu proses pembelajaran dengan Student Centered Learning, Project-Based Learning, dan magang industri.',
+      'Peningkatan kompetensi dosen melalui pelatihan, sertifikasi profesi, dan penelitian terapan.',
+      'Pemutakhiran peralatan laboratorium elektronika, instrumentasi, dan otomasi.',
+      'Pengembangan kerja sama dengan industri manufaktur, energi, maritim, dan telekomunikasi untuk magang dan penyerapan lulusan.',
+      'Penguatan jiwa kewirausahaan melalui inkubasi bisnis dan magang kewirausahaan.'
+    ]
+  };
+
+  const profilLulusan = [
+    { no: 1, judul: 'Teknisi Elektronika-Listrik Terpadu', deskripsi: 'Lulusan mampu berperan sebagai teknisi lapangan yang mampu mengoperasikan, merawat, dan memperbaiki perangkat elektronika, alat ukur, sistem kendali, perangkat telekomunikasi, dan peralatan listrik industri dasar. Lulusan mampu membaca nilai komponen, skema elektronika, diagram kelistrikan, gambar teknik, serta melakukan identifikasi kerusakan dan troubleshooting dengan memperhatikan prosedur K3.' },
+    { no: 2, judul: 'Praktisi Instrumentasi dan Kendali Industri', deskripsi: 'Lulusan mampu berperan sebagai teknisi instrumentasi dan otomasi yang mampu mengoperasikan, memprogram, dan merawat sistem kendali berbasis PLC, mikrokontroler, sensor, transduser, dan aktuator; membaca diagram blok sistem kendali, ladder diagram, dan diagram pengawatan; serta melakukan kalibrasi dan pengujian peralatan instrumentasi sesuai standar prosedur.' },
+    { no: 3, judul: 'Teknisi Pemeliharaan Perangkat Elektronik', deskripsi: 'Lulusan mampu melaksanakan perawatan preventif dan korektif pada peralatan elektronik di laboratorium, industri, dan fasilitas umum; membaca dokumentasi teknis, manual peralatan, dan SOP; serta menerapkan K3 dan penggunaan alat pelindung diri dalam setiap pekerjaan.' },
+    { no: 4, judul: 'Wirausaha Bidang Elektronika', deskripsi: 'Lulusan mampu merintis dan mengelola usaha jasa perbaikan, instalasi, atau produksi perangkat elektronika; memahami peluang pasar, pemasaran, dan manajemen usaha kecil; serta bekerja mandiri maupun dalam tim dengan menerapkan etika profesi dan kewirausahaan.' }
+  ];
+
+  const cpl = [
+    { kode: 'CPL-1', deskripsi: 'Mampu menerapkan konsep matematika teknik, fisika terapan, dan prinsip dasar teknik elektro-elektronika untuk mengidentifikasi, merumuskan, dan menganalisis permasalahan teknis sederhana pada perangkat elektronika, sistem instrumentasi, dan instalasi listrik dengan sikap bertanggung jawab, jujur, dan disiplin.' },
+    { kode: 'CPL-2', deskripsi: 'Mampu membaca, memahami, dan mendokumentasikan nilai komponen, skema elektronika, diagram kelistrikan, gambar teknik, serta dokumentasi teknis lainnya; mampu menggunakan perangkat lunak teknik modern dan peralatan laboratorium dalam praktik pekerjaan dengan teliti, cermat, dan bertanggung jawab.' },
+    { kode: 'CPL-3', deskripsi: 'Mampu mengidentifikasi, menganalisis, dan memperbaiki kerusakan pada perangkat elektronika, sistem instrumentasi, dan sistem kelistrikan/otomasi industri, termasuk PLC, dengan pendekatan sistematis, pengukuran, pengujian sesuai prosedur, serta penerapan K3 secara konsisten.' },
+    { kode: 'CPL-4', deskripsi: 'Mampu merancang dan mengimplementasikan sistem elektronika sederhana berbasis mikrokontroler, PLC, atau rangkaian diskrit untuk memenuhi kebutuhan spesifik dengan mempertimbangkan aspek teknis, ekonomi, efisiensi, dan keselamatan kerja, serta mampu melakukan pengujian dan evaluasi kinerja sistem.' },
+    { kode: 'CPL-5', deskripsi: 'Mampu berkomunikasi secara efektif secara lisan dan tulisan, menyusun laporan teknis dan dokumentasi pekerjaan, bekerja sama dalam tim lintas fungsi dan budaya, serta merencanakan, melaksanakan, dan mengevaluasi tugas sesuai target, jadwal, dan prosedur dengan menjunjung etika profesi, norma, dan peraturan yang berlaku.' },
+    { kode: 'CPL-6', deskripsi: 'Mampu mengakses, memahami, dan memanfaatkan sumber belajar seperti manual, dokumentasi teknis, literatur, dan tutorial daring untuk pengembangan diri secara mandiri dan berkelanjutan serta menunjukkan tanggung jawab, kejujuran, disiplin, integritas, dan adaptasi terhadap perkembangan teknologi dan kebutuhan industri.' }
+  ];
+
+  const standarKompetensi = [
+    'Menguasai konsep dasar matematika, fisika, dan teknik elektro-elektronika yang mendukung pemahaman komponen, rangkaian, dan sistem elektronika.',
+    'Mampu menggunakan alat ukur dan peralatan laboratorium seperti multimeter, osiloskop, function generator, power supply, solder, dan peralatan uji lainnya secara benar dan akurat.',
+    'Mampu membaca, memahami, dan menggambar skema elektronika, diagram kelistrikan, gambar teknik, dan layout PCB.',
+    'Mampu melakukan pengukuran besaran listrik dan elektronika serta menginterpretasikan data hasil pengukuran untuk kebutuhan analisis dan perbaikan.',
+    'Mampu memprogram mikrokontroler dan PLC dasar untuk aplikasi kendali sederhana, termasuk integrasi sensor dan aktuator.',
+    'Mampu melakukan perawatan preventif dan korektif pada perangkat elektronika dan sistem kendali/otomasi.',
+    'Mampu mendiagnosis kerusakan pada perangkat elektronika dan sistem kelistrikan, serta melakukan perbaikan dasar.',
+    'Mampu menerapkan prinsip Keselamatan dan Kesehatan Kerja (K3) dan prosedur tanggap darurat di laboratorium dan tempat kerja.',
+    'Mampu menyusun laporan teknis dan dokumentasi pekerjaan secara sistematis serta mempresentasikan hasil kerja secara komunikatif.',
+    'Mampu merintis usaha di bidang elektronika seperti jasa perbaikan, instalasi, atau produksi perangkat dengan menerapkan prinsip kewirausahaan dan etika profesi.'
+  ];
+
+  const jumlahSks = [
+    { jenis: 'Wajib Umum (WUD)', sks: 12, keterangan: 'Agama (2) + Bahasa Indonesia (3) + Bahasa Inggris (3) + Kewarganegaraan (2) + Pancasila (2)' },
+    { jenis: 'Penciri Dewantara (PD)', sks: 30, keterangan: '10 mata kuliah x 3 SKS' },
+    { jenis: 'Inti Keahlian (PEK)', sks: 18, keterangan: '6 mata kuliah x 3 SKS, salah satu konsentrasi' },
+    { jenis: 'Wajib Polidewa (WP - Magang)', sks: 60, keterangan: 'Praktik Dunia Kerja I, II, dan III x 20 SKS' }
+  ];
+  const totalSks = jumlahSks.reduce((a, s) => a + s.sks, 0); // 120
+
+  // Struktur mata kuliah per semester. Semester III memiliki 2 varian
+  // konsentrasi (Instrumentasi / Telekomunikasi) sesuai dokumen sumber.
+  const strukturSemester = [
     {
       semester: 1,
-      mataKuliah: [
-        { kode: 'MK101', nama: 'Pendidikan Agama', sks: 2, sifat: 'Wajib' },
-        { kode: 'MK102', nama: 'Pendidikan Pancasila', sks: 2, sifat: 'Wajib' },
-        { kode: 'MK103', nama: 'Bahasa Indonesia', sks: 2, sifat: 'Wajib' },
-        { kode: 'MK104', nama: 'Matematika Teknik I', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK105', nama: 'Rangkaian Listrik', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK106', nama: 'Dasar Elektronika', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK107', nama: 'Praktik Bengkel & K3', sks: 2, sifat: 'Wajib' }
+      matkul: [
+        { kode: 'WUD2201-5', nama: 'Pendidikan Agama', teori: 1, praktik: 1, sks: 2, jenis: 'Wajib Umum' },
+        { kode: 'WUD3208', nama: 'Bahasa Indonesia', teori: 1, praktik: 2, sks: 3, jenis: 'Wajib Umum' },
+        { kode: 'WUD3209', nama: 'Bahasa Inggris', teori: 1, praktik: 2, sks: 3, jenis: 'Wajib Umum' },
+        { kode: 'PD3201', nama: 'Etika Kerja', teori: 1, praktik: 2, sks: 3, jenis: 'Penciri Dewantara' },
+        { kode: 'PD3202', nama: 'Standardisasi', teori: 1, praktik: 2, sks: 3, jenis: 'Penciri Dewantara' },
+        { kode: 'PD3203', nama: 'Matematika Teknik', teori: 1, praktik: 2, sks: 3, jenis: 'Penciri Dewantara' },
+        { kode: 'PD3204', nama: 'Perangkat Lunak Aplikasi', teori: 1, praktik: 2, sks: 3, jenis: 'Penciri Dewantara' }
       ]
     },
     {
       semester: 2,
-      mataKuliah: [
-        { kode: 'MK201', nama: 'Bahasa Inggris Teknik', sks: 2, sifat: 'Wajib' },
-        { kode: 'MK202', nama: 'Matematika Teknik II', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK203', nama: 'Elektronika Digital', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK204', nama: 'Pemrograman Dasar', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK205', nama: 'Praktik Elektronika Dasar', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK206', nama: 'Gambar Teknik', sks: 2, sifat: 'Wajib' }
+      matkul: [
+        { kode: 'WUD2206', nama: 'Pendidikan Kewarganegaraan', teori: 2, praktik: 0, sks: 2, jenis: 'Wajib Umum' },
+        { kode: 'PD3205', nama: 'Keselamatan dan Kesehatan Kerja (K3)', teori: 1, praktik: 2, sks: 3, jenis: 'Penciri Dewantara' },
+        { kode: 'PD3206', nama: 'Aplikasi Komputer', teori: 1, praktik: 2, sks: 3, jenis: 'Penciri Dewantara' },
+        { kode: 'PD3207', nama: 'Teknik Pengukuran', teori: 1, praktik: 2, sks: 3, jenis: 'Penciri Dewantara' },
+        { kode: 'PD3208', nama: 'Peralatan Teknik', teori: 1, praktik: 2, sks: 3, jenis: 'Penciri Dewantara' },
+        { kode: 'PD3209', nama: 'Menggambar Teknik', teori: 1, praktik: 2, sks: 3, jenis: 'Penciri Dewantara' },
+        { kode: 'PD3210', nama: 'Data dan Sistem Informasi', teori: 1, praktik: 2, sks: 3, jenis: 'Penciri Dewantara' }
       ]
     },
     {
       semester: 3,
-      mataKuliah: [
-        { kode: 'MK301', nama: 'Mikrokontroler', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK302', nama: 'Sistem Kendali', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK303', nama: 'Instrumentasi Industri', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK304', nama: 'Jaringan Komputer', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK305', nama: 'Praktik Mikrokontroler', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK306', nama: 'Kewirausahaan', sks: 2, sifat: 'Wajib' }
+      varian: [
+        {
+          nama: 'Instrumentasi',
+          matkul: [
+            { kode: 'WUD2207', nama: 'Pendidikan Pancasila', teori: 2, praktik: 0, sks: 2, jenis: 'Wajib Umum' },
+            { kode: 'PEK3201', nama: 'Dasar Sistem Tenaga Listrik', teori: 1, praktik: 2, sks: 3, jenis: 'Inti Keahlian' },
+            { kode: 'PEK3202', nama: 'Elektronika Digital', teori: 1, praktik: 2, sks: 3, jenis: 'Inti Keahlian' },
+            { kode: 'PEK3203', nama: 'Mikrokontroler', teori: 1, praktik: 2, sks: 3, jenis: 'Inti Keahlian' },
+            { kode: 'PEK3204', nama: 'Rangkaian Elektronika', teori: 1, praktik: 2, sks: 3, jenis: 'Inti Keahlian' },
+            { kode: 'PEK3205', nama: 'Perawatan dan Perbaikan', teori: 1, praktik: 2, sks: 3, jenis: 'Inti Keahlian' },
+            { kode: 'PEK3206', nama: 'Programmable Logic Control (PLC)', teori: 1, praktik: 2, sks: 3, jenis: 'Inti Keahlian' }
+          ]
+        },
+        {
+          nama: 'Telekomunikasi',
+          matkul: [
+            { kode: 'WUD2207', nama: 'Pendidikan Pancasila', teori: 2, praktik: 0, sks: 2, jenis: 'Wajib Umum' },
+            { kode: 'PEK3207', nama: 'Komunikasi Data dan Jaringan', teori: 1, praktik: 2, sks: 3, jenis: 'Inti Keahlian' },
+            { kode: 'PEK3208', nama: 'Elektronika Digital', teori: 1, praktik: 2, sks: 3, jenis: 'Inti Keahlian' },
+            { kode: 'PEK3209', nama: 'Antena dan Propagasi', teori: 1, praktik: 2, sks: 3, jenis: 'Inti Keahlian' },
+            { kode: 'PEK3210', nama: 'Keamanan Siber', teori: 1, praktik: 2, sks: 3, jenis: 'Inti Keahlian' },
+            { kode: 'PEK3205', nama: 'Perawatan dan Perbaikan', teori: 1, praktik: 2, sks: 3, jenis: 'Inti Keahlian' },
+            { kode: 'PEK3206', nama: 'Programmable Logic Control (PLC)', teori: 1, praktik: 2, sks: 3, jenis: 'Inti Keahlian' }
+          ]
+        }
       ]
     },
-    {
-      semester: 4,
-      mataKuliah: [
-        { kode: 'MK401', nama: 'PLC & Otomasi Industri', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK402', nama: 'Internet of Things (IoT)', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK403', nama: 'Sistem Tertanam', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK404', nama: 'Praktik PLC', sks: 3, sifat: 'Wajib' },
-        { kode: 'MK405', nama: 'Metodologi Penelitian', sks: 2, sifat: 'Wajib' },
-        { kode: 'MK406', nama: 'Elektronika Daya', sks: 3, sifat: 'Wajib' }
-      ]
-    },
-    {
-      semester: 5,
-      mataKuliah: [
-        { kode: 'MK501', nama: 'Praktik Kerja Industri (Magang)', sks: 8, sifat: 'Wajib' },
-        { kode: 'MK502', nama: 'Pembimbingan Magang', sks: 2, sifat: 'Wajib' }
-      ]
-    },
-    {
-      semester: 6,
-      mataKuliah: [
-        { kode: 'MK601', nama: 'Seminar Hasil Magang', sks: 2, sifat: 'Wajib' },
-        { kode: 'MK602', nama: 'Tugas Akhir', sks: 4, sifat: 'Wajib' },
-        { kode: 'MK603', nama: 'Etika Profesi', sks: 2, sifat: 'Wajib' },
-        { kode: 'MK604', nama: 'Mata Kuliah Pilihan', sks: 3, sifat: 'Pilihan' }
-      ]
-    }
+    { semester: 4, matkul: [ { kode: 'WP2021', nama: 'Praktik Dunia Kerja I', teori: 0, praktik: 20, sks: 20, jenis: 'Wajib Polidewa' } ] },
+    { semester: 5, matkul: [ { kode: 'WP2022', nama: 'Praktik Dunia Kerja II', teori: 0, praktik: 20, sks: 20, jenis: 'Wajib Polidewa' } ] },
+    { semester: 6, matkul: [ { kode: 'WP2023', nama: 'Praktik Dunia Kerja III', teori: 0, praktik: 20, sks: 20, jenis: 'Wajib Polidewa' } ] }
   ];
 
-  const totalSemester = kurikulum.length;
-  const totalMk = kurikulum.reduce((a, s) => a + s.mataKuliah.length, 0);
-  const totalSks = kurikulum.reduce((a, s) => a + s.mataKuliah.reduce((x, mk) => x + mk.sks, 0), 0);
+  const rekognisiMagang = [
+    { kegiatan: 'Magang I', semester: 'IV', sks: 20, fokus: 'Observasi lingkungan kerja dan proses operasional' },
+    { kegiatan: 'Magang II', semester: 'V', sks: 20, fokus: 'Keterlibatan aktif, diagnosis, dan perbaikan sederhana' },
+    { kegiatan: 'Magang III', semester: 'VI', sks: 20, fokus: 'Proyek mandiri, laporan akhir, dan seminar magang' }
+  ];
+
+  const deskripsiMatkul = [
+    { kode: 'WUD2201-5', nama: 'Pendidikan Agama', deskripsi: 'Mahasiswa mampu menginternalisasi nilai keagamaan, beriman dan bertakwa kepada Tuhan Yang Maha Esa, serta menerapkan ajaran agama dalam kehidupan bermasyarakat, berbangsa, dan bernegara.' },
+    { kode: 'WUD2206', nama: 'Pendidikan Kewarganegaraan', deskripsi: 'Mahasiswa memahami hubungan warga negara dengan negara dan pendidikan pendahuluan bela negara agar menjadi warga negara yang dapat diandalkan oleh bangsa dan NKRI.' },
+    { kode: 'WUD2207', nama: 'Pendidikan Pancasila', deskripsi: 'Mahasiswa memahami tindakan cerdas dan bertanggung jawab dalam kehidupan bermasyarakat, berbangsa, dan bernegara berdasarkan nilai-nilai Pancasila.' },
+    { kode: 'WUD3208', nama: 'Bahasa Indonesia', deskripsi: 'Mahasiswa terampil menggunakan Bahasa Indonesia Keilmuan dan menyusun karya ilmiah sesuai kaidah akademik.' },
+    { kode: 'WUD3209', nama: 'Bahasa Inggris', deskripsi: 'Mahasiswa mampu menerapkan komunikasi dasar bahasa Inggris, memahami bacaan sesuai bidang keahlian, dan menguasai kosakata teknis secara mandiri.' },
+    { kode: 'PD3201', nama: 'Etika Kerja', deskripsi: 'Mahasiswa memahami etika, moral, dan tanggung jawab profesi teknik serta mampu menerapkannya dalam perilaku kerja profesional.' },
+    { kode: 'PD3202', nama: 'Standardisasi', deskripsi: 'Mahasiswa memahami tujuan standar, organisasi standardisasi, SNI, akreditasi, sertifikasi, serta standardisasi komponen dan jasa teknik elektronika.' },
+    { kode: 'PD3203', nama: 'Matematika Teknik', deskripsi: 'Mahasiswa memahami dan menerapkan konsep integral serta persamaan diferensial dasar pada bidang teknik elektronika.' },
+    { kode: 'PD3204', nama: 'Perangkat Lunak Aplikasi', deskripsi: 'Mahasiswa memahami penggunaan perangkat lunak teknik, simulasi, desain, pengolahan data, dan aplikasi pendukung pekerjaan elektronika.' },
+    { kode: 'PD3205', nama: 'Keselamatan dan Kesehatan Kerja (K3)', deskripsi: 'Mahasiswa memahami filosofi, prinsip, dan penerapan K3 di laboratorium dan lingkungan kerja teknik elektronika.' },
+    { kode: 'PD3206', nama: 'Aplikasi Komputer', deskripsi: 'Mahasiswa mampu menggunakan aplikasi perkantoran, pengolahan data, grafik, presentasi, dan aplikasi komputer dasar untuk kebutuhan akademik dan teknis.' },
+    { kode: 'PD3207', nama: 'Teknik Pengukuran', deskripsi: 'Mahasiswa mampu menggunakan alat ukur elektronika dan melakukan pengukuran besaran listrik maupun nonlistrik secara benar.' },
+    { kode: 'PD3208', nama: 'Peralatan Teknik', deskripsi: 'Mahasiswa memahami penggunaan alat-alat dasar teknik elektronika dan mengembangkan keterampilan psikomotorik dengan perangkat teknik.' },
+    { kode: 'PD3209', nama: 'Menggambar Teknik', deskripsi: 'Mahasiswa terampil menggambar skema rangkaian, diagram kelistrikan, dan layout PCB secara manual maupun menggunakan perangkat lunak.' },
+    { kode: 'PD3210', nama: 'Data dan Sistem Informasi', deskripsi: 'Mahasiswa memahami konsep sistem informasi, tahapan pengolahan data, serta penggunaan perangkat lunak pengolah data.' },
+    { kode: 'PEK3201', nama: 'Dasar Sistem Tenaga Listrik', deskripsi: 'Mahasiswa memahami sistem tenaga listrik, komponen pembangkit, transmisi, distribusi, panel distribusi, serta instalasi dan pengukuran sistem 1 fasa dan 3 fasa dengan K3.' },
+    { kode: 'PEK3202 / PEK3208', nama: 'Elektronika Digital', deskripsi: 'Mahasiswa mampu mengaplikasikan sistem bilangan, gerbang logika, flip-flop, counter, register, dan rangkaian digital sederhana.' },
+    { kode: 'PEK3203', nama: 'Mikrokontroler', deskripsi: 'Mahasiswa memahami arsitektur mikrokontroler, pemrograman C/C++, integrasi sensor-aktuator, serta komunikasi data sederhana.' },
+    { kode: 'PEK3204', nama: 'Rangkaian Elektronika', deskripsi: 'Mahasiswa memahami rangkaian analog, dioda, transistor, op-amp, catu daya, penguat sederhana, pengukuran, dan troubleshooting rangkaian.' },
+    { kode: 'PEK3205', nama: 'Perawatan dan Perbaikan', deskripsi: 'Mahasiswa memahami perawatan perangkat elektronika, diagnosis kerusakan, perbaikan dasar, dan efisiensi waktu perawatan.' },
+    { kode: 'PEK3206', nama: 'Programmable Logic Control (PLC)', deskripsi: 'Mahasiswa memahami otomasi industri, arsitektur PLC, pemrograman ladder diagram, timer, counter, sequencer, dan sistem kendali sederhana.' },
+    { kode: 'PEK3207', nama: 'Komunikasi Data dan Jaringan', deskripsi: 'Mahasiswa memahami komunikasi data, OSI, TCP/IP, media transmisi, encoding, modulasi, jaringan komputer, dan protokol komunikasi.' },
+    { kode: 'PEK3209', nama: 'Antena dan Propagasi', deskripsi: 'Mahasiswa memahami prinsip kerja antena, parameter antena, jenis antena, serta propagasi gelombang elektromagnetik.' },
+    { kode: 'PEK3210', nama: 'Keamanan Siber', deskripsi: 'Mahasiswa memahami konsep keamanan siber, ancaman sistem informasi dan IoT, celah keamanan, serta perlindungan dasar.' },
+    { kode: 'WP2021', nama: 'Praktik Dunia Kerja I', deskripsi: 'Mahasiswa melakukan praktik kerja profesional terkait pengenalan lingkungan kerja, budaya perusahaan, dan pengamatan proses operasional.' },
+    { kode: 'WP2022', nama: 'Praktik Dunia Kerja II', deskripsi: 'Mahasiswa terlibat aktif dalam pekerjaan teknis, diagnosis kerusakan, dan perbaikan sederhana di industri.' },
+    { kode: 'WP2023', nama: 'Praktik Dunia Kerja III', deskripsi: 'Mahasiswa menyelesaikan proyek teknis mandiri, menyusun laporan akhir, dan mempresentasikan hasil magang.' }
+  ];
+
+  const penilaian = {
+    prinsip: [
+      'Valid: sesuai dengan tujuan pembelajaran dan mengukur capaian yang tepat.',
+      'Reliabel: konsisten dan dapat diandalkan.',
+      'Transparan: prosedur dan hasil penilaian dapat diakses mahasiswa.',
+      'Akuntabel: dilaksanakan sesuai prosedur yang jelas dan disepakati.',
+      'Berkeadilan: semua mahasiswa memperoleh kesempatan yang sama.',
+      'Objektif: bebas dari subjektivitas penilai.',
+      'Edukatif: memotivasi mahasiswa untuk belajar dan memperbaiki diri.'
+    ],
+    komponen: [
+      { komponen: 'Sikap, kehadiran, dan keaktifan', bobot: '10-20%' },
+      { komponen: 'Tugas dan praktikum (formatif)', bobot: '20-30%' },
+      { komponen: 'Ujian Tengah Semester (UTS)', bobot: '20-25%' },
+      { komponen: 'Ujian Akhir Semester (UAS) / Proyek Akhir', bobot: '25-35%' }
+    ],
+    magang: [
+      { komponen: 'Laporan Harian', bobot: '15%', indikator: 'Ketepatan waktu, kelengkapan catatan kegiatan, dan kualitas observasi' },
+      { komponen: 'Laporan Akhir Magang', bobot: '25%', indikator: 'Sistematika penulisan, kelengkapan data, analisis, kesimpulan, dan kerapian' },
+      { komponen: 'Penilaian Pembimbing Industri', bobot: '30%', indikator: 'Kedisiplinan, tanggung jawab, keterampilan teknis, etika kerja, dan kerja sama' },
+      { komponen: 'Presentasi Seminar Magang', bobot: '30%', indikator: 'Kualitas presentasi, penguasaan materi, kemampuan menjawab pertanyaan, dan sikap' }
+    ]
+  };
+
+  const referensi = [
+    'Undang-Undang Republik Indonesia Nomor 12 Tahun 2012 tentang Pendidikan Tinggi.',
+    'Peraturan Presiden Republik Indonesia Nomor 8 Tahun 2012 tentang Kerangka Kualifikasi Nasional Indonesia (KKNI).',
+    'Peraturan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi Nomor 53 Tahun 2023 tentang Penjaminan Mutu Pendidikan Tinggi.',
+    'Panduan Penyusunan Kurikulum Pendidikan Tinggi Tahun 2024.',
+    'Statuta Politeknik Dewantara Tahun 2023.',
+    'Buku Panduan Merdeka Belajar-Kampus Merdeka.',
+    'Modul Praktikum Peralatan Teknik Elektronika, Politeknik Dewantara.',
+    'Standar Nasional Indonesia (SNI) terkait gambar teknik dan elektronika.'
+  ];
+
+  const dokumenInfo = {
+    tahunKurikulum: '2023',
+    tanggalPenetapan: '8 April 2026',
+    direktur: 'Dr. Suaedi, M.Si.',
+    kaprodi: 'Fajar Ramadhan, S.Pd., M.T.',
+    // Sesuai dokumen sumber: masih berstatus draft, belum ditandatangani/berlaku resmi.
+    status: 'Draft - Belum Disahkan',
+    catatanStatus: 'Dokumen ini belum disahkan, direvisi, dan belum berlaku.'
+  };
 
   res.render('landing/dokumen/kurikulum', {
     title: 'Kurikulum - Teknik Elektronika',
     user: req.user || null,
-    kurikulum,
-    totalSemester,
-    totalMk,
+    identitas,
+    visiMisi,
+    profilLulusan,
+    cpl,
+    standarKompetensi,
+    jumlahSks,
     totalSks,
-    tahunKurikulum: '2023',
-    profilLulusan: 'Lulusan Program Studi Teknik Elektronika disiapkan menjadi tenaga ahli madya yang kompeten di bidang instrumentasi, otomasi industri, dan sistem elektronika tertanam, serta mampu beradaptasi dengan perkembangan teknologi industri 4.0.',
-    cpl: [
-      'Mampu merancang, membangun, dan menguji rangkaian elektronika dan sistem kendali sederhana.',
-      'Mampu mengoperasikan dan memelihara peralatan instrumentasi dan otomasi industri.',
-      'Mampu bekerja secara profesional, bertanggung jawab, dan menjunjung etika kerja di dunia industri.',
-      'Mampu berkomunikasi dan bekerja sama dalam tim lintas disiplin.'
-    ],
+    strukturSemester,
+    rekognisiMagang,
+    deskripsiMatkul,
+    penilaian,
+    referensi,
+    dokumenInfo,
     fileKurikulum: '#'
+  });
+});
+
+// ============================================================================
+// DOKUMEN - RPS (RENCANA PEMBELAJARAN SEMESTER)
+// ============================================================================
+// Daftar mata kuliah di bawah ini mengikuti struktur kurikulum resmi (lihat
+// route '/dokumen/kurikulum'). Field `url` masih placeholder '#' - silakan
+// diarahkan ke file RPS masing-masing mata kuliah (mis. hasil upload dosen
+// pengampu / link Google Drive / file di folder public) setelah tersedia.
+router.get('/dokumen/rps', (req, res) => {
+  const rpsSemester = [
+    {
+      semester: 1,
+      matkul: [
+        { kode: 'WUD2201-5', nama: 'Pendidikan Agama', jenis: 'Wajib Umum', url: '#' },
+        { kode: 'WUD3208', nama: 'Bahasa Indonesia', jenis: 'Wajib Umum', url: '#' },
+        { kode: 'WUD3209', nama: 'Bahasa Inggris', jenis: 'Wajib Umum', url: '#' },
+        { kode: 'PD3201', nama: 'Etika Kerja', jenis: 'Penciri Dewantara', url: '#' },
+        { kode: 'PD3202', nama: 'Standardisasi', jenis: 'Penciri Dewantara', url: '#' },
+        { kode: 'PD3203', nama: 'Matematika Teknik', jenis: 'Penciri Dewantara', url: '#' },
+        { kode: 'PD3204', nama: 'Perangkat Lunak Aplikasi', jenis: 'Penciri Dewantara', url: '#' }
+      ]
+    },
+    {
+      semester: 2,
+      matkul: [
+        { kode: 'WUD2206', nama: 'Pendidikan Kewarganegaraan', jenis: 'Wajib Umum', url: '#' },
+        { kode: 'PD3205', nama: 'Keselamatan dan Kesehatan Kerja (K3)', jenis: 'Penciri Dewantara', url: '#' },
+        { kode: 'PD3206', nama: 'Aplikasi Komputer', jenis: 'Penciri Dewantara', url: '#' },
+        { kode: 'PD3207', nama: 'Teknik Pengukuran', jenis: 'Penciri Dewantara', url: '#' },
+        { kode: 'PD3208', nama: 'Peralatan Teknik', jenis: 'Penciri Dewantara', url: '#' },
+        { kode: 'PD3209', nama: 'Menggambar Teknik', jenis: 'Penciri Dewantara', url: '#' },
+        { kode: 'PD3210', nama: 'Data dan Sistem Informasi', jenis: 'Penciri Dewantara', url: '#' }
+      ]
+    },
+    {
+      semester: 3,
+      varian: [
+        {
+          nama: 'Instrumentasi',
+          matkul: [
+            { kode: 'WUD2207', nama: 'Pendidikan Pancasila', jenis: 'Wajib Umum', url: '#' },
+            { kode: 'PEK3201', nama: 'Dasar Sistem Tenaga Listrik', jenis: 'Inti Keahlian', url: '#' },
+            { kode: 'PEK3202', nama: 'Elektronika Digital', jenis: 'Inti Keahlian', url: '#' },
+            { kode: 'PEK3203', nama: 'Mikrokontroler', jenis: 'Inti Keahlian', url: '#' },
+            { kode: 'PEK3204', nama: 'Rangkaian Elektronika', jenis: 'Inti Keahlian', url: '#' },
+            { kode: 'PEK3205', nama: 'Perawatan dan Perbaikan', jenis: 'Inti Keahlian', url: '#' },
+            { kode: 'PEK3206', nama: 'Programmable Logic Control (PLC)', jenis: 'Inti Keahlian', url: '#' }
+          ]
+        },
+        {
+          nama: 'Telekomunikasi',
+          matkul: [
+            { kode: 'WUD2207', nama: 'Pendidikan Pancasila', jenis: 'Wajib Umum', url: '#' },
+            { kode: 'PEK3207', nama: 'Komunikasi Data dan Jaringan', jenis: 'Inti Keahlian', url: '#' },
+            { kode: 'PEK3208', nama: 'Elektronika Digital', jenis: 'Inti Keahlian', url: '#' },
+            { kode: 'PEK3209', nama: 'Antena dan Propagasi', jenis: 'Inti Keahlian', url: '#' },
+            { kode: 'PEK3210', nama: 'Keamanan Siber', jenis: 'Inti Keahlian', url: '#' },
+            { kode: 'PEK3205', nama: 'Perawatan dan Perbaikan', jenis: 'Inti Keahlian', url: '#' },
+            { kode: 'PEK3206', nama: 'Programmable Logic Control (PLC)', jenis: 'Inti Keahlian', url: '#' }
+          ]
+        }
+      ]
+    },
+    { semester: 4, matkul: [ { kode: 'WP2021', nama: 'Praktik Dunia Kerja I', jenis: 'Wajib Polidewa', url: '#' } ] },
+    { semester: 5, matkul: [ { kode: 'WP2022', nama: 'Praktik Dunia Kerja II', jenis: 'Wajib Polidewa', url: '#' } ] },
+    { semester: 6, matkul: [ { kode: 'WP2023', nama: 'Praktik Dunia Kerja III', jenis: 'Wajib Polidewa', url: '#' } ] }
+  ];
+
+  res.render('landing/dokumen/rps', {
+    title: 'RPS - Rencana Pembelajaran Semester',
+    user: req.user || null,
+    rpsSemester,
+    tahunKurikulum: '2023'
+  });
+});
+
+// ============================================================================
+// DOKUMEN - AGENDA & HASIL RAPAT (NOTULENSI)
+// ============================================================================
+// Data notulensi di bawah ini masih CONTOH/PLACEHOLDER, silakan diisi oleh
+// admin prodi setiap kali ada rapat baru. Field `daftarHadir` (daftar nama
+// dosen yang hadir) juga masih placeholder ("Nama Dosen 1", dst) - wajib
+// diganti dengan nama dosen yang benar-benar hadir pada rapat terkait.
+// Jika suatu saat ingin dikelola dinamis (mis. lewat halaman admin +
+// Firestore), cukup ganti bagian ini dengan query
+// db.collection('notulensiRapat').orderBy('tanggal','desc').
+router.get('/dokumen/notulensi', (req, res) => {
+  const notulensi = [
+    {
+      id: 1,
+      tanggal: '2026-04-08',
+      tanggalTampil: '8 April 2026',
+      judul: 'Rapat Penetapan Kurikulum Program Studi D3 Teknik Elektronika',
+      jenis: 'Rapat Program Studi',
+      pimpinan: 'Dr. Suaedi, M.Si. (Direktur)',
+      peserta: 'Direktur, Ketua Program Studi, Tim Dosen Teknik Elektronika',
+      agenda: [
+        'Pemaparan draf Kurikulum Program Studi D3 Teknik Elektronika Tahun 2026',
+        'Pembahasan struktur mata kuliah dan pembagian konsentrasi (Instrumentasi & Telekomunikasi)',
+        'Pembahasan capaian pembelajaran lulusan (CPL) dan standar kompetensi lulusan'
+      ],
+      hasil: [
+        'Draf kurikulum disetujui untuk dilanjutkan ke proses penetapan resmi',
+        'Struktur 120 SKS dalam 6 semester dengan 2 konsentrasi disepakati',
+        'Kurikulum akan dievaluasi dan ditinjau ulang secara berkala'
+      ],
+      daftarHadir: [
+        'Dr. Suaedi, M.Si. (Direktur)',
+        'Fajar Ramadhan, S.Pd., M.T. (Ketua Program Studi)',
+        'Nama Dosen 1, S.T., M.T.',
+        'Nama Dosen 2, S.T., M.T.',
+        'Nama Dosen 3, S.Pd., M.T.'
+      ],
+      dokumenUrl: '#'
+    },
+    {
+      id: 2,
+      tanggal: '2026-02-10',
+      tanggalTampil: '10 Februari 2026',
+      judul: 'Rapat Koordinasi Persiapan Praktik Dunia Kerja (Magang) Semester Genap',
+      jenis: 'Rapat Koordinasi Magang',
+      pimpinan: 'Fajar Ramadhan, S.Pd., M.T. (Ketua Program Studi)',
+      peserta: 'Ketua Program Studi, Dosen Pembimbing Akademik, Koordinator Magang',
+      agenda: [
+        'Evaluasi pelaksanaan magang periode sebelumnya',
+        'Pemetaan mitra industri untuk penempatan mahasiswa',
+        'Penetapan jadwal pembekalan dan pelepasan mahasiswa magang'
+      ],
+      hasil: [
+        'Disepakati jadwal pembekalan magang dilaksanakan 2 minggu sebelum penempatan',
+        'Setiap mahasiswa wajib memiliki dosen pembimbing lapangan yang ditunjuk',
+        'Dibentuk tim monitoring magang untuk kunjungan berkala ke lokasi mitra'
+      ],
+      daftarHadir: [
+        'Fajar Ramadhan, S.Pd., M.T. (Ketua Program Studi)',
+        'Nama Dosen 1, S.T., M.T. (Dosen Pembimbing Akademik)',
+        'Nama Dosen 2, S.T., M.T. (Koordinator Magang)',
+        'Nama Dosen 4, S.Pd., M.T.'
+      ],
+      dokumenUrl: '#'
+    },
+    {
+      id: 3,
+      tanggal: '2025-12-15',
+      tanggalTampil: '15 Desember 2025',
+      judul: 'Rapat Evaluasi Pembelajaran Semester Ganjil 2025/2026',
+      jenis: 'Rapat Evaluasi Akademik',
+      pimpinan: 'Fajar Ramadhan, S.Pd., M.T. (Ketua Program Studi)',
+      peserta: 'Ketua Program Studi, seluruh Dosen Pengampu Mata Kuliah',
+      agenda: [
+        'Evaluasi capaian pembelajaran per mata kuliah semester ganjil',
+        'Tindak lanjut hasil kuesioner kepuasan mahasiswa',
+        'Rencana perbaikan metode pembelajaran semester berikutnya'
+      ],
+      hasil: [
+        'Beberapa mata kuliah praktik perlu penambahan jam pendampingan laboratorium',
+        'Disepakati penerapan Project-Based Learning diperluas ke mata kuliah inti keahlian',
+        'Dosen diminta menyerahkan RPS terbaru sebelum semester berikutnya dimulai'
+      ],
+      daftarHadir: [
+        'Fajar Ramadhan, S.Pd., M.T. (Ketua Program Studi)',
+        'Nama Dosen 1, S.T., M.T.',
+        'Nama Dosen 2, S.T., M.T.',
+        'Nama Dosen 3, S.Pd., M.T.',
+        'Nama Dosen 4, S.Pd., M.T.',
+        'Nama Dosen 5, S.T., M.T.'
+      ],
+      dokumenUrl: '#'
+    }
+  ];
+
+  res.render('landing/dokumen/notulensi', {
+    title: 'Agenda & Hasil Rapat',
+    user: req.user || null,
+    notulensi
   });
 });
 
