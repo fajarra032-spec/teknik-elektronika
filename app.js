@@ -1,13 +1,16 @@
 /**
  * app.js - Entry point aplikasi Teknik Elektronika
  * Dengan inisialisasi Firebase async, Sitemap, SEO, dan Webhook
+ * 
+ * Catatan: createdAt/updatedAt di koleksi 'berita' disimpan sebagai string ISO,
+ * bukan Firestore Timestamp, sehingga parsing langsung menggunakan new Date(string).
  */
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
-const { setFirebaseInstances } = require('./config/firebaseAdmin');
+const { setFirebaseInstances, getFirebaseInstances } = require('./config/firebaseAdmin');
 
 const app = express();
 
@@ -101,27 +104,35 @@ app.post('/webhook', (req, res) => {
 });
 
 /**
- * Sitemap Generator - Statis + Dinamis dari Firebase
+ * Sitemap Generator - Statis + Dinamis dari Firebase dengan caching (6 jam)
  */
+let sitemapCache = null;
+let sitemapCacheTime = 0;
+const CACHE_DURATION = 6 * 60 * 60 * 1000; // 6 jam
+
 app.get('/sitemap.xml', async (req, res) => {
+  // Jika cache masih berlaku, kirim langsung
+  if (sitemapCache && (Date.now() - sitemapCacheTime) < CACHE_DURATION) {
+    return res.header('Content-Type', 'application/xml').send(sitemapCache);
+  }
+
   const baseUrl = 'https://elektronika.polidewa.ac.id';
   const today = new Date().toISOString().split('T')[0];
 
-  // URL Statis - Gabungan dari kedua versi
+  // URL Statis
   const staticUrls = [
     { url: '/', changefreq: 'daily', priority: 1.0 },
     { url: '/panduan', changefreq: 'monthly', priority: 0.7 },
     { url: '/display', changefreq: 'weekly', priority: 0.6 },
     { url: '/ic3', changefreq: 'weekly', priority: 0.7 },
     { url: '/elk-library', changefreq: 'weekly', priority: 0.7 },
-    { url: '/berita', changefreq: 'daily', priority: 0.8 }, // Baru dari versi 2
-    { url: '/lulusan', changefreq: 'weekly', priority: 0.6 }, // Baru dari versi 2
-    { url: '/validasi', changefreq: 'monthly', priority: 0.3 }, // Baru dari versi 2
+    { url: '/berita', changefreq: 'daily', priority: 0.8 },
+    { url: '/lulusan', changefreq: 'weekly', priority: 0.6 },
+    { url: '/validasi', changefreq: 'monthly', priority: 0.3 },
     { url: '/auth/login', changefreq: 'yearly', priority: 0.3 },
     { url: '/auth/register', changefreq: 'yearly', priority: 0.3 },
   ];
 
-  // Mulai XML
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
@@ -139,7 +150,6 @@ app.get('/sitemap.xml', async (req, res) => {
   // URL DINAMIS DARI FIREBASE (Berita)
   // ============================================
   try {
-    const { getFirebaseInstances } = require('./config/firebaseAdmin');
     const instances = getFirebaseInstances();
     const db = instances.db;
 
@@ -154,43 +164,24 @@ app.get('/sitemap.xml', async (req, res) => {
       if (!beritaSnapshot.empty) {
         beritaSnapshot.forEach(doc => {
           const data = doc.data();
-          // Catatan: berita di aplikasi ini tidak punya field 'slug', URL
-          // publiknya (routes/landing.js) memang memakai ID dokumen langsung
-          // (/berita/:id), jadi doc.id di sini SUDAH benar, bukan sekadar fallback.
           const slug = data.slug || doc.id;
           let lastmod = today;
 
-          // ============================================
-          // VALIDASI TANGGAL YANG AMAN
-          // Mendukung dua format: Firestore Timestamp dan String ISO
-          // ============================================
+          // createdAt/updatedAt adalah string ISO, bukan Firestore Timestamp
           try {
             if (data.updatedAt) {
-              let date;
-              // Cek apakah Firestore Timestamp
-              if (data.updatedAt.seconds !== undefined) {
-                date = new Date(data.updatedAt.seconds * 1000);
-              } else {
-                // String ISO
-                date = new Date(data.updatedAt);
-              }
+              const date = new Date(data.updatedAt);
               if (!isNaN(date.getTime())) {
                 lastmod = date.toISOString().split('T')[0];
               }
             } else if (data.createdAt) {
-              let date;
-              if (data.createdAt.seconds !== undefined) {
-                date = new Date(data.createdAt.seconds * 1000);
-              } else {
-                date = new Date(data.createdAt);
-              }
+              const date = new Date(data.createdAt);
               if (!isNaN(date.getTime())) {
                 lastmod = date.toISOString().split('T')[0];
               }
             }
           } catch (e) {
             console.warn('⚠️ Gagal parsing tanggal untuk berita:', slug);
-            // Gunakan today jika parsing gagal
           }
 
           xml += '  <url>\n';
@@ -206,10 +197,14 @@ app.get('/sitemap.xml', async (req, res) => {
     }
   } catch (error) {
     console.error('❌ Gagal ambil berita untuk sitemap:', error.message);
-    // Jangan kirim error, lanjutkan dengan sitemap statis
   }
 
   xml += '</urlset>';
+
+  // Simpan cache
+  sitemapCache = xml;
+  sitemapCacheTime = Date.now();
+
   res.header('Content-Type', 'application/xml');
   res.send(xml);
 });
@@ -255,6 +250,9 @@ async function startServer() {
     const landingRoutes = require('./routes/landing');
     app.use('/', landingRoutes);
 
+    // ROUTES DOKUMEN (baru)
+    app.use('/dokumen', require('./routes/dokumen'));
+
     // ROUTES PORAL IC3 DIGITAL LITERACY
     const ic3Router = require('./routes/ic3');
     app.use('/ic3', ic3Router);
@@ -294,7 +292,7 @@ async function startServer() {
       res.render('dosen/kurikulum/my_rps');
     });
 
-    // Berita
+    // Berita (catatan: rute publik /berita/:id sudah ditangani di routes/landing.js)
     const adminBeritaRoutes = require('./routes/admin/berita');
     app.use('/admin/berita', adminBeritaRoutes);
 

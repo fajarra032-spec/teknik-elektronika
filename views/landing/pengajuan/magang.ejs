@@ -1,0 +1,128 @@
+<%- include('../../partials/header-landing') %>
+
+<style>
+  :root {
+    --p-primary: #4338ca;
+    --p-primary-dark: #312a92;
+    --p-primary-light: rgba(67,56,202,0.08);
+    --p-gradient: linear-gradient(135deg, #4338ca, #6366f1);
+    --p-shadow-sm: 0 5px 15px rgba(0,0,0,0.05);
+    --p-shadow-hover: 0 15px 30px rgba(67,56,202,0.15);
+    --p-radius: 1.5rem;
+  }
+
+  .pgj-header {
+    background: var(--p-gradient); border-radius: var(--p-radius); padding: 3rem 2rem;
+    color: #fff; margin-bottom: 2.5rem; text-align: center; box-shadow: 0 15px 30px rgba(67,56,202,0.25);
+  }
+  .pgj-header h1 { font-weight: 800; font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: .5rem; }
+  .pgj-header p { opacity: .9; font-size: 1.05rem; margin: 0; }
+
+  .section-title {
+    font-size: 1.6rem; font-weight: 700; margin: 2.5rem 0 1.5rem; color: #1e293b;
+    display: flex; align-items: center; gap: .7rem;
+    border-bottom: 3px solid var(--p-primary); padding-bottom: .7rem;
+  }
+  .section-title i { color: var(--p-primary); font-size: 1.7rem; }
+
+  .flow { display: flex; flex-wrap: wrap; gap: 1.2rem; align-items: stretch; }
+  .flow-step {
+    flex: 1 1 200px; background: #fff; border-radius: 1.2rem; padding: 1.4rem 1.2rem;
+    box-shadow: var(--p-shadow-sm); border: 1px solid rgba(67,56,202,0.12); transition: .2s;
+  }
+  .flow-step:hover { transform: translateY(-4px); box-shadow: var(--p-shadow-hover); }
+  .flow-step .step-num {
+    width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--p-gradient); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; margin-bottom: .8rem;
+  }
+  .flow-step h4 { font-size: 1.02rem; font-weight: 700; color: #1e293b; margin-bottom: .4rem; }
+  .flow-step p { font-size: .87rem; color: #64748b; margin: 0; }
+  .flow-arrow { display: flex; align-items: center; color: var(--p-primary); font-size: 1.4rem; }
+  @media (max-width: 767px) { .flow-arrow { transform: rotate(90deg); justify-content: center; } }
+
+  .syarat-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); }
+  .syarat-list li {
+    background: #fff; border-left: 4px solid var(--p-primary); border-radius: .8rem;
+    padding: 1rem 1.2rem; box-shadow: var(--p-shadow-sm); font-size: .92rem; color: #334155; display: flex; gap: .6rem;
+  }
+  .syarat-list li i { color: var(--p-primary); margin-top: .15rem; }
+
+  .doc-list { display: grid; gap: .9rem; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); }
+  .doc-item {
+    background: #fff; border-radius: 1rem; padding: 1.1rem 1.3rem; box-shadow: var(--p-shadow-sm);
+    border: 1px solid rgba(67,56,202,0.12); display: flex; align-items: center; gap: .9rem; text-decoration: none; transition: .2s;
+  }
+  .doc-item:hover { transform: translateY(-3px); box-shadow: var(--p-shadow-hover); }
+  .doc-item i { font-size: 1.6rem; color: #dc2626; }
+  .doc-item .t { font-weight: 700; color: #1e293b; font-size: .92rem; }
+  .doc-item .s { font-size: .78rem; color: #94a3b8; }
+
+  .cta-box {
+    background: var(--p-gradient); border-radius: var(--p-radius); padding: 2.2rem;
+    color: #fff; text-align: center; margin-top: 2.5rem; box-shadow: 0 15px 30px rgba(67,56,202,0.25);
+  }
+  .cta-box h3 { font-weight: 800; margin-bottom: .5rem; }
+  .cta-box p { opacity: .9; margin-bottom: 1.2rem; }
+  .cta-box .btn-cta {
+    background: #fff; color: var(--p-primary-dark); font-weight: 700; padding: .7rem 1.8rem;
+    border-radius: 50px; text-decoration: none; display: inline-block; transition: .2s;
+  }
+  .cta-box .btn-cta:hover { transform: translateY(-2px); color: var(--p-primary-dark); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+
+  .note-box {
+    background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 1rem; padding: 1.1rem 1.3rem;
+    color: #3730a3; font-size: .9rem; margin-top: 1.5rem; display: flex; gap: .7rem;
+  }
+</style>
+
+<div class="pgj-header">
+  <h1><i class="bi bi-briefcase-fill me-2"></i>Pengajuan Magang</h1>
+  <p>SOP dan Alur Proses Pengajuan Praktik Kerja Industri (Magang)</p>
+</div>
+
+<div class="section-title"><i class="bi bi-diagram-3-fill"></i>Diagram Alur Pengajuan</div>
+<div class="flow">
+  <% alur.forEach(function(step, idx){ %>
+    <div class="flow-step">
+      <div class="step-num"><%= idx + 1 %></div>
+      <h4><i class="bi <%= step.icon %> me-1"></i><%= step.judul %></h4>
+      <p><%= step.deskripsi %></p>
+    </div>
+    <% if (idx < alur.length - 1) { %>
+      <div class="flow-arrow"><i class="bi bi-arrow-right-circle-fill"></i></div>
+    <% } %>
+  <% }) %>
+</div>
+
+<div class="note-box">
+  <i class="bi bi-info-circle-fill"></i>
+  <div>Pengajuan magang dibuka setiap awal semester genap/ganjil sesuai kalender akademik. Estimasi proses penerbitan surat pengantar: <strong><%= estimasiWaktu %></strong>.</div>
+</div>
+
+<div class="section-title"><i class="bi bi-clipboard2-check-fill"></i>Syarat Pengajuan Magang</div>
+<ul class="syarat-list">
+  <% syarat.forEach(function(item){ %>
+    <li><i class="bi bi-check-circle-fill"></i><span><%= item %></span></li>
+  <% }) %>
+</ul>
+
+<div class="section-title"><i class="bi bi-folder2-open"></i>Dokumen Pendukung</div>
+<div class="doc-list">
+  <% dokumen.forEach(function(doc){ %>
+    <a class="doc-item" href="<%= doc.url || '#' %>" target="_blank" rel="noopener">
+      <i class="bi bi-file-earmark-pdf-fill"></i>
+      <div>
+        <div class="t"><%= doc.nama %></div>
+        <div class="s"><%= doc.keterangan %></div>
+      </div>
+    </a>
+  <% }) %>
+</div>
+
+<div class="cta-box">
+  <h3>Siap Mengajukan Magang?</h3>
+  <p>Login ke akun mahasiswa Anda untuk mengisi dan mengirimkan formulir pengajuan magang secara daring.</p>
+  <a href="/auth/login" class="btn-cta"><i class="bi bi-box-arrow-in-right me-1"></i>Login Mahasiswa</a>
+</div>
+
+<%- include('../../partials/footer-landing') %>

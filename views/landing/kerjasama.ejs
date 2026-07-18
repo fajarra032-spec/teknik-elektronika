@@ -1,0 +1,130 @@
+<%- include('../partials/header-landing') %>
+
+<style>
+  :root {
+    --p-primary: #1e3a8a;
+    --p-primary-dark: #14265c;
+    --p-primary-light: rgba(30,58,138,0.08);
+    --p-gradient: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    --p-shadow-sm: 0 5px 15px rgba(0,0,0,0.05);
+    --p-shadow-hover: 0 15px 30px rgba(30,58,138,0.15);
+    --p-radius: 1.5rem;
+  }
+
+  .pgj-header {
+    background: var(--p-gradient); border-radius: var(--p-radius); padding: 3rem 2rem;
+    color: #fff; margin-bottom: 2.5rem; text-align: center; box-shadow: 0 15px 30px rgba(30,58,138,0.25);
+  }
+  .pgj-header h1 { font-weight: 800; font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: .5rem; }
+  .pgj-header p { opacity: .9; font-size: 1.05rem; margin: 0; }
+
+  .section-title {
+    font-size: 1.6rem; font-weight: 700; margin: 2.5rem 0 1.5rem; color: #1e293b;
+    display: flex; align-items: center; gap: .7rem;
+    border-bottom: 3px solid var(--p-primary); padding-bottom: .7rem;
+  }
+  .section-title i { color: var(--p-primary); font-size: 1.7rem; }
+
+  .bentuk-list { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); }
+  .bentuk-list .card-bentuk {
+    background: #fff; border-radius: 1.1rem; padding: 1.3rem; box-shadow: var(--p-shadow-sm);
+    border: 1px solid rgba(30,58,138,0.12); transition: .2s;
+  }
+  .bentuk-list .card-bentuk:hover { transform: translateY(-4px); box-shadow: var(--p-shadow-hover); }
+  .bentuk-list .card-bentuk .ic {
+    width: 3rem; height: 3rem; border-radius: 1rem; background: var(--p-gradient); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: .8rem;
+  }
+  .bentuk-list .card-bentuk h5 { font-weight: 700; color: #1e293b; margin-bottom: .4rem; }
+  .bentuk-list .card-bentuk p { font-size: .88rem; color: #64748b; margin: 0; }
+
+  .flow { display: flex; flex-wrap: wrap; gap: 1.2rem; align-items: stretch; }
+  .flow-step {
+    flex: 1 1 200px; background: #fff; border-radius: 1.2rem; padding: 1.4rem 1.2rem;
+    box-shadow: var(--p-shadow-sm); border: 1px solid rgba(30,58,138,0.12); transition: .2s;
+  }
+  .flow-step:hover { transform: translateY(-4px); box-shadow: var(--p-shadow-hover); }
+  .flow-step .step-num {
+    width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--p-gradient); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; margin-bottom: .8rem;
+  }
+  .flow-step h4 { font-size: 1.02rem; font-weight: 700; color: #1e293b; margin-bottom: .4rem; }
+  .flow-step p { font-size: .87rem; color: #64748b; margin: 0; }
+  .flow-arrow { display: flex; align-items: center; color: var(--p-primary); font-size: 1.4rem; }
+  @media (max-width: 767px) { .flow-arrow { transform: rotate(90deg); justify-content: center; } }
+
+  .mitra-grid { display: flex; flex-wrap: wrap; gap: 1rem; }
+  .mitra-badge {
+    background: #fff; border: 1px solid rgba(30,58,138,0.15); border-radius: 50px;
+    padding: .6rem 1.3rem; font-weight: 600; font-size: .88rem; color: var(--p-primary-dark);
+    box-shadow: var(--p-shadow-sm); display: flex; align-items: center; gap: .5rem;
+  }
+  .mitra-badge i { color: var(--p-primary); }
+
+  .cta-box {
+    background: var(--p-gradient); border-radius: var(--p-radius); padding: 2.2rem;
+    color: #fff; text-align: center; margin-top: 2.5rem; box-shadow: 0 15px 30px rgba(30,58,138,0.25);
+  }
+  .cta-box h3 { font-weight: 800; margin-bottom: .5rem; }
+  .cta-box p { opacity: .9; margin-bottom: 1.2rem; }
+  .cta-box .btn-cta {
+    background: #fff; color: var(--p-primary-dark); font-weight: 700; padding: .7rem 1.8rem;
+    border-radius: 50px; text-decoration: none; display: inline-block; transition: .2s; margin: 0 .3rem;
+  }
+  .cta-box .btn-cta:hover { transform: translateY(-2px); color: var(--p-primary-dark); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+  .cta-box .btn-outline {
+    background: transparent; border: 2px solid #fff; color: #fff; font-weight: 700; padding: .65rem 1.7rem;
+    border-radius: 50px; text-decoration: none; display: inline-block; transition: .2s; margin: 0 .3rem;
+  }
+  .cta-box .btn-outline:hover { background: rgba(255,255,255,0.15); color: #fff; }
+</style>
+
+<div class="pgj-header">
+  <h1><i class="bi bi-building-check me-2"></i>Kerjasama Perusahaan</h1>
+  <p>Kemitraan Program Studi Teknik Elektronika dengan Dunia Usaha &amp; Dunia Industri (DUDI)</p>
+</div>
+
+<!-- Bentuk Kerjasama -->
+<div class="section-title"><i class="bi bi-diagram-2-fill"></i>Bentuk Kerjasama</div>
+<div class="bentuk-list">
+  <% bentukKerjasama.forEach(function(b){ %>
+    <div class="card-bentuk">
+      <div class="ic"><i class="bi <%= b.icon %>"></i></div>
+      <h5><%= b.judul %></h5>
+      <p><%= b.deskripsi %></p>
+    </div>
+  <% }) %>
+</div>
+
+<!-- Alur Kerjasama -->
+<div class="section-title"><i class="bi bi-diagram-3-fill"></i>Alur Menjalin Kerjasama</div>
+<div class="flow">
+  <% alur.forEach(function(step, idx){ %>
+    <div class="flow-step">
+      <div class="step-num"><%= idx + 1 %></div>
+      <h4><i class="bi <%= step.icon %> me-1"></i><%= step.judul %></h4>
+      <p><%= step.deskripsi %></p>
+    </div>
+    <% if (idx < alur.length - 1) { %>
+      <div class="flow-arrow"><i class="bi bi-arrow-right-circle-fill"></i></div>
+    <% } %>
+  <% }) %>
+</div>
+
+<!-- Mitra -->
+<div class="section-title"><i class="bi bi-people-fill"></i>Mitra Industri &amp; Instansi</div>
+<div class="mitra-grid">
+  <% mitra.forEach(function(m){ %>
+    <div class="mitra-badge"><i class="bi bi-building"></i><%= m %></div>
+  <% }) %>
+</div>
+
+<!-- CTA -->
+<div class="cta-box">
+  <h3>Tertarik Menjalin Kerjasama?</h3>
+  <p>Hubungi Program Studi Teknik Elektronika untuk penjajakan kerjasama lebih lanjut.</p>
+  <a href="mailto:<%= emailKontak %>" class="btn-cta"><i class="bi bi-envelope-fill me-1"></i>Hubungi Kami</a>
+  <a href="/panduan" class="btn-outline"><i class="bi bi-info-circle me-1"></i>Info Lainnya</a>
+</div>
+
+<%- include('../partials/footer-landing') %>

@@ -1,0 +1,125 @@
+<%- include('../partials/header-landing') %>
+
+<style>
+  .doc-hero {
+    background: linear-gradient(135deg, #6f42c1, #a78bfa);
+    padding: clamp(2.5rem, 6vw, 4rem) 1rem;
+    color: white;
+    text-align: center;
+  }
+  .doc-hero h1 { font-weight: 800; font-size: clamp(1.6rem, 5vw, 2.5rem); margin-bottom: 0.5rem; }
+  .doc-hero p { opacity: 0.9; margin: 0; }
+
+  .flow-wrap { max-width: 780px; margin: 3rem auto; padding: 0 1rem; }
+  .flow-step {
+    display: flex;
+    gap: 1.2rem;
+    position: relative;
+    padding-bottom: 2.5rem;
+  }
+  .flow-step:last-child { padding-bottom: 0; }
+  .flow-step::before {
+    content: '';
+    position: absolute;
+    left: 24px;
+    top: 52px;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #6f42c1, #e9d8fd);
+  }
+  .flow-step:last-child::before { display: none; }
+  .flow-num {
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6f42c1, #a78bfa);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    box-shadow: 0 8px 20px rgba(111,66,193,0.3);
+    z-index: 1;
+  }
+  .flow-content {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.2rem 1.5rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    flex: 1;
+  }
+  .flow-content h5 { font-weight: 700; margin-bottom: 0.4rem; color: #1e293b; }
+  .flow-content p { color: #64748b; font-size: 0.9rem; margin: 0; }
+  .flow-content .syarat {
+    margin-top: 0.7rem;
+    padding-top: 0.7rem;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 0.82rem;
+    color: #6f42c1;
+  }
+
+  .cta-box {
+    background: linear-gradient(135deg, #6f42c1, #a78bfa);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    text-align: center;
+    color: white;
+    max-width: 780px;
+    margin: 0 auto 3rem;
+  }
+  .cta-box .btn-light { border-radius: 50px; font-weight: 600; padding: 0.6rem 1.8rem; }
+</style>
+
+<div class="doc-hero">
+  <h1><i class="bi bi-diagram-3-fill me-2"></i>Alur Pengajuan Seminar Magang</h1>
+  <p>SOP proses pengajuan seminar magang mahasiswa</p>
+</div>
+
+<div class="flow-wrap">
+  <div class="flow-step">
+    <div class="flow-num">1</div>
+    <div class="flow-content">
+      <h5>Mahasiswa Login ke SI-ELK</h5>
+      <p>Mahasiswa masuk ke akun masing-masing di Sistem Informasi ELK, lalu membuka menu Magang &rarr; Pengajuan Seminar.</p>
+      <div class="syarat"><i class="bi bi-info-circle me-1"></i> Pastikan logbook magang sudah diisi lengkap dan disetujui pembimbing.</div>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">2</div>
+    <div class="flow-content">
+      <h5>Mengisi Formulir Pengajuan</h5>
+      <p>Mahasiswa mengisi judul laporan, tanggal &amp; waktu yang diinginkan, tempat pelaksanaan, serta nama dosen pembimbing dan penguji.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">3</div>
+    <div class="flow-content">
+      <h5>Verifikasi oleh Admin Prodi</h5>
+      <p>Admin memeriksa kelengkapan syarat administratif (logbook, laporan magang, nilai pembimbing lapangan) sebelum menyetujui jadwal.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">4</div>
+    <div class="flow-content">
+      <h5>Status Disetujui / Ditolak</h5>
+      <p>Mahasiswa akan menerima notifikasi status pengajuan pada halaman yang sama. Jika ditolak, catatan perbaikan akan disertakan.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">5</div>
+    <div class="flow-content">
+      <h5>Pelaksanaan Seminar</h5>
+      <p>Seminar dilaksanakan sesuai jadwal yang telah disetujui, dihadiri dosen pembimbing dan penguji yang telah ditentukan.</p>
+    </div>
+  </div>
+</div>
+
+<div class="cta-box">
+  <h5 class="fw-bold mb-2">Sudah siap mengajukan seminar?</h5>
+  <p class="mb-3 opacity-90">Login ke akun mahasiswa Anda untuk mulai mengajukan.</p>
+  <a href="/auth/login" class="btn btn-light"><i class="bi bi-box-arrow-in-right me-1"></i> Login SI-ELK</a>
+</div>
+
+<%- include('../partials/footer-landing') %>

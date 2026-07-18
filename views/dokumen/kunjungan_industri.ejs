@@ -1,0 +1,107 @@
+<%- include('../partials/header-landing') %>
+
+<style>
+  .doc-hero {
+    background: linear-gradient(135deg, #0e7490, #22d3ee);
+    padding: clamp(2.5rem, 6vw, 4rem) 1rem;
+    color: white;
+    text-align: center;
+  }
+  .doc-hero h1 { font-weight: 800; font-size: clamp(1.6rem, 5vw, 2.5rem); margin-bottom: 0.5rem; }
+  .doc-hero p { opacity: 0.9; margin: 0; }
+
+  .flow-wrap { max-width: 780px; margin: 3rem auto; padding: 0 1rem; }
+  .flow-step { display: flex; gap: 1.2rem; position: relative; padding-bottom: 2.5rem; }
+  .flow-step:last-child { padding-bottom: 0; }
+  .flow-step::before {
+    content: ''; position: absolute; left: 24px; top: 52px; bottom: 0; width: 3px;
+    background: linear-gradient(180deg, #0e7490, #a5f3fc);
+  }
+  .flow-step:last-child::before { display: none; }
+  .flow-num {
+    flex-shrink: 0; width: 50px; height: 50px; border-radius: 50%;
+    background: linear-gradient(135deg, #0e7490, #22d3ee); color: white;
+    display: flex; align-items: center; justify-content: center; font-weight: 800;
+    font-size: 1.2rem; box-shadow: 0 8px 20px rgba(14,116,144,0.3); z-index: 1;
+  }
+  .flow-content { background: white; border-radius: 1rem; padding: 1.2rem 1.5rem; box-shadow: 0 8px 20px rgba(0,0,0,0.05); flex: 1; }
+  .flow-content h5 { font-weight: 700; margin-bottom: 0.4rem; color: #1e293b; }
+  .flow-content p { color: #64748b; font-size: 0.9rem; margin: 0; }
+  .flow-content .syarat { margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px dashed #e2e8f0; font-size: 0.82rem; color: #0e7490; }
+
+  .info-grid {
+    max-width: 780px; margin: 0 auto 3rem; display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;
+  }
+  .info-item {
+    background: white; border-radius: 1rem; padding: 1.2rem; text-align: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+  }
+  .info-item i { font-size: 1.8rem; color: #0e7490; margin-bottom: 0.5rem; display: block; }
+  .info-item .lbl { font-weight: 600; font-size: 0.9rem; color: #1e293b; }
+
+  .cta-box {
+    background: linear-gradient(135deg, #0e7490, #22d3ee); border-radius: 1.5rem; padding: 2rem;
+    text-align: center; color: white; max-width: 780px; margin: 0 auto 3rem;
+  }
+  .cta-box .btn-light { border-radius: 50px; font-weight: 600; padding: 0.6rem 1.8rem; }
+</style>
+
+<div class="doc-hero">
+  <h1><i class="bi bi-building-fill me-2"></i>Pengajuan Kunjungan Industri</h1>
+  <p>SOP bagi sekolah, kampus, atau perusahaan yang ingin berkunjung ke Prodi Teknik Elektronika</p>
+</div>
+
+<div class="flow-wrap">
+  <div class="flow-step">
+    <div class="flow-num">1</div>
+    <div class="flow-content">
+      <h5>Mengirim Surat Permohonan</h5>
+      <p>Instansi/sekolah/perusahaan mengirimkan surat permohonan resmi kunjungan industri kepada Program Studi Teknik Elektronika, mencantumkan tujuan, jumlah peserta, dan rencana tanggal kunjungan.</p>
+      <div class="syarat"><i class="bi bi-envelope me-1"></i> Surat dapat dikirim melalui email prodi atau langsung ke sekretariat kampus.</div>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">2</div>
+    <div class="flow-content">
+      <h5>Peninjauan &amp; Penjadwalan</h5>
+      <p>Program studi meninjau permohonan dan menentukan jadwal yang sesuai dengan ketersediaan fasilitas laboratorium dan dosen pendamping.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">3</div>
+    <div class="flow-content">
+      <h5>Konfirmasi Jadwal &amp; Rundown Acara</h5>
+      <p>Pihak prodi mengirimkan konfirmasi jadwal beserta susunan acara (rundown) kunjungan kepada instansi pemohon.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">4</div>
+    <div class="flow-content">
+      <h5>Pelaksanaan Kunjungan</h5>
+      <p>Kunjungan dilaksanakan sesuai jadwal, meliputi pengenalan program studi, kunjungan laboratorium, dan sesi tanya jawab.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">5</div>
+    <div class="flow-content">
+      <h5>Dokumentasi &amp; Tindak Lanjut</h5>
+      <p>Kegiatan didokumentasikan dan dapat ditindaklanjuti dengan kerja sama lebih lanjut, seperti magang atau kunjungan balasan.</p>
+      <div class="syarat"><i class="bi bi-arrow-right-circle me-1"></i> Lihat juga <a href="/dokumen/kerjasama-perusahaan">halaman kerjasama perusahaan</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="info-grid">
+  <div class="info-item"><i class="bi bi-people"></i><div class="lbl">Kelompok/Rombongan</div></div>
+  <div class="info-item"><i class="bi bi-clock"></i><div class="lbl">H-14 Sebelum Kunjungan</div></div>
+  <div class="info-item"><i class="bi bi-geo-alt"></i><div class="lbl">Kampus Politeknik Dewantara</div></div>
+</div>
+
+<div class="cta-box">
+  <h5 class="fw-bold mb-2">Ingin mengatur jadwal kunjungan?</h5>
+  <p class="mb-3 opacity-90">Hubungi kami untuk informasi lebih lanjut mengenai kunjungan industri.</p>
+  <a href="/panduan" class="btn btn-light"><i class="bi bi-question-circle me-1"></i> Lihat Panduan</a>
+</div>
+
+<%- include('../partials/footer-landing') %>

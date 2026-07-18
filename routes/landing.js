@@ -754,6 +754,259 @@ router.post('/pmb/submit', upload.single('bukti_pembayaran'), async (req, res) =
 });
 
 // ============================================================================
+// DOKUMEN - KURIKULUM
+// ============================================================================
+// Catatan: data kurikulum di bawah ini masih statis (custom), silakan
+// disesuaikan oleh admin prodi sesuai kurikulum resmi yang berlaku.
+// Jika suatu saat ingin dihubungkan ke Firestore (mis. koleksi
+// 'kurikulumPublik'), cukup ganti bagian ini dengan query db.collection(...).
+router.get('/dokumen/kurikulum', (req, res) => {
+  const kurikulum = [
+    {
+      semester: 1,
+      mataKuliah: [
+        { kode: 'MK101', nama: 'Pendidikan Agama', sks: 2, sifat: 'Wajib' },
+        { kode: 'MK102', nama: 'Pendidikan Pancasila', sks: 2, sifat: 'Wajib' },
+        { kode: 'MK103', nama: 'Bahasa Indonesia', sks: 2, sifat: 'Wajib' },
+        { kode: 'MK104', nama: 'Matematika Teknik I', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK105', nama: 'Rangkaian Listrik', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK106', nama: 'Dasar Elektronika', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK107', nama: 'Praktik Bengkel & K3', sks: 2, sifat: 'Wajib' }
+      ]
+    },
+    {
+      semester: 2,
+      mataKuliah: [
+        { kode: 'MK201', nama: 'Bahasa Inggris Teknik', sks: 2, sifat: 'Wajib' },
+        { kode: 'MK202', nama: 'Matematika Teknik II', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK203', nama: 'Elektronika Digital', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK204', nama: 'Pemrograman Dasar', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK205', nama: 'Praktik Elektronika Dasar', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK206', nama: 'Gambar Teknik', sks: 2, sifat: 'Wajib' }
+      ]
+    },
+    {
+      semester: 3,
+      mataKuliah: [
+        { kode: 'MK301', nama: 'Mikrokontroler', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK302', nama: 'Sistem Kendali', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK303', nama: 'Instrumentasi Industri', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK304', nama: 'Jaringan Komputer', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK305', nama: 'Praktik Mikrokontroler', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK306', nama: 'Kewirausahaan', sks: 2, sifat: 'Wajib' }
+      ]
+    },
+    {
+      semester: 4,
+      mataKuliah: [
+        { kode: 'MK401', nama: 'PLC & Otomasi Industri', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK402', nama: 'Internet of Things (IoT)', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK403', nama: 'Sistem Tertanam', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK404', nama: 'Praktik PLC', sks: 3, sifat: 'Wajib' },
+        { kode: 'MK405', nama: 'Metodologi Penelitian', sks: 2, sifat: 'Wajib' },
+        { kode: 'MK406', nama: 'Elektronika Daya', sks: 3, sifat: 'Wajib' }
+      ]
+    },
+    {
+      semester: 5,
+      mataKuliah: [
+        { kode: 'MK501', nama: 'Praktik Kerja Industri (Magang)', sks: 8, sifat: 'Wajib' },
+        { kode: 'MK502', nama: 'Pembimbingan Magang', sks: 2, sifat: 'Wajib' }
+      ]
+    },
+    {
+      semester: 6,
+      mataKuliah: [
+        { kode: 'MK601', nama: 'Seminar Hasil Magang', sks: 2, sifat: 'Wajib' },
+        { kode: 'MK602', nama: 'Tugas Akhir', sks: 4, sifat: 'Wajib' },
+        { kode: 'MK603', nama: 'Etika Profesi', sks: 2, sifat: 'Wajib' },
+        { kode: 'MK604', nama: 'Mata Kuliah Pilihan', sks: 3, sifat: 'Pilihan' }
+      ]
+    }
+  ];
+
+  const totalSemester = kurikulum.length;
+  const totalMk = kurikulum.reduce((a, s) => a + s.mataKuliah.length, 0);
+  const totalSks = kurikulum.reduce((a, s) => a + s.mataKuliah.reduce((x, mk) => x + mk.sks, 0), 0);
+
+  res.render('landing/dokumen/kurikulum', {
+    title: 'Kurikulum - Teknik Elektronika',
+    user: req.user || null,
+    kurikulum,
+    totalSemester,
+    totalMk,
+    totalSks,
+    tahunKurikulum: '2023',
+    profilLulusan: 'Lulusan Program Studi Teknik Elektronika disiapkan menjadi tenaga ahli madya yang kompeten di bidang instrumentasi, otomasi industri, dan sistem elektronika tertanam, serta mampu beradaptasi dengan perkembangan teknologi industri 4.0.',
+    cpl: [
+      'Mampu merancang, membangun, dan menguji rangkaian elektronika dan sistem kendali sederhana.',
+      'Mampu mengoperasikan dan memelihara peralatan instrumentasi dan otomasi industri.',
+      'Mampu bekerja secara profesional, bertanggung jawab, dan menjunjung etika kerja di dunia industri.',
+      'Mampu berkomunikasi dan bekerja sama dalam tim lintas disiplin.'
+    ],
+    fileKurikulum: '#'
+  });
+});
+
+// ============================================================================
+// PENGAJUAN - SEMINAR MAGANG
+// ============================================================================
+router.get('/pengajuan/seminar', (req, res) => {
+  res.render('landing/pengajuan/seminar', {
+    title: 'Pengajuan Seminar Magang',
+    user: req.user || null,
+    estimasiWaktu: '3-5 hari kerja',
+    alur: [
+      { icon: 'bi-clipboard-check', judul: 'Selesaikan Magang', deskripsi: 'Mahasiswa menyelesaikan seluruh periode magang dan logbook harian disetujui pembimbing.' },
+      { icon: 'bi-file-earmark-text', judul: 'Susun Laporan', deskripsi: 'Mahasiswa menyusun laporan hasil magang sesuai format yang ditentukan.' },
+      { icon: 'bi-send-check', judul: 'Ajukan Seminar', deskripsi: 'Mahasiswa login dan mengisi formulir pengajuan seminar secara daring.' },
+      { icon: 'bi-person-check', judul: 'Verifikasi Kaprodi', deskripsi: 'Kaprodi/Admin memeriksa kelengkapan berkas dan menentukan dosen penguji.' },
+      { icon: 'bi-calendar-event', judul: 'Jadwal Terbit', deskripsi: 'Jadwal dan tempat seminar diterbitkan dan diinformasikan ke mahasiswa.' },
+      { icon: 'bi-easel', judul: 'Pelaksanaan Seminar', deskripsi: 'Mahasiswa memaparkan hasil magang di hadapan dosen penguji.' }
+    ],
+    syarat: [
+      'Telah menyelesaikan minimal 90% total hari magang yang diwajibkan',
+      'Logbook harian magang telah disetujui (approved) oleh pembimbing',
+      'Laporan hasil magang telah selesai disusun dan ditandatangani pembimbing lapangan',
+      'Tidak memiliki tunggakan administrasi/keuangan',
+      'Surat keterangan selesai magang dari perusahaan/instansi'
+    ],
+    dokumen: [
+      { nama: 'Format Laporan Magang', keterangan: 'Template resmi (.docx)', url: '#' },
+      { nama: 'Formulir Pengajuan Seminar', keterangan: 'Diisi melalui akun mahasiswa', url: '#' },
+      { nama: 'SOP Seminar Magang', keterangan: 'Dokumen prosedur lengkap (.pdf)', url: '#' }
+    ]
+  });
+});
+
+// ============================================================================
+// PENGAJUAN - MAGANG
+// ============================================================================
+router.get('/pengajuan/magang', (req, res) => {
+  res.render('landing/pengajuan/magang', {
+    title: 'Pengajuan Magang',
+    user: req.user || null,
+    estimasiWaktu: '5-7 hari kerja',
+    alur: [
+      { icon: 'bi-search', judul: 'Cari Perusahaan', deskripsi: 'Mahasiswa mencari dan menghubungi perusahaan/instansi tujuan magang.' },
+      { icon: 'bi-person-lines-fill', judul: 'Konsultasi Dosen PA', deskripsi: 'Mahasiswa berkonsultasi dengan dosen Pembimbing Akademik terkait tempat magang.' },
+      { icon: 'bi-send-check', judul: 'Ajukan Permohonan', deskripsi: 'Mahasiswa login dan mengisi formulir pengajuan surat pengantar magang.' },
+      { icon: 'bi-person-check', judul: 'Verifikasi Admin', deskripsi: 'Admin/Kaprodi memverifikasi data dan menerbitkan surat pengantar.' },
+      { icon: 'bi-building-check', judul: 'Konfirmasi Perusahaan', deskripsi: 'Mahasiswa menyerahkan surat pengantar ke perusahaan dan menunggu konfirmasi diterima.' },
+      { icon: 'bi-briefcase', judul: 'Pelaksanaan Magang', deskripsi: 'Mahasiswa melaksanakan magang dan mengisi logbook harian melalui sistem.' }
+    ],
+    syarat: [
+      'Terdaftar aktif sebagai mahasiswa minimal semester 4',
+      'Telah menempuh mata kuliah prasyarat sesuai ketentuan kurikulum',
+      'Tidak memiliki tunggakan administrasi/keuangan',
+      'Mengisi formulir pengajuan magang secara daring melalui akun mahasiswa',
+      'Melampirkan surat balasan/penerimaan dari perusahaan (jika sudah ada)'
+    ],
+    dokumen: [
+      { nama: 'Formulir Pengajuan Magang', keterangan: 'Diisi melalui akun mahasiswa', url: '#' },
+      { nama: 'Template Surat Pengantar', keterangan: 'Contoh format (.docx)', url: '#' },
+      { nama: 'SOP Pelaksanaan Magang', keterangan: 'Dokumen prosedur lengkap (.pdf)', url: '#' }
+    ]
+  });
+});
+
+// ============================================================================
+// PENGAJUAN - CUTI / IZIN
+// ============================================================================
+router.get('/pengajuan/cuti', (req, res) => {
+  res.render('landing/pengajuan/cuti', {
+    title: 'Pengajuan Cuti Akademik',
+    user: req.user || null,
+    estimasiWaktu: '2-4 hari kerja',
+    alur: [
+      { icon: 'bi-file-earmark-plus', judul: 'Siapkan Alasan & Bukti', deskripsi: 'Pemohon menyiapkan alasan pengajuan beserta dokumen pendukung (jika ada).' },
+      { icon: 'bi-send-check', judul: 'Ajukan Permohonan', deskripsi: 'Pemohon login dan mengisi formulir pengajuan cuti/izin secara daring.' },
+      { icon: 'bi-person-check', judul: 'Verifikasi Admin', deskripsi: 'Admin/Kaprodi memeriksa kelengkapan dan kelayakan permohonan.' },
+      { icon: 'bi-envelope-check', judul: 'Terbit Surat', deskripsi: 'Surat persetujuan cuti/izin diterbitkan dan dapat diunduh oleh pemohon.' }
+    ],
+    jenisCuti: [
+      { icon: 'bi-mortarboard', judul: 'Cuti Akademik Mahasiswa', deskripsi: 'Penundaan studi sementara dengan alasan tertentu (kesehatan, ekonomi, dll).' },
+      { icon: 'bi-person-badge', judul: 'Izin Dosen', deskripsi: 'Permohonan izin tidak hadir mengajar/bertugas bagi dosen.' },
+      { icon: 'bi-heart-pulse', judul: 'Izin Sakit', deskripsi: 'Permohonan izin dengan disertai surat keterangan dokter.' }
+    ],
+    syarat: [
+      'Mengisi formulir pengajuan secara daring melalui akun mahasiswa/dosen',
+      'Melampirkan surat/bukti pendukung sesuai jenis pengajuan (jika diperlukan)',
+      'Tidak memiliki tunggakan administrasi/keuangan (khusus mahasiswa)',
+      'Diajukan sebelum atau selambat-lambatnya sesuai batas waktu akademik yang berlaku'
+    ],
+    dokumen: [
+      { nama: 'Formulir Pengajuan Cuti/Izin', keterangan: 'Diisi melalui akun pengguna', url: '#' },
+      { nama: 'SOP Cuti Akademik', keterangan: 'Dokumen prosedur lengkap (.pdf)', url: '#' }
+    ]
+  });
+});
+
+// ============================================================================
+// PENGAJUAN - KUNJUNGAN INDUSTRI
+// ============================================================================
+router.get('/pengajuan/kunjungan-industri', (req, res) => {
+  res.render('landing/pengajuan/kunjungan_industri', {
+    title: 'Pengajuan Kunjungan Industri',
+    user: req.user || null,
+    estimasiWaktu: '2 minggu',
+    alur: [
+      { icon: 'bi-building', judul: 'Tentukan Perusahaan Tujuan', deskripsi: 'Panitia/prodi menentukan perusahaan atau instansi tujuan kunjungan industri.' },
+      { icon: 'bi-send-check', judul: 'Ajukan Permohonan', deskripsi: 'Pengaju login dan mengisi formulir pengajuan kunjungan industri secara daring.' },
+      { icon: 'bi-envelope-paper', judul: 'Surat Permohonan', deskripsi: 'Prodi menerbitkan surat permohonan izin kunjungan ke perusahaan tujuan.' },
+      { icon: 'bi-person-check', judul: 'Konfirmasi Perusahaan', deskripsi: 'Menunggu konfirmasi jadwal dan kesediaan dari pihak perusahaan.' },
+      { icon: 'bi-bus-front', judul: 'Persiapan Teknis', deskripsi: 'Koordinasi transportasi, akomodasi, dan peserta kunjungan.' },
+      { icon: 'bi-camera', judul: 'Pelaksanaan Kunjungan', deskripsi: 'Kunjungan industri dilaksanakan sesuai jadwal yang disepakati.' }
+    ],
+    syarat: [
+      'Diajukan oleh panitia/perwakilan kelas atau program studi',
+      'Mengisi formulir pengajuan kunjungan industri secara daring',
+      'Melampirkan daftar nama peserta dan dosen pendamping',
+      'Diajukan minimal 2 minggu sebelum tanggal rencana pelaksanaan'
+    ],
+    dokumen: [
+      { nama: 'Formulir Pengajuan Kunjungan Industri', keterangan: 'Diisi melalui akun pengguna', url: '#' },
+      { nama: 'Template Surat Permohonan', keterangan: 'Contoh format (.docx)', url: '#' },
+      { nama: 'SOP Kunjungan Industri', keterangan: 'Dokumen prosedur lengkap (.pdf)', url: '#' }
+    ]
+  });
+});
+
+// ============================================================================
+// KERJASAMA PERUSAHAAN
+// ============================================================================
+router.get('/kerjasama', (req, res) => {
+  res.render('landing/kerjasama', {
+    title: 'Kerjasama Perusahaan',
+    user: req.user || null,
+    emailKontak: 'teknikelektronika@polidewa.ac.id',
+    bentukKerjasama: [
+      { icon: 'bi-briefcase-fill', judul: 'Penempatan Magang', deskripsi: 'Kerjasama penerimaan mahasiswa untuk Praktik Kerja Industri (magang).' },
+      { icon: 'bi-mortarboard-fill', judul: 'Kurikulum & Kompetensi', deskripsi: 'Penyelarasan kurikulum dan pelatihan kompetensi sesuai kebutuhan industri.' },
+      { icon: 'bi-person-workspace', judul: 'Dosen/Praktisi Tamu', deskripsi: 'Kolaborasi berbagi keahlian melalui kuliah tamu dan pelatihan bersama.' },
+      { icon: 'bi-building-fill-gear', judul: 'Kunjungan Industri', deskripsi: 'Kerjasama penyelenggaraan kunjungan/studi lapangan bagi mahasiswa.' },
+      { icon: 'bi-person-check-fill', judul: 'Rekrutmen Lulusan', deskripsi: 'Kerjasama penyerapan lulusan Program Studi Teknik Elektronika.' }
+    ],
+    alur: [
+      { icon: 'bi-envelope-paper', judul: 'Penjajakan Awal', deskripsi: 'Perusahaan/instansi menghubungi prodi melalui email atau surat resmi.' },
+      { icon: 'bi-people', judul: 'Pertemuan & Diskusi', deskripsi: 'Diskusi bentuk kerjasama yang akan dijalankan kedua belah pihak.' },
+      { icon: 'bi-file-earmark-check', judul: 'Penyusunan MoU/PKS', deskripsi: 'Penyusunan naskah kesepahaman (MoU) atau perjanjian kerjasama (PKS).' },
+      { icon: 'bi-pen', judul: 'Penandatanganan', deskripsi: 'Penandatanganan dokumen kerjasama oleh pihak berwenang kedua institusi.' },
+      { icon: 'bi-arrow-repeat', judul: 'Implementasi & Evaluasi', deskripsi: 'Pelaksanaan program kerjasama serta evaluasi berkala.' }
+    ],
+    // CATATAN: daftar di bawah ini masih placeholder. Ganti dengan nama
+    // perusahaan/instansi mitra yang benar-benar telah menjalin kerjasama
+    // resmi (MoU/PKS) dengan program studi.
+    mitra: [
+      'Mitra Industri 1',
+      'Mitra Industri 2',
+      'Mitra Industri 3',
+      'Mitra Instansi Pemerintah'
+    ]
+  });
+});
+
+// ============================================================================
 // EKSPOR ROUTER
 // ============================================================================
 module.exports = router;

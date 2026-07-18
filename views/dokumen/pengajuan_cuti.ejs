@@ -1,0 +1,97 @@
+<%- include('../partials/header-landing') %>
+
+<style>
+  .doc-hero {
+    background: linear-gradient(135deg, #d97706, #fbbf24);
+    padding: clamp(2.5rem, 6vw, 4rem) 1rem;
+    color: white;
+    text-align: center;
+  }
+  .doc-hero h1 { font-weight: 800; font-size: clamp(1.6rem, 5vw, 2.5rem); margin-bottom: 0.5rem; }
+  .doc-hero p { opacity: 0.9; margin: 0; }
+
+  .flow-wrap { max-width: 780px; margin: 3rem auto; padding: 0 1rem; }
+  .flow-step { display: flex; gap: 1.2rem; position: relative; padding-bottom: 2.5rem; }
+  .flow-step:last-child { padding-bottom: 0; }
+  .flow-step::before {
+    content: ''; position: absolute; left: 24px; top: 52px; bottom: 0; width: 3px;
+    background: linear-gradient(180deg, #d97706, #fde68a);
+  }
+  .flow-step:last-child::before { display: none; }
+  .flow-num {
+    flex-shrink: 0; width: 50px; height: 50px; border-radius: 50%;
+    background: linear-gradient(135deg, #d97706, #fbbf24); color: white;
+    display: flex; align-items: center; justify-content: center; font-weight: 800;
+    font-size: 1.2rem; box-shadow: 0 8px 20px rgba(217,119,6,0.3); z-index: 1;
+  }
+  .flow-content { background: white; border-radius: 1rem; padding: 1.2rem 1.5rem; box-shadow: 0 8px 20px rgba(0,0,0,0.05); flex: 1; }
+  .flow-content h5 { font-weight: 700; margin-bottom: 0.4rem; color: #1e293b; }
+  .flow-content p { color: #64748b; font-size: 0.9rem; margin: 0; }
+
+  .note-box {
+    max-width: 780px; margin: 0 auto 2rem; background: #fffbeb; border: 1px dashed #fbbf24;
+    border-radius: 1rem; padding: 1.2rem 1.5rem; color: #92400e; font-size: 0.88rem;
+  }
+
+  .cta-box {
+    background: linear-gradient(135deg, #d97706, #fbbf24); border-radius: 1.5rem; padding: 2rem;
+    text-align: center; color: white; max-width: 780px; margin: 0 auto 3rem;
+  }
+  .cta-box .btn-light { border-radius: 50px; font-weight: 600; padding: 0.6rem 1.8rem; }
+</style>
+
+<div class="doc-hero">
+  <h1><i class="bi bi-calendar-x-fill me-2"></i>Alur Pengajuan Cuti Akademik</h1>
+  <p>SOP prosedur pengajuan cuti akademik mahasiswa</p>
+</div>
+
+<div class="note-box">
+  <i class="bi bi-exclamation-triangle me-2"></i>
+  Pengajuan cuti akademik saat ini diproses secara administratif langsung di bagian akademik (belum tersedia pengajuan online melalui SI-ELK). Silakan ikuti alur di bawah ini.
+</div>
+
+<div class="flow-wrap">
+  <div class="flow-step">
+    <div class="flow-num">1</div>
+    <div class="flow-content">
+      <h5>Konsultasi dengan Dosen Wali</h5>
+      <p>Mahasiswa berkonsultasi dengan dosen pembimbing akademik (dosen wali) mengenai alasan dan rencana pengajuan cuti.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">2</div>
+    <div class="flow-content">
+      <h5>Mengisi Formulir Permohonan Cuti</h5>
+      <p>Mahasiswa mengambil dan mengisi formulir permohonan cuti akademik di bagian akademik, dilengkapi alasan dan lama cuti yang diajukan.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">3</div>
+    <div class="flow-content">
+      <h5>Persetujuan Dosen Wali &amp; Kaprodi</h5>
+      <p>Formulir yang telah diisi ditandatangani oleh dosen wali dan disetujui oleh Ketua Program Studi.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">4</div>
+    <div class="flow-content">
+      <h5>Pengajuan ke Bagian Akademik</h5>
+      <p>Formulir yang telah disetujui diserahkan ke bagian akademik/BAAK untuk diproses lebih lanjut dan diterbitkan surat keputusan cuti.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">5</div>
+    <div class="flow-content">
+      <h5>Status Akademik Diperbarui</h5>
+      <p>Status mahasiswa pada sistem akademik akan diperbarui menjadi "Cuti" untuk semester yang diajukan, dan otomatis aktif kembali pada semester berikutnya sesuai ketentuan.</p>
+    </div>
+  </div>
+</div>
+
+<div class="cta-box">
+  <h5 class="fw-bold mb-2">Butuh bantuan lebih lanjut?</h5>
+  <p class="mb-3 opacity-90">Hubungi bagian akademik atau dosen wali Anda untuk informasi lebih detail mengenai prosedur cuti akademik.</p>
+  <a href="/panduan" class="btn btn-light"><i class="bi bi-question-circle me-1"></i> Lihat Panduan</a>
+</div>
+
+<%- include('../partials/footer-landing') %>

@@ -1,0 +1,105 @@
+<%- include('../partials/header-landing') %>
+
+<style>
+  .doc-hero {
+    background: linear-gradient(135deg, #be123c, #fb7185);
+    padding: clamp(2.5rem, 6vw, 4rem) 1rem;
+    color: white;
+    text-align: center;
+  }
+  .doc-hero h1 { font-weight: 800; font-size: clamp(1.6rem, 5vw, 2.5rem); margin-bottom: 0.5rem; }
+  .doc-hero p { opacity: 0.9; margin: 0; }
+
+  .section-inner { max-width: 900px; margin: 0 auto; padding: 0 1rem; }
+
+  .benefit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.2rem;
+    margin: 3rem auto;
+  }
+  .benefit-card {
+    background: white; border-radius: 1.2rem; padding: 1.5rem; box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+  }
+  .benefit-card i { font-size: 1.8rem; color: #be123c; margin-bottom: 0.7rem; display: block; }
+  .benefit-card h6 { font-weight: 700; color: #1e293b; margin-bottom: 0.4rem; }
+  .benefit-card p { font-size: 0.85rem; color: #64748b; margin: 0; }
+
+  .partner-section { margin-bottom: 3rem; }
+  .partner-section h3 { font-weight: 800; text-align: center; margin-bottom: 2rem; color: #1e293b; }
+  .partner-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+  .partner-chip {
+    background: white; border-radius: 0.9rem; padding: 1rem;
+    text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    font-size: 0.85rem; font-weight: 600; color: #334155;
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    min-height: 70px;
+  }
+  .partner-chip i { color: #be123c; }
+
+  .cta-box {
+    background: linear-gradient(135deg, #be123c, #fb7185); border-radius: 1.5rem; padding: 2rem;
+    text-align: center; color: white; max-width: 780px; margin: 0 auto 3rem;
+  }
+  .cta-box .btn-light { border-radius: 50px; font-weight: 600; padding: 0.6rem 1.8rem; }
+</style>
+
+<div class="doc-hero">
+  <h1><i class="bi bi-handshake me-2"></i>Kerjasama Perusahaan</h1>
+  <p>Bermitra dengan Program Studi Teknik Elektronika Politeknik Dewantara</p>
+</div>
+
+<div class="section-inner">
+  <div class="text-center mt-4">
+    <p class="text-muted" style="max-width: 650px; margin: 0 auto;">
+      Program Studi Teknik Elektronika membuka peluang kerjasama dengan perusahaan/industri dalam berbagai bentuk,
+      mulai dari penempatan magang mahasiswa, kunjungan industri, hingga pengembangan kurikulum berbasis kebutuhan dunia kerja.
+    </p>
+  </div>
+
+  <div class="benefit-grid">
+    <div class="benefit-card">
+      <i class="bi bi-mortarboard"></i>
+      <h6>Penempatan Magang</h6>
+      <p>Perusahaan dapat menerima mahasiswa magang/PKL sesuai kebutuhan bidang elektronika.</p>
+    </div>
+    <div class="benefit-card">
+      <i class="bi bi-building"></i>
+      <h6>Kunjungan Industri</h6>
+      <p>Kerjasama pelaksanaan kunjungan industri bagi mahasiswa untuk pengenalan dunia kerja.</p>
+    </div>
+    <div class="benefit-card">
+      <i class="bi bi-person-workspace"></i>
+      <h6>Rekrutmen Lulusan</h6>
+      <p>Perusahaan dapat menjalin kerjasama rekrutmen langsung dengan lulusan program studi.</p>
+    </div>
+    <div class="benefit-card">
+      <i class="bi bi-journal-check"></i>
+      <h6>Pengembangan Kurikulum</h6>
+      <p>Masukan dari industri untuk penyesuaian kurikulum agar relevan dengan kebutuhan kerja terkini.</p>
+    </div>
+  </div>
+
+  <% if (perusahaanList && perusahaanList.length > 0) { %>
+    <div class="partner-section">
+      <h3>Perusahaan Mitra Kami</h3>
+      <div class="partner-grid">
+        <% perusahaanList.forEach(p => { %>
+          <div class="partner-chip"><i class="bi bi-building"></i> <%= p.nama %></div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<div class="cta-box">
+  <h5 class="fw-bold mb-2">Tertarik menjalin kerjasama?</h5>
+  <p class="mb-3 opacity-90">Hubungi kami untuk mendiskusikan bentuk kerjasama yang sesuai dengan kebutuhan perusahaan Anda.</p>
+  <a href="/panduan" class="btn btn-light"><i class="bi bi-envelope me-1"></i> Hubungi Kami</a>
+</div>
+
+<%- include('../partials/footer-landing') %>
