@@ -644,5 +644,22 @@
     "ktmFileId": null,
     "ktmFileUrl": null,
     "createdAt": "2026-07-03T07:47:00.989Z"
+  },
+  {
+    "id": "reg-1784521177465",
+    "name": "siakad",
+    "nim": "eq",
+    "prodi": "Teknologi Rekayasa Multimedia",
+    "email": "ada2@gdf",
+    "whatsapp": "ada",
+    "ic3Level": "Level 1",
+    "registrationNo": 39,
+    "fee": 0,
+    "paymentStatus": "not_applicable",
+    "verificationStatus": "rejected",
+    "verificationReason": "[Verifikasi Simulasi] Gagal memvalidasi KTM. NIM terlalu pendek / tidak sesuai format.",
+    "ktmFileId": "1o5stFsHIYT_MPp_-clNjdDx-F1nlCa5V",
+    "ktmFileUrl": "https://drive.google.com/file/d/1o5stFsHIYT_MPp_-clNjdDx-F1nlCa5V/view?usp=drivesdk",
+    "createdAt": "2026-07-20T04:19:37.465Z"
   }
 ]
