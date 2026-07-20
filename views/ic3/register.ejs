@@ -28,8 +28,17 @@
     .text-dewantara-blue { color: var(--color-dewantara-blue); }
     .text-dewantara-gold { color: var(--color-dewantara-gold); }
     .border-dewantara-blue { border-color: var(--color-dewantara-blue); }
-    .from-dewantara-blue { --tw-gradient-from: var(--color-dewantara-blue); }
+    .from-dewantara-blue {
+      --tw-gradient-from: var(--color-dewantara-blue);
+      --tw-gradient-to: rgb(13 82 159 / 0);
+      --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+    }
+    .via-dewantara-blue {
+      --tw-gradient-to: rgb(13 82 159 / 0);
+      --tw-gradient-stops: var(--tw-gradient-from), var(--color-dewantara-blue), var(--tw-gradient-to);
+    }
     .to-dewantara-navy { --tw-gradient-to: var(--color-dewantara-navy); }
+    .to-dewantara-blue { --tw-gradient-to: var(--color-dewantara-blue); }
     .bg-dewantara-gold { background-color: var(--color-dewantara-gold); }
     .border-dewantara-gold { border-color: var(--color-dewantara-gold); }
     .hover\:bg-dewantara-blue:hover { background-color: var(--color-dewantara-blue); }
@@ -130,11 +139,10 @@
               <%= freeSlotsUsed %> / 80 Slot Terisi
             </span>
           </div>
-<div class="w-full bg-slate-100 h-3.5 rounded-full overflow-hidden mt-1 relative">
+<div style="width:100%; background-color:#e2e8f0; height:14px; border-radius:9999px; overflow:hidden; margin-top:4px; position:relative;">
 <div 
   id="progressBar"
-  class="bg-gradient-to-r from-dewantara-blue to-blue-500 h-full rounded-full transition-all duration-500"
-  style="width: <%= Math.min(100, (freeSlotsUsed / 80) * 100) %>%; min-width: 4px;"
+  style="height:100%; border-radius:9999px; transition:width 0.5s ease; background-color:#0d529f; width: <%= Math.max(freeSlotsUsed > 0 ? 3 : 0, Math.min(100, (freeSlotsUsed / 80) * 100)) %>%; min-width: 4px;"
 ></div>
 </div>
           <div class="flex justify-between text-[11px] text-slate-400 font-mono mt-1.5">
@@ -1362,7 +1370,7 @@ async function fetchStats() {
 
     // ========== UPDATE PROGRESS BAR ==========
     const used = stats.freeSlotsUsed || 0;
-    const pct = Math.min(100, (used / 80) * 100);
+    const pct = Math.max(used > 0 ? 3 : 0, Math.min(100, (used / 80) * 100));
 
     // Update angka slot terisi
     const slotUsedEl = document.getElementById('slotUsed');
@@ -1376,6 +1384,7 @@ async function fetchStats() {
     // Update lebar progress bar
     const progressBar = document.getElementById('progressBar');
     if (progressBar) {
+      progressBar.style.backgroundColor = '#0d529f';
       progressBar.style.width = pct + '%';
       console.log('📊 Progress bar width set to:', pct + '%');
     } else {
