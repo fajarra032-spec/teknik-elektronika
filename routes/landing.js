@@ -1008,29 +1008,36 @@ router.get('/dokumen/kurikulum', (req, res) => {
 // diarahkan ke file RPS masing-masing mata kuliah (mis. hasil upload dosen
 // pengampu / link Google Drive / file di folder public) setelah tersedia.
 router.get('/dokumen/rps', (req, res) => {
+  // Berkas RPS gabungan (25 mata kuliah semester I-III) disimpan di
+  // public/dokumen/rps/RPS_Semester_1-3.pdf. Setiap mata kuliah diarahkan
+  // langsung ke halaman awal RPS-nya lewat anchor "#page=N" (didukung oleh
+  // browser PDF viewer bawaan Chrome/Edge/Firefox).
+  const RPS_FILE = '/dokumen/rps/RPS_Semester_1-3.pdf';
+  const rpsUrl = (page) => `${RPS_FILE}#page=${page}`;
+
   const rpsSemester = [
     {
       semester: 1,
       matkul: [
-        { kode: 'WUD2201-5', nama: 'Pendidikan Agama', jenis: 'Wajib Umum', url: '#' },
-        { kode: 'WUD3208', nama: 'Bahasa Indonesia', jenis: 'Wajib Umum', url: '#' },
-        { kode: 'WUD3209', nama: 'Bahasa Inggris', jenis: 'Wajib Umum', url: '#' },
-        { kode: 'PD3201', nama: 'Etika Kerja', jenis: 'Penciri Dewantara', url: '#' },
-        { kode: 'PD3202', nama: 'Standardisasi', jenis: 'Penciri Dewantara', url: '#' },
-        { kode: 'PD3203', nama: 'Matematika Teknik', jenis: 'Penciri Dewantara', url: '#' },
-        { kode: 'PD3204', nama: 'Perangkat Lunak Aplikasi', jenis: 'Penciri Dewantara', url: '#' }
+        { kode: 'WUD2201-5', nama: 'Pendidikan Agama', jenis: 'Wajib Umum', url: rpsUrl(1) },
+        { kode: 'WUD3208', nama: 'Bahasa Indonesia', jenis: 'Wajib Umum', url: rpsUrl(10) },
+        { kode: 'WUD3209', nama: 'Bahasa Inggris', jenis: 'Wajib Umum', url: rpsUrl(13) },
+        { kode: 'PD3201', nama: 'Etika Kerja', jenis: 'Penciri Dewantara', url: rpsUrl(17) },
+        { kode: 'PD3202', nama: 'Standardisasi', jenis: 'Penciri Dewantara', url: rpsUrl(20) },
+        { kode: 'PD3203', nama: 'Matematika Teknik', jenis: 'Penciri Dewantara', url: rpsUrl(23) },
+        { kode: 'PD3204', nama: 'Perangkat Lunak Aplikasi', jenis: 'Penciri Dewantara', url: rpsUrl(26) }
       ]
     },
     {
       semester: 2,
       matkul: [
-        { kode: 'WUD2206', nama: 'Pendidikan Kewarganegaraan', jenis: 'Wajib Umum', url: '#' },
-        { kode: 'PD3205', nama: 'Keselamatan dan Kesehatan Kerja (K3)', jenis: 'Penciri Dewantara', url: '#' },
-        { kode: 'PD3206', nama: 'Aplikasi Komputer', jenis: 'Penciri Dewantara', url: '#' },
-        { kode: 'PD3207', nama: 'Teknik Pengukuran', jenis: 'Penciri Dewantara', url: '#' },
-        { kode: 'PD3208', nama: 'Peralatan Teknik', jenis: 'Penciri Dewantara', url: '#' },
-        { kode: 'PD3209', nama: 'Menggambar Teknik', jenis: 'Penciri Dewantara', url: '#' },
-        { kode: 'PD3210', nama: 'Data dan Sistem Informasi', jenis: 'Penciri Dewantara', url: '#' }
+        { kode: 'WUD2206', nama: 'Pendidikan Kewarganegaraan', jenis: 'Wajib Umum', url: rpsUrl(4) },
+        { kode: 'PD3205', nama: 'Keselamatan dan Kesehatan Kerja (K3)', jenis: 'Penciri Dewantara', url: rpsUrl(29) },
+        { kode: 'PD3206', nama: 'Aplikasi Komputer', jenis: 'Penciri Dewantara', url: rpsUrl(32) },
+        { kode: 'PD3207', nama: 'Teknik Pengukuran', jenis: 'Penciri Dewantara', url: rpsUrl(35) },
+        { kode: 'PD3208', nama: 'Peralatan Teknik', jenis: 'Penciri Dewantara', url: rpsUrl(38) },
+        { kode: 'PD3209', nama: 'Menggambar Teknik', jenis: 'Penciri Dewantara', url: rpsUrl(41) },
+        { kode: 'PD3210', nama: 'Data dan Sistem Informasi', jenis: 'Penciri Dewantara', url: rpsUrl(44) }
       ]
     },
     {
@@ -1039,29 +1046,31 @@ router.get('/dokumen/rps', (req, res) => {
         {
           nama: 'Instrumentasi',
           matkul: [
-            { kode: 'WUD2207', nama: 'Pendidikan Pancasila', jenis: 'Wajib Umum', url: '#' },
-            { kode: 'PEK3201', nama: 'Dasar Sistem Tenaga Listrik', jenis: 'Inti Keahlian', url: '#' },
-            { kode: 'PEK3202', nama: 'Elektronika Digital', jenis: 'Inti Keahlian', url: '#' },
-            { kode: 'PEK3203', nama: 'Mikrokontroler', jenis: 'Inti Keahlian', url: '#' },
-            { kode: 'PEK3204', nama: 'Rangkaian Elektronika', jenis: 'Inti Keahlian', url: '#' },
-            { kode: 'PEK3205', nama: 'Perawatan dan Perbaikan', jenis: 'Inti Keahlian', url: '#' },
-            { kode: 'PEK3206', nama: 'Programmable Logic Control (PLC)', jenis: 'Inti Keahlian', url: '#' }
+            { kode: 'WUD2207', nama: 'Pendidikan Pancasila', jenis: 'Wajib Umum', url: rpsUrl(7) },
+            { kode: 'PEK3201', nama: 'Dasar Sistem Tenaga Listrik', jenis: 'Inti Keahlian', url: rpsUrl(48) },
+            { kode: 'PEK3202', nama: 'Elektronika Digital', jenis: 'Inti Keahlian', url: rpsUrl(51) },
+            { kode: 'PEK3203', nama: 'Mikrokontroler', jenis: 'Inti Keahlian', url: rpsUrl(54) },
+            { kode: 'PEK3204', nama: 'Rangkaian Elektronika', jenis: 'Inti Keahlian', url: rpsUrl(58) },
+            { kode: 'PEK3205', nama: 'Perawatan dan Perbaikan', jenis: 'Inti Keahlian', url: rpsUrl(61) },
+            { kode: 'PEK3206', nama: 'Programmable Logic Control (PLC)', jenis: 'Inti Keahlian', url: rpsUrl(64) }
           ]
         },
         {
           nama: 'Telekomunikasi',
           matkul: [
-            { kode: 'WUD2207', nama: 'Pendidikan Pancasila', jenis: 'Wajib Umum', url: '#' },
-            { kode: 'PEK3207', nama: 'Komunikasi Data dan Jaringan', jenis: 'Inti Keahlian', url: '#' },
-            { kode: 'PEK3208', nama: 'Elektronika Digital', jenis: 'Inti Keahlian', url: '#' },
-            { kode: 'PEK3209', nama: 'Antena dan Propagasi', jenis: 'Inti Keahlian', url: '#' },
-            { kode: 'PEK3210', nama: 'Keamanan Siber', jenis: 'Inti Keahlian', url: '#' },
-            { kode: 'PEK3205', nama: 'Perawatan dan Perbaikan', jenis: 'Inti Keahlian', url: '#' },
-            { kode: 'PEK3206', nama: 'Programmable Logic Control (PLC)', jenis: 'Inti Keahlian', url: '#' }
+            { kode: 'WUD2207', nama: 'Pendidikan Pancasila', jenis: 'Wajib Umum', url: rpsUrl(7) },
+            { kode: 'PEK3207', nama: 'Komunikasi Data dan Jaringan', jenis: 'Inti Keahlian', url: rpsUrl(68) },
+            { kode: 'PEK3208', nama: 'Elektronika Digital', jenis: 'Inti Keahlian', url: rpsUrl(71) },
+            { kode: 'PEK3209', nama: 'Antena dan Propagasi', jenis: 'Inti Keahlian', url: rpsUrl(74) },
+            { kode: 'PEK3210', nama: 'Keamanan Siber', jenis: 'Inti Keahlian', url: rpsUrl(77) },
+            { kode: 'PEK3205', nama: 'Perawatan dan Perbaikan', jenis: 'Inti Keahlian', url: rpsUrl(61) },
+            { kode: 'PEK3206', nama: 'Programmable Logic Control (PLC)', jenis: 'Inti Keahlian', url: rpsUrl(64) }
           ]
         }
       ]
     },
+    // Semester 4-6 (Praktik Dunia Kerja/magang) belum memiliki dokumen RPS
+    // tersendiri - tombol tetap nonaktif ('#') sampai berkasnya disiapkan.
     { semester: 4, matkul: [ { kode: 'WP2021', nama: 'Praktik Dunia Kerja I', jenis: 'Wajib Polidewa', url: '#' } ] },
     { semester: 5, matkul: [ { kode: 'WP2022', nama: 'Praktik Dunia Kerja II', jenis: 'Wajib Polidewa', url: '#' } ] },
     { semester: 6, matkul: [ { kode: 'WP2023', nama: 'Praktik Dunia Kerja III', jenis: 'Wajib Polidewa', url: '#' } ] }
@@ -1071,7 +1080,7 @@ router.get('/dokumen/rps', (req, res) => {
     title: 'RPS - Rencana Pembelajaran Semester',
     user: req.user || null,
     rpsSemester,
-    tahunKurikulum: '2023'
+    tahunKurikulum: '2026'
   });
 });
 

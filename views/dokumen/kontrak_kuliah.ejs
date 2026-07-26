@@ -1,0 +1,81 @@
+<%- include('../partials/header-landing') %>
+
+<style>
+  :root {
+    --kk-primary: #7c3aed;
+    --kk-primary-dark: #5b21b6;
+    --kk-primary-light: rgba(124,58,237,0.08);
+    --kk-gradient: linear-gradient(135deg, #7c3aed, #a78bfa);
+    --kk-shadow-sm: 0 5px 15px rgba(0,0,0,0.05);
+    --kk-radius: 1.5rem;
+  }
+
+  .kk-header {
+    background: var(--kk-gradient); border-radius: var(--kk-radius); padding: 3rem 2rem;
+    color: #fff; margin-bottom: 2.5rem; text-align: center; box-shadow: 0 15px 30px rgba(124,58,237,0.25);
+  }
+  .kk-header h1 { font-weight: 800; font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: .5rem; }
+  .kk-header p { opacity: .9; font-size: 1.05rem; margin: 0; max-width: 640px; margin-inline: auto; }
+
+  .kk-card {
+    background: #fff; border-radius: 1.2rem; box-shadow: var(--kk-shadow-sm);
+    border: 1px solid rgba(124,58,237,0.1); padding: 1.6rem 1.8rem; margin-bottom: 1.2rem;
+  }
+  .kk-card h3 { font-weight: 700; font-size: 1.1rem; color: #1e293b; display:flex; align-items:center; gap:.5rem; margin-bottom: .7rem; }
+  .kk-card h3 i { color: var(--kk-primary); }
+  .kk-card ul { margin: 0; padding-left: 1.2rem; color: #475569; font-size: .95rem; }
+  .kk-card ul li { margin-bottom: .4rem; }
+
+  .download-box {
+    background: #fff; border-radius: var(--kk-radius); box-shadow: var(--kk-shadow-sm);
+    border: 1px solid rgba(124,58,237,0.1); padding: 1.8rem; margin-top: 1.5rem;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;
+  }
+  .download-box .txt h3 { font-weight: 700; font-size: 1.15rem; margin-bottom: .2rem; color: #1e293b; }
+  .download-box .txt p { margin: 0; color: #64748b; font-size: .9rem; }
+  .btn-download {
+    background: var(--kk-gradient); color: #fff; border: none; padding: .7rem 1.5rem;
+    border-radius: 50px; font-weight: 600; text-decoration: none; white-space: nowrap;
+    box-shadow: 0 8px 16px rgba(124,58,237,0.25); transition: .2s; display:inline-flex; align-items:center;
+  }
+  .btn-download:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 12px 20px rgba(124,58,237,0.3); }
+
+  .note-box {
+    background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 1rem; padding: 1.1rem 1.3rem;
+    color: #5b21b6; font-size: .9rem; margin-bottom: 2rem; display: flex; gap: .7rem;
+  }
+</style>
+
+<div class="kk-header">
+  <h1><i class="bi bi-file-earmark-check-fill me-2"></i>Kontrak Kuliah</h1>
+  <p>Kesepakatan pembelajaran antara dosen pengampu dan mahasiswa untuk setiap mata kuliah, disusun mengacu pada RPS Program Studi Teknik Elektronika.</p>
+</div>
+
+<div class="note-box">
+  <i class="bi bi-info-circle-fill"></i>
+  <div>Template ini digunakan oleh dosen pengampu untuk menyusun kontrak kuliah di awal semester, memuat capaian pembelajaran, bobot penilaian, tata tertib, dan kriteria kelulusan yang disepakati bersama mahasiswa.</div>
+</div>
+
+<div class="kk-card">
+  <h3><i class="bi bi-list-check"></i>Isi Kontrak Kuliah</h3>
+  <ul>
+    <li>Deskripsi dan Capaian Pembelajaran Mata Kuliah (CPMK)</li>
+    <li>Ringkasan materi 16 kali pertemuan</li>
+    <li>Komponen dan bobot penilaian (sikap, tugas, praktik, UTS, UAS)</li>
+    <li>Kriteria kelulusan dan konversi nilai huruf mutu</li>
+    <li>Tata tertib perkuliahan dan jadwal konsultasi dosen</li>
+    <li>Lembar pengesahan dosen dan perwakilan mahasiswa</li>
+  </ul>
+</div>
+
+<div class="download-box">
+  <div class="txt">
+    <h3><i class="bi bi-file-earmark-word-fill text-primary me-1"></i>Template Kontrak Kuliah (.docx)</h3>
+    <p>Unduh, isi identitas mata kuliah pada bagian awal, lalu gunakan untuk kesepakatan kelas Anda.</p>
+  </div>
+  <a href="<%= fileUrl || '#' %>" class="btn-download" target="_blank" rel="noopener">
+    <i class="bi bi-download me-1"></i>Unduh Template
+  </a>
+</div>
+
+<%- include('../partials/footer-landing') %>

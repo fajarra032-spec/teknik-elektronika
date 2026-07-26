@@ -133,4 +133,34 @@ router.get('/kerjasama-perusahaan', async (req, res) => {
   }
 });
 
+/**
+ * GET /dokumen/kontrak-kuliah
+ * Halaman info + unduh template Kontrak Kuliah (dipakai dosen pengampu untuk
+ * menyusun kontrak kuliah tiap mata kuliah semester berjalan). Berkas .docx
+ * ada di public/dokumen/kontrak-kuliah/Kontrak_Kuliah_Template.docx
+ */
+router.get('/kontrak-kuliah', (req, res) => {
+  res.render('dokumen/kontrak_kuliah', {
+    title: 'Kontrak Kuliah',
+    description: 'Template Kontrak Kuliah Program Studi Teknik Elektronika Politeknik Dewantara.',
+    fileUrl: '/dokumen/kontrak-kuliah/Kontrak_Kuliah_Template.docx',
+    user: req.user || null
+  });
+});
+
+/**
+ * GET /dokumen/sop-pelaporan-nilai
+ * Halaman info + unduh SOP Pelaporan Nilai Mahasiswa (dokumen mutu tingkat
+ * program studi). Berkas .docx ada di
+ * public/dokumen/sop/SOP_Pelaporan_Nilai_Mahasiswa.docx
+ */
+router.get('/sop-pelaporan-nilai', (req, res) => {
+  res.render('dokumen/sop_pelaporan_nilai', {
+    title: 'SOP Pelaporan Nilai Mahasiswa',
+    description: 'Standar Operasional Prosedur (SOP) Pelaporan Nilai Mahasiswa Program Studi Teknik Elektronika Politeknik Dewantara.',
+    fileUrl: '/dokumen/sop/SOP_Pelaporan_Nilai_Mahasiswa.docx',
+    user: req.user || null
+  });
+});
+
 module.exports = router;

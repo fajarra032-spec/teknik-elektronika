@@ -1,0 +1,95 @@
+<%- include('../partials/header-landing') %>
+
+<style>
+  :root {
+    --sp-primary: #b45309;
+    --sp-primary-dark: #92400e;
+    --sp-primary-light: rgba(180,83,9,0.08);
+    --sp-gradient: linear-gradient(135deg, #b45309, #f59e0b);
+    --sp-shadow-sm: 0 5px 15px rgba(0,0,0,0.05);
+    --sp-radius: 1.5rem;
+  }
+
+  .sp-header {
+    background: var(--sp-gradient); border-radius: var(--sp-radius); padding: 3rem 2rem;
+    color: #fff; margin-bottom: 2.5rem; text-align: center; box-shadow: 0 15px 30px rgba(180,83,9,0.25);
+  }
+  .sp-header h1 { font-weight: 800; font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: .5rem; }
+  .sp-header p { opacity: .9; font-size: 1.05rem; margin: 0; max-width: 640px; margin-inline: auto; }
+
+  .note-box {
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 1rem; padding: 1.1rem 1.3rem;
+    color: #92400e; font-size: .9rem; margin-bottom: 2rem; display: flex; gap: .7rem;
+  }
+
+  .sp-steps { list-style: none; padding: 0; margin: 0 0 2rem; counter-reset: step; }
+  .sp-steps li {
+    background: #fff; border-radius: 1rem; box-shadow: var(--sp-shadow-sm); border: 1px solid rgba(180,83,9,0.1);
+    padding: 1rem 1.2rem 1rem 3.2rem; margin-bottom: .8rem; position: relative; font-size: .93rem; color: #334155;
+  }
+  .sp-steps li::before {
+    counter-increment: step; content: counter(step);
+    position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+    width: 1.8rem; height: 1.8rem; border-radius: 50%; background: var(--sp-gradient); color: #fff;
+    font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: .85rem;
+  }
+  .sp-steps li b { color: #1e293b; }
+
+  .download-box {
+    background: #fff; border-radius: var(--sp-radius); box-shadow: var(--sp-shadow-sm);
+    border: 1px solid rgba(180,83,9,0.1); padding: 1.8rem; margin-top: 1.5rem;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;
+  }
+  .download-box .txt h3 { font-weight: 700; font-size: 1.15rem; margin-bottom: .2rem; color: #1e293b; }
+  .download-box .txt p { margin: 0; color: #64748b; font-size: .9rem; }
+  .btn-download {
+    background: var(--sp-gradient); color: #fff; border: none; padding: .7rem 1.5rem;
+    border-radius: 50px; font-weight: 600; text-decoration: none; white-space: nowrap;
+    box-shadow: 0 8px 16px rgba(180,83,9,0.25); transition: .2s; display:inline-flex; align-items:center;
+  }
+  .btn-download:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 12px 20px rgba(180,83,9,0.3); }
+
+  .batas-waktu { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:1rem; margin-bottom:2rem; }
+  .batas-waktu .box { background:#fff; border-radius:1rem; padding:1.2rem; text-align:center; box-shadow: var(--sp-shadow-sm); border:1px solid rgba(180,83,9,0.1); }
+  .batas-waktu .box .num { font-size:1.3rem; font-weight:800; color: var(--sp-primary); }
+  .batas-waktu .box .lbl { font-size:.8rem; color:#64748b; margin-top:.2rem; }
+</style>
+
+<div class="sp-header">
+  <h1><i class="bi bi-clipboard-check-fill me-2"></i>SOP Pelaporan Nilai Mahasiswa</h1>
+  <p>Standar Operasional Prosedur penilaian, verifikasi, dan pelaporan nilai akhir mahasiswa Program Studi Teknik Elektronika.</p>
+</div>
+
+<div class="note-box">
+  <i class="bi bi-info-circle-fill"></i>
+  <div>SOP ini berlaku untuk seluruh mata kuliah teori, praktik/praktikum, dan Praktik Dunia Kerja (magang), mulai dari penyusunan rekap nilai oleh dosen hingga publikasi nilai akhir kepada mahasiswa.</div>
+</div>
+
+<div class="batas-waktu">
+  <div class="box"><div class="num">7 hari</div><div class="lbl">Input nilai ke SIAKAD setelah UAS</div></div>
+  <div class="box"><div class="num">3 hari</div><div class="lbl">Verifikasi Ketua Program Studi</div></div>
+  <div class="box"><div class="num">1 hari</div><div class="lbl">Publikasi nilai ke mahasiswa</div></div>
+  <div class="box"><div class="num">7 hari</div><div class="lbl">Batas pengajuan komplain nilai</div></div>
+</div>
+
+<h3 class="mb-3" style="font-weight:700;color:#1e293b;"><i class="bi bi-diagram-3-fill me-2" style="color:var(--sp-primary);"></i>Alur Prosedur</h3>
+<ul class="sp-steps">
+  <li><b>Dosen</b> melaksanakan dan mendokumentasikan penilaian (tugas, praktik, UTS, UAS) sesuai Kontrak Kuliah/RPS.</li>
+  <li><b>Dosen</b> menyusun Rekapitulasi Nilai dan Laporan Pembelajaran akhir semester.</li>
+  <li><b>Dosen</b> menginput nilai akhir ke SIAKAD paling lambat 7 hari kerja setelah UAS.</li>
+  <li><b>Ketua Program Studi</b> memverifikasi dan memvalidasi kewajaran nilai.</li>
+  <li>Nilai <b>disahkan dan dipublikasikan</b> ke mahasiswa melalui SIAKAD/KHS.</li>
+  <li><b>Penanganan komplain</b> nilai (bila ada) dan pengarsipan seluruh dokumen penilaian.</li>
+</ul>
+
+<div class="download-box">
+  <div class="txt">
+    <h3><i class="bi bi-file-earmark-word-fill text-primary me-1"></i>Dokumen SOP Lengkap (.docx)</h3>
+    <p>Memuat tujuan, ruang lingkup, definisi, pihak terkait, dan tabel prosedur lengkap 10 langkah.</p>
+  </div>
+  <a href="<%= fileUrl || '#' %>" class="btn-download" target="_blank" rel="noopener">
+    <i class="bi bi-download me-1"></i>Unduh SOP
+  </a>
+</div>
+
+<%- include('../partials/footer-landing') %>

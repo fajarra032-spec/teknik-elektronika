@@ -56,6 +56,11 @@
     white-space: nowrap; display: inline-flex; align-items: center; gap: .3rem; transition: .2s;
   }
   .btn-rps:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 8px 16px rgba(14,116,144,0.25); }
+  .btn-rps-disabled {
+    background: #e2e8f0; color: #94a3b8; border: none; padding: .45rem 1rem;
+    border-radius: 50px; font-weight: 600; font-size: .82rem;
+    white-space: nowrap; display: inline-flex; align-items: center; gap: .3rem; cursor: not-allowed;
+  }
 
   .semester-panel { display: none; }
   .semester-panel.active { display: block; animation: fadeIn .3s ease; }
@@ -71,7 +76,7 @@
 
 <div class="note-box">
   <i class="bi bi-info-circle-fill"></i>
-  <div>RPS disusun dan diunggah oleh dosen pengampu masing-masing mata kuliah mengacu pada struktur kurikulum yang berlaku. Jika tombol "Lihat RPS" belum aktif, berarti berkas untuk mata kuliah tersebut belum tersedia/diunggah.</div>
+  <div>RPS mata kuliah semester I-III sudah dapat dilihat langsung (berkas PDF resmi, mengacu Kurikulum 2026). Untuk mata kuliah Praktik Dunia Kerja (magang) semester IV-VI, tombol "Lihat RPS" akan diaktifkan setelah dokumen disiapkan oleh dosen pembimbing.</div>
 </div>
 
 <div class="semester-nav" id="rpsSemesterNav">
@@ -110,9 +115,13 @@
                     <td><%= mk.nama %></td>
                     <td><span class="badge-jenis"><%= mk.jenis %></span></td>
                     <td>
-                      <a class="btn-rps" href="<%= mk.url || '#' %>" target="_blank" rel="noopener">
-                        <i class="bi bi-eye-fill"></i>Lihat RPS
-                      </a>
+                      <% if (mk.url && mk.url !== '#') { %>
+                        <a class="btn-rps" href="<%= mk.url %>" target="_blank" rel="noopener">
+                          <i class="bi bi-eye-fill"></i>Lihat RPS
+                        </a>
+                      <% } else { %>
+                        <span class="btn-rps-disabled"><i class="bi bi-hourglass-split"></i>Segera Hadir</span>
+                      <% } %>
                     </td>
                   </tr>
                 <% }) %>
@@ -137,9 +146,13 @@
                 <td><%= mk.nama %></td>
                 <td><span class="badge-jenis"><%= mk.jenis %></span></td>
                 <td>
-                  <a class="btn-rps" href="<%= mk.url || '#' %>" target="_blank" rel="noopener">
-                    <i class="bi bi-eye-fill"></i>Lihat RPS
-                  </a>
+                  <% if (mk.url && mk.url !== '#') { %>
+                    <a class="btn-rps" href="<%= mk.url %>" target="_blank" rel="noopener">
+                      <i class="bi bi-eye-fill"></i>Lihat RPS
+                    </a>
+                  <% } else { %>
+                    <span class="btn-rps-disabled"><i class="bi bi-hourglass-split"></i>Segera Hadir</span>
+                  <% } %>
                 </td>
               </tr>
             <% }) %>
