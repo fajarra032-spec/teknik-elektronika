@@ -1,0 +1,133 @@
+<%- include('../partials/header') %>
+
+<%
+  if (typeof mk === 'undefined') mk = { kode: '', nama: '', sks: '' };
+  if (typeof bobot === 'undefined') bobot = {};
+  if (typeof data === 'undefined') data = [];
+%>
+
+<style>
+  .detail-header {
+    background: linear-gradient(135deg, #2193b0, #6dd5ed); border-radius: 1.2rem; padding: 1.5rem 2rem;
+    color: white; margin-bottom: 1.5rem;
+  }
+  .detail-header h2 { font-weight: 700; margin: 0; font-size: 1.6rem; }
+  .table-responsive { border-radius: 1rem; overflow-x: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+  .rubrik-table { width: 100%; border-collapse: collapse; min-width: 1200px; }
+  .rubrik-table thead th {
+    background: linear-gradient(135deg, #2193b0, #6dd5ed); color: white; font-weight: 600; text-transform: uppercase;
+    font-size: 0.72rem; letter-spacing: 0.3px; padding: 0.7rem 0.5rem; text-align: center; position: sticky; top: 0;
+  }
+  .rubrik-table tbody td { vertical-align: middle; padding: 0.6rem 0.4rem; border-bottom: 1px solid #e9ecef; font-size: 0.85rem; text-align: center; }
+  .rubrik-table tbody tr:nth-child(even) { background: #f8fafc; }
+  .name-cell { text-align: left !important; white-space: nowrap; }
+  .huruf-badge { font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.8rem; background: #eef2ff; }
+  .lulus { color: #15803d; font-weight: 600; } .tidak-lulus { color: #b91c1c; font-weight: 600; }
+  .btn-kunci { border-radius: 50px; padding: 0.25rem 0.7rem; font-size: 0.75rem; }
+  .bobot-note { font-size: 0.85rem; color: #475569; background: #f1f5f9; border-radius: 0.8rem; padding: 0.8rem 1.2rem; margin-bottom: 1.2rem; }
+</style>
+
+<div class="container-fluid mt-4">
+  <div class="detail-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <h2><i class="bi bi-clipboard-data me-2"></i><%= mk.kode %> - <%= mk.nama %></h2>
+    <div class="d-flex gap-2">
+      <a href="/admin/rubrik/<%= mk.id %>/cetak?periode=<%= encodeURIComponent(periode) %>" target="_blank" class="btn btn-light btn-sm">
+        <i class="bi bi-printer"></i> Cetak
+      </a>
+      <a href="/admin/rubrik" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Kembali</a>
+    </div>
+  </div>
+
+  <div class="bobot-note">
+    <strong>Dosen Pengampu:</strong> <%= mk.namaDosen || '-' %> &nbsp;|&nbsp;
+    <strong>Periode:</strong> <%= periode %> &nbsp;|&nbsp;
+    <strong>Bobot:</strong> Kehadiran <%= bobot.kehadiran %>% (%Hadir <%= bobot.persenHadir %>%, Sikap <%= bobot.sikap %>%, Keaktifan <%= bobot.keaktifan %>%),
+    Tugas <%= bobot.tugas %>%, Kuis <%= bobot.kuis %>%, UTS <%= bobot.uts %>%, UAS <%= bobot.uas %>%
+  </div>
+
+  <div class="table-responsive">
+    <table class="rubrik-table">
+      <thead>
+        <tr>
+          <th rowspan="2">No</th>
+          <th rowspan="2">NIM</th>
+          <th rowspan="2">Nama Mahasiswa</th>
+          <th colspan="3">Kehadiran, Sikap &amp; Keaktifan</th>
+          <th rowspan="2">Tugas</th>
+          <th rowspan="2">Kuis</th>
+          <th rowspan="2">UTS</th>
+          <th rowspan="2">UAS</th>
+          <th rowspan="2">Nilai<br>Akhir</th>
+          <th rowspan="2">Huruf</th>
+          <th rowspan="2">Ket.</th>
+          <th rowspan="2">Aksi</th>
+        </tr>
+        <tr>
+          <th>% Hadir</th><th>Sikap</th><th>Keaktifan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (data.length === 0) { %>
+          <tr><td colspan="14" class="text-center py-5 text-muted">Belum ada mahasiswa aktif di MK ini.</td></tr>
+        <% } %>
+        <% data.forEach((item, idx) => { const h = item.hasil; const mid = item.mahasiswa.id; %>
+          <tr>
+            <td><%= idx + 1 %></td>
+            <td><%= item.mahasiswa.nim %></td>
+            <td class="name-cell"><%= item.mahasiswa.nama %></td>
+            <td><%= h.persenHadir !== null ? h.persenHadir.toFixed(1) : '-' %></td>
+            <td><%= h.sikap ?? '-' %></td>
+            <td><%= h.keaktifan ?? '-' %></td>
+            <td><%= h.rataTugas !== null ? h.rataTugas.toFixed(2) : '-' %></td>
+            <td><%= h.kuis ?? '-' %></td>
+            <td><%= h.uts ?? '-' %></td>
+            <td><%= h.uas ?? '-' %></td>
+            <td><strong><%= h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-' %></strong></td>
+            <td><span class="huruf-badge"><%= h.huruf || '-' %></span></td>
+            <td class="<%= h.keterangan === 'LULUS' ? 'lulus' : (h.keterangan === 'TIDAK LULUS' ? 'tidak-lulus' : '') %>">
+              <%= h.keterangan || '-' %>
+            </td>
+            <td>
+              <% if (h.nilaiAkhir !== null) { %>
+                <button class="btn btn-sm btn-success btn-kunci" onclick="kunciNilai('<%= mid %>', this)">
+                  <i class="bi bi-lock"></i> Kunci ke Transkrip
+                </button>
+              <% } else { %>
+                <span class="text-muted small">Belum lengkap</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+async function kunciNilai(mahasiswaId, btn) {
+  if (!confirm('Kunci nilai akhir mahasiswa ini ke transkrip resmi (koleksi grades)? Nilai yang sudah dikunci akan menimpa nilai sebelumnya untuk MK & periode ini.')) return;
+  btn.disabled = true;
+  try {
+    const body = new URLSearchParams({ periode: '<%= periode %>' });
+    const res = await fetch('/admin/rubrik/<%= mk.id %>/kunci/' + mahasiswaId, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body
+    });
+    const json = await res.json();
+    if (json.success) {
+      btn.innerHTML = '<i class="bi bi-check-circle"></i> Terkunci (' + json.huruf + ')';
+      btn.classList.remove('btn-success');
+      btn.classList.add('btn-secondary');
+    } else {
+      alert('Gagal: ' + json.message);
+      btn.disabled = false;
+    }
+  } catch (err) {
+    alert('Gagal mengunci nilai: ' + err.message);
+    btn.disabled = false;
+  }
+}
+</script>
+
+<%- include('../partials/footer') %>

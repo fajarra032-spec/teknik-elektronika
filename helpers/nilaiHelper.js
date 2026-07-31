@@ -320,6 +320,226 @@ async function getTranskripMahasiswa(mahasiswaId) {
   return { items, totalSKS: totalSKSDihitung, ipk };
 }
 
+// ============================================================================
+// RUBRIK PENILAIAN (Kehadiran, Sikap, Keaktifan, Kuis, UTS, UAS, Tugas)
+// ============================================================================
+// Bagian ini menambahkan komponen penilaian yang belum ditangani oleh
+// hitungNilaiAkhir() (yang hanya tahu tugas/UTS/UAS), yaitu: Kehadiran (dari
+// jumlah pertemuan hadir), Sikap, Keaktifan, dan Kuis - dengan bobot yang bisa
+// diatur per mata kuliah oleh dosen. Disimpan di koleksi yang sama ('nilai')
+// supaya konsisten dengan alur yang sudah ada, memakai tipe baru:
+//   'KEHADIRAN_JUMLAH' -> jumlah pertemuan hadir (angka, mis. 14)
+//   'KEHADIRAN_TOTAL'  -> total pertemuan (angka, default 16)
+//   'SIKAP'            -> nilai sikap (0-100)
+//   'KEAKTIFAN'        -> nilai keaktifan (0-100)
+//   'KUIS'             -> nilai kuis (0-100)
+// (UTS/UAS memakai tipe 'UTS'/'UAS' yang sudah dipakai di alur lama.)
+
+const TIPE_RUBRIK_KOMPONEN = ['KEHADIRAN_JUMLAH', 'KEHADIRAN_TOTAL', 'SIKAP', 'KEAKTIFAN', 'KUIS', 'UTS', 'UAS'];
+
+/**
+ * Bobot default rubrik (dipakai kalau dosen belum pernah mengatur bobot
+ * untuk MK/periode ini). Total kelima bobot komponen akhir = 100, dan total
+ * ketiga sub-bobot kehadiran = 100 - sama seperti default di template Excel.
+ */
+const BOBOT_DEFAULT = {
+  kehadiran: 10,
+  tugas: 20,
+  kuis: 10,
+  uts: 30,
+  uas: 30,
+  persenHadir: 50,
+  sikap: 25,
+  keaktifan: 25
+};
+
+/**
+ * Simpan/ubah satu nilai komponen rubrik (kehadiran, sikap, keaktifan, kuis)
+ * untuk satu mahasiswa pada satu MK. Upsert seperti saveNilai(), memakai
+ * field `tipe` generik alih-alih format 'tugas_<id>'.
+ */
+async function saveKomponenRubrik(mahasiswaId, mkId, tipe, nilai, periode = getPeriodeAktif()) {
+  if (!TIPE_RUBRIK_KOMPONEN.includes(tipe)) {
+    throw new Error(`Tipe komponen rubrik tidak dikenal: ${tipe}`);
+  }
+  const nilaiAngka = parseFloat(nilai);
+  const now = new Date().toISOString();
+
+  const existingSnapshot = await db.collection('nilai')
+    .where('mahasiswaId', '==', mahasiswaId)
+    .where('mkId', '==', mkId)
+    .where('tipe', '==', tipe)
+    .where('periode', '==', periode)
+    .limit(1)
+    .get();
+
+  if (existingSnapshot.empty) {
+    const docRef = await db.collection('nilai').add({
+      mahasiswaId, mkId, tipe, nilai: nilaiAngka, periode, createdAt: now, updatedAt: now
+    });
+    return { id: docRef.id, isNew: true };
+  } else {
+    const docRef = existingSnapshot.docs[0].ref;
+    await docRef.update({ nilai: nilaiAngka, updatedAt: now });
+    return { id: existingSnapshot.docs[0].id, isNew: false };
+  }
+}
+
+/**
+ * Ambil seluruh komponen rubrik (kehadiran/sikap/keaktifan/kuis/uts/uas)
+ * untuk semua mahasiswa pada satu MK+periode.
+ * @returns {Promise<Object>} map mahasiswaId -> { tipe: nilai }
+ */
+async function getKomponenRubrikByMkId(mkId, periode = getPeriodeAktif()) {
+  const snapshot = await db.collection('nilai')
+    .where('mkId', '==', mkId)
+    .where('periode', '==', periode)
+    .get();
+
+  const result = {};
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    if (!TIPE_RUBRIK_KOMPONEN.includes(data.tipe)) return; // lewati tipe 'tugas_...'
+    if (!result[data.mahasiswaId]) result[data.mahasiswaId] = {};
+    result[data.mahasiswaId][data.tipe] = data.nilai;
+  });
+  return result;
+}
+
+/**
+ * Ambil bobot rubrik untuk satu MK+periode (koleksi 'rubrikBobot', 1 dokumen
+ * per mkId+periode). Kembalikan default kalau dosen belum pernah mengatur.
+ */
+async function getBobotRubrik(mkId, periode = getPeriodeAktif()) {
+  const snapshot = await db.collection('rubrikBobot')
+    .where('mkId', '==', mkId)
+    .where('periode', '==', periode)
+    .limit(1)
+    .get();
+  if (snapshot.empty) return { ...BOBOT_DEFAULT };
+  const data = snapshot.docs[0].data();
+  return { ...BOBOT_DEFAULT, ...data.bobot };
+}
+
+/**
+ * Simpan (upsert) bobot rubrik untuk satu MK+periode.
+ * @param {Object} bobot - lihat BOBOT_DEFAULT untuk daftar key yang valid
+ */
+async function saveBobotRubrik(mkId, bobot, periode = getPeriodeAktif()) {
+  const now = new Date().toISOString();
+  const snapshot = await db.collection('rubrikBobot')
+    .where('mkId', '==', mkId)
+    .where('periode', '==', periode)
+    .limit(1)
+    .get();
+
+  const payload = { mkId, periode, bobot: { ...BOBOT_DEFAULT, ...bobot }, updatedAt: now };
+
+  if (snapshot.empty) {
+    const docRef = await db.collection('rubrikBobot').add({ ...payload, createdAt: now });
+    return { id: docRef.id, isNew: true };
+  } else {
+    await snapshot.docs[0].ref.update(payload);
+    return { id: snapshot.docs[0].id, isNew: false };
+  }
+}
+
+/**
+ * Hitung rekap rubrik lengkap untuk satu mahasiswa: nilai kehadiran akhir
+ * (gabungan % hadir + sikap + keaktifan), rata-rata tugas, kuis, UTS, UAS,
+ * nilai akhir, nilai huruf, dan keterangan lulus/tidak - sesuai bobot yang
+ * diberikan. Fungsi murni (tidak akses DB) supaya mudah dipakai ulang di
+ * halaman dosen, admin, maupun cetak.
+ *
+ * @param {Object} komponen - { KEHADIRAN_JUMLAH, KEHADIRAN_TOTAL, SIKAP, KEAKTIFAN, KUIS, UTS, UAS }
+ * @param {number|null} rataTugas - rata-rata nilai tugas mahasiswa ini (dari koleksi 'tugas'/'nilai')
+ * @param {Object} bobot - lihat BOBOT_DEFAULT
+ * @returns {Object} { persenHadir, kehadiranAkhir, rataTugas, kuis, uts, uas, nilaiAkhir, huruf, keterangan }
+ */
+function hitungRubrik(komponen, rataTugas, bobot = BOBOT_DEFAULT) {
+  const jumlahHadir = komponen.KEHADIRAN_JUMLAH;
+  const totalPertemuan = komponen.KEHADIRAN_TOTAL || 16;
+  const persenHadir = (jumlahHadir === undefined || jumlahHadir === null)
+    ? null
+    : Math.min(100, (parseFloat(jumlahHadir) / totalPertemuan) * 100);
+
+  const sikap = komponen.SIKAP ?? null;
+  const keaktifan = komponen.KEAKTIFAN ?? null;
+  const kuis = komponen.KUIS ?? null;
+  const uts = komponen.UTS ?? null;
+  const uas = komponen.UAS ?? null;
+
+  let kehadiranAkhir = null;
+  if (persenHadir !== null && sikap !== null && keaktifan !== null) {
+    const totalSub = (bobot.persenHadir || 0) + (bobot.sikap || 0) + (bobot.keaktifan || 0);
+    kehadiranAkhir = totalSub > 0
+      ? (persenHadir * bobot.persenHadir + sikap * bobot.sikap + keaktifan * bobot.keaktifan) / totalSub
+      : null;
+  }
+
+  let nilaiAkhir = null;
+  if (kehadiranAkhir !== null && rataTugas !== null && rataTugas !== undefined
+      && kuis !== null && uts !== null && uas !== null) {
+    nilaiAkhir = (
+      kehadiranAkhir * bobot.kehadiran +
+      rataTugas * bobot.tugas +
+      kuis * bobot.kuis +
+      uts * bobot.uts +
+      uas * bobot.uas
+    ) / 100;
+    nilaiAkhir = Math.round(nilaiAkhir * 100) / 100;
+  }
+
+  return {
+    persenHadir: persenHadir !== null ? Math.round(persenHadir * 100) / 100 : null,
+    jumlahHadir: jumlahHadir ?? null,
+    totalPertemuan,
+    sikap, keaktifan, kuis, uts, uas,
+    kehadiranAkhir: kehadiranAkhir !== null ? Math.round(kehadiranAkhir * 100) / 100 : null,
+    rataTugas: (rataTugas !== null && rataTugas !== undefined) ? Math.round(rataTugas * 100) / 100 : null,
+    nilaiAkhir,
+    huruf: nilaiKeHurufRubrik(nilaiAkhir),
+    keterangan: nilaiAkhir === null ? null : (nilaiAkhir >= 45 ? 'LULUS' : 'TIDAK LULUS')
+  };
+}
+
+/**
+ * Konversi nilai 0-100 ke huruf, TANPA A- dan B- (sesuai kebijakan prodi):
+ * A (>=85), B+ (75-84), B (65-74), C+ (55-64), C (45-54), D (35-44), E (<35).
+ */
+function nilaiKeHurufRubrik(nilai) {
+  if (nilai === null || nilai === undefined) return null;
+  if (nilai >= 85) return 'A';
+  if (nilai >= 75) return 'B+';
+  if (nilai >= 65) return 'B';
+  if (nilai >= 55) return 'C+';
+  if (nilai >= 45) return 'C';
+  if (nilai >= 35) return 'D';
+  return 'E';
+}
+
+/**
+ * Ambil rata-rata nilai tugas per mahasiswa untuk satu MK (mengandalkan
+ * getTugasByMkId + getNilaiByMkId yang sudah ada, supaya tetap satu sumber
+ * data tugas dengan modul e-learning yang sudah berjalan).
+ * @returns {Promise<Object>} map mahasiswaId -> rata-rata tugas (number|null)
+ */
+async function getRataTugasByMkId(mkId, periode = getPeriodeAktif()) {
+  const tugasList = await getTugasByMkId(mkId, periode);
+  const nilaiMap = await getNilaiByMkId(mkId, periode); // mahasiswaId -> { tugasId: {nilai,...} }
+
+  const result = {};
+  Object.keys(nilaiMap).forEach(mahasiswaId => {
+    const nilaiPerTugas = tugasList
+      .map(t => nilaiMap[mahasiswaId][t.id]?.nilai)
+      .filter(v => v !== undefined && v !== null);
+    result[mahasiswaId] = nilaiPerTugas.length > 0
+      ? nilaiPerTugas.reduce((a, b) => a + b, 0) / nilaiPerTugas.length
+      : null;
+  });
+  return result;
+}
+
 module.exports = {
   getPeriodeAktif,
   saveNilai,
@@ -328,5 +548,14 @@ module.exports = {
   getNilaiByTugasId,
   hitungNilaiAkhir,
   saveGradeFinal,
-  getTranskripMahasiswa
+  getTranskripMahasiswa,
+  // --- Rubrik Penilaian ---
+  BOBOT_DEFAULT,
+  saveKomponenRubrik,
+  getKomponenRubrikByMkId,
+  getBobotRubrik,
+  saveBobotRubrik,
+  hitungRubrik,
+  nilaiKeHurufRubrik,
+  getRataTugasByMkId
 };

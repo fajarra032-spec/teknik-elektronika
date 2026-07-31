@@ -1,0 +1,204 @@
+<%- include('../partials/header') %>
+
+<%
+  if (typeof mk === 'undefined') mk = { kode: '', nama: '', sks: '', semester: '' };
+  if (typeof bobot === 'undefined') bobot = {};
+  if (typeof data === 'undefined') data = [];
+%>
+
+<style>
+  :root {
+    --primary-start: #1e3a8a;
+    --primary-end: #3b82f6;
+    --primary-light: rgba(30,58,138,0.1);
+    --primary-dark: #0f2b5c;
+  }
+  body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; }
+  .page-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-radius: 1.5rem; padding: 1.5rem 2rem; color: white; margin-bottom: 1.5rem;
+    box-shadow: 0 15px 30px rgba(30,58,138,0.25); position: relative; overflow: hidden;
+  }
+  .page-header::before {
+    content: ''; position: absolute; top: -50%; right: -10%; width: 300px; height: 300px;
+    background: rgba(255,255,255,0.1); border-radius: 50%; transform: rotate(25deg);
+  }
+  .page-header h2 { font-weight: 700; margin: 0; position: relative; z-index: 1; font-size: 1.8rem; }
+  .page-header .btn-back, .page-header .btn-cetak {
+    background: white; border: none; border-radius: 50px; padding: 0.5rem 1.4rem; font-weight: 600;
+    color: var(--primary-start); box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: all 0.3s;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+  .page-header .btn-back:hover, .page-header .btn-cetak:hover { transform: translateY(-3px); color: var(--primary-dark); }
+
+  .bobot-card {
+    background: white; border-radius: 1.2rem; padding: 1.3rem 1.5rem; margin-bottom: 1.5rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid rgba(30,58,138,0.1);
+  }
+  .bobot-card label { font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 0.2rem; }
+  .bobot-card input { text-align: center; }
+  .bobot-card .sub-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary-start); font-weight: 700; margin-bottom: 0.6rem; }
+
+  .table-responsive { border-radius: 1.2rem; overflow-x: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(30,58,138,0.1); background: white; }
+  .rubrik-table { width: 100%; border-collapse: collapse; margin-bottom: 0; min-width: 1300px; }
+  .rubrik-table thead th {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); color: white; font-weight: 600;
+    text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.3px; border: none; padding: 0.7rem 0.5rem;
+    text-align: center; white-space: normal; position: sticky; top: 0; z-index: 5;
+  }
+  .rubrik-table tbody td { vertical-align: middle; padding: 0.4rem; border-bottom: 1px solid #e9ecef; font-size: 0.85rem; text-align: center; }
+  .rubrik-table tbody tr:nth-child(even) { background: #f8fafc; }
+  .rubrik-table input.komponen-input {
+    width: 62px; text-align: center; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.25rem;
+  }
+  .rubrik-table input.komponen-input:focus { border-color: var(--primary-start); outline: none; box-shadow: 0 0 0 0.15rem rgba(30,58,138,0.2); }
+  .readonly-cell { background: #e2efda !important; font-weight: 600; border-radius: 0.5rem; padding: 0.3rem 0.4rem; display: inline-block; min-width: 45px; }
+  .final-cell { background: #d9e1f2; font-weight: 700; border-radius: 0.5rem; padding: 0.3rem 0.5rem; display: inline-block; min-width: 45px; }
+  .huruf-badge { font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.8rem; }
+  .lulus { color: #15803d; } .tidak-lulus { color: #b91c1c; }
+  .name-cell { text-align: left !important; white-space: nowrap; }
+  .saving-note { font-size: 0.7rem; color: #64748b; }
+</style>
+
+<div class="container-fluid mt-4">
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <h2><i class="bi bi-clipboard-data me-2"></i>Rubrik Penilaian - <%= mk.kode %> <%= mk.nama %></h2>
+    <div class="d-flex gap-2">
+      <a href="/dosen/rubrik/<%= mk.id %>/cetak?periode=<%= encodeURIComponent(periode) %>" target="_blank" class="btn-cetak">
+        <i class="bi bi-printer"></i> Cetak
+      </a>
+      <a href="/dosen/rubrik" class="btn-back"><i class="bi bi-arrow-left"></i> Kembali</a>
+    </div>
+  </div>
+
+  <!-- Bobot Komponen -->
+  <div class="bobot-card">
+    <form method="POST" action="/dosen/rubrik/<%= mk.id %>/bobot" class="row g-3 align-items-end">
+      <input type="hidden" name="periode" value="<%= periode %>">
+      <div class="col-12"><div class="sub-title">Bobot Komponen Nilai Akhir (%, total idealnya 100)</div></div>
+      <div class="col-6 col-md-2"><label>Kehadiran</label><input type="number" step="0.01" class="form-control" name="kehadiran" value="<%= bobot.kehadiran %>"></div>
+      <div class="col-6 col-md-2"><label>Tugas</label><input type="number" step="0.01" class="form-control" name="tugas" value="<%= bobot.tugas %>"></div>
+      <div class="col-6 col-md-2"><label>Kuis</label><input type="number" step="0.01" class="form-control" name="kuis" value="<%= bobot.kuis %>"></div>
+      <div class="col-6 col-md-2"><label>UTS</label><input type="number" step="0.01" class="form-control" name="uts" value="<%= bobot.uts %>"></div>
+      <div class="col-6 col-md-2"><label>UAS</label><input type="number" step="0.01" class="form-control" name="uas" value="<%= bobot.uas %>"></div>
+
+      <div class="col-12 mt-3"><div class="sub-title">Sub-bobot Nilai Kehadiran (%, dari % hadir + sikap + keaktifan)</div></div>
+      <div class="col-6 col-md-2"><label>% Hadir</label><input type="number" step="0.01" class="form-control" name="persenHadir" value="<%= bobot.persenHadir %>"></div>
+      <div class="col-6 col-md-2"><label>Sikap</label><input type="number" step="0.01" class="form-control" name="sikap" value="<%= bobot.sikap %>"></div>
+      <div class="col-6 col-md-2"><label>Keaktifan</label><input type="number" step="0.01" class="form-control" name="keaktifan" value="<%= bobot.keaktifan %>"></div>
+
+      <div class="col-12 col-md-4">
+        <button type="submit" class="btn btn-primary w-100" style="border-radius:50px;"><i class="bi bi-save"></i> Simpan Bobot</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabel Rubrik -->
+  <div class="table-responsive">
+    <table class="rubrik-table">
+      <thead>
+        <tr>
+          <th rowspan="2">No</th>
+          <th rowspan="2">NIM</th>
+          <th rowspan="2">Nama Mahasiswa</th>
+          <th colspan="4">Kehadiran, Sikap &amp; Keaktifan</th>
+          <th rowspan="2">Tugas<br><small>(otomatis)</small></th>
+          <th rowspan="2">Kuis</th>
+          <th rowspan="2">UTS</th>
+          <th rowspan="2">UAS</th>
+          <th rowspan="2">Nilai<br>Akhir</th>
+          <th rowspan="2">Huruf</th>
+          <th rowspan="2">Keterangan</th>
+        </tr>
+        <tr>
+          <th>Total<br>Pertemuan</th>
+          <th>Jml<br>Hadir</th>
+          <th>Sikap</th>
+          <th>Keaktifan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (data.length === 0) { %>
+          <tr><td colspan="14" class="text-center py-5 text-muted">Belum ada mahasiswa aktif di MK ini.</td></tr>
+        <% } %>
+        <% data.forEach((item, idx) => { %>
+          <% const k = item.komponen; const h = item.hasil; const mid = item.mahasiswa.id; %>
+          <tr>
+            <td><%= idx + 1 %></td>
+            <td><%= item.mahasiswa.nim %></td>
+            <td class="name-cell"><%= item.mahasiswa.nama %></td>
+            <td>
+              <input type="number" class="komponen-input" value="<%= k.KEHADIRAN_TOTAL ?? 16 %>"
+                     onchange="simpanKomponen(this, '<%= mid %>', 'KEHADIRAN_TOTAL')">
+            </td>
+            <td>
+              <input type="number" class="komponen-input" value="<%= k.KEHADIRAN_JUMLAH ?? '' %>"
+                     onchange="simpanKomponen(this, '<%= mid %>', 'KEHADIRAN_JUMLAH')">
+            </td>
+            <td>
+              <input type="number" min="0" max="100" class="komponen-input" value="<%= k.SIKAP ?? '' %>"
+                     onchange="simpanKomponen(this, '<%= mid %>', 'SIKAP')">
+            </td>
+            <td>
+              <input type="number" min="0" max="100" class="komponen-input" value="<%= k.KEAKTIFAN ?? '' %>"
+                     onchange="simpanKomponen(this, '<%= mid %>', 'KEAKTIFAN')">
+            </td>
+            <td><span class="readonly-cell"><%= h.rataTugas !== null ? h.rataTugas.toFixed(2) : '-' %></span></td>
+            <td>
+              <input type="number" min="0" max="100" class="komponen-input" value="<%= k.KUIS ?? '' %>"
+                     onchange="simpanKomponen(this, '<%= mid %>', 'KUIS')">
+            </td>
+            <td>
+              <input type="number" min="0" max="100" class="komponen-input" value="<%= k.UTS ?? '' %>"
+                     onchange="simpanKomponen(this, '<%= mid %>', 'UTS')">
+            </td>
+            <td>
+              <input type="number" min="0" max="100" class="komponen-input" value="<%= k.UAS ?? '' %>"
+                     onchange="simpanKomponen(this, '<%= mid %>', 'UAS')">
+            </td>
+            <td><span class="final-cell"><%= h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-' %></span></td>
+            <td><span class="huruf-badge"><%= h.huruf || '-' %></span></td>
+            <td class="<%= h.keterangan === 'LULUS' ? 'lulus' : (h.keterangan === 'TIDAK LULUS' ? 'tidak-lulus' : '') %>">
+              <%= h.keterangan || '-' %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <p class="saving-note mt-2"><i class="bi bi-info-circle"></i> Kolom hijau (Kehadiran Akhir, Tugas) otomatis dihitung. Ubah nilai lalu klik di luar kotak untuk menyimpan &amp; menghitung ulang.</p>
+</div>
+
+<script>
+async function simpanKomponen(el, mahasiswaId, tipe) {
+  const nilai = el.value;
+  if (nilai === '') return;
+  el.disabled = true;
+  try {
+    const body = new URLSearchParams({
+      mkId: '<%= mk.id %>',
+      mahasiswaId,
+      tipe,
+      nilai,
+      periode: '<%= periode %>'
+    });
+    const res = await fetch('/dosen/rubrik/input', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body
+    });
+    const json = await res.json();
+    if (json.success) {
+      window.location.reload();
+    } else {
+      alert('Gagal menyimpan: ' + json.message);
+      el.disabled = false;
+    }
+  } catch (err) {
+    alert('Gagal menyimpan nilai: ' + err.message);
+    el.disabled = false;
+  }
+}
+</script>
+
+<%- include('../partials/footer') %>

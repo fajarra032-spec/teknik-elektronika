@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <style>
+    @page { size: A4 landscape; margin: 1.2cm; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; font-size: 9.5pt; }
+    .print-btn, .back-btn { margin: 20px 5px; font-family: Arial, sans-serif; }
+
+    .kop-surat { display: flex; align-items: center; margin-bottom: 16px; }
+    .logo-kop { width: 70px; height: auto; margin-right: 16px; }
+    .teks-kop { flex: 1; }
+    .teks-kop .nama-kampus { font-size: 18pt; font-weight: bold; margin: 0; color: #3b60a3; letter-spacing: 0.5px; }
+    .teks-kop .alamat, .teks-kop .kontak { font-size: 9pt; margin: 1px 0; color: #333; }
+    .garis-kop { border-bottom: 3px solid #3b60a3; margin-bottom: 14px; }
+
+    .judul-dokumen { text-align: center; font-size: 12pt; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
+    .sub-judul { text-align: center; font-size: 10pt; margin-bottom: 14px; }
+
+    .info-mk { width: 100%; margin-bottom: 14px; font-size: 9.5pt; }
+    .info-mk td { padding: 2px 4px; vertical-align: top; }
+    .info-mk .label { width: 110px; }
+
+    table.rubrik { width: 100%; border-collapse: collapse; font-size: 8.3pt; }
+    table.rubrik th, table.rubrik td { border: 1px solid #000; padding: 4px 3px; text-align: center; }
+    table.rubrik th { background: #dbe5f1; font-weight: bold; }
+    table.rubrik td.nama { text-align: left; white-space: nowrap; }
+
+    .huruf-lulus { color: #15803d; font-weight: bold; }
+    .huruf-tidak { color: #b91c1c; font-weight: bold; }
+
+    .keterangan-bobot { font-size: 8pt; margin-top: 10px; color: #333; }
+
+    .ttd-wrap { display: flex; justify-content: space-between; margin-top: 40px; }
+    .ttd-box { text-align: center; width: 260px; font-size: 9.5pt; }
+    .ttd-box .nama-ttd { font-weight: bold; text-decoration: underline; margin-top: 60px; }
+
+    @media print {
+      .btn, .print-btn, .back-btn { display: none !important; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3 print-btn">
+      <button onclick="window.history.back()" class="btn btn-outline-secondary btn-sm back-btn">
+        <i class="bi bi-arrow-left"></i> Kembali
+      </button>
+      <button onclick="window.print()" class="btn btn-primary btn-sm print-btn shadow-sm">
+        <i class="bi bi-printer"></i> Cetak / Simpan PDF
+      </button>
+    </div>
+
+    <div class="kop-surat">
+      <img src="https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png"
+           alt="Logo Politeknik Dewantara" class="logo-kop">
+      <div class="teks-kop">
+        <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
+        <p class="alamat">Program Studi Teknik Elektronika</p>
+      </div>
+    </div>
+    <div class="garis-kop"></div>
+
+    <div class="judul-dokumen">Rubrik Penilaian Mata Kuliah</div>
+    <div class="sub-judul">Semester <%= periode %></div>
+
+    <table class="info-mk">
+      <tr>
+        <td class="label">Mata Kuliah</td><td>: <%= mk.kode %> - <%= mk.nama %></td>
+        <td class="label">SKS</td><td>: <%= mk.sks %></td>
+      </tr>
+      <tr>
+        <td class="label">Dosen Pengampu</td><td>: <%= namaDosen || mk.namaDosen || '-' %></td>
+        <td class="label">Jumlah Mahasiswa</td><td>: <%= data.length %></td>
+      </tr>
+    </table>
+
+    <table class="rubrik">
+      <thead>
+        <tr>
+          <th rowspan="2">No</th>
+          <th rowspan="2">NIM</th>
+          <th rowspan="2">Nama Mahasiswa</th>
+          <th colspan="3">Kehadiran, Sikap &amp; Keaktifan</th>
+          <th rowspan="2">Tugas</th>
+          <th rowspan="2">Kuis</th>
+          <th rowspan="2">UTS</th>
+          <th rowspan="2">UAS</th>
+          <th rowspan="2">Nilai<br>Akhir</th>
+          <th rowspan="2">Huruf</th>
+          <th rowspan="2">Ket.</th>
+        </tr>
+        <tr>
+          <th>% Hadir</th>
+          <th>Sikap</th>
+          <th>Keaktifan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% data.forEach((item, idx) => { const h = item.hasil; %>
+          <tr>
+            <td><%= idx + 1 %></td>
+            <td><%= item.mahasiswa.nim %></td>
+            <td class="nama"><%= item.mahasiswa.nama %></td>
+            <td><%= h.persenHadir !== null ? h.persenHadir.toFixed(1) : '-' %></td>
+            <td><%= h.sikap !== null && h.sikap !== undefined ? h.sikap : '-' %></td>
+            <td><%= h.keaktifan !== null && h.keaktifan !== undefined ? h.keaktifan : '-' %></td>
+            <td><%= h.rataTugas !== null ? h.rataTugas.toFixed(2) : '-' %></td>
+            <td><%= h.kuis !== null && h.kuis !== undefined ? h.kuis : '-' %></td>
+            <td><%= h.uts !== null && h.uts !== undefined ? h.uts : '-' %></td>
+            <td><%= h.uas !== null && h.uas !== undefined ? h.uas : '-' %></td>
+            <td><strong><%= h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-' %></strong></td>
+            <td><%= h.huruf || '-' %></td>
+            <td class="<%= h.keterangan === 'LULUS' ? 'huruf-lulus' : (h.keterangan === 'TIDAK LULUS' ? 'huruf-tidak' : '') %>">
+              <%= h.keterangan ? (h.keterangan === 'LULUS' ? 'L' : 'TL') : '-' %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <div class="keterangan-bobot">
+      Bobot: Kehadiran <%= bobot.kehadiran %>% (dari % Hadir <%= bobot.persenHadir %>%, Sikap <%= bobot.sikap %>%, Keaktifan <%= bobot.keaktifan %>%),
+      Tugas <%= bobot.tugas %>%, Kuis <%= bobot.kuis %>%, UTS <%= bobot.uts %>%, UAS <%= bobot.uas %>%.
+      Predikat huruf: A (&ge;85), B+ (75-84), B (65-74), C+ (55-64), C (45-54), D (35-44), E (&lt;35). L = Lulus, TL = Tidak Lulus.
+    </div>
+
+    <div class="ttd-wrap">
+      <div class="ttd-box">
+        <div>Dosen Pengampu,</div>
+        <div class="nama-ttd"><%= namaDosen || mk.namaDosen || '..........................' %></div>
+      </div>
+      <div class="ttd-box">
+        <div>Palopo, <%= new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %></div>
+        <div>Ketua Program Studi Elektronika,</div>
+        <div class="nama-ttd">Fajar Ramadhan, S.Pd., M.T.</div>
+        <div>NUPTK. 8559777678130153</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

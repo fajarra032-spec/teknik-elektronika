@@ -26,6 +26,7 @@ const biodataRouter = require('./biodata');
 const mkRouter = require('./mk');
 const kurikulumRouter = require('./kurikulum');
 const nilaiRouter = require('./nilai');
+const rubrikRouter = require('./rubrik');
 const mahasiswaRouter = require('./mahasiswa');
 const magangPeriodRouter = require('./magangPeriod');
 const chatRouter = require('./chat');
@@ -105,6 +106,7 @@ router.use('/kelas-chat', require('./kelasChat'));
 router.use('/mk', mkRouter);
 router.use('/kurikulum', kurikulumRouter);
 router.use('/nilai', nilaiRouter);
+router.use('/rubrik', rubrikRouter);
 router.use('/mahasiswa', mahasiswaRouter);
 
 // ============================================================================

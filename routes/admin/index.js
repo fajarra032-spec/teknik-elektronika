@@ -65,6 +65,7 @@ router.use('/khs', require('./khs'));
 
 // Rekap Nilai (per MK) – sebelumnya tidak pernah termuat karena nama file salah (nilai,js)
 router.use('/nilai', require('./nilai'));
+router.use('/rubrik', require('./rubrik'));
 
 // Sertifikat Dosen
 router.use('/sertifikat', require('./sertifikat'));

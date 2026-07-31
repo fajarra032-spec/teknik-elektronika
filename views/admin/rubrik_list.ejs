@@ -1,0 +1,77 @@
+<%- include('../partials/header') %>
+
+<style>
+  .mk-table th {
+    background: linear-gradient(135deg, #2193b0, #6dd5ed);
+    color: white; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; border: none;
+  }
+  .mk-table td { vertical-align: middle; padding: 1rem 0.75rem; }
+  .table-responsive { border-radius: 1rem; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+  .btn-action { margin: 2px; border-radius: 8px; padding: 0.3rem 0.8rem; font-size: 0.85rem; }
+  .progress-mini { height: 8px; border-radius: 4px; background: #e9ecef; overflow: hidden; width: 100px; }
+  .progress-mini-bar { height: 100%; background: linear-gradient(135deg, #2193b0, #6dd5ed); }
+</style>
+
+<div class="container-fluid mt-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0"><i class="bi bi-clipboard-data me-2"></i>Rekap Rubrik Penilaian - Semua Mata Kuliah</h2>
+    <form method="GET" class="d-flex gap-2">
+      <input type="text" name="periode" class="form-control form-control-sm" placeholder="Periode (mis. Genap 2025/2026)" value="<%= periode %>">
+      <button class="btn btn-sm btn-outline-primary">Filter</button>
+    </form>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table mk-table">
+      <thead>
+        <tr>
+          <th>Kode</th>
+          <th>Nama Mata Kuliah</th>
+          <th>Dosen Pengampu</th>
+          <th>SKS</th>
+          <th>Mahasiswa</th>
+          <th>Kelengkapan Rubrik</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (mkList.length === 0) { %>
+          <tr>
+            <td colspan="7" class="text-center py-5">
+              <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+              <p class="text-muted">Belum ada mata kuliah.</p>
+            </td>
+          </tr>
+        <% } %>
+        <% mkList.forEach(mk => {
+             const total = mk.jumlahMahasiswa || 0;
+             const persen = total > 0 ? Math.round((mk.rubrikLengkap / total) * 100) : 0;
+        %>
+          <tr>
+            <td><span class="badge bg-primary bg-opacity-10 text-primary"><%= mk.kode %></span></td>
+            <td><strong><%= mk.nama %></strong></td>
+            <td><%= mk.namaDosen || '-' %></td>
+            <td class="text-center"><%= mk.sks %></td>
+            <td class="text-center"><%= total %></td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress-mini"><div class="progress-mini-bar" style="width: <%= persen %>%"></div></div>
+                <small class="text-muted"><%= mk.rubrikLengkap %>/<%= total %></small>
+              </div>
+            </td>
+            <td>
+              <a href="/admin/rubrik/<%= mk.id %>?periode=<%= encodeURIComponent(periode) %>" class="btn btn-sm btn-outline-primary btn-action">
+                <i class="bi bi-eye"></i> Lihat Rubrik
+              </a>
+              <a href="/admin/rubrik/<%= mk.id %>/cetak?periode=<%= encodeURIComponent(periode) %>" target="_blank" class="btn btn-sm btn-outline-secondary btn-action">
+                <i class="bi bi-printer"></i> Cetak
+              </a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
