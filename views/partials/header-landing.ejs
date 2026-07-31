@@ -278,35 +278,8 @@
 </nav>
 
 <!-- Konten Utama dengan pembungkus -->
+<!-- PENTING: div ini SENGAJA tidak ditutup di sini - baru ditutup di
+     partials/footer-landing.ejs (baris pertama). Semua konten halaman yang
+     disisipkan di antara include('header-landing') dan include('footer-landing')
+     otomatis berada di dalam wrapper ini (max-width 1200px + padding kiri-kanan). -->
 <div class="content-wrapper">
-    <!-- Halaman akan diisi oleh view yang menggunakan header ini -->
-</div>
-
-<!-- Bootstrap JS (hanya satu versi) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // Smooth scroll untuk anchor links (kecuali tombol dropdown / href="#" polos)
-    document.querySelectorAll('a[href^="#"]:not(.dropdown-toggle)').forEach(anchor => {
-        const hrefVal = anchor.getAttribute('href');
-        if (!hrefVal || hrefVal === '#') return; // lewati href kosong, biar tidak error querySelector('#')
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(hrefVal);
-            if (target) {
-                target.scrollIntoView({ behavior: 'smooth' });
-            }
-        });
-    });
-
-    // Efek scroll untuk navbar (ubah latar saat scroll)
-    window.addEventListener('scroll', function() {
-        const navbar = document.getElementById('mainNavbar');
-        if (window.scrollY > 50) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
-    });
-</script>
-</body>
-</html>
