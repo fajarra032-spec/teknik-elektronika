@@ -4,11 +4,11 @@ function getCurrentAcademicSemester() {
   const year = now.getFullYear();
   let semester, tahunAwal, tahunAkhir;
 
-  if (month >= 2 && month <= 7) {
+  if (month >= 2 && month <= 8) {
     semester = "Genap";
     tahunAwal = year - 1;
     tahunAkhir = year;
-  } else if (month >= 8 && month <= 12) {
+  } else if (month >= 9 && month <= 12) {
     semester = "Ganjil";
     tahunAwal = year;
     tahunAkhir = year + 1;
