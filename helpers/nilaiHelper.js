@@ -72,30 +72,36 @@ async function saveNilai(mahasiswaId, mkId, tugasId, judulTugas, nilai, periode 
  * @returns {Promise<Object>} Map mahasiswaId -> { tugasId: nilai }
  */
 async function getNilaiByMkId(mkId, periode = getPeriodeAktif()) {
-  // Jalur murah: query terfilter periode langsung di Firestore (cuma baca
-  // dokumen yang benar-benar cocok, bukan seluruh riwayat).
-  let snapshot = await db.collection('nilai')
-    .where('mkId', '==', mkId)
-    .where('periode', '==', periode)
-    .get();
+  // Ambil SEMUA nilai untuk MK ini (tanpa filter periode di level query).
+  // Sengaja begini (bukan `.where('periode','==',periode)`) supaya nilai
+  // TUGAS tidak ikut terbuang di tahap query kalau field `periode` di
+  // dokumennya kebetulan berbeda dari periode aktif sekarang - penyaringan
+  // yang benar untuk tugas dilakukan di JS di bawah (lihat komentar `isTugas`).
+  // Self-heal: dokumen lama yang belum punya field `periode` ditandai di sini.
+  const snapshot = await db.collection('nilai').where('mkId', '==', mkId).get();
 
-  if (snapshot.empty) {
-    // Kemungkinan data lama belum ditandai `periode` (migrasi belum jalan).
-    // Ambil semua utk MK ini sekali, lalu tandai otomatis (self-heal) supaya
-    // panggilan berikutnya bisa lewat jalur murah di atas lagi.
-    const semuaSnapshot = await db.collection('nilai').where('mkId', '==', mkId).get();
-    const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
-    if (perluDitandai.length > 0) {
-      await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode }).catch(() => {})));
-    }
-    snapshot = semuaSnapshot;
+  const perluDitandai = snapshot.docs.filter(doc => !doc.data().periode);
+  if (perluDitandai.length > 0) {
+    await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode }).catch(() => {})));
   }
 
   const result = {};
   snapshot.docs.forEach(doc => {
     const data = doc.data();
-    const periodeData = data.periode || periode;
-    if (periodeData !== periode) return;
+    const isTugas = typeof data.tipe === 'string' && data.tipe.startsWith('tugas_');
+
+    // Untuk nilai TUGAS: jangan disaring lagi lewat field `periode` di
+    // dokumen 'nilai' - cakupan periodenya sudah ditentukan oleh tugasId
+    // itu sendiri (lihat getTugasByMkId/getRataTugasByMkId yang sudah
+    // menyaring tugasList berdasarkan periode). Ini mencegah nilai tugas
+    // "hilang" kalau dokumen nilainya kebetulan tersimpan saat label
+    // periode aktif sempat berbeda dari periode tugas induknya (mis. saat
+    // ada penyesuaian batas bulan semester). Untuk tipe lain (UTS/UAS/dll)
+    // filter periode tetap ketat seperti semula.
+    if (!isTugas) {
+      const periodeData = data.periode || periode;
+      if (periodeData !== periode) return;
+    }
 
     if (!result[data.mahasiswaId]) {
       result[data.mahasiswaId] = {};
@@ -520,18 +526,46 @@ function nilaiKeHurufRubrik(nilai) {
 
 /**
  * Ambil rata-rata nilai tugas per mahasiswa untuk satu MK (mengandalkan
- * getTugasByMkId + getNilaiByMkId yang sudah ada, supaya tetap satu sumber
- * data tugas dengan modul e-learning yang sudah berjalan).
+ * getTugasByMkId yang sudah ada, supaya tetap satu sumber data tugas dengan
+ * modul e-learning yang sudah berjalan).
+ *
+ * PENTING: nilai per tugas diambil langsung lewat mkId + tipe ('tugas_<id>'),
+ * SAMA PERSIS seperti cara halaman 'Daftar Tugas' (routes/dosen/index.js,
+ * GET /tugas/:id) membaca nilai - BUKAN lewat getNilaiByMkId(mkId, periode).
+ * Alasannya: cakupan periode tugas sudah ditentukan oleh getTugasByMkId
+ * (tugasList hanya berisi tugas milik periode aktif). Kalau nilai ikut
+ * disaring lagi pakai field `periode` di dokumen 'nilai', nilai bisa
+ * "hilang" dari rubrik ketika dokumen nilai itu tersimpan pada saat label
+ * periode aktif sempat berbeda dari periode tugasnya (mis. karena
+ * penyesuaian batas bulan semester) - padahal nilainya tetap tampil normal
+ * di halaman Daftar Tugas karena halaman itu tidak memfilter periode sama
+ * sekali. Dengan menyaring lewat tugasId (bukan field periode di 'nilai'),
+ * rubrik selalu konsisten dengan apa yang dosen lihat di Daftar Tugas.
+ *
  * @returns {Promise<Object>} map mahasiswaId -> rata-rata tugas (number|null)
  */
 async function getRataTugasByMkId(mkId, periode = getPeriodeAktif()) {
   const tugasList = await getTugasByMkId(mkId, periode);
-  const nilaiMap = await getNilaiByMkId(mkId, periode); // mahasiswaId -> { tugasId: {nilai,...} }
+  if (tugasList.length === 0) return {};
+
+  // Ambil semua nilai tugas MK ini sekaligus (satu query per MK, bukan per
+  // tugas) lalu saring di JS berdasarkan tipe yang cocok dengan tugasList.
+  const tipeSet = new Set(tugasList.map(t => `tugas_${t.id}`));
+  const snapshot = await db.collection('nilai').where('mkId', '==', mkId).get();
+
+  const perMahasiswa = {}; // mahasiswaId -> { tugasId: nilai }
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    if (!tipeSet.has(data.tipe)) return; // bukan nilai tugas dari periode ini
+    const tugasId = data.tipe.replace('tugas_', '');
+    if (!perMahasiswa[data.mahasiswaId]) perMahasiswa[data.mahasiswaId] = {};
+    perMahasiswa[data.mahasiswaId][tugasId] = data.nilai;
+  });
 
   const result = {};
-  Object.keys(nilaiMap).forEach(mahasiswaId => {
+  Object.keys(perMahasiswa).forEach(mahasiswaId => {
     const nilaiPerTugas = tugasList
-      .map(t => nilaiMap[mahasiswaId][t.id]?.nilai)
+      .map(t => perMahasiswa[mahasiswaId][t.id])
       .filter(v => v !== undefined && v !== null);
     result[mahasiswaId] = nilaiPerTugas.length > 0
       ? nilaiPerTugas.reduce((a, b) => a + b, 0) / nilaiPerTugas.length

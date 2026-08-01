@@ -32,6 +32,35 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
    bulan 2–8 → Genap 2025/2026, bulan 9–12 → Ganjil 2026/2027, bulan 1 →
    Ganjil 2025/2026.
 
+3. **Perbaikan nilai tugas yang "tidak terbaca" di Rekap Nilai & Rubrik.**
+   Ditemukan akar masalahnya: halaman **Daftar Tugas** (`/dosen/tugas/:id`)
+   membaca nilai tugas hanya lewat `mkId + tipe` (tanpa filter periode),
+   sedangkan halaman **Rekap Nilai** (`/dosen/nilai`) dan **Rubrik** (buatan
+   saya) sama-sama memakai `getNilaiByMkId(mkId, periode)` yang tadinya
+   **ikut menyaring nilai tugas lewat field `periode` di dokumen `nilai`**.
+   Kalau nilai sebuah tugas kebetulan tersimpan saat label periode aktif
+   sempat berbeda dari periode tugas induknya (persis seperti yang terjadi
+   akibat batas bulan semester kemarin), nilai itu jadi "hilang" di Rekap
+   Nilai maupun Rubrik — padahal tetap tampil normal di Daftar Tugas.
+
+   **Perbaikan** (di `helpers/nilaiHelper.js`):
+   - `getNilaiByMkId()` sekarang **tidak lagi menyaring nilai TUGAS lewat
+     field periode-nya sendiri** — cakupan periode untuk tugas ditentukan
+     lewat `tugasId`-nya (yang sudah pasti benar lewat `getTugasByMkId`).
+     Filter periode ketat tetap berlaku untuk komponen lain (UTS, UAS,
+     Kehadiran, Sikap, Keaktifan, Kuis) karena itu tidak attached ke
+     dokumen tugas manapun.
+   - `getRataTugasByMkId()` (dipakai rubrik) diperbaiki dengan logika serupa.
+   - `saveNilai(...)` saat dosen menilai tugas sekarang dipanggil dengan
+     periode **milik dokumen tugasnya sendiri** (`tugas.periode`), bukan
+     periode aktif saat menilai — supaya nilai baru ke depannya tidak
+     pernah drift lagi walau dinilai belakangan setelah pergantian semester.
+
+   Sudah saya tes dengan simulasi data tiruan (nilai tugas yang periode-nya
+   sengaja dibuat "salah") — hasilnya nilai tugas tetap terbaca, sementara
+   filter periode untuk UTS/UAS tetap bekerja seperti semula (tidak ada efek
+   samping).
+
 ---
 
 

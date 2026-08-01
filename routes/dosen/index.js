@@ -408,7 +408,13 @@ router.post('/pengumpulan/nilai', async (req, res) => {
     });
 
     // 4. UPDATE atau CREATE di collection 'nilai' (pakai helper bersama, sudah periode-aware)
-    await saveNilai(mahasiswaId, tugas.mkId, tugasId, tugas.judul, nilai, undefined, komentar || '');
+    // ✅ PENTING: pakai periode milik dokumen tugas ini (tugas.periode),
+    // BUKAN getPeriodeAktif() saat menilai. Kalau dosen menilai beberapa
+    // hari/bulan setelah tugas dibuat dan kebetulan label periode aktif
+    // sudah berubah (mis. karena penyesuaian batas bulan semester), nilai
+    // tetap konsisten satu periode dengan tugasnya sendiri - supaya rekap
+    // nilai & rubrik tidak pernah "kehilangan" nilai tugas ini di kemudian hari.
+    await saveNilai(mahasiswaId, tugas.mkId, tugasId, tugas.judul, nilai, tugas.periode, komentar || '');
 
     console.log(`✅ Nilai ${nilai} untuk ${mahasiswaId} pada tugas ${tugasId} berhasil disimpan di kedua collection`);
 
