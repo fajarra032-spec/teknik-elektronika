@@ -61,6 +61,39 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
    filter periode untuk UTS/UAS tetap bekerja seperti semula (tidak ada efek
    samping).
 
+4. **Komponen penilaian sekarang bisa disesuaikan sendiri (mis. hilangkan Kuis).**
+   Sebelumnya `hitungRubrik()` **mewajibkan kelima komponen** (Kehadiran,
+   Tugas, Kuis, UTS, UAS) terisi sebelum Nilai Akhir dihitung — kalau dosen
+   memang tidak pernah kuis, kolom Kuis akan selalu kosong dan **Nilai Akhir
+   tidak akan pernah muncul**, walaupun komponen lain sudah lengkap. Ini
+   ternyata penyebab keluhan "hasil hitungan tidak muncul".
+
+   **Sekarang:** set bobot komponen yang tidak dipakai jadi **0%** di panel
+   "Bobot Komponen" (mis. Kuis = 0). Komponen berbobot 0% otomatis:
+   - Tidak wajib diisi.
+   - Tidak ikut dihitung sama sekali (bobot sisanya otomatis dinormalisasi
+     ke 100% dari komponen yang benar-benar dipakai).
+   - Header kolomnya ditandai abu-abu "(tidak dipakai)" di halaman input,
+     supaya jelas kolom mana yang memang sengaja tidak dipakai.
+   Ini berlaku juga untuk sub-komponen Kehadiran (% Hadir/Sikap/Keaktifan) -
+   kalau dosen tidak menilai Sikap secara terpisah misalnya, set bobot Sikap
+   ke 0% juga.
+
+   Sudah dites: bobot Kuis=0 dengan Kuis kosong + komponen lain lengkap →
+   Nilai Akhir tetap terhitung normal (bobot sisanya ternormalisasi otomatis).
+
+5. **Perbaikan input Kehadiran/Sikap/Keaktifan/Kuis/UTS/UAS yang "cuma bisa
+   1-2 digit" & hasil tidak langsung muncul.**
+   Sebelumnya tiap kolom pakai `onchange` yang langsung **reload seluruh
+   halaman** begitu tersimpan. Ini berisiko mengganggu saat mengetik (di
+   sebagian browser/keyboard, event bisa terpicu sebelum digit kedua
+   sempat diketik) dan terasa lambat. Sekarang diganti jadi **auto-save
+   dengan jeda ~0.9 detik setelah berhenti mengetik** (bukan tiap huruf/klik),
+   dan **tanpa reload halaman** - begitu tersimpan, kotak yang diubah akan
+   berkedip hijau sebentar dan sel Nilai Akhir/Huruf/Keterangan di baris yang
+   sama langsung ter-update dari hasil hitungan server. Jadi mengetik angka
+   2 digit seperti 80 tidak lagi terputus, dan hasilnya langsung kelihatan.
+
 ---
 
 

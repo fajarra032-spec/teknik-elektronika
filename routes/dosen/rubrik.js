@@ -153,8 +153,19 @@ router.post('/input', async (req, res) => {
     if (!mkId || !mahasiswaId || !tipe) {
       return res.status(400).json({ success: false, message: 'Data tidak lengkap' });
     }
-    await saveKomponenRubrik(mahasiswaId, mkId, tipe, nilai, periode || getPeriodeAktif());
-    res.json({ success: true });
+    const periodeDipakai = periode || getPeriodeAktif();
+    await saveKomponenRubrik(mahasiswaId, mkId, tipe, nilai, periodeDipakai);
+
+    // Hitung ulang hasil rubrik mahasiswa ini saja (bukan seluruh kelas),
+    // supaya frontend bisa langsung update baris tsb tanpa reload halaman.
+    const [bobot, komponenMap, rataTugasMap] = await Promise.all([
+      getBobotRubrik(mkId, periodeDipakai),
+      getKomponenRubrikByMkId(mkId, periodeDipakai),
+      getRataTugasByMkId(mkId, periodeDipakai)
+    ]);
+    const hasil = hitungRubrik(komponenMap[mahasiswaId] || {}, rataTugasMap[mahasiswaId] ?? null, bobot);
+
+    res.json({ success: true, hasil });
   } catch (error) {
     console.error('Error input komponen rubrik:', error);
     res.status(500).json({ success: false, message: 'Gagal menyimpan nilai: ' + error.message });

@@ -103,7 +103,7 @@
           <th rowspan="2">Nama Mahasiswa</th>
           <th colspan="4">Kehadiran, Sikap &amp; Keaktifan</th>
           <th rowspan="2">Tugas<br><small>(otomatis)</small></th>
-          <th rowspan="2">Kuis</th>
+          <th rowspan="2" class="<%= (bobot.kuis || 0) <= 0 ? 'col-off' : '' %>">Kuis<% if ((bobot.kuis || 0) <= 0) { %><br><small>(tidak dipakai)</small><% } %></th>
           <th rowspan="2">UTS</th>
           <th rowspan="2">UAS</th>
           <th rowspan="2">Nilai<br>Akhir</th>
@@ -113,8 +113,8 @@
         <tr>
           <th>Total<br>Pertemuan</th>
           <th>Jml<br>Hadir</th>
-          <th>Sikap</th>
-          <th>Keaktifan</th>
+          <th class="<%= (bobot.sikap || 0) <= 0 ? 'col-off' : '' %>">Sikap<% if ((bobot.sikap || 0) <= 0) { %><br><small>(tidak dipakai)</small><% } %></th>
+          <th class="<%= (bobot.keaktifan || 0) <= 0 ? 'col-off' : '' %>">Keaktifan<% if ((bobot.keaktifan || 0) <= 0) { %><br><small>(tidak dipakai)</small><% } %></th>
         </tr>
       </thead>
       <tbody>
@@ -129,36 +129,36 @@
             <td class="name-cell"><%= item.mahasiswa.nama %></td>
             <td>
               <input type="number" class="komponen-input" value="<%= k.KEHADIRAN_TOTAL ?? 16 %>"
-                     onchange="simpanKomponen(this, '<%= mid %>', 'KEHADIRAN_TOTAL')">
+                     oninput="jadwalSimpan(this, '<%= mid %>', 'KEHADIRAN_TOTAL')">
             </td>
             <td>
               <input type="number" class="komponen-input" value="<%= k.KEHADIRAN_JUMLAH ?? '' %>"
-                     onchange="simpanKomponen(this, '<%= mid %>', 'KEHADIRAN_JUMLAH')">
+                     oninput="jadwalSimpan(this, '<%= mid %>', 'KEHADIRAN_JUMLAH')">
             </td>
-            <td>
+            <td class="<%= (bobot.sikap || 0) <= 0 ? 'col-off' : '' %>">
               <input type="number" min="0" max="100" class="komponen-input" value="<%= k.SIKAP ?? '' %>"
-                     onchange="simpanKomponen(this, '<%= mid %>', 'SIKAP')">
+                     oninput="jadwalSimpan(this, '<%= mid %>', 'SIKAP')">
             </td>
-            <td>
+            <td class="<%= (bobot.keaktifan || 0) <= 0 ? 'col-off' : '' %>">
               <input type="number" min="0" max="100" class="komponen-input" value="<%= k.KEAKTIFAN ?? '' %>"
-                     onchange="simpanKomponen(this, '<%= mid %>', 'KEAKTIFAN')">
+                     oninput="jadwalSimpan(this, '<%= mid %>', 'KEAKTIFAN')">
             </td>
-            <td><span class="readonly-cell"><%= h.rataTugas !== null ? h.rataTugas.toFixed(2) : '-' %></span></td>
-            <td>
+            <td><span class="readonly-cell" id="tugas-<%= mid %>"><%= h.rataTugas !== null ? h.rataTugas.toFixed(2) : '-' %></span></td>
+            <td class="<%= (bobot.kuis || 0) <= 0 ? 'col-off' : '' %>">
               <input type="number" min="0" max="100" class="komponen-input" value="<%= k.KUIS ?? '' %>"
-                     onchange="simpanKomponen(this, '<%= mid %>', 'KUIS')">
+                     oninput="jadwalSimpan(this, '<%= mid %>', 'KUIS')">
             </td>
             <td>
               <input type="number" min="0" max="100" class="komponen-input" value="<%= k.UTS ?? '' %>"
-                     onchange="simpanKomponen(this, '<%= mid %>', 'UTS')">
+                     oninput="jadwalSimpan(this, '<%= mid %>', 'UTS')">
             </td>
             <td>
               <input type="number" min="0" max="100" class="komponen-input" value="<%= k.UAS ?? '' %>"
-                     onchange="simpanKomponen(this, '<%= mid %>', 'UAS')">
+                     oninput="jadwalSimpan(this, '<%= mid %>', 'UAS')">
             </td>
-            <td><span class="final-cell"><%= h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-' %></span></td>
-            <td><span class="huruf-badge"><%= h.huruf || '-' %></span></td>
-            <td class="<%= h.keterangan === 'LULUS' ? 'lulus' : (h.keterangan === 'TIDAK LULUS' ? 'tidak-lulus' : '') %>">
+            <td><span class="final-cell" id="nilai-akhir-<%= mid %>"><%= h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-' %></span></td>
+            <td><span class="huruf-badge" id="huruf-<%= mid %>"><%= h.huruf || '-' %></span></td>
+            <td id="keterangan-<%= mid %>" class="<%= h.keterangan === 'LULUS' ? 'lulus' : (h.keterangan === 'TIDAK LULUS' ? 'tidak-lulus' : '') %>">
               <%= h.keterangan || '-' %>
             </td>
           </tr>
@@ -166,14 +166,33 @@
       </tbody>
     </table>
   </div>
-  <p class="saving-note mt-2"><i class="bi bi-info-circle"></i> Kolom hijau (Kehadiran Akhir, Tugas) otomatis dihitung. Ubah nilai lalu klik di luar kotak untuk menyimpan &amp; menghitung ulang.</p>
+  <p class="saving-note mt-2">
+    <i class="bi bi-info-circle"></i> Nilai tersimpan otomatis ~1 detik setelah Anda berhenti mengetik (tanpa perlu reload halaman).
+    Kolom hijau/biru dihitung otomatis. Kolom abu-abu bertanda <em>(tidak dipakai)</em> berarti bobotnya 0% - atur di panel Bobot Komponen di atas kalau ingin dipakai lagi.
+  </p>
 </div>
 
+<style>
+  .col-off { background: #f1f1f1 !important; opacity: 0.6; }
+  th.col-off { background: linear-gradient(135deg, #94a3b8, #cbd5e1) !important; }
+  .komponen-input.saved-flash { border-color: #22c55e !important; box-shadow: 0 0 0 0.15rem rgba(34,197,94,0.3) !important; }
+</style>
+
 <script>
+const timers = {};
+
+// Debounce: simpan baru dikirim ~900ms setelah pengguna BERHENTI mengetik,
+// supaya mengetik angka 2 digit (mis. 80) tidak pernah terputus/tersimpan
+// sebagian, dan tidak perlu reload halaman penuh setiap kali.
+function jadwalSimpan(el, mahasiswaId, tipe) {
+  const key = mahasiswaId + '-' + tipe;
+  clearTimeout(timers[key]);
+  timers[key] = setTimeout(() => simpanKomponen(el, mahasiswaId, tipe), 900);
+}
+
 async function simpanKomponen(el, mahasiswaId, tipe) {
   const nilai = el.value;
   if (nilai === '') return;
-  el.disabled = true;
   try {
     const body = new URLSearchParams({
       mkId: '<%= mk.id %>',
@@ -189,14 +208,33 @@ async function simpanKomponen(el, mahasiswaId, tipe) {
     });
     const json = await res.json();
     if (json.success) {
-      window.location.reload();
+      updateBarisHasil(mahasiswaId, json.hasil);
+      el.classList.add('saved-flash');
+      setTimeout(() => el.classList.remove('saved-flash'), 700);
     } else {
       alert('Gagal menyimpan: ' + json.message);
-      el.disabled = false;
     }
   } catch (err) {
     alert('Gagal menyimpan nilai: ' + err.message);
-    el.disabled = false;
+  }
+}
+
+// Update sel-sel hasil hitungan (Tugas, Nilai Akhir, Huruf, Keterangan) di
+// baris mahasiswa ini secara langsung, tanpa reload halaman.
+function updateBarisHasil(mahasiswaId, h) {
+  const tugasEl = document.getElementById('tugas-' + mahasiswaId);
+  if (tugasEl) tugasEl.textContent = h.rataTugas !== null ? h.rataTugas.toFixed(2) : '-';
+
+  const nilaiEl = document.getElementById('nilai-akhir-' + mahasiswaId);
+  if (nilaiEl) nilaiEl.textContent = h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-';
+
+  const hurufEl = document.getElementById('huruf-' + mahasiswaId);
+  if (hurufEl) hurufEl.textContent = h.huruf || '-';
+
+  const ketEl = document.getElementById('keterangan-' + mahasiswaId);
+  if (ketEl) {
+    ketEl.textContent = h.keterangan || '-';
+    ketEl.className = h.keterangan === 'LULUS' ? 'lulus' : (h.keterangan === 'TIDAK LULUS' ? 'tidak-lulus' : '');
   }
 }
 </script>

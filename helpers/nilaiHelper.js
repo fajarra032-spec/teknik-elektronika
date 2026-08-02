@@ -475,25 +475,44 @@ function hitungRubrik(komponen, rataTugas, bobot = BOBOT_DEFAULT) {
   const uts = komponen.UTS ?? null;
   const uas = komponen.UAS ?? null;
 
+  // --- Sub-komponen Kehadiran (% Hadir, Sikap, Keaktifan) ---
+  // Komponen dengan bobot 0 (atau tidak diisi bobotnya) dianggap TIDAK
+  // DIPAKAI oleh dosen ini (mis. tidak pernah menilai Keaktifan terpisah),
+  // sehingga tidak ikut disyaratkan maupun dihitung. Kehadiran Akhir hanya
+  // butuh komponen yang bobotnya > 0 dan sudah diisi.
+  const subKomponen = [
+    { nilai: persenHadir, bobot: bobot.persenHadir },
+    { nilai: sikap, bobot: bobot.sikap },
+    { nilai: keaktifan, bobot: bobot.keaktifan }
+  ].filter(k => (k.bobot || 0) > 0);
+
   let kehadiranAkhir = null;
-  if (persenHadir !== null && sikap !== null && keaktifan !== null) {
-    const totalSub = (bobot.persenHadir || 0) + (bobot.sikap || 0) + (bobot.keaktifan || 0);
+  if (subKomponen.length > 0 && subKomponen.every(k => k.nilai !== null && k.nilai !== undefined)) {
+    const totalSub = subKomponen.reduce((s, k) => s + k.bobot, 0);
     kehadiranAkhir = totalSub > 0
-      ? (persenHadir * bobot.persenHadir + sikap * bobot.sikap + keaktifan * bobot.keaktifan) / totalSub
+      ? subKomponen.reduce((s, k) => s + k.nilai * k.bobot, 0) / totalSub
       : null;
   }
 
+  // --- Nilai Akhir (Kehadiran, Tugas, Kuis, UTS, UAS) ---
+  // Sama seperti di atas: komponen dengan bobot 0 (mis. Kuis dihilangkan
+  // karena dosen tidak pernah kuis) tidak ikut disyaratkan/dihitung, dan
+  // sisa bobot komponen yang dipakai dinormalisasi otomatis ke 100%.
+  const komponenAkhir = [
+    { nilai: kehadiranAkhir, bobot: bobot.kehadiran },
+    { nilai: rataTugas, bobot: bobot.tugas },
+    { nilai: kuis, bobot: bobot.kuis },
+    { nilai: uts, bobot: bobot.uts },
+    { nilai: uas, bobot: bobot.uas }
+  ].filter(k => (k.bobot || 0) > 0);
+
   let nilaiAkhir = null;
-  if (kehadiranAkhir !== null && rataTugas !== null && rataTugas !== undefined
-      && kuis !== null && uts !== null && uas !== null) {
-    nilaiAkhir = (
-      kehadiranAkhir * bobot.kehadiran +
-      rataTugas * bobot.tugas +
-      kuis * bobot.kuis +
-      uts * bobot.uts +
-      uas * bobot.uas
-    ) / 100;
-    nilaiAkhir = Math.round(nilaiAkhir * 100) / 100;
+  if (komponenAkhir.length > 0 && komponenAkhir.every(k => k.nilai !== null && k.nilai !== undefined)) {
+    const totalBobot = komponenAkhir.reduce((s, k) => s + k.bobot, 0);
+    if (totalBobot > 0) {
+      nilaiAkhir = komponenAkhir.reduce((s, k) => s + k.nilai * k.bobot, 0) / totalBobot;
+      nilaiAkhir = Math.round(nilaiAkhir * 100) / 100;
+    }
   }
 
   return {
