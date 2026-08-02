@@ -15,6 +15,7 @@ const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { saveNilai, getPeriodeAktif } = require('../../helpers/nilaiHelper');
+const { getSemesterForDate } = require('../../helpers/academicHelper');
 
 // Import sub‑modul
 const laporanMagangRouter = require('./laporanMagang');
@@ -125,45 +126,47 @@ router.get('/', (req, res) => {
 router.get('/tugas', async (req, res) => {
   try {
     const periodeAktif = getPeriodeAktif();
-    let snapshot;
-    try {
-      snapshot = await db.collection('tugas')
-        .where('dosenId', '==', req.dosen.id)
-        .where('periode', '==', periodeAktif)
-        .orderBy('deadline', 'desc')
-        .get();
-    } catch (indexError) {
-      // Index composite belum siap di Firestore - mundur ke query paling
-      // sederhana (satu filter saja, tanpa orderBy) yang tidak pernah butuh
-      // index gabungan, lalu urutkan manual di JS.
-      console.error('Index tugas(dosenId,periode,deadline) belum siap, fallback:', indexError.message);
-      snapshot = await db.collection('tugas').where('dosenId', '==', req.dosen.id).get();
-    }
 
-    if (snapshot.empty) {
-      // Fallback + self-heal: data lama mungkin belum ditandai periode
-      const semuaSnapshot = await db.collection('tugas')
-        .where('dosenId', '==', req.dosen.id)
-        .get();
-      const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
-      if (perluDitandai.length > 0) {
-        await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode: periodeAktif }).catch(() => {})));
-      }
-      snapshot = semuaSnapshot;
-    }
+    // Ambil SEMUA tugas dosen ini (tanpa filter periode di level query) -
+    // lihat komentar panjang di getTugasByMkId (helpers/nilaiHelper.js) untuk
+    // alasannya: field `periode` yang tersimpan bisa drift/salah, jadi kita
+    // hitung ulang dari tanggal asli tugasnya sendiri (deadline/createdAt)
+    // dan perbaiki (self-heal) dokumen yang ternyata salah label.
+    const snapshot = await db.collection('tugas')
+      .where('dosenId', '==', req.dosen.id)
+      .get();
 
-    const tugasList = snapshot.docs
-      .filter(doc => (doc.data().periode || periodeAktif) === periodeAktif) // data lama tanpa periode dianggap periode aktif
-      .sort((a, b) => (b.data().deadline || '').localeCompare(a.data().deadline || ''))
-      .map(doc => {
+    const tugasList = [];
+    const perluDiperbaiki = [];
+
+    snapshot.docs.forEach(doc => {
       const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        mkKode: data.mkKode || '?',
-        mkNama: data.mkNama || '?'
-      };
+      const tanggalAcuan = data.deadline || data.createdAt;
+      const periodeSeharusnya = tanggalAcuan
+        ? getSemesterForDate(tanggalAcuan).label
+        : (data.periode || periodeAktif);
+
+      if (data.periode !== periodeSeharusnya) {
+        perluDiperbaiki.push({ ref: doc.ref, periodeBaru: periodeSeharusnya });
+      }
+
+      if (periodeSeharusnya === periodeAktif) {
+        tugasList.push({
+          id: doc.id,
+          ...data,
+          mkKode: data.mkKode || '?',
+          mkNama: data.mkNama || '?'
+        });
+      }
     });
+
+    if (perluDiperbaiki.length > 0) {
+      await Promise.all(perluDiperbaiki.map(p =>
+        p.ref.update({ periode: p.periodeBaru }).catch(() => {})
+      ));
+    }
+
+    tugasList.sort((a, b) => (b.deadline || '').localeCompare(a.deadline || ''));
 
     res.render('dosen/tugas_list', {
       title: 'Daftar Tugas',

@@ -17,6 +17,9 @@ const {
   getKomponenRubrikByMkId,
   getRataTugasByMkId,
   getRincianTugasByMkId,
+  tambahTugasManual,
+  hapusTugasManual,
+  saveNilaiTugasManual,
   hitungRubrik
 } = require('../../helpers/nilaiHelper');
 
@@ -95,6 +98,60 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error:', error);
     res.status(500).render('error', { title: 'Error', message: 'Gagal mengambil data mata kuliah' });
+  }
+});
+
+// ============================================================================
+// TUGAS MANUAL - untuk tugas yang diberikan TIDAK lewat web (kertas, lisan,
+// praktikum tanpa upload, dll) tapi tetap ikut dihitung sebagai bagian dari
+// rata-rata "Tugas" di Rubrik. Dikelola langsung dari halaman Rincian Tugas.
+// ============================================================================
+router.post('/:mkId/tugas-manual', async (req, res) => {
+  try {
+    const { mkId } = req.params;
+    const { judul, periode } = req.body;
+    if (!judul || !judul.trim()) {
+      return res.status(400).send('Judul tugas manual wajib diisi');
+    }
+    await tambahTugasManual(mkId, req.dosen.id, judul.trim(), periode || getPeriodeAktif());
+    res.redirect(`/dosen/rubrik/${mkId}/rincian-tugas?periode=${encodeURIComponent(periode || getPeriodeAktif())}`);
+  } catch (error) {
+    console.error('Error tambah tugas manual:', error);
+    res.status(500).send('Gagal menambah tugas manual: ' + error.message);
+  }
+});
+
+router.post('/:mkId/tugas-manual/:tugasManualId/hapus', async (req, res) => {
+  try {
+    const { mkId, tugasManualId } = req.params;
+    const periode = req.body.periode || getPeriodeAktif();
+    await hapusTugasManual(tugasManualId);
+    res.redirect(`/dosen/rubrik/${mkId}/rincian-tugas?periode=${encodeURIComponent(periode)}`);
+  } catch (error) {
+    console.error('Error hapus tugas manual:', error);
+    res.status(500).send('Gagal menghapus tugas manual: ' + error.message);
+  }
+});
+
+// Simpan nilai satu mahasiswa untuk satu tugas manual (AJAX, dipanggil dari
+// halaman Rincian Tugas) - lalu kembalikan rata-rata Tugas terbaru mahasiswa
+// itu supaya frontend bisa update tanpa reload.
+router.post('/tugas-manual/nilai', async (req, res) => {
+  try {
+    const { mkId, mahasiswaId, tugasManualId, nilai, periode } = req.body;
+    if (!mkId || !mahasiswaId || !tugasManualId) {
+      return res.status(400).json({ success: false, message: 'Data tidak lengkap' });
+    }
+    const periodeDipakai = periode || getPeriodeAktif();
+    await saveNilaiTugasManual(mahasiswaId, mkId, tugasManualId, nilai, periodeDipakai);
+
+    const rataTugasMap = await getRataTugasByMkId(mkId, periodeDipakai);
+    const rataTugas = rataTugasMap[mahasiswaId] ?? null;
+
+    res.json({ success: true, rataTugas });
+  } catch (error) {
+    console.error('Error simpan nilai tugas manual:', error);
+    res.status(500).json({ success: false, message: 'Gagal menyimpan nilai: ' + error.message });
   }
 });
 

@@ -153,6 +153,70 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
    tolong screenshot atau salin isi halaman Daftar Tugas + Rincian Tugas
    untuk MK yang sama, biar saya bisa bandingkan lebih spesifik.
 
+10. **Akar masalah sebenarnya dari "tugas hilang di Daftar Tugas" - ditemukan
+    & diperbaiki.** Ternyata bukan soal nilai, tapi **dokumen tugasnya sendiri**
+    yang hilang dari daftar. Kronologinya:
+    - `helpers/academicHelper.js` versi lama menganggap Agustus = "Ganjil".
+    - Kalau ada tugas yang **dibuat di bulan Agustus 2026** (sebelum saya
+      perbaiki batas semester minggu lalu), tugas itu ikut tersimpan dengan
+      label `periode: "Ganjil 2026/2027"` - padahal seharusnya
+      "Genap 2025/2026".
+    - Begitu batas semester saya perbaiki (Agustus jadi masuk Genap lagi),
+      **Daftar Tugas** (`/dosen/tugas`) dan **Rubrik/Rincian Tugas** sama-sama
+      cuma menampilkan tugas yang labelnya persis "Genap 2025/2026" -
+      sehingga tugas yang telanjur salah label itu **hilang total** dari
+      kedua halaman, walau datanya tetap ada utuh di Firestore.
+
+    **Perbaikan** (di `helpers/academicHelper.js`, `helpers/nilaiHelper.js`,
+    `routes/dosen/index.js`):
+    - Ditambahkan `getSemesterForDate(tanggal)` - versi umum dari
+      `getCurrentAcademicSemester()` yang bisa menghitung label semester
+      untuk **tanggal apa saja**, bukan cuma "sekarang".
+    - `getTugasByMkId()` (dipakai Rubrik/Rincian Tugas) dan halaman
+      **Daftar Tugas** sekarang **menghitung ulang periode setiap tugas dari
+      tanggal deadline/dibuatnya sendiri** (sumber kebenaran yang tidak
+      pernah berubah), BUKAN mempercayai field `periode` yang tersimpan.
+      Kalau hasilnya beda dari yang tersimpan, dokumennya langsung
+      **diperbaiki otomatis** (self-heal) saat pertama kali diakses.
+
+    Sudah saya tes ulang persis skenario ini (tugas dibuat 15 Agustus 2026,
+    label salah tersimpan "Ganjil 2026/2027") — setelah fix, tugas tsb
+    langsung muncul lagi di Daftar Tugas & Rubrik, dan dokumennya otomatis
+    diperbaiki labelnya secara permanen begitu diakses sekali saja.
+
+    Ini kemungkinan besar **penyebab sebenarnya** dari laporan tugas
+    "belum sinkron" sebelumnya - bukan soal nilai tugas yang tidak terbaca,
+    tapi tugasnya sendiri yang sempat tidak kelihatan.
+
+11. **Fitur baru: Tugas Manual** (untuk tugas yang diberikan TIDAK lewat web -
+    misal dikerjakan di kertas, presentasi lisan, praktikum tanpa upload,
+    dll) - tetap ikut dihitung sebagai bagian dari rata-rata "Tugas" di
+    Rubrik, berdampingan dengan tugas yang dibuat lewat menu Kelola Tugas.
+
+    **Cara pakai:** buka halaman **Rincian Tugas**
+    (`/dosen/rubrik/:mkId/rincian-tugas`) → ada form kecil "+ Tambah Tugas
+    Manual" di atas tabel → isi judulnya (mis. "Presentasi Kelompok") →
+    kolom baru bertanda badge kuning **MANUAL** langsung muncul di tabel dan
+    **bisa diisi langsung di situ** (auto-save ~0.9 detik setelah berhenti
+    mengetik, sama seperti input di halaman Rubrik). Kolom Rata-rata & Tugas
+    di Rubrik otomatis ikut memperhitungkan nilai ini.
+
+    Tugas manual bisa dihapus lagi kapan saja (tombol ✕ kecil di header
+    kolomnya, dengan konfirmasi) - nilainya ikut terhapus rapi, tidak
+    meninggalkan data nyasar.
+
+    **Cara kerja teknis:** disimpan di koleksi Firestore baru `tugasManual`
+    (terpisah dari `tugas` supaya tidak tercampur dengan modul e-learning),
+    nilainya tetap di koleksi `nilai` yang sama (tipe `tugasmanual_<id>`,
+    prefix beda dari `tugas_<id>` biar tidak pernah bentrok). Rata-rata Tugas
+    di Rubrik (`getRataTugasByMkId`) sekarang otomatis menggabungkan tugas
+    web + tugas manual jadi satu perhitungan.
+
+    Sudah saya tes: gabungan 1 tugas web (nilai 80) + 1 tugas manual (nilai
+    90) → rata-rata 85 ✅; tambah tugas manual baru (nilai 70) → rata-rata
+    otomatis jadi 80 ✅; hapus tugas manual → rata-rata kembali ke 85 dan
+    nilainya ikut terhapus ✅.
+
 ---
 
 

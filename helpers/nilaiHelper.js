@@ -1,6 +1,6 @@
 // helpers/nilaiHelper.js
 const { db } = require('../config/firebaseAdmin');
-const { getCurrentAcademicSemester } = require('./academicHelper');
+const { getCurrentAcademicSemester, getSemesterForDate } = require('./academicHelper');
 
 /**
  * Label periode akademik aktif saat ini (mis. "Ganjil 2025/2026").
@@ -127,38 +127,47 @@ async function getNilaiByMkId(mkId, periode = getPeriodeAktif()) {
  * @returns {Promise<Array>} Daftar tugas
  */
 async function getTugasByMkId(mkId, periode = getPeriodeAktif()) {
-  let snapshot;
-  try {
-    snapshot = await db.collection('tugas')
-      .where('mkId', '==', mkId)
-      .where('periode', '==', periode)
-      .orderBy('deadline', 'asc')
-      .get();
-  } catch (indexError) {
-    // Index composite (mkId, periode, deadline) belum siap di Firestore - mundur ke query aman
-    console.error('Index tugas belum siap, fallback ke query tanpa periode:', indexError.message);
-    snapshot = await db.collection('tugas').where('mkId', '==', mkId).get();
-  }
+  // Ambil SEMUA tugas untuk MK ini (tanpa filter periode di level query).
+  // Sengaja begini: field `periode` yang tersimpan di dokumen bisa saja
+  // salah/drift (mis. dibuat saat batas bulan semester sempat berbeda dari
+  // yang sekarang berlaku) - jadi kita HITUNG ULANG periode yang seharusnya
+  // dari tanggal asli tugas itu sendiri (deadline, atau createdAt kalau
+  // deadline tidak ada), bukan cuma percaya field `periode` yang tersimpan.
+  // Kalau hasil hitung ulang beda dari yang tersimpan, dokumennya langsung
+  // diperbaiki (self-heal) supaya query berikutnya sudah benar dari awal.
+  const snapshot = await db.collection('tugas').where('mkId', '==', mkId).get();
 
-  if (snapshot.empty) {
-    // Fallback + self-heal: data lama mungkin belum ditandai periode
-    const semuaSnapshot = await db.collection('tugas').where('mkId', '==', mkId).get();
-    const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
-    if (perluDitandai.length > 0) {
-      await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode }).catch(() => {})));
+  const hasil = [];
+  const perluDiperbaiki = [];
+
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    const tanggalAcuan = data.deadline || data.createdAt;
+    const periodeSeharusnya = tanggalAcuan
+      ? getSemesterForDate(tanggalAcuan).label
+      : (data.periode || periode);
+
+    if (data.periode !== periodeSeharusnya) {
+      perluDiperbaiki.push({ ref: doc.ref, periodeBaru: periodeSeharusnya });
     }
-    snapshot = semuaSnapshot;
+
+    if (periodeSeharusnya === periode) {
+      hasil.push({
+        id: doc.id,
+        judul: data.judul,
+        deadline: data.deadline,
+        deskripsi: data.deskripsi
+      });
+    }
+  });
+
+  if (perluDiperbaiki.length > 0) {
+    await Promise.all(perluDiperbaiki.map(p =>
+      p.ref.update({ periode: p.periodeBaru }).catch(() => {})
+    ));
   }
 
-  return snapshot.docs
-    .filter(doc => (doc.data().periode || periode) === periode) // data lama tanpa periode dianggap periode aktif
-    .sort((a, b) => (a.data().deadline || '').localeCompare(b.data().deadline || ''))
-    .map(doc => ({
-      id: doc.id,
-      judul: doc.data().judul,
-      deadline: doc.data().deadline,
-      deskripsi: doc.data().deskripsi
-    }));
+  return hasil.sort((a, b) => (a.deadline || '').localeCompare(b.deadline || ''));
 }
 
 /**
@@ -578,31 +587,143 @@ function nilaiKeHurufRubrik(nilai) {
  *
  * @returns {Promise<Object>} map mahasiswaId -> rata-rata tugas (number|null)
  */
-async function getRataTugasByMkId(mkId, periode = getPeriodeAktif()) {
-  const tugasList = await getTugasByMkId(mkId, periode);
-  if (tugasList.length === 0) return {};
+/**
+ * ============================================================================
+ * TUGAS MANUAL - untuk tugas yang diberikan TIDAK lewat web (mis. dikerjakan
+ * di kertas, presentasi lisan, praktikum tanpa upload, dll) tapi tetap ingin
+ * ikut dihitung sebagai bagian dari rata-rata "Tugas" di Rubrik, berdampingan
+ * dengan tugas yang dibuat lewat menu Kelola Tugas.
+ * ============================================================================
+ * Disimpan di koleksi terpisah 'tugasManual' (bukan 'tugas', supaya tidak
+ * tercampur dengan modul e-learning/pengumpulan file yang sudah ada).
+ * Nilainya tetap disimpan di koleksi 'nilai' yang sama, memakai tipe
+ * `tugasmanual_<id>` (prefix beda dari `tugas_<id>` supaya tidak pernah
+ * bentrok/tertukar).
+ */
 
-  // Ambil semua nilai tugas MK ini sekaligus (satu query per MK, bukan per
-  // tugas) lalu saring di JS berdasarkan tipe yang cocok dengan tugasList.
-  const tipeSet = new Set(tugasList.map(t => `tugas_${t.id}`));
+async function tambahTugasManual(mkId, dosenId, judul, periode = getPeriodeAktif()) {
+  const now = new Date().toISOString();
+  const docRef = await db.collection('tugasManual').add({
+    mkId, dosenId, judul, periode, createdAt: now
+  });
+  return { id: docRef.id };
+}
+
+async function hapusTugasManual(tugasManualId) {
+  await db.collection('tugasManual').doc(tugasManualId).delete();
+  // Ikut hapus semua nilai yang sudah terlanjur diisi utk tugas manual ini,
+  // supaya tidak jadi data nyasar (orphan) di koleksi 'nilai'.
+  const snapshot = await db.collection('nilai').where('tipe', '==', `tugasmanual_${tugasManualId}`).get();
+  await Promise.all(snapshot.docs.map(doc => doc.ref.delete().catch(() => {})));
+}
+
+/**
+ * Ambil daftar tugas manual untuk satu MK+periode, direkonsiliasi dengan
+ * prinsip yang sama seperti getTugasByMkId (hitung ulang periode dari
+ * createdAt-nya sendiri, self-heal kalau ternyata drift).
+ */
+async function getTugasManualByMkId(mkId, periode = getPeriodeAktif()) {
+  const snapshot = await db.collection('tugasManual').where('mkId', '==', mkId).get();
+
+  const hasil = [];
+  const perluDiperbaiki = [];
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    const periodeSeharusnya = data.createdAt ? getSemesterForDate(data.createdAt).label : (data.periode || periode);
+    if (data.periode !== periodeSeharusnya) {
+      perluDiperbaiki.push({ ref: doc.ref, periodeBaru: periodeSeharusnya });
+    }
+    if (periodeSeharusnya === periode) {
+      hasil.push({ id: doc.id, judul: data.judul, createdAt: data.createdAt, manual: true });
+    }
+  });
+
+  if (perluDiperbaiki.length > 0) {
+    await Promise.all(perluDiperbaiki.map(p => p.ref.update({ periode: p.periodeBaru }).catch(() => {})));
+  }
+
+  return hasil.sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
+}
+
+/**
+ * Simpan/ubah nilai satu mahasiswa untuk satu tugas manual (upsert, sama
+ * polanya dengan saveKomponenRubrik).
+ */
+async function saveNilaiTugasManual(mahasiswaId, mkId, tugasManualId, nilai, periode = getPeriodeAktif()) {
+  const tipe = `tugasmanual_${tugasManualId}`;
+  const nilaiAngka = parseFloat(nilai);
+  const now = new Date().toISOString();
+
+  const existingSnapshot = await db.collection('nilai')
+    .where('mahasiswaId', '==', mahasiswaId)
+    .where('mkId', '==', mkId)
+    .where('tipe', '==', tipe)
+    .limit(1)
+    .get();
+
+  if (existingSnapshot.empty) {
+    const docRef = await db.collection('nilai').add({
+      mahasiswaId, mkId, tipe, nilai: nilaiAngka, periode, createdAt: now, updatedAt: now
+    });
+    return { id: docRef.id, isNew: true };
+  } else {
+    await existingSnapshot.docs[0].ref.update({ nilai: nilaiAngka, updatedAt: now });
+    return { id: existingSnapshot.docs[0].id, isNew: false };
+  }
+}
+
+/**
+ * Gabungkan tugas dari web (getTugasByMkId) + tugas manual
+ * (getTugasManualByMkId) jadi satu daftar tunggal, dan ambil semua nilainya
+ * sekaligus (satu query 'nilai' per MK). Dipakai bersama oleh
+ * getRataTugasByMkId & getRincianTugasByMkId supaya keduanya selalu
+ * konsisten satu sama lain, dan supaya tugas manual otomatis ikut masuk ke
+ * rata-rata Tugas tanpa perlu logika terpisah.
+ */
+async function _getSemuaTugasDenganNilai(mkId, periode) {
+  const [tugasWeb, tugasManual] = await Promise.all([
+    getTugasByMkId(mkId, periode),
+    getTugasManualByMkId(mkId, periode)
+  ]);
+  const semuaTugas = [...tugasWeb, ...tugasManual]; // tugas web dulu, baru manual
+
+  if (semuaTugas.length === 0) return { semuaTugas, perMahasiswa: {} };
+
+  const tipeMap = new Map(); // tipe -> tugasId
+  tugasWeb.forEach(t => tipeMap.set(`tugas_${t.id}`, t.id));
+  tugasManual.forEach(t => tipeMap.set(`tugasmanual_${t.id}`, t.id));
+
   const snapshot = await db.collection('nilai').where('mkId', '==', mkId).get();
-
   const perMahasiswa = {}; // mahasiswaId -> { tugasId: nilai }
   snapshot.docs.forEach(doc => {
     const data = doc.data();
-    if (!tipeSet.has(data.tipe)) return; // bukan nilai tugas dari periode ini
-    const tugasId = data.tipe.replace('tugas_', '');
+    if (!tipeMap.has(data.tipe)) return;
+    const tugasId = tipeMap.get(data.tipe);
     if (!perMahasiswa[data.mahasiswaId]) perMahasiswa[data.mahasiswaId] = {};
     perMahasiswa[data.mahasiswaId][tugasId] = data.nilai;
   });
 
+  return { semuaTugas, perMahasiswa };
+}
+
+/**
+ * Rata-rata nilai tugas (WEB + MANUAL digabung) per mahasiswa untuk satu MK.
+ * Lihat _getSemuaTugasDenganNilai untuk penjelasan penggabungannya, dan
+ * komentar panjang sebelumnya soal kenapa nilai tugas TIDAK disaring lagi
+ * lewat field periode di dokumen 'nilai' itu sendiri.
+ * @returns {Promise<Object>} map mahasiswaId -> rata-rata tugas (number|null)
+ */
+async function getRataTugasByMkId(mkId, periode = getPeriodeAktif()) {
+  const { semuaTugas, perMahasiswa } = await _getSemuaTugasDenganNilai(mkId, periode);
+  if (semuaTugas.length === 0) return {};
+
   const result = {};
   Object.keys(perMahasiswa).forEach(mahasiswaId => {
-    const nilaiPerTugas = tugasList
+    const nilaiValid = semuaTugas
       .map(t => perMahasiswa[mahasiswaId][t.id])
       .filter(v => v !== undefined && v !== null);
-    result[mahasiswaId] = nilaiPerTugas.length > 0
-      ? nilaiPerTugas.reduce((a, b) => a + b, 0) / nilaiPerTugas.length
+    result[mahasiswaId] = nilaiValid.length > 0
+      ? nilaiValid.reduce((a, b) => a + b, 0) / nilaiValid.length
       : null;
   });
   return result;
@@ -610,39 +731,24 @@ async function getRataTugasByMkId(mkId, periode = getPeriodeAktif()) {
 
 /**
  * Sama seperti getRataTugasByMkId, tapi mengembalikan RINCIAN per-tugas
- * (bukan cuma rata-rata) - dipakai halaman "Rincian Tugas" di rubrik supaya
- * dosen bisa melihat akumulasi Tugas 1, Tugas 2, Tugas 3, dst per mahasiswa,
- * dan membandingkannya langsung dengan apa yang tampil di Daftar Tugas.
- * Sengaja pakai query & logika yang SAMA PERSIS dengan getRataTugasByMkId
- * supaya kedua angka (rincian vs rata-rata di rubrik) selalu konsisten satu
- * sama lain.
+ * (WEB + MANUAL digabung, manual ditandai `manual: true`) - dipakai halaman
+ * "Rincian Tugas" supaya dosen bisa melihat akumulasi semua tugas per
+ * mahasiswa, termasuk yang diberikan di luar web.
  *
  * @returns {Promise<Object>} {
- *   tugasList: [{ id, judul, deadline }, ...],   // urut sesuai deadline
+ *   tugasList: [{ id, judul, deadline?, manual? }, ...],
  *   perMahasiswa: { mahasiswaId: { tugasId: nilai|null, rata: number|null } }
  * }
  */
 async function getRincianTugasByMkId(mkId, periode = getPeriodeAktif()) {
-  const tugasList = await getTugasByMkId(mkId, periode);
-  if (tugasList.length === 0) return { tugasList: [], perMahasiswa: {} };
-
-  const tipeSet = new Set(tugasList.map(t => `tugas_${t.id}`));
-  const snapshot = await db.collection('nilai').where('mkId', '==', mkId).get();
-
-  const nilaiPerMahasiswa = {}; // mahasiswaId -> { tugasId: nilai }
-  snapshot.docs.forEach(doc => {
-    const data = doc.data();
-    if (!tipeSet.has(data.tipe)) return;
-    const tugasId = data.tipe.replace('tugas_', '');
-    if (!nilaiPerMahasiswa[data.mahasiswaId]) nilaiPerMahasiswa[data.mahasiswaId] = {};
-    nilaiPerMahasiswa[data.mahasiswaId][tugasId] = data.nilai;
-  });
+  const { semuaTugas, perMahasiswa: nilaiPerMahasiswa } = await _getSemuaTugasDenganNilai(mkId, periode);
+  if (semuaTugas.length === 0) return { tugasList: [], perMahasiswa: {} };
 
   const perMahasiswa = {};
   Object.keys(nilaiPerMahasiswa).forEach(mahasiswaId => {
     const nilaiMap = {};
     const nilaiValid = [];
-    tugasList.forEach(t => {
+    semuaTugas.forEach(t => {
       const v = nilaiPerMahasiswa[mahasiswaId][t.id];
       nilaiMap[t.id] = (v === undefined) ? null : v;
       if (v !== undefined && v !== null) nilaiValid.push(v);
@@ -655,7 +761,7 @@ async function getRincianTugasByMkId(mkId, periode = getPeriodeAktif()) {
     };
   });
 
-  return { tugasList, perMahasiswa };
+  return { tugasList: semuaTugas, perMahasiswa };
 }
 
 module.exports = {
@@ -676,5 +782,9 @@ module.exports = {
   hitungRubrik,
   nilaiKeHurufRubrik,
   getRataTugasByMkId,
-  getRincianTugasByMkId
+  getRincianTugasByMkId,
+  tambahTugasManual,
+  hapusTugasManual,
+  getTugasManualByMkId,
+  saveNilaiTugasManual
 };

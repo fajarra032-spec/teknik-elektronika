@@ -66,7 +66,17 @@
     Halaman ini menampilkan nilai <strong>setiap tugas satu per satu</strong> (akumulasi Tugas 1, 2, 3, dst),
     diambil dari sumber data yang sama persis dengan <a href="/dosen/tugas" target="_blank">Daftar Tugas</a> dan
     kolom "Tugas (otomatis)" di Rubrik — jadi angka di sini pasti sinkron dengan keduanya. Kolom
-    <strong>Rata-rata</strong> adalah nilai yang dipakai di Rubrik.
+    <strong>Rata-rata</strong> adalah nilai yang dipakai di Rubrik. Kolom bertanda <span class="badge-manual">MANUAL</span>
+    bisa diisi langsung di sini untuk tugas yang diberikan <strong>tidak lewat web</strong> (kertas, presentasi lisan, dll).
+  </div>
+
+  <div class="tambah-manual-box">
+    <form method="POST" action="/dosen/rubrik/<%= mk.id %>/tugas-manual" class="d-flex flex-wrap gap-2 align-items-center">
+      <input type="hidden" name="periode" value="<%= periode %>">
+      <label class="fw-semibold mb-0" style="font-size:0.85rem;"><i class="bi bi-plus-circle"></i> Tambah Tugas Manual:</label>
+      <input type="text" name="judul" class="form-control form-control-sm" style="max-width:260px;" placeholder="mis. Presentasi Kelompok" required>
+      <button type="submit" class="btn btn-sm btn-primary">Tambah</button>
+    </form>
   </div>
 
   <div class="table-responsive">
@@ -77,31 +87,95 @@
           <th>NIM</th>
           <th>Nama Mahasiswa</th>
           <% tugasList.forEach((t, i) => { %>
-            <th><%= t.judul || ('Tugas ' + (i + 1)) %></th>
+            <th>
+              <%= t.judul || ('Tugas ' + (i + 1)) %>
+              <% if (t.manual) { %>
+                <br><span class="badge-manual">MANUAL</span>
+                <form method="POST" action="/dosen/rubrik/<%= mk.id %>/tugas-manual/<%= t.id %>/hapus"
+                      onsubmit="return confirm('Hapus tugas manual ini beserta semua nilainya?');" class="d-inline">
+                  <input type="hidden" name="periode" value="<%= periode %>">
+                  <button type="submit" class="btn-hapus-manual" title="Hapus tugas manual ini"><i class="bi bi-x-circle"></i></button>
+                </form>
+              <% } %>
+            </th>
           <% }) %>
           <th>Rata-rata</th>
         </tr>
       </thead>
       <tbody>
         <% if (tugasList.length === 0) { %>
-          <tr><td colspan="4" class="text-center py-5 text-muted">Belum ada tugas dibuat untuk MK ini pada periode <%= periode %>.</td></tr>
+          <tr><td colspan="4" class="text-center py-5 text-muted">Belum ada tugas untuk MK ini pada periode <%= periode %>. Buat lewat Daftar Tugas, atau tambah Tugas Manual di atas.</td></tr>
         <% } else if (data.length === 0) { %>
           <tr><td colspan="<%= 3 + tugasList.length + 1 %>" class="text-center py-5 text-muted">Belum ada mahasiswa aktif di MK ini.</td></tr>
         <% } %>
-        <% data.forEach((item, idx) => { const n = item.nilai || {}; %>
+        <% data.forEach((item, idx) => { const n = item.nilai || {}; const mid = item.mahasiswa.id; %>
           <tr>
             <td><%= idx + 1 %></td>
             <td><%= item.mahasiswa.nim %></td>
             <td class="name-cell"><%= item.mahasiswa.nama %></td>
             <% tugasList.forEach(t => { const v = n[t.id]; %>
-              <td class="<%= (v === null || v === undefined) ? 'kosong' : '' %>"><%= (v === null || v === undefined) ? '-' : v %></td>
+              <% if (t.manual) { %>
+                <td>
+                  <input type="number" min="0" max="100" class="manual-input" value="<%= (v === null || v === undefined) ? '' : v %>"
+                         oninput="jadwalSimpanManual(this, '<%= mid %>', '<%= t.id %>')">
+                </td>
+              <% } else { %>
+                <td class="<%= (v === null || v === undefined) ? 'kosong' : '' %>"><%= (v === null || v === undefined) ? '-' : v %></td>
+              <% } %>
             <% }) %>
-            <td><span class="rata-cell"><%= (n.rata !== null && n.rata !== undefined) ? n.rata.toFixed(2) : '-' %></span></td>
+            <td><span class="rata-cell" id="rata-<%= mid %>"><%= (n.rata !== null && n.rata !== undefined) ? n.rata.toFixed(2) : '-' %></span></td>
           </tr>
         <% }) %>
       </tbody>
     </table>
   </div>
 </div>
+
+<style>
+  .badge-manual { background: #f59e0b; color: white; font-size: 0.6rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 50px; }
+  .tambah-manual-box { background: white; border-radius: 0.9rem; padding: 0.9rem 1.2rem; margin-bottom: 1.2rem; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+  .manual-input { width: 60px; text-align: center; border: 1px solid #fbbf24; background: #fffbeb; border-radius: 0.4rem; padding: 0.25rem; }
+  .manual-input.saved-flash { border-color: #22c55e !important; background: #ecfdf5; }
+  .btn-hapus-manual { background: none; border: none; color: #b91c1c; font-size: 0.85rem; padding: 0; line-height: 1; }
+</style>
+
+<script>
+const timersManual = {};
+function jadwalSimpanManual(el, mahasiswaId, tugasManualId) {
+  const key = mahasiswaId + '-' + tugasManualId;
+  clearTimeout(timersManual[key]);
+  timersManual[key] = setTimeout(() => simpanNilaiManual(el, mahasiswaId, tugasManualId), 900);
+}
+
+async function simpanNilaiManual(el, mahasiswaId, tugasManualId) {
+  const nilai = el.value;
+  if (nilai === '') return;
+  try {
+    const body = new URLSearchParams({
+      mkId: '<%= mk.id %>',
+      mahasiswaId,
+      tugasManualId,
+      nilai,
+      periode: '<%= periode %>'
+    });
+    const res = await fetch('/dosen/rubrik/tugas-manual/nilai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body
+    });
+    const json = await res.json();
+    if (json.success) {
+      const rataEl = document.getElementById('rata-' + mahasiswaId);
+      if (rataEl) rataEl.textContent = json.rataTugas !== null ? json.rataTugas.toFixed(2) : '-';
+      el.classList.add('saved-flash');
+      setTimeout(() => el.classList.remove('saved-flash'), 700);
+    } else {
+      alert('Gagal menyimpan: ' + json.message);
+    }
+  } catch (err) {
+    alert('Gagal menyimpan nilai: ' + err.message);
+  }
+}
+</script>
 
 <%- include('../partials/footer') %>

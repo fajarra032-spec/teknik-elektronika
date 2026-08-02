@@ -1,7 +1,15 @@
-function getCurrentAcademicSemester() {
-  const now = new Date();
-  const month = now.getMonth() + 1;
-  const year = now.getFullYear();
+/**
+ * Hitung label semester akademik untuk TANGGAL APAPUN (bukan cuma "sekarang").
+ * Dipakai untuk merekonsiliasi dokumen `tugas`/`nilai` yang label periode-nya
+ * kebetulan salah tersimpan (mis. akibat penyesuaian batas bulan semester) -
+ * dengan menghitung ulang dari tanggal aslinya (deadline/createdAt), bukan
+ * dari kapan dokumen itu disimpan.
+ * @param {Date|string} dateInput
+ */
+function getSemesterForDate(dateInput) {
+  const d = (dateInput instanceof Date) ? dateInput : new Date(dateInput);
+  const month = d.getMonth() + 1;
+  const year = d.getFullYear();
   let semester, tahunAwal, tahunAkhir;
 
   if (month >= 2 && month <= 8) {
@@ -23,8 +31,12 @@ function getCurrentAcademicSemester() {
     tahunAwal,
     tahunAkhir,
     label: `${semester} ${tahunAwal}/${tahunAkhir}`,
-    tahunAkademik: `${tahunAwal}/${tahunAkhir}`  // <-- tambahkan ini
+    tahunAkademik: `${tahunAwal}/${tahunAkhir}`
   };
+}
+
+function getCurrentAcademicSemester() {
+  return getSemesterForDate(new Date());
 }
 
 function getAngkatanFromNim(nim) {
@@ -46,6 +58,7 @@ function getStudentCurrentSemester(angkatan) {
 
 module.exports = {
   getCurrentAcademicSemester,
+  getSemesterForDate,
   getAngkatanFromNim,
   getStudentCurrentSemester
 };
