@@ -217,6 +217,36 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
     otomatis jadi 80 ✅; hapus tugas manual → rata-rata kembali ke 85 dan
     nilainya ikut terhapus ✅.
 
+12. **Bug penyebab "nilai yang sudah diperiksa belum kembali" - ditemukan &
+    diperbaiki.** Ini beda lagi dari sebelumnya, dan cukup halus: fungsi
+    `saveNilai()` (dipakai setiap dosen menilai/memeriksa tugas) tadinya
+    mengecek "apakah nilai untuk mahasiswa+tugas ini sudah pernah ada?" dengan
+    ikut menyaring field `periode`. Kalau label periode aktif SEKARANG beda
+    dari yang tersimpan di nilai LAMA (persis skenario akibat penyesuaian
+    batas semester kemarin), pengecekan ini **gagal menemukan nilai lama**
+    dan malah **membuat dokumen nilai BARU** - sehingga ada 2 dokumen nilai
+    untuk mahasiswa+tugas yang sama. Karena halaman detail tugas menampilkan
+    nilai tanpa urutan yang pasti, nilai yang baru saja diperiksa dosen bisa
+    "keteter" oleh dokumen lama saat ditampilkan lagi - persis seperti yang
+    dilaporkan.
+
+    **Perbaikan** (`helpers/nilaiHelper.js` - `saveNilai()`):
+    - Pengecekan nilai yang sudah ada sekarang **tidak lagi ikut menyaring
+      periode** - cukup (mahasiswaId, mkId, tipe tugas), karena satu tugasId
+      memang sudah pasti hanya milik satu periode.
+    - Kalau ternyata SUDAH ADA lebih dari satu dokumen nilai untuk kombinasi
+      yang sama (sisa dari bug lama), sistem otomatis **membersihkan
+      duplikatnya** - menyimpan ke yang paling baru diubah, menghapus sisanya.
+    - Halaman **detail tugas** (`/dosen/tugas/:id`) juga diperkuat sebagai
+      lapis kedua: kalau masih ada duplikat nyasar, otomatis pilih nilai yang
+      **paling baru** (bukan asal urutan Firestore) dan bersihkan sisanya.
+
+    Sudah saya tes persis skenario ini: nilai lama (60, periode drift) +
+    dosen menilai ulang jadi 95 (periode sudah benar) → hasilnya **1
+    dokumen saja**, nilai ter-update jadi 95, bukan 2 dokumen yang
+    tumpang tindih. Ini kemungkinan **penyebab pasti** dari laporan
+    "nilai yang diperiksa belum kembali".
+
 ---
 
 

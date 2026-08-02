@@ -25,14 +25,21 @@ function getPeriodeAktif() {
 async function saveNilai(mahasiswaId, mkId, tugasId, judulTugas, nilai, periode = getPeriodeAktif(), komentar = null) {
   const tipeNilai = `tugas_${tugasId}`; // Format unik: tugas_<tugasId>
 
-  // Disengaja: query juga menyertakan periode, supaya nilai attempt mahasiswa
-  // yang mengulang MK ini di periode lain tidak tertimpa/dianggap sama.
+  // ✅ PENTING: cek dokumen yang sudah ada HANYA lewat (mahasiswaId, mkId,
+  // tipe) - TANPA ikut menyaring field `periode`. Satu tugasId sudah pasti
+  // milik satu periode tertentu (satu dokumen 'tugas'), jadi periode tidak
+  // perlu jadi bagian dari kunci keunikan di sini. Kalau periode tetap
+  // disertakan dalam pencarian dan kebetulan label periode aktif sempat
+  // berbeda dari periode yang tersimpan di dokumen nilai sebelumnya (mis.
+  // karena penyesuaian batas bulan semester), query ini akan gagal menemukan
+  // nilai yang sudah ada dan malah MEMBUAT DOKUMEN BARU (duplikat) setiap
+  // kali dosen menilai ulang - sehingga nilai yang baru saja diperiksa bisa
+  // "tertimpa balik" oleh dokumen lama saat ditampilkan. Ini pernah jadi
+  // penyebab nilai yang sudah diperiksa dosen terlihat tidak tersimpan.
   const existingSnapshot = await db.collection('nilai')
     .where('mahasiswaId', '==', mahasiswaId)
     .where('mkId', '==', mkId)
     .where('tipe', '==', tipeNilai)
-    .where('periode', '==', periode)
-    .limit(1)
     .get();
   
   const nilaiAngka = parseFloat(nilai);
@@ -51,16 +58,29 @@ async function saveNilai(mahasiswaId, mkId, tugasId, judulTugas, nilai, periode 
       updatedAt: now
     });
     return { id: docRef.id, isNew: true };
-  } else {
-    const docRef = existingSnapshot.docs[0].ref;
-    await docRef.update({
-      nilai: nilaiAngka,
-      judulTugas,
-      komentar,
-      updatedAt: now
-    });
-    return { id: existingSnapshot.docs[0].id, isNew: false };
   }
+
+  // Kalau (karena bug lama sebelum perbaikan ini) sempat ada LEBIH DARI SATU
+  // dokumen nilai utk kombinasi ini, bersihkan sekalian: simpan nilai baru
+  // ke dokumen yang PALING BARU diubah, dan hapus sisanya supaya tidak ada
+  // duplikat yang nyangkut lagi.
+  const docsUrut = existingSnapshot.docs.sort((a, b) =>
+    (b.data().updatedAt || '').localeCompare(a.data().updatedAt || '')
+  );
+  const docUtama = docsUrut[0];
+  const dupLain = docsUrut.slice(1);
+  if (dupLain.length > 0) {
+    await Promise.all(dupLain.map(d => d.ref.delete().catch(() => {})));
+  }
+
+  await docUtama.ref.update({
+    nilai: nilaiAngka,
+    judulTugas,
+    komentar,
+    periode,
+    updatedAt: now
+  });
+  return { id: docUtama.id, isNew: false };
 }
 
 /**

@@ -318,16 +318,35 @@ router.get('/tugas/:id', async (req, res) => {
       .where('tipe', '==', `tugas_${tugas.id}`)
       .get();
     
-    // Buat map nilai berdasarkan mahasiswaId
-    const nilaiMap = new Map();
+    // Buat map nilai berdasarkan mahasiswaId. Kalau (karena bug periode lama
+    // sebelum diperbaiki) ternyata ada LEBIH DARI SATU dokumen nilai utk
+    // mahasiswa+tugas yang sama, pakai yang PALING BARU diubah (updatedAt),
+    // bukan asal dokumen terakhir yang kebetulan muncul di iterasi - supaya
+    // nilai yang baru saja diperiksa dosen tidak "keteter" duplikat lama.
+    // Duplikat yang lebih lama langsung dibersihkan (self-heal).
+    const docsPerMahasiswa = new Map(); // mahasiswaId -> [{ref, data}, ...]
     nilaiSnapshot.docs.forEach(doc => {
       const data = doc.data();
-      nilaiMap.set(data.mahasiswaId, {
-        nilai: data.nilai,
-        komentar: data.komentar || '',
-        updatedAt: data.updatedAt
-      });
+      if (!docsPerMahasiswa.has(data.mahasiswaId)) docsPerMahasiswa.set(data.mahasiswaId, []);
+      docsPerMahasiswa.get(data.mahasiswaId).push({ ref: doc.ref, data });
     });
+
+    const nilaiMap = new Map();
+    const dupUntukDihapus = [];
+    docsPerMahasiswa.forEach((daftar, mahasiswaId) => {
+      daftar.sort((a, b) => (b.data.updatedAt || '').localeCompare(a.data.updatedAt || ''));
+      const utama = daftar[0].data;
+      nilaiMap.set(mahasiswaId, {
+        nilai: utama.nilai,
+        komentar: utama.komentar || '',
+        updatedAt: utama.updatedAt
+      });
+      daftar.slice(1).forEach(d => dupUntukDihapus.push(d.ref));
+    });
+    if (dupUntukDihapus.length > 0) {
+      Promise.all(dupUntukDihapus.map(ref => ref.delete().catch(() => {})))
+        .catch(err => console.error('Gagal membersihkan duplikat nilai:', err));
+    }
 
     const mahasiswaList = [];
     for (const uid of mahasiswaIds) {
