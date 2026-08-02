@@ -94,6 +94,65 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
    sama langsung ter-update dari hasil hitungan server. Jadi mengetik angka
    2 digit seperti 80 tidak lagi terputus, dan hasilnya langsung kelihatan.
 
+6. **Nilai Tugas di rubrik = akumulasi Tugas 1, 2, 3, dst (dan cara cek sinkron
+   dengan Daftar Tugas).** Ditambahkan halaman baru **"Rincian Tugas"**
+   (`/dosen/rubrik/:mkId/rincian-tugas`, link ada di pojok kanan atas halaman
+   Rubrik) yang menampilkan tabel nilai **per tugas satu per satu** (Tugas 1,
+   Tugas 2, Tugas 3, ... sesuai tugas yang benar-benar dibuat di MK itu) plus
+   kolom Rata-rata — mirip sheet "Detail Tugas" di Excel yang dulu dibuat.
+
+   Angka rata-rata di halaman ini dijamin **identik** dengan angka "Tugas
+   (otomatis)" di Rubrik, karena keduanya (`getRincianTugasByMkId` dan
+   `getRataTugasByMkId`) memakai query & logika yang sama persis - sudah
+   saya tes dengan data tiruan 3 tugas (termasuk 1 nilai yang periode-nya
+   sengaja dibuat beda) dan hasilnya konsisten 100% di kedua fungsi.
+
+   Kalau nanti masih ada yang terlihat "belum sinkron" antara Daftar Tugas
+   dan Rubrik, buka halaman Rincian Tugas ini dulu - kalau di situ juga
+   sudah tidak sesuai dengan Daftar Tugas, kemungkinan ada MK/tugas/nilai
+   spesifik yang bermasalah (mis. `mkId` di dokumen `tugas` tidak persis
+   sama dengan `mkId` yang dipakai enrollment) - kabari saya MK & tugas mana
+   supaya saya bisa telusuri lebih spesifik.
+
+7. **Kolom bobot 0% sekarang benar-benar disembunyikan (bukan cuma abu-abu).**
+   Di halaman input dosen, halaman detail admin, dan halaman cetak - kalau
+   bobot Kuis/Sikap/Keaktifan diatur 0%, kolomnya **hilang total** dari tabel
+   (bukan cuma diberi label "tidak dipakai" seperti revisi sebelumnya).
+
+8. **Kenapa Huruf/Nilai Akhir kadang tidak muncul - sekarang ada penjelasannya
+   langsung di tabel.** Root cause paling umum: dosen mengira menghapus satu
+   komponen (mis. set bobot Kuis = 0) sudah cukup, padahal ada komponen LAIN
+   yang bobotnya masih > 0 tapi belum sempat diisi (paling sering:
+   Sikap/Keaktifan, karena keduanya dipakai untuk menghitung Kehadiran Akhir).
+   Selama ada komponen berbobot > 0 yang masih kosong, Nilai Akhir memang
+   sengaja belum dihitung (supaya tidak salah/prematur).
+
+   **Sekarang lebih transparan:** kalau Nilai Akhir masih "-", di bawah
+   angkanya muncul catatan kecil **"Belum: Sikap, Keaktifan"** (misalnya) -
+   jadi dosen langsung tahu komponen mana yang masih perlu diisi atau
+   bobotnya perlu di-nol-kan juga. Ini update otomatis tanpa reload begitu
+   nilai disimpan.
+
+9. **Diagnostik tugas "salah MK" (kemungkinan akar masalah sinkron yang
+   sebenarnya).** Karena laporan "tugas belum sinkron" ternyata menunjuk ke
+   URL Daftar Tugas & detail tugas spesifik yang tidak bisa saya akses
+   langsung (di luar percakapan ini, perlu login), saya tambahkan alat
+   diagnostik otomatis di halaman **Rincian Tugas**: sistem akan mengecek
+   apakah ada tugas dengan **kode MK yang sama persis** (mis. sama-sama
+   "ELK301") tapi **ID data Mata Kuliah yang berbeda** di Firestore - ini
+   biasanya terjadi kalau ada 2 dokumen `mataKuliah` untuk kelas yang
+   terlihat sama di UI tapi sebenarnya beda record (mis. sisa duplikat dari
+   semester sebelumnya). Kalau ditemukan, akan muncul kotak peringatan merah
+   di atas tabel Rincian Tugas yang menyebutkan tugas mana saja yang
+   "salah tempat" beserta ID datanya masing-masing - supaya bisa langsung
+   ketahuan apakah ini penyebabnya.
+
+   **Catatan jujur:** saya tidak bisa membuka `wa.ac.id/dosen/tugas/...` dari
+   sini (perlu login & di luar akses saya), jadi kalau setelah update ini
+   kotak peringatan itu tetap tidak muncul padahal Anda yakin datanya beda,
+   tolong screenshot atau salin isi halaman Daftar Tugas + Rincian Tugas
+   untuk MK yang sama, biar saya bisa bandingkan lebih spesifik.
+
 ---
 
 

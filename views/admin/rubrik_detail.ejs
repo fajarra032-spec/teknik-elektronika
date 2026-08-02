@@ -45,6 +45,14 @@
     Tugas <%= bobot.tugas %>%, Kuis <%= bobot.kuis %>%, UTS <%= bobot.uts %>%, UAS <%= bobot.uas %>%
   </div>
 
+  <%
+    const pakaiSikap = (bobot.sikap || 0) > 0;
+    const pakaiKeaktifan = (bobot.keaktifan || 0) > 0;
+    const pakaiKuis = (bobot.kuis || 0) > 0;
+    const kehadiranColspan = 1 + (pakaiSikap ? 1 : 0) + (pakaiKeaktifan ? 1 : 0);
+    const totalKolom = 3 + kehadiranColspan + 1 + (pakaiKuis ? 1 : 0) + 2 + 4;
+  %>
+
   <div class="table-responsive">
     <table class="rubrik-table">
       <thead>
@@ -52,9 +60,9 @@
           <th rowspan="2">No</th>
           <th rowspan="2">NIM</th>
           <th rowspan="2">Nama Mahasiswa</th>
-          <th colspan="3">Kehadiran, Sikap &amp; Keaktifan</th>
+          <th colspan="<%= kehadiranColspan %>">Kehadiran<% if (pakaiSikap || pakaiKeaktifan) { %>, Sikap &amp; Keaktifan<% } %></th>
           <th rowspan="2">Tugas</th>
-          <th rowspan="2">Kuis</th>
+          <% if (pakaiKuis) { %><th rowspan="2">Kuis</th><% } %>
           <th rowspan="2">UTS</th>
           <th rowspan="2">UAS</th>
           <th rowspan="2">Nilai<br>Akhir</th>
@@ -63,12 +71,14 @@
           <th rowspan="2">Aksi</th>
         </tr>
         <tr>
-          <th>% Hadir</th><th>Sikap</th><th>Keaktifan</th>
+          <th>% Hadir</th>
+          <% if (pakaiSikap) { %><th>Sikap</th><% } %>
+          <% if (pakaiKeaktifan) { %><th>Keaktifan</th><% } %>
         </tr>
       </thead>
       <tbody>
         <% if (data.length === 0) { %>
-          <tr><td colspan="14" class="text-center py-5 text-muted">Belum ada mahasiswa aktif di MK ini.</td></tr>
+          <tr><td colspan="<%= totalKolom %>" class="text-center py-5 text-muted">Belum ada mahasiswa aktif di MK ini.</td></tr>
         <% } %>
         <% data.forEach((item, idx) => { const h = item.hasil; const mid = item.mahasiswa.id; %>
           <tr>
@@ -76,13 +86,18 @@
             <td><%= item.mahasiswa.nim %></td>
             <td class="name-cell"><%= item.mahasiswa.nama %></td>
             <td><%= h.persenHadir !== null ? h.persenHadir.toFixed(1) : '-' %></td>
-            <td><%= h.sikap ?? '-' %></td>
-            <td><%= h.keaktifan ?? '-' %></td>
+            <% if (pakaiSikap) { %><td><%= h.sikap ?? '-' %></td><% } %>
+            <% if (pakaiKeaktifan) { %><td><%= h.keaktifan ?? '-' %></td><% } %>
             <td><%= h.rataTugas !== null ? h.rataTugas.toFixed(2) : '-' %></td>
-            <td><%= h.kuis ?? '-' %></td>
+            <% if (pakaiKuis) { %><td><%= h.kuis ?? '-' %></td><% } %>
             <td><%= h.uts ?? '-' %></td>
             <td><%= h.uas ?? '-' %></td>
-            <td><strong><%= h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-' %></strong></td>
+            <td>
+              <strong><%= h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-' %></strong>
+              <% if (h.nilaiAkhir === null && h.belumLengkap && h.belumLengkap.length > 0) { %>
+                <div class="text-muted" style="font-size:0.68rem;">Belum: <%= h.belumLengkap.join(', ') %></div>
+              <% } %>
+            </td>
             <td><span class="huruf-badge"><%= h.huruf || '-' %></span></td>
             <td class="<%= h.keterangan === 'LULUS' ? 'lulus' : (h.keterangan === 'TIDAK LULUS' ? 'tidak-lulus' : '') %>">
               <%= h.keterangan || '-' %>

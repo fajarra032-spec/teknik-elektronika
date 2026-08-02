@@ -16,6 +16,7 @@ const {
   saveKomponenRubrik,
   getKomponenRubrikByMkId,
   getRataTugasByMkId,
+  getRincianTugasByMkId,
   hitungRubrik
 } = require('../../helpers/nilaiHelper');
 
@@ -94,6 +95,67 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error:', error);
     res.status(500).render('error', { title: 'Error', message: 'Gagal mengambil data mata kuliah' });
+  }
+});
+
+// ============================================================================
+// RINCIAN TUGAS (akumulasi Tugas 1, 2, 3, dst per mahasiswa) - alat bantu
+// dosen memverifikasi rata-rata Tugas di rubrik sudah sinkron dengan
+// Daftar Tugas, sekaligus melihat rincian nilai tiap tugas per mahasiswa.
+// ============================================================================
+router.get('/:mkId/rincian-tugas', async (req, res) => {
+  try {
+    const { mkId } = req.params;
+    const periode = req.query.periode || getPeriodeAktif();
+
+    const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
+    if (!mkDoc.exists) return res.status(404).send('Mata kuliah tidak ditemukan');
+    const mk = { id: mkId, ...mkDoc.data() };
+
+    const enrollmentSnapshot = await db.collection('enrollment')
+      .where('mkId', '==', mkId)
+      .where('status', '==', 'active')
+      .get();
+    const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
+
+    const { tugasList, perMahasiswa } = await getRincianTugasByMkId(mkId, periode);
+
+    // --- Diagnostik: cari tugas milik dosen ini (periode sama) yang KODE
+    // MK-nya sama persis dengan MK yang sedang dibuka, TAPI mkId-nya
+    // BERBEDA. Ini kemungkinan besar penyebab tugas "tidak sinkron" yang
+    // tidak bisa diperbaiki lewat logika query saja - biasanya karena ada
+    // dokumen mataKuliah duplikat (mis. sisa dari semester sebelumnya) untuk
+    // MK yang terlihat sama di UI tapi beda ID Firestore-nya.
+    let tugasSalahMk = [];
+    try {
+      const semuaTugasDosenSnapshot = await db.collection('tugas')
+        .where('dosenId', '==', req.dosen.id)
+        .get();
+      tugasSalahMk = semuaTugasDosenSnapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(t => t.mkKode === mk.kode && t.mkId !== mkId && (!t.periode || t.periode === periode));
+    } catch (diagErr) {
+      console.error('Diagnostik rincian tugas gagal (diabaikan):', diagErr);
+    }
+
+    const data = [];
+    for (const uid of mahasiswaIds) {
+      const mahasiswa = await getMahasiswaById(uid);
+      data.push({ mahasiswa, nilai: perMahasiswa[uid] || null });
+    }
+    data.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));
+
+    res.render('dosen/rubrik_rincian_tugas', {
+      title: `Rincian Tugas - ${mk.kode} ${mk.nama}`,
+      mk,
+      tugasList,
+      data,
+      periode,
+      tugasSalahMk
+    });
+  } catch (error) {
+    console.error('Error rincian tugas:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat rincian tugas: ' + error.message });
   }
 });
 

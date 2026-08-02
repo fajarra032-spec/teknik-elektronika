@@ -481,13 +481,15 @@ function hitungRubrik(komponen, rataTugas, bobot = BOBOT_DEFAULT) {
   // sehingga tidak ikut disyaratkan maupun dihitung. Kehadiran Akhir hanya
   // butuh komponen yang bobotnya > 0 dan sudah diisi.
   const subKomponen = [
-    { nilai: persenHadir, bobot: bobot.persenHadir },
-    { nilai: sikap, bobot: bobot.sikap },
-    { nilai: keaktifan, bobot: bobot.keaktifan }
+    { label: '% Hadir', nilai: persenHadir, bobot: bobot.persenHadir },
+    { label: 'Sikap', nilai: sikap, bobot: bobot.sikap },
+    { label: 'Keaktifan', nilai: keaktifan, bobot: bobot.keaktifan }
   ].filter(k => (k.bobot || 0) > 0);
 
+  const subBelumLengkap = subKomponen.filter(k => k.nilai === null || k.nilai === undefined).map(k => k.label);
+
   let kehadiranAkhir = null;
-  if (subKomponen.length > 0 && subKomponen.every(k => k.nilai !== null && k.nilai !== undefined)) {
+  if (subKomponen.length > 0 && subBelumLengkap.length === 0) {
     const totalSub = subKomponen.reduce((s, k) => s + k.bobot, 0);
     kehadiranAkhir = totalSub > 0
       ? subKomponen.reduce((s, k) => s + k.nilai * k.bobot, 0) / totalSub
@@ -499,15 +501,27 @@ function hitungRubrik(komponen, rataTugas, bobot = BOBOT_DEFAULT) {
   // karena dosen tidak pernah kuis) tidak ikut disyaratkan/dihitung, dan
   // sisa bobot komponen yang dipakai dinormalisasi otomatis ke 100%.
   const komponenAkhir = [
-    { nilai: kehadiranAkhir, bobot: bobot.kehadiran },
-    { nilai: rataTugas, bobot: bobot.tugas },
-    { nilai: kuis, bobot: bobot.kuis },
-    { nilai: uts, bobot: bobot.uts },
-    { nilai: uas, bobot: bobot.uas }
+    { label: 'Kehadiran', nilai: kehadiranAkhir, bobot: bobot.kehadiran },
+    { label: 'Tugas', nilai: rataTugas, bobot: bobot.tugas },
+    { label: 'Kuis', nilai: kuis, bobot: bobot.kuis },
+    { label: 'UTS', nilai: uts, bobot: bobot.uts },
+    { label: 'UAS', nilai: uas, bobot: bobot.uas }
   ].filter(k => (k.bobot || 0) > 0);
 
+  // Kalau Kehadiran dipakai (bobot>0) tapi sub-komponennya belum lengkap,
+  // laporkan sub-komponen yang kurang itu (lebih informatif daripada cuma
+  // bilang "Kehadiran belum lengkap").
+  const belumLengkap = [];
+  komponenAkhir.forEach(k => {
+    if (k.label === 'Kehadiran' && (k.nilai === null || k.nilai === undefined)) {
+      belumLengkap.push(...(subBelumLengkap.length > 0 ? subBelumLengkap : ['Kehadiran']));
+    } else if (k.nilai === null || k.nilai === undefined) {
+      belumLengkap.push(k.label);
+    }
+  });
+
   let nilaiAkhir = null;
-  if (komponenAkhir.length > 0 && komponenAkhir.every(k => k.nilai !== null && k.nilai !== undefined)) {
+  if (komponenAkhir.length > 0 && belumLengkap.length === 0) {
     const totalBobot = komponenAkhir.reduce((s, k) => s + k.bobot, 0);
     if (totalBobot > 0) {
       nilaiAkhir = komponenAkhir.reduce((s, k) => s + k.nilai * k.bobot, 0) / totalBobot;
@@ -524,7 +538,8 @@ function hitungRubrik(komponen, rataTugas, bobot = BOBOT_DEFAULT) {
     rataTugas: (rataTugas !== null && rataTugas !== undefined) ? Math.round(rataTugas * 100) / 100 : null,
     nilaiAkhir,
     huruf: nilaiKeHurufRubrik(nilaiAkhir),
-    keterangan: nilaiAkhir === null ? null : (nilaiAkhir >= 45 ? 'LULUS' : 'TIDAK LULUS')
+    keterangan: nilaiAkhir === null ? null : (nilaiAkhir >= 45 ? 'LULUS' : 'TIDAK LULUS'),
+    belumLengkap // array label komponen yang masih kosong (bobot>0 tapi belum diisi); kosong berarti sudah lengkap
   };
 }
 
@@ -593,6 +608,56 @@ async function getRataTugasByMkId(mkId, periode = getPeriodeAktif()) {
   return result;
 }
 
+/**
+ * Sama seperti getRataTugasByMkId, tapi mengembalikan RINCIAN per-tugas
+ * (bukan cuma rata-rata) - dipakai halaman "Rincian Tugas" di rubrik supaya
+ * dosen bisa melihat akumulasi Tugas 1, Tugas 2, Tugas 3, dst per mahasiswa,
+ * dan membandingkannya langsung dengan apa yang tampil di Daftar Tugas.
+ * Sengaja pakai query & logika yang SAMA PERSIS dengan getRataTugasByMkId
+ * supaya kedua angka (rincian vs rata-rata di rubrik) selalu konsisten satu
+ * sama lain.
+ *
+ * @returns {Promise<Object>} {
+ *   tugasList: [{ id, judul, deadline }, ...],   // urut sesuai deadline
+ *   perMahasiswa: { mahasiswaId: { tugasId: nilai|null, rata: number|null } }
+ * }
+ */
+async function getRincianTugasByMkId(mkId, periode = getPeriodeAktif()) {
+  const tugasList = await getTugasByMkId(mkId, periode);
+  if (tugasList.length === 0) return { tugasList: [], perMahasiswa: {} };
+
+  const tipeSet = new Set(tugasList.map(t => `tugas_${t.id}`));
+  const snapshot = await db.collection('nilai').where('mkId', '==', mkId).get();
+
+  const nilaiPerMahasiswa = {}; // mahasiswaId -> { tugasId: nilai }
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    if (!tipeSet.has(data.tipe)) return;
+    const tugasId = data.tipe.replace('tugas_', '');
+    if (!nilaiPerMahasiswa[data.mahasiswaId]) nilaiPerMahasiswa[data.mahasiswaId] = {};
+    nilaiPerMahasiswa[data.mahasiswaId][tugasId] = data.nilai;
+  });
+
+  const perMahasiswa = {};
+  Object.keys(nilaiPerMahasiswa).forEach(mahasiswaId => {
+    const nilaiMap = {};
+    const nilaiValid = [];
+    tugasList.forEach(t => {
+      const v = nilaiPerMahasiswa[mahasiswaId][t.id];
+      nilaiMap[t.id] = (v === undefined) ? null : v;
+      if (v !== undefined && v !== null) nilaiValid.push(v);
+    });
+    perMahasiswa[mahasiswaId] = {
+      ...nilaiMap,
+      rata: nilaiValid.length > 0
+        ? Math.round((nilaiValid.reduce((a, b) => a + b, 0) / nilaiValid.length) * 100) / 100
+        : null
+    };
+  });
+
+  return { tugasList, perMahasiswa };
+}
+
 module.exports = {
   getPeriodeAktif,
   saveNilai,
@@ -610,5 +675,6 @@ module.exports = {
   saveBobotRubrik,
   hitungRubrik,
   nilaiKeHurufRubrik,
-  getRataTugasByMkId
+  getRataTugasByMkId,
+  getRincianTugasByMkId
 };
