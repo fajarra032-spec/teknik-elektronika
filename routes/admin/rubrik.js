@@ -21,28 +21,36 @@ const {
 router.use(verifyToken);
 router.use(isAdmin);
 
-async function getMahasiswaById(uid) {
-  try {
-    const userDoc = await db.collection('users').doc(uid).get();
-    if (userDoc.exists) return { id: uid, ...userDoc.data() };
-    return { id: uid, nama: 'Unknown', nim: '-' };
-  } catch (error) {
-    console.error('Error getMahasiswaById:', error);
-    return { id: uid, nama: 'Error', nim: '-' };
+// ✅ OPTIMISASI KUOTA: cache nama dosen dalam satu request (banyak MK sering
+// diampu oleh dosen yang sama, jadi tidak perlu baca dokumen `users` yang
+// sama berkali-kali).
+const _dosenNamaCache = new Map();
+async function getDosenNamaByIds(dosenIds = []) {
+  const idBelumAda = dosenIds.filter(id => !_dosenNamaCache.has(id));
+  if (idBelumAda.length > 0) {
+    const refs = idBelumAda.map(id => db.collection('users').doc(id));
+    const docs = await db.getAll(...refs);
+    docs.forEach((doc, i) => {
+      _dosenNamaCache.set(idBelumAda[i], doc.exists ? (doc.data().nama || idBelumAda[i]) : idBelumAda[i]);
+    });
   }
+  return dosenIds.map(id => _dosenNamaCache.get(id)).join(', ');
 }
 
-async function getDosenNamaByIds(dosenIds = []) {
-  const nama = [];
-  for (const id of dosenIds) {
-    try {
-      const doc = await db.collection('users').doc(id).get();
-      nama.push(doc.exists ? (doc.data().nama || id) : id);
-    } catch {
-      nama.push(id);
-    }
-  }
-  return nama.join(', ');
+/**
+ * Ambil banyak dokumen `users` SEKALIGUS (satu round-trip via db.getAll),
+ * bukan satu per satu dalam loop - dipakai utk daftar mahasiswa di halaman
+ * detail rubrik/cetak.
+ */
+async function getMahasiswaBanyak(uids) {
+  if (uids.length === 0) return {};
+  const refs = uids.map(uid => db.collection('users').doc(uid));
+  const docs = await db.getAll(...refs);
+  const map = {};
+  docs.forEach((doc, i) => {
+    map[uids[i]] = doc.exists ? { id: uids[i], ...doc.data() } : { id: uids[i], nama: 'Unknown', nim: '-' };
+  });
+  return map;
 }
 
 async function ambilDataRubrik(mkId, periode) {
@@ -59,15 +67,15 @@ async function ambilDataRubrik(mkId, periode) {
   const bobot = await getBobotRubrik(mkId, periode);
   const komponenMap = await getKomponenRubrikByMkId(mkId, periode);
   const rataTugasMap = await getRataTugasByMkId(mkId, periode);
+  const mahasiswaMap = await getMahasiswaBanyak(mahasiswaIds); // 1 round-trip, bukan N
 
-  const data = [];
-  for (const uid of mahasiswaIds) {
-    const mahasiswa = await getMahasiswaById(uid);
+  const data = mahasiswaIds.map(uid => {
+    const mahasiswa = mahasiswaMap[uid];
     const komponen = komponenMap[uid] || {};
     const rataTugas = rataTugasMap[uid] ?? null;
     const hasil = hitungRubrik(komponen, rataTugas, bobot);
-    data.push({ mahasiswa, komponen, hasil });
-  }
+    return { mahasiswa, komponen, hasil };
+  });
   data.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));
 
   return { mk, bobot, data };
@@ -81,30 +89,35 @@ router.get('/', async (req, res) => {
     const periode = req.query.periode || getPeriodeAktif();
     const mkSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
 
-    const mkList = [];
-    for (const doc of mkSnapshot.docs) {
+    // ✅ OPTIMISASI KUOTA: sebelumnya, untuk SETIAP mata kuliah di daftar ini,
+    // sistem membaca ULANG SELURUH koleksi 'nilai' MK tsb DUA KALI
+    // (getKomponenRubrikByMkId + getRataTugasByMkId) hanya untuk menghitung
+    // "berapa mahasiswa yang rubriknya sudah lengkap" - padahal itu cuma
+    // angka ringkasan di halaman daftar. Kalau prodi punya puluhan MK, itu
+    // artinya puluhan kali pembacaan penuh koleksi 'nilai' SETIAP KALI
+    // admin membuka halaman ini. Sekarang dihapus dari sini - angka
+    // kelengkapan lengkap tetap bisa dilihat dengan klik ke detail MK
+    // (yang memang perlu baca data itu, tapi cuma untuk 1 MK, bukan semua).
+    // Jumlah mahasiswa per MK juga dipakai count() aggregation (bukan
+    // membaca semua dokumen enrollment).
+    const mkList = await Promise.all(mkSnapshot.docs.map(async (doc) => {
       const mk = { id: doc.id, ...doc.data() };
-      const enrollmentSnapshot = await db.collection('enrollment')
-        .where('mkId', '==', doc.id)
-        .where('status', '==', 'active')
-        .get();
-      mk.jumlahMahasiswa = enrollmentSnapshot.size;
-      mk.namaDosen = await getDosenNamaByIds(mk.dosenIds || []);
-
-      // Hitung berapa mahasiswa yang rubriknya sudah lengkap (nilai akhir terisi)
-      const komponenMap = await getKomponenRubrikByMkId(doc.id, periode);
-      const rataTugasMap = await getRataTugasByMkId(doc.id, periode);
-      const bobot = await getBobotRubrik(doc.id, periode);
-      let lengkap = 0;
-      const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
-      mahasiswaIds.forEach(uid => {
-        const hasil = hitungRubrik(komponenMap[uid] || {}, rataTugasMap[uid] ?? null, bobot);
-        if (hasil.nilaiAkhir !== null) lengkap++;
-      });
-      mk.rubrikLengkap = lengkap;
-
-      mkList.push(mk);
-    }
+      const [jumlahMahasiswa, namaDosen] = await Promise.all([
+        db.collection('enrollment')
+          .where('mkId', '==', doc.id)
+          .where('status', '==', 'active')
+          .count().get()
+          .then(s => s.data().count)
+          .catch(async () => {
+            const s = await db.collection('enrollment').where('mkId', '==', doc.id).where('status', '==', 'active').get();
+            return s.size;
+          }),
+        getDosenNamaByIds(mk.dosenIds || [])
+      ]);
+      mk.jumlahMahasiswa = jumlahMahasiswa;
+      mk.namaDosen = namaDosen;
+      return mk;
+    }));
 
     res.render('admin/rubrik_list', {
       title: 'Rekap Rubrik Penilaian - Semua Mata Kuliah',

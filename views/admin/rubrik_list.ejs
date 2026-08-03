@@ -30,38 +30,28 @@
           <th>Dosen Pengampu</th>
           <th>SKS</th>
           <th>Mahasiswa</th>
-          <th>Kelengkapan Rubrik</th>
           <th>Aksi</th>
         </tr>
       </thead>
       <tbody>
         <% if (mkList.length === 0) { %>
           <tr>
-            <td colspan="7" class="text-center py-5">
+            <td colspan="6" class="text-center py-5">
               <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
               <p class="text-muted">Belum ada mata kuliah.</p>
             </td>
           </tr>
         <% } %>
-        <% mkList.forEach(mk => {
-             const total = mk.jumlahMahasiswa || 0;
-             const persen = total > 0 ? Math.round((mk.rubrikLengkap / total) * 100) : 0;
-        %>
+        <% mkList.forEach(mk => { %>
           <tr>
             <td><span class="badge bg-primary bg-opacity-10 text-primary"><%= mk.kode %></span></td>
             <td><strong><%= mk.nama %></strong></td>
             <td><%= mk.namaDosen || '-' %></td>
             <td class="text-center"><%= mk.sks %></td>
-            <td class="text-center"><%= total %></td>
-            <td>
-              <div class="d-flex align-items-center gap-2">
-                <div class="progress-mini"><div class="progress-mini-bar" style="width: <%= persen %>%"></div></div>
-                <small class="text-muted"><%= mk.rubrikLengkap %>/<%= total %></small>
-              </div>
-            </td>
+            <td class="text-center"><%= mk.jumlahMahasiswa || 0 %></td>
             <td>
               <a href="/admin/rubrik/<%= mk.id %>?periode=<%= encodeURIComponent(periode) %>" class="btn btn-sm btn-outline-primary btn-action">
-                <i class="bi bi-eye"></i> Lihat Rubrik
+                <i class="bi bi-eye"></i> Lihat Rubrik &amp; Kelengkapan
               </a>
               <a href="/admin/rubrik/<%= mk.id %>/cetak?periode=<%= encodeURIComponent(periode) %>" target="_blank" class="btn btn-sm btn-outline-secondary btn-action">
                 <i class="bi bi-printer"></i> Cetak

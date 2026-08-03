@@ -26,15 +26,19 @@ const {
 router.use(verifyToken);
 router.use(isDosen);
 
-async function getMahasiswaById(uid) {
-  try {
-    const userDoc = await db.collection('users').doc(uid).get();
-    if (userDoc.exists) return { id: uid, ...userDoc.data() };
-    return { id: uid, nama: 'Unknown', nim: '-' };
-  } catch (error) {
-    console.error('Error getMahasiswaById:', error);
-    return { id: uid, nama: 'Error', nim: '-' };
-  }
+/**
+ * Ambil banyak dokumen `users` SEKALIGUS (satu round-trip via db.getAll),
+ * bukan satu per satu dalam loop - jauh lebih hemat kuota utk kelas besar.
+ */
+async function getMahasiswaBanyak(uids) {
+  if (uids.length === 0) return {};
+  const refs = uids.map(uid => db.collection('users').doc(uid));
+  const docs = await db.getAll(...refs);
+  const map = {};
+  docs.forEach((doc, i) => {
+    map[uids[i]] = doc.exists ? { id: uids[i], ...doc.data() } : { id: uids[i], nama: 'Unknown', nim: '-' };
+  });
+  return map;
 }
 
 /**
@@ -55,10 +59,11 @@ async function ambilDataRubrik(mkId, periode) {
   const bobot = await getBobotRubrik(mkId, periode);
   const komponenMap = await getKomponenRubrikByMkId(mkId, periode);
   const rataTugasMap = await getRataTugasByMkId(mkId, periode);
+  const mahasiswaMap = await getMahasiswaBanyak(mahasiswaIds); // 1 round-trip, bukan N
 
   const data = [];
   for (const uid of mahasiswaIds) {
-    const mahasiswa = await getMahasiswaById(uid);
+    const mahasiswa = mahasiswaMap[uid];
     const komponen = komponenMap[uid] || {};
     const rataTugas = rataTugasMap[uid] ?? null;
     const hasil = hitungRubrik(komponen, rataTugas, bobot);
@@ -80,16 +85,24 @@ router.get('/', async (req, res) => {
       .orderBy('kode')
       .get();
 
-    const mkList = [];
-    for (const doc of mkSnapshot.docs) {
+    const mkList = await Promise.all(mkSnapshot.docs.map(async (doc) => {
       const mk = { id: doc.id, ...doc.data() };
-      const enrollmentSnapshot = await db.collection('enrollment')
-        .where('mkId', '==', doc.id)
-        .where('status', '==', 'active')
-        .get();
-      mk.jumlahMahasiswa = enrollmentSnapshot.size;
-      mkList.push(mk);
-    }
+      try {
+        const countSnap = await db.collection('enrollment')
+          .where('mkId', '==', doc.id)
+          .where('status', '==', 'active')
+          .count().get();
+        mk.jumlahMahasiswa = countSnap.data().count;
+      } catch (err) {
+        // Fallback kalau versi firebase-admin belum dukung count()
+        const enrollmentSnapshot = await db.collection('enrollment')
+          .where('mkId', '==', doc.id)
+          .where('status', '==', 'active')
+          .get();
+        mk.jumlahMahasiswa = enrollmentSnapshot.size;
+      }
+      return mk;
+    }));
 
     res.render('dosen/rubrik_pilih_mk', {
       title: 'Rubrik Penilaian - Pilih Mata Kuliah',
@@ -195,11 +208,8 @@ router.get('/:mkId/rincian-tugas', async (req, res) => {
       console.error('Diagnostik rincian tugas gagal (diabaikan):', diagErr);
     }
 
-    const data = [];
-    for (const uid of mahasiswaIds) {
-      const mahasiswa = await getMahasiswaById(uid);
-      data.push({ mahasiswa, nilai: perMahasiswa[uid] || null });
-    }
+    const mahasiswaMap = await getMahasiswaBanyak(mahasiswaIds); // 1 round-trip, bukan N
+    const data = mahasiswaIds.map(uid => ({ mahasiswa: mahasiswaMap[uid], nilai: perMahasiswa[uid] || null }));
     data.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));
 
     res.render('dosen/rubrik_rincian_tugas', {

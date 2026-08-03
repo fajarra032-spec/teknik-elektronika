@@ -247,6 +247,79 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
     tumpang tindih. Ini kemungkinan **penyebab pasti** dari laporan
     "nilai yang diperiksa belum kembali".
 
+13. **AKAR MASALAH SEBENARNYA dari "nilai belum kembali" - ditemukan.** Ini
+    yang paling penting, dan sebenarnya sudah tersirat dari permintaan Anda
+    sebelumnya ("buat tugas bisa diisi manual kalau diberi tidak lewat web").
+    Ternyata halaman **detail tugas** (`/dosen/tugas/:id`) HANYA menampilkan
+    tombol "Nilai" untuk mahasiswa yang **sudah upload/submit lewat web**
+    (ada dokumen `pengumpulan`). Untuk mahasiswa yang tugasnya dikerjakan
+    **tidak lewat web** (kertas, presentasi lisan, dll) atau belum sempat
+    upload, tombolnya **tidak ada sama sekali** - jadi dosen memang TIDAK
+    BISA memberi nilai untuk mahasiswa itu lewat halaman ini. Ini kemungkinan
+    besar penyebab pasti "nilai belum kembali" - bukan soal sinkronisasi,
+    tapi memang belum pernah bisa diisi dari awal untuk mahasiswa tersebut.
+
+    Ditemukan juga bug kedua yang berkaitan: kolom "Nilai" di tabel ini
+    membaca dari `pengumpulan.nilai` (yang cuma ada kalau ada submission),
+    BUKAN dari nilai sebenarnya yang tersimpan di collection `nilai` - jadi
+    walaupun suatu saat nilai berhasil tersimpan lewat cara lain, kolom ini
+    tetap akan menampilkan "-".
+
+    **Perbaikan** (`views/dosen/tugas_detail.ejs` + `routes/dosen/index.js`):
+    - Kolom "Nilai" sekarang membaca nilai yang benar (`m.nilai`, hasil dari
+      collection `nilai`) - tampil dengan benar baik ada submission atau tidak.
+    - Mahasiswa **tanpa submission** sekarang tetap dapat tombol
+      **"Nilai Langsung"** (beda warna dari tombol "Nilai" biasa) yang
+      membuka modal yang sama, tapi menyimpan nilai **langsung by mahasiswaId**
+      tanpa perlu dokumen pengumpulan - route baru
+      `POST /dosen/tugas/nilai-langsung`.
+    - Modal input nilai juga sekarang **pre-fill** nilai yang sudah ada
+      (kalau sebelumnya pernah dinilai), jadi bisa langsung diedit, bukan
+      cuma bisa isi baru.
+
+    Ini file BARU yang perlu Anda tambahkan/timpa: `views/dosen/tugas_detail.ejs`
+    (selain `routes/dosen/index.js` yang sudah diperbarui lagi).
+
+14. **Optimasi kuota Firestore - dashboard & rubrik jauh lebih hemat baca.**
+    Ini bukan bug baru, tapi memang boros dari sananya (dan sebagian dari
+    fitur Rubrik yang saya buat sendiri juga ikut boros, sudah diperbaiki
+    sekalian). Perubahan di `routes/admin/dashboard.js`,
+    `routes/dosen/dashboard.js`, `routes/admin/rubrik.js`, dan
+    `routes/dosen/rubrik.js`:
+
+    - **Dashboard Admin**: 8 query yang tadinya `.get()` penuh (baca SEMUA
+      dokumen yang cocok cuma untuk dapat angkanya) diganti pakai Firestore
+      **`count()` aggregation** - jauh lebih murah, apalagi untuk koleksi
+      besar seperti `users`. Ada fallback otomatis ke cara lama kalau versi
+      `firebase-admin` di server belum mendukung `count()`.
+    - **Dashboard Dosen**: ada 2 pola **N+1 query** yang lumayan parah -
+      "pengumpulan belum dinilai" tadinya query TERPISAH untuk **setiap**
+      tugas (20 tugas = 20 query), dan "logbook" tadinya query TERPISAH
+      untuk **setiap** mahasiswa bimbingan + `users` diambil satu-satu untuk
+      tiap entri pending. Sekarang semuanya di-batch (`where(...,'in',...)`,
+      per 10 sekaligus) dan dokumen `users` yang dibutuhkan diambil
+      SEKALIGUS lewat `db.getAll(...)`, bukan satu per satu dalam loop.
+    - **Halaman Rekap Rubrik Admin** (daftar semua MK): tadinya, untuk
+      **SETIAP** MK di daftar, sistem membaca ULANG SELURUH koleksi `nilai`
+      MK itu **dua kali** cuma untuk menghitung "berapa mahasiswa yang
+      rubriknya lengkap" - kalau ada 30 MK, itu 60 pembacaan penuh koleksi
+      nilai setiap kali admin buka halaman ini. Angka kelengkapan itu sudah
+      dihapus dari daftar (tetap bisa dilihat begitu klik ke detail 1 MK,
+      yang memang cuma perlu baca 1 MK, bukan semua). Jumlah mahasiswa per
+      MK juga diganti pakai `count()`.
+    - **Halaman Rubrik & Rincian Tugas** (dosen & admin): dokumen mahasiswa
+      (`users`) yang tadinya diambil **satu per satu dalam loop** (N query
+      utk N mahasiswa di kelas) sekarang diambil **sekaligus** lewat
+      `db.getAll(...)` (1 round-trip). Nama dosen juga di-cache dalam satu
+      request supaya MK dengan dosen yang sama tidak baca dokumen `users`
+      yang sama berulang kali.
+
+    **Catatan:** `count()` aggregation query butuh `firebase-admin` versi
+    yang cukup baru (kira-kira v10.6+/v11+). Sudah saya kasih fallback
+    otomatis kalau ternyata versi di server Anda lebih lama, jadi tidak akan
+    error - cuma belum sehemat itu sampai `firebase-admin` di-update
+    (`npm update firebase-admin`).
+
 ---
 
 
@@ -259,6 +332,9 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
 | `routes/admin/index.js` | Ditambah 1 baris: `router.use('/rubrik', require('./rubrik'))`. |
 | `views/dosen/dashboard.ejs` | Ditambah 1 kartu pintasan "Rubrik Penilaian". |
 | `views/admin/dashboard.ejs` | Ditambah 1 kartu menu "Rubrik Penilaian". |
+| `views/dosen/tugas_detail.ejs` | Perbaikan kolom Nilai + tombol "Nilai Langsung" untuk mahasiswa tanpa submission (lihat poin 13). |
+| `routes/admin/dashboard.js` | Optimasi kuota: pakai `count()` aggregation (lihat poin 14). |
+| `routes/dosen/dashboard.js` | Optimasi kuota: hilangkan pola N+1 query (lihat poin 14). |
 
 **Cara aman menerapkannya**: buka file Anda yang asli, cari baris yang sama
 persis (lihat isi file di zip ini), lalu tambahkan baris barunya secara manual

@@ -449,6 +449,44 @@ router.post('/pengumpulan/nilai', async (req, res) => {
   }
 });
 
+// Beri nilai LANGSUNG (tanpa pengumpulan) - untuk mahasiswa yang tugasnya
+// diberikan/dikerjakan TIDAK lewat web (kertas, presentasi lisan, dll) atau
+// yang belum sempat upload tapi tetap perlu dinilai lewat sistem ini.
+router.post('/tugas/nilai-langsung', async (req, res) => {
+  try {
+    const { mahasiswaId, tugasId, nilai, komentar } = req.body;
+
+    if (!mahasiswaId || !tugasId || nilai === undefined || nilai === '') {
+      return res.status(400).send('Data tidak lengkap');
+    }
+
+    const tugasDoc = await db.collection('tugas').doc(tugasId).get();
+    if (!tugasDoc.exists) {
+      return res.status(404).send('Tugas tidak ditemukan');
+    }
+    const tugas = tugasDoc.data();
+
+    // Pastikan tugas ini milik dosen yang login (proteksi yang sama seperti
+    // GET /tugas/:id)
+    if (tugas.dosenId !== req.dosen.id) {
+      return res.status(403).send('Anda tidak berhak menilai tugas ini');
+    }
+
+    // Simpan langsung ke collection 'nilai' - TIDAK butuh dokumen
+    // 'pengumpulan' sama sekali. Pakai periode milik tugas ini sendiri
+    // (bukan getPeriodeAktif() saat menilai), sama seperti alur pengumpulan
+    // biasa, dan sudah anti-duplikat (lihat komentar di saveNilai()).
+    await saveNilai(mahasiswaId, tugas.mkId, tugasId, tugas.judul, nilai, tugas.periode, komentar || '');
+
+    console.log(`✅ Nilai langsung ${nilai} untuk ${mahasiswaId} pada tugas ${tugasId} (tanpa pengumpulan) berhasil disimpan`);
+
+    res.redirect(`/dosen/tugas/${tugasId}`);
+  } catch (error) {
+    console.error('Error memberi nilai langsung:', error);
+    res.status(500).send('Gagal memberi nilai: ' + error.message);
+  }
+});
+
 // ============================================================================
 // HAPUS TUGAS
 // ============================================================================

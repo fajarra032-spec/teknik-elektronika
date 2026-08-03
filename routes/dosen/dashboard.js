@@ -13,6 +13,27 @@ function formatDate(dateString) {
   return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+/** Pecah array jadi potongan kecil (Firestore 'in' query maksimal ~30 nilai
+ * per query - dipakai 10 di sini biar aman untuk versi SDK yang lebih lama). */
+function chunkArray(arr, size) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
+  return chunks;
+}
+
+/** Hitung jumlah dokumen cocok TANPA membaca isinya (count() aggregation),
+ * dengan fallback ke .get().size kalau SDK belum mendukung count(). */
+async function hitungJumlah(query) {
+  try {
+    const snap = await query.count().get();
+    return snap.data().count;
+  } catch (err) {
+    console.error('count() tidak tersedia, fallback ke get().size:', err.message);
+    const snap = await query.get();
+    return snap.size;
+  }
+}
+
 router.get('/', async (req, res) => {
   try {
     const dosen = req.dosen;
@@ -66,28 +87,37 @@ router.get('/', async (req, res) => {
     const totalMahasiswa = mahasiswaBimbinganIds.size;
 
     // ========================================================================
-    // 3. Tugas aktif
+    // 3 & 4. Tugas aktif + Pengumpulan belum dinilai
     // ========================================================================
-    const now = new Date().toISOString();
-    const tugasSnapshot = await db.collection('tugas')
-      .where('dosenId', '==', req.dosen.id)
-      .where('deadline', '>', now)
-      .get();
-    const tugasAktif = tugasSnapshot.size;
-
-    // ========================================================================
-    // 4. Pengumpulan belum dinilai
-    // ========================================================================
-    let pengumpulanBelumDinilai = 0;
+    // ✅ OPTIMISASI KUOTA: sebelumnya ada 2 masalah di sini:
+    //  (a) tugasAktif dihitung lewat query TERPISAH dari tugasSemua, padahal
+    //      datanya bisa dihitung dari HASIL YANG SAMA (satu query 'tugas'
+    //      cukup, filter deadline > now cukup di JS).
+    //  (b) pengumpulanBelumDinilai dihitung dengan query 'pengumpulan'
+    //      TERPISAH UNTUK SETIAP TUGAS (N query utk N tugas) - kalau dosen
+    //      punya 20 tugas, itu 20 pembacaan minimum SETIAP KALI dashboard
+    //      dibuka. Sekarang digabung jadi query batch (`where('tugasId','in',...)`)
+    //      per 10 tugasId sekaligus, jadi maksimal N/10 query saja.
     const tugasSemua = await db.collection('tugas')
       .where('dosenId', '==', req.dosen.id)
       .get();
-    for (const tugasDoc of tugasSemua.docs) {
-      const pengumpulanSnap = await db.collection('pengumpulan')
-        .where('tugasId', '==', tugasDoc.id)
-        .where('status', '==', 'dikumpulkan')
-        .get();
-      pengumpulanBelumDinilai += pengumpulanSnap.size;
+
+    const now = new Date().toISOString();
+    let tugasAktif = 0;
+    const tugasIds = [];
+    tugasSemua.docs.forEach(doc => {
+      tugasIds.push(doc.id);
+      if ((doc.data().deadline || '') > now) tugasAktif++;
+    });
+
+    let pengumpulanBelumDinilai = 0;
+    for (const chunk of chunkArray(tugasIds, 10)) {
+      if (chunk.length === 0) continue;
+      pengumpulanBelumDinilai += await hitungJumlah(
+        db.collection('pengumpulan')
+          .where('tugasId', 'in', chunk)
+          .where('status', '==', 'dikumpulkan')
+      );
     }
 
     // ========================================================================
@@ -104,51 +134,77 @@ router.get('/', async (req, res) => {
     // ========================================================================
     // 6. Logbook: daftar pending + statistik approved/total
     // ========================================================================
+    // ✅ OPTIMISASI KUOTA: sebelumnya query 'logbookMagang' dijalankan SATU
+    // PER SATU untuk setiap mahasiswa bimbingan (N query utk N mahasiswa),
+    // dan untuk tiap entri pending, dokumen 'users' juga diambil SATU PER
+    // SATU. Sekarang: logbook diambil per-batch (10 mahasiswaId sekaligus
+    // lewat 'in'), dan semua dokumen 'users' yang dibutuhkan diambil
+    // SEKALIGUS lewat db.getAll(...) - bukan satu per satu dalam loop.
     let totalLogbookAll = 0;
     let totalLogbookApproved = 0;
-    const logbookPendingList = [];
+    const pendingRaw = []; // { id, mahasiswaId, data }
 
-    for (const mahasiswaId of mahasiswaBimbinganIds) {
+    const mahasiswaIdsArr = Array.from(mahasiswaBimbinganIds);
+    for (const chunk of chunkArray(mahasiswaIdsArr, 10)) {
+      if (chunk.length === 0) continue;
       const logbookSnap = await db.collection('logbookMagang')
-        .where('userId', '==', mahasiswaId)
+        .where('userId', 'in', chunk)
         .get();
 
-      for (const logbookDoc of logbookSnap.docs) {
+      logbookSnap.docs.forEach(logbookDoc => {
         const data = logbookDoc.data();
-        const status = data.status;
         totalLogbookAll++;
-        if (status === 'approved') totalLogbookApproved++;
+        if (data.status === 'approved') totalLogbookApproved++;
+        if (data.status === 'pending') {
+          pendingRaw.push({ id: logbookDoc.id, mahasiswaId: data.userId, data });
+        }
+      });
+    }
 
-        if (status === 'pending') {
-          const userDoc = await db.collection('users').doc(mahasiswaId).get();
-          const mahasiswaNama = userDoc.exists ? userDoc.data().nama : 'Unknown';
-          const mahasiswaNim = userDoc.exists ? userDoc.data().nim : '-';
-          let pdkInfo = '';
-          if (data.pdkId) {
-            const periodSnap = await db.collection('magangPeriod')
-              .where('pdkId', '==', data.pdkId)
-              .where('mahasiswaId', '==', mahasiswaId)
-              .limit(1)
-              .get();
-            if (!periodSnap.empty) {
-              const period = periodSnap.docs[0].data();
-              pdkInfo = `${period.pdkKode} - ${period.pdkNama}`;
-            }
-          }
-          logbookPendingList.push({
-            id: logbookDoc.id,
-            mahasiswaId,
-            mahasiswaNama,
-            mahasiswaNim,
-            tanggal: data.tanggal,
-            tanggalFormatted: formatDate(data.tanggal),
-            kegiatan: data.kegiatan && data.kegiatan.length > 60 ? data.kegiatan.substring(0, 60) + '...' : (data.kegiatan || '-'),
-            durasi: data.durasi,
-            pdkInfo,
-            imageCount: data.imageUrls ? data.imageUrls.length : 0
-          });
+    // Ambil semua dokumen 'users' yang dibutuhkan utk entri pending SEKALIGUS
+    // (satu round-trip), bukan satu per satu di dalam loop.
+    const userIdsUnik = [...new Set(pendingRaw.map(p => p.mahasiswaId))];
+    const userDocsMap = new Map();
+    if (userIdsUnik.length > 0) {
+      const userRefs = userIdsUnik.map(uid => db.collection('users').doc(uid));
+      const userDocs = await db.getAll(...userRefs);
+      userDocs.forEach(doc => {
+        if (doc.exists) userDocsMap.set(doc.id, doc.data());
+      });
+    }
+
+    // pdkInfo per entri pending tetap query kecil per-item (biasanya jumlah
+    // pending jauh lebih sedikit daripada total logbook, jadi dampaknya
+    // kecil) - tapi hanya dijalankan untuk yang benar-benar pending.
+    const logbookPendingList = [];
+    for (const item of pendingRaw) {
+      const userData = userDocsMap.get(item.mahasiswaId);
+      const mahasiswaNama = userData ? userData.nama : 'Unknown';
+      const mahasiswaNim = userData ? userData.nim : '-';
+      let pdkInfo = '';
+      if (item.data.pdkId) {
+        const periodSnap = await db.collection('magangPeriod')
+          .where('pdkId', '==', item.data.pdkId)
+          .where('mahasiswaId', '==', item.mahasiswaId)
+          .limit(1)
+          .get();
+        if (!periodSnap.empty) {
+          const period = periodSnap.docs[0].data();
+          pdkInfo = `${period.pdkKode} - ${period.pdkNama}`;
         }
       }
+      logbookPendingList.push({
+        id: item.id,
+        mahasiswaId: item.mahasiswaId,
+        mahasiswaNama,
+        mahasiswaNim,
+        tanggal: item.data.tanggal,
+        tanggalFormatted: formatDate(item.data.tanggal),
+        kegiatan: item.data.kegiatan && item.data.kegiatan.length > 60 ? item.data.kegiatan.substring(0, 60) + '...' : (item.data.kegiatan || '-'),
+        durasi: item.data.durasi,
+        pdkInfo,
+        imageCount: item.data.imageUrls ? item.data.imageUrls.length : 0
+      });
     }
 
     logbookPendingList.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
