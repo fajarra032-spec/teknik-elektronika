@@ -11,12 +11,11 @@ const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const {
   getPeriodeAktif,
-  getBobotRubrik,
   saveBobotRubrik,
   saveKomponenRubrik,
-  getKomponenRubrikByMkId,
-  getRataTugasByMkId,
   getRincianTugasByMkId,
+  getHasilRubrikSatuMahasiswa,
+  getHasilRubrikSemuaMahasiswa,
   tambahTugasManual,
   hapusTugasManual,
   saveNilaiTugasManual,
@@ -56,17 +55,14 @@ async function ambilDataRubrik(mkId, periode) {
     .get();
   const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
 
-  const bobot = await getBobotRubrik(mkId, periode);
-  const komponenMap = await getKomponenRubrikByMkId(mkId, periode);
-  const rataTugasMap = await getRataTugasByMkId(mkId, periode);
+  const { bobot, komponenMap, hasilMap } = await getHasilRubrikSemuaMahasiswa(mkId, periode);
   const mahasiswaMap = await getMahasiswaBanyak(mahasiswaIds); // 1 round-trip, bukan N
 
   const data = [];
   for (const uid of mahasiswaIds) {
     const mahasiswa = mahasiswaMap[uid];
     const komponen = komponenMap[uid] || {};
-    const rataTugas = rataTugasMap[uid] ?? null;
-    const hasil = hitungRubrik(komponen, rataTugas, bobot);
+    const hasil = hasilMap[uid] || hitungRubrik({}, null, bobot);
     data.push({ mahasiswa, komponen, hasil });
   }
   data.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));
@@ -158,10 +154,12 @@ router.post('/tugas-manual/nilai', async (req, res) => {
     const periodeDipakai = periode || getPeriodeAktif();
     await saveNilaiTugasManual(mahasiswaId, mkId, tugasManualId, nilai, periodeDipakai);
 
-    const rataTugasMap = await getRataTugasByMkId(mkId, periodeDipakai);
-    const rataTugas = rataTugasMap[mahasiswaId] ?? null;
+    // ✅ OPTIMISASI KUOTA: pakai versi khusus satu mahasiswa (lihat komentar
+    // panjang di getHasilRubrikSatuMahasiswa, helpers/nilaiHelper.js) -
+    // BUKAN getRataTugasByMkId yang membaca ulang seluruh kelas.
+    const hasil = await getHasilRubrikSatuMahasiswa(mahasiswaId, mkId, periodeDipakai);
 
-    res.json({ success: true, rataTugas });
+    res.json({ success: true, rataTugas: hasil.rataTugas });
   } catch (error) {
     console.error('Error simpan nilai tugas manual:', error);
     res.status(500).json({ success: false, message: 'Gagal menyimpan nilai: ' + error.message });
@@ -285,14 +283,15 @@ router.post('/input', async (req, res) => {
     const periodeDipakai = periode || getPeriodeAktif();
     await saveKomponenRubrik(mahasiswaId, mkId, tipe, nilai, periodeDipakai);
 
-    // Hitung ulang hasil rubrik mahasiswa ini saja (bukan seluruh kelas),
-    // supaya frontend bisa langsung update baris tsb tanpa reload halaman.
-    const [bobot, komponenMap, rataTugasMap] = await Promise.all([
-      getBobotRubrik(mkId, periodeDipakai),
-      getKomponenRubrikByMkId(mkId, periodeDipakai),
-      getRataTugasByMkId(mkId, periodeDipakai)
-    ]);
-    const hasil = hitungRubrik(komponenMap[mahasiswaId] || {}, rataTugasMap[mahasiswaId] ?? null, bobot);
+    // ✅ OPTIMISASI KUOTA: sebelumnya bagian ini memanggil
+    // getKomponenRubrikByMkId() + getRataTugasByMkId(), yang MASING-MASING
+    // membaca ulang SELURUH koleksi 'nilai' untuk SEMUA mahasiswa di MK ini -
+    // padahal cuma perlu hasil utk SATU mahasiswa yang baru diedit. Untuk
+    // kelas 30 mahasiswa, tiap kali dosen mengetik satu nilai (auto-save)
+    // ini bisa membaca ratusan dokumen yang tidak relevan. Sekarang pakai
+    // getHasilRubrikSatuMahasiswa() yang query-nya sudah dipersempit
+    // langsung ke satu mahasiswa ini saja.
+    const hasil = await getHasilRubrikSatuMahasiswa(mahasiswaId, mkId, periodeDipakai);
 
     res.json({ success: true, hasil });
   } catch (error) {

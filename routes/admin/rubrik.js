@@ -11,9 +11,7 @@ const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const {
   getPeriodeAktif,
-  getBobotRubrik,
-  getKomponenRubrikByMkId,
-  getRataTugasByMkId,
+  getHasilRubrikSemuaMahasiswa,
   hitungRubrik,
   saveGradeFinal
 } = require('../../helpers/nilaiHelper');
@@ -64,16 +62,13 @@ async function ambilDataRubrik(mkId, periode) {
     .get();
   const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
 
-  const bobot = await getBobotRubrik(mkId, periode);
-  const komponenMap = await getKomponenRubrikByMkId(mkId, periode);
-  const rataTugasMap = await getRataTugasByMkId(mkId, periode);
+  const { bobot, komponenMap, hasilMap } = await getHasilRubrikSemuaMahasiswa(mkId, periode);
   const mahasiswaMap = await getMahasiswaBanyak(mahasiswaIds); // 1 round-trip, bukan N
 
   const data = mahasiswaIds.map(uid => {
     const mahasiswa = mahasiswaMap[uid];
     const komponen = komponenMap[uid] || {};
-    const rataTugas = rataTugasMap[uid] ?? null;
-    const hasil = hitungRubrik(komponen, rataTugas, bobot);
+    const hasil = hasilMap[uid] || hitungRubrik({}, null, bobot);
     return { mahasiswa, komponen, hasil };
   });
   data.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));

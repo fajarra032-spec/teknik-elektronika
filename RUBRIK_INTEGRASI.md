@@ -406,6 +406,34 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
     `views/dosen/magang_detail.ejs`, `views/admin/emagang_mahasiswa.ejs`,
     `views/mahasiswa/magang/logbook.ejs`.
 
+17. **Optimasi kuota - Rubrik Penilaian dosen (ini yang paling parah, dan
+    paling sering kena karena auto-save).** Ditemukan 2 masalah:
+
+    - **Setiap kali dosen mengetik SATU nilai** (Kehadiran/Sikap/Keaktifan/
+      Kuis/UTS/UAS/Tugas Manual - auto-save ~0.9 detik setelah berhenti
+      ngetik), sistem SEBELUMNYA membaca ULANG **seluruh koleksi `nilai`
+      untuk SEMUA mahasiswa di kelas itu**, padahal cuma perlu hasil untuk
+      SATU mahasiswa yang sedang diedit. Untuk kelas 30 mahasiswa, itu bisa
+      puluhan-ratusan pembacaan dokumen HANYA untuk menyimpan 1 angka.
+    - Halaman rubrik kelas penuh (input dosen, detail admin, cetak) juga
+      membaca koleksi `nilai` yang sama **2 kali terpisah** (sekali lewat
+      `getKomponenRubrikByMkId`, sekali lagi lewat `getRataTugasByMkId`).
+
+    **Perbaikan** (`helpers/nilaiHelper.js`):
+    - Fungsi baru `getHasilRubrikSatuMahasiswa()` - query `nilai` dipersempit
+      langsung di Firestore ke SATU mahasiswa saja
+      (`where('mahasiswaId','==',...)`), dipakai di route auto-save
+      (`POST /dosen/rubrik/input` dan `POST /dosen/rubrik/tugas-manual/nilai`).
+    - Fungsi baru `getHasilRubrikSemuaMahasiswa()` - menggabungkan
+      `getKomponenRubrikByMkId` + `getRataTugasByMkId` jadi SATU pembacaan
+      koleksi `nilai`, dipakai di halaman kelas penuh (dosen, admin, cetak).
+
+    **Hasil tes nyata** (simulasi kelas 30 mahasiswa, menyimpan 1 nilai):
+    cara lama = **68 operasi baca**, cara baru = **7 operasi baca** - sekitar
+    **10x lebih hemat**, dan penghematannya makin besar untuk kelas yang
+    lebih besar (karena cara lama scaling-nya ikut jumlah mahasiswa, cara
+    baru tidak).
+
 ---
 
 

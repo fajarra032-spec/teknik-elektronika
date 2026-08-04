@@ -700,6 +700,53 @@ async function saveNilaiTugasManual(mahasiswaId, mkId, tugasManualId, nilai, per
  * konsisten satu sama lain, dan supaya tugas manual otomatis ikut masuk ke
  * rata-rata Tugas tanpa perlu logika terpisah.
  */
+/**
+ * ✅ OPTIMISASI KUOTA: versi gabungan dari getKomponenRubrikByMkId() +
+ * bagian nilai-tugas dari _getSemuaTugasDenganNilai() - keduanya
+ * SEBELUMNYA membaca koleksi 'nilai' untuk MK yang sama secara TERPISAH
+ * (2x baca penuh koleksi yang sama). Dipakai oleh halaman rubrik yang
+ * memang butuh data SEMUA mahasiswa sekaligus (halaman input kelas penuh,
+ * halaman admin, halaman cetak) - untuk kasus SATU mahasiswa saja, pakai
+ * getHasilRubrikSatuMahasiswa() yang jauh lebih hemat lagi.
+ *
+ * @returns {Promise<Object>} {
+ *   semuaTugas: [{id,judul,...}],
+ *   komponenMap: { mahasiswaId: { tipe: nilai } },       // kehadiran/sikap/dst
+ *   nilaiTugasMap: { mahasiswaId: { tugasId: nilai } }   // tugas web+manual
+ * }
+ */
+async function _getSemuaDataNilaiByMkId(mkId, periode) {
+  const [tugasWeb, tugasManual, snapshot] = await Promise.all([
+    getTugasByMkId(mkId, periode),
+    getTugasManualByMkId(mkId, periode),
+    db.collection('nilai').where('mkId', '==', mkId).get()
+  ]);
+  const semuaTugas = [...tugasWeb, ...tugasManual];
+
+  const tipeTugasMap = new Map();
+  tugasWeb.forEach(t => tipeTugasMap.set(`tugas_${t.id}`, t.id));
+  tugasManual.forEach(t => tipeTugasMap.set(`tugasmanual_${t.id}`, t.id));
+
+  const komponenMap = {};
+  const nilaiTugasMap = {};
+
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    if (TIPE_RUBRIK_KOMPONEN.includes(data.tipe)) {
+      const periodeData = data.periode || periode;
+      if (periodeData !== periode) return; // komponen non-tugas tetap disaring periode
+      if (!komponenMap[data.mahasiswaId]) komponenMap[data.mahasiswaId] = {};
+      komponenMap[data.mahasiswaId][data.tipe] = data.nilai;
+    } else if (tipeTugasMap.has(data.tipe)) {
+      const tugasId = tipeTugasMap.get(data.tipe);
+      if (!nilaiTugasMap[data.mahasiswaId]) nilaiTugasMap[data.mahasiswaId] = {};
+      nilaiTugasMap[data.mahasiswaId][tugasId] = data.nilai;
+    }
+  });
+
+  return { semuaTugas, komponenMap, nilaiTugasMap };
+}
+
 async function _getSemuaTugasDenganNilai(mkId, periode) {
   const [tugasWeb, tugasManual] = await Promise.all([
     getTugasByMkId(mkId, periode),
@@ -784,6 +831,147 @@ async function getRincianTugasByMkId(mkId, periode = getPeriodeAktif()) {
   return { tugasList: semuaTugas, perMahasiswa };
 }
 
+/**
+ * ✅ OPTIMISASI KUOTA - PALING PENTING DI FITUR RUBRIK: hitung hasil rubrik
+ * untuk SATU mahasiswa saja, dengan membaca HANYA nilai milik mahasiswa itu
+ * (filter mahasiswaId, bukan seluruh kelas). Dipakai setelah setiap
+ * auto-save di halaman input Rubrik (`POST /dosen/rubrik/input`), yang bisa
+ * terpicu puluhan-ratusan kali dalam satu sesi menilai (tiap dosen berhenti
+ * mengetik sebentar di satu kolom). Sebelumnya, setiap auto-save memanggil
+ * getKomponenRubrikByMkId + getRataTugasByMkId yang MASING-MASING membaca
+ * ULANG SELURUH koleksi 'nilai' untuk MK ITU (SEMUA mahasiswa, SEMUA
+ * komponen) - untuk kelas 30 mahasiswa x 6 komponen, itu bisa >300 pembacaan
+ * dokumen HANYA untuk menghitung ulang nilai SATU mahasiswa. Sekarang cukup
+ * baca nilai milik mahasiswa itu sendiri (biasanya <10 dokumen), plus daftar
+ * tugas MK (koleksi kecil, tidak sebesar 'nilai').
+ *
+ * @returns {Promise<Object>} hasil hitungRubrik utk mahasiswa ini
+ */
+async function hitungRubrikSatuMahasiswa(mahasiswaId, mkId, periode = getPeriodeAktif()) {
+  const [bobot, tugasWeb, tugasManual, nilaiSnapshot] = await Promise.all([
+    getBobotRubrik(mkId, periode),
+    getTugasByMkId(mkId, periode),
+    getTugasManualByMkId(mkId, periode),
+    db.collection('nilai')
+      .where('mkId', '==', mkId)
+      .where('mahasiswaId', '==', mahasiswaId)
+      .get()
+  ]);
+
+  const semuaTugas = [...tugasWeb, ...tugasManual];
+  const tipeTugasMap = new Map(); // tipe -> tugasId
+  tugasWeb.forEach(t => tipeTugasMap.set(`tugas_${t.id}`, t.id));
+  tugasManual.forEach(t => tipeTugasMap.set(`tugasmanual_${t.id}`, t.id));
+
+  const komponen = {};
+  const nilaiTugas = {};
+  nilaiSnapshot.docs.forEach(doc => {
+    const data = doc.data();
+    if (TIPE_RUBRIK_KOMPONEN.includes(data.tipe)) {
+      komponen[data.tipe] = data.nilai;
+    } else if (tipeTugasMap.has(data.tipe)) {
+      nilaiTugas[tipeTugasMap.get(data.tipe)] = data.nilai;
+    }
+  });
+
+  const nilaiTugasValid = semuaTugas
+    .map(t => nilaiTugas[t.id])
+    .filter(v => v !== undefined && v !== null);
+  const rataTugas = nilaiTugasValid.length > 0
+    ? nilaiTugasValid.reduce((a, b) => a + b, 0) / nilaiTugasValid.length
+    : null;
+
+  return hitungRubrik(komponen, rataTugas, bobot);
+}
+
+/**
+ * ✅ OPTIMISASI KUOTA - PALING PENTING DI FILE INI: versi hitung rubrik
+ * KHUSUS SATU MAHASISWA. Dipakai setiap kali dosen menyimpan SATU nilai
+ * komponen/tugas manual (dipanggil dari POST /dosen/rubrik/input dan
+ * POST /dosen/rubrik/tugas-manual/nilai - yaitu SETIAP KALI dosen berhenti
+ * mengetik di satu kotak, karena auto-save).
+ *
+ * SEBELUMNYA, kedua route itu memanggil getKomponenRubrikByMkId() +
+ * getRataTugasByMkId() - yang MASING-MASING membaca ULANG SELURUH koleksi
+ * 'nilai' untuk SEMUA mahasiswa di MK tsb, padahal cuma butuh hasil UNTUK
+ * SATU mahasiswa yang baru diedit. Untuk kelas berisi 30 mahasiswa dengan
+ * banyak komponen nilai, itu bisa ratusan pembacaan dokumen SETIAP KALI
+ * dosen mengetik satu nilai saja.
+ *
+ * Sekarang: query 'nilai' dipersempit langsung di Firestore lewat
+ * `where('mahasiswaId','==',...)` - jadi HANYA dokumen milik mahasiswa itu
+ * saja yang dibaca, bukan seluruh kelas.
+ */
+async function getHasilRubrikSatuMahasiswa(mahasiswaId, mkId, periode = getPeriodeAktif()) {
+  const [tugasWeb, tugasManual, bobot, nilaiSnapshot] = await Promise.all([
+    getTugasByMkId(mkId, periode),
+    getTugasManualByMkId(mkId, periode),
+    getBobotRubrik(mkId, periode),
+    db.collection('nilai')
+      .where('mahasiswaId', '==', mahasiswaId)
+      .where('mkId', '==', mkId)
+      .get()
+  ]);
+
+  const tipeTugasMap = new Map(); // tipe -> tugasId
+  tugasWeb.forEach(t => tipeTugasMap.set(`tugas_${t.id}`, t.id));
+  tugasManual.forEach(t => tipeTugasMap.set(`tugasmanual_${t.id}`, t.id));
+  const semuaTugas = [...tugasWeb, ...tugasManual];
+
+  const komponen = {};
+  const nilaiTugasMap = {};
+  nilaiSnapshot.docs.forEach(doc => {
+    const data = doc.data();
+    if (TIPE_RUBRIK_KOMPONEN.includes(data.tipe)) {
+      // Konsisten dgn getKomponenRubrikByMkId: komponen non-tugas tetap
+      // disaring periode (kehadiran/sikap/keaktifan/kuis/uts/uas).
+      const periodeData = data.periode || periode;
+      if (periodeData === periode) komponen[data.tipe] = data.nilai;
+    } else if (tipeTugasMap.has(data.tipe)) {
+      // Nilai tugas TIDAK disaring periode lagi (lihat komentar panjang di
+      // getNilaiByMkId soal kenapa) - cakupannya sudah ditentukan tugasList.
+      nilaiTugasMap[tipeTugasMap.get(data.tipe)] = data.nilai;
+    }
+  });
+
+  const nilaiTugasValid = semuaTugas
+    .map(t => nilaiTugasMap[t.id])
+    .filter(v => v !== undefined && v !== null);
+  const rataTugas = nilaiTugasValid.length > 0
+    ? nilaiTugasValid.reduce((a, b) => a + b, 0) / nilaiTugasValid.length
+    : null;
+
+  return hitungRubrik(komponen, rataTugas, bobot);
+}
+
+/**
+ * ✅ OPTIMISASI KUOTA: hitung rubrik utk SEMUA mahasiswa di satu MK sekaligus,
+ * membaca koleksi 'nilai' MK tsb HANYA SEKALI (lewat _getSemuaDataNilaiByMkId)
+ * - dipakai sebagai pengganti kombinasi getBobotRubrik + getKomponenRubrikByMkId
+ * + getRataTugasByMkId yang SEBELUMNYA membaca koleksi yang sama 2x terpisah.
+ * @returns {Promise<Object>} { bobot, hasilMap: { mahasiswaId: hasilHitungRubrik } }
+ */
+async function getHasilRubrikSemuaMahasiswa(mkId, periode = getPeriodeAktif()) {
+  const [bobot, { semuaTugas, komponenMap, nilaiTugasMap }] = await Promise.all([
+    getBobotRubrik(mkId, periode),
+    _getSemuaDataNilaiByMkId(mkId, periode)
+  ]);
+
+  const hasilMap = {};
+  const mahasiswaIds = new Set([...Object.keys(komponenMap), ...Object.keys(nilaiTugasMap)]);
+  mahasiswaIds.forEach(mahasiswaId => {
+    const nilaiTugasValid = semuaTugas
+      .map(t => (nilaiTugasMap[mahasiswaId] || {})[t.id])
+      .filter(v => v !== undefined && v !== null);
+    const rataTugas = nilaiTugasValid.length > 0
+      ? nilaiTugasValid.reduce((a, b) => a + b, 0) / nilaiTugasValid.length
+      : null;
+    hasilMap[mahasiswaId] = hitungRubrik(komponenMap[mahasiswaId] || {}, rataTugas, bobot);
+  });
+
+  return { bobot, komponenMap, hasilMap };
+}
+
 module.exports = {
   getPeriodeAktif,
   saveNilai,
@@ -803,8 +991,11 @@ module.exports = {
   nilaiKeHurufRubrik,
   getRataTugasByMkId,
   getRincianTugasByMkId,
+  getHasilRubrikSatuMahasiswa,
+  getHasilRubrikSemuaMahasiswa,
   tambahTugasManual,
   hapusTugasManual,
   getTugasManualByMkId,
-  saveNilaiTugasManual
+  saveNilaiTugasManual,
+  hitungRubrikSatuMahasiswa
 };
