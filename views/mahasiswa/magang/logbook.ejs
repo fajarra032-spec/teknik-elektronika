@@ -499,6 +499,9 @@
                     <% if (item.approvedByNama) { %>
                       <div class="small text-muted mt-1">Oleh: <%= item.approvedByNama %></div>
                     <% } %>
+                    <% if (item.catatan) { %>
+                      <div class="small text-muted mt-1"><i class="bi bi-chat-left-text"></i> <%= item.catatan %></div>
+                    <% } %>
                   <% } else if (item.status === 'rejected') { %>
                     <span class="badge-status badge-rejected"><i class="bi bi-x-circle"></i> Ditolak</span>
                     <% if (item.rejectedByNama) { %>

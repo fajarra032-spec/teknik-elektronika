@@ -508,6 +508,105 @@ router.post('/logbook/:id/reject', async (req, res) => {
 });
 
 // ============================================================================
+// SETUJUI LOGBOOK 1 MINGGU SEKALIGUS (Pembimbing 2)
+// ============================================================================
+// Menyetujui semua logbook berstatus 'pending' milik mahasiswa ini dalam
+// 7 hari terakhir sekaligus (bukan satu per satu), supaya dosen pembimbing 2
+// tidak perlu klik "Setujui" berulang kali untuk tiap entri logbook harian.
+// Kalau ada periode magang dipilih (periodId), hanya logbook periode itu yang
+// ikut disetujui.
+router.post('/:userId/setujui-minggu', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { periodId } = req.body;
+
+    const canApproveFlag = await canApprove(req.dosen.id, userId);
+    if (!canApproveFlag) {
+      req.session.error = 'Hanya Pembimbing 2 yang dapat menyetujui logbook';
+      return res.redirect(`/dosen/magang/${userId}`);
+    }
+
+    let pdkId = null;
+    if (periodId) {
+      const periods = await getActiveMagangPeriods(userId);
+      const period = periods.find(p => p.id === periodId);
+      if (!period) {
+        req.session.error = 'Periode magang tidak ditemukan';
+        return res.redirect(`/dosen/magang/${userId}`);
+      }
+      pdkId = period.pdkId;
+      const isActive = await isMagangPeriodActive(userId, pdkId);
+      if (!isActive) {
+        req.session.error = 'Periode magang sudah berakhir, tidak dapat menyetujui logbook';
+        return res.redirect(`/dosen/magang/${userId}?periodId=${periodId}`);
+      }
+    }
+
+    // Rentang 7 hari terakhir (hari ini mundur 6 hari), format YYYY-MM-DD
+    // supaya bisa dibandingkan langsung dengan field `tanggal` (string ISO).
+    const hariIni = new Date();
+    const tujuhHariLalu = new Date(hariIni);
+    tujuhHariLalu.setDate(hariIni.getDate() - 6);
+    const tanggalAkhir = hariIni.toISOString().split('T')[0];
+    const tanggalAwal = tujuhHariLalu.toISOString().split('T')[0];
+
+    let query = db.collection('logbookMagang')
+      .where('userId', '==', userId)
+      .where('status', '==', 'pending');
+    if (pdkId) query = query.where('pdkId', '==', pdkId);
+    const pendingSnapshot = await query.get();
+
+    // Saring ke rentang 7 hari terakhir di JS (field tanggal disimpan string,
+    // aman dibandingkan leksikografis krn format ISO YYYY-MM-DD).
+    const docsMingguIni = pendingSnapshot.docs.filter(doc => {
+      const tgl = doc.data().tanggal;
+      return tgl && tgl >= tanggalAwal && tgl <= tanggalAkhir;
+    });
+
+    if (docsMingguIni.length === 0) {
+      req.session.error = 'Tidak ada logbook pending dalam 7 hari terakhir untuk disetujui';
+      return res.redirect(`/dosen/magang/${userId}${periodId ? `?periodId=${periodId}` : ''}`);
+    }
+
+    // Kalau tidak difilter per-periode, logbook 7 hari terakhir bisa saja
+    // berasal dari lebih dari satu periode magang - pastikan SEMUA periode
+    // yang terlibat masih aktif sebelum menyetujui.
+    if (!pdkId) {
+      const pdkIdTerlibat = [...new Set(docsMingguIni.map(doc => doc.data().pdkId).filter(Boolean))];
+      for (const pid of pdkIdTerlibat) {
+        const isActive = await isMagangPeriodActive(userId, pid);
+        if (!isActive) {
+          req.session.error = 'Ada periode magang yang sudah berakhir dalam rentang minggu ini - pilih periode secara spesifik untuk menyetujui yang masih aktif saja';
+          return res.redirect(`/dosen/magang/${userId}`);
+        }
+      }
+    }
+
+    const now = new Date().toISOString();
+    const catatan = 'Mahasiswa telah konsultasi dan logbook disetujui';
+    const batch = db.batch();
+    docsMingguIni.forEach(doc => {
+      batch.update(doc.ref, {
+        status: 'approved',
+        approvedAt: now,
+        approvedBy: req.dosen.id,
+        approvedByNama: req.dosen.nama,
+        approvedByRole: 'Pembimbing 2',
+        catatan
+      });
+    });
+    await batch.commit();
+
+    req.session.success = `${docsMingguIni.length} logbook (7 hari terakhir) berhasil disetujui sekaligus`;
+    res.redirect(`/dosen/magang/${userId}${periodId ? `?periodId=${periodId}` : ''}`);
+  } catch (error) {
+    console.error('Error setujui logbook per minggu:', error);
+    req.session.error = 'Gagal menyetujui logbook per minggu';
+    res.redirect('back');
+  }
+});
+
+// ============================================================================
 // CETAK LOGBOOK
 // ============================================================================
 router.get('/print/:userId', async (req, res) => {

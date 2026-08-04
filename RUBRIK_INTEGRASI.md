@@ -371,6 +371,41 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
     pembacaan berulang di atas sudah dioptimalkan sejauh mungkin tanpa
     mengubah skema data atau fungsionalitas.
 
+16. **Fitur baru: tombol "Setujui 1 Minggu" untuk logbook magang** (dosen
+    Pembimbing 2 & admin) - supaya tidak perlu menyetujui logbook satu per
+    satu setiap hari.
+
+    **Lokasi tombol:** di bagian atas halaman detail logbook mahasiswa,
+    berdampingan dengan tombol Print/Kembali yang sudah ada:
+    - Dosen: `/dosen/magang/:userId` (hanya tampil kalau Anda Pembimbing 2).
+    - Admin: `/admin/emagang/mahasiswa/:userId`.
+
+    **Cara kerja:** sekali klik (dengan konfirmasi), sistem menyetujui
+    **SEMUA logbook berstatus "pending" dalam 7 hari terakhir** milik
+    mahasiswa itu sekaligus (bukan cuma hari ini - betul-betul 1 minggu
+    penuh ke belakang). Kalau sedang memilih periode magang tertentu (filter
+    PDK di halaman itu), hanya logbook periode itu yang ikut disetujui.
+    Setiap logbook yang disetujui lewat tombol ini otomatis diberi catatan:
+
+    > "Mahasiswa telah konsultasi dan logbook disetujui"
+
+    Catatan ini muncul di halaman logbook mahasiswa (`mahasiswa/magang/logbook.ejs`)
+    dan di halaman detail dosen/admin, di bawah nama yang menyetujui - jadi
+    semua pihak tahu logbook itu disetujui secara massal per minggu, bukan
+    ditinjau satu per satu.
+
+    **Teknis:** field baru `catatan` pada dokumen `logbookMagang` (field
+    `keterangan` yang sudah ada TIDAK disentuh - itu dipakai untuk status
+    hadir/sakit/izin dari mahasiswa, beda konsep). Update ke banyak dokumen
+    dilakukan lewat satu `db.batch()` (bukan update satu-satu), jadi tetap
+    hemat kuota. Kalau tidak ada logbook pending dalam 7 hari terakhir, akan
+    muncul pesan "Tidak ada logbook pending" - tombol aman diklik kapan saja
+    tanpa risiko error.
+
+    File baru/berubah: `routes/dosen/magang.js`, `routes/admin/emagang.js`,
+    `views/dosen/magang_detail.ejs`, `views/admin/emagang_mahasiswa.ejs`,
+    `views/mahasiswa/magang/logbook.ejs`.
+
 ---
 
 

@@ -195,6 +195,8 @@
   .btn-manage { background: #8b5cf6; color: white; border: none; border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.75rem; }
   .btn-print { background: #17a2b8; color: white; border: none; border-radius: 50px; padding: 0.5rem 1.2rem; font-size: 0.85rem; }
   .btn-back { background: transparent; border: 1px solid var(--primary-start); color: var(--primary-start); border-radius: 50px; padding: 0.5rem 1.2rem; }
+  .btn-approve-minggu { background: #16a34a; color: white; border: none; border-radius: 50px; padding: 0.5rem 1.2rem; font-size: 0.85rem; font-weight: 600; box-shadow: 0 5px 10px rgba(22,163,74,0.3); }
+  .btn-approve-minggu:hover { background: #15803d; }
 
   .modal-header-custom {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
@@ -234,6 +236,15 @@
       <button class="btn-manage" data-bs-toggle="modal" data-bs-target="#startPeriodModal">
         <i class="bi bi-plus-circle"></i> Mulai Periode Baru
       </button>
+      <form method="POST" action="/admin/emagang/mahasiswa/<%= mahasiswa.id %>/setujui-minggu" style="display:inline;"
+            onsubmit="return confirm('Setujui SEMUA logbook pending mahasiswa ini dalam 7 hari terakhir<%= (typeof selectedPeriod !== 'undefined' && selectedPeriod) ? ` untuk periode ${selectedPeriod.pdkKode}` : '' %> sekaligus? Catatan otomatis: \'Mahasiswa telah konsultasi dan logbook disetujui\'.');">
+        <% if (typeof selectedPeriod !== 'undefined' && selectedPeriod) { %>
+          <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+        <% } %>
+        <button type="submit" class="btn-approve-minggu">
+          <i class="bi bi-check2-all"></i> Setujui 1 Minggu
+        </button>
+      </form>
       <a href="/admin/emagang/print?userId=<%= mahasiswa.id %>" class="btn-print" target="_blank">
         <i class="bi bi-printer"></i> Print
       </a>
@@ -386,6 +397,9 @@
                     <span class="badge-status badge-approved"><i class="bi bi-check-circle"></i> Disetujui</span>
                     <% if (item.approvedByNama) { %>
                       <div class="small text-muted mt-1">Oleh: <%= item.approvedByNama %></div>
+                    <% } %>
+                    <% if (item.catatan) { %>
+                      <div class="small text-muted mt-1"><i class="bi bi-chat-left-text"></i> <%= item.catatan %></div>
                     <% } %>
                   <% } else if (item.status === 'rejected') { %>
                     <span class="badge-status badge-rejected"><i class="bi bi-x-circle"></i> Ditolak</span>
