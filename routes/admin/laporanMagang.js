@@ -39,14 +39,20 @@ router.get('/rekap', async (req, res) => {
     }
 
     // Ambil data mahasiswa untuk setiap userId
-    const groupedList = [];
-    for (const userId in grouped) {
-      const mahasiswa = await getMahasiswaById(userId);
-      groupedList.push({
-        mahasiswa,
-        laporan: grouped[userId]
+    // ✅ OPTIMISASI KUOTA: sebelumnya diambil satu per satu di dalam loop
+    // (N query utk N mahasiswa berbeda) - sekarang sekaligus lewat db.getAll().
+    const userIdsUnik = Object.keys(grouped);
+    const mahasiswaMap = {};
+    if (userIdsUnik.length > 0) {
+      const userDocs = await db.getAll(...userIdsUnik.map(uid => db.collection('users').doc(uid)));
+      userDocs.forEach((doc, i) => {
+        mahasiswaMap[userIdsUnik[i]] = doc.exists ? { id: doc.id, ...doc.data() } : { id: userIdsUnik[i], nama: 'Unknown', nim: '-' };
       });
     }
+    const groupedList = userIdsUnik.map(userId => ({
+      mahasiswa: mahasiswaMap[userId],
+      laporan: grouped[userId]
+    }));
 
     // Urutkan berdasarkan nama mahasiswa
     groupedList.sort((a, b) => a.mahasiswa.nama.localeCompare(b.mahasiswa.nama));

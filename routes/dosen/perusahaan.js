@@ -16,9 +16,21 @@ router.get('/', async (req, res) => {
 
     // Kelompokkan berdasarkan nama perusahaan (unik)
     const perusahaanMap = new Map();
+    const periodsData = snapshot.docs.map(doc => doc.data());
 
-    for (const doc of snapshot.docs) {
-      const period = doc.data();
+    // ✅ OPTIMISASI KUOTA: kumpulkan dulu semua mahasiswaId unik, ambil
+    // datanya SEKALIGUS lewat db.getAll() - bukan satu per satu di dalam
+    // loop (sebelumnya N query utk N periode magang).
+    const mahasiswaIdsUnik = [...new Set(periodsData.map(p => p.mahasiswaId).filter(Boolean))];
+    const mahasiswaNamaMap = new Map();
+    if (mahasiswaIdsUnik.length > 0) {
+      const userDocs = await db.getAll(...mahasiswaIdsUnik.map(id => db.collection('users').doc(id)));
+      userDocs.forEach((doc, i) => {
+        mahasiswaNamaMap.set(mahasiswaIdsUnik[i], doc.exists ? doc.data().nama : 'Tidak diketahui');
+      });
+    }
+
+    for (const period of periodsData) {
       const perusahaan = period.perusahaan || {};
       const namaPerusahaan = perusahaan.nama;
       if (!namaPerusahaan) continue;
@@ -32,12 +44,9 @@ router.get('/', async (req, res) => {
           mahasiswaList: []
         });
       }
-      // Ambil data mahasiswa
-      let mahasiswaNama = 'Tidak diketahui';
-      if (period.mahasiswaId) {
-        const userDoc = await db.collection('users').doc(period.mahasiswaId).get();
-        if (userDoc.exists) mahasiswaNama = userDoc.data().nama;
-      }
+      const mahasiswaNama = period.mahasiswaId
+        ? (mahasiswaNamaMap.get(period.mahasiswaId) || 'Tidak diketahui')
+        : 'Tidak diketahui';
       perusahaanMap.get(namaPerusahaan).mahasiswaList.push({
         id: period.mahasiswaId,
         nama: mahasiswaNama,

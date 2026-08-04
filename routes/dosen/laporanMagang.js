@@ -39,21 +39,24 @@ router.get('/', async (req, res) => {
   try {
     // Ambil semua laporan magang (koleksi laporanMagang)
     const laporanSnapshot = await db.collection('laporanMagang').get();
-    
-    // Kelompokkan berdasarkan userId
+
+    // Kelompokkan berdasarkan userId (data mentah dulu, tanpa fetch mahasiswa)
     const grouped = {};
-    for (const doc of laporanSnapshot.docs) {
+    laporanSnapshot.docs.forEach(doc => {
       const data = doc.data();
       const userId = data.userId;
-      if (!grouped[userId]) {
-        grouped[userId] = {
-          mahasiswa: await getMahasiswa(userId),
-          laporan: []
-        };
-      }
-      grouped[userId].laporan.push({
-        id: doc.id,
-        ...data
+      if (!grouped[userId]) grouped[userId] = { laporan: [] };
+      grouped[userId].laporan.push({ id: doc.id, ...data });
+    });
+
+    // ✅ OPTIMISASI KUOTA: ambil data SEMUA mahasiswa yang dibutuhkan
+    // SEKALIGUS lewat db.getAll(), bukan satu per satu di dalam loop
+    // (sebelumnya N query utk N mahasiswa berbeda).
+    const userIdsUnik = Object.keys(grouped);
+    if (userIdsUnik.length > 0) {
+      const userDocs = await db.getAll(...userIdsUnik.map(uid => db.collection('users').doc(uid)));
+      userDocs.forEach((doc, i) => {
+        grouped[userIdsUnik[i]].mahasiswa = doc.exists ? { id: doc.id, ...doc.data() } : { id: userIdsUnik[i], nama: 'Unknown', nim: '-' };
       });
     }
 

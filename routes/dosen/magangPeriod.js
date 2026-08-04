@@ -20,19 +20,25 @@ async function getActivePdkListForMahasiswa(mahasiswaId) {
       .where('userId', '==', mahasiswaId)
       .where('status', '==', 'active')
       .get();
-    
+
+    // ✅ OPTIMISASI KUOTA: ambil semua dokumen mataKuliah SEKALIGUS lewat
+    // db.getAll(), bukan satu per satu di dalam loop serial (await di dalam
+    // for-loop menunggu satu per satu, padahal bisa sekaligus).
+    const enrollments = enrollmentSnapshot.docs.map(doc => doc.data());
+    const mkIds = enrollments.map(e => e.mkId);
     const pdkList = [];
-    for (const doc of enrollmentSnapshot.docs) {
-      const enrollment = doc.data();
-      const mkDoc = await db.collection('mataKuliah').doc(enrollment.mkId).get();
-      if (mkDoc.exists && mkDoc.data().isPDK === true) {
-        pdkList.push({
-          id: mkDoc.id,
-          kode: mkDoc.data().kode,
-          nama: mkDoc.data().nama,
-          urutan: mkDoc.data().urutanPDK
-        });
-      }
+    if (mkIds.length > 0) {
+      const mkDocs = await db.getAll(...mkIds.map(id => db.collection('mataKuliah').doc(id)));
+      mkDocs.forEach(mkDoc => {
+        if (mkDoc.exists && mkDoc.data().isPDK === true) {
+          pdkList.push({
+            id: mkDoc.id,
+            kode: mkDoc.data().kode,
+            nama: mkDoc.data().nama,
+            urutan: mkDoc.data().urutanPDK
+          });
+        }
+      });
     }
     return pdkList;
   } catch (error) {

@@ -320,6 +320,57 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
     error - cuma belum sehemat itu sampai `firebase-admin` di-update
     (`npm update firebase-admin`).
 
+15. **Optimasi kuota Firestore - modul MAGANG (admin, dosen, mahasiswa).**
+    Sama seperti dashboard, modul magang punya beberapa pola boros yang
+    sekarang diperbaiki tanpa mengubah fungsionalitas (hasil akhir yang
+    ditampilkan ke pengguna tetap sama persis):
+
+    - **`routes/dosen/magang.js`** - `getLogbookStatistik()` (dipanggil
+      **sekali per mahasiswa bimbingan** di halaman daftar) tadinya membaca
+      ulang SELURUH logbook mahasiswa itu **4 kali** (total, pending,
+      approved, rejected - overlap besar) → sekarang pakai `count()`
+      aggregation, 4 angka tanpa mengunduh isi dokumennya sama sekali. Selain
+      itu, enrollment & periode aktif tadinya di-query **terpisah per
+      mahasiswa**, dan dokumen mataKuliah diambil **satu per satu per
+      enrollment** (bisa 50+ pembacaan serial untuk 10 mahasiswa x 5
+      enrollment) → sekarang di-batch pakai `where(...,'in',...)` per 10
+      mahasiswa sekaligus, dan semua dokumen mataKuliah diambil sekaligus
+      lewat `db.getAll()`.
+    - **`routes/admin/emagang.js`** - halaman detail logbook satu mahasiswa
+      tadinya membaca **koleksi logbook mahasiswa yang sama sampai 5 kali**
+      dalam satu page load (sekali utk tampilan, sekali lagi utk daftar
+      semester, lalu sekali lagi PER PERIODE magang utk statistik) → sekarang
+      cukup **1 kali baca**, sisanya (filter tampilan, daftar semester,
+      statistik per PDK) dihitung dari data yang sama di memori/JS.
+    - **`routes/dosen/magangPeriod.js`, `routes/mahasiswa/magang.js`** -
+      pola yang sama (fetch mataKuliah per-enrollment satu-satu secara
+      serial) diperbaiki jadi `db.getAll()` sekaligus. Juga: 2 query yang
+      cuma butuh JUMLAH logbook (progress bar) diganti ke `count()`; query
+      cek ulasan perusahaan yang tadinya **per periode magang** (N query)
+      digabung jadi 1 query batch `'in'`; dan 3 dokumen laporan magang tetap
+      (laporan ke-1/2/3) yang tadinya diambil lewat 3x `.get()` berurutan
+      sekarang lewat 1x `db.getAll()`.
+    - **`routes/admin/laporanMagang.js`, `routes/dosen/laporanMagang.js`,
+      `routes/dosen/perusahaan.js`** - ketiganya punya pola yang sama:
+      data mahasiswa diambil **satu per satu di dalam loop** (N query utk N
+      mahasiswa berbeda yang muncul di daftar laporan/perusahaan) → sekarang
+      1 kali `db.getAll()` untuk semua mahasiswa yang dibutuhkan sekaligus.
+
+    **Catatan jujur soal batas optimasi:** untuk pola "ambil dokumen A, B, C
+    satu per satu" (mis. `db.getAll()`), biaya BACA dokumennya di Firestore
+    sebenarnya sama saja (tetap dihitung per dokumen) - yang benar-benar
+    dihemat adalah jumlah ROUND-TRIP/koneksi (lebih cepat & lebih sedikit
+    request), plus untuk kasus dengan hasil KOSONG, query terpisah tadinya
+    tetap kena biaya minimum per query, sedangkan digabung jadi 1 query
+    biayanya cuma sekali. Penghematan BACA DOKUMEN yang paling signifikan ada
+    di 2 pola: (1) mengganti `.get()`+`.size`/`.forEach` yang cuma butuh
+    angka dengan `count()` aggregation (hemat besar utk koleksi berisi
+    banyak dokumen), dan (2) menghilangkan pembacaan koleksi yang SAMA
+    berulang-ulang dalam satu request (mis. logbook 4x atau 5x tadi).
+    Modul-modul yang sudah dipakai `count()`/`db.getAll()` dan bebas dari
+    pembacaan berulang di atas sudah dioptimalkan sejauh mungkin tanpa
+    mengubah skema data atau fungsionalitas.
+
 ---
 
 
@@ -335,6 +386,13 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
 | `views/dosen/tugas_detail.ejs` | Perbaikan kolom Nilai + tombol "Nilai Langsung" untuk mahasiswa tanpa submission (lihat poin 13). |
 | `routes/admin/dashboard.js` | Optimasi kuota: pakai `count()` aggregation (lihat poin 14). |
 | `routes/dosen/dashboard.js` | Optimasi kuota: hilangkan pola N+1 query (lihat poin 14). |
+| `routes/dosen/magang.js` | Optimasi kuota modul magang (lihat poin 15). |
+| `routes/admin/emagang.js` | Optimasi kuota modul magang (lihat poin 15). |
+| `routes/dosen/magangPeriod.js` | Optimasi kuota modul magang (lihat poin 15). |
+| `routes/admin/laporanMagang.js` | Optimasi kuota modul magang (lihat poin 15). |
+| `routes/dosen/laporanMagang.js` | Optimasi kuota modul magang (lihat poin 15). |
+| `routes/dosen/perusahaan.js` | Optimasi kuota modul magang (lihat poin 15). |
+| `routes/mahasiswa/magang.js` | Optimasi kuota modul magang (lihat poin 15). |
 
 **Cara aman menerapkannya**: buka file Anda yang asli, cari baris yang sama
 persis (lihat isi file di zip ini), lalu tambahkan baris barunya secara manual

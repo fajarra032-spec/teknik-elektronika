@@ -371,21 +371,23 @@ async function getActivePdkList(userId) {
       .where('status', '==', 'active')
       .get();
 
+    // ✅ OPTIMISASI KUOTA: ambil semua dokumen mataKuliah SEKALIGUS lewat
+    // db.getAll(), bukan satu per satu di dalam loop.
+    const enrollments = enrollmentSnapshot.docs.map(doc => doc.data());
     const pdkList = [];
-
-    for (const doc of enrollmentSnapshot.docs) {
-      const enrollment = doc.data();
-      const mkDoc = await db.collection('mataKuliah').doc(enrollment.mkId).get();
-
-      if (mkDoc.exists && mkDoc.data().isPDK === true) {
-        pdkList.push({
-          id: mkDoc.id,
-          kodeMK: mkDoc.data().kode,
-          namaMK: mkDoc.data().nama,
-          semester: enrollment.semester,
-          tahunAjaran: enrollment.tahunAjaran
-        });
-      }
+    if (enrollments.length > 0) {
+      const mkDocs = await db.getAll(...enrollments.map(e => db.collection('mataKuliah').doc(e.mkId)));
+      mkDocs.forEach((mkDoc, i) => {
+        if (mkDoc.exists && mkDoc.data().isPDK === true) {
+          pdkList.push({
+            id: mkDoc.id,
+            kodeMK: mkDoc.data().kode,
+            namaMK: mkDoc.data().nama,
+            semester: enrollments[i].semester,
+            tahunAjaran: enrollments[i].tahunAjaran
+          });
+        }
+      });
     }
 
     pdkList.sort((a, b) => a.kodeMK.localeCompare(b.kodeMK));
@@ -527,11 +529,23 @@ router.get('/', async (req, res) => {
 
     for (const period of allPeriods) {
       if (period.status === 'active') {
-        const logbookSnapshot = await db.collection('logbookMagang')
-          .where('userId', '==', userId)
-          .where('pdkId', '==', period.pdkId)
-          .get();
-        const totalLogbook = logbookSnapshot.size;
+        // ✅ OPTIMISASI KUOTA: cuma butuh JUMLAH-nya, bukan isi dokumennya -
+        // pakai count() aggregation, bukan .get().size (yang membaca semua
+        // dokumen logbook periode ini).
+        let totalLogbook;
+        try {
+          const countSnap = await db.collection('logbookMagang')
+            .where('userId', '==', userId)
+            .where('pdkId', '==', period.pdkId)
+            .count().get();
+          totalLogbook = countSnap.data().count;
+        } catch (err) {
+          const logbookSnapshot = await db.collection('logbookMagang')
+            .where('userId', '==', userId)
+            .where('pdkId', '==', period.pdkId)
+            .get();
+          totalLogbook = logbookSnapshot.size;
+        }
 
         const progress = calculateProgress(
           totalLogbook,
@@ -622,11 +636,21 @@ router.get('/logbook', async (req, res) => {
 
     let progress = null;
     if (selectedPeriod) {
-      const logbookSnapshot = await db.collection('logbookMagang')
-        .where('userId', '==', userId)
-        .where('pdkId', '==', selectedPeriod.pdkId)
-        .get();
-      const totalLogbook = logbookSnapshot.size;
+      // ✅ OPTIMISASI KUOTA: sama seperti di atas - cuma butuh jumlahnya.
+      let totalLogbook;
+      try {
+        const countSnap = await db.collection('logbookMagang')
+          .where('userId', '==', userId)
+          .where('pdkId', '==', selectedPeriod.pdkId)
+          .count().get();
+        totalLogbook = countSnap.data().count;
+      } catch (err) {
+        const logbookSnapshot = await db.collection('logbookMagang')
+          .where('userId', '==', userId)
+          .where('pdkId', '==', selectedPeriod.pdkId)
+          .get();
+        totalLogbook = logbookSnapshot.size;
+      }
       progress = calculateProgress(
         totalLogbook,
         selectedPeriod.tanggalMulai,
@@ -979,18 +1003,30 @@ router.get('/ulasan', async (req, res) => {
   try {
     const completedPeriods = await getCompletedMagangPeriods(req.user.id);
 
-    const periodsWithUlasan = [];
-    for (const period of completedPeriods) {
-      const reviewSnapshot = await db.collection('reviewPerusahaan')
-        .where('magangPeriodId', '==', period.id)
-        .get();
-
-      periodsWithUlasan.push({
-        ...period,
-        hasUlasan: !reviewSnapshot.empty,
-        ulasanId: reviewSnapshot.empty ? null : reviewSnapshot.docs[0].id
-      });
+    // ✅ OPTIMISASI KUOTA: sebelumnya query 'reviewPerusahaan' dijalankan
+    // TERPISAH untuk setiap periode magang yang sudah selesai (N query utk N
+    // periode). Sekarang cukup SATU query batch (`where('magangPeriodId','in',...)`)
+    // utk semua periode sekaligus (periode magang biasanya sedikit, jadi ini
+    // hampir selalu cukup 1 query saja, bukan N).
+    const periodIds = completedPeriods.map(p => p.id);
+    const reviewByPeriodId = new Map(); // periodId -> reviewDoc id
+    if (periodIds.length > 0) {
+      const chunks = [];
+      for (let i = 0; i < periodIds.length; i += 10) chunks.push(periodIds.slice(i, i + 10));
+      for (const chunk of chunks) {
+        const snap = await db.collection('reviewPerusahaan').where('magangPeriodId', 'in', chunk).get();
+        snap.docs.forEach(doc => {
+          const pid = doc.data().magangPeriodId;
+          if (!reviewByPeriodId.has(pid)) reviewByPeriodId.set(pid, doc.id); // simpan yang pertama ditemukan
+        });
+      }
     }
+
+    const periodsWithUlasan = completedPeriods.map(period => ({
+      ...period,
+      hasUlasan: reviewByPeriodId.has(period.id),
+      ulasanId: reviewByPeriodId.get(period.id) || null
+    }));
 
     res.render('mahasiswa/magang/ulasan_list', {
       title: 'Ulasan Perusahaan Magang',
@@ -1101,17 +1137,15 @@ router.get('/laporan', async (req, res) => {
     const userId = req.user.id;
     const pembimbing = await getPembimbingMahasiswa(userId);
 
-    const laporanList = [];
-    for (let i = 1; i <= 3; i++) {
-      const docId = `${userId}_${i}`;
-      const doc = await db.collection('laporanMagang').doc(docId).get();
-
-      laporanList.push({
-        ke: i,
-        exists: doc.exists,
-        data: doc.exists ? doc.data() : null
-      });
-    }
+    // ✅ OPTIMISASI KUOTA: 3 dokumen tetap (laporan 1, 2, 3) diambil
+    // SEKALIGUS lewat db.getAll(), bukan 3 kali .get() terpisah berurutan.
+    const docIds = [1, 2, 3].map(i => `${userId}_${i}`);
+    const docs = await db.getAll(...docIds.map(id => db.collection('laporanMagang').doc(id)));
+    const laporanList = docs.map((doc, idx) => ({
+      ke: idx + 1,
+      exists: doc.exists,
+      data: doc.exists ? doc.data() : null
+    }));
 
     res.render('mahasiswa/magang/laporan', {
       title: 'Laporan Magang',

@@ -250,49 +250,58 @@ router.get('/mahasiswa/:userId', async (req, res) => {
     if (periodId) selectedPeriod = allPeriods.find(p => p.id === periodId);
     else if (allPeriods.length > 0) selectedPeriod = allPeriods[0];
 
-    // Query logbook utama
-    let logbookQuery = db.collection('logbookMagang')
-      .where('userId', '==', userId)
-      .orderBy('tanggal', 'desc');
-    if (selectedPeriod) logbookQuery = logbookQuery.where('pdkId', '==', selectedPeriod.pdkId);
-    if (semester) logbookQuery = logbookQuery.where('semester', '==', semester);
-    const logbookSnapshot = await logbookQuery.get();
-    const logbookList = logbookSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        tanggalFormatted: formatDate(data.tanggal),
-        tanggalWaktuFormatted: formatDateTime(data.tanggal)
-      };
-    });
-
-    // Ambil daftar semester unik
-    const allSemesterSnapshot = await db.collection('logbookMagang')
+    // ✅ OPTIMISASI KUOTA: sebelumnya halaman ini membaca koleksi
+    // 'logbookMagang' mahasiswa yang SAMA sampai (2 + jumlah periode magang)
+    // KALI secara terpisah - sekali utk daftar yang ditampilkan, sekali lagi
+    // utk daftar semester, dan sekali lagi PER PERIODE utk statistik per PDK.
+    // Sekarang cukup SATU KALI baca semua logbook mahasiswa ini, sisanya
+    // (filter tampilan, daftar semester, statistik per PDK) dihitung di JS.
+    const semuaLogbookSnapshot = await db.collection('logbookMagang')
       .where('userId', '==', userId)
       .get();
-    const semesterSet = new Set();
-    allSemesterSnapshot.docs.forEach(doc => {
-      if (doc.data().semester) semesterSet.add(doc.data().semester);
+    const semuaLogbook = semuaLogbookSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Daftar logbook yang ditampilkan (terapkan filter period/semester + urutkan)
+    let logbookList = semuaLogbook.filter(l => {
+      if (selectedPeriod && l.pdkId !== selectedPeriod.pdkId) return false;
+      if (semester && l.semester !== semester) return false;
+      return true;
     });
+    logbookList.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+    logbookList = logbookList.map(data => ({
+      ...data,
+      tanggalFormatted: formatDate(data.tanggal),
+      tanggalWaktuFormatted: formatDateTime(data.tanggal)
+    }));
+
+    // Daftar semester unik
+    const semesterSet = new Set();
+    semuaLogbook.forEach(l => { if (l.semester) semesterSet.add(l.semester); });
     const semesterList = Array.from(semesterSet).sort();
 
-    // Statistik per PDK (paralel)
-    const pdkStats = await Promise.all(allPeriods.map(async period => {
-      const stats = await getLogbookStats(userId, period.pdkId);
+    // Statistik per PDK - dihitung dari data yang sudah ada di memori,
+    // BUKAN query baru per periode.
+    const pdkStats = allPeriods.map(period => {
+      let pending = 0, approved = 0, rejected = 0;
+      semuaLogbook.forEach(l => {
+        if (l.pdkId !== period.pdkId) return;
+        if (l.status === 'pending') pending++;
+        else if (l.status === 'approved') approved++;
+        else if (l.status === 'rejected') rejected++;
+      });
       return {
         id: period.id,
         pdkKode: period.pdkKode,
         pdkNama: period.pdkNama,
-        pendingCount: stats.pending,
-        approvedCount: stats.approved,
-        rejectedCount: stats.rejected,
+        pendingCount: pending,
+        approvedCount: approved,
+        rejectedCount: rejected,
         status: period.status,
         tanggalMulai: period.tanggalMulai,
         tanggalSelesai: period.tanggalSelesai,
         perusahaan: period.perusahaan
       };
-    }));
+    });
 
     // Daftar PDK untuk dropdown (satu query)
     const pdkSnapshot = await db.collection('mataKuliah')

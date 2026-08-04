@@ -112,24 +112,40 @@ async function getMahasiswaBimbingan(dosenId) {
   }
 }
 
+/**
+ * ✅ OPTIMISASI KUOTA: fungsi ini dipanggil SATU KALI PER MAHASISWA BIMBINGAN
+ * (lihat statistikPromises di bawah) - sebelumnya, setiap panggilan membaca
+ * ULANG SELURUH logbook mahasiswa itu SAMPAI 4 KALI (total, pending,
+ * approved, rejected - overlap besar antara query-query ini). Untuk dosen
+ * dengan 10 mahasiswa bimbingan x 50 entri logbook, itu bisa >1000 pembacaan
+ * dokumen HANYA untuk menampilkan angka statistik. Sekarang pakai Firestore
+ * count() aggregation - tidak mengunduh isi dokumen logbook sama sekali,
+ * cuma angkanya. Ada fallback ke cara lama kalau versi firebase-admin belum
+ * mendukung count().
+ */
 async function getLogbookStatistik(mahasiswaId, pdkId = null) {
   try {
     let baseQuery = db.collection('logbookMagang').where('userId', '==', mahasiswaId);
     if (pdkId) baseQuery = baseQuery.where('pdkId', '==', pdkId);
-    
-    const [totalSnapshot, pendingSnapshot, approvedSnapshot, rejectedSnapshot] = await Promise.all([
-      baseQuery.get(),
-      baseQuery.where('status', '==', 'pending').get(),
-      baseQuery.where('status', '==', 'approved').get(),
-      baseQuery.where('status', '==', 'rejected').get()
-    ]);
-    
-    return {
-      totalLogbook: totalSnapshot.size,
-      pendingCount: pendingSnapshot.size,
-      approvedCount: approvedSnapshot.size,
-      rejectedCount: rejectedSnapshot.size
+
+    const hitung = async (query) => {
+      try {
+        const snap = await query.count().get();
+        return snap.data().count;
+      } catch (err) {
+        const snap = await query.get();
+        return snap.size;
+      }
     };
+
+    const [totalLogbook, pendingCount, approvedCount, rejectedCount] = await Promise.all([
+      hitung(baseQuery),
+      hitung(baseQuery.where('status', '==', 'pending')),
+      hitung(baseQuery.where('status', '==', 'approved')),
+      hitung(baseQuery.where('status', '==', 'rejected'))
+    ]);
+
+    return { totalLogbook, pendingCount, approvedCount, rejectedCount };
   } catch (error) {
     console.error('Error getLogbookStatistik:', error);
     return { totalLogbook: 0, pendingCount: 0, approvedCount: 0, rejectedCount: 0 };
@@ -203,43 +219,70 @@ router.get('/', async (req, res) => {
       });
     }
     
-    // Kumpulkan semua data tambahan secara paralel
-    const enrollmentPromises = mahasiswaList.map(mhs =>
-      db.collection('enrollment').where('userId', '==', mhs.id).where('status', '==', 'active').get()
-    );
-    const periodActivePromises = mahasiswaList.map(mhs =>
-      db.collection('magangPeriod').where('mahasiswaId', '==', mhs.id).where('status', '==', 'active').limit(1).get()
-    );
-    const statistikPromises = mahasiswaList.map(mhs => getLogbookStatistik(mhs.id));
-    
-    const [enrollmentSnapshots, periodActiveSnapshots, statsResults] = await Promise.all([
-      Promise.all(enrollmentPromises),
-      Promise.all(periodActivePromises),
-      Promise.all(statistikPromises)
-    ]);
-    
+    // ✅ OPTIMISASI KUOTA: sebelumnya ada 2 masalah di sini:
+    //  (a) enrollment & periode aktif di-query TERPISAH UNTUK SETIAP mahasiswa
+    //      (N query utk N mahasiswa bimbingan, masing-masing).
+    //  (b) untuk SETIAP enrollment dari SETIAP mahasiswa, dokumen mataKuliah
+    //      diambil SATU PER SATU secara SERIAL (bukan paralel) - kalau 10
+    //      mahasiswa x 5 enrollment, itu 50 pembacaan dokumen satu-satu.
+    // Sekarang: enrollment & periode aktif di-batch pakai 'in' (per 10
+    // mahasiswaId sekaligus), dan SEMUA dokumen mataKuliah yang dibutuhkan
+    // dikumpulkan ID-nya dulu lalu diambil SEKALIGUS lewat db.getAll().
+    function chunkArray(arr, size) {
+      const chunks = [];
+      for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
+      return chunks;
+    }
+
+    const mahasiswaIdList = mahasiswaList.map(m => m.id);
+    const enrollmentByMhs = new Map(); // mahasiswaId -> [enrollment docs]
+    const periodAktifSet = new Set(); // mahasiswaId yang punya periode aktif
+
+    for (const chunk of chunkArray(mahasiswaIdList, 10)) {
+      if (chunk.length === 0) continue;
+      const [enrollSnap, periodSnap] = await Promise.all([
+        db.collection('enrollment').where('userId', 'in', chunk).where('status', '==', 'active').get(),
+        db.collection('magangPeriod').where('mahasiswaId', 'in', chunk).where('status', '==', 'active').get()
+      ]);
+      enrollSnap.docs.forEach(doc => {
+        const data = doc.data();
+        if (!enrollmentByMhs.has(data.userId)) enrollmentByMhs.set(data.userId, []);
+        enrollmentByMhs.get(data.userId).push(data);
+      });
+      periodSnap.docs.forEach(doc => periodAktifSet.add(doc.data().mahasiswaId));
+    }
+
+    // Kumpulkan semua mkId unik dari SELURUH mahasiswa, lalu ambil sekaligus
+    const mkIdSet = new Set();
+    enrollmentByMhs.forEach(list => list.forEach(e => mkIdSet.add(e.mkId)));
+    const mkIdArr = Array.from(mkIdSet);
+    const mkDocsMap = new Map();
+    if (mkIdArr.length > 0) {
+      const mkRefs = mkIdArr.map(id => db.collection('mataKuliah').doc(id));
+      const mkDocs = await db.getAll(...mkRefs);
+      mkDocs.forEach((doc, i) => { if (doc.exists) mkDocsMap.set(mkIdArr[i], doc.data()); });
+    }
+
+    const statsResults = await Promise.all(mahasiswaList.map(mhs => getLogbookStatistik(mhs.id)));
+
     for (let i = 0; i < mahasiswaList.length; i++) {
       const mhs = mahasiswaList[i];
-      const enrolmentSnapshot = enrollmentSnapshots[i];
-      const periodActiveSnapshot = periodActiveSnapshots[i];
       const stats = statsResults[i];
-      
-      // enrolledPdks
+
       const enrolledPdks = [];
-      for (const doc of enrolmentSnapshot.docs) {
-        const enrollment = doc.data();
-        const mkDoc = await db.collection('mataKuliah').doc(enrollment.mkId).get();
-        if (mkDoc.exists && mkDoc.data().isPDK === true) {
+      (enrollmentByMhs.get(mhs.id) || []).forEach(enrollment => {
+        const mkData = mkDocsMap.get(enrollment.mkId);
+        if (mkData && mkData.isPDK === true) {
           enrolledPdks.push({
-            id: mkDoc.id,
-            kode: mkDoc.data().kode,
-            nama: mkDoc.data().nama,
-            urutan: mkDoc.data().urutanPDK
+            id: enrollment.mkId,
+            kode: mkData.kode,
+            nama: mkData.nama,
+            urutan: mkData.urutanPDK
           });
         }
-      }
+      });
       mhs.enrolledPdks = enrolledPdks;
-      mhs.hasActivePeriod = !periodActiveSnapshot.empty;
+      mhs.hasActivePeriod = periodAktifSet.has(mhs.id);
       mhs.totalLogbook = stats.totalLogbook;
       mhs.pendingCount = stats.pendingCount;
       mhs.approvedCount = stats.approvedCount;
