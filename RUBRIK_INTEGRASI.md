@@ -434,6 +434,37 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
     lebih besar (karena cara lama scaling-nya ikut jumlah mahasiswa, cara
     baru tidak).
 
+18. **Kenapa dashboard dosen terasa lambat - ini soal KECEPATAN, bukan
+    cuma kuota.** Setelah optimasi kuota sebelumnya (poin 14), ternyata
+    dashboard dosen masih bisa lambat karena masalah yang BEDA: banyak
+    query yang **saling tidak berhubungan** tapi ditulis menunggu satu-satu
+    secara BERURUTAN (`await` demi `await`), bukan berbarengan.
+
+    Bedanya penting: kalau 5 query independen dijalankan berurutan, total
+    waktu tunggu = **jumlah** semua waktu round-trip-nya (mis. 5 x 150ms =
+    750ms). Kalau dijalankan bersamaan (`Promise.all`), total waktu tunggu =
+    waktu round-trip **paling lama saja** (~150-200ms) - jauh lebih cepat,
+    meskipun jumlah dokumen yang dibaca sama persis.
+
+    Titik yang paling berdampak: bagian "pdkInfo" untuk logbook pending
+    tadinya query `magangPeriod` **satu per satu dalam for-loop serial** -
+    kalau ada 15 logbook pending, ini menunggu 15 round-trip Firestore
+    berurutan (bisa nambah 1-3 detik sendiri ke waktu loading dashboard).
+
+    **Perbaikan** (`routes/dosen/dashboard.js`):
+    - 5 query independen di awal (mata kuliah, bimbingan1, bimbingan2, tugas,
+      event) digabung jadi satu `Promise.all`.
+    - Query batch "pengumpulan belum dinilai" per-chunk, dan "logbook"
+      per-chunk, dijalankan bersamaan lewat `Promise.all` (sebelumnya
+      for-loop serial menunggu chunk demi chunk).
+    - Bagian pdkInfo per logbook pending (yang paling berat) diubah dari
+      for-loop serial jadi `Promise.all(pendingRaw.map(...))`.
+
+    Jumlah dokumen yang dibaca **tidak berubah** (optimasi kuota poin 14
+    tetap berlaku) - yang berubah cuma cara menjalankannya, dari
+    satu-per-satu-menunggu jadi bersamaan. Dashboard admin sudah memakai
+    pola `Promise.all` sejak awal jadi tidak ada perubahan di sana.
+
 ---
 
 

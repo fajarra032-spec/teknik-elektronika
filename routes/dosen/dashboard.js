@@ -37,18 +37,30 @@ async function hitungJumlah(query) {
 router.get('/', async (req, res) => {
   try {
     const dosen = req.dosen;
+    const currentSemester = getCurrentAcademicSemester();
+    const dosenId = req.dosen.id;
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date().toISOString();
 
-    // ========================================================================
-    // 0. Semester saat ini (untuk ditampilkan di dashboard)
-    // ========================================================================
-    const currentSemester = getCurrentAcademicSemester(); // dapatkan semester saat ini
+    // ⚡ OPTIMISASI KECEPATAN (bukan cuma kuota): 5 query di bawah ini SAMA
+    // SEKALI TIDAK SALING BERGANTUNG - sebelumnya ditulis `await` satu per
+    // satu berurutan, jadi total waktu tunggu = JUMLAH semua waktu round-trip
+    // Firestore-nya (mis. 5 x 150ms = 750ms). Dijalankan bersamaan lewat
+    // Promise.all, total waktu tunggu = waktu round-trip PALING LAMA saja
+    // (mis. cuma ~150-200ms) - dashboard terasa jauh lebih cepat dibuka,
+    // terlepas dari optimasi jumlah baca dokumen yang sudah dilakukan
+    // sebelumnya.
+    const [mkSnapshot, bimbingan1, bimbingan2, tugasSemua, eventsSnapshot] = await Promise.all([
+      db.collection('mataKuliah').where('dosenIds', 'array-contains', dosenId).get(),
+      db.collection('bimbingan').where('pembimbing1Id', '==', dosenId).where('status', '==', 'active').get(),
+      db.collection('bimbingan').where('pembimbing2Id', '==', dosenId).where('status', '==', 'active').get(),
+      db.collection('tugas').where('dosenId', '==', dosenId).get(),
+      db.collection('jadwalPenting').where('tanggal', '>=', today).orderBy('tanggal', 'asc').limit(5).get()
+    ]);
 
     // ========================================================================
     // 1. Mata Kuliah yang diampu dan progress pertemuan
     // ========================================================================
-    const mkSnapshot = await db.collection('mataKuliah')
-      .where('dosenIds', 'array-contains', req.dosen.id)
-      .get();
     const mkList = mkSnapshot.docs.map(doc => ({
       id: doc.id,
       kode: doc.data().kode,
@@ -62,25 +74,16 @@ router.get('/', async (req, res) => {
     const PERTEMUAN_PER_MK = 16;
     let totalPertemuanTerlaksana = 0;
     for (const mk of mkList) {
-      const terlaksana = mk.materi.filter(m => m.status === 'selesai').length;
-      totalPertemuanTerlaksana += terlaksana;
+      totalPertemuanTerlaksana += mk.materi.filter(m => m.status === 'selesai').length;
     }
     const totalPertemuanMax = mkCount * PERTEMUAN_PER_MK;
-    const persentasePengajaran = totalPertemuanMax > 0 
-      ? Math.round((totalPertemuanTerlaksana / totalPertemuanMax) * 100) 
+    const persentasePengajaran = totalPertemuanMax > 0
+      ? Math.round((totalPertemuanTerlaksana / totalPertemuanMax) * 100)
       : 0;
 
     // ========================================================================
     // 2. Total mahasiswa bimbingan
     // ========================================================================
-    const bimbingan1 = await db.collection('bimbingan')
-      .where('pembimbing1Id', '==', req.dosen.id)
-      .where('status', '==', 'active')
-      .get();
-    const bimbingan2 = await db.collection('bimbingan')
-      .where('pembimbing2Id', '==', req.dosen.id)
-      .where('status', '==', 'active')
-      .get();
     const mahasiswaBimbinganIds = new Set();
     bimbingan1.docs.forEach(doc => mahasiswaBimbinganIds.add(doc.data().mahasiswaId));
     bimbingan2.docs.forEach(doc => mahasiswaBimbinganIds.add(doc.data().mahasiswaId));
@@ -89,20 +92,6 @@ router.get('/', async (req, res) => {
     // ========================================================================
     // 3 & 4. Tugas aktif + Pengumpulan belum dinilai
     // ========================================================================
-    // ✅ OPTIMISASI KUOTA: sebelumnya ada 2 masalah di sini:
-    //  (a) tugasAktif dihitung lewat query TERPISAH dari tugasSemua, padahal
-    //      datanya bisa dihitung dari HASIL YANG SAMA (satu query 'tugas'
-    //      cukup, filter deadline > now cukup di JS).
-    //  (b) pengumpulanBelumDinilai dihitung dengan query 'pengumpulan'
-    //      TERPISAH UNTUK SETIAP TUGAS (N query utk N tugas) - kalau dosen
-    //      punya 20 tugas, itu 20 pembacaan minimum SETIAP KALI dashboard
-    //      dibuka. Sekarang digabung jadi query batch (`where('tugasId','in',...)`)
-    //      per 10 tugasId sekaligus, jadi maksimal N/10 query saja.
-    const tugasSemua = await db.collection('tugas')
-      .where('dosenId', '==', req.dosen.id)
-      .get();
-
-    const now = new Date().toISOString();
     let tugasAktif = 0;
     const tugasIds = [];
     tugasSemua.docs.forEach(doc => {
@@ -110,47 +99,37 @@ router.get('/', async (req, res) => {
       if ((doc.data().deadline || '') > now) tugasAktif++;
     });
 
-    let pengumpulanBelumDinilai = 0;
-    for (const chunk of chunkArray(tugasIds, 10)) {
-      if (chunk.length === 0) continue;
-      pengumpulanBelumDinilai += await hitungJumlah(
-        db.collection('pengumpulan')
-          .where('tugasId', 'in', chunk)
-          .where('status', '==', 'dikumpulkan')
-      );
-    }
+    // ⚡ Chunk 'pengumpulan' dijalankan PARALEL (Promise.all), bukan for-loop
+    // serial menunggu satu chunk selesai baru lanjut ke chunk berikutnya.
+    const pengumpulanChunkCounts = await Promise.all(
+      chunkArray(tugasIds, 10)
+        .filter(chunk => chunk.length > 0)
+        .map(chunk => hitungJumlah(
+          db.collection('pengumpulan').where('tugasId', 'in', chunk).where('status', '==', 'dikumpulkan')
+        ))
+    );
+    const pengumpulanBelumDinilai = pengumpulanChunkCounts.reduce((a, b) => a + b, 0);
 
     // ========================================================================
-    // 5. Event terdekat
+    // 5. Event terdekat (sudah diambil paralel di atas)
     // ========================================================================
-    const today = new Date().toISOString().split('T')[0];
-    const eventsSnapshot = await db.collection('jadwalPenting')
-      .where('tanggal', '>=', today)
-      .orderBy('tanggal', 'asc')
-      .limit(5)
-      .get();
     const events = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     // ========================================================================
     // 6. Logbook: daftar pending + statistik approved/total
     // ========================================================================
-    // ✅ OPTIMISASI KUOTA: sebelumnya query 'logbookMagang' dijalankan SATU
-    // PER SATU untuk setiap mahasiswa bimbingan (N query utk N mahasiswa),
-    // dan untuk tiap entri pending, dokumen 'users' juga diambil SATU PER
-    // SATU. Sekarang: logbook diambil per-batch (10 mahasiswaId sekaligus
-    // lewat 'in'), dan semua dokumen 'users' yang dibutuhkan diambil
-    // SEKALIGUS lewat db.getAll(...) - bukan satu per satu dalam loop.
+    // ⚡ Chunk 'logbookMagang' juga dijalankan PARALEL, bukan for-loop serial.
+    const mahasiswaIdsArr = Array.from(mahasiswaBimbinganIds);
+    const logbookChunkSnaps = await Promise.all(
+      chunkArray(mahasiswaIdsArr, 10)
+        .filter(chunk => chunk.length > 0)
+        .map(chunk => db.collection('logbookMagang').where('userId', 'in', chunk).get())
+    );
+
     let totalLogbookAll = 0;
     let totalLogbookApproved = 0;
     const pendingRaw = []; // { id, mahasiswaId, data }
-
-    const mahasiswaIdsArr = Array.from(mahasiswaBimbinganIds);
-    for (const chunk of chunkArray(mahasiswaIdsArr, 10)) {
-      if (chunk.length === 0) continue;
-      const logbookSnap = await db.collection('logbookMagang')
-        .where('userId', 'in', chunk)
-        .get();
-
+    logbookChunkSnaps.forEach(logbookSnap => {
       logbookSnap.docs.forEach(logbookDoc => {
         const data = logbookDoc.data();
         totalLogbookAll++;
@@ -159,10 +138,9 @@ router.get('/', async (req, res) => {
           pendingRaw.push({ id: logbookDoc.id, mahasiswaId: data.userId, data });
         }
       });
-    }
+    });
 
-    // Ambil semua dokumen 'users' yang dibutuhkan utk entri pending SEKALIGUS
-    // (satu round-trip), bukan satu per satu di dalam loop.
+    // Ambil semua dokumen 'users' yang dibutuhkan utk entri pending SEKALIGUS.
     const userIdsUnik = [...new Set(pendingRaw.map(p => p.mahasiswaId))];
     const userDocsMap = new Map();
     if (userIdsUnik.length > 0) {
@@ -173,11 +151,12 @@ router.get('/', async (req, res) => {
       });
     }
 
-    // pdkInfo per entri pending tetap query kecil per-item (biasanya jumlah
-    // pending jauh lebih sedikit daripada total logbook, jadi dampaknya
-    // kecil) - tapi hanya dijalankan untuk yang benar-benar pending.
-    const logbookPendingList = [];
-    for (const item of pendingRaw) {
+    // ⚡ INI YANG PALING BERDAMPAK KE KECEPATAN: pdkInfo per entri pending
+    // SEBELUMNYA di-query satu per satu dalam for-loop serial - kalau ada
+    // 15 logbook pending, itu 15 round-trip Firestore MENUNGGU BERURUTAN
+    // (bisa nambah 1-3 detik sendiri ke waktu loading). Sekarang semuanya
+    // dijalankan BERSAMAAN lewat Promise.all.
+    const logbookPendingList = await Promise.all(pendingRaw.map(async item => {
       const userData = userDocsMap.get(item.mahasiswaId);
       const mahasiswaNama = userData ? userData.nama : 'Unknown';
       const mahasiswaNim = userData ? userData.nim : '-';
@@ -193,7 +172,7 @@ router.get('/', async (req, res) => {
           pdkInfo = `${period.pdkKode} - ${period.pdkNama}`;
         }
       }
-      logbookPendingList.push({
+      return {
         id: item.id,
         mahasiswaId: item.mahasiswaId,
         mahasiswaNama,
@@ -204,8 +183,8 @@ router.get('/', async (req, res) => {
         durasi: item.data.durasi,
         pdkInfo,
         imageCount: item.data.imageUrls ? item.data.imageUrls.length : 0
-      });
-    }
+      };
+    }));
 
     logbookPendingList.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
     const recentLogbookPending = logbookPendingList.slice(0, 10);
@@ -218,7 +197,7 @@ router.get('/', async (req, res) => {
     res.render('dosen/dashboard', {
       title: 'Dashboard Dosen',
       dosen,
-      currentSemester,                     // <-- DITAMBAHKAN
+      currentSemester,
       mkCount,
       totalPertemuanTerlaksana,
       totalPertemuanMax,
