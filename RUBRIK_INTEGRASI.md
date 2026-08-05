@@ -465,6 +465,134 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
     satu-per-satu-menunggu jadi bersamaan. Dashboard admin sudah memakai
     pola `Promise.all` sejak awal jadi tidak ada perubahan di sana.
 
+19. **Sapuan lebih luas - titik boros lain yang ditemukan & sebagian
+    diperbaiki.** Saya telusuri seluruh 78 file route di project (bukan
+    cuma dashboard/rubrik/magang), cari pola query-di-dalam-loop yang sama.
+    Yang sudah diperbaiki di update ini:
+
+    - **`routes/mahasiswa/dashboard.js`** (PALING PENTING - dashboard yang
+      dibuka SETIAP mahasiswa SETIAP login): daftar MK yang diambil tadinya
+      fetch `mataKuliah` satu per satu per enrollment (serial) → sekarang
+      `db.getAll()`. Daftar tugas aktif tadinya query TERPISAH per MK (N
+      query kalau ambil N MK) → sekarang di-batch pakai `'in'`. 3 pemanggilan
+      data yang saling independen (tagihan, MK, event) juga digabung jadi
+      `Promise.all` (sama seperti perbaikan dashboard dosen kemarin).
+    - **`routes/dosen/mk.js`** (halaman "Kelola Mata Kuliah" - dosen kelola
+      satu MK: presensi, materi, dll): daftar mahasiswa peserta (muncul di
+      2 tempat di file ini) dan daftar nama dosen pengampu tadinya fetch
+      satu per satu → sekarang `db.getAll()`.
+    - **`routes/dosen/mahasiswa.js`**: halaman daftar "Mahasiswa Bimbingan"
+      - fetch data mahasiswa satu per satu → `db.getAll()`. Halaman detail
+      satu mahasiswa - nilai per MK tadinya di-query terpisah PER MK (bisa
+      2x query per MK karena ada fallback) → digabung jadi 1 query batch
+      `'in'` untuk semua MK sekaligus.
+
+    **Kandidat lain yang TERDETEKSI tapi BELUM sempat diperbaiki** (skala
+    dampaknya lebih kecil - biasanya halaman detail satu-data, bukan
+    dashboard/list besar - tapi tetap pola yang sama kalau mau dibereskan
+    juga):
+    - `mahasiswa/elearning.js` (~baris 331-343): fetch `mataKuliah` per tugas
+      dalam loop.
+    - `mahasiswa/akademik.js` (~baris 96, 243, 300): fetch `mataKuliah` per
+      item KRS/KHS dalam loop, muncul di 3 tempat berbeda.
+    - `dosen/kurikulum.js`, `dosen/nilai.js`, `admin/pengajaran.js`,
+      `admin/mahasiswa.js`, `admin/bimbingan.js`, `admin/khs.js`,
+      `admin/tagihan.js`, `admin/sk.js`, `admin/spmp.js`, `admin/rps.js`,
+      `admin/berkas.js`, `landing.js` - masing-masing punya 1-2 titik fetch
+      dokumen tunggal (`dosen`/`users`/`mataKuliah`) di dalam loop kecil,
+      biasanya di halaman form/detail (bukan dashboard), jadi prioritasnya
+      lebih rendah.
+
+    Kalau mau saya lanjutkan membereskan sisanya, tinggal bilang saja -
+    pola perbaikannya sama semua (batch pakai `db.getAll()` atau `'in'`).
+
+20. **Analisis data ASLI dari Firebase Query Insights (Aug 4-5) - ini
+    konfirmasi nyata, bukan simulasi lagi.** Anda share data 24 jam terakhir
+    dari Firebase Console, dan ini yang paling penting ditemukan:
+
+    **a) Query PALING BOROS: `logbookMagang` WHERE (userId, pdkId, status)**
+    - Cuma 59 kali dipanggil, tapi total **4.363 operasi baca**, dan
+      rata-rata **2.303 index entries dibaca** padahal cuma 72 dokumen yang
+      benar-benar jadi hasil (rasio index-dibaca/hasil = **32x**!).
+    - **Penyebabnya**: query dengan 3+ filter kesetaraan (`==`) TANPA index
+      komposit yang cocok, Firestore terpaksa **zigzag-merge** antar index
+      per-field satu-satu (index `userId`, index `pdkId`, index `status`
+      masing-masing sendiri-sendiri) - jauh lebih boros daripada kalau ada
+      SATU index gabungan utk ketiganya sekaligus.
+    - Sumbernya: `helpers/magangHelper.js` (`getProgressMagangHarian` -
+      dipakai halaman publik/papan display, sudah di-cache 15 menit tapi
+      query di baliknya tetap boros tiap kali cache refresh).
+    - **Perbaikan: bukan ubah kode, tapi TAMBAH INDEX KOMPOSIT** (lihat
+      `firestore.indexes.json` di zip ini) - setelah index ini ada,
+      Firestore otomatis pakai jalur cepat, TANPA perlu ubah satu baris
+      kode pun.
+
+    **b) Query nomor 2 paling boros: `nilai` WHERE (mahasiswaId, mkId, tipe,
+    periode) LIMIT 1** - 117 eksekusi, pola sama (zigzag-merge, rasio 58.5x).
+    Ini kode SAYA SENDIRI (`saveKomponenRubrik` - dipanggil tiap dosen input
+    Kehadiran/Sikap/dll di Rubrik). **Sudah saya perbaiki di update ini**:
+    field `periode` dihapus dari pengecekan (sama seperti fix `saveNilai`
+    sebelumnya - satu `mkId` di aplikasi ini representasi satu periode
+    tertentu, jadi `periode` tidak perlu ikut jadi kunci pencarian). Index
+    komposit utk 3 field sisanya (mahasiswaId, mkId, tipe) tetap saya
+    sertakan sebagai lapis kedua.
+
+    **c) Ditemukan juga: `enrollment` WHERE status = ? (SATU filter saja)**
+    - 234 dokumen dibaca RATA-RATA setiap eksekusi - ini membaca **SEMUA
+      enrollment aktif DI SELURUH SISTEM** (semua mata kuliah, bukan cuma
+      magang), padahal cuma dibutuhkan yang terkait PDK/magang.
+    - Sumbernya: `routes/admin/emagang.js` (halaman "Manajemen Magang" admin)
+    - **Sudah saya perbaiki**: sekarang cari dulu MK mana yang `isPDK==true`
+      (jumlahnya jauh lebih sedikit), baru query enrollment DIBATASI ke
+      MK-MK itu saja - bukan seluruh sistem.
+
+    **d) KONFIRMASI PENTING: optimasi `count()` yang saya buat SEBELUMNYA
+    kemungkinan BELUM AKTIF di server Anda.** Baris `COLLECTION /users WHERE
+    role = ?` (47 eksekusi, ~105 dokumen dibaca tiap kali) dan
+    `COLLECTION /dosen` (47 eksekusi, ~7 dokumen tiap kali) polanya PERSIS
+    seperti dashboard admin yang saya optimasi pakai `count()` (poin 14) -
+    tapi kalau `count()` benar-benar jalan, harusnya angka "dokumen dibaca"
+    jauh lebih kecil dari ini. Ini indikasi kuat **fallback ke cara lama**
+    sedang aktif, artinya versi `firebase-admin` di server kemungkinan
+    **belum mendukung `count()` aggregation**.
+
+    **➡️ Yang perlu Anda lakukan:**
+    1. Jalankan `npm list firebase-admin` di server, lalu
+       `npm install firebase-admin@latest` kalau versinya di bawah v11
+       (minimal v10.6) - supaya semua optimasi `count()` yang sudah dibuat
+       benar-benar aktif, bukan fallback.
+    2. Tambahkan index komposit dari `firestore.indexes.json` (di zip ini)
+       ke Firebase Console Anda: buka **Firestore → Indexes → Composite →
+       Add Index**, lalu buat 4 index sesuai isi file itu (kalau Anda pakai
+       Firebase CLI, gabungkan isinya ke `firestore.indexes.json` project
+       Anda - JANGAN ditimpa kalau sudah ada index lain di situ - lalu
+       jalankan `firebase deploy --only firestore:indexes`). Index komposit
+       **gratis** di plan Spark, tidak kena biaya.
+    3. Setelah kedua langkah di atas + file kode yang sudah diperbarui
+       terpasang, cek lagi Query Insights besok - baris `logbookMagang`
+       (userId+pdkId+status) seharusnya rasio index/hasil-nya turun drastis
+       dari 32x mendekati 1x.
+
+21. **Lanjutan sapuan efisiensi (tanpa emulator, langsung ke kode) -
+    `mahasiswa/elearning.js` & `mahasiswa/akademik.js`.**
+
+    - **`routes/mahasiswa/elearning.js`** (halaman "Tugas Aktif" mahasiswa):
+      query `tugas` per-MK dan cek `pengumpulan` per-tugas yang tadinya
+      serial (N query utk N MK/tugas) → di-batch pakai `'in'` per 10
+      sekaligus, dijalankan paralel.
+    - **`routes/mahasiswa/akademik.js`** (KRS & KHS) - 3 tempat terpisah:
+      - Daftar KRS: fetch `mataKuliah` per KRS x per mkId (nested loop
+        serial) → dikumpulkan jadi satu set ID unik, diambil sekaligus
+        lewat `db.getAll()`.
+      - Detail KRS: sama, fetch satu per satu → `db.getAll()`.
+      - Cetak KHS: sama, plus tetap mempertahankan logika "pengaman" aslinya
+        (item bisa berupa string ID atau object `{id/kode/mkId}`) - cuma
+        bagian pengambilan dokumennya yang di-batch.
+
+    Semua fungsionalitas (termasuk pesan warning kalau MK tidak ditemukan,
+    fallback nama kolom, dst) dipertahankan persis seperti sebelumnya - cuma
+    cara ambil datanya yang berubah.
+
 ---
 
 

@@ -171,17 +171,21 @@ router.get('/:id/mahasiswa', async (req, res) => {
       .map(doc => doc.data().userId)
       .filter(uid => uid && typeof uid === 'string' && uid.trim() !== '');
 
+    // ✅ OPTIMISASI KUOTA: ambil semua dokumen users SEKALIGUS lewat
+    // db.getAll(), bukan satu per satu di dalam loop serial.
     const mahasiswaList = [];
-    for (const uid of mahasiswaIds) {
-      const userDoc = await db.collection('users').doc(uid).get();
-      if (userDoc.exists) {
-        mahasiswaList.push({
-          id: uid,
-          nama: userDoc.data().nama,
-          nim: userDoc.data().nim,
-          foto: userDoc.data().foto
-        });
-      }
+    if (mahasiswaIds.length > 0) {
+      const userDocs = await db.getAll(...mahasiswaIds.map(uid => db.collection('users').doc(uid)));
+      userDocs.forEach((userDoc, i) => {
+        if (userDoc.exists) {
+          mahasiswaList.push({
+            id: mahasiswaIds[i],
+            nama: userDoc.data().nama,
+            nim: userDoc.data().nim,
+            foto: userDoc.data().foto
+          });
+        }
+      });
     }
 
     // Urutkan berdasarkan NIM
@@ -346,17 +350,21 @@ router.get('/:id', async (req, res) => {
       .map(doc => doc.data().userId)
       .filter(uid => uid && typeof uid === 'string' && uid.trim() !== '');
 
+    // ✅ OPTIMISASI KUOTA: ambil semua dokumen users SEKALIGUS, bukan satu
+    // per satu di dalam loop serial.
     const mahasiswaList = [];
-    for (const uid of mahasiswaIds) {
-      const userDoc = await db.collection('users').doc(uid).get();
-      if (userDoc.exists) {
-        mahasiswaList.push({
-          id: uid,
-          nama: userDoc.data().nama,
-          nim: userDoc.data().nim,
-          foto: userDoc.data().foto
-        });
-      }
+    if (mahasiswaIds.length > 0) {
+      const userDocs = await db.getAll(...mahasiswaIds.map(uid => db.collection('users').doc(uid)));
+      userDocs.forEach((userDoc, i) => {
+        if (userDoc.exists) {
+          mahasiswaList.push({
+            id: mahasiswaIds[i],
+            nama: userDoc.data().nama,
+            nim: userDoc.data().nim,
+            foto: userDoc.data().foto
+          });
+        }
+      });
     }
 
     // ===== PERTEMUAN (dari materi MK) =====
@@ -379,14 +387,13 @@ router.get('/:id', async (req, res) => {
     const persentase = Math.round((terlaksana / 16) * 100);
 
     // ===== DOSEN PENGAMPU =====
+    // ✅ OPTIMISASI KUOTA: batch juga, bukan satu per satu.
     const dosenList = [];
     if (mk.dosenIds && mk.dosenIds.length > 0) {
-      for (const dId of mk.dosenIds) {
-        const dDoc = await db.collection('dosen').doc(dId).get();
-        if (dDoc.exists) {
-          dosenList.push(dDoc.data().nama);
-        }
-      }
+      const dosenDocs = await db.getAll(...mk.dosenIds.map(dId => db.collection('dosen').doc(dId)));
+      dosenDocs.forEach(dDoc => {
+        if (dDoc.exists) dosenList.push(dDoc.data().nama);
+      });
     }
 
     // ===== TUGAS (opsional) =====

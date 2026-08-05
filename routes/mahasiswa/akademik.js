@@ -88,33 +88,32 @@ router.get('/krs', async (req, res) => {
       .orderBy('createdAt', 'desc')
       .get();
 
-    const krsList = [];
-    for (const doc of snapshot.docs) {
-      const data = doc.data();
-      const mkIds = data.mataKuliah || [];
-      const courses = [];
-      for (const mkId of mkIds.slice(0, 3)) {
-        if (!mkId) continue;
-        try {
-          const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
-          if (mkDoc.exists) {
-            courses.push({
-              kode: mkDoc.data().kode,
-              nama: mkDoc.data().nama,
-              sks: mkDoc.data().sks
-            });
-          }
-        } catch (err) {
-          console.error(`Gagal ambil mata kuliah ${mkId}:`, err.message);
-        }
-      }
-      krsList.push({
-        id: doc.id,
-        ...data,
-        courses,
-        courseCount: mkIds.length
-      });
+    // ✅ OPTIMISASI KUOTA: sebelumnya fetch mataKuliah dilakukan SATU PER
+    // SATU dalam loop bersarang (per KRS x per mkId, serial) - sekarang
+    // kumpulkan dulu semua mkId unik yang dibutuhkan (maks 3 per KRS, sama
+    // seperti perilaku asli), ambil sekaligus lewat db.getAll().
+    const krsDataList = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+    const mkIdSet = new Set();
+    krsDataList.forEach(({ data }) => {
+      (data.mataKuliah || []).slice(0, 3).forEach(mkId => { if (mkId) mkIdSet.add(mkId); });
+    });
+    const mkIdArr = Array.from(mkIdSet);
+    const mkDataMap = new Map();
+    if (mkIdArr.length > 0) {
+      const mkDocs = await db.getAll(...mkIdArr.map(id => db.collection('mataKuliah').doc(id)));
+      mkDocs.forEach((mkDoc, i) => { if (mkDoc.exists) mkDataMap.set(mkIdArr[i], mkDoc.data()); });
     }
+
+    const krsList = krsDataList.map(({ id, data }) => {
+      const mkIds = data.mataKuliah || [];
+      const courses = mkIds.slice(0, 3)
+        .filter(mkId => mkId && mkDataMap.has(mkId))
+        .map(mkId => {
+          const mk = mkDataMap.get(mkId);
+          return { kode: mk.kode, nama: mk.nama, sks: mk.sks };
+        });
+      return { id, ...data, courses, courseCount: mkIds.length };
+    });
 
     res.render('mahasiswa/krs_list', {
       title: 'Daftar KRS',
@@ -238,23 +237,22 @@ router.get('/krs/:id', async (req, res) => {
       return res.status(403).render('error', { title: 'Akses Ditolak', message: 'Anda tidak memiliki akses ke KRS ini' });
     }
 
-    const mkIds = krs.mataKuliah || [];
+    const mkIds = (krs.mataKuliah || []).filter(Boolean);
+    // ✅ OPTIMISASI KUOTA: ambil semua mataKuliah SEKALIGUS lewat db.getAll(),
+    // bukan satu per satu di dalam loop serial.
     const mkList = [];
-    for (const mkId of mkIds) {
-      if (!mkId) continue;
-      try {
-        const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
+    if (mkIds.length > 0) {
+      const mkDocs = await db.getAll(...mkIds.map(id => db.collection('mataKuliah').doc(id)));
+      mkDocs.forEach((mkDoc, i) => {
         if (mkDoc.exists) {
           mkList.push({
-            id: mkId,
+            id: mkIds[i],
             kode: mkDoc.data().kode,
             nama: mkDoc.data().nama,
             sks: mkDoc.data().sks
           });
         }
-      } catch (err) {
-        console.error(`Gagal ambil mata kuliah ${mkId}:`, err.message);
-      }
+      });
     }
 
     res.render('mahasiswa/krs_detail', {
@@ -297,15 +295,19 @@ router.get('/krs/krs_print/:id', async (req, res) => {
     const mkIds = krsData.mataKuliah || krsData.mkList || [];
     const mkList = [];
 
-    for (const item of mkIds) {
-      if (!item) continue;
-      
-      try {
-        // PENGAMAN: Cek apakah item di DB berupa string ID ("123") atau Object ({id: "123"})
-        const mkIdString = typeof item === 'object' ? (item.id || item.kode || item.mkId) : String(item);
-        
-        const mkDoc = await db.collection('mataKuliah').doc(mkIdString).get();
-        
+    // ✅ OPTIMISASI KUOTA: normalisasi ID dulu (murni JS, tanpa DB), lalu
+    // ambil SEMUA dokumen mataKuliah SEKALIGUS lewat db.getAll() - bukan
+    // satu per satu di dalam loop serial. Logika "PENGAMAN" (item bisa
+    // string atau object) tetap sama persis seperti sebelumnya.
+    const mkIdStrings = mkIds
+      .filter(item => item)
+      .map(item => typeof item === 'object' ? (item.id || item.kode || item.mkId) : String(item))
+      .filter(Boolean);
+
+    if (mkIdStrings.length > 0) {
+      const mkDocs = await db.getAll(...mkIdStrings.map(id => db.collection('mataKuliah').doc(id)));
+      mkDocs.forEach((mkDoc, i) => {
+        const mkIdString = mkIdStrings[i];
         if (mkDoc.exists) {
           const dataMk = mkDoc.data();
           mkList.push({
@@ -317,9 +319,7 @@ router.get('/krs/krs_print/:id', async (req, res) => {
         } else {
           console.log(`[WARNING] Data mata kuliah dengan ID ${mkIdString} tidak ditemukan di database.`);
         }
-      } catch (err) {
-        console.error(`Gagal memuat mata kuliah (${item}):`, err.message);
-      }
+      });
     }
 
     // ========================================================================

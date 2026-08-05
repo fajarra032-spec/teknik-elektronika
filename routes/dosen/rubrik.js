@@ -21,7 +21,6 @@ const {
   saveNilaiTugasManual,
   hitungRubrik
 } = require('../../helpers/nilaiHelper');
-const { getSemesterForDate } = require('../../helpers/academicHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -69,27 +68,6 @@ async function ambilDataRubrik(mkId, periode) {
   data.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));
 
   return { mk, bobot, data };
-}
-
-/**
- * Susun daftar 16 pertemuan (topik/materi ada-tidak + catatan) dari field
- * `materi` pada dokumen mataKuliah, untuk halaman cetak "Berita Acara
- * Pengajaran". Logika sinkron dengan routes/dosen/mk.js (GET /:id).
- */
-function ambilDataPertemuan(mk) {
-  const materi = mk.materi || [];
-  const pertemuanList = [];
-  for (let i = 1; i <= 16; i++) {
-    const existing = materi.find(m => m.pertemuan === i) || {};
-    pertemuanList.push({
-      pertemuan: i,
-      topik: existing.topik || '',
-      tanggal: existing.tanggal || null,
-      adaMateri: !!(existing.fileUrl || existing.topik),
-      catatan: existing.catatan || ''
-    });
-  }
-  return pertemuanList;
 }
 
 // ============================================================================
@@ -327,31 +305,19 @@ router.post('/input', async (req, res) => {
 // ============================================================================
 router.get('/:mkId/cetak', async (req, res) => {
   try {
-    const { mkId } = req.params;
     const periode = req.query.periode || getPeriodeAktif();
-    const hasil = await ambilDataRubrik(mkId, periode);
+    const hasil = await ambilDataRubrik(req.params.mkId, periode);
     if (!hasil) return res.status(404).send('Mata kuliah tidak ditemukan');
 
     const namaDosen = req.dosen.nama || req.user.nama || '-';
-    const nuptkDosen = req.dosen.nuptk || req.dosen.nidn || '-';
-
-    const pertemuanList = ambilDataPertemuan(hasil.mk);
-    const terlaksana = pertemuanList.filter(p => p.adaMateri).length;
-
-    // Info semester Ganjil/Genap & tahun akademik untuk Berita Acara
-    const infoSemester = getSemesterForDate(new Date());
 
     res.render('rubrik_print', {
-      title: `Cetak Dokumen Perkuliahan - ${hasil.mk.kode}`,
+      title: `Cetak Rubrik Penilaian - ${hasil.mk.kode}`,
       mk: hasil.mk,
       bobot: hasil.bobot,
       data: hasil.data,
       periode,
-      namaDosen,
-      nuptkDosen,
-      pertemuanList,
-      terlaksana,
-      infoSemester
+      namaDosen
     });
   } catch (error) {
     console.error('Error cetak rubrik:', error);

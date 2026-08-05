@@ -92,12 +92,16 @@ router.get('/', async (req, res) => {
     const mahasiswaIds = Array.from(mahasiswaIdsSet);
 
     // Ambil data mahasiswa
+    // ✅ OPTIMISASI KUOTA: ambil semua dokumen users SEKALIGUS lewat
+    // db.getAll(), bukan satu per satu di dalam loop serial.
     const mahasiswaList = [];
-    for (const uid of mahasiswaIds) {
-      const userDoc = await db.collection('users').doc(uid).get();
-      if (userDoc.exists) {
+    if (mahasiswaIds.length > 0) {
+      const userDocs = await db.getAll(...mahasiswaIds.map(uid => db.collection('users').doc(uid)));
+      userDocs.forEach((userDoc, idx) => {
+        const uid = mahasiswaIds[idx];
+        if (!userDoc.exists) return;
         const m = { id: uid, ...userDoc.data() };
-        
+
         // Hitung angkatan dari NIM
         let angkatanMhs = '';
         if (m.nim && m.nim.length >= 2) {
@@ -105,14 +109,14 @@ router.get('/', async (req, res) => {
         }
 
         // Filter berdasarkan angkatan
-        if (angkatan && angkatanMhs !== angkatan) continue;
+        if (angkatan && angkatanMhs !== angkatan) return;
 
         // Filter berdasarkan search (nama/NIM)
         if (search) {
           const lowerSearch = search.toLowerCase();
           const matchNama = m.nama && m.nama.toLowerCase().includes(lowerSearch);
           const matchNim = m.nim && m.nim.includes(search);
-          if (!matchNama && !matchNim) continue;
+          if (!matchNama && !matchNim) return;
         }
 
         // Ambil MK yang diambil mahasiswa ini (hanya dari MK yang diampu dosen)
@@ -128,7 +132,7 @@ router.get('/', async (req, res) => {
           angkatan: angkatanMhs,
           mkDiambil
         });
-      }
+      });
     }
 
     // Urutkan berdasarkan NIM
@@ -198,20 +202,26 @@ router.get('/:id', async (req, res) => {
       }
     }
 
-    // Ambil nilai untuk setiap MK
-    const nilaiList = [];
+    // ✅ OPTIMISASI KUOTA: sebelumnya query 'nilai' dijalankan TERPISAH utk
+    // SETIAP MK yang diambil mahasiswa ini (bisa sampai 2x per MK karena ada
+    // fallback self-heal) - sekarang cukup SATU query batch pakai
+    // `where('mkId','in',...)` utk semua MK sekaligus (mkDiambil biasanya
+    // sedikit, jauh di bawah batas 30 utk 'in').
     const periodeAktif = getPeriodeAktif();
-    for (const mk of mkDiambil) {
+    const mkIdsDiambil = mkDiambil.map(mk => mk.id);
+    const nilaiMapPerMk = {}; // mkId -> { tipe: nilai }
+
+    if (mkIdsDiambil.length > 0) {
       let nilaiSnapshot = await db.collection('nilai')
         .where('mahasiswaId', '==', mahasiswaId)
-        .where('mkId', '==', mk.id)
+        .where('mkId', 'in', mkIdsDiambil)
         .where('periode', '==', periodeAktif)
         .get();
 
       if (nilaiSnapshot.empty) {
         const semuaSnapshot = await db.collection('nilai')
           .where('mahasiswaId', '==', mahasiswaId)
-          .where('mkId', '==', mk.id)
+          .where('mkId', 'in', mkIdsDiambil)
           .get();
         const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
         if (perluDitandai.length > 0) {
@@ -220,17 +230,18 @@ router.get('/:id', async (req, res) => {
         nilaiSnapshot = semuaSnapshot;
       }
 
-      const nilaiMap = {};
       nilaiSnapshot.docs.forEach(doc => {
         const data = doc.data();
-        if ((data.periode || periodeAktif) !== periodeAktif) return; // data lama tanpa periode dianggap periode aktif
-        nilaiMap[data.tipe] = data.nilai;
-      });
-      nilaiList.push({
-        mk,
-        nilai: nilaiMap
+        if ((data.periode || periodeAktif) !== periodeAktif) return;
+        if (!nilaiMapPerMk[data.mkId]) nilaiMapPerMk[data.mkId] = {};
+        nilaiMapPerMk[data.mkId][data.tipe] = data.nilai;
       });
     }
+
+    const nilaiList = mkDiambil.map(mk => ({
+      mk,
+      nilai: nilaiMapPerMk[mk.id] || {}
+    }));
 
     res.render('dosen/mahasiswa_detail', {
       title: `Detail Mahasiswa - ${mahasiswa.nama}`,

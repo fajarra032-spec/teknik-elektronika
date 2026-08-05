@@ -1,14 +1,6 @@
 {
   "indexes": [
     {
-      "collectionGroup": "jadwalPenting",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "kategori", "order": "ASCENDING" },
-        { "fieldPath": "tanggal", "order": "ASCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "logbookMagang",
       "queryScope": "COLLECTION",
       "fields": [
@@ -18,12 +10,12 @@
       ]
     },
     {
-      "collectionGroup": "logbookMagang",
+      "collectionGroup": "nilai",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "mahasiswaId", "order": "ASCENDING" },
-        { "fieldPath": "pdkId", "order": "ASCENDING" },
-        { "fieldPath": "status", "order": "ASCENDING" }
+        { "fieldPath": "mkId", "order": "ASCENDING" },
+        { "fieldPath": "tipe", "order": "ASCENDING" }
       ]
     },
     {
@@ -36,48 +28,11 @@
       ]
     },
     {
-      "collectionGroup": "tugas",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "mkId", "order": "ASCENDING" },
-        { "fieldPath": "periode", "order": "ASCENDING" },
-        { "fieldPath": "deadline", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "tugas",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "dosenId", "order": "ASCENDING" },
-        { "fieldPath": "periode", "order": "ASCENDING" },
-        { "fieldPath": "deadline", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "nilai",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "mkId", "order": "ASCENDING" },
-        { "fieldPath": "mahasiswaId", "order": "ASCENDING" },
-        { "fieldPath": "periode", "order": "ASCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "enrollment",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "mkId", "order": "ASCENDING" },
-        { "fieldPath": "semester", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "kelasChat",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "mkId", "order": "ASCENDING" },
-        { "fieldPath": "periode", "order": "ASCENDING" },
-        { "fieldPath": "timestamp", "order": "ASCENDING" }
       ]
     }
   ],

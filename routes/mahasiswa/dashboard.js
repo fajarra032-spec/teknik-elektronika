@@ -32,20 +32,26 @@ async function getMataKuliahDiambil(userId) {
       .where('status', '==', 'active')
       .get();
 
+    // ✅ OPTIMISASI KUOTA: ambil semua dokumen mataKuliah SEKALIGUS lewat
+    // db.getAll(), bukan satu per satu di dalam loop serial. Halaman ini
+    // dibuka SETIAP mahasiswa SETIAP login, jadi kecil pun penghematannya
+    // dikali jumlah mahasiswa jadi besar.
+    const enrollments = enrollmentSnapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+    if (enrollments.length === 0) return [];
+
+    const mkDocs = await db.getAll(...enrollments.map(e => db.collection('mataKuliah').doc(e.data.mkId)));
     const mkList = [];
-    for (const doc of enrollmentSnapshot.docs) {
-      const data = doc.data();
-      const mkDoc = await db.collection('mataKuliah').doc(data.mkId).get();
+    mkDocs.forEach((mkDoc, i) => {
       if (mkDoc.exists) {
         mkList.push({
-          id: data.mkId,
+          id: enrollments[i].data.mkId,
           ...mkDoc.data(),
-          enrollmentId: doc.id,
-          semesterEnrollment: data.semester,
-          tahunAjaran: data.tahunAjaran
+          enrollmentId: enrollments[i].id,
+          semesterEnrollment: enrollments[i].data.semester,
+          tahunAjaran: enrollments[i].data.tahunAjaran
         });
       }
-    }
+    });
     return mkList;
   } catch (error) {
     console.error('Error getMataKuliahDiambil:', error);
@@ -62,15 +68,29 @@ async function getTugasAktif(mkIds) {
   try {
     if (mkIds.length === 0) return [];
     const now = new Date().toISOString();
-    const tugasList = [];
-    for (const mkId of mkIds) {
-      const snapshot = await db.collection('tugas')
-        .where('mkId', '==', mkId)
-        .where('deadline', '>', now)
-        .orderBy('deadline', 'asc')
-        .get();
-      snapshot.docs.forEach(doc => tugasList.push({ id: doc.id, ...doc.data() }));
+
+    // ✅ OPTIMISASI KUOTA: sebelumnya query 'tugas' dijalankan TERPISAH utk
+    // SETIAP mata kuliah (N query utk N MK yang diambil mahasiswa - mahasiswa
+    // dg 8 MK = 8 query serial). Sekarang di-batch pakai `where(...,'in',...)`
+    // per 10 mkId sekaligus, jadi maksimal N/10 query, dijalankan paralel.
+    function chunkArray(arr, size) {
+      const chunks = [];
+      for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
+      return chunks;
     }
+    const chunks = chunkArray(mkIds, 10);
+    const snapshots = await Promise.all(chunks.map(chunk =>
+      db.collection('tugas')
+        .where('mkId', 'in', chunk)
+        .where('deadline', '>', now)
+        .get()
+    ));
+
+    const tugasList = [];
+    snapshots.forEach(snapshot => {
+      snapshot.docs.forEach(doc => tugasList.push({ id: doc.id, ...doc.data() }));
+    });
+    tugasList.sort((a, b) => (a.deadline || '').localeCompare(b.deadline || ''));
     return tugasList;
   } catch (error) {
     console.error('Error getTugasAktif:', error);
@@ -103,12 +123,18 @@ router.get('/', async (req, res) => {
     const user = req.user;
     const userId = user.id;
 
-    const tagihan = await getTagihan(userId);
-    const mkList = await getMataKuliahDiambil(userId);
+    // ⚡ OPTIMISASI KECEPATAN: tagihan, daftar MK, dan event terdekat SAMA
+    // SEKALI TIDAK SALING BERGANTUNG - dijalankan bersamaan lewat Promise.all
+    // alih-alih menunggu satu-satu berurutan. Hanya getTugasAktif yang harus
+    // menunggu (butuh mkIds dari mkList dulu).
+    const [tagihan, mkList, upcomingEvents] = await Promise.all([
+      getTagihan(userId),
+      getMataKuliahDiambil(userId),
+      getUpcomingEvents(3)
+    ]);
     const mkIds = mkList.map(mk => mk.id);
     const totalSks = mkList.reduce((acc, mk) => acc + (mk.sks || 0), 0);
     const tugasAktif = await getTugasAktif(mkIds);
-    const upcomingEvents = await getUpcomingEvents(3); // ambil 3 event terdekat
 
     const currentSemester = getCurrentAcademicSemester();
     const semesterSekarang = currentSemester.label;

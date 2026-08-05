@@ -130,21 +130,46 @@ router.get('/', async (req, res) => {
     clearCache();
     const { search, angkatan } = req.query;
 
-    // 1. Ambil semua enrollment aktif
-    const enrollmentSnapshot = await db.collection('enrollment')
-      .where('status', '==', 'active')
-      .get();
-
-    // Kumpulkan semua mkId unik, ambil data mata kuliah sekali
-    const mkIds = new Set();
-    enrollmentSnapshot.forEach(doc => mkIds.add(doc.data().mkId));
-    const mkDocs = await Promise.all(Array.from(mkIds).map(id => db.collection('mataKuliah').doc(id).get()));
+    // ✅ OPTIMISASI KUOTA: sebelumnya di sini membaca SEMUA enrollment AKTIF
+    // DI SELURUH SISTEM (semua mata kuliah, bukan cuma magang/PDK) - lalu
+    // baru menyaring mana yang PDK di JS. Data real dari Firebase Query
+    // Insights menunjukkan ini salah satu query paling boros di seluruh
+    // aplikasi (~234 dokumen dibaca SETIAP kali halaman ini dibuka).
+    // Sekarang: cari dulu MK mana saja yang isPDK==true (jumlahnya jauh
+    // lebih sedikit, biasanya cuma beberapa PDK per angkatan), baru query
+    // enrollment DIBATASI ke mkId-mkId itu saja.
+    const pdkMkSnapshot = await db.collection('mataKuliah').where('isPDK', '==', true).get();
+    const pdkMkIds = pdkMkSnapshot.docs.map(doc => doc.id);
     const mkMap = new Map();
-    mkDocs.forEach(doc => { if (doc.exists) mkMap.set(doc.id, doc.data()); });
+    pdkMkSnapshot.docs.forEach(doc => mkMap.set(doc.id, doc.data()));
+
+    if (pdkMkIds.length === 0) {
+      return res.render('admin/emagang_list', {
+        title: 'E‑Magang - Monitoring Magang',
+        mahasiswaList: [],
+        angkatanList: [],
+        filters: { search: search || '', angkatan: angkatan || '' },
+        user: req.user
+      });
+    }
+
+    function chunkArray(arr, size) {
+      const chunks = [];
+      for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
+      return chunks;
+    }
+    const enrollmentDocsAll = [];
+    for (const chunk of chunkArray(pdkMkIds, 10)) {
+      const snap = await db.collection('enrollment')
+        .where('mkId', 'in', chunk)
+        .where('status', '==', 'active')
+        .get();
+      enrollmentDocsAll.push(...snap.docs);
+    }
 
     // Kelompokkan per mahasiswa
     const userPdkMap = new Map();
-    for (const doc of enrollmentSnapshot.docs) {
+    for (const doc of enrollmentDocsAll) {
       const enrollment = doc.data();
       const userId = enrollment.userId;
       const mk = mkMap.get(enrollment.mkId);
@@ -162,9 +187,12 @@ router.get('/', async (req, res) => {
       }
     }
 
-    // Ambil data mahasiswa secara paralel
+    // Ambil data mahasiswa SEKALIGUS lewat db.getAll() (bukan Promise.all
+    // per-doc yang read cost-nya sama tapi round-trip-nya lebih banyak).
     const userIds = Array.from(userPdkMap.keys());
-    const mahasiswaDocs = await Promise.all(userIds.map(id => db.collection('users').doc(id).get()));
+    const mahasiswaDocs = userIds.length > 0
+      ? await db.getAll(...userIds.map(id => db.collection('users').doc(id)))
+      : [];
     const mahasiswaMap = new Map();
     mahasiswaDocs.forEach((doc, idx) => {
       if (doc.exists && doc.data().role === 'mahasiswa') {

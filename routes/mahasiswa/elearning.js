@@ -326,33 +326,70 @@ router.get('/tugas-aktif', async (req, res) => {
 
     const mkIds = enrollmentSnapshot.docs.map(doc => doc.data().mkId);
     const now = new Date().toISOString();
-    const tugasList = [];
 
-    for (const mkId of mkIds) {
-      const tugasSnapshot = await db.collection('tugas')
-        .where('mkId', '==', mkId)
-        .where('deadline', '>', now)
-        .orderBy('deadline', 'asc')
-        .get();
+    // ✅ OPTIMISASI KUOTA: sebelumnya query 'tugas' dijalankan TERPISAH utk
+    // SETIAP MK yang diambil mahasiswa (N query serial utk N MK). Sekarang
+    // di-batch pakai `where(...,'in',...)` per 10 mkId sekaligus, dijalankan
+    // paralel (bukan for-loop serial).
+    function chunkArray(arr, size) {
+      const chunks = [];
+      for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
+      return chunks;
+    }
 
-      if (tugasSnapshot.empty) continue;
+    let tugasRaw = [];
+    if (mkIds.length > 0) {
+      const chunks = chunkArray(mkIds, 10);
+      const snapshots = await Promise.all(chunks.map(chunk =>
+        db.collection('tugas').where('mkId', 'in', chunk).where('deadline', '>', now).get()
+      ));
+      snapshots.forEach(snap => {
+        snap.docs.forEach(doc => tugasRaw.push({ id: doc.id, ...doc.data() }));
+      });
+    }
 
-      // Ambil sekali saja per mkId (sebelumnya diambil ulang untuk setiap
-      // tugas walau mkId-nya sama), dan pakai cache karena datanya jarang berubah
+    // Ambil data MK (pakai cache yang sudah ada, dijalankan paralel per mkId unik)
+    const mkIdUnik = [...new Set(tugasRaw.map(t => t.mkId))];
+    const mkDataMap = new Map();
+    await Promise.all(mkIdUnik.map(async mkId => {
       const mkData = await mataKuliahCache.getOrFetch(mkId, async () => {
         const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
         return mkDoc.exists ? mkDoc.data() : null;
       });
+      mkDataMap.set(mkId, mkData);
+    }));
 
-      for (const doc of tugasSnapshot.docs) {
-        const tugas = { id: doc.id, ...doc.data() };
-        tugas.mkKode = mkData ? mkData.kode : '-';
-        tugas.mkNama = mkData ? mkData.nama : '-';
-        const pengumpulan = await getPengumpulan(tugas.id, userId);
-        tugas.pengumpulan = pengumpulan;
-        tugasList.push(tugas);
-      }
+    // ✅ OPTIMISASI KUOTA: pengumpulan tadinya di-cek SATU PER SATU per tugas
+    // (N query serial utk N tugas aktif). Sekarang di-batch pakai
+    // `where('tugasId','in',...)` per 10 tugasId sekaligus (mahasiswaId
+    // tetap sama - userId - jadi cukup 1 filter equality + 1 filter 'in').
+    const tugasIds = tugasRaw.map(t => t.id);
+    const pengumpulanMap = new Map(); // tugasId -> pengumpulan
+    if (tugasIds.length > 0) {
+      const chunks = chunkArray(tugasIds, 10);
+      const snapshots = await Promise.all(chunks.map(chunk =>
+        db.collection('pengumpulan')
+          .where('tugasId', 'in', chunk)
+          .where('mahasiswaId', '==', userId)
+          .get()
+      ));
+      snapshots.forEach(snap => {
+        snap.docs.forEach(doc => {
+          const data = doc.data();
+          pengumpulanMap.set(data.tugasId, { id: doc.id, ...data });
+        });
+      });
     }
+
+    const tugasList = tugasRaw.map(tugas => {
+      const mkData = mkDataMap.get(tugas.mkId);
+      return {
+        ...tugas,
+        mkKode: mkData ? mkData.kode : '-',
+        mkNama: mkData ? mkData.nama : '-',
+        pengumpulan: pengumpulanMap.get(tugas.id) || null
+      };
+    });
 
     tugasList.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
 

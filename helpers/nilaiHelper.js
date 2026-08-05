@@ -400,11 +400,20 @@ async function saveKomponenRubrik(mahasiswaId, mkId, tipe, nilai, periode = getP
   const nilaiAngka = parseFloat(nilai);
   const now = new Date().toISOString();
 
+  // ✅ OPTIMISASI KUOTA (dikonfirmasi dari data Firebase Query Insights
+  // produksi - query 4-field ini termasuk yang paling boros, ~31x lebih
+  // banyak index entries dibaca dibanding hasil yang dikembalikan, karena
+  // Firestore terpaksa zigzag-merge antar index tunggal utk query
+  // equality-only 4 field). Sama seperti saveNilai(): TIDAK menyaring
+  // `periode` di pengecekan existing - satu mkId di aplikasi ini memang
+  // representasi SATU penawaran/periode MK tertentu (dikonfirmasi lewat
+  // konsistensi getTugasByMkId/getKomponenRubrikByMkId dkk di file ini),
+  // jadi (mahasiswaId, mkId, tipe) saja sudah cukup unik - tidak perlu
+  // periode sebagai bagian kunci pencarian, cukup sebagai data yg disimpan.
   const existingSnapshot = await db.collection('nilai')
     .where('mahasiswaId', '==', mahasiswaId)
     .where('mkId', '==', mkId)
     .where('tipe', '==', tipe)
-    .where('periode', '==', periode)
     .limit(1)
     .get();
 
@@ -415,7 +424,7 @@ async function saveKomponenRubrik(mahasiswaId, mkId, tipe, nilai, periode = getP
     return { id: docRef.id, isNew: true };
   } else {
     const docRef = existingSnapshot.docs[0].ref;
-    await docRef.update({ nilai: nilaiAngka, updatedAt: now });
+    await docRef.update({ nilai: nilaiAngka, periode, updatedAt: now });
     return { id: existingSnapshot.docs[0].id, isNew: false };
   }
 }
