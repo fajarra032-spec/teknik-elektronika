@@ -19,9 +19,7 @@ const {
   tambahTugasManual,
   hapusTugasManual,
   saveNilaiTugasManual,
-  hitungRubrik,
-  getNilaiByMkId,
-  getTugasByMkId
+  hitungRubrik
 } = require('../../helpers/nilaiHelper');
 const { getSemesterForDate } = require('../../helpers/academicHelper');
 
@@ -71,31 +69,6 @@ async function ambilDataRubrik(mkId, periode) {
   data.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));
 
   return { mk, bobot, data };
-}
-
-/**
- * Kumpulkan rincian nilai per-tugas untuk semua mahasiswa aktif di satu MK.
- * Dipakai khusus untuk halaman cetak "Penilaian" (rincian, bukan rata-rata
- * seperti di halaman Rubrik).
- */
-async function ambilDataPenilaian(mkId, periode, mahasiswaMap, mahasiswaIds) {
-  const [nilaiMap, tugasList] = await Promise.all([
-    getNilaiByMkId(mkId, periode),
-    getTugasByMkId(mkId, periode)
-  ]);
-
-  const data = mahasiswaIds.map(uid => {
-    const mahasiswa = mahasiswaMap[uid];
-    const nilaiMahasiswa = nilaiMap[uid] || {};
-    const nilaiPerTugas = tugasList.map(tugas => {
-      const nilaiData = nilaiMahasiswa[tugas.id];
-      return { tugasId: tugas.id, nilai: nilaiData ? nilaiData.nilai : null };
-    });
-    return { mahasiswa, nilaiPerTugas };
-  });
-  data.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));
-
-  return { tugasList, data };
 }
 
 /**
@@ -362,16 +335,6 @@ router.get('/:mkId/cetak', async (req, res) => {
     const namaDosen = req.dosen.nama || req.user.nama || '-';
     const nuptkDosen = req.dosen.nuptk || req.dosen.nidn || '-';
 
-    // Data mahasiswa aktif (dipakai ulang oleh halaman Penilaian)
-    const enrollmentSnapshot = await db.collection('enrollment')
-      .where('mkId', '==', mkId)
-      .where('status', '==', 'active')
-      .get();
-    const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
-    const mahasiswaMap = {};
-    hasil.data.forEach(item => { mahasiswaMap[item.mahasiswa.id] = item.mahasiswa; });
-
-    const penilaian = await ambilDataPenilaian(mkId, periode, mahasiswaMap, mahasiswaIds);
     const pertemuanList = ambilDataPertemuan(hasil.mk);
     const terlaksana = pertemuanList.filter(p => p.adaMateri).length;
 
@@ -386,7 +349,6 @@ router.get('/:mkId/cetak', async (req, res) => {
       periode,
       namaDosen,
       nuptkDosen,
-      penilaian,
       pertemuanList,
       terlaksana,
       infoSemester

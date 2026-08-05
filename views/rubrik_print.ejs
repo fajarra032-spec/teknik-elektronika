@@ -7,13 +7,17 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
   <style>
-    @page { size: A4 landscape; margin: 1.2cm; }
+    @page { size: A4 portrait; margin: 1.8cm; }
+    @page potrait-page { size: A4 portrait; margin: 1.8cm; }
+    @page landscape-page { size: A4 landscape; margin: 1.2cm; }
     body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; font-size: 9.5pt; }
     .print-btn, .back-btn { margin: 20px 5px; font-family: Arial, sans-serif; }
 
     /* ===== Satu halaman cetak ===== */
     .cetak-halaman { page-break-after: always; }
     .cetak-halaman:last-child { page-break-after: auto; }
+    .halaman-potrait { page: potrait-page; }
+    .halaman-landscape { page: landscape-page; }
 
     .kop-surat { display: flex; align-items: center; margin-bottom: 16px; }
     .logo-kop { width: 70px; height: auto; margin-right: 16px; }
@@ -30,7 +34,7 @@
     .info-mk .label { width: 130px; }
 
     table.rubrik { width: 100%; border-collapse: collapse; font-size: 8.3pt; }
-    table.rubrik th, table.rubrik td { border: 1px solid #000; padding: 4px 3px; text-align: center; }
+    table.rubrik th, table.rubrik td { border: 1px solid #000; padding: 3px 3px; text-align: center; }
     table.rubrik th { background: #dbe5f1; font-weight: bold; }
     table.rubrik td.nama { text-align: left; white-space: nowrap; }
     table.rubrik td.kiri { text-align: left; }
@@ -40,21 +44,21 @@
     .ada-materi { color: #15803d; font-weight: bold; }
     .tidak-materi { color: #b91c1c; font-weight: bold; }
 
-    .keterangan-bobot { font-size: 8pt; margin-top: 10px; color: #333; }
+    .keterangan-bobot { font-size: 8pt; margin-top: 8px; color: #333; }
 
-    .ttd-wrap { display: flex; justify-content: space-between; margin-top: 40px; }
+    .ttd-wrap { display: flex; justify-content: space-between; margin-top: 26px; break-inside: avoid; page-break-inside: avoid; }
     .ttd-box { text-align: center; width: 260px; font-size: 9.5pt; }
-    .ttd-box .nama-ttd { font-weight: bold; text-decoration: underline; margin-top: 60px; }
+    .ttd-box .nama-ttd { font-weight: bold; text-decoration: underline; margin-top: 45px; }
 
-    .narasi { font-size: 9.5pt; text-align: justify; margin-bottom: 12px; line-height: 1.5; }
-    .isian-list { width: 100%; font-size: 9.5pt; margin: 14px 0; }
+    .narasi { font-size: 9.5pt; text-align: justify; margin-bottom: 8px; line-height: 1.45; }
+    .isian-list { width: 100%; font-size: 9.5pt; margin: 10px 0; }
     .isian-list td { padding: 3px 4px; vertical-align: top; }
     .isian-list .label-isian { width: 170px; }
     .isian-list .titik-dua { width: 15px; }
 
-    .kk-section-title { font-weight: bold; font-size: 10pt; margin: 16px 0 6px; text-transform: uppercase; }
-    .kk-list { font-size: 9pt; margin: 0 0 10px 0; padding-left: 18px; }
-    .kk-list li { margin-bottom: 3px; }
+    .kk-section-title { font-weight: bold; font-size: 10pt; margin: 10px 0 4px; text-transform: uppercase; }
+    .kk-list { font-size: 9pt; margin: 0 0 6px 0; padding-left: 18px; }
+    .kk-list li { margin-bottom: 2px; }
 
     @media print {
       .btn, .print-btn, .back-btn { display: none !important; }
@@ -86,22 +90,26 @@
     %>
 
     <!-- ======================================================================
-         HALAMAN 1 - PENILAIAN (rincian nilai per tugas)
+         HALAMAN 1 - DAFTAR PENILAIAN AKHIR MAHASISWA
     ====================================================================== -->
-    <div class="cetak-halaman">
+    <div class="cetak-halaman halaman-potrait">
       <%- include('partials/kop_surat') %>
 
-      <div class="judul-dokumen">Rincian Nilai Tugas Mahasiswa</div>
+      <div class="judul-dokumen">Daftar Penilaian Akhir Mahasiswa</div>
       <div class="sub-judul">Semester <%= periode %></div>
 
       <table class="info-mk">
         <tr>
           <td class="label">Mata Kuliah</td><td>: <%= mk.kode %> - <%= mk.nama %></td>
+        </tr>
+        <tr>
           <td class="label">SKS</td><td>: <%= mk.sks %></td>
         </tr>
         <tr>
           <td class="label">Dosen Pengampu</td><td>: <%= namaDosen || mk.namaDosen || '-' %></td>
-          <td class="label">Jumlah Mahasiswa</td><td>: <%= penilaian.data.length %></td>
+        </tr>
+        <tr>
+          <td class="label">Jumlah Mahasiswa</td><td>: <%= data.length %></td>
         </tr>
       </table>
 
@@ -111,35 +119,29 @@
             <th>No</th>
             <th>NIM</th>
             <th>Nama Mahasiswa</th>
-            <% if (penilaian.tugasList && penilaian.tugasList.length > 0) { %>
-              <% penilaian.tugasList.forEach(tugas => { %>
-                <th><%= tugas.judul %></th>
-              <% }) %>
-            <% } else { %>
-              <th>Belum ada tugas tercatat</th>
-            <% } %>
+            <th>Nilai Akhir</th>
+            <th>Huruf</th>
+            <th>Keterangan</th>
           </tr>
         </thead>
         <tbody>
-          <% penilaian.data.forEach((item, idx) => { %>
+          <% data.forEach((item, idx) => { const h = item.hasil; %>
             <tr>
               <td><%= idx + 1 %></td>
               <td><%= item.mahasiswa.nim %></td>
               <td class="nama"><%= item.mahasiswa.nama %></td>
-              <% if (penilaian.tugasList && penilaian.tugasList.length > 0) { %>
-                <% item.nilaiPerTugas.forEach(n => { %>
-                  <td><%= (n.nilai !== null && n.nilai !== undefined) ? (typeof n.nilai === 'number' ? n.nilai.toFixed(2) : n.nilai) : '-' %></td>
-                <% }) %>
-              <% } else { %>
-                <td>-</td>
-              <% } %>
+              <td><strong><%= h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-' %></strong></td>
+              <td><%= h.huruf || '-' %></td>
+              <td class="<%= h.keterangan === 'LULUS' ? 'huruf-lulus' : (h.keterangan === 'TIDAK LULUS' ? 'huruf-tidak' : '') %>">
+                <%= h.keterangan || '-' %>
+              </td>
             </tr>
           <% }) %>
         </tbody>
       </table>
 
       <div class="keterangan-bobot">
-        Nilai tugas di atas adalah rincian per-tugas sebagaimana tercatat pada modul e-learning. Rata-rata nilai tugas dipakai sebagai komponen "Tugas" pada Rubrik Penilaian di halaman berikutnya.
+        Nilai akhir merupakan hasil perhitungan gabungan komponen kehadiran, tugas, UTS, dan UAS sesuai bobot yang ditetapkan. Rincian tiap komponen dapat dilihat pada Rubrik Penilaian di halaman berikutnya.
       </div>
 
       <div class="ttd-wrap">
@@ -160,7 +162,7 @@
     <!-- ======================================================================
          HALAMAN 2 - RUBRIK PENILAIAN
     ====================================================================== -->
-    <div class="cetak-halaman">
+    <div class="cetak-halaman halaman-landscape">
       <%- include('partials/kop_surat') %>
 
       <div class="judul-dokumen">Rubrik Penilaian Mata Kuliah</div>
@@ -245,7 +247,7 @@
     <!-- ======================================================================
          HALAMAN 3 - KONTRAK KULIAH
     ====================================================================== -->
-    <div class="cetak-halaman">
+    <div class="cetak-halaman halaman-potrait">
       <%- include('partials/kop_surat') %>
 
       <div class="judul-dokumen">Kontrak Kuliah</div>
@@ -314,8 +316,8 @@
           <div>NIM.</div>
         </div>
       </div>
-      <div class="narasi" style="margin-top:20px; text-align:center;">
-        Mengetahui,<br>Ketua Program Studi Elektronika,<br><br><br><br>
+      <div class="narasi" style="margin-top:14px; text-align:center;">
+        Mengetahui,<br>Ketua Program Studi Elektronika,<br><br><br>
         <strong style="text-decoration:underline;"><%= namaKaprodi %></strong><br>
         NUPTK. <%= nuptkKaprodi %>
       </div>
@@ -324,7 +326,7 @@
     <!-- ======================================================================
          HALAMAN 4 - BERITA ACARA PENGAJARAN
     ====================================================================== -->
-    <div class="cetak-halaman">
+    <div class="cetak-halaman halaman-landscape">
       <%- include('partials/kop_surat') %>
 
       <div class="judul-dokumen">Berita Acara Pengajaran</div>
@@ -386,7 +388,7 @@
     <!-- ======================================================================
          HALAMAN 5 - BERITA ACARA TANDA TERIMA PENYERAHAN NILAI
     ====================================================================== -->
-    <div class="cetak-halaman">
+    <div class="cetak-halaman halaman-potrait">
       <%- include('partials/kop_surat') %>
 
       <div class="judul-dokumen">Berita Acara Tanda Terima Penyerahan Nilai</div>
@@ -416,13 +418,13 @@
         <div class="ttd-box">
           <div>Mengetahui,</div>
           <div>Dosen Pengampuh Mata Kuliah</div>
-          <div class="nama-ttd">----------------------</div>
+          <div class="nama-ttd"><%= namaDosen || mk.namaDosen || '..........................' %></div>
           <div>NUPTK/NIDN. <%= nuptkDosen %></div>
         </div>
         <div class="ttd-box">
           <div>Mengetahui,</div>
           <div>Ketua Program Studi</div>
-          <div class="nama-ttd">----------------------</div>
+          <div class="nama-ttd"><%= namaKaprodi %></div>
           <div>NUPTK/NIDN. <%= nuptkKaprodi %></div>
         </div>
       </div>
