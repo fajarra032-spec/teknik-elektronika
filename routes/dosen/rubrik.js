@@ -19,8 +19,11 @@ const {
   tambahTugasManual,
   hapusTugasManual,
   saveNilaiTugasManual,
-  hitungRubrik
+  hitungRubrik,
+  getNilaiByMkId,
+  getTugasByMkId
 } = require('../../helpers/nilaiHelper');
+const { getSemesterForDate } = require('../../helpers/academicHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -68,6 +71,52 @@ async function ambilDataRubrik(mkId, periode) {
   data.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));
 
   return { mk, bobot, data };
+}
+
+/**
+ * Kumpulkan rincian nilai per-tugas untuk semua mahasiswa aktif di satu MK.
+ * Dipakai khusus untuk halaman cetak "Penilaian" (rincian, bukan rata-rata
+ * seperti di halaman Rubrik).
+ */
+async function ambilDataPenilaian(mkId, periode, mahasiswaMap, mahasiswaIds) {
+  const [nilaiMap, tugasList] = await Promise.all([
+    getNilaiByMkId(mkId, periode),
+    getTugasByMkId(mkId, periode)
+  ]);
+
+  const data = mahasiswaIds.map(uid => {
+    const mahasiswa = mahasiswaMap[uid];
+    const nilaiMahasiswa = nilaiMap[uid] || {};
+    const nilaiPerTugas = tugasList.map(tugas => {
+      const nilaiData = nilaiMahasiswa[tugas.id];
+      return { tugasId: tugas.id, nilai: nilaiData ? nilaiData.nilai : null };
+    });
+    return { mahasiswa, nilaiPerTugas };
+  });
+  data.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));
+
+  return { tugasList, data };
+}
+
+/**
+ * Susun daftar 16 pertemuan (topik/materi ada-tidak + catatan) dari field
+ * `materi` pada dokumen mataKuliah, untuk halaman cetak "Berita Acara
+ * Pengajaran". Logika sinkron dengan routes/dosen/mk.js (GET /:id).
+ */
+function ambilDataPertemuan(mk) {
+  const materi = mk.materi || [];
+  const pertemuanList = [];
+  for (let i = 1; i <= 16; i++) {
+    const existing = materi.find(m => m.pertemuan === i) || {};
+    pertemuanList.push({
+      pertemuan: i,
+      topik: existing.topik || '',
+      tanggal: existing.tanggal || null,
+      adaMateri: !!(existing.fileUrl || existing.topik),
+      catatan: existing.catatan || ''
+    });
+  }
+  return pertemuanList;
 }
 
 // ============================================================================
@@ -305,19 +354,42 @@ router.post('/input', async (req, res) => {
 // ============================================================================
 router.get('/:mkId/cetak', async (req, res) => {
   try {
+    const { mkId } = req.params;
     const periode = req.query.periode || getPeriodeAktif();
-    const hasil = await ambilDataRubrik(req.params.mkId, periode);
+    const hasil = await ambilDataRubrik(mkId, periode);
     if (!hasil) return res.status(404).send('Mata kuliah tidak ditemukan');
 
     const namaDosen = req.dosen.nama || req.user.nama || '-';
+    const nuptkDosen = req.dosen.nuptk || req.dosen.nidn || '-';
+
+    // Data mahasiswa aktif (dipakai ulang oleh halaman Penilaian)
+    const enrollmentSnapshot = await db.collection('enrollment')
+      .where('mkId', '==', mkId)
+      .where('status', '==', 'active')
+      .get();
+    const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
+    const mahasiswaMap = {};
+    hasil.data.forEach(item => { mahasiswaMap[item.mahasiswa.id] = item.mahasiswa; });
+
+    const penilaian = await ambilDataPenilaian(mkId, periode, mahasiswaMap, mahasiswaIds);
+    const pertemuanList = ambilDataPertemuan(hasil.mk);
+    const terlaksana = pertemuanList.filter(p => p.adaMateri).length;
+
+    // Info semester Ganjil/Genap & tahun akademik untuk Berita Acara
+    const infoSemester = getSemesterForDate(new Date());
 
     res.render('rubrik_print', {
-      title: `Cetak Rubrik Penilaian - ${hasil.mk.kode}`,
+      title: `Cetak Dokumen Perkuliahan - ${hasil.mk.kode}`,
       mk: hasil.mk,
       bobot: hasil.bobot,
       data: hasil.data,
       periode,
-      namaDosen
+      namaDosen,
+      nuptkDosen,
+      penilaian,
+      pertemuanList,
+      terlaksana,
+      infoSemester
     });
   } catch (error) {
     console.error('Error cetak rubrik:', error);

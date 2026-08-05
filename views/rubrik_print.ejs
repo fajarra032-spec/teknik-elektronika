@@ -11,6 +11,10 @@
     body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; font-size: 9.5pt; }
     .print-btn, .back-btn { margin: 20px 5px; font-family: Arial, sans-serif; }
 
+    /* ===== Satu halaman cetak ===== */
+    .cetak-halaman { page-break-after: always; }
+    .cetak-halaman:last-child { page-break-after: auto; }
+
     .kop-surat { display: flex; align-items: center; margin-bottom: 16px; }
     .logo-kop { width: 70px; height: auto; margin-right: 16px; }
     .teks-kop { flex: 1; }
@@ -23,21 +27,34 @@
 
     .info-mk { width: 100%; margin-bottom: 14px; font-size: 9.5pt; }
     .info-mk td { padding: 2px 4px; vertical-align: top; }
-    .info-mk .label { width: 110px; }
+    .info-mk .label { width: 130px; }
 
     table.rubrik { width: 100%; border-collapse: collapse; font-size: 8.3pt; }
     table.rubrik th, table.rubrik td { border: 1px solid #000; padding: 4px 3px; text-align: center; }
     table.rubrik th { background: #dbe5f1; font-weight: bold; }
     table.rubrik td.nama { text-align: left; white-space: nowrap; }
+    table.rubrik td.kiri { text-align: left; }
 
     .huruf-lulus { color: #15803d; font-weight: bold; }
     .huruf-tidak { color: #b91c1c; font-weight: bold; }
+    .ada-materi { color: #15803d; font-weight: bold; }
+    .tidak-materi { color: #b91c1c; font-weight: bold; }
 
     .keterangan-bobot { font-size: 8pt; margin-top: 10px; color: #333; }
 
     .ttd-wrap { display: flex; justify-content: space-between; margin-top: 40px; }
     .ttd-box { text-align: center; width: 260px; font-size: 9.5pt; }
     .ttd-box .nama-ttd { font-weight: bold; text-decoration: underline; margin-top: 60px; }
+
+    .narasi { font-size: 9.5pt; text-align: justify; margin-bottom: 12px; line-height: 1.5; }
+    .isian-list { width: 100%; font-size: 9.5pt; margin: 14px 0; }
+    .isian-list td { padding: 3px 4px; vertical-align: top; }
+    .isian-list .label-isian { width: 170px; }
+    .isian-list .titik-dua { width: 15px; }
+
+    .kk-section-title { font-weight: bold; font-size: 10pt; margin: 16px 0 6px; text-transform: uppercase; }
+    .kk-list { font-size: 9pt; margin: 0 0 10px 0; padding-left: 18px; }
+    .kk-list li { margin-bottom: 3px; }
 
     @media print {
       .btn, .print-btn, .back-btn { display: none !important; }
@@ -52,103 +69,365 @@
         <i class="bi bi-arrow-left"></i> Kembali
       </button>
       <button onclick="window.print()" class="btn btn-primary btn-sm print-btn shadow-sm">
-        <i class="bi bi-printer"></i> Cetak / Simpan PDF
+        <i class="bi bi-printer"></i> Cetak / Simpan PDF (5 Halaman)
       </button>
     </div>
-
-    <div class="kop-surat">
-      <img src="https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png"
-           alt="Logo Politeknik Dewantara" class="logo-kop">
-      <div class="teks-kop">
-        <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
-        <p class="alamat">Program Studi Teknik Elektronika</p>
-      </div>
-    </div>
-    <div class="garis-kop"></div>
-
-    <div class="judul-dokumen">Rubrik Penilaian Mata Kuliah</div>
-    <div class="sub-judul">Semester <%= periode %></div>
-
-    <table class="info-mk">
-      <tr>
-        <td class="label">Mata Kuliah</td><td>: <%= mk.kode %> - <%= mk.nama %></td>
-        <td class="label">SKS</td><td>: <%= mk.sks %></td>
-      </tr>
-      <tr>
-        <td class="label">Dosen Pengampu</td><td>: <%= namaDosen || mk.namaDosen || '-' %></td>
-        <td class="label">Jumlah Mahasiswa</td><td>: <%= data.length %></td>
-      </tr>
-    </table>
 
     <%
       const pakaiSikap = (bobot.sikap || 0) > 0;
       const pakaiKeaktifan = (bobot.keaktifan || 0) > 0;
       const pakaiKuis = (bobot.kuis || 0) > 0;
       const kehadiranColspan = 1 + (pakaiSikap ? 1 : 0) + (pakaiKeaktifan ? 1 : 0);
+      const tglCetak = new Date();
+      const tglCetakLengkap = tglCetak.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      const hariCetak = tglCetak.toLocaleDateString('id-ID', { weekday: 'long' });
+      const namaKaprodi = 'Fajar Ramadhan, S.Pd., M.T.';
+      const nuptkKaprodi = '8559777678130153';
     %>
 
-    <table class="rubrik">
-      <thead>
+    <!-- ======================================================================
+         HALAMAN 1 - PENILAIAN (rincian nilai per tugas)
+    ====================================================================== -->
+    <div class="cetak-halaman">
+      <%- include('partials/kop_surat') %>
+
+      <div class="judul-dokumen">Rincian Nilai Tugas Mahasiswa</div>
+      <div class="sub-judul">Semester <%= periode %></div>
+
+      <table class="info-mk">
         <tr>
-          <th rowspan="2">No</th>
-          <th rowspan="2">NIM</th>
-          <th rowspan="2">Nama Mahasiswa</th>
-          <th colspan="<%= kehadiranColspan %>">Kehadiran<% if (pakaiSikap || pakaiKeaktifan) { %>, Sikap &amp; Keaktifan<% } %></th>
-          <th rowspan="2">Tugas</th>
-          <% if (pakaiKuis) { %><th rowspan="2">Kuis</th><% } %>
-          <th rowspan="2">UTS</th>
-          <th rowspan="2">UAS</th>
-          <th rowspan="2">Nilai<br>Akhir</th>
-          <th rowspan="2">Huruf</th>
-          <th rowspan="2">Ket.</th>
+          <td class="label">Mata Kuliah</td><td>: <%= mk.kode %> - <%= mk.nama %></td>
+          <td class="label">SKS</td><td>: <%= mk.sks %></td>
         </tr>
         <tr>
-          <th>% Hadir</th>
-          <% if (pakaiSikap) { %><th>Sikap</th><% } %>
-          <% if (pakaiKeaktifan) { %><th>Keaktifan</th><% } %>
+          <td class="label">Dosen Pengampu</td><td>: <%= namaDosen || mk.namaDosen || '-' %></td>
+          <td class="label">Jumlah Mahasiswa</td><td>: <%= penilaian.data.length %></td>
         </tr>
-      </thead>
-      <tbody>
-        <% data.forEach((item, idx) => { const h = item.hasil; %>
+      </table>
+
+      <table class="rubrik">
+        <thead>
           <tr>
-            <td><%= idx + 1 %></td>
-            <td><%= item.mahasiswa.nim %></td>
-            <td class="nama"><%= item.mahasiswa.nama %></td>
-            <td><%= h.persenHadir !== null ? h.persenHadir.toFixed(1) : '-' %></td>
-            <% if (pakaiSikap) { %><td><%= h.sikap !== null && h.sikap !== undefined ? h.sikap : '-' %></td><% } %>
-            <% if (pakaiKeaktifan) { %><td><%= h.keaktifan !== null && h.keaktifan !== undefined ? h.keaktifan : '-' %></td><% } %>
-            <td><%= h.rataTugas !== null ? h.rataTugas.toFixed(2) : '-' %></td>
-            <% if (pakaiKuis) { %><td><%= h.kuis !== null && h.kuis !== undefined ? h.kuis : '-' %></td><% } %>
-            <td><%= h.uts !== null && h.uts !== undefined ? h.uts : '-' %></td>
-            <td><%= h.uas !== null && h.uas !== undefined ? h.uas : '-' %></td>
-            <td><strong><%= h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-' %></strong></td>
-            <td><%= h.huruf || '-' %></td>
-            <td class="<%= h.keterangan === 'LULUS' ? 'huruf-lulus' : (h.keterangan === 'TIDAK LULUS' ? 'huruf-tidak' : '') %>">
-              <%= h.keterangan ? (h.keterangan === 'LULUS' ? 'L' : 'TL') : '-' %>
-            </td>
+            <th>No</th>
+            <th>NIM</th>
+            <th>Nama Mahasiswa</th>
+            <% if (penilaian.tugasList && penilaian.tugasList.length > 0) { %>
+              <% penilaian.tugasList.forEach(tugas => { %>
+                <th><%= tugas.judul %></th>
+              <% }) %>
+            <% } else { %>
+              <th>Belum ada tugas tercatat</th>
+            <% } %>
           </tr>
-        <% }) %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <% penilaian.data.forEach((item, idx) => { %>
+            <tr>
+              <td><%= idx + 1 %></td>
+              <td><%= item.mahasiswa.nim %></td>
+              <td class="nama"><%= item.mahasiswa.nama %></td>
+              <% if (penilaian.tugasList && penilaian.tugasList.length > 0) { %>
+                <% item.nilaiPerTugas.forEach(n => { %>
+                  <td><%= (n.nilai !== null && n.nilai !== undefined) ? (typeof n.nilai === 'number' ? n.nilai.toFixed(2) : n.nilai) : '-' %></td>
+                <% }) %>
+              <% } else { %>
+                <td>-</td>
+              <% } %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
 
-    <div class="keterangan-bobot">
-      Bobot: Kehadiran <%= bobot.kehadiran %>% (dari % Hadir <%= bobot.persenHadir %>%<% if (pakaiSikap) { %>, Sikap <%= bobot.sikap %>%<% } %><% if (pakaiKeaktifan) { %>, Keaktifan <%= bobot.keaktifan %>%<% } %>),
-      Tugas <%= bobot.tugas %>%<% if (pakaiKuis) { %>, Kuis <%= bobot.kuis %>%<% } %>, UTS <%= bobot.uts %>%, UAS <%= bobot.uas %>%.
-      Predikat huruf: A (&ge;85), B+ (75-84), B (65-74), C+ (55-64), C (45-54), D (35-44), E (&lt;35). L = Lulus, TL = Tidak Lulus.
+      <div class="keterangan-bobot">
+        Nilai tugas di atas adalah rincian per-tugas sebagaimana tercatat pada modul e-learning. Rata-rata nilai tugas dipakai sebagai komponen "Tugas" pada Rubrik Penilaian di halaman berikutnya.
+      </div>
+
+      <div class="ttd-wrap">
+        <div class="ttd-box">
+          <div>Dosen Pengampu,</div>
+          <div class="nama-ttd"><%= namaDosen || mk.namaDosen || '..........................' %></div>
+          <div>NUPTK/NIDN. <%= nuptkDosen %></div>
+        </div>
+        <div class="ttd-box">
+          <div>Palopo, <%= tglCetakLengkap %></div>
+          <div>Ketua Program Studi Elektronika,</div>
+          <div class="nama-ttd"><%= namaKaprodi %></div>
+          <div>NUPTK. <%= nuptkKaprodi %></div>
+        </div>
+      </div>
     </div>
 
-    <div class="ttd-wrap">
-      <div class="ttd-box">
-        <div>Dosen Pengampu,</div>
-        <div class="nama-ttd"><%= namaDosen || mk.namaDosen || '..........................' %></div>
+    <!-- ======================================================================
+         HALAMAN 2 - RUBRIK PENILAIAN
+    ====================================================================== -->
+    <div class="cetak-halaman">
+      <%- include('partials/kop_surat') %>
+
+      <div class="judul-dokumen">Rubrik Penilaian Mata Kuliah</div>
+      <div class="sub-judul">Semester <%= periode %></div>
+
+      <table class="info-mk">
+        <tr>
+          <td class="label">Mata Kuliah</td><td>: <%= mk.kode %> - <%= mk.nama %></td>
+          <td class="label">SKS</td><td>: <%= mk.sks %></td>
+        </tr>
+        <tr>
+          <td class="label">Dosen Pengampu</td><td>: <%= namaDosen || mk.namaDosen || '-' %></td>
+          <td class="label">Jumlah Mahasiswa</td><td>: <%= data.length %></td>
+        </tr>
+      </table>
+
+      <table class="rubrik">
+        <thead>
+          <tr>
+            <th rowspan="2">No</th>
+            <th rowspan="2">NIM</th>
+            <th rowspan="2">Nama Mahasiswa</th>
+            <th colspan="<%= kehadiranColspan %>">Kehadiran<% if (pakaiSikap || pakaiKeaktifan) { %>, Sikap &amp; Keaktifan<% } %></th>
+            <th rowspan="2">Tugas</th>
+            <% if (pakaiKuis) { %><th rowspan="2">Kuis</th><% } %>
+            <th rowspan="2">UTS</th>
+            <th rowspan="2">UAS</th>
+            <th rowspan="2">Nilai<br>Akhir</th>
+            <th rowspan="2">Huruf</th>
+            <th rowspan="2">Ket.</th>
+          </tr>
+          <tr>
+            <th>% Hadir</th>
+            <% if (pakaiSikap) { %><th>Sikap</th><% } %>
+            <% if (pakaiKeaktifan) { %><th>Keaktifan</th><% } %>
+          </tr>
+        </thead>
+        <tbody>
+          <% data.forEach((item, idx) => { const h = item.hasil; %>
+            <tr>
+              <td><%= idx + 1 %></td>
+              <td><%= item.mahasiswa.nim %></td>
+              <td class="nama"><%= item.mahasiswa.nama %></td>
+              <td><%= h.persenHadir !== null ? h.persenHadir.toFixed(1) : '-' %></td>
+              <% if (pakaiSikap) { %><td><%= h.sikap !== null && h.sikap !== undefined ? h.sikap : '-' %></td><% } %>
+              <% if (pakaiKeaktifan) { %><td><%= h.keaktifan !== null && h.keaktifan !== undefined ? h.keaktifan : '-' %></td><% } %>
+              <td><%= h.rataTugas !== null ? h.rataTugas.toFixed(2) : '-' %></td>
+              <% if (pakaiKuis) { %><td><%= h.kuis !== null && h.kuis !== undefined ? h.kuis : '-' %></td><% } %>
+              <td><%= h.uts !== null && h.uts !== undefined ? h.uts : '-' %></td>
+              <td><%= h.uas !== null && h.uas !== undefined ? h.uas : '-' %></td>
+              <td><strong><%= h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-' %></strong></td>
+              <td><%= h.huruf || '-' %></td>
+              <td class="<%= h.keterangan === 'LULUS' ? 'huruf-lulus' : (h.keterangan === 'TIDAK LULUS' ? 'huruf-tidak' : '') %>">
+                <%= h.keterangan ? (h.keterangan === 'LULUS' ? 'L' : 'TL') : '-' %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+
+      <div class="keterangan-bobot">
+        Bobot: Kehadiran <%= bobot.kehadiran %>% (dari % Hadir <%= bobot.persenHadir %>%<% if (pakaiSikap) { %>, Sikap <%= bobot.sikap %>%<% } %><% if (pakaiKeaktifan) { %>, Keaktifan <%= bobot.keaktifan %>%<% } %>),
+        Tugas <%= bobot.tugas %>%<% if (pakaiKuis) { %>, Kuis <%= bobot.kuis %>%<% } %>, UTS <%= bobot.uts %>%, UAS <%= bobot.uas %>%.
+        Predikat huruf: A (&ge;85), B+ (75-84), B (65-74), C+ (55-64), C (45-54), D (35-44), E (&lt;35). L = Lulus, TL = Tidak Lulus.
       </div>
-      <div class="ttd-box">
-        <div>Palopo, <%= new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %></div>
-        <div>Ketua Program Studi Elektronika,</div>
-        <div class="nama-ttd">Fajar Ramadhan, S.Pd., M.T.</div>
-        <div>NUPTK. 8559777678130153</div>
+
+      <div class="ttd-wrap">
+        <div class="ttd-box">
+          <div>Dosen Pengampu,</div>
+          <div class="nama-ttd"><%= namaDosen || mk.namaDosen || '..........................' %></div>
+          <div>NUPTK/NIDN. <%= nuptkDosen %></div>
+        </div>
+        <div class="ttd-box">
+          <div>Palopo, <%= tglCetakLengkap %></div>
+          <div>Ketua Program Studi Elektronika,</div>
+          <div class="nama-ttd"><%= namaKaprodi %></div>
+          <div>NUPTK. <%= nuptkKaprodi %></div>
+        </div>
       </div>
     </div>
+
+    <!-- ======================================================================
+         HALAMAN 3 - KONTRAK KULIAH
+    ====================================================================== -->
+    <div class="cetak-halaman">
+      <%- include('partials/kop_surat') %>
+
+      <div class="judul-dokumen">Kontrak Kuliah</div>
+      <div class="sub-judul">Semester <%= periode %></div>
+
+      <table class="info-mk">
+        <tr>
+          <td class="label">Mata Kuliah</td><td>: <%= mk.kode %> - <%= mk.nama %></td>
+          <td class="label">SKS</td><td>: <%= mk.sks %></td>
+        </tr>
+        <tr>
+          <td class="label">Program Studi</td><td>: Teknik Elektronika</td>
+          <td class="label">Dosen Pengampu</td><td>: <%= namaDosen || mk.namaDosen || '-' %></td>
+        </tr>
+      </table>
+
+      <div class="kk-section-title">Deskripsi &amp; Capaian Pembelajaran</div>
+      <div class="narasi">
+        Mata kuliah <%= mk.nama %> diselenggarakan mengacu pada Rencana Pembelajaran Semester (RPS) Program Studi Teknik Elektronika, dengan tujuan agar mahasiswa mampu memahami dan menerapkan konsep-konsep pokok mata kuliah ini secara teori maupun praktik, serta memenuhi capaian pembelajaran yang telah ditetapkan dalam kurikulum program studi.
+      </div>
+
+      <div class="kk-section-title">Ringkasan Materi 16 Kali Pertemuan</div>
+      <table class="rubrik">
+        <thead>
+          <tr><th style="width:40px;">Pertemuan</th><th>Topik / Materi</th></tr>
+        </thead>
+        <tbody>
+          <% pertemuanList.forEach(p => { %>
+            <tr>
+              <td>Ke-<%= p.pertemuan %></td>
+              <td class="kiri"><%= p.topik || '-' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+
+      <div class="kk-section-title">Komponen &amp; Bobot Penilaian</div>
+      <div class="narasi">
+        Kehadiran <%= bobot.kehadiran %>%<% if (pakaiSikap) { %>, Sikap <%= bobot.sikap %>%<% } %><% if (pakaiKeaktifan) { %>, Keaktifan <%= bobot.keaktifan %>%<% } %>,
+        Tugas <%= bobot.tugas %>%<% if (pakaiKuis) { %>, Kuis <%= bobot.kuis %>%<% } %>, UTS <%= bobot.uts %>%, UAS <%= bobot.uas %>%.
+      </div>
+
+      <div class="kk-section-title">Kriteria Kelulusan &amp; Konversi Nilai Huruf Mutu</div>
+      <div class="narasi">
+        A (&ge;85), B+ (75-84), B (65-74), C+ (55-64), C (45-54), D (35-44), E (&lt;35). Mahasiswa dinyatakan Lulus (L) apabila memenuhi batas nilai minimum kelulusan mata kuliah sesuai ketentuan program studi.
+      </div>
+
+      <div class="kk-section-title">Tata Tertib Perkuliahan</div>
+      <ul class="kk-list">
+        <li>Mahasiswa wajib hadir tepat waktu dan mengikuti perkuliahan sesuai jadwal yang ditetapkan.</li>
+        <li>Kehadiran minimal 75% dari total pertemuan menjadi syarat mengikuti UAS.</li>
+        <li>Tugas dikumpulkan sesuai batas waktu (deadline) yang ditentukan dosen pengampu.</li>
+        <li>Mahasiswa wajib menjaga etika dan kesopanan selama proses perkuliahan berlangsung.</li>
+        <li>Jadwal konsultasi dosen di luar jam perkuliahan dapat disepakati langsung dengan dosen pengampu.</li>
+      </ul>
+
+      <div class="ttd-wrap">
+        <div class="ttd-box">
+          <div>Dosen Pengampu,</div>
+          <div class="nama-ttd"><%= namaDosen || mk.namaDosen || '..........................' %></div>
+          <div>NUPTK/NIDN. <%= nuptkDosen %></div>
+        </div>
+        <div class="ttd-box">
+          <div>Perwakilan Mahasiswa,</div>
+          <div class="nama-ttd">..........................</div>
+          <div>NIM.</div>
+        </div>
+      </div>
+      <div class="narasi" style="margin-top:20px; text-align:center;">
+        Mengetahui,<br>Ketua Program Studi Elektronika,<br><br><br><br>
+        <strong style="text-decoration:underline;"><%= namaKaprodi %></strong><br>
+        NUPTK. <%= nuptkKaprodi %>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         HALAMAN 4 - BERITA ACARA PENGAJARAN
+    ====================================================================== -->
+    <div class="cetak-halaman">
+      <%- include('partials/kop_surat') %>
+
+      <div class="judul-dokumen">Berita Acara Pengajaran</div>
+      <div class="sub-judul">Semester <%= periode %></div>
+
+      <table class="info-mk">
+        <tr>
+          <td class="label">Mata Kuliah</td><td>: <%= mk.kode %> - <%= mk.nama %></td>
+          <td class="label">SKS</td><td>: <%= mk.sks %></td>
+        </tr>
+        <tr>
+          <td class="label">Dosen Pengampu</td><td>: <%= namaDosen || mk.namaDosen || '-' %></td>
+          <td class="label">Pertemuan Terlaksana</td><td>: <%= terlaksana %> dari 16 pertemuan</td>
+        </tr>
+      </table>
+
+      <div class="narasi">
+        Pada semester <%= periode %>, telah dilaksanakan proses belajar mengajar mata kuliah <%= mk.kode %> - <%= mk.nama %> oleh dosen pengampu <%= namaDosen || mk.namaDosen || '-' %>, sebanyak <%= terlaksana %> dari 16 pertemuan yang direncanakan, dengan rincian materi dan catatan per pertemuan sebagai berikut:
+      </div>
+
+      <table class="rubrik">
+        <thead>
+          <tr>
+            <th style="width:60px;">Pertemuan</th>
+            <th style="width:90px;">Tanggal</th>
+            <th>Topik / Materi</th>
+            <th style="width:70px;">Materi</th>
+            <th>Catatan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% pertemuanList.forEach(p => { %>
+            <tr>
+              <td>Ke-<%= p.pertemuan %></td>
+              <td><%= p.tanggal ? new Date(p.tanggal).toLocaleDateString('id-ID') : '-' %></td>
+              <td class="kiri"><%= p.topik || '-' %></td>
+              <td class="<%= p.adaMateri ? 'ada-materi' : 'tidak-materi' %>"><%= p.adaMateri ? 'Ada' : 'Tidak Ada' %></td>
+              <td class="kiri"><%= p.catatan || '-' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+
+      <div class="ttd-wrap">
+        <div class="ttd-box">
+          <div>Dosen Pengampu,</div>
+          <div class="nama-ttd"><%= namaDosen || mk.namaDosen || '..........................' %></div>
+          <div>NUPTK/NIDN. <%= nuptkDosen %></div>
+        </div>
+        <div class="ttd-box">
+          <div>Palopo, <%= tglCetakLengkap %></div>
+          <div>Ketua Program Studi Elektronika,</div>
+          <div class="nama-ttd"><%= namaKaprodi %></div>
+          <div>NUPTK. <%= nuptkKaprodi %></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         HALAMAN 5 - BERITA ACARA TANDA TERIMA PENYERAHAN NILAI
+    ====================================================================== -->
+    <div class="cetak-halaman">
+      <%- include('partials/kop_surat') %>
+
+      <div class="judul-dokumen">Berita Acara Tanda Terima Penyerahan Nilai</div>
+
+      <div class="narasi" style="margin-top:14px;">
+        Pada hari ini <%= hariCetak %> Tanggal <%= tglCetak.getDate() %> Bulan <%= tglCetak.toLocaleDateString('id-ID', { month: 'long' }) %> Tahun <%= tglCetak.getFullYear() %>,
+        telah dilakukan serah terima berkas nilai semester <%= infoSemester.semester %> Tahun Akademik <%= infoSemester.tahunAkademik %> dengan rincian sebagai berikut:
+      </div>
+
+      <table class="isian-list">
+        <tr>
+          <td class="label-isian">Kode/Mata Kuliah</td><td class="titik-dua">:</td><td><%= mk.kode %> - <%= mk.nama %></td>
+        </tr>
+        <tr>
+          <td class="label-isian">Program Studi</td><td class="titik-dua">:</td><td>Teknik Elektronika</td>
+        </tr>
+        <tr>
+          <td class="label-isian">Dosen Pengampuh</td><td class="titik-dua">:</td><td><%= namaDosen || mk.namaDosen || '-' %></td>
+        </tr>
+      </table>
+
+      <div class="narasi">
+        Demikian berita acara ini dibuat untuk dapat dipergunakan seperlunya.
+      </div>
+
+      <div class="ttd-wrap" style="margin-top:50px;">
+        <div class="ttd-box">
+          <div>Mengetahui,</div>
+          <div>Dosen Pengampuh Mata Kuliah</div>
+          <div class="nama-ttd">----------------------</div>
+          <div>NUPTK/NIDN. <%= nuptkDosen %></div>
+        </div>
+        <div class="ttd-box">
+          <div>Mengetahui,</div>
+          <div>Ketua Program Studi</div>
+          <div class="nama-ttd">----------------------</div>
+          <div>NUPTK/NIDN. <%= nuptkKaprodi %></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </body>
 </html>
