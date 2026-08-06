@@ -237,15 +237,21 @@ function formatTanggal(dateString) {
 }
 
 /**
- * Format nilai huruf dari nilai angka
+ * Format nilai huruf dari nilai angka.
+ * Skala resmi yang sama dengan KHS/Transkrip/Rubrik (lihat
+ * helpers/nilaiHelper.js -> nilaiKeHuruf), supaya konsisten di seluruh app.
  * @param {number} nilaiAngka - Nilai angka (0-100)
  * @returns {string}
  */
 function getNilaiHuruf(nilaiAngka) {
-  if (nilaiAngka >= 85) return 'A';
-  if (nilaiAngka >= 75) return 'B';
-  if (nilaiAngka >= 65) return 'C';
-  if (nilaiAngka >= 50) return 'D';
+  const n = parseFloat(nilaiAngka);
+  if (isNaN(n)) return '-';
+  if (n >= 86) return 'A';
+  if (n >= 76) return 'B+';
+  if (n >= 60) return 'B';
+  if (n >= 50) return 'C+';
+  if (n >= 25) return 'C';
+  if (n >= 10) return 'D';
   return 'E';
 }
 

@@ -1,5 +1,6 @@
 // models/magangPeriodModel.js
 const { db } = require('../config/firebaseAdmin');
+const { nilaiKeHuruf } = require('../helpers/nilaiHelper');
 
 // Konstanta Status
 const MAGANG_STATUS = {
@@ -217,12 +218,9 @@ async function setNilaiMagang(periodId, nilaiAngka, komentar, dinilaiOleh, kompo
     throw new Error('Periode magang tidak ditemukan');
   }
   
-  // Hitung nilai huruf
-  let nilaiHuruf = 'E';
-  if (nilaiAngka >= 85) nilaiHuruf = 'A';
-  else if (nilaiAngka >= 75) nilaiHuruf = 'B';
-  else if (nilaiAngka >= 65) nilaiHuruf = 'C';
-  else if (nilaiAngka >= 50) nilaiHuruf = 'D';
+  // Hitung nilai huruf - skala resmi yang sama dengan KHS/Transkrip/Rubrik
+  // (helpers/nilaiHelper.js -> nilaiKeHuruf), supaya konsisten di seluruh app.
+  const nilaiHuruf = nilaiKeHuruf(nilaiAngka).huruf;
   
   await periodRef.update({
     'nilai.angka': nilaiAngka,

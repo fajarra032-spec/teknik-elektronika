@@ -117,7 +117,7 @@
       <div class="ipk-value"><%= ipk %></div>
     </div>
     <div class="text-muted small">
-      <i class="bi bi-info-circle me-1"></i> IPK dihitung dari total nilai (A=4, B=3, C=2, D=1, E=0)
+      <i class="bi bi-info-circle me-1"></i> Skala: A (86&ndash;100, 4.0) &middot; B+ (76&ndash;85, 3.5) &middot; B (60&ndash;75, 3.0) &middot; C+ (50&ndash;59, 2.5) &middot; C (25&ndash;49, 2.0) &middot; D (10&ndash;24, 1.0) &middot; E (&lt;10, 0.0)
     </div>
   </div>
 
@@ -132,23 +132,23 @@
             <th>Mata Kuliah</th>
             <th>SKS</th>
             <th>Nilai</th>
-            <th>Bobot</th>
+            <th>Huruf</th>
+            <th>Indeks</th>
           </tr>
         </thead>
         <tbody>
           <% if (grades.length === 0) { %>
             <tr>
-              <td colspan="6" class="text-center py-5">
+              <td colspan="7" class="text-center py-5">
                 <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
                 <p class="text-muted">Belum ada nilai yang dimasukkan.</p>
               </td>
             </tr>
           <% } %>
-          <% 
-            let totalSKS = 0, totalNilai = 0;
+          <%
+            let totalSKS = 0;
             grades.forEach(g => {
               totalSKS += g.sks;
-              totalNilai += g.sks * g.nilai;
           %>
             <tr>
               <td><strong><%= g.semester %></strong></td>
@@ -156,23 +156,24 @@
               <td><%= g.namaMk %></td>
               <td class="text-center"><%= g.sks %></td>
               <td>
-                <span class="nilai-badge 
-                  <% if (g.nilai >= 80) { %>nilai-a<% } 
-                  else if (g.nilai >= 70) { %>nilai-b<% } 
-                  else if (g.nilai >= 60) { %>nilai-c<% } 
-                  else if (g.nilai >= 50) { %>nilai-d<% } 
+                <span class="nilai-badge
+                  <% if (g.huruf === 'A') { %>nilai-a<% }
+                  else if (g.huruf === 'B+' || g.huruf === 'B') { %>nilai-b<% }
+                  else if (g.huruf === 'C+' || g.huruf === 'C') { %>nilai-c<% }
+                  else if (g.huruf === 'D') { %>nilai-d<% }
                   else { %>nilai-e<% } %>">
-                  <%= g.nilai %>
+                  <%= g.nilai !== null ? g.nilai : '-' %>
                 </span>
               </td>
-              <td><%= (g.nilai / 20).toFixed(1) %></td>
+              <td class="text-center"><strong><%= g.huruf %></strong></td>
+              <td class="text-center"><%= g.indeks !== null ? g.indeks.toFixed(1) : '-' %></td>
             </tr>
           <% }) %>
           <% if (grades.length > 0) { %>
             <tr class="table-light">
               <td colspan="3" class="text-end fw-bold">Total</td>
               <td class="text-center fw-bold"><%= totalSKS %></td>
-              <td colspan="2"></td>
+              <td colspan="3"></td>
             </tr>
           <% } %>
         </tbody>

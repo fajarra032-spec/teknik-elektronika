@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { nilaiKeHuruf } = require('../../helpers/nilaiHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -609,11 +610,9 @@ router.post('/period/:periodId/complete', async (req, res) => {
     }
     const period = periodDoc.data();
     const mahasiswaId = period.mahasiswaId;
-    let nilaiHuruf = 'E';
-    if (nilaiAngka >= 85) nilaiHuruf = 'A';
-    else if (nilaiAngka >= 75) nilaiHuruf = 'B';
-    else if (nilaiAngka >= 65) nilaiHuruf = 'C';
-    else if (nilaiAngka >= 50) nilaiHuruf = 'D';
+    // Hitung nilai huruf - skala resmi yang sama dengan KHS/Transkrip/Rubrik
+    // (helpers/nilaiHelper.js -> nilaiKeHuruf), supaya konsisten di seluruh app.
+    const nilaiHuruf = nilaiKeHuruf(nilaiAngka).huruf;
     await periodRef.update({
       status: 'completed',
       tanggalSelesai: new Date().toISOString().split('T')[0],

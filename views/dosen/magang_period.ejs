@@ -805,11 +805,14 @@
     if (nilaiInput) {
       nilaiInput.addEventListener('input', function() {
         const nilai = parseFloat(this.value);
+        // Skala sama dengan KHS/Transkrip/Rubrik (helpers/nilaiHelper.js -> nilaiKeHuruf)
         let huruf = 'E';
-        if (nilai >= 85) huruf = 'A';
-        else if (nilai >= 75) huruf = 'B';
-        else if (nilai >= 65) huruf = 'C';
-        else if (nilai >= 50) huruf = 'D';
+        if (nilai >= 86) huruf = 'A';
+        else if (nilai >= 76) huruf = 'B+';
+        else if (nilai >= 60) huruf = 'B';
+        else if (nilai >= 50) huruf = 'C+';
+        else if (nilai >= 25) huruf = 'C';
+        else if (nilai >= 10) huruf = 'D';
         nilaiHurufDisplay.value = huruf;
       });
     }

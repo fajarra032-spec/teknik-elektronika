@@ -1,0 +1,175 @@
+    </div> <!-- Penutup container dari header-landing -->
+
+    <!-- Footer (versi landing) — layout standar 4 kolom, tidak ada nested row
+         supaya teks tautan tidak sempit/terpotong di layar kecil. -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="row gy-4">
+                <!-- Kolom 1: Informasi Prodi -->
+                <div class="col-6 col-lg-3">
+                    <h5 class="footer-heading">Teknik Elektronika</h5>
+                    <p class="footer-text mb-1">Politeknik Dewantara</p>
+                    <p class="footer-text small mb-0">
+                        <i class="bi bi-geo-alt-fill me-2"></i>JL. KH Ahmad Razak 2, No.7, Kota Palopo, Sulawesi Selatan
+                    </p>
+                </div>
+
+                <!-- Kolom 2: Tautan Cepat -->
+                <div class="col-6 col-lg-3">
+                    <h5 class="footer-heading">Tautan Cepat</h5>
+                    <ul class="footer-links">
+                        <li><a href="/"><i class="bi bi-chevron-right me-1"></i>Beranda</a></li>
+                        <li><a href="/berita"><i class="bi bi-chevron-right me-1"></i>Berita</a></li>
+                        <li><a href="#statistik"><i class="bi bi-chevron-right me-1"></i>Statistik</a></li>
+                        <li><a href="#seminar"><i class="bi bi-chevron-right me-1"></i>Seminar</a></li>
+                    </ul>
+                </div>
+
+                <!-- Kolom 3: Layanan -->
+                <div class="col-6 col-lg-3">
+                    <h5 class="footer-heading">Layanan</h5>
+                    <ul class="footer-links">
+                        <li><a href="/cekmahasiswa"><i class="bi bi-chevron-right me-1"></i>Cek Data</a></li>
+                        <li><a href="/auth/login"><i class="bi bi-chevron-right me-1"></i>Portal Mahasiswa</a></li>
+                        <li><a href="/auth/login?role=admin"><i class="bi bi-chevron-right me-1"></i>Portal Admin</a></li>
+                        <li><a href="/panduan"><i class="bi bi-chevron-right me-1"></i>Panduan SI ELK</a></li>
+                    </ul>
+                </div>
+
+                <!-- Kolom 4: Kontak & Sosial Media -->
+                <div class="col-6 col-lg-3">
+                    <h5 class="footer-heading">Kontak</h5>
+                    <p class="footer-text small mb-1">
+                        <i class="bi bi-telephone me-2"></i>0852 4245 9746
+                    </p>
+                    <p class="footer-text small mb-3">
+                        <i class="bi bi-envelope me-2"></i>teknikelektronika@polidewa.ac.id
+                    </p>
+                    <h6 class="footer-heading footer-heading-sm">Ikuti Kami</h6>
+                    <div class="d-flex gap-2">
+                        <a href="#" class="footer-social" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="footer-social" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="footer-social" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+                        <a href="#" class="footer-social" aria-label="Twitter/X"><i class="bi bi-twitter-x"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="footer-divider">
+
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="footer-copy mb-0">
+                        &copy; <%= new Date().getFullYear() %> Sistem Informasi Teknik Elektronika Polidewa &mdash; Version 1.2.0 (Powered by Fajar Elektrik)
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <style>
+        .site-footer {
+            background: #0f172a;
+            color: rgba(255, 255, 255, 0.85);
+            padding: 3rem 0 1.5rem;
+            margin-top: 3rem;
+        }
+        .footer-heading {
+            text-transform: uppercase;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.03em;
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+        .footer-heading-sm {
+            font-size: 0.8rem;
+            margin-bottom: 0.75rem;
+        }
+        .footer-text {
+            color: rgba(255, 255, 255, 0.65);
+            line-height: 1.6;
+        }
+        .footer-links {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .footer-links li {
+            margin-bottom: 0.6rem;
+        }
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.65);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s, padding-left 0.2s;
+            display: inline-block;
+        }
+        .footer-links a:hover {
+            color: #ffffff;
+            padding-left: 3px;
+        }
+        .footer-social {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1rem;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .footer-social:hover {
+            background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+        .footer-divider {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            margin: 2rem 0 1.25rem;
+        }
+        .footer-copy {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+        }
+        @media (max-width: 575.98px) {
+            .site-footer { padding: 2.5rem 0 1.25rem; text-align: left; }
+        }
+    </style>
+
+    <!-- Bootstrap JS + script navbar dipindah ke sini (akhir body) supaya:
+         1) HTML tetap valid (cuma 1 pasang </body></html> untuk seluruh halaman)
+         2) Smooth-scroll ikut berlaku untuk link jangkar (#...) yang ada di
+            konten halaman itu sendiri, bukan cuma yang ada di navbar. -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Smooth scroll untuk anchor links (kecuali tombol dropdown / href="#" polos)
+        document.querySelectorAll('a[href^="#"]:not(.dropdown-toggle)').forEach(anchor => {
+            const hrefVal = anchor.getAttribute('href');
+            if (!hrefVal || hrefVal === '#') return; // lewati href kosong, biar tidak error querySelector('#')
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(hrefVal);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Efek scroll untuk navbar (ubah latar saat scroll)
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('mainNavbar');
+            if (navbar) {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

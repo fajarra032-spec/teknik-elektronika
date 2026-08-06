@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { nilaiKeHuruf } = require('../../helpers/nilaiHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -508,12 +509,10 @@ router.post('/:periodId/complete', async (req, res) => {
       return res.status(403).send('Anda tidak memiliki akses');
     }
     
-    // Hitung nilai huruf
-    let nilaiHuruf = 'E';
-    if (nilaiAngka >= 85) nilaiHuruf = 'A';
-    else if (nilaiAngka >= 75) nilaiHuruf = 'B';
-    else if (nilaiAngka >= 65) nilaiHuruf = 'C';
-    else if (nilaiAngka >= 50) nilaiHuruf = 'D';
+    // Hitung nilai huruf - pakai skala resmi yang sama dengan KHS/Transkrip/Rubrik
+    // (lihat helpers/nilaiHelper.js -> nilaiKeHuruf), supaya huruf mutu magang
+    // konsisten dengan huruf mutu akademik lain di seluruh aplikasi.
+    const nilaiHuruf = nilaiKeHuruf(nilaiAngka).huruf;
     
     await periodRef.update({
       status: 'completed',
