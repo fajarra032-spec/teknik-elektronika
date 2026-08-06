@@ -15,7 +15,8 @@ const {
   getRincianTugasByMkId,
   getKontrakKuliah,
   hitungRubrik,
-  saveGradeFinal
+  saveGradeFinal,
+  saveGradeFinalBulk
 } = require('../../helpers/nilaiHelper');
 const { getSemesterForDate } = require('../../helpers/academicHelper');
 
@@ -236,6 +237,47 @@ router.post('/:mkId/kunci/:mahasiswaId', async (req, res) => {
   } catch (error) {
     console.error('Error kunci nilai akhir dari rubrik:', error);
     res.status(500).json({ success: false, message: 'Gagal mengunci nilai: ' + error.message });
+  }
+});
+
+// ============================================================================
+// KUNCI SEMUA NILAI AKHIR SEKELAS SEKALIGUS -> koleksi 'grades' resmi
+// ============================================================================
+router.post('/:mkId/kunci-semua', async (req, res) => {
+  try {
+    const { mkId } = req.params;
+    const periode = req.body.periode || getPeriodeAktif();
+
+    const hasil = await ambilDataRubrik(mkId, periode);
+    if (!hasil) return res.status(404).json({ success: false, message: 'MK tidak ditemukan' });
+
+    const siapDikunci = hasil.data.filter(d => d.hasil.nilaiAkhir !== null);
+    const belumLengkap = hasil.data.length - siapDikunci.length;
+
+    if (siapDikunci.length === 0) {
+      return res.status(400).json({ success: false, message: 'Belum ada mahasiswa dengan nilai akhir lengkap di MK ini' });
+    }
+
+    const items = siapDikunci.map(d => ({
+      userId: d.mahasiswa.id,
+      namaMk: hasil.mk.nama,
+      sks: hasil.mk.sks,
+      nilai: d.hasil.nilaiAkhir
+    }));
+
+    const { count } = await saveGradeFinalBulk(hasil.mk.kode, periode, items);
+
+    res.json({
+      success: true,
+      count,
+      belumLengkap,
+      pesan: belumLengkap > 0
+        ? `${count} nilai berhasil dikunci ke transkrip. ${belumLengkap} mahasiswa dilewati karena rubriknya belum lengkap.`
+        : `${count} nilai berhasil dikunci ke transkrip.`
+    });
+  } catch (error) {
+    console.error('Error kunci semua nilai akhir dari rubrik:', error);
+    res.status(500).json({ success: false, message: 'Gagal mengunci nilai sekelas: ' + error.message });
   }
 });
 

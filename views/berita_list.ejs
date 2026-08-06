@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <%- include('partials/header-landing') %>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0d6efd;
+            --secondary: #0dcaf0;
+            --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #475569;
+            --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+            --border-radius: 1rem;
+            --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .page-header {
+            background: var(--gradient);
+            border-radius: var(--border-radius);
+            padding: clamp(2rem, 5vw, 3rem) 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: #fff;
+        }
+        .page-header h1 {
+            font-family: 'Montserrat', var(--font-sans);
+            font-weight: 800;
+            font-size: clamp(1.6rem, 4vw, 2.4rem);
+            margin-bottom: 0.5rem;
+        }
+        .page-header p {
+            opacity: 0.9;
+            margin-bottom: 0;
+            font-size: clamp(0.9rem, 2vw, 1.05rem);
+        }
+
+        .search-box {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+        .search-box .form-control {
+            border-radius: 50px 0 0 50px;
+            padding: 0.7rem 1.2rem;
+        }
+        .search-box .btn-search {
+            border-radius: 0 50px 50px 0;
+            padding: 0.7rem 1.5rem;
+            background: var(--gradient);
+            color: #fff;
+            border: none;
+            font-weight: 600;
+        }
+        .search-meta {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .news-card {
+            background: linear-gradient(135deg, rgba(13, 110, 253, 0.02) 0%, rgba(13, 202, 240, 0.02) 100%);
+            border: 1px solid rgba(13, 110, 253, 0.08);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .news-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 1rem 2rem rgba(13, 110, 253, 0.12);
+        }
+        .news-card .card-img-wrapper {
+            height: 190px;
+            overflow: hidden;
+        }
+        .news-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+        .news-card:hover img {
+            transform: scale(1.05);
+        }
+        .news-card .card-body {
+            padding: 1.2rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .news-card .card-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+            font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+        }
+        .news-card .card-text {
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            flex-grow: 1;
+        }
+        .news-card .btn-outline-primary {
+            border-radius: 50px;
+            padding: 0.4rem 1rem;
+            font-weight: 600;
+            border-width: 2px;
+            font-size: 0.85rem;
+            align-self: flex-start;
+        }
+        .news-card .btn-outline-primary:hover {
+            background: var(--gradient);
+            border-color: transparent;
+            color: white;
+        }
+        .badge-schedule {
+            font-size: 0.75rem;
+            background: rgba(13, 110, 253, 0.08);
+            color: var(--primary);
+            padding: 0.25rem 0.6rem;
+            border-radius: 50px;
+            font-weight: 600;
+        }
+
+        .pagination .page-link {
+            border-radius: 50px;
+            margin: 0 0.2rem;
+            color: var(--primary);
+            border: 1px solid rgba(13, 110, 253, 0.15);
+        }
+        .pagination .page-item.active .page-link {
+            background: var(--gradient);
+            border-color: transparent;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: rgba(13, 110, 253, 0.3);
+            margin-bottom: 1rem;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="content-wrapper py-4">
+
+    <div class="page-header">
+        <h1>Berita &amp; Kegiatan</h1>
+        <p>Kumpulan berita dan kegiatan Program Studi Teknik Elektronika Politeknik Dewantara</p>
+    </div>
+
+    <div class="search-box">
+        <form action="/berita" method="GET" class="row g-2 align-items-center">
+            <div class="col-12 col-md-8">
+                <div class="d-flex">
+                    <input type="text" name="search" class="form-control" placeholder="Cari judul atau isi berita..." value="<%= search %>">
+                    <button type="submit" class="btn-search"><i class="bi bi-search"></i> Cari</button>
+                </div>
+            </div>
+            <div class="col-12 col-md-4 text-md-end">
+                <span class="search-meta">
+                    <% if (search) { %>
+                        Ditemukan <strong><%= totalBerita %></strong> hasil untuk "<%= search %>"
+                        &nbsp;<a href="/berita" class="text-decoration-none">(hapus filter)</a>
+                    <% } else { %>
+                        Total <strong><%= totalBerita %></strong> berita
+                    <% } %>
+                </span>
+            </div>
+        </form>
+    </div>
+
+    <% if (!items || items.length === 0) { %>
+        <div class="empty-state">
+            <i class="bi bi-newspaper"></i>
+            <p class="mb-0">
+                <% if (search) { %>
+                    Tidak ada berita yang cocok dengan pencarian "<%= search %>".
+                <% } else { %>
+                    Belum ada berita yang dipublikasikan.
+                <% } %>
+            </p>
+        </div>
+    <% } else { %>
+        <div class="row g-4">
+            <% items.forEach(item => { %>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="news-card">
+                        <div class="card-img-wrapper">
+                            <% if (item.gambar) { %>
+                                <img src="<%= item.gambar %>" alt="<%= item.judul %>" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x200?text=No+Image';">
+                            <% } else { %>
+                                <img src="https://via.placeholder.com/400x200?text=Elektronika" alt="Default">
+                            <% } %>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <span class="badge-schedule"><i class="bi bi-calendar"></i>
+                                    <%= item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-' %>
+                                </span>
+                            </div>
+                            <h5 class="card-title"><%= item.judul %></h5>
+                            <p class="card-text"><%= (item.isi || '').replace(/<[^>]*>?/gm, '').substring(0, 100) %>...</p>
+                            <a href="/berita/<%= item.id %>" class="btn btn-outline-primary btn-sm mt-2">Baca Selengkapnya <i class="bi bi-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+
+        <% if (totalPages > 1) { %>
+            <nav aria-label="Navigasi halaman berita" class="mt-5">
+                <ul class="pagination justify-content-center flex-wrap">
+                    <li class="page-item <%= currentPage <= 1 ? 'disabled' : '' %>">
+                        <a class="page-link" href="/berita?page=<%= currentPage - 1 %><%= search ? '&search=' + encodeURIComponent(search) : '' %>">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    <% for (let p = 1; p <= totalPages; p++) { %>
+                        <li class="page-item <%= p === currentPage ? 'active' : '' %>">
+                            <a class="page-link" href="/berita?page=<%= p %><%= search ? '&search=' + encodeURIComponent(search) : '' %>"><%= p %></a>
+                        </li>
+                    <% } %>
+                    <li class="page-item <%= currentPage >= totalPages ? 'disabled' : '' %>">
+                        <a class="page-link" href="/berita?page=<%= currentPage + 1 %><%= search ? '&search=' + encodeURIComponent(search) : '' %>">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        <% } %>
+    <% } %>
+
+    <div class="text-center mt-4 mb-2">
+        <a href="/" class="text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Kembali ke Beranda</a>
+    </div>
+
+</div>
+
+<%- include('partials/footer-landing') %>
+</body>
+</html>

@@ -24,13 +24,24 @@
   .huruf-badge { font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.8rem; background: #eef2ff; }
   .lulus { color: #15803d; font-weight: 600; } .tidak-lulus { color: #b91c1c; font-weight: 600; }
   .btn-kunci { border-radius: 50px; padding: 0.25rem 0.7rem; font-size: 0.75rem; }
+  .btn-kunci-semua { border-radius: 50px; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 600; background: #16a34a; border: none; color: white; }
+  .btn-kunci-semua:hover { background: #15803d; color: white; }
+  .btn-kunci-semua:disabled { background: #94a3b8; }
   .bobot-note { font-size: 0.85rem; color: #475569; background: #f1f5f9; border-radius: 0.8rem; padding: 0.8rem 1.2rem; margin-bottom: 1.2rem; }
 </style>
+
+<%
+  const jumlahSiapDikunci = data.filter(d => d.hasil.nilaiAkhir !== null).length;
+%>
 
 <div class="container-fluid mt-4">
   <div class="detail-header d-flex flex-wrap justify-content-between align-items-center gap-2">
     <h2><i class="bi bi-clipboard-data me-2"></i><%= mk.kode %> - <%= mk.nama %></h2>
     <div class="d-flex gap-2">
+      <button type="button" class="btn-kunci-semua" id="btnKunciSemua"
+              onclick="kunciSemua()" <%= jumlahSiapDikunci === 0 ? 'disabled' : '' %>>
+        <i class="bi bi-lock-fill"></i> Kunci Semua ke Transkrip (<%= jumlahSiapDikunci %>/<%= data.length %>)
+      </button>
       <a href="/admin/rubrik/<%= mk.id %>/cetak?periode=<%= encodeURIComponent(periode) %>" target="_blank" class="btn btn-light btn-sm">
         <i class="bi bi-printer"></i> Cetak
       </a>
@@ -140,6 +151,47 @@ async function kunciNilai(mahasiswaId, btn) {
     }
   } catch (err) {
     alert('Gagal mengunci nilai: ' + err.message);
+    btn.disabled = false;
+  }
+}
+
+async function kunciSemua() {
+  const jumlah = <%= jumlahSiapDikunci %>;
+  if (!confirm('Kunci SEMUA (' + jumlah + ') nilai akhir yang sudah lengkap di MK ini ke transkrip resmi (koleksi grades) sekaligus? Ini langsung tersinkron ke KHS mahasiswa. Nilai yang sudah pernah dikunci sebelumnya akan diperbarui, bukan diduplikasi.')) return;
+
+  const btn = document.getElementById('btnKunciSemua');
+  btn.disabled = true;
+  const teksAsli = btn.innerHTML;
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Memproses...';
+
+  try {
+    const body = new URLSearchParams({ periode: '<%= periode %>' });
+    const res = await fetch('/admin/rubrik/<%= mk.id %>/kunci-semua', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body
+    });
+    const json = await res.json();
+    if (json.success) {
+      alert(json.pesan);
+      // Tandai semua tombol kunci per-baris yang sudah lengkap sebagai "Terkunci"
+      document.querySelectorAll('.btn-kunci').forEach(b => {
+        if (!b.disabled) {
+          b.innerHTML = '<i class="bi bi-check-circle"></i> Terkunci';
+          b.classList.remove('btn-success');
+          b.classList.add('btn-secondary');
+          b.disabled = true;
+        }
+      });
+      btn.innerHTML = '<i class="bi bi-check-circle"></i> Semua Terkunci (' + json.count + ')';
+    } else {
+      alert('Gagal: ' + json.message);
+      btn.innerHTML = teksAsli;
+      btn.disabled = false;
+    }
+  } catch (err) {
+    alert('Gagal mengunci nilai sekelas: ' + err.message);
+    btn.innerHTML = teksAsli;
     btn.disabled = false;
   }
 }

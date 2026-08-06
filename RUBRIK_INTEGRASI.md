@@ -676,6 +676,35 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
     tidak berpengaruh ke fungsionalitas (tidak pernah dipanggil), cuma
     dirapikan.
 
+25. **Fitur baru: "Kunci Semua ke Transkrip" (sinkron ke KHS mahasiswa
+    sekelas sekaligus)** - sebelumnya cuma bisa satu-satu per mahasiswa.
+
+    Perlu diketahui dulu: fitur sinkron ke KHS ini **sebenarnya sudah ada**
+    sejak awal (tombol "Kunci ke Transkrip" per baris di halaman detail
+    rubrik admin) - begitu dikunci, nilai akhir rubrik tersalin ke koleksi
+    `grades` resmi yang memang sudah dibaca oleh halaman KHS/transkrip
+    mahasiswa (`getTranskripMahasiswa()`, dipakai di
+    `routes/mahasiswa/akademik.js`). Jadi sinkronnya sudah jalan, cuma
+    prosesnya satu-satu.
+
+    **Sekarang ditambahkan** tombol **"Kunci Semua ke Transkrip
+    (X/Y)"** di pojok kanan atas halaman detail rubrik admin - mengunci
+    SEMUA mahasiswa yang nilai akhirnya sudah lengkap dalam SATU klik.
+    Mahasiswa yang rubriknya belum lengkap otomatis dilewati (dikasih tahu
+    berapa yang dilewati), tidak menghentikan proses.
+
+    **Teknis**: fungsi baru `saveGradeFinalBulk()` di `helpers/nilaiHelper.js`
+    - sengaja BUKAN memanggil `saveGradeFinal()` satu-satu dalam loop (itu
+    N query pengecekan-duplikat berurutan utk N mahasiswa), tapi 1 query
+    pengecekan (karena kodeMk+semester sama utk semua mahasiswa di
+    operasi ini) + 1 `db.batch()` untuk semua tulisnya sekaligus - tetap
+    konsisten dengan tema hemat kuota di seluruh pembaruan ini.
+
+    Sudah saya tes: mahasiswa dengan nilai lengkap terkunci, yang belum
+    lengkap dilewati dengan pesan jelas, dan dipanggil berkali-kali **tidak
+    membuat data dobel** (update, bukan duplikat) - persis seperti perilaku
+    tombol satu-per-satu yang sudah ada.
+
 ---
 
 

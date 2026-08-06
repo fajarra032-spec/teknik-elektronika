@@ -987,6 +987,61 @@ async function saveKontrakKuliah(mkId, periode, { deskripsi, kriteriaKelulusan, 
   }
 }
 
+/**
+ * Versi BULK dari saveGradeFinal() - mengunci nilai akhir SATU KELAS
+ * SEKALIGUS ke koleksi 'grades' resmi, dipakai tombol "Kunci Semua ke
+ * Transkrip" di halaman detail rubrik admin. Sengaja TIDAK memanggil
+ * saveGradeFinal() per mahasiswa dalam loop (itu berarti N query
+ * pengecekan-duplikat berurutan utk N mahasiswa) - sebagai gantinya, satu
+ * MK+periode yang sama artinya SATU query cukup untuk cek semua mahasiswa
+ * sekaligus (grades sudah pasti terfilter kodeMk+semester yang sama), lalu
+ * satu `db.batch()` untuk semua tulis-nya.
+ *
+ * @param {string} kodeMk
+ * @param {string} semester
+ * @param {Array<{userId, namaMk, sks, nilai}>} items
+ * @returns {Promise<{count: number}>}
+ */
+async function saveGradeFinalBulk(kodeMk, semester, items) {
+  const existingSnapshot = await db.collection('grades')
+    .where('kodeMk', '==', kodeMk)
+    .where('semester', '==', semester)
+    .get();
+  const existingByUser = new Map();
+  existingSnapshot.docs.forEach(doc => existingByUser.set(doc.data().userId, doc.ref));
+
+  const now = new Date().toISOString();
+  const batch = db.batch();
+  let count = 0;
+
+  items.forEach(item => {
+    const nilaiAngka = parseFloat(item.nilai);
+    if (isNaN(nilaiAngka) || nilaiAngka < 0 || nilaiAngka > 100) return; // lewati yang tidak valid
+
+    const payload = {
+      userId: item.userId,
+      kodeMk,
+      namaMk: item.namaMk || '-',
+      sks: parseFloat(item.sks) || 0,
+      nilai: nilaiAngka,
+      semester,
+      updatedAt: now
+    };
+
+    const existingRef = existingByUser.get(item.userId);
+    if (existingRef) {
+      batch.update(existingRef, payload);
+    } else {
+      const newRef = db.collection('grades').doc();
+      batch.set(newRef, { ...payload, createdAt: now });
+    }
+    count++;
+  });
+
+  await batch.commit();
+  return { count };
+}
+
 module.exports = {
   getPeriodeAktif,
   saveNilai,
@@ -995,6 +1050,7 @@ module.exports = {
   getNilaiByTugasId,
   hitungNilaiAkhir,
   saveGradeFinal,
+  saveGradeFinalBulk,
   getTranskripMahasiswa,
   // --- Rubrik Penilaian ---
   BOBOT_DEFAULT,
