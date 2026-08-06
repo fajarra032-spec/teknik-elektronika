@@ -593,6 +593,44 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
     fallback nama kolom, dst) dipertahankan persis seperti sebelumnya - cuma
     cara ambil datanya yang berubah.
 
+22. **Digabung dengan kontribusi Anda: Cetak jadi 5 halaman dokumen
+    perkuliahan lengkap** (file `file-yang-diubah.zip` yang Anda kirim).
+    Anda memperluas halaman cetak dari 1 halaman (Rubrik saja) jadi 5
+    halaman sekaligus, dengan kop surat yang sudah dipisah jadi partial
+    (`views/partials/kop_surat.ejs`) supaya bisa dipakai ulang:
+
+    1. **Penilaian** - rincian nilai per tugas (bukan cuma rata-rata)
+    2. **Rubrik Penilaian** - seperti sebelumnya
+    3. **Kontrak Kuliah** - deskripsi MK, ringkasan 16 pertemuan, bobot,
+       kriteria kelulusan, tata tertib
+    4. **Berita Acara Pengajaran** - rekap pertemuan yang benar-benar
+       terlaksana (tanggal, topik, ada/tidak materi, catatan)
+    5. **Berita Acara Tanda Terima Penyerahan Nilai**
+
+    **Yang saya sesuaikan saat menggabungkan** (route `routes/dosen/rubrik.js`
+    & `routes/admin/rubrik.js` versi Anda dibuat dari versi rubrik.js yang
+    lebih lama, sebelum optimasi kuota poin 17/20 - jadi saya satukan lagi
+    dengan versi TERBARU, bukan menimpa optimasi yang sudah ada):
+    - Halaman "Penilaian" (rincian per tugas) sekarang pakai
+      `getRincianTugasByMkId()` yang sudah ada (bukan query manual
+      `getNilaiByMkId`+`getTugasByMkId` terpisah) - efeknya: **Tugas Manual
+      ikut tercetak juga**, tidak cuma tugas dari web.
+    - Dihapus 1 query enrollment yang redundan (data mahasiswa dipakai
+      ulang dari `hasil.data`, yang sudah diambil `ambilDataRubrik`
+      lewat `db.getAll()` - bukan query baru).
+    - Ditambahkan versi yang sama persis untuk **admin** juga (`routes/admin/rubrik.js`)
+      - sebelumnya kalau tidak disesuaikan, tombol cetak dari sisi admin
+        akan ERROR karena template sekarang butuh variabel `penilaian`,
+        `pertemuanList`, dll yang cuma disiapkan di sisi dosen. Untuk NUPTK
+        dosen di sisi admin (yang tidak py `req.dosen` sendiri), diambil
+        dari dosen pertama yang mengampu MK tsb.
+
+    Sudah saya tes end-to-end (bukan cuma cek sintaks) - langsung memanggil
+    route handler-nya dengan data tiruan, dan memverifikasi SEMUA variabel
+    yang dibutuhkan ke-5 halaman cetak (`penilaian`, `pertemuanList`,
+    `terlaksana`, `infoSemester`, `nuptkDosen`, dst) terisi dengan struktur
+    yang benar, baik dari sisi dosen maupun admin - tidak ada error runtime.
+
 ---
 
 

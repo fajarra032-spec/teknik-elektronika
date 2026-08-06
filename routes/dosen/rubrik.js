@@ -21,6 +21,7 @@ const {
   saveNilaiTugasManual,
   hitungRubrik
 } = require('../../helpers/nilaiHelper');
+const { getSemesterForDate } = require('../../helpers/academicHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -68,6 +69,50 @@ async function ambilDataRubrik(mkId, periode) {
   data.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));
 
   return { mk, bobot, data };
+}
+
+/**
+ * Susun rincian nilai per-tugas (WEB + MANUAL) untuk halaman cetak
+ * "Penilaian" (rincian per tugas, beda dari halaman Rubrik yang cuma
+ * menampilkan rata-ratanya). Pakai ulang `hasil.data` dari ambilDataRubrik
+ * (tidak query enrollment lagi) dan getRincianTugasByMkId (satu sumber data
+ * yang sama dengan halaman "Rincian Tugas", supaya angkanya selalu sinkron
+ * dan Tugas Manual ikut tercetak juga).
+ */
+async function ambilDataPenilaian(mkId, periode, hasilRubrik) {
+  const { tugasList, perMahasiswa } = await getRincianTugasByMkId(mkId, periode);
+  const data = hasilRubrik.data.map(item => {
+    const uid = item.mahasiswa.id;
+    const nilaiMahasiswa = perMahasiswa[uid] || {};
+    const nilaiPerTugas = tugasList.map(tugas => ({
+      tugasId: tugas.id,
+      nilai: nilaiMahasiswa[tugas.id] ?? null
+    }));
+    return { mahasiswa: item.mahasiswa, nilaiPerTugas };
+  });
+  return { tugasList, data };
+}
+
+/**
+ * Susun daftar 16 pertemuan (topik/materi ada-tidak + catatan) dari field
+ * `materi` pada dokumen mataKuliah, untuk halaman cetak "Berita Acara
+ * Pengajaran". Logika sinkron dengan routes/dosen/mk.js (GET /:id). Fungsi
+ * murni (tidak akses DB) - `mk` sudah punya field `materi` dari ambilDataRubrik.
+ */
+function ambilDataPertemuan(mk) {
+  const materi = mk.materi || [];
+  const pertemuanList = [];
+  for (let i = 1; i <= 16; i++) {
+    const existing = materi.find(m => m.pertemuan === i) || {};
+    pertemuanList.push({
+      pertemuan: i,
+      topik: existing.topik || '',
+      tanggal: existing.tanggal || null,
+      adaMateri: !!(existing.fileUrl || existing.topik),
+      catatan: existing.catatan || ''
+    });
+  }
+  return pertemuanList;
 }
 
 // ============================================================================
@@ -301,23 +346,43 @@ router.post('/input', async (req, res) => {
 });
 
 // ============================================================================
-// CETAK RUBRIK (PDF via print dialog browser)
+// CETAK DOKUMEN PERKULIAHAN (5 halaman: Penilaian, Rubrik, Kontrak Kuliah,
+// Berita Acara Pengajaran, Berita Acara Serah Terima Nilai) - via print
+// dialog browser.
 // ============================================================================
 router.get('/:mkId/cetak', async (req, res) => {
   try {
+    const { mkId } = req.params;
     const periode = req.query.periode || getPeriodeAktif();
-    const hasil = await ambilDataRubrik(req.params.mkId, periode);
+    const hasil = await ambilDataRubrik(mkId, periode);
     if (!hasil) return res.status(404).send('Mata kuliah tidak ditemukan');
 
     const namaDosen = req.dosen.nama || req.user.nama || '-';
+    const nuptkDosen = req.dosen.nuptk || req.dosen.nidn || '-';
+
+    const [penilaian] = await Promise.all([
+      ambilDataPenilaian(mkId, periode, hasil)
+    ]);
+    const pertemuanList = ambilDataPertemuan(hasil.mk);
+    const terlaksana = pertemuanList.filter(p => p.adaMateri).length;
+
+    // Info semester Ganjil/Genap & tahun akademik untuk Berita Acara -
+    // dihitung dari tanggal SEKARANG (kapan dokumen ini dicetak), bukan
+    // dari periode MK yang mungkin sedang dipilih dosen di dropdown.
+    const infoSemester = getSemesterForDate(new Date());
 
     res.render('rubrik_print', {
-      title: `Cetak Rubrik Penilaian - ${hasil.mk.kode}`,
+      title: `Cetak Dokumen Perkuliahan - ${hasil.mk.kode}`,
       mk: hasil.mk,
       bobot: hasil.bobot,
       data: hasil.data,
       periode,
-      namaDosen
+      namaDosen,
+      nuptkDosen,
+      penilaian,
+      pertemuanList,
+      terlaksana,
+      infoSemester
     });
   } catch (error) {
     console.error('Error cetak rubrik:', error);

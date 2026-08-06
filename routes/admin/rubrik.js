@@ -12,9 +12,11 @@ const { db } = require('../../config/firebaseAdmin');
 const {
   getPeriodeAktif,
   getHasilRubrikSemuaMahasiswa,
+  getRincianTugasByMkId,
   hitungRubrik,
   saveGradeFinal
 } = require('../../helpers/nilaiHelper');
+const { getSemesterForDate } = require('../../helpers/academicHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -74,6 +76,60 @@ async function ambilDataRubrik(mkId, periode) {
   data.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));
 
   return { mk, bobot, data };
+}
+
+/**
+ * Susun rincian nilai per-tugas (WEB + MANUAL) untuk halaman cetak
+ * "Penilaian" - pakai ulang hasil.data (tidak query enrollment lagi) dan
+ * getRincianTugasByMkId (sumber sama dengan halaman Rincian Tugas dosen).
+ */
+async function ambilDataPenilaian(mkId, periode, hasilRubrik) {
+  const { tugasList, perMahasiswa } = await getRincianTugasByMkId(mkId, periode);
+  const data = hasilRubrik.data.map(item => {
+    const uid = item.mahasiswa.id;
+    const nilaiMahasiswa = perMahasiswa[uid] || {};
+    const nilaiPerTugas = tugasList.map(tugas => ({
+      tugasId: tugas.id,
+      nilai: nilaiMahasiswa[tugas.id] ?? null
+    }));
+    return { mahasiswa: item.mahasiswa, nilaiPerTugas };
+  });
+  return { tugasList, data };
+}
+
+/**
+ * Susun daftar 16 pertemuan dari field `materi` mataKuliah, untuk halaman
+ * cetak "Berita Acara Pengajaran". Fungsi murni (tidak akses DB).
+ */
+function ambilDataPertemuan(mk) {
+  const materi = mk.materi || [];
+  const pertemuanList = [];
+  for (let i = 1; i <= 16; i++) {
+    const existing = materi.find(m => m.pertemuan === i) || {};
+    pertemuanList.push({
+      pertemuan: i,
+      topik: existing.topik || '',
+      tanggal: existing.tanggal || null,
+      adaMateri: !!(existing.fileUrl || existing.topik),
+      catatan: existing.catatan || ''
+    });
+  }
+  return pertemuanList;
+}
+
+/**
+ * Admin tidak punya req.dosen sendiri (bukan dosen), jadi utk NUPTK di
+ * dokumen cetak, ambil dari dosen PERTAMA yang mengampu MK ini.
+ */
+async function getNuptkDosenPertama(dosenIds = []) {
+  if (dosenIds.length === 0) return '-';
+  try {
+    const doc = await db.collection('users').doc(dosenIds[0]).get();
+    if (!doc.exists) return '-';
+    return doc.data().nuptk || doc.data().nidn || '-';
+  } catch {
+    return '-';
+  }
 }
 
 // ============================================================================
@@ -183,22 +239,36 @@ router.post('/:mkId/kunci/:mahasiswaId', async (req, res) => {
 });
 
 // ============================================================================
-// CETAK RUBRIK (dipakai juga oleh admin, view sama dengan dosen)
+// CETAK DOKUMEN PERKULIAHAN (5 halaman - view sama dengan dosen)
 // ============================================================================
 router.get('/:mkId/cetak', async (req, res) => {
   try {
+    const { mkId } = req.params;
     const periode = req.query.periode || getPeriodeAktif();
-    const hasil = await ambilDataRubrik(req.params.mkId, periode);
+    const hasil = await ambilDataRubrik(mkId, periode);
     if (!hasil) return res.status(404).send('Mata kuliah tidak ditemukan');
     hasil.mk.namaDosen = await getDosenNamaByIds(hasil.mk.dosenIds || []);
 
+    const [nuptkDosen, penilaian] = await Promise.all([
+      getNuptkDosenPertama(hasil.mk.dosenIds || []),
+      ambilDataPenilaian(mkId, periode, hasil)
+    ]);
+    const pertemuanList = ambilDataPertemuan(hasil.mk);
+    const terlaksana = pertemuanList.filter(p => p.adaMateri).length;
+    const infoSemester = getSemesterForDate(new Date());
+
     res.render('rubrik_print', {
-      title: `Cetak Rubrik Penilaian - ${hasil.mk.kode}`,
+      title: `Cetak Dokumen Perkuliahan - ${hasil.mk.kode}`,
       mk: hasil.mk,
       bobot: hasil.bobot,
       data: hasil.data,
       periode,
-      namaDosen: hasil.mk.namaDosen
+      namaDosen: hasil.mk.namaDosen,
+      nuptkDosen,
+      penilaian,
+      pertemuanList,
+      terlaksana,
+      infoSemester
     });
   } catch (error) {
     console.error('Error cetak rubrik admin:', error);
