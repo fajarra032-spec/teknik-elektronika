@@ -841,59 +841,6 @@ async function getRincianTugasByMkId(mkId, periode = getPeriodeAktif()) {
 }
 
 /**
- * ✅ OPTIMISASI KUOTA - PALING PENTING DI FITUR RUBRIK: hitung hasil rubrik
- * untuk SATU mahasiswa saja, dengan membaca HANYA nilai milik mahasiswa itu
- * (filter mahasiswaId, bukan seluruh kelas). Dipakai setelah setiap
- * auto-save di halaman input Rubrik (`POST /dosen/rubrik/input`), yang bisa
- * terpicu puluhan-ratusan kali dalam satu sesi menilai (tiap dosen berhenti
- * mengetik sebentar di satu kolom). Sebelumnya, setiap auto-save memanggil
- * getKomponenRubrikByMkId + getRataTugasByMkId yang MASING-MASING membaca
- * ULANG SELURUH koleksi 'nilai' untuk MK ITU (SEMUA mahasiswa, SEMUA
- * komponen) - untuk kelas 30 mahasiswa x 6 komponen, itu bisa >300 pembacaan
- * dokumen HANYA untuk menghitung ulang nilai SATU mahasiswa. Sekarang cukup
- * baca nilai milik mahasiswa itu sendiri (biasanya <10 dokumen), plus daftar
- * tugas MK (koleksi kecil, tidak sebesar 'nilai').
- *
- * @returns {Promise<Object>} hasil hitungRubrik utk mahasiswa ini
- */
-async function hitungRubrikSatuMahasiswa(mahasiswaId, mkId, periode = getPeriodeAktif()) {
-  const [bobot, tugasWeb, tugasManual, nilaiSnapshot] = await Promise.all([
-    getBobotRubrik(mkId, periode),
-    getTugasByMkId(mkId, periode),
-    getTugasManualByMkId(mkId, periode),
-    db.collection('nilai')
-      .where('mkId', '==', mkId)
-      .where('mahasiswaId', '==', mahasiswaId)
-      .get()
-  ]);
-
-  const semuaTugas = [...tugasWeb, ...tugasManual];
-  const tipeTugasMap = new Map(); // tipe -> tugasId
-  tugasWeb.forEach(t => tipeTugasMap.set(`tugas_${t.id}`, t.id));
-  tugasManual.forEach(t => tipeTugasMap.set(`tugasmanual_${t.id}`, t.id));
-
-  const komponen = {};
-  const nilaiTugas = {};
-  nilaiSnapshot.docs.forEach(doc => {
-    const data = doc.data();
-    if (TIPE_RUBRIK_KOMPONEN.includes(data.tipe)) {
-      komponen[data.tipe] = data.nilai;
-    } else if (tipeTugasMap.has(data.tipe)) {
-      nilaiTugas[tipeTugasMap.get(data.tipe)] = data.nilai;
-    }
-  });
-
-  const nilaiTugasValid = semuaTugas
-    .map(t => nilaiTugas[t.id])
-    .filter(v => v !== undefined && v !== null);
-  const rataTugas = nilaiTugasValid.length > 0
-    ? nilaiTugasValid.reduce((a, b) => a + b, 0) / nilaiTugasValid.length
-    : null;
-
-  return hitungRubrik(komponen, rataTugas, bobot);
-}
-
-/**
  * ✅ OPTIMISASI KUOTA - PALING PENTING DI FILE INI: versi hitung rubrik
  * KHUSUS SATU MAHASISWA. Dipakai setiap kali dosen menyimpan SATU nilai
  * komponen/tugas manual (dipanggil dari POST /dosen/rubrik/input dan
@@ -981,6 +928,65 @@ async function getHasilRubrikSemuaMahasiswa(mkId, periode = getPeriodeAktif()) {
   return { bobot, komponenMap, hasilMap };
 }
 
+/**
+ * ============================================================================
+ * KONTRAK KULIAH - isian yang bisa diedit dosen (beda-beda tiap MK/dosen)
+ * untuk halaman cetak "Kontrak Kuliah": deskripsi & capaian pembelajaran,
+ * kriteria kelulusan, dan tata tertib perkuliahan. Kalau dosen belum pernah
+ * mengisi, halaman cetak tetap tampil dengan teks generik/default (tidak
+ * kosong/error) - lihat DEFAULT_KONTRAK_KULIAH.
+ * ============================================================================
+ */
+const DEFAULT_KONTRAK_KULIAH = {
+  deskripsi: '',       // kosong = pakai narasi default di view (otomatis sisipkan nama MK)
+  kriteriaKelulusan: '', // kosong = pakai teks konversi huruf default di view
+  tataTertib: []         // kosong = pakai daftar default di view
+};
+
+async function getKontrakKuliah(mkId, periode = getPeriodeAktif()) {
+  const snapshot = await db.collection('kontrakKuliah')
+    .where('mkId', '==', mkId)
+    .where('periode', '==', periode)
+    .limit(1)
+    .get();
+  if (snapshot.empty) return { ...DEFAULT_KONTRAK_KULIAH };
+  const data = snapshot.docs[0].data();
+  return {
+    deskripsi: data.deskripsi || '',
+    kriteriaKelulusan: data.kriteriaKelulusan || '',
+    tataTertib: Array.isArray(data.tataTertib) ? data.tataTertib : []
+  };
+}
+
+async function saveKontrakKuliah(mkId, periode, { deskripsi, kriteriaKelulusan, tataTertib }) {
+  const now = new Date().toISOString();
+  const tataTertibArr = Array.isArray(tataTertib)
+    ? tataTertib
+    : String(tataTertib || '').split('\n').map(s => s.trim()).filter(Boolean);
+
+  const snapshot = await db.collection('kontrakKuliah')
+    .where('mkId', '==', mkId)
+    .where('periode', '==', periode)
+    .limit(1)
+    .get();
+
+  const payload = {
+    mkId, periode,
+    deskripsi: (deskripsi || '').trim(),
+    kriteriaKelulusan: (kriteriaKelulusan || '').trim(),
+    tataTertib: tataTertibArr,
+    updatedAt: now
+  };
+
+  if (snapshot.empty) {
+    const docRef = await db.collection('kontrakKuliah').add({ ...payload, createdAt: now });
+    return { id: docRef.id, isNew: true };
+  } else {
+    await snapshot.docs[0].ref.update(payload);
+    return { id: snapshot.docs[0].id, isNew: false };
+  }
+}
+
 module.exports = {
   getPeriodeAktif,
   saveNilai,
@@ -1006,5 +1012,6 @@ module.exports = {
   hapusTugasManual,
   getTugasManualByMkId,
   saveNilaiTugasManual,
-  hitungRubrikSatuMahasiswa
+  getKontrakKuliah,
+  saveKontrakKuliah
 };

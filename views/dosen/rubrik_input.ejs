@@ -38,6 +38,8 @@
   .bobot-card label { font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 0.2rem; }
   .bobot-card input { text-align: center; }
   .bobot-card .sub-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary-start); font-weight: 700; margin-bottom: 0.6rem; }
+  .kontrak-kuliah-card summary::-webkit-details-marker { display: none; }
+  .kontrak-kuliah-card[open] summary { margin-bottom: 0.5rem; }
 
   .table-responsive { border-radius: 1.2rem; overflow-x: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(30,58,138,0.1); background: white; }
   .rubrik-table { width: 100%; border-collapse: collapse; margin-bottom: 0; min-width: 1300px; }
@@ -95,6 +97,38 @@
       </div>
     </form>
   </div>
+
+  <!-- Isian Kontrak Kuliah (beda-beda tiap dosen/MK, dipakai di halaman cetak) -->
+  <details class="bobot-card kontrak-kuliah-card">
+    <summary class="sub-title" style="cursor:pointer; list-style:none;">
+      <i class="bi bi-file-earmark-text"></i> Isian Kontrak Kuliah (klik untuk buka/tutup)
+    </summary>
+    <p class="text-muted small mt-2 mb-3">
+      Isi bagian ini untuk menyesuaikan halaman cetak "Kontrak Kuliah" sesuai MK Anda. Kalau tidak diisi,
+      halaman cetak tetap tampil dengan teks umum bawaan sistem.
+    </p>
+    <form method="POST" action="/dosen/rubrik/<%= mk.id %>/kontrak-kuliah" class="row g-3">
+      <input type="hidden" name="periode" value="<%= periode %>">
+      <div class="col-12">
+        <label class="form-label fw-semibold">Deskripsi &amp; Capaian Pembelajaran</label>
+        <textarea name="deskripsi" class="form-control" rows="3"
+                  placeholder="Kosongkan untuk pakai teks umum bawaan sistem."><%= kontrakKuliah ? kontrakKuliah.deskripsi : '' %></textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-semibold">Kriteria Kelulusan &amp; Konversi Nilai Huruf Mutu</label>
+        <textarea name="kriteriaKelulusan" class="form-control" rows="2"
+                  placeholder="Kosongkan untuk pakai teks umum bawaan sistem."><%= kontrakKuliah ? kontrakKuliah.kriteriaKelulusan : '' %></textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-semibold">Tata Tertib Perkuliahan <small class="text-muted">(satu aturan per baris)</small></label>
+        <textarea name="tataTertib" class="form-control" rows="5"
+                  placeholder="Kosongkan untuk pakai daftar umum bawaan sistem."><%= (kontrakKuliah && kontrakKuliah.tataTertib && kontrakKuliah.tataTertib.length > 0) ? kontrakKuliah.tataTertib.join('\n') : '' %></textarea>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary" style="border-radius:50px;"><i class="bi bi-save"></i> Simpan Kontrak Kuliah</button>
+      </div>
+    </form>
+  </details>
 
   <%
     const pakaiSikap = (bobot.sikap || 0) > 0;

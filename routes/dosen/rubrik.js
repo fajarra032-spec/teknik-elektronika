@@ -19,6 +19,8 @@ const {
   tambahTugasManual,
   hapusTugasManual,
   saveNilaiTugasManual,
+  getKontrakKuliah,
+  saveKontrakKuliah,
   hitungRubrik
 } = require('../../helpers/nilaiHelper');
 const { getSemesterForDate } = require('../../helpers/academicHelper');
@@ -275,7 +277,10 @@ router.get('/:mkId/rincian-tugas', async (req, res) => {
 router.get('/:mkId', async (req, res) => {
   try {
     const periode = req.query.periode || getPeriodeAktif();
-    const hasil = await ambilDataRubrik(req.params.mkId, periode);
+    const [hasil, kontrakKuliah] = await Promise.all([
+      ambilDataRubrik(req.params.mkId, periode),
+      getKontrakKuliah(req.params.mkId, periode)
+    ]);
     if (!hasil) return res.status(404).send('Mata kuliah tidak ditemukan');
 
     res.render('dosen/rubrik_input', {
@@ -283,11 +288,29 @@ router.get('/:mkId', async (req, res) => {
       mk: hasil.mk,
       bobot: hasil.bobot,
       data: hasil.data,
-      periode
+      periode,
+      kontrakKuliah
     });
   } catch (error) {
     console.error('Error rubrik input:', error);
     res.status(500).render('error', { title: 'Error', message: 'Gagal memuat rubrik: ' + error.message });
+  }
+});
+
+// ============================================================================
+// SIMPAN ISIAN KONTRAK KULIAH (beda tiap dosen/MK - dipakai di halaman cetak)
+// ============================================================================
+router.post('/:mkId/kontrak-kuliah', async (req, res) => {
+  try {
+    const { mkId } = req.params;
+    const { periode, deskripsi, kriteriaKelulusan, tataTertib } = req.body;
+    const periodeDipakai = periode || getPeriodeAktif();
+    await saveKontrakKuliah(mkId, periodeDipakai, { deskripsi, kriteriaKelulusan, tataTertib });
+    req.session.success = 'Isian Kontrak Kuliah berhasil disimpan';
+    res.redirect(`/dosen/rubrik/${mkId}?periode=${encodeURIComponent(periodeDipakai)}`);
+  } catch (error) {
+    console.error('Error simpan kontrak kuliah:', error);
+    res.status(500).send('Gagal menyimpan Kontrak Kuliah: ' + error.message);
   }
 });
 
@@ -360,8 +383,9 @@ router.get('/:mkId/cetak', async (req, res) => {
     const namaDosen = req.dosen.nama || req.user.nama || '-';
     const nuptkDosen = req.dosen.nuptk || req.dosen.nidn || '-';
 
-    const [penilaian] = await Promise.all([
-      ambilDataPenilaian(mkId, periode, hasil)
+    const [penilaian, kontrakKuliah] = await Promise.all([
+      ambilDataPenilaian(mkId, periode, hasil),
+      getKontrakKuliah(mkId, periode)
     ]);
     const pertemuanList = ambilDataPertemuan(hasil.mk);
     const terlaksana = pertemuanList.filter(p => p.adaMateri).length;
@@ -382,7 +406,8 @@ router.get('/:mkId/cetak', async (req, res) => {
       penilaian,
       pertemuanList,
       terlaksana,
-      infoSemester
+      infoSemester,
+      kontrakKuliah
     });
   } catch (error) {
     console.error('Error cetak rubrik:', error);

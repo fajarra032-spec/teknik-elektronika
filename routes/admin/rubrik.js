@@ -13,6 +13,7 @@ const {
   getPeriodeAktif,
   getHasilRubrikSemuaMahasiswa,
   getRincianTugasByMkId,
+  getKontrakKuliah,
   hitungRubrik,
   saveGradeFinal
 } = require('../../helpers/nilaiHelper');
@@ -249,9 +250,10 @@ router.get('/:mkId/cetak', async (req, res) => {
     if (!hasil) return res.status(404).send('Mata kuliah tidak ditemukan');
     hasil.mk.namaDosen = await getDosenNamaByIds(hasil.mk.dosenIds || []);
 
-    const [nuptkDosen, penilaian] = await Promise.all([
+    const [nuptkDosen, penilaian, kontrakKuliah] = await Promise.all([
       getNuptkDosenPertama(hasil.mk.dosenIds || []),
-      ambilDataPenilaian(mkId, periode, hasil)
+      ambilDataPenilaian(mkId, periode, hasil),
+      getKontrakKuliah(mkId, periode)
     ]);
     const pertemuanList = ambilDataPertemuan(hasil.mk);
     const terlaksana = pertemuanList.filter(p => p.adaMateri).length;
@@ -268,7 +270,8 @@ router.get('/:mkId/cetak', async (req, res) => {
       penilaian,
       pertemuanList,
       terlaksana,
-      infoSemester
+      infoSemester,
+      kontrakKuliah
     });
   } catch (error) {
     console.error('Error cetak rubrik admin:', error);

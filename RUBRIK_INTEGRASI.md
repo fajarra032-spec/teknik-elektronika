@@ -631,6 +631,51 @@ file-file ini ke lokasi yang sama persis di project Anda (bukan project baru).
     `terlaksana`, `infoSemester`, `nuptkDosen`, dst) terisi dengan struktur
     yang benar, baik dari sisi dosen maupun admin - tidak ada error runtime.
 
+23. **Perbaikan halaman 5 (Berita Acara Serah Terima Nilai) & anti-potong
+    kolom TTD saat dicetak.**
+    - Tanda tangan Dosen & Ketua Program Studi di halaman 5 sebelumnya
+      berupa garis putus-putus kosong (`----------------------`) - sekarang
+      **otomatis terisi nama** (`namaDosen`/`namaKaprodi`), konsisten dengan
+      halaman 1-4.
+    - Ditambahkan `page-break-inside: avoid` (+ `break-inside: avoid` versi
+      modern) pada `.ttd-wrap`, `.ttd-box`, dan blok tanda tangan Kaprodi di
+      halaman Kontrak Kuliah - supaya baris tanda tangan **tidak pernah
+      terpotong** jadi 2 halaman cetak (nama di satu halaman, NUPTK di
+      halaman berikutnya, dsb).
+
+24. **Fitur baru: Isian Kontrak Kuliah bisa diedit per dosen/MK** - karena
+    memang isinya beda-beda tiap dosen. Sebelumnya "Deskripsi & Capaian
+    Pembelajaran", "Kriteria Kelulusan", dan "Tata Tertib" di halaman cetak
+    Kontrak Kuliah semuanya teks generik hardcoded (sama utk semua MK).
+
+    **Sekarang**: di halaman Rubrik Penilaian dosen (`/dosen/rubrik/:mkId`),
+    ada panel baru **"Isian Kontrak Kuliah"** (bisa dibuka/tutup, klik
+    judulnya) dengan 3 kolom:
+    - Deskripsi & Capaian Pembelajaran (teks bebas)
+    - Kriteria Kelulusan & Konversi Nilai Huruf Mutu (teks bebas)
+    - Tata Tertib Perkuliahan (satu aturan per baris)
+
+    Kalau dosen **tidak mengisi** (kosong), halaman cetak tetap tampil
+    normal pakai teks umum bawaan sistem (fallback) - tidak akan pernah
+    kosong/rusak. Kalau **diisi**, teks itu yang tercetak, menggantikan versi
+    generik.
+
+    **Teknis**: koleksi Firestore baru `kontrakKuliah` (1 dokumen per
+    mkId+periode), fungsi `getKontrakKuliah()`/`saveKontrakKuliah()` di
+    `helpers/nilaiHelper.js`, route baru
+    `POST /dosen/rubrik/:mkId/kontrak-kuliah`. Halaman cetak (dosen **dan**
+    admin) sudah disambungkan untuk memakai isian ini.
+
+    Sudah saya tes end-to-end: buka halaman kosong → isi lewat form → cek
+    tersimpan & muncul lagi saat dibuka ulang → cek ikut terbawa ke halaman
+    cetak - semua jalan tanpa error.
+
+    **Bonus**: sekalian dibersihkan 1 fungsi duplikat/mati
+    (`hitungRubrikSatuMahasiswa`) yang ternyata tidak terpakai di
+    `helpers/nilaiHelper.js` - sisa draft lama yang belum terhapus,
+    tidak berpengaruh ke fungsionalitas (tidak pernah dipanggil), cuma
+    dirapikan.
+
 ---
 
 

@@ -42,9 +42,16 @@
 
     .keterangan-bobot { font-size: 8pt; margin-top: 10px; color: #333; }
 
-    .ttd-wrap { display: flex; justify-content: space-between; margin-top: 40px; }
-    .ttd-box { text-align: center; width: 260px; font-size: 9.5pt; }
+    .ttd-wrap {
+      display: flex; justify-content: space-between; margin-top: 40px;
+      page-break-inside: avoid; break-inside: avoid;
+    }
+    .ttd-box {
+      text-align: center; width: 260px; font-size: 9.5pt;
+      page-break-inside: avoid; break-inside: avoid;
+    }
     .ttd-box .nama-ttd { font-weight: bold; text-decoration: underline; margin-top: 60px; }
+    .ttd-solo { page-break-inside: avoid; break-inside: avoid; }
 
     .narasi { font-size: 9.5pt; text-align: justify; margin-bottom: 12px; line-height: 1.5; }
     .isian-list { width: 100%; font-size: 9.5pt; margin: 14px 0; }
@@ -264,7 +271,11 @@
 
       <div class="kk-section-title">Deskripsi &amp; Capaian Pembelajaran</div>
       <div class="narasi">
-        Mata kuliah <%= mk.nama %> diselenggarakan mengacu pada Rencana Pembelajaran Semester (RPS) Program Studi Teknik Elektronika, dengan tujuan agar mahasiswa mampu memahami dan menerapkan konsep-konsep pokok mata kuliah ini secara teori maupun praktik, serta memenuhi capaian pembelajaran yang telah ditetapkan dalam kurikulum program studi.
+        <% if (kontrakKuliah && kontrakKuliah.deskripsi) { %>
+          <%= kontrakKuliah.deskripsi %>
+        <% } else { %>
+          Mata kuliah <%= mk.nama %> diselenggarakan mengacu pada Rencana Pembelajaran Semester (RPS) Program Studi Teknik Elektronika, dengan tujuan agar mahasiswa mampu memahami dan menerapkan konsep-konsep pokok mata kuliah ini secara teori maupun praktik, serta memenuhi capaian pembelajaran yang telah ditetapkan dalam kurikulum program studi.
+        <% } %>
       </div>
 
       <div class="kk-section-title">Ringkasan Materi 16 Kali Pertemuan</div>
@@ -290,16 +301,26 @@
 
       <div class="kk-section-title">Kriteria Kelulusan &amp; Konversi Nilai Huruf Mutu</div>
       <div class="narasi">
-        A (&ge;85), B+ (75-84), B (65-74), C+ (55-64), C (45-54), D (35-44), E (&lt;35). Mahasiswa dinyatakan Lulus (L) apabila memenuhi batas nilai minimum kelulusan mata kuliah sesuai ketentuan program studi.
+        <% if (kontrakKuliah && kontrakKuliah.kriteriaKelulusan) { %>
+          <%= kontrakKuliah.kriteriaKelulusan %>
+        <% } else { %>
+          A (&ge;85), B+ (75-84), B (65-74), C+ (55-64), C (45-54), D (35-44), E (&lt;35). Mahasiswa dinyatakan Lulus (L) apabila memenuhi batas nilai minimum kelulusan mata kuliah sesuai ketentuan program studi.
+        <% } %>
       </div>
 
       <div class="kk-section-title">Tata Tertib Perkuliahan</div>
       <ul class="kk-list">
-        <li>Mahasiswa wajib hadir tepat waktu dan mengikuti perkuliahan sesuai jadwal yang ditetapkan.</li>
-        <li>Kehadiran minimal 75% dari total pertemuan menjadi syarat mengikuti UAS.</li>
-        <li>Tugas dikumpulkan sesuai batas waktu (deadline) yang ditentukan dosen pengampu.</li>
-        <li>Mahasiswa wajib menjaga etika dan kesopanan selama proses perkuliahan berlangsung.</li>
-        <li>Jadwal konsultasi dosen di luar jam perkuliahan dapat disepakati langsung dengan dosen pengampu.</li>
+        <% if (kontrakKuliah && kontrakKuliah.tataTertib && kontrakKuliah.tataTertib.length > 0) { %>
+          <% kontrakKuliah.tataTertib.forEach(item => { %>
+            <li><%= item %></li>
+          <% }) %>
+        <% } else { %>
+          <li>Mahasiswa wajib hadir tepat waktu dan mengikuti perkuliahan sesuai jadwal yang ditetapkan.</li>
+          <li>Kehadiran minimal 75% dari total pertemuan menjadi syarat mengikuti UAS.</li>
+          <li>Tugas dikumpulkan sesuai batas waktu (deadline) yang ditentukan dosen pengampu.</li>
+          <li>Mahasiswa wajib menjaga etika dan kesopanan selama proses perkuliahan berlangsung.</li>
+          <li>Jadwal konsultasi dosen di luar jam perkuliahan dapat disepakati langsung dengan dosen pengampu.</li>
+        <% } %>
       </ul>
 
       <div class="ttd-wrap">
@@ -314,7 +335,7 @@
           <div>NIM.</div>
         </div>
       </div>
-      <div class="narasi" style="margin-top:20px; text-align:center;">
+      <div class="narasi ttd-solo" style="margin-top:20px; text-align:center;">
         Mengetahui,<br>Ketua Program Studi Elektronika,<br><br><br><br>
         <strong style="text-decoration:underline;"><%= namaKaprodi %></strong><br>
         NUPTK. <%= nuptkKaprodi %>
@@ -416,13 +437,13 @@
         <div class="ttd-box">
           <div>Mengetahui,</div>
           <div>Dosen Pengampuh Mata Kuliah</div>
-          <div class="nama-ttd">----------------------</div>
+          <div class="nama-ttd"><%= namaDosen || mk.namaDosen || '..........................' %></div>
           <div>NUPTK/NIDN. <%= nuptkDosen %></div>
         </div>
         <div class="ttd-box">
           <div>Mengetahui,</div>
           <div>Ketua Program Studi</div>
-          <div class="nama-ttd">----------------------</div>
+          <div class="nama-ttd"><%= namaKaprodi %></div>
           <div>NUPTK/NIDN. <%= nuptkKaprodi %></div>
         </div>
       </div>
