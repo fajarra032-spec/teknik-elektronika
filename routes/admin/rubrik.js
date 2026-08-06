@@ -16,7 +16,8 @@ const {
   getKontrakKuliah,
   hitungRubrik,
   saveGradeFinal,
-  saveGradeFinalBulk
+  saveGradeFinalBulk,
+  getStatusKunciByMkId
 } = require('../../helpers/nilaiHelper');
 const { getSemesterForDate } = require('../../helpers/academicHelper');
 
@@ -67,13 +68,27 @@ async function ambilDataRubrik(mkId, periode) {
   const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
 
   const { bobot, komponenMap, hasilMap } = await getHasilRubrikSemuaMahasiswa(mkId, periode);
-  const mahasiswaMap = await getMahasiswaBanyak(mahasiswaIds); // 1 round-trip, bukan N
+  const [mahasiswaMap, statusKunciMap] = await Promise.all([
+    getMahasiswaBanyak(mahasiswaIds), // 1 round-trip, bukan N
+    getStatusKunciByMkId(mk.kode, periode)
+  ]);
 
   const data = mahasiswaIds.map(uid => {
     const mahasiswa = mahasiswaMap[uid];
     const komponen = komponenMap[uid] || {};
     const hasil = hasilMap[uid] || hitungRubrik({}, null, bobot);
-    return { mahasiswa, komponen, hasil };
+
+    // Status kunci ke transkrip - lihat komentar di getStatusKunciByMkId()
+    const kunciInfo = statusKunciMap.get(uid);
+    let kunci = { terkunci: false, nilaiTerkunci: null, berbeda: false };
+    if (kunciInfo) {
+      const beda = hasil.nilaiAkhir === null
+        ? true // nilai saat ini malah jadi tidak lengkap lagi - tetap tandai beda
+        : Math.round(hasil.nilaiAkhir * 100) / 100 !== Math.round(kunciInfo.nilaiTerkunci * 100) / 100;
+      kunci = { terkunci: true, nilaiTerkunci: kunciInfo.nilaiTerkunci, berbeda: beda };
+    }
+
+    return { mahasiswa, komponen, hasil, kunci };
   });
   data.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));
 

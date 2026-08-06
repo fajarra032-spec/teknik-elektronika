@@ -218,6 +218,17 @@
             <td><span class="huruf-badge" id="huruf-<%= mid %>"><%= h.huruf || '-' %></span></td>
             <td id="keterangan-<%= mid %>" class="<%= h.keterangan === 'LULUS' ? 'lulus' : (h.keterangan === 'TIDAK LULUS' ? 'tidak-lulus' : '') %>">
               <%= h.keterangan || '-' %>
+              <% if (item.kunci && item.kunci.terkunci) { %>
+                <% if (item.kunci.berbeda) { %>
+                  <div class="kunci-hint kunci-berubah" title="Nilai di KHS mahasiswa masih <%= item.kunci.nilaiTerkunci %> - beda dari rubrik sekarang. Minta admin kunci ulang.">
+                    <i class="bi bi-exclamation-triangle"></i> KHS belum update
+                  </div>
+                <% } else { %>
+                  <div class="kunci-hint kunci-aman" title="Nilai ini sudah masuk KHS resmi mahasiswa.">
+                    <i class="bi bi-lock-fill"></i> Sudah di KHS
+                  </div>
+                <% } %>
+              <% } %>
             </td>
           </tr>
         <% }) %>
@@ -233,6 +244,9 @@
 
 <style>
   .belum-lengkap-hint { font-size: 0.68rem; color: #b45309; margin-top: 2px; line-height: 1.2; }
+  .kunci-hint { font-size: 0.65rem; margin-top: 3px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 3px; }
+  .kunci-hint.kunci-aman { color: #065f46; }
+  .kunci-hint.kunci-berubah { color: #92400e; }
   .komponen-input.saved-flash { border-color: #22c55e !important; box-shadow: 0 0 0 0.15rem rgba(34,197,94,0.3) !important; }
 </style>
 

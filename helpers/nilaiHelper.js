@@ -243,19 +243,16 @@ function hitungNilaiAkhir(nilaiMap) {
 }
 
 /**
- * Konversi nilai angka (skala 0-100) ke bobot IPK (skala 0-4), memakai
- * breakpoint huruf yang sama dengan yang dipakai di tampilan transkrip
- * (badge A/B/C/D/E: >=80/>=70/>=60/>=50/lainnya) supaya konsisten di
- * seluruh aplikasi, bukan konversi rasio sembarang.
+ * Konversi nilai angka (skala 0-100) ke bobot IPK (skala 0-4).
+ * @deprecated Sekadar pembungkus (wrapper) tipis di atas nilaiKeHuruf() -
+ * dipertahankan supaya kode lama yang mungkin masih memanggil nama ini
+ * tidak rusak, tapi sekarang hasilnya SAMA PERSIS dengan skala huruf resmi
+ * (Excel KHS/Transkrip), bukan breakpoint 80/70/60/50 yang lama lagi.
  * @param {number} nilai - nilai 0-100
- * @returns {number} bobot 0-4
+ * @returns {number} indeks 0-4
  */
 function nilaiKeBobot(nilai) {
-  if (nilai >= 80) return 4;
-  if (nilai >= 70) return 3;
-  if (nilai >= 60) return 2;
-  if (nilai >= 50) return 1;
-  return 0;
+  return nilaiKeHuruf(nilai).indeks;
 }
 
 /**
@@ -312,12 +309,53 @@ async function saveGradeFinal({ userId, kodeMk, namaMk, sks, nilai, semester }) 
 }
 
 /**
+ * ============================================================================
+ * SKALA PENILAIAN RESMI (satu-satunya sumber kebenaran untuk konversi
+ * nilai angka -> huruf -> indeks di SELURUH aplikasi: KHS, Transkrip, Rubrik).
+ * ============================================================================
+ * Diselaraskan persis dengan rumus pada file KHS/Transkrip Excel resmi prodi
+ * (breakpoint IF berjenjang di kolom Huruf & Indeks tiap sheet Semester):
+ *
+ *   Nilai Angka   Huruf   Indeks   Kategori
+ *   >= 86         A       4.0      Istimewa
+ *   76 - 85       B+      3.5      Sangat baik
+ *   60 - 75       B       3.0      Baik
+ *   50 - 59       C+      2.5      Cukup Baik
+ *   25 - 49       C       2.0      Cukup
+ *   10 - 24       D       1.0      Kurang
+ *   < 10          E       0.0      Gagal
+ *
+ * SEBELUM ini ada 2 skala lain yang berbeda-beda dipakai di file ini
+ * (nilaiKeBobot: 80/70/60/50 tanpa huruf, dan nilaiKeHurufRubrik:
+ * 85/75/65/55/45/35) - sehingga IPK di Transkrip, huruf di Rubrik, dan
+ * IPS/IPK di KHS Excel bisa menghasilkan angka BERBEDA untuk nilai yang
+ * sama. Sekarang keduanya didefinisikan ulang di bawah supaya cuma
+ * memanggil fungsi kanonik ini (backward compatible: nama & signature lama
+ * tetap ada, tapi hasilnya sekarang konsisten dengan skala Excel).
+ *
+ * @param {number} nilai - nilai angka 0-100
+ * @returns {{huruf: string, indeks: number}}
+ */
+function nilaiKeHuruf(nilai) {
+  const n = parseFloat(nilai);
+  if (isNaN(n)) return { huruf: '-', indeks: 0 };
+  if (n >= 86) return { huruf: 'A', indeks: 4.0 };
+  if (n >= 76) return { huruf: 'B+', indeks: 3.5 };
+  if (n >= 60) return { huruf: 'B', indeks: 3.0 };
+  if (n >= 50) return { huruf: 'C+', indeks: 2.5 };
+  if (n >= 25) return { huruf: 'C', indeks: 2.0 };
+  if (n >= 10) return { huruf: 'D', indeks: 1.0 };
+  return { huruf: 'E', indeks: 0.0 };
+}
+
+/**
  * Mengambil transkrip lengkap (semua nilai akhir yang sudah diinput admin) untuk
  * satu mahasiswa dari koleksi 'grades', beserta IPK terkonversi ke skala 0-4
- * (pakai breakpoint huruf yang sama dengan badge di tampilan transkrip).
+ * (pakai skala huruf resmi nilaiKeHuruf, sama persis dengan KHS/Transkrip Excel),
+ * DAN rekap per semester (IPS tiap semester) - dipakai halaman KHS.
  *
  * @param {string} mahasiswaId - UID mahasiswa
- * @returns {Promise<{items: Array, totalSKS: number, ipk: string}>}
+ * @returns {Promise<{items: Array, totalSKS: number, ipk: string, perSemester: Array}>}
  */
 async function getTranskripMahasiswa(mahasiswaId) {
   const gradesSnapshot = await db.collection('grades')
@@ -326,13 +364,19 @@ async function getTranskripMahasiswa(mahasiswaId) {
 
   const items = gradesSnapshot.docs.map(doc => {
     const g = doc.data();
+    const nilaiNum = (g.nilai === null || g.nilai === undefined) ? null : parseFloat(g.nilai);
+    const { huruf, indeks } = nilaiNum !== null ? nilaiKeHuruf(nilaiNum) : { huruf: '-', indeks: null };
+    const sks = parseFloat(g.sks) || 0;
     return {
       id: doc.id,
       kodeMk: g.kodeMk || '-',
       namaMk: g.namaMk || '-',
-      sks: parseFloat(g.sks) || 0,
+      sks,
       semester: g.semester || '-',
-      nilai: g.nilai,
+      nilai: nilaiNum,
+      huruf,
+      indeks,
+      sksIndeks: indeks !== null ? Math.round(sks * indeks * 100) / 100 : null,
       createdAt: g.createdAt
     };
   });
@@ -344,7 +388,7 @@ async function getTranskripMahasiswa(mahasiswaId) {
   items.forEach(item => {
     if (item.nilai !== null && item.nilai !== undefined && item.sks > 0) {
       totalSKSDihitung += item.sks;
-      totalBobotNilai += item.sks * nilaiKeBobot(item.nilai);
+      totalBobotNilai += item.sks * item.indeks;
     }
   });
 
@@ -352,7 +396,27 @@ async function getTranskripMahasiswa(mahasiswaId) {
     ? (totalBobotNilai / totalSKSDihitung).toFixed(2)
     : '0.00';
 
-  return { items, totalSKS: totalSKSDihitung, ipk };
+  // --- Rekap per semester (dipakai halaman KHS: satu semester = satu KHS) ---
+  const semesterMap = new Map();
+  items.forEach(item => {
+    if (!semesterMap.has(item.semester)) {
+      semesterMap.set(item.semester, { semester: item.semester, matkul: [], totalSKS: 0, totalSksIndeks: 0 });
+    }
+    const s = semesterMap.get(item.semester);
+    s.matkul.push(item);
+    if (item.nilai !== null && item.sks > 0) {
+      s.totalSKS += item.sks;
+      s.totalSksIndeks += item.sksIndeks;
+    }
+  });
+  const perSemester = Array.from(semesterMap.values())
+    .map(s => ({
+      ...s,
+      ips: s.totalSKS > 0 ? (s.totalSksIndeks / s.totalSKS).toFixed(2) : '0.00'
+    }))
+    .sort((a, b) => String(a.semester).localeCompare(String(b.semester)));
+
+  return { items, totalSKS: totalSKSDihitung, ipk, perSemester };
 }
 
 // ============================================================================
@@ -582,18 +646,16 @@ function hitungRubrik(komponen, rataTugas, bobot = BOBOT_DEFAULT) {
 }
 
 /**
- * Konversi nilai 0-100 ke huruf, TANPA A- dan B- (sesuai kebijakan prodi):
- * A (>=85), B+ (75-84), B (65-74), C+ (55-64), C (45-54), D (35-44), E (<35).
+ * Konversi nilai 0-100 ke huruf.
+ * @deprecated Pembungkus tipis di atas nilaiKeHuruf() - dipertahankan hanya
+ * supaya nama lama tidak rusak. Breakpoint lama (85/75/65/55/45/35) SUDAH
+ * TIDAK DIPAKAI LAGI; sekarang huruf Rubrik memakai skala resmi yang sama
+ * dengan KHS/Transkrip Excel (86/76/60/50/25/10), supaya huruf yang dosen
+ * lihat di Rubrik sama persis dengan huruf yang muncul di KHS mahasiswa.
  */
 function nilaiKeHurufRubrik(nilai) {
   if (nilai === null || nilai === undefined) return null;
-  if (nilai >= 85) return 'A';
-  if (nilai >= 75) return 'B+';
-  if (nilai >= 65) return 'B';
-  if (nilai >= 55) return 'C+';
-  if (nilai >= 45) return 'C';
-  if (nilai >= 35) return 'D';
-  return 'E';
+  return nilaiKeHuruf(nilai).huruf;
 }
 
 /**
@@ -1002,6 +1064,31 @@ async function saveKontrakKuliah(mkId, periode, { deskripsi, kriteriaKelulusan, 
  * @param {Array<{userId, namaMk, sks, nilai}>} items
  * @returns {Promise<{count: number}>}
  */
+/**
+ * Ambil status "terkunci ke transkrip" untuk SEMUA mahasiswa di satu
+ * MK+periode sekaligus (1 query, bukan per-mahasiswa) - dipakai halaman
+ * Rubrik (dosen & admin) untuk menampilkan:
+ *  (a) badge "Terkunci" kalau nilai mahasiswa itu sudah masuk KHS resmi
+ *  (b) peringatan "nilai berubah sejak dikunci" kalau nilai rubrik SAAT INI
+ *      beda dari yang tersimpan di 'grades' (mis. dosen edit UTS setelah
+ *      admin sempat kunci) - supaya tidak ada nilai "basi" tanpa disadari.
+ *
+ * @returns {Promise<Map<string, {nilaiTerkunci: number, updatedAt: string}>>}
+ *          key: userId
+ */
+async function getStatusKunciByMkId(kodeMk, semester) {
+  const snapshot = await db.collection('grades')
+    .where('kodeMk', '==', kodeMk)
+    .where('semester', '==', semester)
+    .get();
+  const map = new Map();
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    map.set(data.userId, { nilaiTerkunci: data.nilai, updatedAt: data.updatedAt || data.createdAt });
+  });
+  return map;
+}
+
 async function saveGradeFinalBulk(kodeMk, semester, items) {
   const existingSnapshot = await db.collection('grades')
     .where('kodeMk', '==', kodeMk)
@@ -1044,6 +1131,7 @@ async function saveGradeFinalBulk(kodeMk, semester, items) {
 
 module.exports = {
   getPeriodeAktif,
+  nilaiKeHuruf,
   saveNilai,
   getNilaiByMkId,
   getTugasByMkId,
@@ -1051,6 +1139,7 @@ module.exports = {
   hitungNilaiAkhir,
   saveGradeFinal,
   saveGradeFinalBulk,
+  getStatusKunciByMkId,
   getTranskripMahasiswa,
   // --- Rubrik Penilaian ---
   BOBOT_DEFAULT,
