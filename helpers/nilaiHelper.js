@@ -358,17 +358,75 @@ function nilaiKeHuruf(nilai) {
  * @returns {Promise<{items: Array, totalSKS: number, ipk: string, perSemester: Array}>}
  */
 async function getTranskripMahasiswa(mahasiswaId) {
-  const gradesSnapshot = await db.collection('grades')
-    .where('userId', '==', mahasiswaId)
-    .get();
+  // Digabung dari 2 sumber:
+  // 1. 'grades'     - nilai akhir yang SUDAH dikunci admin (sumber huruf/indeks).
+  // 2. 'enrollment' - matkul yang mahasiswa PROGRAM di KRS dan sudah disetujui
+  //    (dibuat otomatis saat admin approve KRS - lihat routes/admin/krs.js).
+  // Digabung supaya KHS/Transkrip menampilkan SEMUA matkul yang diprogram,
+  // bukan cuma yang nilainya sudah keluar - kalau belum keluar, tetap
+  // tampil dengan status "Belum Ada Nilai" (nilai/huruf/indeks = null),
+  // supaya IPS/IPK jelas dihitung dari berapa matkul, dan mahasiswa tidak
+  // bingung kenapa sebagian matkul yang diprogram "hilang" dari KHS.
+  const [gradesSnapshot, enrollmentSnapshot] = await Promise.all([
+    db.collection('grades').where('userId', '==', mahasiswaId).get(),
+    db.collection('enrollment').where('userId', '==', mahasiswaId).where('status', '==', 'active').get()
+  ]);
 
-  const items = gradesSnapshot.docs.map(doc => {
+  // Nilai terkunci, key: "semester|kodeMk" - dipakai untuk mencocokkan ke matkul yang diprogram
+  const gradeMap = new Map();
+  gradesSnapshot.docs.forEach(doc => {
     const g = doc.data();
+    gradeMap.set(`${g.semester}|${g.kodeMk}`, { id: doc.id, ...g });
+  });
+
+  // Ambil data mataKuliah (kode/nama/sks) untuk semua matkul yang diprogram,
+  // sekaligus lewat db.getAll() (bukan satu-satu dalam loop).
+  const enrollmentDocs = enrollmentSnapshot.docs.map(d => d.data());
+  const mkIdArr = Array.from(new Set(enrollmentDocs.map(e => e.mkId).filter(Boolean)));
+  const mkMap = new Map();
+  if (mkIdArr.length > 0) {
+    const mkDocs = await db.getAll(...mkIdArr.map(id => db.collection('mataKuliah').doc(id)));
+    mkDocs.forEach((doc, i) => { if (doc.exists) mkMap.set(mkIdArr[i], doc.data()); });
+  }
+
+  const items = [];
+  const kunciDipakai = new Set();
+
+  // 1) Semua matkul yang diprogram (KRS disetujui) - dicek apakah nilainya sudah keluar
+  enrollmentDocs.forEach(e => {
+    const mk = mkMap.get(e.mkId);
+    if (!mk) return; // data MK sudah tidak ada, lewati
+    const key = `${e.semester}|${mk.kode}`;
+    kunciDipakai.add(key);
+    const g = gradeMap.get(key);
+    const nilaiNum = (g && g.nilai !== null && g.nilai !== undefined) ? parseFloat(g.nilai) : null;
+    const { huruf, indeks } = nilaiNum !== null ? nilaiKeHuruf(nilaiNum) : { huruf: null, indeks: null };
+    const sks = parseFloat(mk.sks) || 0;
+    items.push({
+      id: g ? g.id : null,
+      kodeMk: mk.kode || '-',
+      namaMk: mk.nama || '-',
+      sks,
+      semester: e.semester || '-',
+      nilai: nilaiNum,
+      huruf,
+      indeks,
+      sksIndeks: indeks !== null ? Math.round(sks * indeks * 100) / 100 : null,
+      belumAdaNilai: nilaiNum === null,
+      createdAt: g ? g.createdAt : null
+    });
+  });
+
+  // 2) Nilai terkunci yang TIDAK ketemu pasangan enrollment-nya (mis. data
+  // lama sebelum koleksi 'enrollment' ada, atau input manual admin di luar
+  // alur KRS) - tetap ditampilkan supaya tidak ada nilai yang "hilang".
+  gradeMap.forEach((g, key) => {
+    if (kunciDipakai.has(key)) return;
     const nilaiNum = (g.nilai === null || g.nilai === undefined) ? null : parseFloat(g.nilai);
-    const { huruf, indeks } = nilaiNum !== null ? nilaiKeHuruf(nilaiNum) : { huruf: '-', indeks: null };
+    const { huruf, indeks } = nilaiNum !== null ? nilaiKeHuruf(nilaiNum) : { huruf: null, indeks: null };
     const sks = parseFloat(g.sks) || 0;
-    return {
-      id: doc.id,
+    items.push({
+      id: g.id,
       kodeMk: g.kodeMk || '-',
       namaMk: g.namaMk || '-',
       sks,
@@ -377,8 +435,9 @@ async function getTranskripMahasiswa(mahasiswaId) {
       huruf,
       indeks,
       sksIndeks: indeks !== null ? Math.round(sks * indeks * 100) / 100 : null,
+      belumAdaNilai: nilaiNum === null,
       createdAt: g.createdAt
-    };
+    });
   });
 
   items.sort((a, b) => String(a.semester).localeCompare(String(b.semester)));
@@ -397,16 +456,27 @@ async function getTranskripMahasiswa(mahasiswaId) {
     : '0.00';
 
   // --- Rekap per semester (dipakai halaman KHS: satu semester = satu KHS) ---
+  // totalSKS/totalSksIndeks/ips HANYA dari matkul yang SUDAH ada nilai
+  // (supaya IPS tetap valid secara matematis - tidak bisa membagi dengan
+  // SKS matkul yang belum dinilai). totalSKSDiprogram & jumlahBelumNilai
+  // ditambahkan terpisah untuk ditampilkan sebagai konteks tambahan.
   const semesterMap = new Map();
   items.forEach(item => {
     if (!semesterMap.has(item.semester)) {
-      semesterMap.set(item.semester, { semester: item.semester, matkul: [], totalSKS: 0, totalSksIndeks: 0 });
+      semesterMap.set(item.semester, {
+        semester: item.semester, matkul: [],
+        totalSKS: 0, totalSksIndeks: 0,
+        totalSKSDiprogram: 0, jumlahBelumNilai: 0
+      });
     }
     const s = semesterMap.get(item.semester);
     s.matkul.push(item);
+    s.totalSKSDiprogram += item.sks;
     if (item.nilai !== null && item.sks > 0) {
       s.totalSKS += item.sks;
       s.totalSksIndeks += item.sksIndeks;
+    } else {
+      s.jumlahBelumNilai += 1;
     }
   });
   const perSemester = Array.from(semesterMap.values())

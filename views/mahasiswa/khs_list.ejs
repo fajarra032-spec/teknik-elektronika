@@ -160,17 +160,24 @@
         </div>
         <div class="col-6 col-md-3 summary-stat">
           <div class="value"><%= khs.matkul.length %></div>
-          <div class="label">Mata Kuliah</div>
+          <div class="label">Mata Kuliah Diprogram</div>
         </div>
         <div class="col-6 col-md-3 summary-stat">
-          <div class="value"><%= khs.totalSKS %></div>
-          <div class="label">Total SKS</div>
+          <div class="value"><%= khs.totalSKS %><% if (khs.totalSKSDiprogram !== khs.totalSKS) { %><span class="text-muted" style="font-size: 0.9rem;"> / <%= khs.totalSKSDiprogram %></span><% } %></div>
+          <div class="label">SKS Dinilai <% if (khs.totalSKSDiprogram !== khs.totalSKS) { %>/ Diprogram<% } %></div>
         </div>
         <div class="col-6 col-md-3 summary-stat">
           <div class="badge-ip"><%= khs.ips %></div>
           <div class="label mt-1">IP Semester</div>
         </div>
       </div>
+      <% if (khs.jumlahBelumNilai > 0) { %>
+        <div class="alert alert-warning mt-3 mb-0 py-2 px-3" style="border-radius: 0.8rem; font-size: 0.9rem;">
+          <i class="bi bi-hourglass-split me-1"></i>
+          <%= khs.jumlahBelumNilai %> dari <%= khs.matkul.length %> mata kuliah yang Anda program semester ini
+          <strong>belum keluar nilainya</strong> - IP Semester di atas baru dihitung dari mata kuliah yang sudah ada nilai.
+        </div>
+      <% } %>
     </div>
 
     <!-- Tabel Mata Kuliah -->
@@ -189,14 +196,18 @@
         </thead>
         <tbody>
           <% khs.matkul.forEach((m, i) => { %>
-          <tr>
+          <tr<%= m.belumAdaNilai ? ' class="text-muted"' : '' %>>
             <td class="fw-bold"><%= i + 1 %></td>
             <td><%= m.kodeMk %></td>
             <td><%= m.namaMk %></td>
             <td><%= m.sks %></td>
-            <td><%= m.nilai !== null ? m.nilai : '-' %></td>
-            <td><span class="fw-semibold"><%= m.huruf %></span></td>
-            <td><%= m.indeks !== null ? m.indeks.toFixed(1) : '-' %></td>
+            <% if (m.belumAdaNilai) { %>
+              <td colspan="3"><em>Belum Ada Nilai</em></td>
+            <% } else { %>
+              <td><%= m.nilai %></td>
+              <td><span class="fw-semibold"><%= m.huruf %></span></td>
+              <td><%= m.indeks.toFixed(1) %></td>
+            <% } %>
           </tr>
           <% }) %>
         </tbody>

@@ -169,15 +169,20 @@
             </thead>
             <tbody>
               <% grades.forEach(g => { %>
-                <tr>
+                <tr<%= g.belumAdaNilai ? ' class="text-muted"' : '' %>>
                   <td><%= g.semester %></td>
                   <td><span class="badge bg-primary bg-opacity-10 text-primary"><%= g.kodeMk %></span></td>
                   <td><%= g.namaMk %></td>
                   <td class="text-center"><%= g.sks %></td>
-                  <td class="fw-bold <%= g.nilai >= 80 ? 'text-success' : (g.nilai >= 60 ? 'text-warning' : 'text-danger') %>">
-                    <%= g.nilai %>
-                  </td>
-                  <td><small class="text-muted"><%= new Date(g.createdAt).toLocaleDateString('id-ID') %></small></td>
+                  <% if (g.belumAdaNilai) { %>
+                    <td class="fw-bold"><em>Belum Ada Nilai</em></td>
+                    <td><small class="text-muted">-</small></td>
+                  <% } else { %>
+                    <td class="fw-bold <%= g.nilai >= 80 ? 'text-success' : (g.nilai >= 60 ? 'text-warning' : 'text-danger') %>">
+                      <%= g.nilai %>
+                    </td>
+                    <td><small class="text-muted"><%= new Date(g.createdAt).toLocaleDateString('id-ID') %></small></td>
+                  <% } %>
                 </tr>
               <% }) %>
             </tbody>

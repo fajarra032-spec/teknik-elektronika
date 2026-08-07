@@ -335,10 +335,21 @@
   </div>
 
   <!-- Tombol Buat KRS Baru -->
-  <div class="mb-4">
+  <div class="mb-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
     <a href="/mahasiswa/akademik/krs/baru" class="btn-gradient">
       <i class="bi bi-plus-circle"></i> Buat KRS Baru
     </a>
+    <form method="GET" class="d-flex align-items-center gap-2 mb-0">
+      <label for="semester" class="mb-0 small text-muted">Semester:</label>
+      <select name="semester" id="semester" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+        <% if (semesterList && semesterList.length) { %>
+          <% semesterList.forEach(s => { %>
+            <option value="<%= s %>" <%= semesterDipilih === s ? 'selected' : '' %>><%= s %></option>
+          <% }) %>
+        <% } %>
+        <option value="semua" <%= semesterDipilih === 'semua' ? 'selected' : '' %>>Semua Semester</option>
+      </select>
+    </form>
   </div>
 
   <!-- Tabel KRS -->
@@ -361,7 +372,7 @@
               <td colspan="6" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
-                  <p>Belum ada KRS yang diajukan.</p>
+                  <p><%= semesterDipilih && semesterDipilih !== 'semua' ? `Belum ada KRS untuk semester ${semesterDipilih}.` : 'Belum ada KRS yang diajukan.' %></p>
                 </div>
               </td>
             </tr>

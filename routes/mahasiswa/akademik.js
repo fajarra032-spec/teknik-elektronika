@@ -104,7 +104,7 @@ router.get('/krs', async (req, res) => {
       mkDocs.forEach((mkDoc, i) => { if (mkDoc.exists) mkDataMap.set(mkIdArr[i], mkDoc.data()); });
     }
 
-    const krsList = krsDataList.map(({ id, data }) => {
+    const krsSemuaSemester = krsDataList.map(({ id, data }) => {
       const mkIds = data.mataKuliah || [];
       const courses = mkIds.slice(0, 3)
         .filter(mkId => mkId && mkDataMap.has(mkId))
@@ -115,9 +115,27 @@ router.get('/krs', async (req, res) => {
       return { id, ...data, courses, courseCount: mkIds.length };
     });
 
+    // Gaya SIA: dropdown pilih semester -> filter tabel ke semester itu saja
+    // (default: semester terbaru). "Semua Semester" tetap disediakan karena
+    // beda dari KHS, satu semester KRS bisa punya lebih dari satu pengajuan
+    // (mis. sempat ditolak lalu diajukan ulang) - jadi riwayat lengkap tetap
+    // relevan untuk dilihat sewaktu-waktu.
+    const semesterList = Array.from(new Set(krsSemuaSemester.map(k => k.semester).filter(Boolean)));
+    // krsSemuaSemester sudah terurut createdAt desc, jadi elemen pertama = pengajuan terbaru
+    const semesterTerbaru = krsSemuaSemester.length > 0 ? krsSemuaSemester[0].semester : null;
+    const semesterDipilih = req.query.semester === 'semua'
+      ? 'semua'
+      : ((req.query.semester && semesterList.includes(req.query.semester)) ? req.query.semester : semesterTerbaru);
+
+    const krsList = (semesterDipilih === 'semua' || !semesterDipilih)
+      ? krsSemuaSemester
+      : krsSemuaSemester.filter(k => k.semester === semesterDipilih);
+
     res.render('mahasiswa/krs_list', {
       title: 'Daftar KRS',
       user: req.user,
+      semesterList,
+      semesterDipilih,
       krsList
     });
   } catch (error) {

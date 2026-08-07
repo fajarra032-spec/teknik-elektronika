@@ -259,9 +259,13 @@
             <td class="center"><%= g.kodeMk || '-' %></td>
             <td><%= g.namaMk || '-' %></td>
             <td class="center"><%= g.sks %></td>
-            <td class="center"><%= g.nilai !== null ? g.nilai : '-' %></td>
-            <td class="center"><%= g.huruf %></td>
-            <td class="center"><%= g.indeks !== null ? g.indeks.toFixed(1) : '-' %></td>
+            <% if (g.belumAdaNilai) { %>
+              <td class="center" colspan="3" style="font-style: italic; color: #666;">Belum Ada Nilai</td>
+            <% } else { %>
+              <td class="center"><%= g.nilai %></td>
+              <td class="center"><%= g.huruf %></td>
+              <td class="center"><%= g.indeks.toFixed(1) %></td>
+            <% } %>
           </tr>
           <% }) %>
         <% } else { %>

@@ -153,7 +153,12 @@
               </div>
             </td>
             <td><%= khs.semester || '-' %></td>
-            <td><%= khs.jumlahMatkul %></td>
+            <td>
+              <%= khs.jumlahMatkul %>
+              <% if (khs.jumlahBelumNilai > 0) { %>
+                <span class="badge bg-warning text-dark ms-1" title="<%= khs.jumlahBelumNilai %> matkul belum ada nilai"><%= khs.jumlahBelumNilai %> belum dinilai</span>
+              <% } %>
+            </td>
             <td><%= khs.totalSKS %> SKS</td>
             <td>
               <span class="badge-ip"><%= khs.ips %></span>

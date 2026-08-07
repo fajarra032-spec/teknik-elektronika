@@ -71,6 +71,7 @@ router.get('/list', async (req, res) => {
           ips: s.ips,
           totalSKS: s.totalSKS,
           jumlahMatkul: s.matkul.length,
+          jumlahBelumNilai: s.jumlahBelumNilai,
           mahasiswa: {
             nama: mahasiswa.nama,
             nim: mahasiswa.nim,

@@ -133,10 +133,14 @@
           <td class="center"><%= m.kodeMk %></td>
           <td><%= m.namaMk %></td>
           <td class="center"><%= m.sks %></td>
-          <td class="center"><%= m.nilai !== null ? m.nilai : '-' %></td>
-          <td class="center"><%= m.huruf %></td>
-          <td class="center"><%= m.indeks !== null ? m.indeks.toFixed(1) : '-' %></td>
-          <td class="center"><%= m.sksIndeks !== null ? m.sksIndeks : '-' %></td>
+          <% if (m.belumAdaNilai) { %>
+            <td class="center" colspan="4" style="font-style: italic; color: #666;">Belum Ada Nilai</td>
+          <% } else { %>
+            <td class="center"><%= m.nilai %></td>
+            <td class="center"><%= m.huruf %></td>
+            <td class="center"><%= m.indeks.toFixed(1) %></td>
+            <td class="center"><%= m.sksIndeks %></td>
+          <% } %>
         </tr>
         <% }) %>
       </tbody>
