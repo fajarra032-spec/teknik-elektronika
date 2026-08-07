@@ -407,34 +407,27 @@ router.post('/krs/:id/upload', upload.single('file'), async (req, res) => {
 // ============================================================================
 // KARTU HASIL STUDI (KHS)
 // ============================================================================
+// Dihitung LIVE dari koleksi 'grades' (bukan lagi file PDF yang diupload
+// admin). Satu semester = satu KHS, dengan IPS/IPK dihitung otomatis
+// memakai skala resmi (lihat helpers/nilaiHelper.js -> nilaiKeHuruf), yang
+// sudah diselaraskan dengan file KHS/Transkrip Excel prodi.
+// ============================================================================
 
 /**
  * GET /mahasiswa/akademik/khs
- * Daftar KHS per semester (dengan filter)
+ * Daftar KHS milik mahasiswa yang login, satu baris per semester
+ * (dengan filter opsional ?semester=...)
  */
 router.get('/khs', async (req, res) => {
   try {
     const { semester } = req.query;
 
-    let khsQuery = db.collection('khs')
-      .where('userId', '==', req.user.id)
-      .orderBy('semester', 'asc');
+    const { perSemester } = await getTranskripMahasiswa(req.user.id);
 
-    if (semester) {
-      khsQuery = khsQuery.where('semester', '==', semester);
-    }
-
-    const khsSnapshot = await khsQuery.get();
-    const khsList = khsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-    const allKhsSnapshot = await db.collection('khs')
-      .where('userId', '==', req.user.id)
-      .get();
-    const semesterSet = new Set();
-    allKhsSnapshot.docs.forEach(doc => {
-      if (doc.data().semester) semesterSet.add(doc.data().semester);
-    });
-    const semesterList = Array.from(semesterSet).sort();
+    const semesterList = perSemester.map(s => s.semester);
+    const khsList = semester
+      ? perSemester.filter(s => s.semester === semester)
+      : perSemester;
 
     res.render('mahasiswa/khs_list', {
       title: 'Kartu Hasil Studi (KHS)',
@@ -450,24 +443,36 @@ router.get('/khs', async (req, res) => {
 });
 
 /**
- * GET /mahasiswa/akademik/khs/:id
- * Detail KHS
+ * GET /mahasiswa/akademik/khs/:semester
+ * Detail/cetak KHS satu semester milik mahasiswa yang login.
+ * :semester harus di-encodeURIComponent oleh pemanggil karena label
+ * semester mengandung spasi/slash (mis. "Ganjil 2025/2026").
  */
-router.get('/khs/:id', async (req, res) => {
+router.get('/khs/:semester', async (req, res) => {
   try {
-    const khsDoc = await db.collection('khs').doc(req.params.id).get();
-    if (!khsDoc.exists) {
-      return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'KHS tidak ditemukan' });
+    const semesterLabel = decodeURIComponent(req.params.semester);
+    const { perSemester, ipk, totalSKS } = await getTranskripMahasiswa(req.user.id);
+
+    const idx = perSemester.findIndex(s => s.semester === semesterLabel);
+    if (idx === -1) {
+      return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'KHS untuk semester ini belum tersedia' });
     }
-    const khs = { id: khsDoc.id, ...khsDoc.data() };
-    if (khs.userId !== req.user.id) {
-      return res.status(403).render('error', { title: 'Akses Ditolak', message: 'Anda tidak memiliki akses ke KHS ini' });
-    }
+    const khs = perSemester[idx];
+
+    // IPK kumulatif "s.d. semester ini"
+    const sampaiSemesterIni = perSemester.slice(0, idx + 1);
+    let sksKum = 0, bobotKum = 0;
+    sampaiSemesterIni.forEach(s => { sksKum += s.totalSKS; bobotKum += s.totalSksIndeks; });
+    const ipkSampaiSemesterIni = sksKum > 0 ? (bobotKum / sksKum).toFixed(2) : '0.00';
 
     res.render('mahasiswa/khs_detail', {
       title: 'Detail KHS',
       user: req.user,
-      khs
+      khs,
+      ipkSampaiSemesterIni,
+      sksKumulatif: sksKum,
+      ipkAkhir: ipk,
+      totalSKSAkhir: totalSKS
     });
   } catch (error) {
     console.error(error);
@@ -485,13 +490,14 @@ router.get('/khs/:id', async (req, res) => {
  */
 router.get('/transkrip', async (req, res) => {
   try {
-    const { items, ipk } = await getTranskripMahasiswa(req.user.id);
+    const { items, ipk, totalSKS } = await getTranskripMahasiswa(req.user.id);
 
     res.render('mahasiswa/transkrip', {
       title: 'Transkrip Nilai',
       user: req.user,
       grades: items, // nama variabel view tetap 'grades' agar template EJS tidak perlu diubah
-      ipk
+      ipk,
+      totalSKS
     });
   } catch (error) {
     console.error(error);

@@ -1,45 +1,185 @@
-<%- include('../partials/header') %>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KHS <%= khs.semester %> - <%= mahasiswa.nama %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <style>
+    @page { size: A4; margin: 1.5cm; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #000; background-color: #fff; font-size: 10pt; }
+    .print-btn, .back-btn { margin: 20px 5px; font-family: Arial, sans-serif; }
 
-<div class="container mt-4" style="max-width: 720px;">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold mb-0"><i class="bi bi-file-earmark-text me-2"></i><%= title %></h4>
-    <a href="/admin/khs/list" class="btn btn-outline-secondary">
-      <i class="bi bi-arrow-left me-1"></i> Kembali
-    </a>
-  </div>
+    .kop-surat { display: flex; align-items: center; margin-bottom: 20px; }
+    .logo-kop { width: 100px; height: auto; margin-right: 20px; }
+    .teks-kop { flex: 1; }
+    .teks-kop .nama-kampus { font-size: 26pt; font-weight: bold; margin: 0; color: #3b60a3; letter-spacing: 0.5px; }
+    .teks-kop .alamat, .teks-kop .kontak { font-size: 11pt; margin: 2px 0; color: #333; }
 
-  <div class="info-card">
-    <div class="card-body">
-      <div class="row mb-2">
-        <div class="col-sm-4 text-muted">Mahasiswa</div>
-        <div class="col-sm-8"><%= mahasiswa.nama || '-' %> (<%= mahasiswa.nim || '-' %>)</div>
-      </div>
-      <div class="row mb-2">
-        <div class="col-sm-4 text-muted">Semester</div>
-        <div class="col-sm-8"><%= khs.semester || '-' %></div>
-      </div>
-      <div class="row mb-2">
-        <div class="col-sm-4 text-muted">Indeks Prestasi (IP)</div>
-        <div class="col-sm-8"><%= khs.ip != null ? khs.ip : '-' %></div>
-      </div>
-      <div class="row mb-2">
-        <div class="col-sm-4 text-muted">Nama File</div>
-        <div class="col-sm-8"><%= khs.fileName || '-' %></div>
-      </div>
-      <div class="row mb-3">
-        <div class="col-sm-4 text-muted">Diunggah</div>
-        <div class="col-sm-8"><%= khs.createdAt ? new Date(khs.createdAt).toLocaleString('id-ID') : '-' %></div>
-      </div>
+    .judul-dokumen { text-align: center; font-size: 12pt; font-weight: bold; margin: 25px 0 20px 0; }
 
-      <% if (khs.fileUrl) { %>
-        <a href="<%= khs.fileUrl %>" target="_blank" class="btn btn-primary">
-          <i class="bi bi-box-arrow-up-right me-1"></i> Buka File KHS
-        </a>
-      <% } else { %>
-        <p class="text-muted mb-0">File tidak tersedia.</p>
-      <% } %>
+    .info-container { display: flex; justify-content: space-between; margin-bottom: 10px; }
+    .info-table { font-size: 9pt; }
+    .info-table td { padding: 3px 5px 3px 0; vertical-align: top; text-transform: uppercase; }
+    .info-table td.titik-dua { width: 15px; text-align: center; }
+
+    .garis-pemisah { border-top: 1.5px solid #000; margin: 15px 0; }
+
+    .table-khs { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 9.5pt; }
+    .table-khs th, .table-khs td { border: 1px solid #000; padding: 6px 8px; vertical-align: middle; }
+    .table-khs th { text-align: center; font-weight: bold; }
+    .table-khs td.center { text-align: center; }
+
+    tr { page-break-inside: avoid; }
+    thead { display: table-header-group; }
+
+    .ringkasan-container { display: flex; justify-content: flex-end; margin-bottom: 15px; }
+    .ringkasan-table { font-size: 9.5pt; width: 45%; }
+    .ringkasan-table td { padding: 4px 8px; border: 1px solid #000; }
+    .ringkasan-table td.label { font-weight: bold; }
+
+    .tanda-tangan-container { display: flex; justify-content: flex-end; margin-top: 40px; font-size: 10pt; }
+    .kolom-tanda { width: 32%; text-align: center; }
+    .area-ttd { height: 80px; }
+    .nama-ttd { margin-bottom: 0; font-weight: bold; text-decoration: underline; }
+    .nip-ttd { margin-top: 0; }
+
+    @media print {
+      body { margin: 0; }
+      .btn, .print-btn, .back-btn { display: none !important; }
+      .table-khs th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid px-4 py-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3 print-btn">
+      <a href="/admin/khs/list" class="btn btn-outline-secondary btn-sm back-btn">
+        <i class="bi bi-arrow-left"></i> Kembali
+      </a>
+      <button onclick="window.print()" class="btn btn-primary btn-sm print-btn shadow-sm">
+        <i class="bi bi-printer-fill"></i> Cetak KHS
+      </button>
     </div>
-  </div>
-</div>
 
-<%- include('../partials/footer') %>
+    <%- include('../partials/kop_surat') %>
+
+    <div class="judul-dokumen">
+      KARTU HASIL STUDI (KHS)
+    </div>
+
+    <div class="info-container">
+      <table class="info-table" style="width: 60%;">
+        <tr>
+          <td width="30%">NIM</td>
+          <td class="titik-dua">:</td>
+          <td><%= mahasiswa.nim || '-' %></td>
+        </tr>
+        <tr>
+          <td>NAMA</td>
+          <td class="titik-dua">:</td>
+          <td><%= mahasiswa.nama || '-' %></td>
+        </tr>
+        <tr>
+          <td>PROGRAM STUDI</td>
+          <td class="titik-dua">:</td>
+          <td>TEKNIK ELEKTRONIKA</td>
+        </tr>
+      </table>
+
+      <table class="info-table" style="width: 36%;">
+        <tr>
+          <td width="55%">SEMESTER</td>
+          <td class="titik-dua">:</td>
+          <td><%= khs.semester %></td>
+        </tr>
+        <tr>
+          <td>IPK S.D. SEMESTER INI</td>
+          <td class="titik-dua">:</td>
+          <td><strong><%= ipkSampaiSemesterIni %></strong></td>
+        </tr>
+        <tr>
+          <td>SKS KUMULATIF</td>
+          <td class="titik-dua">:</td>
+          <td><%= sksKumulatif %> SKS</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="garis-pemisah"></div>
+
+    <table class="table-khs">
+      <thead>
+        <tr>
+          <th rowspan="2" width="4%">No</th>
+          <th rowspan="2" width="10%">Kode MK</th>
+          <th rowspan="2" width="32%">Mata Kuliah</th>
+          <th rowspan="2" width="8%">Bobot SKS</th>
+          <th colspan="3">Nilai</th>
+          <th rowspan="2" width="10%">SKS Indeks</th>
+        </tr>
+        <tr>
+          <th width="10%">Angka</th>
+          <th width="8%">Huruf</th>
+          <th width="8%">Indeks</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% khs.matkul.forEach((m, i) => { %>
+        <tr>
+          <td class="center"><%= i + 1 %></td>
+          <td class="center"><%= m.kodeMk %></td>
+          <td><%= m.namaMk %></td>
+          <td class="center"><%= m.sks %></td>
+          <td class="center"><%= m.nilai !== null ? m.nilai : '-' %></td>
+          <td class="center"><%= m.huruf %></td>
+          <td class="center"><%= m.indeks !== null ? m.indeks.toFixed(1) : '-' %></td>
+          <td class="center"><%= m.sksIndeks !== null ? m.sksIndeks : '-' %></td>
+        </tr>
+        <% }) %>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" style="text-align: right; font-weight: bold;">Jumlah</td>
+          <td class="center" style="font-weight: bold;"><%= khs.totalSKS %></td>
+          <td colspan="3"></td>
+          <td class="center" style="font-weight: bold;"><%= khs.totalSksIndeks.toFixed(2) %></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="ringkasan-container">
+      <table class="ringkasan-table">
+        <tr>
+          <td class="label">IPS (Indeks Prestasi Semester)</td>
+          <td style="text-align: center; font-weight: bold; font-size: 12pt;"><%= khs.ips %></td>
+        </tr>
+        <tr>
+          <td class="label">IPK Akhir (semua semester)</td>
+          <td style="text-align: center; font-weight: bold;"><%= ipkAkhir %> (<%= totalSKSAkhir %> SKS)</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="garis-pemisah"></div>
+
+    <p style="font-size: 8.5pt; color: #555;">
+      Keterangan skala nilai: A (86&ndash;100, 4.0) &middot; B+ (76&ndash;85, 3.5) &middot; B (60&ndash;75, 3.0) &middot;
+      C+ (50&ndash;59, 2.5) &middot; C (25&ndash;49, 2.0) &middot; D (10&ndash;24, 1.0) &middot; E (&lt;10, 0.0)
+    </p>
+
+    <div class="tanda-tangan-container">
+      <div class="kolom-tanda">
+        <p class="mb-0">Palopo, <%= new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %></p>
+        <p>Ketua Program Studi Teknik Elektronika</p>
+        <div class="area-ttd"></div>
+        <p class="nama-ttd">Fajar Ramadhan, S.Pd., M.T</p>
+        <p class="nip-ttd">NUPTK: 8559777678130153</p>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
