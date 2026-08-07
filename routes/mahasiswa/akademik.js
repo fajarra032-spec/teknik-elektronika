@@ -415,26 +415,28 @@ router.post('/krs/:id/upload', upload.single('file'), async (req, res) => {
 
 /**
  * GET /mahasiswa/akademik/khs
- * Daftar KHS milik mahasiswa yang login, satu baris per semester
- * (dengan filter opsional ?semester=...)
+ * Gaya SIA: dropdown pilih semester -> tampil KHS semester itu di halaman
+ * yang sama (default ke semester terbaru), bukan daftar semua semester.
  */
 router.get('/khs', async (req, res) => {
   try {
-    const { semester } = req.query;
-
     const { perSemester } = await getTranskripMahasiswa(req.user.id);
-
     const semesterList = perSemester.map(s => s.semester);
-    const khsList = semester
-      ? perSemester.filter(s => s.semester === semester)
-      : perSemester;
+
+    const semesterDipilih = (req.query.semester && semesterList.includes(req.query.semester))
+      ? req.query.semester
+      : (semesterList.length > 0 ? semesterList[semesterList.length - 1] : null);
+
+    const khs = semesterDipilih
+      ? perSemester.find(s => s.semester === semesterDipilih)
+      : null;
 
     res.render('mahasiswa/khs_list', {
       title: 'Kartu Hasil Studi (KHS)',
       user: req.user,
-      khsList,
       semesterList,
-      filters: { semester: semester || '' }
+      semesterDipilih,
+      khs
     });
   } catch (error) {
     console.error(error);
@@ -488,16 +490,44 @@ router.get('/khs/:semester', async (req, res) => {
  * GET /mahasiswa/akademik/transkrip
  * Menampilkan transkrip nilai (dari collection grades)
  */
+/**
+ * GET /mahasiswa/akademik/transkrip
+ * Menampilkan transkrip nilai (dari collection grades).
+ * Gaya SIA: dropdown "s.d. Semester" -> transkrip kumulatif dari semester 1
+ * sampai semester yang dipilih (default: semester terbaru), bukan langsung
+ * menampilkan seluruh riwayat tanpa pilihan.
+ */
 router.get('/transkrip', async (req, res) => {
   try {
-    const { items, ipk, totalSKS } = await getTranskripMahasiswa(req.user.id);
+    const { perSemester, items: semuaItem, ipk: ipkTotal, totalSKS: totalSKSTotal } = await getTranskripMahasiswa(req.user.id);
+    const semesterList = perSemester.map(s => s.semester);
+
+    const semesterDipilih = (req.query.semester && semesterList.includes(req.query.semester))
+      ? req.query.semester
+      : (semesterList.length > 0 ? semesterList[semesterList.length - 1] : null);
+
+    let grades = semuaItem;
+    let ipk = ipkTotal;
+    let totalSKS = totalSKSTotal;
+
+    if (semesterDipilih) {
+      const idx = semesterList.indexOf(semesterDipilih);
+      const sampaiSemesterIni = perSemester.slice(0, idx + 1);
+      grades = sampaiSemesterIni.flatMap(s => s.matkul);
+      let sksKum = 0, bobotKum = 0;
+      sampaiSemesterIni.forEach(s => { sksKum += s.totalSKS; bobotKum += s.totalSksIndeks; });
+      totalSKS = sksKum;
+      ipk = sksKum > 0 ? (bobotKum / sksKum).toFixed(2) : '0.00';
+    }
 
     res.render('mahasiswa/transkrip', {
       title: 'Transkrip Nilai',
       user: req.user,
-      grades: items, // nama variabel view tetap 'grades' agar template EJS tidak perlu diubah
+      grades, // nama variabel view tetap 'grades' agar template EJS tidak perlu diubah
       ipk,
-      totalSKS
+      totalSKS,
+      semesterList,
+      semesterDipilih
     });
   } catch (error) {
     console.error(error);

@@ -173,6 +173,16 @@
       <a href="/mahasiswa/akademik" class="btn btn-outline-secondary btn-sm back-btn">
         <i class="bi bi-arrow-left"></i> Kembali
       </a>
+      <form method="GET" class="d-flex align-items-center gap-2 mb-0">
+        <label for="semester" class="mb-0 small text-muted">Tampilkan s.d. Semester:</label>
+        <select name="semester" id="semester" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+          <% if (semesterList && semesterList.length) { %>
+            <% semesterList.forEach(s => { %>
+              <option value="<%= s %>" <%= semesterDipilih === s ? 'selected' : '' %>><%= s %></option>
+            <% }) %>
+          <% } %>
+        </select>
+      </form>
       <button onclick="window.print()" class="btn btn-primary btn-sm print-btn shadow-sm">
         <i class="bi bi-printer-fill"></i> Cetak Dokumen
       </button>
@@ -182,6 +192,9 @@
 
     <div class="judul-dokumen">
       TRANSKRIP NILAI AKADEMIK
+      <% if (semesterDipilih) { %>
+        <div style="font-size: 9pt; font-weight: normal; margin-top: 4px;">(Kumulatif s.d. <%= semesterDipilih %>)</div>
+      <% } %>
     </div>
 
     <div class="info-container">

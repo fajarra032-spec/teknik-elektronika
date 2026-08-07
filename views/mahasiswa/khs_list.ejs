@@ -16,23 +16,16 @@
   }
   .khs-table td {
     vertical-align: middle;
-    padding: 1rem 0.75rem;
-  }
-  .khs-table tbody tr {
-    transition: all 0.2s;
-  }
-  .khs-table tbody tr:hover {
-    background-color: rgba(33,147,176,0.05);
-    transform: scale(1.01);
-    box-shadow: 0 2px 8px rgba(33,147,176,0.1);
+    padding: 0.85rem 0.75rem;
   }
   .badge-ip {
     background: linear-gradient(135deg, #2193b0, #6dd5ed);
     color: white;
     font-weight: 600;
-    padding: 0.4rem 0.8rem;
+    padding: 0.5rem 1.1rem;
     border-radius: 50px;
     display: inline-block;
+    font-size: 1.1rem;
     box-shadow: 0 2px 5px rgba(33,147,176,0.2);
   }
   .avatar-circle {
@@ -55,21 +48,12 @@
     background: white;
     padding: 0.5rem;
   }
-  .info-card {
+  .info-card, .selector-card, .summary-card {
     background: white;
     border-radius: 1.2rem;
     box-shadow: 0 10px 25px rgba(0,0,0,0.05);
     padding: 1.5rem;
-    margin-bottom: 2rem;
-    border: 1px solid rgba(33,147,176,0.1);
-  }
-  .filter-card {
-    border-radius: 1.2rem;
-    border: none;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    background: white;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     border: 1px solid rgba(33,147,176,0.1);
   }
   .btn-gradient {
@@ -86,44 +70,29 @@
     box-shadow: 0 10px 25px rgba(33,147,176,0.4);
     color: white;
   }
-  .btn-outline-gradient {
-    background: transparent;
-    border: 2px solid #2193b0;
-    color: #2193b0;
-    font-weight: 500;
-    padding: 0.5rem 1.5rem;
-    border-radius: 50px;
-    transition: all 0.3s;
-  }
-  .btn-outline-gradient:hover {
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
-    border-color: transparent;
-    color: white;
-    transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(33,147,176,0.3);
-  }
-  .btn-sm-outline {
-    padding: 0.3rem 1rem;
-    font-size: 0.85rem;
-    border-radius: 50px;
-    border: 1px solid #2193b0;
-    color: #2193b0;
-    background: transparent;
-    transition: all 0.2s;
-  }
-  .btn-sm-outline:hover {
-    background: #2193b0;
-    color: white;
-  }
-  .filter-form .form-select {
+  .selector-form .form-select {
     border-radius: 50px;
     border: 1px solid #dee2e6;
     padding: 0.6rem 1rem;
     transition: all 0.2s;
   }
-  .filter-form .form-select:focus {
+  .selector-form .form-select:focus {
     border-color: #2193b0;
     box-shadow: 0 0 0 0.25rem rgba(33,147,176,0.25);
+  }
+  .summary-stat {
+    text-align: center;
+  }
+  .summary-stat .value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #2193b0;
+  }
+  .summary-stat .label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 </style>
 
@@ -150,74 +119,97 @@
     </div>
   </div>
 
-  <div class="alert alert-light border d-flex align-items-center mb-4" style="border-radius: 1rem;">
-    <i class="bi bi-info-circle-fill me-2" style="color: #2193b0;"></i>
-    <span class="small text-muted">IPS dihitung otomatis dari nilai akhir yang sudah dikunci Program Studi. Semester yang belum ada nilai terkunci tidak akan muncul di sini.</span>
-  </div>
-
-  <!-- Filter Card -->
-  <div class="filter-card">
-    <form method="GET" class="row g-3 align-items-end filter-form">
-      <div class="col-md-4">
-        <label for="semester" class="form-label fw-semibold"><i class="bi bi-funnel me-1"></i>Filter Semester</label>
-        <select class="form-select" id="semester" name="semester">
-          <option value="">Semua Semester</option>
+  <!-- Pilih Semester -->
+  <div class="selector-card">
+    <form method="GET" class="row g-3 align-items-end selector-form">
+      <div class="col-md-6">
+        <label for="semester" class="form-label fw-semibold"><i class="bi bi-calendar3 me-1"></i>Pilih Semester</label>
+        <select class="form-select" id="semester" name="semester" onchange="this.form.submit()">
           <% if (semesterList && semesterList.length) { %>
             <% semesterList.forEach(s => { %>
-              <option value="<%= s %>" <%= filters?.semester === s ? 'selected' : '' %>><%= s %></option>
+              <option value="<%= s %>" <%= semesterDipilih === s ? 'selected' : '' %>><%= s %></option>
             <% }) %>
+          <% } else { %>
+            <option value="">Belum ada semester</option>
           <% } %>
         </select>
       </div>
-      <div class="col-md-2">
-        <button type="submit" class="btn btn-gradient w-100">Terapkan</button>
-      </div>
-      <div class="col-md-2">
-        <a href="/mahasiswa/akademik/khs" class="btn btn-outline-gradient w-100">Reset</a>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-gradient w-100">
+          <i class="bi bi-eye me-1"></i> Tampilkan
+        </button>
       </div>
     </form>
   </div>
 
-  <!-- Tabel KHS -->
-  <div class="table-responsive">
-    <table class="table khs-table mb-0">
-      <thead>
-        <tr>
-          <th>No</th>
-          <th>Semester</th>
-          <th>Jml Matkul</th>
-          <th>Total SKS</th>
-          <th>IP Semester</th>
-          <th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if (!khsList || khsList.length === 0) { %>
+  <% if (!khs) { %>
+    <div class="table-responsive">
+      <div class="text-center py-5">
+        <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+        <p class="text-muted">Belum ada KHS. KHS akan muncul otomatis setelah Program Studi mengunci nilai akhir semester Anda.</p>
+      </div>
+    </div>
+  <% } else { %>
+
+    <!-- Ringkasan Semester Terpilih -->
+    <div class="summary-card">
+      <div class="row">
+        <div class="col-6 col-md-3 summary-stat">
+          <div class="value"><%= khs.semester %></div>
+          <div class="label">Semester</div>
+        </div>
+        <div class="col-6 col-md-3 summary-stat">
+          <div class="value"><%= khs.matkul.length %></div>
+          <div class="label">Mata Kuliah</div>
+        </div>
+        <div class="col-6 col-md-3 summary-stat">
+          <div class="value"><%= khs.totalSKS %></div>
+          <div class="label">Total SKS</div>
+        </div>
+        <div class="col-6 col-md-3 summary-stat">
+          <div class="badge-ip"><%= khs.ips %></div>
+          <div class="label mt-1">IP Semester</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabel Mata Kuliah -->
+    <div class="table-responsive">
+      <table class="table khs-table mb-0">
+        <thead>
           <tr>
-            <td colspan="6" class="text-center py-5">
-              <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
-              <p class="text-muted">Belum ada KHS. KHS akan muncul otomatis setelah Program Studi mengunci nilai akhir semester Anda.</p>
-            </td>
+            <th>No</th>
+            <th>Kode MK</th>
+            <th>Mata Kuliah</th>
+            <th>SKS</th>
+            <th>Nilai</th>
+            <th>Huruf</th>
+            <th>Indeks</th>
           </tr>
-        <% } else { %>
-          <% khsList.forEach((khs, index) => { %>
+        </thead>
+        <tbody>
+          <% khs.matkul.forEach((m, i) => { %>
           <tr>
-            <td class="fw-bold"><%= index + 1 %></td>
-            <td><span class="fw-semibold"><%= khs.semester || '-' %></span></td>
-            <td><%= khs.matkul.length %></td>
-            <td><%= khs.totalSKS %> SKS</td>
-            <td><span class="badge-ip"><%= khs.ips %></span></td>
-            <td>
-              <a href="/mahasiswa/akademik/khs/<%= encodeURIComponent(khs.semester) %>" class="btn btn-sm-outline">
-                <i class="bi bi-info-circle me-1"></i> Detail / Cetak
-              </a>
-            </td>
+            <td class="fw-bold"><%= i + 1 %></td>
+            <td><%= m.kodeMk %></td>
+            <td><%= m.namaMk %></td>
+            <td><%= m.sks %></td>
+            <td><%= m.nilai !== null ? m.nilai : '-' %></td>
+            <td><span class="fw-semibold"><%= m.huruf %></span></td>
+            <td><%= m.indeks !== null ? m.indeks.toFixed(1) : '-' %></td>
           </tr>
           <% }) %>
-        <% } %>
-      </tbody>
-    </table>
-  </div>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="text-end mt-3">
+      <a href="/mahasiswa/akademik/khs/<%= encodeURIComponent(khs.semester) %>" class="btn btn-gradient" target="_blank">
+        <i class="bi bi-printer-fill me-1"></i> Cetak KHS
+      </a>
+    </div>
+
+  <% } %>
 </div>
 
 <%- include('../partials/footer') %>
