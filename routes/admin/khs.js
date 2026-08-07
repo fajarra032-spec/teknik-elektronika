@@ -1,16 +1,24 @@
 /**
  * routes/admin/khs.js
- * Kelola KHS: daftar, upload, detail, hapus
+ * KHS (Kartu Hasil Studi) — dihitung LIVE dari koleksi 'grades', bukan lagi
+ * upload file PDF manual. Nilai bersumber dari nilai akhir yang sudah
+ * dikunci admin (lihat routes/admin/nilai.js -> saveGradeFinal /
+ * saveGradeFinalBulk), lalu dikonversi ke huruf/indeks/IPS/IPK memakai
+ * skala resmi yang sama dengan file KHS/Transkrip Excel prodi
+ * (lihat helpers/nilaiHelper.js -> nilaiKeHuruf).
+ *
+ * Perubahan dari versi lama:
+ * - TIDAK ADA LAGI upload/hapus file ke Google Drive untuk KHS (folder
+ *   'KHS_Mahasiswa' & koleksi 'khs' tidak dipakai lagi oleh modul ini).
+ * - Daftar KHS sekarang = daftar (mahasiswa x semester) yang punya nilai
+ *   di 'grades', dengan IPS dihitung otomatis, bukan diinput manual.
  */
 
 const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const drive = require('../../config/googleDrive');
-const { Readable } = require('stream');
-const multer = require('multer');
-const upload = multer({ storage: multer.memoryStorage() });
+const { getTranskripMahasiswa } = require('../../helpers/nilaiHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -20,27 +28,7 @@ router.use(isAdmin);
 // ============================================================================
 
 /**
- * Mendapatkan folder KHS di Drive (buat jika belum ada)
- */
-async function getKhsFolderId() {
-  const folderName = 'KHS_Mahasiswa';
-  const query = await drive.files.list({
-    q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-    fields: 'files(id)',
-  });
-  if (query.data.files.length > 0) {
-    return query.data.files[0].id;
-  } else {
-    const folder = await drive.files.create({
-      resource: { name: folderName, mimeType: 'application/vnd.google-apps.folder' },
-      fields: 'id',
-    });
-    return folder.data.id;
-  }
-}
-
-/**
- * Mendapatkan angkatan dari NIM
+ * Mendapatkan angkatan dari NIM (2 digit pertama)
  */
 function getAngkatanFromNim(nim) {
   if (!nim || nim.length < 2) return 'Unknown';
@@ -48,54 +36,58 @@ function getAngkatanFromNim(nim) {
 }
 
 // ============================================================================
-// DAFTAR KHS
+// DAFTAR KHS (semua mahasiswa x semester yang punya nilai)
 // ============================================================================
 
 /**
  * GET /admin/khs/list
- * Menampilkan daftar KHS dengan filter semester/angkatan
+ * Menampilkan daftar KHS (per mahasiswa per semester), dihitung live.
+ * Filter opsional: ?semester=...&angkatan=...
  */
 router.get('/list', async (req, res) => {
   try {
     const { semester, angkatan } = req.query;
 
-    // Ambil semua KHS
-    let khsQuery = db.collection('khs').orderBy('createdAt', 'desc');
-    if (semester) khsQuery = khsQuery.where('semester', '==', semester);
-    const khsSnapshot = await khsQuery.get();
+    const mahasiswaSnapshot = await db.collection('users')
+      .where('role', '==', 'mahasiswa')
+      .orderBy('nim')
+      .get();
 
     const khsList = [];
-    for (const doc of khsSnapshot.docs) {
-      const data = doc.data();
-      const mahasiswaDoc = await db.collection('users').doc(data.userId).get();
-      const mahasiswa = mahasiswaDoc.exists ? mahasiswaDoc.data() : { nama: 'Unknown', nim: '-' };
+    const semesterSet = new Set();
+
+    for (const doc of mahasiswaSnapshot.docs) {
+      const mahasiswa = { id: doc.id, ...doc.data() };
       const angkatanMhs = getAngkatanFromNim(mahasiswa.nim);
-      
       if (angkatan && angkatanMhs !== angkatan) continue;
 
-      khsList.push({
-        id: doc.id,
-        ...data,
-        mahasiswa: {
-          nama: mahasiswa.nama,
-          nim: mahasiswa.nim,
-          foto: mahasiswa.foto,
-          angkatan: angkatanMhs
-        }
+      const { perSemester } = await getTranskripMahasiswa(mahasiswa.id);
+      perSemester.forEach(s => {
+        semesterSet.add(s.semester);
+        if (semester && s.semester !== semester) return;
+        khsList.push({
+          userId: mahasiswa.id,
+          semester: s.semester,
+          ips: s.ips,
+          totalSKS: s.totalSKS,
+          jumlahMatkul: s.matkul.length,
+          mahasiswa: {
+            nama: mahasiswa.nama,
+            nim: mahasiswa.nim,
+            foto: mahasiswa.foto,
+            angkatan: angkatanMhs
+          }
+        });
       });
     }
 
-    // Daftar semester unik untuk filter
-    const semesterSnapshot = await db.collection('khs').get();
-    const semesterSet = new Set();
-    semesterSnapshot.docs.forEach(doc => {
-      if (doc.data().semester) semesterSet.add(doc.data().semester);
-    });
-    const semesterList = Array.from(semesterSet).sort();
+    khsList.sort((a, b) =>
+      String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)) ||
+      String(a.semester).localeCompare(String(b.semester))
+    );
 
-    // Daftar angkatan unik
-    const angkatanSet = new Set(khsList.map(k => k.mahasiswa.angkatan));
-    const angkatanList = Array.from(angkatanSet).sort().reverse();
+    const semesterList = Array.from(semesterSet).sort();
+    const angkatanList = Array.from(new Set(khsList.map(k => k.mahasiswa.angkatan))).sort().reverse();
 
     res.render('admin/khs_list', {
       title: 'Daftar KHS',
@@ -114,156 +106,53 @@ router.get('/list', async (req, res) => {
 });
 
 // ============================================================================
-// FORM UPLOAD KHS
+// DETAIL / CETAK KHS SATU MAHASISWA UNTUK SATU SEMESTER
 // ============================================================================
 
 /**
- * GET /admin/khs/upload
- * Form upload KHS baru
+ * GET /admin/khs/:userId/:semester
+ * Menampilkan KHS lengkap (tabel matkul, nilai, huruf, indeks, SKS indeks,
+ * IPS) untuk satu mahasiswa pada satu semester — layout mengikuti sheet
+ * "Semester N" pada file Excel KHS resmi, siap dicetak (tombol Cetak).
+ * Catatan: :semester ada di URL sehingga harus di-encodeURIComponent oleh
+ * pemanggil (label semester mengandung spasi/slash, mis. "Ganjil 2025/2026").
  */
-router.get('/upload', async (req, res) => {
+router.get('/:userId/:semester', async (req, res) => {
   try {
-    // Ambil daftar mahasiswa untuk dropdown
-    const mahasiswaSnapshot = await db.collection('users')
-      .where('role', '==', 'mahasiswa')
-      .orderBy('nim')
-      .get();
-    const mahasiswaList = mahasiswaSnapshot.docs.map(doc => ({
-      id: doc.id,
-      nim: doc.data().nim,
-      nama: doc.data().nama
-    }));
+    const { userId, semester } = req.params;
+    const semesterLabel = decodeURIComponent(semester);
 
-    // Semester yang tersedia (bisa hardcode atau dari koleksi)
-    const semesterOptions = [
-      'Ganjil 2024/2025',
-      'Genap 2024/2025',
-      'Ganjil 2025/2026',
-      'Genap 2025/2026'
-    ];
-
-    res.render('admin/khs_upload', {
-      title: 'Upload KHS',
-      mahasiswaList,
-      semesterOptions,
-      error: req.query.error
-    });
-  } catch (error) {
-    console.error('Error load form upload:', error);
-    res.status(500).send('Gagal memuat form upload');
-  }
-});
-
-/**
- * POST /admin/khs/upload
- * Proses upload file KHS ke Drive dan simpan ke Firestore
- */
-router.post('/upload', upload.single('file'), async (req, res) => {
-  try {
-    const { userId, semester, ip } = req.body;
-    const file = req.file;
-
-    if (!userId || !semester || !file) {
-      return res.redirect('/admin/khs/upload?error=Data tidak lengkap');
-    }
-
-    // Validasi IP
-    const ipNumber = parseFloat(ip);
-    if (isNaN(ipNumber) || ipNumber < 0 || ipNumber > 4) {
-      return res.redirect('/admin/khs/upload?error=IP tidak valid (0-4)');
-    }
-
-    // Cek apakah sudah ada KHS untuk mahasiswa dan semester ini
-    const existing = await db.collection('khs')
-      .where('userId', '==', userId)
-      .where('semester', '==', semester)
-      .get();
-    if (!existing.empty) {
-      return res.redirect('/admin/khs/upload?error=KHS untuk semester ini sudah ada');
-    }
-
-    // Dapatkan folder KHS
-    const folderId = await getKhsFolderId();
-
-    // Ambil data mahasiswa untuk penamaan file
     const mahasiswaDoc = await db.collection('users').doc(userId).get();
     if (!mahasiswaDoc.exists) {
-      return res.redirect('/admin/khs/upload?error=Mahasiswa tidak ditemukan');
+      return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Mahasiswa tidak ditemukan' });
     }
-    const mahasiswa = mahasiswaDoc.data();
-    const nim = mahasiswa.nim || 'unknown';
-    const fileName = `KHS_${nim}_${semester.replace(/\s+/g, '_')}.pdf`;
+    const mahasiswa = { id: userId, ...mahasiswaDoc.data() };
 
-    // Upload ke Drive
-    const fileMetadata = {
-      name: fileName,
-      parents: [folderId]
-    };
-    const media = {
-      mimeType: file.mimetype,
-      body: Readable.from(file.buffer)
-    };
-    const driveResponse = await drive.files.create({
-      resource: fileMetadata,
-      media,
-      fields: 'id, webViewLink'
-    });
+    const { perSemester, ipk, totalSKS } = await getTranskripMahasiswa(userId);
+    const khs = perSemester.find(s => s.semester === semesterLabel);
 
-    // Set permission publik
-    await drive.permissions.create({
-      fileId: driveResponse.data.id,
-      requestBody: {
-        role: 'reader',
-        type: 'anyone'
-      }
-    });
-
-    // Simpan ke Firestore
-    await db.collection('khs').add({
-      userId,
-      semester,
-      ip: ipNumber,
-      fileUrl: `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`,
-      fileId: driveResponse.data.id,
-      fileName,
-      createdAt: new Date().toISOString(),
-      createdBy: req.user.id
-    });
-
-    res.redirect('/admin/khs/list?success=uploaded');
-  } catch (error) {
-    console.error('Error upload KHS:', error);
-    res.redirect('/admin/khs/upload?error=Gagal upload: ' + error.message);
-  }
-});
-
-// ============================================================================
-// DETAIL KHS
-// ============================================================================
-
-/**
- * GET /admin/khs/:id
- * Menampilkan detail KHS
- */
-router.get('/:id', async (req, res) => {
-  try {
-    const khsDoc = await db.collection('khs').doc(req.params.id).get();
-    if (!khsDoc.exists) {
+    if (!khs) {
       return res.status(404).render('error', {
         title: 'Tidak Ditemukan',
-        message: 'KHS tidak ditemukan'
+        message: `Belum ada nilai terkunci untuk ${mahasiswa.nama} pada semester "${semesterLabel}"`
       });
     }
-    const khs = { id: khsDoc.id, ...khsDoc.data() };
 
-    // Ambil data mahasiswa
-    const mahasiswaDoc = await db.collection('users').doc(khs.userId).get();
-    const mahasiswa = mahasiswaDoc.exists ? mahasiswaDoc.data() : { nama: '-', nim: '-' };
+    // SKS & IPK kumulatif "s.d. semester ini" (sesuai posisi semester di urutan perSemester)
+    const idx = perSemester.findIndex(s => s.semester === semesterLabel);
+    const sampaiSemesterIni = perSemester.slice(0, idx + 1);
+    let sksKum = 0, bobotKum = 0;
+    sampaiSemesterIni.forEach(s => { sksKum += s.totalSKS; bobotKum += s.totalSksIndeks; });
+    const ipkSampaiSemesterIni = sksKum > 0 ? (bobotKum / sksKum).toFixed(2) : '0.00';
 
     res.render('admin/khs_detail', {
-      title: `Detail KHS - ${mahasiswa.nama}`,
+      title: `KHS - ${mahasiswa.nama} - ${semesterLabel}`,
+      mahasiswa,
       khs,
-      mahasiswa
+      ipkSampaiSemesterIni,
+      sksKumulatif: sksKum,
+      ipkAkhir: ipk,
+      totalSKSAkhir: totalSKS
     });
   } catch (error) {
     console.error('Error detail KHS:', error);
@@ -271,41 +160,6 @@ router.get('/:id', async (req, res) => {
       title: 'Error',
       message: 'Gagal memuat detail KHS'
     });
-  }
-});
-
-// ============================================================================
-// HAPUS KHS
-// ============================================================================
-
-/**
- * POST /admin/khs/delete/:id
- * Menghapus KHS dan file di Drive
- */
-router.post('/delete/:id', async (req, res) => {
-  try {
-    const khsDoc = await db.collection('khs').doc(req.params.id).get();
-    if (!khsDoc.exists) {
-      return res.status(404).send('KHS tidak ditemukan');
-    }
-    const khs = khsDoc.data();
-
-    // Hapus file di Drive jika ada
-    if (khs.fileId) {
-      try {
-        await drive.files.delete({ fileId: khs.fileId });
-      } catch (err) {
-        console.error('Gagal hapus file Drive:', err.message);
-      }
-    }
-
-    // Hapus dokumen
-    await db.collection('khs').doc(req.params.id).delete();
-
-    res.redirect('/admin/khs/list?success=deleted');
-  } catch (error) {
-    console.error('Error delete KHS:', error);
-    res.status(500).send('Gagal menghapus KHS');
   }
 });
 

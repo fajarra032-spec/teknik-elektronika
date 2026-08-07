@@ -1,25 +1,9 @@
 <%- include('../partials/header') %>
 
-<%
-  // Fungsi untuk mengekstrak ID file dari URL Google Drive
-  const getFileIdFromUrl = (url) => {
-    if (!url) return null;
-    // Format: https://drive.google.com/uc?export=view&id=XXX
-    let match = url.match(/[?&]id=([^&]+)/);
-    if (match) return match[1];
-    // Format: https://drive.google.com/file/d/XXX/view
-    match = url.match(/\/d\/([^\/]+)/);
-    if (match) return match[1];
-    return null;
-  };
-%>
-
 <style>
   @media (max-width: 480px) {
-    body {
-        zoom: 0.72; 
-    }
-}
+    body { zoom: 0.72; }
+  }
   .khs-table th {
     background: linear-gradient(135deg, #2193b0, #6dd5ed);
     color: white;
@@ -96,7 +80,6 @@
     padding: 0.6rem 1.5rem;
     border-radius: 50px;
     transition: all 0.3s;
-    box-shadow: 0 5px 15px rgba(33,147,176,0.2);
   }
   .btn-gradient:hover {
     transform: translateY(-3px);
@@ -154,14 +137,9 @@
 
   <div class="info-card">
     <div class="d-flex align-items-center">
-      <% if (user.foto) { 
-        const fileId = getFileIdFromUrl(user.foto);
-      %>
-        <img src="https://drive.google.com/thumbnail?id=<%= fileId %>&sz=w200" 
-             alt="foto" 
-             class="rounded-circle me-3" 
-             style="width: 60px; height: 60px; object-fit: cover; border: 3px solid #2193b0;"
-             onerror="this.onerror=null; this.src='<%= user.foto %>'; this.onerror=null;">
+      <% if (user.foto) { %>
+        <img src="<%= user.foto %>" alt="foto" class="rounded-circle me-3"
+             style="width: 60px; height: 60px; object-fit: cover; border: 3px solid #2193b0;">
       <% } else { %>
         <div class="avatar-circle me-3"><%= (user.nama || '?').charAt(0).toUpperCase() %></div>
       <% } %>
@@ -170,6 +148,11 @@
         <p class="text-muted mb-0"><i class="bi bi-building me-2"></i>Program Studi Teknik Elektronika</p>
       </div>
     </div>
+  </div>
+
+  <div class="alert alert-light border d-flex align-items-center mb-4" style="border-radius: 1rem;">
+    <i class="bi bi-info-circle-fill me-2" style="color: #2193b0;"></i>
+    <span class="small text-muted">IPS dihitung otomatis dari nilai akhir yang sudah dikunci Program Studi. Semester yang belum ada nilai terkunci tidak akan muncul di sini.</span>
   </div>
 
   <!-- Filter Card -->
@@ -202,17 +185,18 @@
         <tr>
           <th>No</th>
           <th>Semester</th>
+          <th>Jml Matkul</th>
+          <th>Total SKS</th>
           <th>IP Semester</th>
-          <th>File KHS</th>
           <th>Aksi</th>
         </tr>
       </thead>
       <tbody>
-        <% if (khsList.length === 0) { %>
+        <% if (!khsList || khsList.length === 0) { %>
           <tr>
-            <td colspan="5" class="text-center py-5">
+            <td colspan="6" class="text-center py-5">
               <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
-              <p class="text-muted">Belum ada data KHS.</p>
+              <p class="text-muted">Belum ada KHS. KHS akan muncul otomatis setelah Program Studi mengunci nilai akhir semester Anda.</p>
             </td>
           </tr>
         <% } else { %>
@@ -220,19 +204,12 @@
           <tr>
             <td class="fw-bold"><%= index + 1 %></td>
             <td><span class="fw-semibold"><%= khs.semester || '-' %></span></td>
-            <td><span class="badge-ip"><%= khs.ip ? khs.ip.toFixed(2) : '-' %></span></td>
+            <td><%= khs.matkul.length %></td>
+            <td><%= khs.totalSKS %> SKS</td>
+            <td><span class="badge-ip"><%= khs.ips %></span></td>
             <td>
-              <% if (khs.fileUrl) { %>
-                <a href="<%= khs.fileUrl %>" target="_blank" class="btn btn-sm-outline">
-                  <i class="bi bi-file-earmark-pdf me-1"></i> Lihat
-                </a>
-              <% } else { %>
-                <span class="badge bg-secondary">Tidak ada file</span>
-              <% } %>
-            </td>
-            <td>
-              <a href="/mahasiswa/akademik/khs/<%= khs.id %>" class="btn btn-sm-outline">
-                <i class="bi bi-info-circle me-1"></i> Detail
+              <a href="/mahasiswa/akademik/khs/<%= encodeURIComponent(khs.semester) %>" class="btn btn-sm-outline">
+                <i class="bi bi-info-circle me-1"></i> Detail / Cetak
               </a>
             </td>
           </tr>
