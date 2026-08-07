@@ -297,13 +297,35 @@ router.get('/:mkId', async (req, res) => {
     ]);
     if (!hasil) return res.status(404).send('Mata kuliah tidak ditemukan');
 
+    // --- Diagnostik: cek MK duplikat (kode sama, tapi ID Firestore beda).
+    // Ini penyebab paling umum "input nilai tidak tersimpan setelah
+    // refresh" untuk MK/mahasiswa tertentu - dosen membuka rubrik lewat
+    // MK dengan id A, tapi mahasiswa yang bersangkutan sebenarnya terdaftar
+    // di dokumen mataKuliah id B (kode sama, sisa duplikat dari input
+    // sebelumnya) - jadi nilai yang disimpan (mkId=A) tidak pernah muncul
+    // lagi saat halaman dibuka ulang lewat rute yang resolve ke mkId=B,
+    // atau sebaliknya. Sama persis pola yang sudah ditemukan di halaman
+    // Rincian Tugas.
+    let mkDuplikat = [];
+    try {
+      const mkSnapshot = await db.collection('mataKuliah')
+        .where('kode', '==', hasil.mk.kode)
+        .get();
+      mkDuplikat = mkSnapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(m => m.id !== req.params.mkId);
+    } catch (diagErr) {
+      console.error('Diagnostik MK duplikat gagal (diabaikan):', diagErr);
+    }
+
     res.render('dosen/rubrik_input', {
       title: `Rubrik Penilaian - ${hasil.mk.kode} ${hasil.mk.nama}`,
       mk: hasil.mk,
       bobot: hasil.bobot,
       data: hasil.data,
       periode,
-      kontrakKuliah
+      kontrakKuliah,
+      mkDuplikat
     });
   } catch (error) {
     console.error('Error rubrik input:', error);

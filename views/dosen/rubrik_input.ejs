@@ -76,6 +76,29 @@
     </div>
   </div>
 
+  <% if (typeof mkDuplikat !== 'undefined' && mkDuplikat.length > 0) { %>
+    <div class="alert alert-danger" style="border-radius: 0.8rem;">
+      <i class="bi bi-exclamation-triangle-fill me-1"></i>
+      <strong>Ditemukan kemungkinan penyebab nilai tidak tersimpan!</strong>
+      Ada <strong><%= mkDuplikat.length %></strong> data Mata Kuliah lain di sistem dengan
+      kode yang sama persis (<strong><%= mk.kode %></strong>) tapi <strong>ID Firestore
+      berbeda</strong> dari MK yang sedang Anda buka sekarang - kemungkinan besar ada
+      duplikat data MK "<%= mk.kode %>" (mis. sisa dari semester lalu, atau input ganda).
+      Kalau ada mahasiswa yang nilainya (kehadiran/sikap/kuis/dst) selalu balik ke angka
+      semula setelah refresh, kemungkinan besar mahasiswa itu sebenarnya "terdaftar" di
+      salah satu MK duplikat berikut, bukan MK yang sedang Anda buka:
+      <ul class="mb-0 mt-2">
+        <% mkDuplikat.forEach(m => { %>
+          <li>
+            <code><%= m.id %></code> - <%= m.nama || '(tanpa nama)' %>
+            <a href="/dosen/rubrik/<%= m.id %>?periode=<%= encodeURIComponent(periode) %>" target="_blank">buka rubrik MK ini</a>
+          </li>
+        <% }) %>
+      </ul>
+      <div class="mt-2">Kabari admin - ini perlu digabungkan/dibersihkan langsung di data MK (Firestore), bukan sekadar diperbaiki lewat halaman ini.</div>
+    </div>
+  <% } %>
+
   <!-- Bobot Komponen -->
   <div class="bobot-card">
     <form method="POST" action="/dosen/rubrik/<%= mk.id %>/bobot" class="row g-3 align-items-end">
