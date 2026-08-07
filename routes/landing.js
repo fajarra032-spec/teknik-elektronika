@@ -175,6 +175,35 @@ router.get('/', async (req, res) => {
       }
     }
 
+    // 8b. Testimoni Alumni - dikelola admin di /admin/testimoni (sebelumnya
+    // hardcode 3 testimoni tetap di index.ejs). Hanya yang aktif=true yang
+    // ditampilkan di landing, diurutkan sesuai field "urutan".
+    let testimoniAlumni = [];
+    try {
+      const testimoniSnapshot = await db.collection('testimoniAlumni')
+        .where('aktif', '==', true)
+        .orderBy('urutan', 'asc')
+        .limit(6)
+        .get();
+      testimoniAlumni = testimoniSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (err) {
+      console.warn('Gagal mengambil testimoni alumni:', err.message);
+    }
+
+    // 8c. Video Konten - dikelola admin di /admin/video-konten (sebelumnya
+    // 4 video hardcode di index.ejs, mengarah ke file lokal /videos/*.mp4).
+    let videoKonten = [];
+    try {
+      const videoSnapshot = await db.collection('videoKonten')
+        .where('aktif', '==', true)
+        .orderBy('urutan', 'asc')
+        .limit(8)
+        .get();
+      videoKonten = videoSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (err) {
+      console.warn('Gagal mengambil video konten:', err.message);
+    }
+
     // ============ 9. DOKUMENTASI MAGANG UNTUK CAROUSEL ============
     let magangSlides = [];
     try {
@@ -289,6 +318,8 @@ router.get('/', async (req, res) => {
       dosenList,
       lulusanKerja,
       magangSlides,
+      testimoniAlumni,
+      videoKonten,
       formatDate
     });
   } catch (error) {

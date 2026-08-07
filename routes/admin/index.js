@@ -92,6 +92,12 @@ router.use('/jadwalpenting', require('./jadwalpenting'));
 // Track Lulusan – survey dan foto tempat kerja
 router.use('/tracklulusan', require('./tracklulusan'));
 
+// Testimoni Alumni – konten dinamis untuk landing page (section "Apa Kata Alumni?")
+router.use('/testimoni', require('./testimoni'));
+
+// Video Konten – konten dinamis untuk landing page (section "Video Konten")
+router.use('/video-konten', require('./videoKonten'));
+
 // ============================================================================
 // RUTE UTAMA DASHBOARD ADMIN
 // ============================================================================

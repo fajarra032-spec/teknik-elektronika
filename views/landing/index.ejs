@@ -448,6 +448,37 @@
         object-fit: cover;
     }
 
+    /* Carousel dokumentasi magang - pakai aspect-ratio (bukan height fix
+       450px) supaya proporsional di semua lebar layar, dari HP kecil sampai
+       monitor lebar. */
+    .magang-slide-img {
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+        width: 100%;
+    }
+    .magang-caption {
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        border-radius: 20px;
+        bottom: 0; left: 0; right: 0;
+        text-align: left;
+        padding: 30px 20px 20px;
+    }
+    .magang-progress {
+        width: 100%;
+        max-width: 300px;
+    }
+    @media (max-width: 576px) {
+        .magang-slide-img {
+            aspect-ratio: 4 / 3;
+        }
+        .magang-caption {
+            padding: 16px 12px 12px;
+        }
+        .magang-caption h3 {
+            font-size: 1.1rem;
+        }
+    }
+
     .gallery-card:hover .gallery-img-wrapper img {
         transform: scale(1.08);
     }
@@ -1107,7 +1138,7 @@
     </div>
 </section>
 
-<div class="container">
+<div class="landing-container">
 <!-- ===== UCAPAN SELAMAT & SUKSES ===== -->
 <!--<section class="section-wrapper">
     <h2 class="section-title">Selamat & <span>Sukses</span></h2>
@@ -1151,6 +1182,14 @@
                     <div class="stat-label">Seminar Mendatang</div>
                 </div>
             </div>
+        </div> <!-- Penutup .row g-4 (4 kartu statistik) - sebelumnya tidak
+                     tertutup di sini, sehingga semua section sesudahnya
+                     (pencarian, visi misi, grafik, berita, dosen, video,
+                     testimoni) ikut ternestasi di dalam row ini sampai
+                     akhirnya "ditutup paksa" oleh komentar
+                     "penutup container utama" di bawah, sementara div
+                     .container aslinya (dibuka sebelum section Statistik)
+                     malah tidak pernah tertutup dan menjepit footer. -->
     <!-- ===== PENCARIAN MAHASISWA (MODERN, TIDAK TERBAGI) ===== -->
     <div class="row mt-5 pt-2">
       <div class="col-12">
@@ -1234,7 +1273,18 @@
                             const labels = validData.map(a => a.tahun);
                             const data = validData.map(a => Number(a.jumlah) || 0);
 
-                            new Chart(ctx, {
+                            // Rasio grafik disesuaikan per lebar layar supaya
+                            // tidak terlalu pipih/kependekan di HP, dan tidak
+                            // terlalu memanjang di layar besar.
+                            function getAspectRatio() {
+                                const w = window.innerWidth;
+                                if (w < 400) return 1;
+                                if (w < 576) return 1.2;
+                                if (w < 768) return 1.6;
+                                return 2.2;
+                            }
+
+                            const chart = new Chart(ctx, {
                                 type: 'bar',
                                 data: {
                                     labels: labels,
@@ -1251,6 +1301,7 @@
                                 options: {
                                     responsive: true,
                                     maintainAspectRatio: true,
+                                    aspectRatio: getAspectRatio(),
                                     plugins: { 
                                         legend: { display: false },
                                         tooltip: { backgroundColor: '#0d6efd' }
@@ -1261,9 +1312,29 @@
                                             grid: { color: 'rgba(0,0,0,0.05)' },
                                             ticks: { stepSize: 1 }
                                         },
-                                        x: { grid: { display: false } }
+                                        x: {
+                                            grid: { display: false },
+                                            ticks: {
+                                                autoSkip: true,
+                                                maxRotation: window.innerWidth < 576 ? 60 : 0,
+                                                minRotation: window.innerWidth < 576 ? 60 : 0
+                                            }
+                                        }
                                     }
                                 }
+                            });
+
+                            // Update rasio saat ukuran layar berubah (misal
+                            // rotasi HP, atau resize browser desktop).
+                            let resizeTimer;
+                            window.addEventListener('resize', function() {
+                                clearTimeout(resizeTimer);
+                                resizeTimer = setTimeout(function() {
+                                    chart.options.aspectRatio = getAspectRatio();
+                                    chart.options.scales.x.ticks.maxRotation = window.innerWidth < 576 ? 60 : 0;
+                                    chart.options.scales.x.ticks.minRotation = window.innerWidth < 576 ? 60 : 0;
+                                    chart.resize();
+                                }, 200);
                             });
                         } catch (e) {
                             console.error(e);
@@ -1320,13 +1391,13 @@
     <!-- GALERI MAGANG MAHASISWA - CAROUSEL STYLE DASHBOARD -->
     <section class="section-wrapper">
         <h2 class="section-title">Dokumentasi <span>Magang Mahasiswa</span></h2>
-        <div id="magangCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="6000">
+        <div id="magangCarousel" class="carousel slide carousel-fade magang-carousel" data-bs-ride="carousel" data-bs-interval="6000">
             <div class="carousel-inner" style="border-radius: var(--border-radius); overflow: hidden;">
                 <% 
                 const slidesMagang = typeof magangSlides !== 'undefined' && magangSlides.length ? magangSlides : [];
                 if (slidesMagang.length === 0) { %>
                     <div class="carousel-item active">
-                        <img src="https://via.placeholder.com/1200x600?text=Belum+Ada+Dokumentasi+Magang" class="d-block w-100" style="height: 450px; object-fit: cover;">
+                        <img src="https://via.placeholder.com/1200x600?text=Belum+Ada+Dokumentasi+Magang" class="d-block w-100 magang-slide-img">
                         <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-3">
                             <h5>Belum Ada Dokumentasi</h5>
                             <p>Segera upload aktivitas magang mahasiswa</p>
@@ -1335,14 +1406,14 @@
                 <% } else {
                     slidesMagang.forEach((item, idx) => { %>
                         <div class="carousel-item <%= idx === 0 ? 'active' : '' %>">
-                            <img src="<%= item.imageUrl %>" class="d-block w-100" style="height: 450px; object-fit: cover;" 
+                            <img src="<%= item.imageUrl %>" class="d-block w-100 magang-slide-img"
                                  onerror="this.src='https://via.placeholder.com/1200x600?text=Foto+Magang'">
-                            <div class="carousel-caption d-none d-md-block" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); border-radius: 20px; bottom: 0; left: 0; right: 0; text-align: left; padding: 30px 20px 20px;">
+                            <div class="carousel-caption d-none d-md-block magang-caption">
                                 <h3 style="font-weight: 800; margin-bottom: 5px;"><%= item.mahasiswa || 'Mahasiswa Magang' %></h3>
                                 <p class="mb-1"><i class="bi bi-building"></i> <%= item.perusahaan || 'Perusahaan Mitra' %></p>
                                 <p><i class="bi bi-card-text"></i> <%= item.caption || 'Aktivitas magang' %></p>
                                 <% if (item.progressPercent) { %>
-                                    <div class="progress" style="height: 8px; width: 300px; background: rgba(255,255,255,0.3);">
+                                    <div class="progress magang-progress" style="height: 8px; background: rgba(255,255,255,0.3);">
                                         <div class="progress-bar bg-warning" style="width: <%= item.progressPercent %>%;" role="progressbar"></div>
                                     </div>
                                     <small>Progress Logbook: <%= item.progressPercent %>% (<%= item.progressUploaded %>/<%= item.progressTotal %> hari)</small>
@@ -1486,133 +1557,90 @@
         </div>
     </section>
 
-    <!-- VIDEO KONTEN -->
+    <!-- VIDEO KONTEN - dinamis dari koleksi videoKonten (dikelola admin di
+         /admin/video-konten), bukan lagi 4 video tetap hardcode. -->
     <section class="section-wrapper">
         <h2 class="section-title">Video <span>Konten</span></h2>
-        <div id="videoCarousel" class="carousel slide video-carousel">
-            <!-- Indikator slide -->
-            <div class="carousel-indicators">
-                <button type="button" data-bs-target="#videoCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-                <button type="button" data-bs-target="#videoCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
-                <button type="button" data-bs-target="#videoCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
-                <button type="button" data-bs-target="#videoCarousel" data-bs-slide-to="3" aria-label="Slide 4"></button>
+        <% if (!videoKonten || videoKonten.length === 0) { %>
+            <div class="alert alert-info text-center">Belum ada video yang ditambahkan.</div>
+        <% } else { %>
+            <div id="videoCarousel" class="carousel slide video-carousel">
+                <div class="carousel-indicators">
+                    <% videoKonten.forEach((v, idx) => { %>
+                        <button type="button" data-bs-target="#videoCarousel" data-bs-slide-to="<%= idx %>" class="<%= idx === 0 ? 'active' : '' %>" <% if (idx === 0) { %>aria-current="true"<% } %> aria-label="Slide <%= idx + 1 %>"></button>
+                    <% }) %>
+                </div>
+                <div class="carousel-inner">
+                    <% videoKonten.forEach((v, idx) => { %>
+                        <div class="carousel-item <%= idx === 0 ? 'active' : '' %>">
+                            <div class="video-slide">
+                                <div class="video-wrapper">
+                                    <video controls preload="metadata">
+                                        <source src="<%= v.videoUrl %>" type="video/mp4">
+                                        Browser Anda tidak mendukung video.
+                                    </video>
+                                </div>
+                                <div class="video-caption">
+                                    <h5><%= v.judul %></h5>
+                                    <% if (v.deskripsi) { %><p><%= v.deskripsi %></p><% } %>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+                <% if (videoKonten.length > 1) { %>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#videoCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#videoCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                <% } %>
             </div>
-            <div class="carousel-inner">
-                <!-- Slide 1 -->
-                <div class="carousel-item active">
-                    <div class="video-slide">
-                        <div class="video-wrapper">
-                            <video controls preload="metadata">
-                                <source src="/videos/video1.mp4" type="video/mp4">
-                                Browser Anda tidak mendukung video.
-                            </video>
-                        </div>
-                        <div class="video-caption">
-                            <h5>Testimoni Mahasiswa Elektronika</h5>
-                            <p>Ibnu Muarif Mahasiswa ELK-2023 bekerja di PT.GNI</p>
-                        </div>
-                    </div>
-                </div>
-                <!-- Slide 2 -->
-                <div class="carousel-item">
-                    <div class="video-slide">
-                        <div class="video-wrapper">
-                            <video controls preload="metadata">
-                                <source src="/videos/video2.mp4" type="video/mp4">
-                                Browser Anda tidak mendukung video.
-                            </video>
-                        </div>
-                        <div class="video-caption">
-                            <h5>Kunjungan Industri</h5>
-                            <p>PT Charoend Phokphand Makassar</p>
-                        </div>
-                    </div>
-                </div>
-                <!-- Slide 3 -->
-                <div class="carousel-item">
-                    <div class="video-slide">
-                        <div class="video-wrapper">
-                            <video controls preload="metadata">
-                                <source src="/videos/video3.mp4" type="video/mp4">
-                                Browser Anda tidak mendukung video.
-                            </video>
-                        </div>
-                        <div class="video-caption">
-                            <h5>Kunjungan Industri</h5>
-                            <p>PT. Darma Karya Elektrik Makassar</p>
-                        </div>
-                    </div>
-                </div>
-                <!-- Slide 4 -->
-                <div class="carousel-item">
-                    <div class="video-slide">
-                        <div class="video-wrapper">
-                            <video controls preload="metadata">
-                                <source src="/videos/video4.mp4" type="video/mp4">
-                                Browser Anda tidak mendukung video.
-                            </video>
-                        </div>
-                        <div class="video-caption">
-                            <h5>Pengabdian Kepada Masyarakat 4</h5>
-                            <p>Program C4S-ELECTRO CARE di desa Cimpu Kec.Suli</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- Tombol navigasi -->
-            <button class="carousel-control-prev" type="button" data-bs-target="#videoCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#videoCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
-            </button>
-        </div>
+        <% } %>
     </section>
 
-    <!-- TESTIMONI ALUMNI -->
+    <!-- TESTIMONI ALUMNI - dinamis dari koleksi testimoniAlumni (dikelola
+         admin di /admin/testimoni), bukan lagi 3 nama tetap hardcode. -->
     <section class="section-wrapper">
         <h2 class="section-title">Apa Kata <span>Alumni?</span></h2>
-        <div id="testimoniCarousel" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-inner">
-                <div class="carousel-item active">
-                    <div class="testimonial-card">
-                        <i class="bi bi-quote"></i>
-                        <img src="https://i.ibb.co.com/6xf2WTj/Untitled-design.png" class="testimonial-img" alt="Alumni">
-                        <h5 class="testimonial-name">Nana</h5>
-                        <p class="testimonial-role">Bekerja di Dokter Finance (Lulusan 2020)</p>
-                        <p class="testimonial-text">"Pendidikan di Teknik Elektronika sangat aplikatif dan dosen-dosennya berpengalaman. Saya langsung siap kerja setelah lulus."</p>
-                    </div>
+        <% if (!testimoniAlumni || testimoniAlumni.length === 0) { %>
+            <div class="alert alert-info text-center">Belum ada testimoni yang ditambahkan.</div>
+        <% } else { %>
+            <div id="testimoniCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    <% testimoniAlumni.forEach((t, idx) => { %>
+                        <div class="carousel-item <%= idx === 0 ? 'active' : '' %>">
+                            <div class="testimonial-card">
+                                <i class="bi bi-quote"></i>
+                                <% if (t.foto) { %>
+                                    <img src="<%= t.foto %>" class="testimonial-img" alt="<%= t.nama %>" onerror="this.src='https://via.placeholder.com/100?text=Alumni'">
+                                <% } else { %>
+                                    <img src="https://via.placeholder.com/100?text=Alumni" class="testimonial-img" alt="<%= t.nama %>">
+                                <% } %>
+                                <h5 class="testimonial-name"><%= t.nama %></h5>
+                                <p class="testimonial-role">
+                                    <%= t.role || 'Alumni' %><% if (t.tahunLulus) { %> (Lulusan <%= t.tahunLulus %>)<% } %>
+                                </p>
+                                <p class="testimonial-text">"<%= t.testimoni %>"</p>
+                            </div>
+                        </div>
+                    <% }) %>
                 </div>
-                <div class="carousel-item">
-                    <div class="testimonial-card">
-                        <i class="bi bi-quote"></i>
-                        <img src="https://i.ibb.co.com/6c2MJzg9/image.png" class="testimonial-img" alt="Alumni">
-                        <h5 class="testimonial-name">Muhammad Dani</h5>
-                        <p class="testimonial-role">Engineer di PT. Sari Roti (Lulusan 2021)</p>
-                        <p class="testimonial-text">"Dosennya Intelektual dan sering ada pelatihan dari industri. Sangat membantu karir saya."</p>
-                    </div>
-                </div>
-                <div class="carousel-item">
-                    <div class="testimonial-card">
-                        <i class="bi bi-quote"></i>
-                        <img src="https://i.ibb.co.com/4g3rv2ZQ/image.png" class="testimonial-img" alt="Alumni">
-                        <h5 class="testimonial-name">Asmunandar</h5>
-                        <p class="testimonial-role">Wirausaha (Lulusan 2022)</p>
-                        <p class="testimonial-text">"Ilmu yang didapat sangat mendukung saya dalam memulai bisnis di bidang elektronik."</p>
-                    </div>
-                </div>
+                <% if (testimoniAlumni.length > 1) { %>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#testimoniCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#testimoniCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                <% } %>
             </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#testimoniCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#testimoniCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
-            </button>
-        </div>
+        <% } %>
     </section>
 </div> <!-- penutup container utama -->
 
@@ -1656,7 +1684,6 @@
 <div class="text-center text-muted mt-5 mb-3">
     <small><i class="bi bi-shield-check me-1"></i> Sistem Informasi Program Studi Elektronika - Politeknik Dewantara 2025 by Fajar Elektrik</small>
 </div>
-</div> <!-- Penutup .container yang dibuka di awal (sebelum section Statistik) - sebelumnya tidak tertutup sehingga footer ikut "terjepit" di dalamnya -->
 
 <%- include('../partials/footer-landing') %>
 </body>

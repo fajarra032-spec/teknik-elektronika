@@ -196,6 +196,23 @@
             }
         }
 
+        /* Perbaikan adaptif: di layar < lg (saat navbar di-collapse jadi
+           hamburger), dropdown "Layanan" dipaksa jadi block statis penuh
+           lebar mengikuti alur menu mobile, BUKAN floating box posisi
+           absolute lagi. Ini mencegah dropdown melebar keluar layar / teks
+           terpotong di HP sempit (320-375px) karena isinya cukup panjang
+           ("RPS (Rencana Pembelajaran Semester)", dst). */
+        @media (max-width: 991.98px) {
+            .navbar-custom .dropdown-menu {
+                position: static !important;
+                float: none;
+                width: 100%;
+                margin-top: 0.3rem;
+                box-shadow: none;
+                border: 1px solid rgba(0,0,0,0.06);
+            }
+        }
+
         /* Pembungkus konten */
         .content-wrapper {
             max-width: 1200px;
