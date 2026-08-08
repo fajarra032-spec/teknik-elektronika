@@ -2,29 +2,29 @@
 
 <style>
   :root {
-    --sp-primary: #b45309;
-    --sp-primary-dark: #92400e;
-    --sp-primary-light: rgba(180,83,9,0.08);
-    --sp-gradient: linear-gradient(135deg, #b45309, #f59e0b);
+    --sp-primary: #0d6efd;
+    --sp-primary-dark: #0b5ed7;
+    --sp-primary-light: rgba(13,110,253,0.08);
+    --sp-gradient: linear-gradient(135deg, #0d6efd, #0dcaf0);
     --sp-shadow-sm: 0 5px 15px rgba(0,0,0,0.05);
     --sp-radius: 1.5rem;
   }
 
   .sp-header {
     background: var(--sp-gradient); border-radius: var(--sp-radius); padding: 3rem 2rem;
-    color: #fff; margin-bottom: 2.5rem; text-align: center; box-shadow: 0 15px 30px rgba(180,83,9,0.25);
+    color: #fff; margin-bottom: 2.5rem; text-align: center; box-shadow: 0 15px 30px rgba(13,110,253,0.25);
   }
   .sp-header h1 { font-weight: 800; font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: .5rem; }
   .sp-header p { opacity: .9; font-size: 1.05rem; margin: 0; max-width: 640px; margin-inline: auto; }
 
   .note-box {
-    background: #fffbeb; border: 1px solid #fde68a; border-radius: 1rem; padding: 1.1rem 1.3rem;
-    color: #92400e; font-size: .9rem; margin-bottom: 2rem; display: flex; gap: .7rem;
+    background: #eff5ff; border: 1px solid #bfe0f5; border-radius: 1rem; padding: 1.1rem 1.3rem;
+    color: #0b5ed7; font-size: .9rem; margin-bottom: 2rem; display: flex; gap: .7rem;
   }
 
   .sp-steps { list-style: none; padding: 0; margin: 0 0 2rem; counter-reset: step; }
   .sp-steps li {
-    background: #fff; border-radius: 1rem; box-shadow: var(--sp-shadow-sm); border: 1px solid rgba(180,83,9,0.1);
+    background: #fff; border-radius: 1rem; box-shadow: var(--sp-shadow-sm); border: 1px solid rgba(13,110,253,0.1);
     padding: 1rem 1.2rem 1rem 3.2rem; margin-bottom: .8rem; position: relative; font-size: .93rem; color: #334155;
   }
   .sp-steps li::before {
@@ -37,7 +37,7 @@
 
   .download-box {
     background: #fff; border-radius: var(--sp-radius); box-shadow: var(--sp-shadow-sm);
-    border: 1px solid rgba(180,83,9,0.1); padding: 1.8rem; margin-top: 1.5rem;
+    border: 1px solid rgba(13,110,253,0.1); padding: 1.8rem; margin-top: 1.5rem;
     display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;
   }
   .download-box .txt h3 { font-weight: 700; font-size: 1.15rem; margin-bottom: .2rem; color: #1e293b; }
@@ -45,12 +45,12 @@
   .btn-download {
     background: var(--sp-gradient); color: #fff; border: none; padding: .7rem 1.5rem;
     border-radius: 50px; font-weight: 600; text-decoration: none; white-space: nowrap;
-    box-shadow: 0 8px 16px rgba(180,83,9,0.25); transition: .2s; display:inline-flex; align-items:center;
+    box-shadow: 0 8px 16px rgba(13,110,253,0.25); transition: .2s; display:inline-flex; align-items:center;
   }
-  .btn-download:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 12px 20px rgba(180,83,9,0.3); }
+  .btn-download:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 12px 20px rgba(13,110,253,0.3); }
 
   .batas-waktu { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:1rem; margin-bottom:2rem; }
-  .batas-waktu .box { background:#fff; border-radius:1rem; padding:1.2rem; text-align:center; box-shadow: var(--sp-shadow-sm); border:1px solid rgba(180,83,9,0.1); }
+  .batas-waktu .box { background:#fff; border-radius:1rem; padding:1.2rem; text-align:center; box-shadow: var(--sp-shadow-sm); border:1px solid rgba(13,110,253,0.1); }
   .batas-waktu .box .num { font-size:1.3rem; font-weight:800; color: var(--sp-primary); }
   .batas-waktu .box .lbl { font-size:.8rem; color:#64748b; margin-top:.2rem; }
 </style>

@@ -1,8 +1,8 @@
 /**
  * routes/dokumen.js
- * Halaman-halaman dokumen publik di landing page: kurikulum, SOP/alur
- * pengajuan seminar, pengajuan magang, pengajuan cuti, pengajuan kunjungan
- * industri, dan kerjasama perusahaan.
+ * Halaman-halaman dokumen publik di landing page: kurikulum, RPS, notulensi,
+ * SOP/alur pengajuan seminar, pengajuan magang, pengajuan cuti, pengajuan
+ * kunjungan industri, dan kerjasama perusahaan.
  */
 
 const express = require('express');
@@ -43,6 +43,93 @@ router.get('/kurikulum', async (req, res) => {
   } catch (error) {
     console.error('Error memuat kurikulum:', error);
     res.status(500).render('error', { title: 'Error', message: 'Gagal memuat data kurikulum', user: req.user || null });
+  }
+});
+
+/**
+ * GET /dokumen/rps
+ * RPS (Rencana Pembelajaran Semester) - sebelumnya link ini ada di menu nav
+ * ("Layanan" > "RPS") tapi TIDAK PERNAH di-routing (views/landing/dokumen/rps.ejs
+ * sudah ada tapi menganggur), jadi selalu 404. Sekarang disambungkan, memakai
+ * data mataKuliah yang sama dengan /dokumen/kurikulum supaya field rpsUrl
+ * selalu sinkron dengan yang dikelola admin (lihat routes/admin/rps.js).
+ */
+router.get('/rps', async (req, res) => {
+  try {
+    const snapshot = await db.collection('mataKuliah').orderBy('semester', 'asc').orderBy('kode', 'asc').get();
+    const mkList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    const perSemester = {};
+    mkList.forEach(mk => {
+      const sem = mk.semester || 0;
+      if (!perSemester[sem]) perSemester[sem] = [];
+      perSemester[sem].push({
+        kode: mk.kode,
+        nama: mk.nama,
+        jenis: mk.isPDK ? 'Praktik Dunia Kerja' : 'Reguler',
+        url: mk.rpsUrl || null
+      });
+    });
+
+    const rpsSemester = Object.keys(perSemester)
+      .sort((a, b) => a - b)
+      .map(sem => ({ semester: sem, matkul: perSemester[sem] }));
+
+    res.render('dokumen/rps', {
+      title: 'RPS',
+      description: 'Rencana Pembelajaran Semester (RPS) tiap mata kuliah Program Studi Teknik Elektronika.',
+      rpsSemester,
+      tahunKurikulum: new Date().getFullYear(),
+      user: req.user || null
+    });
+  } catch (error) {
+    console.error('Error memuat RPS:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat data RPS', user: req.user || null });
+  }
+});
+
+/**
+ * GET /dokumen/notulensi
+ * Agenda & Hasil Rapat - sama seperti /dokumen/rps, link ini sebelumnya
+ * TIDAK di-routing sama sekali sehingga 404 (views/landing/dokumen/notulensi.ejs
+ * sudah ada tapi menganggur). Disambungkan ke koleksi Firestore 'notulensi'.
+ * CATATAN: belum ada CRUD admin untuk mengisi koleksi ini - untuk sementara
+ * halaman akan tampil dengan status "belum ada data" sampai fitur kelola
+ * notulensi rapat dibuat di sisi admin.
+ */
+router.get('/notulensi', async (req, res) => {
+  try {
+    const snapshot = await db.collection('notulensi').orderBy('tanggal', 'desc').limit(50).get();
+    const notulensi = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        tanggalTampil: data.tanggal
+          ? new Date(data.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+          : '-',
+        agenda: Array.isArray(data.agenda) ? data.agenda : [],
+        hasil: Array.isArray(data.hasil) ? data.hasil : [],
+        daftarHadir: Array.isArray(data.daftarHadir) ? data.daftarHadir : []
+      };
+    });
+
+    res.render('dokumen/notulensi', {
+      title: 'Agenda & Hasil Rapat',
+      description: 'Dokumentasi agenda dan hasil rapat Program Studi Teknik Elektronika.',
+      notulensi,
+      user: req.user || null
+    });
+  } catch (error) {
+    console.error('Error memuat notulensi:', error);
+    // Koleksi 'notulensi' mungkin belum pernah dibuat sama sekali di Firestore -
+    // tampilkan halaman kosong yang rapi, bukan error 500.
+    res.render('dokumen/notulensi', {
+      title: 'Agenda & Hasil Rapat',
+      description: 'Dokumentasi agenda dan hasil rapat Program Studi Teknik Elektronika.',
+      notulensi: [],
+      user: req.user || null
+    });
   }
 });
 
