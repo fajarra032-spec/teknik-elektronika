@@ -214,6 +214,32 @@
   }
 </style>
 
+<!-- Structured data (JSON-LD) supaya Google mengenali halaman ini sebagai
+     artikel berita: membantu proses indexing & tampilan rich result -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "NewsArticle",
+  "headline": <%- JSON.stringify(berita.judul || '') %>,
+  "image": [<%- JSON.stringify(berita.gambar || 'https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png') %>],
+  "datePublished": <%- JSON.stringify(berita.tanggal || berita.createdAt || '') %>,
+  "dateModified": <%- JSON.stringify(berita.updatedAt || berita.tanggal || '') %>,
+  "author": [{
+    "@type": "Person",
+    "name": <%- JSON.stringify(berita.penulis || 'Admin') %>
+  }],
+  "publisher": {
+    "@type": "Organization",
+    "name": "Program Studi Teknik Elektronika Politeknik Dewantara",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png"
+    }
+  },
+  "description": <%- JSON.stringify(description || '') %>
+}
+</script>
+
 <div class="container">
   <div class="berita-card">
     <!-- Breadcrumb -->

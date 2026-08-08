@@ -51,6 +51,53 @@
     </div>
   </div>
 
+  <% if (typeof mkDuplikat !== 'undefined' && mkDuplikat.length > 0) { %>
+    <div class="alert alert-danger" style="border-radius: 0.8rem;">
+      <i class="bi bi-exclamation-triangle-fill me-1"></i>
+      <strong>Ditemukan kemungkinan penyebab nilai tidak tersimpan!</strong>
+      Ada <strong><%= mkDuplikat.length %></strong> data Mata Kuliah lain dengan kode sama
+      persis (<strong><%= mk.kode %></strong>) tapi ID Firestore berbeda:
+      <ul class="mb-0 mt-2">
+        <% mkDuplikat.forEach(m => { %>
+          <li><code><%= m.id %></code> - <%= m.nama || '(tanpa nama)' %>
+            <a href="/admin/rubrik/<%= m.id %>?periode=<%= encodeURIComponent(periode) %>" target="_blank">buka rubrik MK ini</a>
+          </li>
+        <% }) %>
+      </ul>
+      <div class="mt-2">Perlu digabungkan/dibersihkan langsung di data MK (Firestore).</div>
+    </div>
+  <% } %>
+
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <label for="periodeSelect" class="mb-0 small text-muted">Periode:</label>
+    <select id="periodeSelect" class="form-select form-select-sm" style="width: auto;"
+      onchange="window.location.href = '/admin/rubrik/<%= mk.id %>?periode=' + encodeURIComponent(this.value)">
+      <option value="<%= periode %>" selected><%= periode %> (sedang dibuka)</option>
+      <% if (typeof periodeLain !== 'undefined') { %>
+        <% periodeLain.forEach(p => { %>
+          <option value="<%= p %>"><%= p %></option>
+        <% }) %>
+      <% } %>
+    </select>
+  </div>
+
+  <% if (typeof periodeLain !== 'undefined' && periodeLain.length > 0) { %>
+    <div class="alert alert-warning" style="border-radius: 0.8rem;">
+      <i class="bi bi-calendar-x me-1"></i>
+      Ada tugas untuk MK ini yang tercatat di periode lain: <strong><%= periodeLain.join(', ') %></strong>
+      - bukan di periode <strong><%= periode %></strong> yang sedang dibuka.
+    </div>
+  <% } %>
+
+  <% if (typeof jumlahNilaiTugasTanpaTugas !== 'undefined' && jumlahNilaiTugasTanpaTugas > 0) { %>
+    <div class="alert alert-warning" style="border-radius: 0.8rem;">
+      <i class="bi bi-exclamation-triangle-fill me-1"></i>
+      Ditemukan <strong><%= jumlahNilaiTugasTanpaTugas %></strong> nilai tugas tersimpan untuk MK
+      ini yang dokumen tugasnya sudah tidak ada - tidak akan pernah muncul di Rata Tugas
+      sampai ditangani manual di database.
+    </div>
+  <% } %>
+
   <div class="bobot-note">
     <strong>Dosen Pengampu:</strong> <%= mk.namaDosen || '-' %> &nbsp;|&nbsp;
     <strong>Periode:</strong> <%= periode %> &nbsp;|&nbsp;

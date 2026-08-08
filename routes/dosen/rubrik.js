@@ -318,6 +318,45 @@ router.get('/:mkId', async (req, res) => {
       console.error('Diagnostik MK duplikat gagal (diabaikan):', diagErr);
     }
 
+    // --- Diagnostik 2: cari periode LAIN yang punya data tugas/nilai untuk
+    // MK ini, tapi tidak ikut terhitung di periode yang sedang dibuka.
+    // Ini penyebab lain yang sama seringnya dengan MK duplikat: halaman
+    // Rubrik selalu terkunci ke satu periode (default periode aktif
+    // sekarang) tanpa cara untuk pindah - jadi kalau tugas diberikan &
+    // dinilai di periode yang berbeda dari yang sedang dibuka (mis. label
+    // periode-nya kehitung beda karena tanggal deadline/createdAt tugas
+    // jatuh di bulan yang berbeda), dosen tidak akan pernah melihatnya
+    // tanpa tahu harus ganti ?periode= di URL secara manual.
+    let periodeLain = [];
+    let jumlahNilaiTugasTanpaTugas = 0;
+    try {
+      const [tugasSemuaPeriode, nilaiMentahSnapshot] = await Promise.all([
+        db.collection('tugas').where('mkId', '==', req.params.mkId).get(),
+        db.collection('nilai').where('mkId', '==', req.params.mkId).get()
+      ]);
+      const periodeSet = new Set();
+      tugasSemuaPeriode.docs.forEach(d => {
+        const p = d.data().periode;
+        if (p && p !== periode) periodeSet.add(p);
+      });
+      periodeLain = Array.from(periodeSet).sort();
+
+      // Nilai tugas (tipe 'tugas_...') yang tersimpan tapi dokumen 'tugas'
+      // induknya sudah tidak ada sama sekali (bukan cuma beda periode) -
+      // ini tidak akan pernah muncul di Rubrik periode manapun sampai
+      // dicek manual, karena getRataTugasByMkId hanya jalan dari daftar
+      // tugas yang masih ada.
+      const tugasIdSet = new Set(tugasSemuaPeriode.docs.map(d => d.id));
+      jumlahNilaiTugasTanpaTugas = nilaiMentahSnapshot.docs.filter(d => {
+        const tipe = d.data().tipe || '';
+        if (!tipe.startsWith('tugas_')) return false;
+        const tugasId = tipe.replace('tugas_', '');
+        return !tugasIdSet.has(tugasId);
+      }).length;
+    } catch (diagErr) {
+      console.error('Diagnostik periode lain gagal (diabaikan):', diagErr);
+    }
+
     res.render('dosen/rubrik_input', {
       title: `Rubrik Penilaian - ${hasil.mk.kode} ${hasil.mk.nama}`,
       mk: hasil.mk,
@@ -325,7 +364,9 @@ router.get('/:mkId', async (req, res) => {
       data: hasil.data,
       periode,
       kontrakKuliah,
-      mkDuplikat
+      mkDuplikat,
+      periodeLain,
+      jumlahNilaiTugasTanpaTugas
     });
   } catch (error) {
     console.error('Error rubrik input:', error);

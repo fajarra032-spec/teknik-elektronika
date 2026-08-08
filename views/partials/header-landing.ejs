@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title><%= typeof title !== 'undefined' && title ? title + ' - Teknik Elektronika Politeknik Dewantara' : 'Teknik Elektronika - Politeknik Dewantara' %></title>
     <meta name="description" content="<%= typeof description !== 'undefined' && description ? description : 'Program Studi Teknik Elektronika Politeknik Dewantara - informasi akademik, berita, dan kegiatan kampus.' %>">
+    <meta name="robots" content="<%= typeof robotsMeta !== 'undefined' ? robotsMeta : 'index, follow' %>">
+    <% if (typeof canonicalUrl !== 'undefined' && canonicalUrl) { %>
+    <link rel="canonical" href="<%= canonicalUrl %>">
+    <% } %>
     <!-- Open Graph (pratinjau saat dibagikan ke WhatsApp/Facebook/dll) -->
     <meta property="og:title" content="<%= typeof title !== 'undefined' && title ? title : 'Teknik Elektronika - Politeknik Dewantara' %>">
     <meta property="og:description" content="<%= typeof description !== 'undefined' && description ? description : 'Program Studi Teknik Elektronika Politeknik Dewantara' %>">

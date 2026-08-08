@@ -213,6 +213,7 @@
                                 <span class="badge-schedule"><i class="bi bi-calendar"></i>
                                     <%= item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-' %>
                                 </span>
+                                <span class="badge-schedule ms-2"><i class="bi bi-eye"></i> <%= item.dilihat || 0 %></span>
                             </div>
                             <h5 class="card-title"><%= item.judul %></h5>
                             <p class="card-text"><%= (item.isi || '').replace(/<[^>]*>?/gm, '').substring(0, 100) %>...</p>

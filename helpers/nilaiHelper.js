@@ -1213,6 +1213,7 @@ module.exports = {
   getTranskripMahasiswa,
   // --- Rubrik Penilaian ---
   BOBOT_DEFAULT,
+  TIPE_RUBRIK_KOMPONEN,
   saveKomponenRubrik,
   getKomponenRubrikByMkId,
   getBobotRubrik,

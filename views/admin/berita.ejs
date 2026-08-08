@@ -240,13 +240,14 @@
             <th>Judul</th>
             <th>Penulis</th>
             <th>Tanggal</th>
+            <th>Dilihat</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
           <% if (!berita || berita.length === 0) { %>
             <tr>
-              <td colspan="5" class="empty-state">
+              <td colspan="6" class="empty-state">
                 <i class="bi bi-inbox"></i>
                 <p class="mt-2 text-muted">Belum ada berita. Klik "Tambah Berita" untuk membuat.</p>
               </td>
@@ -268,6 +269,9 @@
                     <i class="bi bi-calendar3 me-1"></i>
                     <%= b.tanggal ? new Date(b.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-' %>
                   </span>
+                </td>
+                <td data-label="Dilihat">
+                  <span class="badge-tanggal"><i class="bi bi-eye me-1"></i><%= b.dilihat || 0 %></span>
                 </td>
                 <td data-label="Aksi">
                   <div class="d-flex flex-wrap gap-1">

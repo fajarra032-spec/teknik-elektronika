@@ -41,6 +41,29 @@ app.use((req, res, next) => {
 });
 
 // ============================================================================
+// SEO: canonical URL otomatis + blokir indexing halaman privat
+// ============================================================================
+// Halaman privat (admin/mahasiswa/dosen/auth) tidak boleh diindex Google,
+// walaupun crawler tetap bisa "menyasar" ke sana (mis. lewat link internal).
+// Header X-Robots-Tag ini jadi lapisan kedua selain Disallow di robots.txt,
+// karena Disallow hanya mencegah crawling, bukan menjamin de-index bila
+// URL-nya sudah kadung ditemukan Google dari sumber lain.
+const SEO_BASE_URL = 'https://elektronika.polidewa.ac.id';
+app.use((req, res, next) => {
+  const isHalamanPrivat = /^\/(admin|mahasiswa|dosen|auth|webhook)(\/|$)/.test(req.path);
+  if (isHalamanPrivat) {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    res.locals.robotsMeta = 'noindex, nofollow';
+  } else {
+    res.locals.robotsMeta = 'index, follow';
+  }
+  // URL kanonik tanpa query string (?search=, ?page=, dsb) supaya Google
+  // tidak menganggap /berita?page=2 sebagai halaman duplikat dari /berita
+  res.locals.canonicalUrl = SEO_BASE_URL + req.path;
+  next();
+});
+
+// ============================================================================
 // VIEW ENGINE
 // ============================================================================
 app.set('view engine', 'ejs');
@@ -56,8 +79,15 @@ app.set('views', path.join(__dirname, 'views'));
 app.get('/robots.txt', (req, res) => {
   const robots = `User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /mahasiswa
+Disallow: /dosen
+Disallow: /auth
+Disallow: /webhook
+Disallow: /*?*search=
+Disallow: /*?*page=
+
 Sitemap: https://elektronika.polidewa.ac.id/sitemap.xml
-Sitemap: https://casaos.polidewa.ac.id/sitemap.xml
 `;
   res.type('text/plain');
   res.send(robots);
@@ -129,8 +159,9 @@ app.get('/sitemap.xml', async (req, res) => {
     { url: '/berita', changefreq: 'daily', priority: 0.8 },
     { url: '/lulusan', changefreq: 'weekly', priority: 0.6 },
     { url: '/validasi', changefreq: 'monthly', priority: 0.3 },
-    { url: '/auth/login', changefreq: 'yearly', priority: 0.3 },
-    { url: '/auth/register', changefreq: 'yearly', priority: 0.3 },
+    // Catatan: halaman /auth/login dan /auth/register sengaja TIDAK
+    // dimasukkan ke sitemap. Halaman login tidak punya nilai konten untuk
+    // pencarian dan sebaiknya tidak diindeks Google.
   ];
 
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -193,6 +224,49 @@ app.get('/sitemap.xml', async (req, res) => {
         });
       } else {
         console.log('ℹ️ Tidak ada berita ditemukan di Firebase');
+      }
+
+      // ============================================
+      // URL DINAMIS DARI FIREBASE (ELK Library)
+      // Hanya karya yang sudah "approved" yang layak
+      // muncul di sitemap & diindeks Google - termasuk
+      // laporan magang mahasiswa.
+      // ============================================
+      const elkCollections = [
+        { name: 'laporanMagang', changefreq: 'monthly', priority: 0.6 },
+        { name: 'penelitian', changefreq: 'monthly', priority: 0.5 },
+        { name: 'pengabdian', changefreq: 'monthly', priority: 0.5 },
+        { name: 'buku', changefreq: 'monthly', priority: 0.5 },
+      ];
+
+      for (const col of elkCollections) {
+        try {
+          const snapshot = await db.collection(col.name)
+            .where('status', '==', 'approved')
+            .limit(1000)
+            .get();
+
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            let lastmod = today;
+            try {
+              const rawDate = data.approvedAt || data.updatedAt || data.createdAt;
+              if (rawDate) {
+                const date = new Date(rawDate);
+                if (!isNaN(date.getTime())) lastmod = date.toISOString().split('T')[0];
+              }
+            } catch (e) { /* pakai lastmod default */ }
+
+            xml += '  <url>\n';
+            xml += `    <loc>${baseUrl}/elk-library/${doc.id}</loc>\n`;
+            xml += `    <lastmod>${lastmod}</lastmod>\n`;
+            xml += `    <changefreq>${col.changefreq}</changefreq>\n`;
+            xml += `    <priority>${col.priority}</priority>\n`;
+            xml += '  </url>\n';
+          });
+        } catch (colError) {
+          console.error(`❌ Gagal ambil koleksi '${col.name}' untuk sitemap:`, colError.message);
+        }
       }
     }
   } catch (error) {

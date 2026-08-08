@@ -210,12 +210,48 @@ router.get('/:mkId', async (req, res) => {
     }
     hasil.mk.namaDosen = await getDosenNamaByIds(hasil.mk.dosenIds || []);
 
+    // --- Diagnostik: MK duplikat (kode sama, ID beda) + tugas/nilai yang
+    // tercatat di periode lain - lihat komentar lebih lengkap di
+    // routes/dosen/rubrik.js pada diagnostik yang sama.
+    let mkDuplikat = [];
+    let periodeLain = [];
+    let jumlahNilaiTugasTanpaTugas = 0;
+    try {
+      const [mkSnapshot, tugasSemuaPeriode, nilaiMentahSnapshot] = await Promise.all([
+        db.collection('mataKuliah').where('kode', '==', hasil.mk.kode).get(),
+        db.collection('tugas').where('mkId', '==', req.params.mkId).get(),
+        db.collection('nilai').where('mkId', '==', req.params.mkId).get()
+      ]);
+      mkDuplikat = mkSnapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(m => m.id !== req.params.mkId);
+
+      const periodeSet = new Set();
+      tugasSemuaPeriode.docs.forEach(d => {
+        const p = d.data().periode;
+        if (p && p !== periode) periodeSet.add(p);
+      });
+      periodeLain = Array.from(periodeSet).sort();
+
+      const tugasIdSet = new Set(tugasSemuaPeriode.docs.map(d => d.id));
+      jumlahNilaiTugasTanpaTugas = nilaiMentahSnapshot.docs.filter(d => {
+        const tipe = d.data().tipe || '';
+        if (!tipe.startsWith('tugas_')) return false;
+        return !tugasIdSet.has(tipe.replace('tugas_', ''));
+      }).length;
+    } catch (diagErr) {
+      console.error('Diagnostik rubrik admin gagal (diabaikan):', diagErr);
+    }
+
     res.render('admin/rubrik_detail', {
       title: `Rubrik Penilaian - ${hasil.mk.kode} ${hasil.mk.nama}`,
       mk: hasil.mk,
       bobot: hasil.bobot,
       data: hasil.data,
-      periode
+      periode,
+      mkDuplikat,
+      periodeLain,
+      jumlahNilaiTugasTanpaTugas
     });
   } catch (error) {
     console.error('Error detail rubrik admin:', error);

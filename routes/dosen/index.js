@@ -103,6 +103,7 @@ router.use('/magang-period', magangPeriodRouter);
 router.use('/chat', chatRouter);
 router.use('/sertifikat', sertifikatRouter);
 router.use('/kelas-chat', require('./kelasChat'));
+router.use('/komunitas', require('./komunitas'));
 
 router.use('/mk', mkRouter);
 router.use('/kurikulum', kurikulumRouter);

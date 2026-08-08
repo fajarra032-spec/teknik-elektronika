@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const { hitungNilaiAkhir, saveGradeFinal, getTranskripMahasiswa, getPeriodeAktif } = require('../../helpers/nilaiHelper');
+const { saveGradeFinal, getTranskripMahasiswa, getPeriodeAktif, getHasilRubrikSemuaMahasiswa, getHasilRubrikSatuMahasiswa, getRincianTugasByMkId, saveKomponenRubrik, saveNilai, TIPE_RUBRIK_KOMPONEN } = require('../../helpers/nilaiHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -40,6 +40,10 @@ async function getMahasiswaById(uid) {
 /**
  * GET /admin/nilai
  * Menampilkan daftar semua mata kuliah
+ */
+/**
+ * GET /admin/nilai
+ * Daftar mata kuliah - pilih satu untuk lihat/edit rekap nilainya.
  */
 router.get('/', async (req, res) => {
   try {
@@ -128,12 +132,19 @@ router.post('/', async (req, res) => {
 });
 
 // ============================================================================
-// DETAIL NILAI PER MATA KULIAH
+// DETAIL NILAI PER MATA KULIAH - bisa diedit langsung dari sini.
+// Nilai Akhir dihitung pakai rumus RESMI yang sama dengan Rubrik Penilaian
+// (getHasilRubrikSemuaMahasiswa -> hitungRubrik, bobot bisa diatur per
+// prodi), BUKAN rumus 40/30/30 tetap yang lama - supaya "Nilai Akhir" yang
+// tampil di sini selalu sama persis dengan yang tampil di Rubrik, dan
+// mengedit nilai di sini otomatis nyambung ke perhitungan Rubrik juga
+// (keduanya baca/tulis koleksi 'nilai' yang sama).
 // ============================================================================
 
 /**
  * GET /admin/nilai/:mkId
- * Menampilkan daftar mahasiswa beserta nilai tugas, UTS, UAS, dan nilai akhir
+ * Menampilkan grid nilai (kehadiran/sikap/keaktifan/kuis/UTS/UAS/tugas)
+ * semua mahasiswa di MK ini, siap diedit inline.
  */
 router.get('/:mkId', async (req, res) => {
   try {
@@ -145,75 +156,74 @@ router.get('/:mkId', async (req, res) => {
     }
     const mk = { id: mkId, ...mkDoc.data() };
 
-    // Ambil semua mahasiswa yang terdaftar di MK ini pada periode yang dipilih
+    // Mahasiswa yang terdaftar aktif (KRS disetujui) untuk MK+periode ini
     const enrollmentSnapshot = await db.collection('enrollment')
       .where('mkId', '==', mkId)
       .where('semester', '==', periode)
       .where('status', '==', 'active')
       .get();
-
     const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
-    const mahasiswaList = [];
 
-    for (const uid of mahasiswaIds) {
-      const mahasiswa = await getMahasiswaById(uid);
-      // Jalur murah: query terfilter periode. Kalau kosong, kemungkinan data
-      // lama belum ditandai - ambil semua & tandai otomatis (self-heal).
-      let nilaiSnapshot = await db.collection('nilai')
-        .where('mkId', '==', mkId)
-        .where('mahasiswaId', '==', uid)
-        .where('periode', '==', periode)
-        .get();
+    const [{ komponenMap, hasilMap }, { tugasList, perMahasiswa: tugasPerMahasiswa }, mahasiswaArr] = await Promise.all([
+      getHasilRubrikSemuaMahasiswa(mkId, periode),
+      getRincianTugasByMkId(mkId, periode),
+      Promise.all(mahasiswaIds.map(uid => getMahasiswaById(uid)))
+    ]);
 
-      if (nilaiSnapshot.empty) {
-        const semuaSnapshot = await db.collection('nilai')
-          .where('mkId', '==', mkId)
-          .where('mahasiswaId', '==', uid)
-          .get();
-        const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
-        if (perluDitandai.length > 0) {
-          await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode }).catch(() => {})));
-        }
-        nilaiSnapshot = semuaSnapshot;
-      }
-
-      const nilaiMap = {};
-      nilaiSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        if ((data.periode || periode) !== periode) return;
-        nilaiMap[data.tipe] = data.nilai;
-      });
-
-      // Hitung nilai akhir
-      const nilaiAkhir = hitungNilaiAkhir(nilaiMap);
-
-      mahasiswaList.push({
-        mahasiswa,
-        nilai: nilaiMap,
-        nilaiAkhir
-      });
-    }
-
-    // Urutkan berdasarkan NIM
-    mahasiswaList.sort((a, b) => a.mahasiswa.nim.localeCompare(b.mahasiswa.nim));
-
-    // Kumpulkan semua tipe nilai yang ada (untuk header tabel)
-    const tipeSet = new Set();
-    mahasiswaList.forEach(item => {
-      Object.keys(item.nilai).forEach(tipe => tipeSet.add(tipe));
-    });
-    const tipeList = Array.from(tipeSet).sort();
+    const mahasiswaList = mahasiswaIds.map((uid, i) => ({
+      mahasiswaId: uid,
+      mahasiswa: mahasiswaArr[i],
+      komponen: komponenMap[uid] || {},
+      tugas: tugasPerMahasiswa[uid] || {},
+      hasil: hasilMap[uid] || { nilaiAkhir: null, huruf: null }
+    })).sort((a, b) => (a.mahasiswa.nim || '').localeCompare(b.mahasiswa.nim || ''));
 
     res.render('admin/nilai_detail', {
       title: `Rekap Nilai - ${mk.kode} ${mk.nama} (${periode})`,
       mk,
       mahasiswaList,
-      tipeList,
+      tugasList,
+      tipeKomponen: TIPE_RUBRIK_KOMPONEN,
       periode
     });
   } catch (error) {
     console.error('Error detail nilai:', error);
-    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat detail nilai' });
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat detail nilai: ' + error.message });
+  }
+});
+
+/**
+ * POST /admin/nilai/:mkId/set
+ * Menyimpan SATU nilai komponen (kehadiran/sikap/keaktifan/kuis/UTS/UAS)
+ * atau satu nilai tugas, dipanggil lewat AJAX tiap kali admin selesai
+ * mengedit satu kotak (auto-save, sama seperti pola di halaman Rubrik).
+ * Body: { mahasiswaId, tipe, nilai, periode, judulTugas? }
+ * `tipe` = salah satu TIPE_RUBRIK_KOMPONEN (komponen rubrik), ATAU
+ * `tugas_<tugasId>` (nilai tugas individual).
+ */
+router.post('/:mkId/set', async (req, res) => {
+  try {
+    const mkId = req.params.mkId;
+    const { mahasiswaId, tipe, nilai, periode, judulTugas } = req.body;
+    if (!mahasiswaId || !tipe || nilai === undefined || nilai === '') {
+      return res.status(400).json({ success: false, message: 'Data tidak lengkap' });
+    }
+    const p = periode || getPeriodeAktif();
+
+    if (TIPE_RUBRIK_KOMPONEN.includes(tipe)) {
+      await saveKomponenRubrik(mahasiswaId, mkId, tipe, nilai, p);
+    } else if (tipe.startsWith('tugas_')) {
+      const tugasId = tipe.replace('tugas_', '');
+      await saveNilai(mahasiswaId, mkId, tugasId, judulTugas || 'Tugas', nilai, p);
+    } else {
+      return res.status(400).json({ success: false, message: 'Tipe nilai tidak dikenali' });
+    }
+
+    const hasil = await getHasilRubrikSatuMahasiswa(mahasiswaId, mkId, p);
+    res.json({ success: true, hasil });
+  } catch (error) {
+    console.error('Error menyimpan nilai (grid admin):', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

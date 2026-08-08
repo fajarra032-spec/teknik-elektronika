@@ -227,6 +227,47 @@
 </style>
 
 <div class="container mt-4 mb-5">
+  <!-- Structured data (JSON-LD) supaya Google mengenali dokumen ini dengan
+       tipe yang tepat (laporan magang mahasiswa = Thesis, penelitian dosen =
+       ScholarlyArticle, dst) - membantu proses crawling & indexing -->
+  <%
+    const schemaTypeMap = { laporan: 'Thesis', artikel: 'Article', penelitian: 'ScholarlyArticle', pengabdian: 'CreativeWork', buku: 'Book' };
+    const schemaJudul = item.judulPublik || item.title || item.judul || '(Judul tidak tersedia)';
+    const schemaPenulis = item.nama || item.penulis || item.dosenNama || 'Anonim';
+    const schemaAbstrakPolos = (item.abstrak || item.abstract || item.deskripsi || '').replace(/<[^>]*>?/gm, '').trim();
+    const schemaTanggal = item.approvedAt || item.createdAt || item.uploadedAt || '';
+  %>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": <%- JSON.stringify(schemaTypeMap[item._type] || 'CreativeWork') %>,
+    "name": <%- JSON.stringify(schemaJudul) %>,
+    "headline": <%- JSON.stringify(schemaJudul) %>,
+    "abstract": <%- JSON.stringify(schemaAbstrakPolos) %>,
+    "author": {
+      "@type": "Person",
+      "name": <%- JSON.stringify(schemaPenulis) %>
+    },
+    <% if (item.pembimbing) { %>
+    "creator": {
+      "@type": "Person",
+      "name": <%- JSON.stringify(item.pembimbing) %>
+    },
+    <% } %>
+    <% if (item.tahun) { %>
+    "datePublished": <%- JSON.stringify(String(item.tahun)) %>,
+    <% } else if (schemaTanggal) { %>
+    "datePublished": <%- JSON.stringify(schemaTanggal) %>,
+    <% } %>
+    "publisher": {
+      "@type": "CollegeOrUniversity",
+      "name": "Politeknik Dewantara"
+    },
+    "isAccessibleForFree": true,
+    "inLanguage": "id"
+  }
+  </script>
+
   <!-- Breadcrumb -->
   <nav class="breadcrumb-nav">
     <a href="/" class="text-decoration-none text-muted">Home</a> / 

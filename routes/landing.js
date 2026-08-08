@@ -5,7 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { db } = require('../config/firebaseAdmin');
+const { db, admin } = require('../config/firebaseAdmin');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -593,13 +593,27 @@ router.get('/berita', async (req, res) => {
 
 router.get('/berita/:id', async (req, res) => {
   try {
-    const doc = await db.collection('berita').doc(req.params.id).get();
+    const docRef = db.collection('berita').doc(req.params.id);
+    const doc = await docRef.get();
     if (!doc.exists) {
       return res.status(404).render('404', { title: 'Berita Tidak Ditemukan', user: req.user || null });
     }
     const berita = doc.data();
     const isiPolos = (berita.isi || '').replace(/<[^>]*>?/gm, '').trim();
     const description = isiPolos.length > 160 ? isiPolos.substring(0, 157) + '...' : (isiPolos || 'Berita Program Studi Teknik Elektronika Politeknik Dewantara.');
+
+    // Tambah jumlah "dilihat" +1 setiap kali halaman diakses.
+    // Dijalankan tanpa "await" (fire-and-forget) supaya tidak memperlambat
+    // render halaman, dan tidak menggagalkan request jika update-nya gagal.
+    // Bot/crawler (Googlebot, WhatsApp preview, dll) sengaja tidak dihitung
+    // supaya angka "dilihat" mencerminkan pembaca asli.
+    const userAgent = (req.headers['user-agent'] || '').toLowerCase();
+    const isBot = /bot|crawl|spider|slurp|facebookexternalhit|whatsapp|preview/i.test(userAgent);
+    if (!isBot) {
+      docRef.update({ dilihat: admin.firestore.FieldValue.increment(1) })
+        .catch(err => console.error('Gagal update jumlah dilihat berita:', err.message));
+      berita.dilihat = (berita.dilihat || 0) + 1; // langsung tampilkan angka terbaru di request ini
+    }
 
     res.render('berita_detail', {
       title: berita.judul || 'Detail Berita',

@@ -94,6 +94,7 @@ router.use('/tracklulusan', require('./tracklulusan'));
 
 // Testimoni Alumni – konten dinamis untuk landing page (section "Apa Kata Alumni?")
 router.use('/testimoni', require('./testimoni'));
+router.use('/komunitas', require('./komunitas'));
 
 // Video Konten – konten dinamis untuk landing page (section "Video Konten")
 router.use('/video-konten', require('./videoKonten'));

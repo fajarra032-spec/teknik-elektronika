@@ -148,6 +148,7 @@ router.get('/', async (req, res) => {
 
     res.render('elkLibrary/index', {
       title: 'ELK Library',
+      description: `Koleksi ${totalItemsGlobal} karya ilmiah Program Studi Teknik Elektronika Politeknik Dewantara: laporan magang mahasiswa, penelitian dosen, pengabdian masyarakat, dan buku.`,
       items: itemsForView,
       filters: {
         search: search || '',
@@ -209,8 +210,23 @@ router.get('/:id', async (req, res) => {
     // Increment views jika ada field views
     await doc.ref.update({ views: (data.views || 0) + 1 });
 
+    const judul = item.judulPublik || item.title || item.judul || 'Detail';
+    const penulis = item.nama || item.penulis || item.dosenNama || 'Anonim';
+    const abstrakPolos = (item.abstrak || item.abstract || item.deskripsi || '').replace(/<[^>]*>?/gm, '').trim();
+    const description = abstrakPolos.length > 160
+      ? abstrakPolos.substring(0, 157) + '...'
+      : (abstrakPolos || `${judul} oleh ${penulis} - koleksi ELK Library Program Studi Teknik Elektronika Politeknik Dewantara.`);
+
+    // Item yang belum "approved" (masih menunggu verifikasi admin) sebaiknya
+    // tidak diindeks Google, walau tetap bisa diakses lewat link langsung.
+    if (item.status && item.status !== 'approved') {
+      res.locals.robotsMeta = 'noindex, nofollow';
+    }
+
     res.render('elkLibrary/detail', {
-      title: item.judul || item.judulPublik || item.title || 'Detail',
+      title: judul,
+      description,
+      ogType: 'article',
       item
     });
   } catch (error) {

@@ -1,0 +1,172 @@
+<%- include('../partials/header') %>
+
+<style>
+  .komunitas-wrap {
+    display: flex; flex-direction: column; height: calc(100vh - 180px); min-height: 500px;
+    background: white; border-radius: 1rem; box-shadow: var(--shadow-sm, 0 0.5rem 1rem rgba(0,0,0,0.05));
+    overflow: hidden; max-width: 800px; margin: 0 auto;
+  }
+  .komunitas-header {
+    padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0;
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .komunitas-header i { font-size: 1.3rem; color: var(--primary-start, #1e3a8a); }
+  .komunitas-header .subtitle { font-size: 0.78rem; color: #64748b; }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 10px; }
+  .bubble-wrap { max-width: 78%; position: relative; }
+  .bubble-wrap.me { align-self: flex-end; }
+  .bubble-sender { font-size: 0.7rem; font-weight: 600; margin-bottom: 2px; padding: 0 4px; display: flex; align-items: center; gap: 4px; }
+  .role-badge { font-size: 0.6rem; padding: 1px 6px; border-radius: 50px; font-weight: 700; text-transform: uppercase; }
+  .role-badge.admin { background: #fee2e2; color: #b91c1c; }
+  .role-badge.dosen { background: #fef3c7; color: #92400e; }
+  .role-badge.mahasiswa { background: #dbeafe; color: #1e40af; }
+  .bubble { padding: 8px 12px; border-radius: 12px; font-size: 0.9rem; word-break: break-word; }
+  .bubble.me { background: var(--primary-start, #1e3a8a); color: white; border-bottom-right-radius: 3px; }
+  .bubble.other { background: #f1f5f9; color: #0f172a; border-bottom-left-radius: 3px; }
+  .bubble-time { font-size: 0.65rem; opacity: 0.7; display: block; margin-top: 3px; }
+  .bubble-delete {
+    font-size: 0.65rem; color: #94a3b8; background: none; border: none; padding: 0 4px;
+    cursor: pointer; opacity: 0; transition: opacity 0.2s;
+  }
+  .bubble-wrap:hover .bubble-delete { opacity: 1; }
+  .bubble-delete:hover { color: #dc2626; }
+  .chat-input-row { border-top: 1px solid #e2e8f0; padding: 0.75rem; display: flex; gap: 0.5rem; }
+  @media (max-width: 768px) {
+    .komunitas-wrap { height: calc(100vh - 140px); }
+  }
+</style>
+
+<div class="container-fluid mt-4" style="max-width: 850px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0"><i class="bi bi-people-fill me-2"></i>Komunitas</h5>
+    <a href="/dosen/dashboard" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Kembali
+    </a>
+  </div>
+
+  <div class="komunitas-wrap">
+    <div class="komunitas-header">
+      <i class="bi bi-chat-square-heart"></i>
+      <div>
+        <div class="fw-bold">Ruang Obrolan Umum</div>
+        <div class="subtitle">Terbuka untuk seluruh admin, dosen, dan mahasiswa</div>
+      </div>
+    </div>
+    <div id="chat-messages" class="chat-messages">
+      <p class="text-muted text-center small">Memuat pesan...</p>
+    </div>
+    <form id="chat-form" class="chat-input-row">
+      <input type="text" id="chat-input" class="form-control" placeholder="Tulis pesan ke komunitas..." autocomplete="off" maxlength="1000" required>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i></button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const API_BASE = '/dosen/komunitas';
+  const currentUserId = <%- JSON.stringify(currentUserId) %>;
+  const currentUserRole = <%- JSON.stringify(currentUserRole) %>;
+  const isModerator = currentUserRole === 'admin';
+  const chatMessages = document.getElementById('chat-messages');
+  const chatForm = document.getElementById('chat-form');
+  const chatInput = document.getElementById('chat-input');
+
+  let lastTimestamp = null;
+  let pollTimer = null;
+  const POLL_INTERVAL_MS = 8000;
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  function roleBadgeHtml(role) {
+    const label = role === 'admin' ? 'Admin' : (role === 'dosen' ? 'Dosen' : 'Mahasiswa');
+    return `<span class="role-badge ${role}">${label}</span>`;
+  }
+
+  function bubbleHtml(m) {
+    const isMe = m.senderId === currentUserId;
+    const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+    const canDelete = isMe || isModerator;
+    return `<div class="bubble-wrap ${isMe ? 'me' : ''}" data-id="${m.id}">
+              ${!isMe ? `<div class="bubble-sender">${escapeHtml(m.senderNama)} ${roleBadgeHtml(m.senderRole)}</div>` : ''}
+              <div class="bubble ${isMe ? 'me' : 'other'}">${escapeHtml(m.pesan)}<span class="bubble-time">${time}${canDelete ? ` <button class="bubble-delete" onclick="hapusPesan('${m.id}')" title="Hapus pesan"><i class="bi bi-trash3"></i></button>` : ''}</span></div>
+            </div>`;
+  }
+
+  async function loadMessages() {
+    try {
+      const url = lastTimestamp
+        ? `${API_BASE}/messages?sejak=${encodeURIComponent(lastTimestamp)}`
+        : `${API_BASE}/messages`;
+      const res = await fetch(url);
+      const messages = await res.json();
+      if (!Array.isArray(messages) || messages.length === 0) {
+        if (lastTimestamp === null) {
+          chatMessages.innerHTML = '<p class="text-muted text-center small">Belum ada pesan. Mulai obrolan komunitas!</p>';
+        }
+        return;
+      }
+      if (lastTimestamp === null) {
+        chatMessages.innerHTML = messages.map(bubbleHtml).join('');
+      } else {
+        chatMessages.insertAdjacentHTML('beforeend', messages.map(bubbleHtml).join(''));
+      }
+      lastTimestamp = messages[messages.length - 1].timestamp;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    } catch (err) {
+      console.error('Gagal memuat pesan komunitas:', err);
+    }
+  }
+
+  async function hapusPesan(id) {
+    if (!confirm('Hapus pesan ini?')) return;
+    try {
+      await fetch(`${API_BASE}/${id}/delete`, { method: 'POST' });
+      const el = chatMessages.querySelector(`[data-id="${id}"]`);
+      if (el) el.remove();
+    } catch (err) {
+      console.error('Gagal menghapus pesan:', err);
+    }
+  }
+
+  chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pesan = chatInput.value.trim();
+    if (!pesan) return;
+    chatInput.value = '';
+    try {
+      await fetch(`${API_BASE}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pesan })
+      });
+      await loadMessages();
+    } catch (err) {
+      console.error('Gagal mengirim pesan komunitas:', err);
+    }
+  });
+
+  function startPolling() {
+    if (pollTimer) return;
+    pollTimer = setInterval(loadMessages, POLL_INTERVAL_MS);
+  }
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopPolling();
+    } else {
+      loadMessages();
+      startPolling();
+    }
+  });
+
+  loadMessages();
+  if (!document.hidden) startPolling();
+</script>
+
+<%- include('../partials/footer') %>

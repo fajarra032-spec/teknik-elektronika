@@ -99,6 +99,43 @@
     </div>
   <% } %>
 
+  <!-- Pilih Periode - halaman ini sebelumnya SELALU terkunci ke periode
+       aktif sekarang, tidak ada cara pindah lihat periode lain lewat UI.
+       Ini bisa bikin tugas/nilai yang diberikan di periode lain terlihat
+       "hilang" padahal cuma tidak sedang ditampilkan. -->
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <label for="periodeSelect" class="mb-0 small text-muted">Periode:</label>
+    <select id="periodeSelect" class="form-select form-select-sm" style="width: auto;"
+      onchange="window.location.href = '/dosen/rubrik/<%= mk.id %>?periode=' + encodeURIComponent(this.value)">
+      <option value="<%= periode %>" selected><%= periode %> (sedang dibuka)</option>
+      <% if (typeof periodeLain !== 'undefined') { %>
+        <% periodeLain.forEach(p => { %>
+          <option value="<%= p %>"><%= p %></option>
+        <% }) %>
+      <% } %>
+    </select>
+  </div>
+
+  <% if (typeof periodeLain !== 'undefined' && periodeLain.length > 0) { %>
+    <div class="alert alert-warning" style="border-radius: 0.8rem;">
+      <i class="bi bi-calendar-x me-1"></i>
+      Ada tugas untuk MK ini yang tercatat di periode lain:
+      <strong><%= periodeLain.join(', ') %></strong> - bukan di periode
+      <strong><%= periode %></strong> yang sedang Anda buka. Coba pilih periode
+      itu dari dropdown di atas untuk melihat/menilai tugasnya.
+    </div>
+  <% } %>
+
+  <% if (typeof jumlahNilaiTugasTanpaTugas !== 'undefined' && jumlahNilaiTugasTanpaTugas > 0) { %>
+    <div class="alert alert-warning" style="border-radius: 0.8rem;">
+      <i class="bi bi-exclamation-triangle-fill me-1"></i>
+      Ditemukan <strong><%= jumlahNilaiTugasTanpaTugas %></strong> nilai tugas tersimpan
+      untuk MK ini yang dokumen tugasnya sudah tidak ada lagi (mis. tugasnya sempat
+      dihapus setelah dinilai). Nilai ini <strong>tidak akan pernah muncul</strong> di
+      Rata Tugas manapun sampai ditangani manual oleh admin langsung di database.
+    </div>
+  <% } %>
+
   <!-- Bobot Komponen -->
   <div class="bobot-card">
     <form method="POST" action="/dosen/rubrik/<%= mk.id %>/bobot" class="row g-3 align-items-end">

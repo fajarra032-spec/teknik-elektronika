@@ -1,100 +1,210 @@
 <%- include('../partials/header') %>
 
+<%
+  const pakaiSikap = true, pakaiKeaktifan = true, pakaiKuis = true;
+  const kehadiranColspan = 4; // Total Pertemuan, Jml Hadir, Sikap, Keaktifan
+  const totalKolom = 3 + kehadiranColspan + 1 + 1 + 2 + 2; // + Tugas + Kuis + UTS/UAS + Nilai Akhir/Huruf
+%>
+
 <style>
-  .detail-header {
+  body { background-color: #f8fafc; }
+  .page-header {
     background: linear-gradient(135deg, #2193b0, #6dd5ed);
-    border-radius: 1rem;
-    padding: 1.5rem;
-    color: white;
-    margin-bottom: 2rem;
+    border-radius: 1.5rem; padding: 1.5rem 2rem; color: white; margin-bottom: 1.5rem;
+    box-shadow: 0 15px 30px rgba(33,147,176,0.25);
   }
-  .nilai-table th {
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
-    color: white;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-    border: none;
+  .page-header h2 { font-weight: 700; margin: 0; }
+  .page-header .btn-back, .page-header .btn-cetak {
+    background: white; border: none; border-radius: 50px; padding: 0.5rem 1.4rem; font-weight: 600;
+    color: #2193b0; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: all 0.3s;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;
   }
-  .nilai-table td {
-    vertical-align: middle;
-    padding: 0.75rem 0.5rem;
+  .page-header .btn-back:hover, .page-header .btn-cetak:hover { transform: translateY(-3px); }
+
+  .table-responsive { border-radius: 1.2rem; overflow-x: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(33,147,176,0.1); background: white; }
+  .nilai-table { width: 100%; border-collapse: collapse; margin-bottom: 0; min-width: 1200px; }
+  .nilai-table thead th {
+    background: linear-gradient(135deg, #2193b0, #6dd5ed); color: white; font-weight: 600;
+    text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.3px; padding: 0.6rem 0.4rem;
+    text-align: center; border: 1px solid rgba(255,255,255,0.2);
   }
-  .table-responsive {
-    border-radius: 1rem;
-    overflow: hidden;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+  .nilai-table tbody td { vertical-align: middle; padding: 0.4rem; border-bottom: 1px solid #e9ecef; font-size: 0.85rem; text-align: center; }
+  .nilai-table tbody tr:nth-child(even) { background: #f8fafc; }
+  .nilai-table .name-cell { text-align: left; font-weight: 500; }
+  .nilai-table input.komponen-input {
+    width: 60px; text-align: center; border: 1px solid #dee2e6; border-radius: 0.4rem; padding: 0.25rem; font-size: 0.85rem;
   }
-  .btn-action {
-    margin: 2px;
-    border-radius: 8px;
-    padding: 0.3rem 0.8rem;
-    font-size: 0.85rem;
-  }
+  .nilai-table input.komponen-input:focus { border-color: #2193b0; outline: none; box-shadow: 0 0 0 0.15rem rgba(33,147,176,0.2); }
+  .komponen-input.saved-flash { border-color: #22c55e !important; box-shadow: 0 0 0 0.15rem rgba(34,197,94,0.3) !important; }
+  .readonly-cell { background: #e2efda !important; font-weight: 600; border-radius: 0.5rem; padding: 0.3rem 0.4rem; display: inline-block; min-width: 45px; }
+  .final-cell { background: #d9e1f2; font-weight: 700; border-radius: 0.5rem; padding: 0.3rem 0.5rem; display: inline-block; min-width: 45px; }
+  .huruf-badge { font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.8rem; background: #e2e3e5; }
+  .belum-lengkap-hint { font-size: 0.65rem; color: #b45309; margin-top: 2px; line-height: 1.2; }
+  .saving-note { font-size: 0.8rem; color: #6c757d; }
 </style>
 
 <div class="container-fluid mt-4">
-  <div class="detail-header d-flex justify-content-between align-items-center">
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-2">
     <div>
-      <h2 class="fw-bold"><%= mk.kode %> - <%= mk.nama %></h2>
-      <p class="mb-0 opacity-75">SKS: <%= mk.sks %> | Semester: <%= mk.semester || '-' %></p>
+      <h2><i class="bi bi-table me-2"></i><%= mk.kode %> - <%= mk.nama %></h2>
+      <p class="mb-0 opacity-75">SKS: <%= mk.sks %> &middot; Periode: <%= periode %></p>
     </div>
-    <a href="/admin/nilai" class="btn btn-light">
-      <i class="bi bi-arrow-left me-2"></i>Kembali
-    </a>
+    <div class="d-flex gap-2">
+      <a href="/admin/rubrik/<%= mk.id %>?periode=<%= encodeURIComponent(periode) %>" class="btn-cetak">
+        <i class="bi bi-clipboard-data"></i> Lihat di Rubrik
+      </a>
+      <a href="/admin/nilai" class="btn-back"><i class="bi bi-arrow-left"></i> Kembali</a>
+    </div>
+  </div>
+
+  <div class="alert alert-light border" style="border-radius: 1rem;">
+    <i class="bi bi-info-circle-fill me-2" style="color: #2193b0;"></i>
+    <span class="small text-muted">
+      Nilai Akhir di sini dihitung pakai rumus resmi yang sama dengan
+      <a href="/admin/rubrik/<%= mk.id %>?periode=<%= encodeURIComponent(periode) %>">Rubrik Penilaian</a>
+      (bobot komponen bisa diatur dosen di halaman Rubrik). Mengedit nilai di sini otomatis nyambung ke sana juga -
+      keduanya baca/tulis data yang sama. Nilai tugas individual (per tugas) hanya bisa diedit lewat halaman
+      Rubrik/Rincian Tugas, di sini cuma tampil rata-ratanya.
+    </span>
   </div>
 
   <div class="table-responsive">
-    <table class="table nilai-table">
+    <table class="nilai-table">
       <thead>
         <tr>
-          <th>No</th>
-          <th>NIM</th>
-          <th>Nama</th>
-          <% tipeList.forEach(tipe => { %>
-            <th><%= tipe %></th>
-          <% }) %>
-          <th>Nilai Akhir</th>
+          <th rowspan="2">No</th>
+          <th rowspan="2">NIM</th>
+          <th rowspan="2">Nama Mahasiswa</th>
+          <th colspan="<%= kehadiranColspan %>">Kehadiran, Sikap &amp; Keaktifan</th>
+          <th rowspan="2">Tugas<br><small>(rata-rata)</small></th>
+          <th rowspan="2">Kuis</th>
+          <th rowspan="2">UTS</th>
+          <th rowspan="2">UAS</th>
+          <th rowspan="2">Nilai<br>Akhir</th>
+          <th rowspan="2">Huruf</th>
+        </tr>
+        <tr>
+          <th>Total<br>Pertemuan</th>
+          <th>Jml<br>Hadir</th>
+          <th>Sikap</th>
+          <th>Keaktifan</th>
         </tr>
       </thead>
       <tbody>
         <% if (mahasiswaList.length === 0) { %>
-          <tr>
-            <td colspan="<%= 3 + tipeList.length + 1 %>" class="text-center py-5">
-              <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
-              <p class="text-muted">Tidak ada mahasiswa terdaftar.</p>
-            </td>
-          </tr>
+          <tr><td colspan="<%= totalKolom %>" class="text-center py-5 text-muted">Belum ada mahasiswa aktif (KRS disetujui) di MK ini untuk periode <%= periode %>.</td></tr>
         <% } %>
-        <% mahasiswaList.forEach((item, index) => { %>
+        <% mahasiswaList.forEach((item, idx) => { %>
+          <% const k = item.komponen; const h = item.hasil; const mid = item.mahasiswaId; %>
           <tr>
-            <td class="text-center"><%= index + 1 %></td>
+            <td><%= idx + 1 %></td>
             <td><%= item.mahasiswa.nim %></td>
-            <td><%= item.mahasiswa.nama %></td>
-            <% tipeList.forEach(tipe => { 
-              const nilai = item.nilai[tipe];
-            %>
-              <td class="text-center">
-                <% if (nilai) { %>
-                  <span class="badge bg-primary"><%= nilai %></span>
-                <% } else { %>
-                  <span class="text-muted">-</span>
-                <% } %>
-              </td>
-            <% }) %>
-            <td class="text-center">
-              <% if (item.nilaiAkhir) { %>
-                <strong><%= item.nilaiAkhir.toFixed(2) %></strong>
+            <td class="name-cell"><%= item.mahasiswa.nama %></td>
+            <td>
+              <input type="number" class="komponen-input" value="<%= k.KEHADIRAN_TOTAL ?? 16 %>"
+                     oninput="jadwalSimpan(this, '<%= mid %>', 'KEHADIRAN_TOTAL')">
+            </td>
+            <td>
+              <input type="number" class="komponen-input" value="<%= k.KEHADIRAN_JUMLAH ?? '' %>"
+                     oninput="jadwalSimpan(this, '<%= mid %>', 'KEHADIRAN_JUMLAH')">
+            </td>
+            <td>
+              <input type="number" min="0" max="100" class="komponen-input" value="<%= k.SIKAP ?? '' %>"
+                     oninput="jadwalSimpan(this, '<%= mid %>', 'SIKAP')">
+            </td>
+            <td>
+              <input type="number" min="0" max="100" class="komponen-input" value="<%= k.KEAKTIFAN ?? '' %>"
+                     oninput="jadwalSimpan(this, '<%= mid %>', 'KEAKTIFAN')">
+            </td>
+            <td><span class="readonly-cell" id="tugas-<%= mid %>"><%= (item.tugas && item.tugas.rata !== null && item.tugas.rata !== undefined) ? item.tugas.rata.toFixed(2) : '-' %></span></td>
+            <td>
+              <input type="number" min="0" max="100" class="komponen-input" value="<%= k.KUIS ?? '' %>"
+                     oninput="jadwalSimpan(this, '<%= mid %>', 'KUIS')">
+            </td>
+            <td>
+              <input type="number" min="0" max="100" class="komponen-input" value="<%= k.UTS ?? '' %>"
+                     oninput="jadwalSimpan(this, '<%= mid %>', 'UTS')">
+            </td>
+            <td>
+              <input type="number" min="0" max="100" class="komponen-input" value="<%= k.UAS ?? '' %>"
+                     oninput="jadwalSimpan(this, '<%= mid %>', 'UAS')">
+            </td>
+            <td>
+              <span class="final-cell" id="nilai-akhir-<%= mid %>"><%= h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-' %></span>
+              <% if (h.nilaiAkhir === null && h.belumLengkap && h.belumLengkap.length > 0) { %>
+                <div class="belum-lengkap-hint" id="belum-lengkap-<%= mid %>">Belum: <%= h.belumLengkap.join(', ') %></div>
               <% } else { %>
-                <span class="text-muted">-</span>
+                <div class="belum-lengkap-hint" id="belum-lengkap-<%= mid %>" style="display:none;"></div>
               <% } %>
             </td>
+            <td><span class="huruf-badge" id="huruf-<%= mid %>"><%= h.huruf || '-' %></span></td>
           </tr>
         <% }) %>
       </tbody>
     </table>
   </div>
+  <p class="saving-note mt-2">
+    <i class="bi bi-info-circle"></i> Nilai tersimpan otomatis ~1 detik setelah Anda berhenti mengetik (tanpa reload halaman).
+  </p>
 </div>
+
+<script>
+const timers = {};
+
+function jadwalSimpan(el, mahasiswaId, tipe) {
+  const key = mahasiswaId + '-' + tipe;
+  clearTimeout(timers[key]);
+  timers[key] = setTimeout(() => simpanNilai(el, mahasiswaId, tipe), 900);
+}
+
+async function simpanNilai(el, mahasiswaId, tipe) {
+  const nilai = el.value;
+  if (nilai === '') return;
+  try {
+    const body = new URLSearchParams({
+      mahasiswaId,
+      tipe,
+      nilai,
+      periode: '<%= periode %>'
+    });
+    const res = await fetch('/admin/nilai/<%= mk.id %>/set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body
+    });
+    const json = await res.json();
+    if (json.success) {
+      updateBarisHasil(mahasiswaId, json.hasil);
+      el.classList.add('saved-flash');
+      setTimeout(() => el.classList.remove('saved-flash'), 700);
+    } else {
+      alert('Gagal menyimpan: ' + json.message);
+    }
+  } catch (err) {
+    alert('Gagal menyimpan nilai: ' + err.message);
+  }
+}
+
+function updateBarisHasil(mahasiswaId, h) {
+  const tugasEl = document.getElementById('tugas-' + mahasiswaId);
+  if (tugasEl) tugasEl.textContent = h.rataTugas !== null ? h.rataTugas.toFixed(2) : '-';
+
+  const nilaiAkhirEl = document.getElementById('nilai-akhir-' + mahasiswaId);
+  if (nilaiAkhirEl) nilaiAkhirEl.textContent = h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-';
+
+  const belumLengkapEl = document.getElementById('belum-lengkap-' + mahasiswaId);
+  if (belumLengkapEl) {
+    if (h.nilaiAkhir === null && h.belumLengkap && h.belumLengkap.length > 0) {
+      belumLengkapEl.textContent = 'Belum: ' + h.belumLengkap.join(', ');
+      belumLengkapEl.style.display = '';
+    } else {
+      belumLengkapEl.style.display = 'none';
+    }
+  }
+
+  const hurufEl = document.getElementById('huruf-' + mahasiswaId);
+  if (hurufEl) hurufEl.textContent = h.huruf || '-';
+}
+</script>
 
 <%- include('../partials/footer') %>
