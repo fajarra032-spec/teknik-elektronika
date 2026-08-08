@@ -107,10 +107,65 @@ const isAdminOrDosen = (req, res, next) => {
   }
 };
 
+/**
+ * Middleware OPSIONAL: coba kenali user yang sedang login (dari session
+ * cookie), tapi TIDAK PERNAH redirect/blokir kalau belum login atau
+ * cookie-nya tidak valid - selalu lanjut ke next(). Beda dengan verifyToken
+ * yang wajib login.
+ *
+ * Dipakai secara global di app.js supaya req.user tersedia di halaman
+ * publik (landing, dokumen/layanan, cek data, panduan, dll) - dipakai
+ * partials/header-landing.ejs untuk menampilkan menu "Dashboard/Logout"
+ * alih-alih "Login" kalau user sudah login. Sebelumnya halaman-halaman
+ * publik ini tidak pernah diberi middleware auth sama sekali, jadi req.user
+ * selalu undefined dan navbar selalu menampilkan "Login" walau user sudah
+ * login di tab/kunjungan lain.
+ */
+const attachUserIfLoggedIn = async (req, res, next) => {
+  const sessionCookie = req.cookies && req.cookies.session;
+  if (!sessionCookie) {
+    req.user = null;
+    return next();
+  }
+
+  try {
+    const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+    const uid = decodedClaims.uid;
+
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (userDoc.exists) {
+      req.user = { id: uid, ...userDoc.data() };
+    } else {
+      const dosenSnapshot = await db.collection('dosen').where('userId', '==', uid).limit(1).get();
+      if (!dosenSnapshot.empty) {
+        const dosenData = dosenSnapshot.docs[0].data();
+        req.user = {
+          id: uid,
+          nama: dosenData.nama,
+          email: dosenData.email,
+          role: 'dosen',
+          dosenId: dosenSnapshot.docs[0].id,
+          ...dosenData
+        };
+      } else {
+        req.user = null;
+      }
+    }
+  } catch (error) {
+    // Cookie kadaluarsa/tidak valid - anggap saja belum login, jangan
+    // clear cookie atau redirect di sini (biarkan verifyToken yang urus
+    // itu di halaman yang memang wajib login).
+    req.user = null;
+  }
+
+  next();
+};
+
 module.exports = {
   verifyToken,
   isAdmin,
   isMahasiswa,
   isDosen,
-  isAdminOrDosen
+  isAdminOrDosen,
+  attachUserIfLoggedIn
 };

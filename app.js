@@ -244,7 +244,15 @@ async function startServer() {
     // ============================================================================
     // ROUTES (semua require setelah Firebase siap)
     // ============================================================================
-    const { verifyToken } = require('./middleware/auth');
+    const { verifyToken, attachUserIfLoggedIn } = require('./middleware/auth');
+
+    // Middleware global (opsional, tidak redirect): supaya req.user tersedia
+    // di semua halaman publik (landing, dokumen/layanan, cek data, panduan,
+    // berita) - dipakai navbar (partials/header-landing.ejs) untuk
+    // menampilkan "Dashboard/Logout" alih-alih "Login" kalau user sudah
+    // login. Dipasang di sini (sebelum semua route) supaya berlaku untuk
+    // seluruh route publik sekaligus tanpa perlu ditambahkan satu-satu.
+    app.use(attachUserIfLoggedIn);
 
     // ROUTES PUBLIK
     const landingRoutes = require('./routes/landing');
