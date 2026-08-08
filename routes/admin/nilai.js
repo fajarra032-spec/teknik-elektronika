@@ -72,13 +72,25 @@ router.get('/mahasiswa/:userId/tambah', async (req, res) => {
     const mkSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
     const courses = mkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    const { items } = await getTranskripMahasiswa(req.params.userId);
+    const { items, perSemester } = await getTranskripMahasiswa(req.params.userId);
+
+    // Daftar semester untuk dropdown - gabungan semester yang sudah pernah
+    // dipakai mahasiswa ini (dari KRS/enrollment/nilai) + periode aktif saat
+    // ini (supaya tetap bisa input nilai untuk semester berjalan meski
+    // belum ada histori sama sekali). Ini menggantikan input teks bebas
+    // yang sebelumnya rawan typo (bikin data nilai "nyasar" karena string
+    // semester tidak persis sama dengan yang dipakai KRS/enrollment).
+    const semesterSet = new Set(perSemester.map(s => s.semester));
+    semesterSet.add(getPeriodeAktif());
+    const semesterOptions = Array.from(semesterSet).sort();
 
     res.render('admin/nilai_form', {
       title: `Input Nilai - ${mahasiswa.nama || mahasiswa.id}`,
       mahasiswa,
       courses,
-      grades: items
+      grades: items,
+      semesterOptions,
+      success: req.query.success
     });
   } catch (error) {
     console.error('Error menampilkan form nilai:', error);
@@ -88,24 +100,28 @@ router.get('/mahasiswa/:userId/tambah', async (req, res) => {
 
 /**
  * POST /admin/nilai
- * Menyimpan nilai akhir mahasiswa untuk satu mata kuliah ke koleksi 'grades'
+ * Menyimpan (atau memperbarui, kalau kombinasi mahasiswa+kodeMk+semester
+ * sudah ada) nilai akhir mahasiswa ke koleksi 'grades'.
  */
 router.post('/', async (req, res) => {
   const { userId, kodeMk, namaMk, sks, nilai, semester } = req.body;
   try {
-    await saveGradeFinal({ userId, kodeMk, namaMk, sks, nilai, semester });
-    res.redirect(`/admin/nilai/mahasiswa/${userId}/tambah`);
+    const { isNew } = await saveGradeFinal({ userId, kodeMk, namaMk, sks, nilai, semester });
+    res.redirect(`/admin/nilai/mahasiswa/${userId}/tambah?success=${isNew ? 'ditambahkan' : 'diperbarui'}`);
   } catch (error) {
     console.error('Error menyimpan nilai akhir:', error);
     const mahasiswa = await getMahasiswaById(userId);
     const mkSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
     const courses = mkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    const { items } = await getTranskripMahasiswa(userId);
+    const { items, perSemester } = await getTranskripMahasiswa(userId);
+    const semesterSet = new Set(perSemester.map(s => s.semester));
+    semesterSet.add(getPeriodeAktif());
     res.status(400).render('admin/nilai_form', {
       title: `Input Nilai - ${mahasiswa.nama || mahasiswa.id}`,
       mahasiswa,
       courses,
       grades: items,
+      semesterOptions: Array.from(semesterSet).sort(),
       error: error.message
     });
   }

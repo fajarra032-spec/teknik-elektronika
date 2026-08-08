@@ -92,9 +92,20 @@
   </div>
 
   <!-- Form Input Nilai -->
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="alert alert-success" style="border-radius: 0.8rem;">
+      <i class="bi bi-check-circle-fill me-1"></i>
+      Nilai berhasil <%= success === 'diperbarui' ? 'diperbarui' : 'ditambahkan' %>.
+    </div>
+  <% } %>
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger" style="border-radius: 0.8rem;">
+      <i class="bi bi-exclamation-triangle-fill me-1"></i> <%= error %>
+    </div>
+  <% } %>
   <div class="form-card">
     <div class="form-header">
-      <h3><i class="bi bi-pencil-square me-2"></i>Tambah Nilai Baru</h3>
+      <h3 id="formTitle"><i class="bi bi-pencil-square me-2"></i>Tambah Nilai Baru</h3>
     </div>
     <div class="form-body">
       <form method="POST" action="/admin/nilai" id="formNilai">
@@ -130,14 +141,24 @@
 
           <div class="col-md-2">
             <label for="semester" class="form-label fw-semibold">Semester</label>
-            <input type="text" class="form-control" id="semester" name="semester" placeholder="Contoh: Ganjil 2025" required>
+            <select class="form-select" id="semester" name="semester" required>
+              <option value="">-- Pilih Semester --</option>
+              <% semesterOptions.forEach(s => { %>
+                <option value="<%= s %>"><%= s %></option>
+              <% }) %>
+            </select>
           </div>
 
           <div class="col-md-1 d-flex align-items-end">
-            <button type="submit" class="btn-gradient w-100">
+            <button type="submit" class="btn-gradient w-100" id="btnSubmitNilai">
               <i class="bi bi-plus-lg me-1"></i>Tambah
             </button>
           </div>
+        </div>
+        <div class="mt-2">
+          <button type="button" class="btn btn-sm btn-link text-muted d-none" id="btnBatalEdit" onclick="batalEdit()">
+            <i class="bi bi-x-circle me-1"></i>Batal edit, kembali ke mode tambah baru
+          </button>
         </div>
       </form>
     </div>
@@ -165,6 +186,7 @@
                 <th>SKS</th>
                 <th>Nilai</th>
                 <th>Tanggal Input</th>
+                <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -177,11 +199,18 @@
                   <% if (g.belumAdaNilai) { %>
                     <td class="fw-bold"><em>Belum Ada Nilai</em></td>
                     <td><small class="text-muted">-</small></td>
+                    <td><small class="text-muted">Belum bisa diedit di sini - input lewat Rubrik dosen</small></td>
                   <% } else { %>
                     <td class="fw-bold <%= g.nilai >= 80 ? 'text-success' : (g.nilai >= 60 ? 'text-warning' : 'text-danger') %>">
                       <%= g.nilai %>
                     </td>
                     <td><small class="text-muted"><%= new Date(g.createdAt).toLocaleDateString('id-ID') %></small></td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-outline-primary"
+                        onclick="mulaiEdit('<%= g.kodeMk %>', '<%= (g.namaMk || '').replace(/'/g, "\\'") %>', <%= g.sks %>, <%= g.nilai %>, '<%= g.semester %>')">
+                        <i class="bi bi-pencil"></i> Edit
+                      </button>
+                    </td>
                   <% } %>
                 </tr>
               <% }) %>
@@ -208,6 +237,48 @@
     const sks = selected.getAttribute('data-sks') || '';
     document.getElementById('namaMk').value = namaMk;
     document.getElementById('sks').value = sks;
+  });
+
+  // Isi form dengan data nilai yang mau diedit. Karena saveGradeFinal()
+  // di backend meng-upsert berdasarkan (userId, kodeMk, semester), submit
+  // ulang form dengan kombinasi kodeMk+semester yang SAMA PERSIS otomatis
+  // meng-update nilai lama, bukan bikin data baru - makanya kodeMk &
+  // semester dikunci (disabled) selama mode edit, supaya tidak sengaja
+  // berubah dan malah nyasar bikin data baru.
+  function mulaiEdit(kodeMk, namaMk, sks, nilai, semester) {
+    const selectMk = document.getElementById('kodeMk');
+    selectMk.value = kodeMk;
+    document.getElementById('namaMk').value = namaMk;
+    document.getElementById('sks').value = sks;
+    document.getElementById('nilai').value = nilai;
+    document.getElementById('semester').value = semester;
+
+    selectMk.disabled = true;
+    document.getElementById('semester').disabled = true;
+
+    document.getElementById('formTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Edit Nilai - ' + kodeMk;
+    const btn = document.getElementById('btnSubmitNilai');
+    btn.innerHTML = '<i class="bi bi-save me-1"></i>Simpan';
+    document.getElementById('btnBatalEdit').classList.remove('d-none');
+
+    document.getElementById('formNilai').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('nilai').focus();
+  }
+
+  function batalEdit() {
+    document.getElementById('formNilai').reset();
+    document.getElementById('kodeMk').disabled = false;
+    document.getElementById('semester').disabled = false;
+    document.getElementById('formTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Tambah Nilai Baru';
+    document.getElementById('btnSubmitNilai').innerHTML = '<i class="bi bi-plus-lg me-1"></i>Tambah';
+    document.getElementById('btnBatalEdit').classList.add('d-none');
+  }
+
+  // <select disabled> tidak ikut terkirim saat submit form - jadi sesaat
+  // sebelum submit, aktifkan lagi supaya kodeMk & semester tetap terkirim.
+  document.getElementById('formNilai').addEventListener('submit', function() {
+    document.getElementById('kodeMk').disabled = false;
+    document.getElementById('semester').disabled = false;
   });
 </script>
 
