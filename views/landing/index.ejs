@@ -217,7 +217,11 @@
         position: relative;
         margin-bottom: 2rem;
         font-weight: 700;
-        font-size: 1.8rem;
+        /* font-size TIDAK didefinisikan di sini lagi - sengaja, supaya versi
+           responsif clamp(1.3rem, 4vw, 1.8rem) dari blok "FLUID TYPOGRAPHY"
+           di atas yang berlaku. Sebelumnya ada duplikat font-size: 1.8rem
+           fixed di sini yang menimpa versi responsif tsb, itu sebabnya
+           judul section terlihat kebesaran & tidak menyusut di HP. */
         color: var(--text-main);
         text-align: center;
     }
@@ -642,8 +646,10 @@
         padding: 0; /* Override shared padding */
     }
 
+    /* aspect-ratio (bukan height fix 200px) - supaya gambar tetap
+       proporsional walau card jadi sempit di mobile (2-4 card per baris). */
     .news-card .card-img-wrapper {
-        height: 200px;
+        aspect-ratio: 16 / 10;
         overflow: hidden;
     }
 
@@ -659,36 +665,60 @@
     }
 
     .news-card .card-body {
-        padding: 1.2rem;
+        padding: 1rem;
         flex-grow: 1;
+        display: flex;
+        flex-direction: column;
     }
 
     .news-card .card-title {
         font-weight: 700;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.4rem;
         color: var(--text-main);
-        font-size: 1.1rem;
+        /* font-size sengaja tidak diset di sini - pakai versi responsif
+           clamp(0.95rem, 2.5vw, 1.1rem) dari blok FLUID TYPOGRAPHY di atas.
+           Sebelumnya ada duplikat font-size: 1.1rem fixed di sini yang
+           menimpanya. */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     .news-card .card-text {
         color: var(--text-muted);
-        margin-bottom: 1rem;
-        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+        flex-grow: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     .news-card .btn-outline-primary {
         border-radius: 50px;
-        padding: 0.4rem 1rem;
+        padding: 0.35rem 0.9rem;
         font-weight: 600;
         border-width: 2px;
-        font-size: 0.85rem;
         transition: var(--transition);
+        align-self: flex-start;
     }
 
     .news-card .btn-outline-primary:hover {
         background: var(--gradient);
         border-color: transparent;
         color: white;
+    }
+
+    /* ===== LAYOUT KHUSUS MOBILE: card berita 1 per baris di HP kecil,
+       supaya proporsi gambar+teks tetap nyaman dibaca (bukan card sempit
+       yang isinya numpuk ke bawah). 2 per baris mulai dari sm (≥576px),
+       4 per baris baru di lg (≥992px) - diatur lewat class kolom Bootstrap
+       di HTML (col-12 col-sm-6 col-lg-3). */
+    @media (max-width: 400px) {
+        .news-card .card-title {
+            -webkit-line-clamp: 3;
+        }
     }
 
     /* ===== TABLE STYLING ===== */
@@ -793,20 +823,25 @@
     }
 
     .id-card-body {
-        padding: 1rem;
+        padding: 0.75rem;
         text-align: center;
     }
 
     .id-card-body h5 {
         font-weight: 700;
         margin-bottom: 0.2rem;
-        font-size: 0.95rem;
+        /* font-size pakai versi responsif clamp(0.85rem, 2vw, 0.95rem) dari
+           blok FLUID TYPOGRAPHY di atas (dulu ada duplikat fixed 0.95rem
+           di sini yang menimpanya). */
         color: var(--text-main);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     .id-card-body p {
         color: var(--text-light);
-        font-size: 0.8rem;
         margin-bottom: 0;
         font-weight: 500;
     }
@@ -1356,7 +1391,7 @@
                 <div class="col-12"><div class="alert alert-info text-center">Belum ada berita.</div></div>
             <% } else { %>
                 <% berita.forEach(item => { %>
-                    <div class="col-6 col-lg-3">
+                    <div class="col-12 col-sm-6 col-lg-3">
                         <div class="news-card">
                             <div class="card-img-wrapper">
                                 <% if (item.gambar) { %>
