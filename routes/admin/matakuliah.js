@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { mataKuliahCache } = require('../../helpers/cache');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -131,6 +132,7 @@ router.post('/', async (req, res) => {
       createdAt: new Date().toISOString()
     });
 
+    mataKuliahCache.delete('all');
     res.redirect('/admin/matakuliah');
   } catch (error) {
     console.error('Error tambah MK:', error);
@@ -223,6 +225,7 @@ router.post('/:id/update', async (req, res) => {
       updatedAt: new Date().toISOString()
     });
 
+    mataKuliahCache.delete('all');
     res.redirect('/admin/matakuliah');
   } catch (error) {
     console.error('Error update MK:', error);
@@ -257,6 +260,7 @@ router.post('/:id/materi', async (req, res) => {
 
     await mkRef.update({ materi });
 
+    mataKuliahCache.delete('all');
     res.redirect(`/admin/matakuliah/${req.params.id}`);
   } catch (error) {
     console.error('Error update materi:', error);
@@ -273,6 +277,7 @@ router.post('/:id/delete', async (req, res) => {
     // Periksa apakah MK digunakan di dokumen lain? (tugas, enrollment, dll) – opsional
     // Bisa juga hapus data terkait, tapi untuk sederhana hapus saja
     await mkRef.delete();
+    mataKuliahCache.delete('all');
     res.redirect('/admin/matakuliah');
   } catch (error) {
     console.error('Error hapus MK:', error);

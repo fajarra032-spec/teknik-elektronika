@@ -3,12 +3,16 @@ const { db } = require('../config/firebaseAdmin');
 const { getActiveMagangPeriods } = require('../models/magangPeriodModel');
 const { TTLCache } = require('./cache');
 
-// Cache 15 menit: dipakai untuk konteks publik (beranda, papan display) yang
+// Cache 60 menit: dipakai untuk konteks publik (beranda, papan display) yang
 // tidak butuh akurasi real-time detik-per-detik. Sebelumnya logika ini
 // terduplikasi di routes/display.js (sudah benar di-cache per-modul) dan
 // routes/landing.js (cache-nya dibuat ulang setiap request, jadi tidak
 // pernah benar-benar tersimpan antar kunjungan) - sekarang disatukan di sini.
-const progressHarianCache = new TTLCache(15 * 60 * 1000);
+// TTL dinaikkan dari 15 -> 60 menit: ini query PALING boros per-panggilan
+// (rata-rata puluhan dokumen logbook dibaca sekaligus per mahasiswa+PDK),
+// dan progres magang di papan display publik tidak perlu update tiap 15
+// menit - approval logbook biasanya cuma terjadi beberapa kali sehari.
+const progressHarianCache = new TTLCache(60 * 60 * 1000);
 
 /**
  * Menghitung progres magang berbasis HARI (jumlah hari logbook disetujui
@@ -255,12 +259,25 @@ function getNilaiHuruf(nilaiAngka) {
   return 'E';
 }
 
+/**
+ * Hapus cache progress harian untuk 1 mahasiswa+PDK tertentu. Dipanggil
+ * setiap kali status logbook berubah (approve/reject/edit) supaya progress
+ * yang ditampilkan di beranda/papan display langsung akurat, tidak perlu
+ * nunggu TTL 60 menit habis dulu.
+ * @param {string} mahasiswaId
+ * @param {string} pdkId
+ */
+function invalidateProgressMagangHarian(mahasiswaId, pdkId) {
+  progressHarianCache.delete(`${mahasiswaId}_${pdkId}`);
+}
+
 module.exports = {
   canSubmitLogbook,
   getActivePdkList,
   getActivePdkWithPeriod,
   getMagangProgress,
   getProgressMagangHarian,
+  invalidateProgressMagangHarian,
   formatTanggal,
   getNilaiHuruf
 };

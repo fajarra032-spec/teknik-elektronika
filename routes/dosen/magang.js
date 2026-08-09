@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { invalidateProgressMagangHarian } = require('../../helpers/magangHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -455,6 +456,7 @@ router.post('/logbook/:id/approve', async (req, res) => {
       approvedByNama: req.dosen.nama,
       approvedByRole: 'Pembimbing 2'
     });
+    invalidateProgressMagangHarian(mahasiswaId, pdkId);
     req.session.success = 'Logbook berhasil disetujui';
     res.redirect(`/dosen/magang/${mahasiswaId}`);
   } catch (error) {
@@ -498,6 +500,7 @@ router.post('/logbook/:id/reject', async (req, res) => {
       rejectedByRole: 'Pembimbing 2',
       rejectionReason: alasan || 'Tidak ada alasan'
     });
+    invalidateProgressMagangHarian(mahasiswaId, pdkId);
     req.session.success = 'Logbook berhasil ditolak';
     res.redirect(`/dosen/magang/${mahasiswaId}`);
   } catch (error) {
@@ -596,6 +599,13 @@ router.post('/:userId/setujui-minggu', async (req, res) => {
       });
     });
     await batch.commit();
+
+    // Invalidasi cache progress harian untuk semua PDK yang ikut disetujui
+    // di batch ini, supaya progress mahasiswa langsung akurat.
+    const pdkIdUntukInvalidasi = pdkId
+      ? [pdkId]
+      : [...new Set(docsMingguIni.map(doc => doc.data().pdkId).filter(Boolean))];
+    pdkIdUntukInvalidasi.forEach(pid => invalidateProgressMagangHarian(userId, pid));
 
     req.session.success = `${docsMingguIni.length} logbook (7 hari terakhir) berhasil disetujui sekaligus`;
     res.redirect(`/dosen/magang/${userId}${periodId ? `?periodId=${periodId}` : ''}`);

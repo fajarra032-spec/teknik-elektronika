@@ -66,8 +66,10 @@ router.get('/', async (req, res) => {
       .sort()
       .map(tahun => ({ tahun, jumlah: angkatanCount[tahun] }));
     statistik.mahasiswaMagang = magangCount;
-    const dosenSnapshot = await db.collection('dosen').get();
-    const jumlahDosen = dosenSnapshot.size;
+    // Sama seperti logbookMagang - cuma butuh jumlahnya, jadi pakai count()
+    // (agregasi Firestore) alih-alih .get() yang membaca semua dokumen dosen.
+    const dosenCountSnap = await db.collection('dosen').count().get();
+    const jumlahDosen = dosenCountSnap.data().count;
 
     // 2. Berita terbaru (dibatasi 4 untuk landing page; semua berita bisa
     // dilihat di halaman khusus /berita)

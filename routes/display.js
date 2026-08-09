@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../config/firebaseAdmin');
 const { getProgressMagangHarian } = require('../helpers/magangHelper');
-const { getAllMahasiswa } = require('../helpers/cache');
+const { getAllMahasiswa, dosenCache, mataKuliahCache } = require('../helpers/cache');
 
 // Nama hari, index harus sama dengan Date.getDay() (0=Minggu ... 6=Sabtu)
 const HARI_LIST = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -208,15 +208,22 @@ router.get('/', async (req, res) => {
     mahasiswaList.forEach(data => { nimMap[data.id] = data.nim || ''; });
 
     // Ambil semua dosen sekali saja, dipakai untuk hitung jumlah & memetakan nama dosen pengampu
-    const dosenSnapshot = await db.collection('dosen').get();
-    const jumlahDosen = dosenSnapshot.size;
+    // (di-cache 10 menit - dosenCache sudah dipakai di tempat lain untuk lookup
+    // per-id, di sini kita tambah key 'all' untuk daftar lengkapnya)
+    const dosenList = await dosenCache.getOrFetch('all', async () => {
+      const snap = await db.collection('dosen').get();
+      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    });
+    const jumlahDosen = dosenList.length;
     const dosenMap = {};
-    dosenSnapshot.docs.forEach(doc => { dosenMap[doc.id] = doc.data().nama || 'Dosen'; });
+    dosenList.forEach(data => { dosenMap[data.id] = data.nama || 'Dosen'; });
 
     // Ambil semua mata kuliah sekali saja, dipakai untuk jumlah MK & jadwal perkuliahan
-    const mkAllSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
-    const jumlahMK = mkAllSnapshot.size;
-    const mkAllList = mkAllSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const mkAllList = await mataKuliahCache.getOrFetch('all', async () => {
+      const snap = await db.collection('mataKuliah').orderBy('kode').get();
+      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    });
+    const jumlahMK = mkAllList.length;
 
     // Jadwal perkuliahan dosen - daftar lengkap (diisi lewat menu Kelola Mata Kuliah > field "Jadwal")
     const jadwalKuliah = mkAllList

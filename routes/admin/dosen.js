@@ -11,6 +11,7 @@ const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
+const { dosenCache } = require('../../helpers/cache');
 
 // Middleware autentikasi (sudah diterapkan di index.js, namun untuk keamanan tambahan)
 router.use(verifyToken);
@@ -123,6 +124,7 @@ router.post('/', upload.single('foto'), async (req, res) => {
       createdAt: new Date().toISOString(),
     });
 
+    dosenCache.delete('all');
     res.redirect('/admin/dosen');
   } catch (error) {
     console.error('Error menambah dosen:', error);
@@ -204,6 +206,7 @@ router.post('/:id/update', upload.single('foto'), async (req, res) => {
     }
 
     await dosenRef.update(updateData);
+    dosenCache.delete('all');
     res.redirect('/admin/dosen');
   } catch (error) {
     console.error('Error update dosen:', error);
@@ -233,6 +236,7 @@ router.post('/:id/delete', async (req, res) => {
     }
 
     await dosenRef.delete();
+    dosenCache.delete('all');
     res.redirect('/admin/dosen');
   } catch (error) {
     console.error('Error hapus dosen:', error);

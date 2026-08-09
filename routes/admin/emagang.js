@@ -10,6 +10,7 @@ const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { nilaiKeHuruf } = require('../../helpers/nilaiHelper');
+const { invalidateProgressMagangHarian } = require('../../helpers/magangHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -665,6 +666,7 @@ router.post('/logbook/:id/approve', async (req, res) => {
       approvedByNama: req.user.nama || 'Admin',
       approvedByRole: 'Admin'
     });
+    invalidateProgressMagangHarian(mahasiswaId, logbook.pdkId);
     req.session.success = 'Logbook berhasil disetujui';
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
   } catch (error) {
@@ -693,6 +695,7 @@ router.post('/logbook/:id/reject', async (req, res) => {
       rejectedByRole: 'Admin',
       rejectionReason: alasan || 'Tidak ada alasan'
     });
+    invalidateProgressMagangHarian(mahasiswaId, logbook.pdkId);
     req.session.success = 'Logbook berhasil ditolak';
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
   } catch (error) {
@@ -760,6 +763,11 @@ router.post('/mahasiswa/:userId/setujui-minggu', async (req, res) => {
       });
     });
     await batch.commit();
+
+    const pdkIdUntukInvalidasi = pdkId
+      ? [pdkId]
+      : [...new Set(docsMingguIni.map(doc => doc.data().pdkId).filter(Boolean))];
+    pdkIdUntukInvalidasi.forEach(pid => invalidateProgressMagangHarian(userId, pid));
 
     req.session.success = `${docsMingguIni.length} logbook (7 hari terakhir) berhasil disetujui sekaligus`;
     res.redirect(`/admin/emagang/mahasiswa/${userId}${periodId ? `?periodId=${periodId}` : ''}`);

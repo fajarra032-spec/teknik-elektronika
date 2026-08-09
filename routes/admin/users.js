@@ -6,7 +6,7 @@ const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
-const { mahasiswaCache } = require('../../helpers/cache');
+const { mahasiswaCache, dosenCache } = require('../../helpers/cache');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -175,6 +175,7 @@ router.post('/', upload.single('foto'), async (req, res) => {
     // Cache daftar mahasiswa jadi basi begitu ada user baru - hapus supaya
     // halaman publik langsung dapat data terbaru, bukan nunggu TTL 10 menit
     mahasiswaCache.delete('all');
+    dosenCache.delete('all');
 
     res.redirect('/admin/users?success=ditambahkan');
   } catch (error) {
@@ -335,6 +336,7 @@ router.post('/edit/:id', upload.single('foto'), async (req, res) => {
     }
 
     mahasiswaCache.delete('all');
+    dosenCache.delete('all');
 
     res.redirect('/admin/users?success=diperbarui');
   } catch (error) {
@@ -386,6 +388,7 @@ router.post('/:id/delete', async (req, res) => {
     await dosenRef.delete().catch(() => {});
 
     mahasiswaCache.delete('all');
+    dosenCache.delete('all');
 
     res.redirect('/admin/users?success=dihapus');
   } catch (error) {
