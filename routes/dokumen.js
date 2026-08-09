@@ -75,7 +75,7 @@ router.get('/rps', async (req, res) => {
       .sort((a, b) => a - b)
       .map(sem => ({ semester: sem, matkul: perSemester[sem] }));
 
-    res.render('dokumen/rps', {
+    res.render('landing/dokumen/rps', {
       title: 'RPS',
       description: 'Rencana Pembelajaran Semester (RPS) tiap mata kuliah Program Studi Teknik Elektronika.',
       rpsSemester,
@@ -114,7 +114,7 @@ router.get('/notulensi', async (req, res) => {
       };
     });
 
-    res.render('dokumen/notulensi', {
+    res.render('landing/dokumen/notulensi', {
       title: 'Agenda & Hasil Rapat',
       description: 'Dokumentasi agenda dan hasil rapat Program Studi Teknik Elektronika.',
       notulensi,
@@ -124,7 +124,7 @@ router.get('/notulensi', async (req, res) => {
     console.error('Error memuat notulensi:', error);
     // Koleksi 'notulensi' mungkin belum pernah dibuat sama sekali di Firestore -
     // tampilkan halaman kosong yang rapi, bukan error 500.
-    res.render('dokumen/notulensi', {
+    res.render('landing/dokumen/notulensi', {
       title: 'Agenda & Hasil Rapat',
       description: 'Dokumentasi agenda dan hasil rapat Program Studi Teknik Elektronika.',
       notulensi: [],
