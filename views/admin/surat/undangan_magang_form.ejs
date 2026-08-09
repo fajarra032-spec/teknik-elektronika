@@ -8,130 +8,210 @@
     </a>
   </div>
 
-  <% if (daftarMagangAktif.length === 0) { %>
-    <div class="alert alert-warning">
-      Tidak ada mahasiswa dengan status magang aktif saat ini. Undangan seminar hanya bisa dikirim untuk mahasiswa yang sedang menjalani PDK/magang.
-    </div>
-  <% } %>
+  <!-- TAB SWITCHER -->
+  <ul class="nav nav-pills mb-4" id="modeTab">
+    <li class="nav-item">
+      <button type="button" class="nav-link active" id="tab-otomatis" onclick="pindahTab('otomatis')">
+        <i class="bi bi-magic me-1"></i> Generate Otomatis
+      </button>
+    </li>
+    <li class="nav-item">
+      <button type="button" class="nav-link" id="tab-manual" onclick="pindahTab('manual')">
+        <i class="bi bi-file-earmark-arrow-up me-1"></i> Upload PDF Manual
+      </button>
+    </li>
+  </ul>
 
-  <div class="info-card">
-    <div class="card-body">
-      <form method="POST" action="/admin/surat/undangan-magang/create" id="formUndangan">
+  <!-- ============================================================ -->
+  <!-- TAB 1: GENERATE OTOMATIS -->
+  <!-- ============================================================ -->
+  <div id="panel-otomatis">
+    <p class="text-muted small mb-3">Sistem akan buat PDF undangan otomatis (bisa sampai 4 salinan tembusan sekaligus) berdasarkan data yang kamu isi di bawah.</p>
 
-        <h6 class="fw-semibold mb-3">1. Mahasiswa & Tempat Magang</h6>
-        <div class="mb-3">
-          <label class="form-label">Mahasiswa</label>
-          <select name="mahasiswaId" id="mahasiswaId" class="form-select" required <%= daftarMagangAktif.length === 0 ? 'disabled' : '' %>>
-            <option value="">Pilih mahasiswa yang sedang magang aktif</option>
-            <% daftarMagangAktif.forEach(function(m) { %>
-              <option value="<%= m.mahasiswaId %>"
-                data-perusahaan="<%= m.perusahaan %>"
-                data-pembimbing1="<%= m.pembimbing1Nama %>"
-                data-pembimbing2="<%= m.pembimbing2Nama %>">
-                <%= m.nama %> (<%= m.nim %>)<%= m.perusahaan ? ' - ' + m.perusahaan : '' %>
-              </option>
-            <% }); %>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Nama Perusahaan/Instansi Tempat Magang</label>
-          <input type="text" name="perusahaanMagang" id="perusahaanMagang" class="form-control" required placeholder="Contoh: PT Contoh Logistik Indonesia">
-          <div class="form-text">Terisi otomatis dari data magang mahasiswa, boleh diedit.</div>
-        </div>
+    <% if (daftarMagangAktif.length === 0) { %>
+      <div class="alert alert-warning">
+        Tidak ada mahasiswa dengan status magang aktif saat ini. Undangan seminar otomatis hanya bisa dibuat untuk mahasiswa yang sedang menjalani PDK/magang. Kamu tetap bisa pakai tab <strong>"Upload PDF Manual"</strong> untuk mahasiswa lain.
+      </div>
+    <% } %>
 
-        <hr>
-        <h6 class="fw-semibold mb-3">2. Jadwal Presentasi Hasil Magang</h6>
-        <div class="row g-3 mb-3">
-          <div class="col-md-4">
-            <label class="form-label">Tanggal</label>
-            <input type="date" name="tanggalAcara" class="form-control" required>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Waktu</label>
-            <input type="text" name="waktu" class="form-control" required placeholder="10.00 WITA - selesai">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Tempat</label>
-            <input type="text" name="tempatAcara" class="form-control" required placeholder="Ruang Rapat lt.3 Kampus Politeknik Dewantara">
-          </div>
-        </div>
+    <div class="info-card">
+      <div class="card-body">
+        <form method="POST" action="/admin/surat/undangan-magang/create" id="formOtomatis">
 
-        <hr>
-        <h6 class="fw-semibold mb-3">3. Nomor Surat</h6>
-        <div class="row g-3 mb-3">
-          <div class="col-md-8">
-            <label class="form-label">Nomor Surat</label>
-            <input type="text" name="nomorSurat" class="form-control" required placeholder="Contoh: 2463/ELK/Polidewa/VIII/2026">
+          <h6 class="fw-semibold mb-3">1. Mahasiswa & Tempat Magang</h6>
+          <div class="mb-3">
+            <label class="form-label">Mahasiswa</label>
+            <select name="mahasiswaId" id="mahasiswaId" class="form-select" required <%= daftarMagangAktif.length === 0 ? 'disabled' : '' %>>
+              <option value="">Pilih mahasiswa yang sedang magang aktif</option>
+              <% daftarMagangAktif.forEach(function(m) { %>
+                <option value="<%= m.mahasiswaId %>"
+                  data-perusahaan="<%= m.perusahaan %>"
+                  data-pembimbing1="<%= m.pembimbing1Nama %>"
+                  data-pembimbing2="<%= m.pembimbing2Nama %>">
+                  <%= m.nama %> (<%= m.nim %>)<%= m.perusahaan ? ' - ' + m.perusahaan : '' %>
+                </option>
+              <% }); %>
+            </select>
           </div>
-          <div class="col-md-4">
-            <label class="form-label">Lampiran (opsional)</label>
-            <input type="text" name="lampiran" class="form-control" placeholder="-">
+          <div class="mb-3">
+            <label class="form-label">Nama Perusahaan/Instansi Tempat Magang</label>
+            <input type="text" name="perusahaanMagang" id="perusahaanMagang" class="form-control" required placeholder="Contoh: PT Contoh Logistik Indonesia">
+            <div class="form-text">Terisi otomatis dari data magang mahasiswa, boleh diedit.</div>
           </div>
-        </div>
 
-        <hr>
-        <h6 class="fw-semibold mb-1">4. Penerima Surat ("Kepada")</h6>
-        <p class="text-muted small mb-3">Sistem akan membuat 1 salinan PDF terpisah untuk setiap penerima yang diisi di bawah (kosongkan yang tidak diperlukan). Nama pembimbing magang terisi otomatis saat memilih mahasiswa, silakan lengkapi jabatannya.</p>
+          <hr>
+          <h6 class="fw-semibold mb-3">2. Jadwal Presentasi Hasil Magang</h6>
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label">Tanggal</label>
+              <input type="date" name="tanggalAcara" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Waktu</label>
+              <input type="text" name="waktu" class="form-control" required placeholder="10.00 WITA - selesai">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Tempat</label>
+              <input type="text" name="tempatAcara" class="form-control" required placeholder="Ruang Rapat lt.3 Kampus Politeknik Dewantara">
+            </div>
+          </div>
 
-        <div class="row g-3 mb-3 align-items-end">
-          <div class="col-md-6">
-            <label class="form-label">Penerima 1 - Nama</label>
-            <input type="text" name="kepada1Nama" id="kepada1Nama" class="form-control" required placeholder="Nama Dosen Pembimbing Magang 1">
+          <hr>
+          <h6 class="fw-semibold mb-3">3. Nomor Surat</h6>
+          <div class="row g-3 mb-3">
+            <div class="col-md-8">
+              <label class="form-label">Nomor Surat</label>
+              <input type="text" name="nomorSurat" class="form-control" required placeholder="Contoh: 2463/ELK/Polidewa/VIII/2026">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Lampiran (opsional)</label>
+              <input type="text" name="lampiran" class="form-control" placeholder="-">
+            </div>
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Penerima 1 - Jabatan</label>
-            <input type="text" name="kepada1Jabatan" class="form-control" value="Dosen Pembimbing Magang 1">
-          </div>
-        </div>
 
-        <div class="row g-3 mb-3 align-items-end">
-          <div class="col-md-6">
-            <label class="form-label">Penerima 2 - Nama</label>
-            <input type="text" name="kepada2Nama" id="kepada2Nama" class="form-control" placeholder="Nama Dosen Pembimbing Magang 2">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Penerima 2 - Jabatan</label>
-            <input type="text" name="kepada2Jabatan" class="form-control" value="Dosen Pembimbing Magang 2">
-          </div>
-        </div>
+          <hr>
+          <h6 class="fw-semibold mb-1">4. Penerima Surat ("Kepada")</h6>
+          <p class="text-muted small mb-3">Sistem akan membuat 1 salinan PDF terpisah untuk setiap penerima yang diisi di bawah (kosongkan yang tidak diperlukan). Nama pembimbing magang terisi otomatis saat memilih mahasiswa, silakan lengkapi jabatannya.</p>
 
-        <div class="row g-3 mb-3 align-items-end">
-          <div class="col-md-6">
-            <label class="form-label">Penerima 3 - Nama</label>
-            <input type="text" name="kepada3Nama" class="form-control" placeholder="Nama Wakil Direktur I">
+          <div class="row g-3 mb-3 align-items-end">
+            <div class="col-md-6">
+              <label class="form-label">Penerima 1 - Nama</label>
+              <input type="text" name="kepada1Nama" id="kepada1Nama" class="form-control" required placeholder="Nama Dosen Pembimbing Magang 1">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Penerima 1 - Jabatan</label>
+              <input type="text" name="kepada1Jabatan" class="form-control" value="Dosen Pembimbing Magang 1">
+            </div>
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Penerima 3 - Jabatan</label>
-            <input type="text" name="kepada3Jabatan" class="form-control" value="Wakil Direktur I Bidang Akademik">
-          </div>
-        </div>
 
-        <div class="row g-3 mb-4 align-items-end">
-          <div class="col-md-6">
-            <label class="form-label">Penerima 4 - Nama</label>
-            <input type="text" name="kepada4Nama" class="form-control" placeholder="Nama Pengelola Magang">
+          <div class="row g-3 mb-3 align-items-end">
+            <div class="col-md-6">
+              <label class="form-label">Penerima 2 - Nama</label>
+              <input type="text" name="kepada2Nama" id="kepada2Nama" class="form-control" placeholder="Nama Dosen Pembimbing Magang 2">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Penerima 2 - Jabatan</label>
+              <input type="text" name="kepada2Jabatan" class="form-control" value="Dosen Pembimbing Magang 2">
+            </div>
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Penerima 4 - Jabatan</label>
-            <input type="text" name="kepada4Jabatan" class="form-control" value="PPMA (Pengelola Magang)">
-          </div>
-        </div>
 
-        <div class="d-flex gap-2 mt-4">
-          <button type="submit" class="btn btn-primary" id="btnKirim">
-            <i class="bi bi-send-fill me-1"></i> Buat & Kirim Undangan
-          </button>
-          <a href="/admin/surat" class="btn btn-light">Batal</a>
-        </div>
-      </form>
+          <div class="row g-3 mb-3 align-items-end">
+            <div class="col-md-6">
+              <label class="form-label">Penerima 3 - Nama</label>
+              <input type="text" name="kepada3Nama" class="form-control" placeholder="Nama Wakil Direktur I">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Penerima 3 - Jabatan</label>
+              <input type="text" name="kepada3Jabatan" class="form-control" value="Wakil Direktur I Bidang Akademik">
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4 align-items-end">
+            <div class="col-md-6">
+              <label class="form-label">Penerima 4 - Nama</label>
+              <input type="text" name="kepada4Nama" class="form-control" placeholder="Nama Pengelola Magang">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Penerima 4 - Jabatan</label>
+              <input type="text" name="kepada4Jabatan" class="form-control" value="PPMA (Pengelola Magang)">
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary" id="btnKirim">
+              <i class="bi bi-send-fill me-1"></i> Buat & Kirim Undangan
+            </button>
+            <a href="/admin/surat" class="btn btn-light">Batal</a>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB 2: UPLOAD PDF MANUAL -->
+  <!-- ============================================================ -->
+  <div id="panel-manual" style="display:none;">
+    <p class="text-muted small mb-3">Untuk kasus file undangan (PDF) sudah kamu buat sendiri (mis. dari Word) dan tinggal dikirim ke mahasiswa.</p>
+
+    <div class="info-card">
+      <div class="card-body">
+        <form method="POST" action="/admin/surat/undangan-magang/kirim-manual" enctype="multipart/form-data" id="formManual">
+
+          <div class="mb-3">
+            <label class="form-label">Mahasiswa Penerima</label>
+            <select name="mahasiswaId" class="form-select" required>
+              <option value="">Pilih mahasiswa</option>
+              <% daftarMahasiswa.forEach(function(m) { %>
+                <option value="<%= m.id %>"><%= m.nama %> (<%= m.nim || '-' %>)</option>
+              <% }); %>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Nomor Surat (opsional)</label>
+            <input type="text" name="nomorSurat" class="form-control" placeholder="Contoh: 2463/ELK/Polidewa/VIII/2026">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Keterangan / Perihal (opsional)</label>
+            <input type="text" name="keperluan" class="form-control" placeholder="Contoh: Undangan menghadiri presentasi hasil magang">
+            <div class="form-text">Kalau dikosongkan, sistem isi otomatis dengan keterangan standar.</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">File PDF Undangan</label>
+            <input type="file" name="file" class="form-control" accept="application/pdf" required>
+            <div class="form-text">Maksimal 5MB, hanya file PDF.</div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary" id="btnKirimManual">
+              <i class="bi bi-send-fill me-1"></i> Kirim ke Mahasiswa
+            </button>
+            <a href="/admin/surat" class="btn btn-light">Batal</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
-  // Auto-isi perusahaan & nama pembimbing magang saat admin memilih mahasiswa,
-  // supaya tidak perlu ketik ulang data yang sebenarnya sudah ada di sistem.
-  // Admin tetap bebas mengedit isinya sebelum dikirim.
+  // Ganti tab tanpa reload halaman - kedua form tetap ada di DOM, cuma
+  // disembunyikan/ditampilkan. Masing-masing form tetap submit ke endpoint-nya
+  // sendiri-sendiri (POST terpisah), jadi tidak ada perubahan di sisi server.
+  function pindahTab(mode) {
+    const isOtomatis = mode === 'otomatis';
+    document.getElementById('panel-otomatis').style.display = isOtomatis ? '' : 'none';
+    document.getElementById('panel-manual').style.display = isOtomatis ? 'none' : '';
+    document.getElementById('tab-otomatis').classList.toggle('active', isOtomatis);
+    document.getElementById('tab-manual').classList.toggle('active', !isOtomatis);
+  }
+
+  // Auto-isi perusahaan & nama pembimbing magang saat admin memilih mahasiswa
+  // di tab Otomatis, supaya tidak perlu ketik ulang data yang sudah ada.
   document.getElementById('mahasiswaId').addEventListener('change', function () {
     const opt = this.options[this.selectedIndex];
     const perusahaan = opt.getAttribute('data-perusahaan') || '';
@@ -144,10 +224,16 @@
   });
 
   // Cegah klik ganda saat generate PDF (proses Puppeteer butuh beberapa detik)
-  document.getElementById('formUndangan').addEventListener('submit', function () {
+  document.getElementById('formOtomatis').addEventListener('submit', function () {
     const btn = document.getElementById('btnKirim');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Membuat PDF, mohon tunggu...';
+  });
+
+  document.getElementById('formManual').addEventListener('submit', function () {
+    const btn = document.getElementById('btnKirimManual');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Mengunggah & mengirim...';
   });
 </script>
 

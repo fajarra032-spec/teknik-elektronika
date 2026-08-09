@@ -892,9 +892,11 @@ router.post('/:id/:role/delete', async (req, res) => {
 // ============================================================================
 router.get('/undangan-magang/create', async (req, res) => {
   try {
-    // Ambil semua periode magang yang sedang aktif, gabungkan dengan data
-    // mahasiswa (pakai cache getAllMahasiswa yang sudah ada supaya tidak
-    // query 'users' berkali-kali - lihat helpers/cache.js)
+    // Ambil semua periode magang yang sedang aktif (untuk tab "Generate
+    // Otomatis"), sekaligus daftar SEMUA mahasiswa (untuk tab "Upload PDF
+    // Manual", yang tidak dibatasi status magang) - keduanya pakai cache
+    // getAllMahasiswa yang sama, jadi cuma 1x query 'users' walau dipakai
+    // untuk 2 keperluan sekaligus.
     const [periodSnapshot, mahasiswaList] = await Promise.all([
       db.collection('magangPeriod').where('status', '==', 'active').get(),
       getAllMahasiswa(db)
@@ -919,13 +921,16 @@ router.get('/undangan-magang/create', async (req, res) => {
       .filter(Boolean)
       .sort((a, b) => a.nama.localeCompare(b.nama));
 
+    const daftarMahasiswa = [...mahasiswaList].sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
+
     res.render('admin/surat/undangan_magang_form', {
       title: 'Kirim Undangan Seminar Magang',
-      daftarMagangAktif
+      daftarMagangAktif,
+      daftarMahasiswa
     });
   } catch (err) {
     console.error('Error memuat form undangan magang:', err);
-    res.status(500).send('Gagal memuat data mahasiswa magang aktif');
+    res.status(500).send('Gagal memuat data mahasiswa');
   }
 });
 
@@ -1041,6 +1046,65 @@ router.post('/undangan-magang/create', upload.none(), async (req, res) => {
   } catch (err) {
     console.error('Error kirim undangan seminar magang:', err);
     res.status(500).send('Gagal membuat & mengirim surat undangan: ' + err.message);
+  }
+});
+
+// ============================================================================
+// FITUR ADMIN: Kirim Undangan Seminar Magang - Upload PDF Manual
+// Untuk kasus admin sudah punya file PDF undangan yang dibuat sendiri
+// (mis. dari Word) dan cukup mau kirim langsung ke mahasiswa tanpa lewat
+// proses generate otomatis. Formnya ada di tab yang sama dengan generate
+// otomatis (lihat GET /undangan-magang/create di atas & view
+// undangan_magang_form.ejs) - jadi tidak perlu route GET terpisah di sini.
+// ============================================================================
+router.post('/undangan-magang/kirim-manual', upload.single('file'), async (req, res) => {
+  try {
+    const { mahasiswaId, nomorSurat, keperluan } = req.body;
+    const file = req.file;
+    if (!mahasiswaId || !file) return res.status(400).send('Mahasiswa dan file PDF wajib diisi');
+
+    const mahasiswa = await getMahasiswa(mahasiswaId);
+    if (!mahasiswa.nim || mahasiswa.nim === '-') {
+      return res.status(404).send('Data mahasiswa tidak lengkap/tidak ditemukan');
+    }
+
+    const tahunAkademik = getCurrentAcademicSemester().tahunAkademik;
+    const kodeValidasi = generateKodeValidasi();
+    const folderId = await getSuratFolderMahasiswa(mahasiswa.nim, tahunAkademik);
+    const fileName = `Undangan_Seminar_Magang_${kodeValidasi}.pdf`;
+    const fileMetadata = { name: fileName, parents: [folderId] };
+    const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
+    const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
+    await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+    const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
+
+    const currentSemester = getCurrentAcademicSemester();
+    await db.collection('surat').add({
+      userId: mahasiswaId,
+      jenis: 'Undangan Seminar Magang',
+      keperluan: keperluan && keperluan.trim() !== '' ? keperluan.trim() : `Undangan menghadiri presentasi hasil magang a.n. ${mahasiswa.nama}`,
+      semester: currentSemester.semester,
+      tahunAkademik: currentSemester.tahunAkademik,
+      nomorSurat: nomorSurat || '',
+      kodeValidasi,
+      status: 'completed',
+      fileUrl,
+      fileId: driveResponse.data.id,
+      dikirimOleh: req.user.id,
+      dikirimOlehNama: req.user.nama || 'Admin',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{
+        status: 'completed',
+        timestamp: new Date().toISOString(),
+        catatan: `Surat undangan seminar magang (file PDF manual) dikirim langsung oleh ${req.user.nama || 'Admin'}`
+      }]
+    });
+
+    res.redirect('/admin/surat?success=undangan_terkirim');
+  } catch (err) {
+    console.error('Error kirim undangan manual:', err);
+    res.status(500).send('Gagal mengirim surat undangan: ' + err.message);
   }
 });
 
