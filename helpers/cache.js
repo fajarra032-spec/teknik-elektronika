@@ -63,4 +63,26 @@ const mataKuliahCache = new TTLCache(10 * 60 * 1000); // 10 menit
 const dosenCache = new TTLCache(10 * 60 * 1000);      // 10 menit
 const tugasAktifCache = new TTLCache(3 * 60 * 1000);  // 3 menit (lebih singkat karena lebih dinamis)
 
-module.exports = { TTLCache, mataKuliahCache, dosenCache, tugasAktifCache };
+// Daftar mahasiswa (role='mahasiswa') dipakai di banyak tempat (landing page,
+// papan display, direktori pencarian) dan sebelumnya di-fetch ULANG dari
+// awal (scan seluruh koleksi `users`) di SETIAP kunjungan halaman publik -
+// salah satu sumber pemborosan read terbesar di aplikasi ini. Data mahasiswa
+// tidak berubah tiap menit, jadi aman di-cache 10 menit dan dipakai bersama
+// (shared) oleh semua route lewat helper getAllMahasiswa() di bawah.
+const mahasiswaCache = new TTLCache(10 * 60 * 1000); // 10 menit
+
+/**
+ * Ambil semua dokumen user dengan role='mahasiswa', dari cache kalau masih
+ * berlaku. Mengembalikan array plain object (bukan QuerySnapshot) supaya
+ * gampang dipakai ulang di berbagai route tanpa perlu tahu detail Firestore.
+ * @param {import('firebase-admin').firestore.Firestore} db
+ * @returns {Promise<Array<Object>>}
+ */
+async function getAllMahasiswa(db) {
+  return mahasiswaCache.getOrFetch('all', async () => {
+    const snap = await db.collection('users').where('role', '==', 'mahasiswa').get();
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  });
+}
+
+module.exports = { TTLCache, mataKuliahCache, dosenCache, tugasAktifCache, mahasiswaCache, getAllMahasiswa };

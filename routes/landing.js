@@ -11,6 +11,7 @@ const path = require('path');
 const fs = require('fs');
 const { getProgressMagangHarian } = require('../helpers/magangHelper');
 const { getGabunganLulusan, normalisasiStatus } = require('../helpers/lulusanHelper');
+const { getAllMahasiswa } = require('../helpers/cache');
 
 // ============================================================================
 // FUNGSI BANTU
@@ -42,15 +43,14 @@ router.get('/', async (req, res) => {
       angkatan: []
     };
 
-    const mahasiswaSnapshot = await db.collection('users').where('role', '==', 'mahasiswa').get();
+    const mahasiswaList = await getAllMahasiswa(db);
     let aktifCount = 0;
     let magangCount = 0;
     // Hitung sebaran angkatan LANGSUNG dari data mahasiswa asli (via NIM),
     // supaya grafik "Sebaran Mahasiswa per Angkatan" selalu akurat dan tidak
     // bergantung pada input manual admin di dokumen statistik/data.
     const angkatanCount = {};
-    mahasiswaSnapshot.docs.forEach(doc => {
-      const data = doc.data();
+    mahasiswaList.forEach(data => {
       if (data.statusMahasiswa === 'Aktif' || data.status === 'aktif') aktifCount++;
       if (data.statusMagang && (data.statusMagang.includes('Magang') || data.statusMagang === 'Selesai Magang')) magangCount++;
 
@@ -338,10 +338,9 @@ router.get('/cekmahasiswa', async (req, res) => {
   try {
     const { searchMahasiswa, searchDosen } = req.query;
 
-    // Data Mahasiswa
-    let mahasiswa = [];
-    const mhsSnapshot = await db.collection('users').where('role', '==', 'mahasiswa').get();
-    mahasiswa = mhsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Data Mahasiswa (disalin dgn slice() supaya .sort() di bawah tidak
+    // mengubah array asli yang tersimpan di cache bersama)
+    let mahasiswa = (await getAllMahasiswa(db)).slice();
     if (searchMahasiswa) {
       const keyword = searchMahasiswa.toLowerCase();
       mahasiswa = mahasiswa.filter(m =>

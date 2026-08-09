@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../config/firebaseAdmin');
 const { getProgressMagangHarian } = require('../helpers/magangHelper');
+const { getAllMahasiswa } = require('../helpers/cache');
 
 // Nama hari, index harus sama dengan Date.getDay() (0=Minggu ... 6=Sabtu)
 const HARI_LIST = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -87,17 +88,23 @@ async function getStatistikProdi() {
   const now = Date.now();
   if (cache.stats && now < cache.statsExpiry) return cache.stats;
   try {
-    const [allLogbook, pendingLogbook, activePeriods, tugasSnapshot] = await Promise.all([
-      db.collection('logbookMagang').get(),
-      db.collection('logbookMagang').where('status', '==', 'pending').get(),
+    // Sebelumnya pakai .get() untuk kedua query ini padahal cuma butuh
+    // .size (jumlahnya saja) - itu artinya SETIAP dokumen di collection
+    // logbookMagang ikut TERBACA (kena biaya 1 read per dokumen), padahal
+    // isinya tidak pernah dipakai. .count() adalah query agregasi Firestore
+    // yang dihitung di server tanpa mengunduh isi dokumen - jauh lebih murah
+    // (total collection sekalipun jutaan dokumen, tetap sangat ringan).
+    const [allLogbookCount, pendingLogbookCount, activePeriods, tugasSnapshot] = await Promise.all([
+      db.collection('logbookMagang').count().get(),
+      db.collection('logbookMagang').where('status', '==', 'pending').count().get(),
       db.collection('magangPeriod').where('status', '==', 'active').get(),
       db.collection('tugas').where('deadline', '>=', new Date().toISOString().split('T')[0]).get()
     ]);
     const activeMahasiswaIds = new Set();
     activePeriods.docs.forEach(doc => activeMahasiswaIds.add(doc.data().mahasiswaId));
     const stats = {
-      totalLogbook: allLogbook.size,
-      logbookPending: pendingLogbook.size,
+      totalLogbook: allLogbookCount.data().count,
+      logbookPending: pendingLogbookCount.data().count,
       totalMahasiswaMagangAktif: activeMahasiswaIds.size,
       tugasAktif: tugasSnapshot.size
     };
@@ -194,11 +201,11 @@ router.get('/', async (req, res) => {
     }));
 
     // Statistik umum prodi
-    const mahasiswaSnapshot = await db.collection('users').where('role', '==', 'mahasiswa').get();
-    const jumlahMahasiswa = mahasiswaSnapshot.size;
+    const mahasiswaList = await getAllMahasiswa(db);
+    const jumlahMahasiswa = mahasiswaList.length;
     // Peta userId -> NIM, dipakai untuk menghitung angkatan tanpa query berulang
     const nimMap = {};
-    mahasiswaSnapshot.docs.forEach(doc => { nimMap[doc.id] = doc.data().nim || ''; });
+    mahasiswaList.forEach(data => { nimMap[data.id] = data.nim || ''; });
 
     // Ambil semua dosen sekali saja, dipakai untuk hitung jumlah & memetakan nama dosen pengampu
     const dosenSnapshot = await db.collection('dosen').get();
