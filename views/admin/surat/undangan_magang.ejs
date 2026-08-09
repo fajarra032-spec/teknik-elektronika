@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Undangan Seminar Magang - <%= mahasiswa.nama %></title>
+  <style>
+    @page {
+      size: A4;
+      margin: 2cm;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #000;
+      background-color: #fff;
+    }
+
+    /* === KOP SURAT === */
+    .kop-surat {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      border-bottom: 3px double #000;
+      padding-bottom: 10px;
+    }
+    .logo-kop {
+      width: 80px;
+      height: auto;
+      margin-right: 18px;
+    }
+    .teks-kop {
+      flex: 1;
+    }
+    .teks-kop .nama-kampus {
+      font-size: 22pt;
+      font-weight: bold;
+      margin: 0;
+      color: #3b60a3;
+      letter-spacing: 0.5px;
+    }
+    .teks-kop .alamat, .teks-kop .kontak {
+      font-size: 10pt;
+      margin: 2px 0;
+      color: #333;
+    }
+
+    /* === KEPALA SURAT (nomor, tanggal, hal) === */
+    .kepala-surat {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    .kepala-surat table {
+      border-collapse: collapse;
+    }
+    .kepala-surat table td {
+      padding: 1px 0;
+      vertical-align: top;
+    }
+    .kepala-surat .label {
+      width: 65px;
+    }
+    .kepala-surat .titik {
+      width: 12px;
+    }
+    .tanggal-surat {
+      white-space: nowrap;
+    }
+
+    .kepada-blok {
+      margin: 15px 0;
+    }
+    .kepada-blok p {
+      margin: 0;
+    }
+
+    .isi p {
+      text-align: justify;
+      margin: 10px 0;
+    }
+
+    .info-acara {
+      margin: 10px 0 10px 20px;
+      border-collapse: collapse;
+    }
+    .info-acara td {
+      padding: 2px 0;
+      vertical-align: top;
+    }
+    .info-acara .label {
+      width: 90px;
+    }
+    .info-acara .titik {
+      width: 12px;
+    }
+
+    /* Tabel Data Mahasiswa */
+    .tabel-mhs {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+    }
+    .tabel-mhs th, .tabel-mhs td {
+      border: 1px solid #000;
+      padding: 6px 10px;
+      text-align: center;
+    }
+    .tabel-mhs th {
+      background-color: #f0f0f0;
+    }
+
+    /* === TANDA TANGAN === */
+    .tanda-tangan-wrapper {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 25px;
+    }
+    .tanda-tangan {
+      width: 260px;
+      text-align: left;
+    }
+    .area-ttd {
+      position: relative;
+      height: 45px;
+    }
+    .img-ttd {
+      position: absolute;
+      top: -50px;
+      left: -15px;
+      height: 160px;
+      width: auto;
+      z-index: 10;
+      mix-blend-mode: multiply;
+    }
+    .nama-ttd {
+      font-weight: bold;
+      text-decoration: underline;
+      margin-bottom: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .nip-ttd {
+      margin-top: 0;
+    }
+
+    .tembusan-blok {
+      margin-top: 25px;
+      font-size: 10pt;
+    }
+    .tembusan-blok p {
+      margin: 0 0 4px 0;
+      font-weight: bold;
+    }
+    .tembusan-blok ol {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .footer-validasi {
+      margin-top: 30px;
+      font-size: 7.5pt;
+      color: #555;
+      border-top: 1px dashed #ccc;
+      padding-top: 6px;
+    }
+
+    /* Setiap salinan surat mulai di halaman baru, kecuali salinan pertama */
+    .halaman-surat {
+      page-break-after: always;
+    }
+    .halaman-surat:last-child {
+      page-break-after: auto;
+    }
+
+    @media print {
+      .img-ttd {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <% tembusanList.forEach(function(penerima) { %>
+  <div class="halaman-surat">
+
+    <!-- KOP SURAT -->
+    <div class="kop-surat">
+      <img src="/images/logo.png" alt="Logo Politeknik Dewantara" class="logo-kop">
+      <div class="teks-kop">
+        <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
+        <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo. Sulawesi Selatan</p>
+        <p class="kontak">E-mail: elektronika@polidewa.ac.id | Website: elektronika.polidewa.ac.id</p>
+      </div>
+    </div>
+
+    <!-- NOMOR, LAMPIRAN, HAL & TANGGAL -->
+    <div class="kepala-surat">
+      <table>
+        <tr><td class="label">Nomor</td><td class="titik">:</td><td><%= nomorSurat %></td></tr>
+        <tr><td class="label">Lampiran</td><td class="titik">:</td><td><%= lampiran || '-' %></td></tr>
+        <tr><td class="label">Hal</td><td class="titik">:</td><td><strong>Undangan Menghadiri Presentasi Hasil Magang</strong></td></tr>
+      </table>
+      <div class="tanggal-surat">Palopo, <%= tanggalSurat %></div>
+    </div>
+
+    <!-- KEPADA -->
+    <div class="kepada-blok">
+      <p>Kepada Yth,</p>
+      <p><strong><%= penerima.nama %></strong><% if (penerima.jabatan) { %><br><%= penerima.jabatan %><% } %></p>
+      <p>di &ndash;</p>
+      <p style="margin-left: 20px;">Tempat</p>
+    </div>
+
+    <!-- ISI SURAT -->
+    <div class="isi">
+      <p>Assalamualaikum Warahmatullahi Wabarakatuh</p>
+
+      <p>Teriring doa semoga Bapak/Ibu senantiasa sehat walafiat dan diberi petunjuk dalam menjalankan tugas-tugas kepemimpinan. Aamiin</p>
+
+      <p>Sehubungan dengan proses magang/PDK mahasiswa kami yang telah berlangsung di
+      <strong><%= perusahaanMagang %></strong>, kami sampaikan penghargaan dan terima kasih atas
+      perkenan dan kesempatan yang telah diberikan kepada mahasiswa kami untuk magang di perusahaan/instansi
+      yang Bapak/Ibu pimpin.</p>
+
+      <p>Melalui surat ini kami mengundang kepada Bapak/Ibu kiranya berkenan dapat hadir dalam kegiatan
+      presentasi hasil akhir magang mahasiswa yang Insya Allah akan dilaksanakan pada:</p>
+
+      <table class="info-acara">
+        <tr><td class="label">Hari/Tgl</td><td class="titik">:</td><td><%= hari %>, <%= tanggalAcara %></td></tr>
+        <tr><td class="label">Waktu</td><td class="titik">:</td><td><%= waktu %></td></tr>
+        <tr><td class="label">Tempat</td><td class="titik">:</td><td><%= tempatAcara %></td></tr>
+      </table>
+
+      <p>Adapun mahasiswa yang akan melaksanakan presentasi hasil akhir magang adalah tercantum namanya sebagai berikut:</p>
+
+      <table class="tabel-mhs">
+        <thead>
+          <tr>
+            <th>Nama Mahasiswa</th>
+            <th>NIM</th>
+            <th>Program Studi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><%= mahasiswa.nama %></td>
+            <td><%= mahasiswa.nim %></td>
+            <td><%= prodi %></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>Demikian surat ini kami sampaikan, atas perhatian dan kerjasama Bapak/Ibu kami haturkan terima kasih.</p>
+    </div>
+
+    <!-- TANDA TANGAN -->
+    <div class="tanda-tangan-wrapper">
+      <div class="tanda-tangan">
+        <p style="position: relative; z-index: 1; margin: 0;">Ketua Program Studi Teknik Elektronika,</p>
+        <div class="area-ttd">
+          <img src="/images/ttd.png" alt="Tanda Tangan Kaprodi" class="img-ttd">
+        </div>
+        <p class="nama-ttd">Fajar Ramadhan, S.Pd., M.T.</p>
+        <p class="nip-ttd" style="position: relative; z-index: 1;">NUPTK. 8559777678130153</p>
+      </div>
+    </div>
+
+    <!-- TEMBUSAN -->
+    <div class="tembusan-blok">
+      <p>Tembusan:</p>
+      <ol>
+        <% tembusanList.forEach(function(t) { %>
+          <li><%= t.jabatan || t.nama %></li>
+        <% }) %>
+      </ol>
+    </div>
+
+    <!-- FOOTER VALIDASI -->
+    <div class="footer-validasi">
+      Dokumen ini diterbitkan oleh Sistem Informasi Elektronika Polidewa &middot; Kode Validasi: <strong><%= kodeValidasi %></strong><br>
+      Periksa keaslian dokumen di: elektronika.polidewa.ac.id
+    </div>
+
+  </div>
+  <% }) %>
+
+</body>
+</html>

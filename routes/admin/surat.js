@@ -27,6 +27,7 @@ const upload = multer({
   }
 });
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
+const { getAllMahasiswa } = require('../../helpers/cache');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
@@ -877,6 +878,169 @@ router.post('/:id/:role/delete', async (req, res) => {
   } catch (error) {
     console.error('Error delete surat:', error);
     res.status(500).send('Gagal menghapus surat');
+  }
+});
+
+// ============================================================================
+// FITUR ADMIN: Kirim Undangan Seminar/Presentasi Hasil Magang ke Mahasiswa
+// Admin pilih 1 mahasiswa yang sedang magang aktif, isi jadwal presentasi,
+// dan sistem otomatis generate PDF (4 salinan: 2 pembimbing magang + Wadir I
+// + PPMA) lalu langsung tersimpan sebagai surat 'completed' milik mahasiswa
+// tsb - otomatis muncul di halaman "Daftar Surat" mahasiswa (collection
+// 'surat' yang sama dipakai fitur persuratan lain), tanpa perlu ubah apapun
+// di sisi mahasiswa.
+// ============================================================================
+router.get('/undangan-magang/create', async (req, res) => {
+  try {
+    // Ambil semua periode magang yang sedang aktif, gabungkan dengan data
+    // mahasiswa (pakai cache getAllMahasiswa yang sudah ada supaya tidak
+    // query 'users' berkali-kali - lihat helpers/cache.js)
+    const [periodSnapshot, mahasiswaList] = await Promise.all([
+      db.collection('magangPeriod').where('status', '==', 'active').get(),
+      getAllMahasiswa(db)
+    ]);
+    const mahasiswaMap = {};
+    mahasiswaList.forEach(m => { mahasiswaMap[m.id] = m; });
+
+    const daftarMagangAktif = periodSnapshot.docs
+      .map(doc => {
+        const period = doc.data();
+        const mhs = mahasiswaMap[period.mahasiswaId];
+        if (!mhs) return null;
+        return {
+          mahasiswaId: period.mahasiswaId,
+          nama: mhs.nama || '-',
+          nim: mhs.nim || '-',
+          perusahaan: (period.perusahaan && period.perusahaan.nama) || '',
+          pembimbing1Nama: period.pembimbing1Nama || '',
+          pembimbing2Nama: period.pembimbing2Nama || ''
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.nama.localeCompare(b.nama));
+
+    res.render('admin/surat/undangan_magang_form', {
+      title: 'Kirim Undangan Seminar Magang',
+      daftarMagangAktif
+    });
+  } catch (err) {
+    console.error('Error memuat form undangan magang:', err);
+    res.status(500).send('Gagal memuat data mahasiswa magang aktif');
+  }
+});
+
+router.post('/undangan-magang/create', upload.none(), async (req, res) => {
+  try {
+    const {
+      mahasiswaId, nomorSurat, lampiran, perusahaanMagang,
+      tanggalAcara, waktu, tempatAcara,
+      kepada1Nama, kepada1Jabatan,
+      kepada2Nama, kepada2Jabatan,
+      kepada3Nama, kepada3Jabatan,
+      kepada4Nama, kepada4Jabatan
+    } = req.body;
+
+    if (!mahasiswaId || !nomorSurat || !tanggalAcara || !waktu || !tempatAcara || !perusahaanMagang) {
+      return res.status(400).send('Mahasiswa, nomor surat, tanggal, waktu, tempat, dan perusahaan magang wajib diisi');
+    }
+    if (!kepada1Nama) {
+      return res.status(400).send('Minimal 1 penerima ("Kepada") wajib diisi');
+    }
+
+    const mahasiswa = await getMahasiswa(mahasiswaId);
+    if (!mahasiswa.nim || mahasiswa.nim === '-') {
+      return res.status(404).send('Data mahasiswa tidak lengkap/tidak ditemukan');
+    }
+
+    // Hanya masukkan penerima yang namanya diisi - admin boleh kirim ke
+    // kurang dari 4 penerima kalau memang tidak semua relevan
+    const calonTembusan = [
+      { nama: kepada1Nama, jabatan: kepada1Jabatan },
+      { nama: kepada2Nama, jabatan: kepada2Jabatan },
+      { nama: kepada3Nama, jabatan: kepada3Jabatan },
+      { nama: kepada4Nama, jabatan: kepada4Jabatan }
+    ];
+    const tembusanList = calonTembusan.filter(t => t.nama && t.nama.trim() !== '');
+
+    const tanggalObj = new Date(tanggalAcara);
+    const hari = new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(tanggalObj);
+    const tanggalAcaraFormatted = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(tanggalObj);
+    const tanggalSurat = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+    const kodeValidasi = generateKodeValidasi();
+
+    const templateData = {
+      nomorSurat,
+      lampiran: lampiran || '',
+      tanggalSurat,
+      mahasiswa: { nama: mahasiswa.nama, nim: mahasiswa.nim },
+      prodi: 'Teknik Elektronika',
+      perusahaanMagang,
+      hari,
+      tanggalAcara: tanggalAcaraFormatted,
+      waktu,
+      tempatAcara,
+      tembusanList,
+      kodeValidasi
+    };
+
+    let html = await new Promise((resolve, reject) => {
+      res.render('admin/surat/undangan_magang', templateData, (err, html) => {
+        if (err) reject(err);
+        else resolve(html);
+      });
+    });
+
+    const logoPath = path.join(__dirname, '../../public/images/logo.png');
+    const ttdPath = path.join(__dirname, '../../public/images/ttd.png');
+    let logoBase64 = '', ttdBase64 = '';
+    if (fs.existsSync(logoPath)) logoBase64 = fs.readFileSync(logoPath).toString('base64');
+    if (fs.existsSync(ttdPath)) ttdBase64 = fs.readFileSync(ttdPath).toString('base64');
+    if (logoBase64) html = html.replace(/src="\/images\/logo\.png"/g, `src="data:image/png;base64,${logoBase64}"`);
+    if (ttdBase64) html = html.replace(/src="\/images\/ttd\.png"/g, `src="data:image/png;base64,${ttdBase64}"`);
+
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: 'new', timeout: 60000 });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 60000 });
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '0', bottom: '0', left: '0', right: '0' } });
+    await browser.close();
+
+    const buffer = Buffer.from(pdfBuffer);
+    const tahunAkademik = getCurrentAcademicSemester().tahunAkademik;
+    const folderId = await getSuratFolderMahasiswa(mahasiswa.nim, tahunAkademik);
+    const fileName = `Undangan_Seminar_Magang_${kodeValidasi}.pdf`;
+    const fileMetadata = { name: fileName, parents: [folderId] };
+    const media = { mimeType: 'application/pdf', body: Readable.from(buffer) };
+    const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
+    await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+    const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
+
+    const currentSemester = getCurrentAcademicSemester();
+    await db.collection('surat').add({
+      userId: mahasiswaId,
+      jenis: 'Undangan Seminar Magang',
+      keperluan: `Undangan menghadiri presentasi hasil magang a.n. ${mahasiswa.nama} di ${perusahaanMagang}`,
+      semester: currentSemester.semester,
+      tahunAkademik: currentSemester.tahunAkademik,
+      nomorSurat,
+      kodeValidasi,
+      status: 'completed',
+      fileUrl,
+      fileId: driveResponse.data.id,
+      dikirimOleh: req.user.id,
+      dikirimOlehNama: req.user.nama || 'Admin',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{
+        status: 'completed',
+        timestamp: new Date().toISOString(),
+        catatan: `Surat undangan seminar magang dikirim langsung oleh ${req.user.nama || 'Admin'} (${tembusanList.length} salinan tembusan)`
+      }]
+    });
+
+    res.redirect('/admin/surat?success=undangan_terkirim');
+  } catch (err) {
+    console.error('Error kirim undangan seminar magang:', err);
+    res.status(500).send('Gagal membuat & mengirim surat undangan: ' + err.message);
   }
 });
 
