@@ -1,0 +1,214 @@
+<%- include('../partials/header') %>
+
+<style>
+  @media (max-width: 480px) {
+    body { zoom: 0.72; }
+  }
+  .transkrip-table th {
+    background: linear-gradient(135deg, #2193b0, #6dd5ed);
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    border: none;
+    padding: 1rem 0.75rem;
+  }
+  .transkrip-table td {
+    vertical-align: middle;
+    padding: 0.85rem 0.75rem;
+  }
+  .avatar-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2193b0, #6dd5ed);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 2rem;
+    box-shadow: 0 5px 15px rgba(33,147,176,0.3);
+  }
+  .table-responsive {
+    border-radius: 1.2rem;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    background: white;
+    padding: 0.5rem;
+  }
+  .info-card, .selector-card, .summary-card {
+    background: white;
+    border-radius: 1.2rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(33,147,176,0.1);
+  }
+  .btn-gradient {
+    background: linear-gradient(135deg, #2193b0, #6dd5ed);
+    border: none;
+    color: white;
+    font-weight: 500;
+    padding: 0.6rem 1.5rem;
+    border-radius: 50px;
+    transition: all 0.3s;
+  }
+  .btn-gradient:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(33,147,176,0.4);
+    color: white;
+  }
+  .selector-form .form-select {
+    border-radius: 50px;
+    border: 1px solid #dee2e6;
+    padding: 0.6rem 1rem;
+    transition: all 0.2s;
+  }
+  .selector-form .form-select:focus {
+    border-color: #2193b0;
+    box-shadow: 0 0 0 0.25rem rgba(33,147,176,0.25);
+  }
+  .summary-stat {
+    text-align: center;
+  }
+  .summary-stat .value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #2193b0;
+  }
+  .summary-stat .label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-huruf {
+    background: #e2e3e5;
+    font-weight: 700;
+    padding: 0.3rem 0.7rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+  }
+</style>
+
+<div class="container-fluid mt-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold"><i class="bi bi-journal-bookmark me-2" style="color: #2193b0;"></i>Transkrip Nilai</h2>
+    <div>
+      <span class="badge bg-gradient p-3" style="background: linear-gradient(135deg, #2193b0, #6dd5ed); color: white; font-size: 1rem;"><i class="bi bi-qr-code me-1"></i><%= user.nim %></span>
+    </div>
+  </div>
+
+  <div class="info-card">
+    <div class="d-flex align-items-center">
+      <% if (user.foto) { %>
+        <img src="<%= user.foto %>" alt="foto" class="rounded-circle me-3"
+             style="width: 60px; height: 60px; object-fit: cover; border: 3px solid #2193b0;">
+      <% } else { %>
+        <div class="avatar-circle me-3"><%= (user.nama || '?').charAt(0).toUpperCase() %></div>
+      <% } %>
+      <div>
+        <h4 class="fw-bold mb-1"><%= user.nama %></h4>
+        <p class="text-muted mb-0"><i class="bi bi-building me-2"></i>Program Studi Teknik Elektronika</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pilih s.d. Semester -->
+  <div class="selector-card">
+    <form method="GET" class="row g-3 align-items-end selector-form">
+      <div class="col-md-6">
+        <label for="semester" class="form-label fw-semibold"><i class="bi bi-calendar3 me-1"></i>Tampilkan s.d. Semester</label>
+        <select class="form-select" id="semester" name="semester" onchange="this.form.submit()">
+          <% if (semesterList && semesterList.length) { %>
+            <% semesterList.forEach(s => { %>
+              <option value="<%= s %>" <%= semesterDipilih === s ? 'selected' : '' %>><%= s %></option>
+            <% }) %>
+          <% } else { %>
+            <option value="">Belum ada semester</option>
+          <% } %>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-gradient w-100">
+          <i class="bi bi-eye me-1"></i> Tampilkan
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <% if (!grades || grades.length === 0) { %>
+    <div class="table-responsive">
+      <div class="text-center py-5">
+        <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+        <p class="text-muted">Belum ada nilai yang tercatat.</p>
+      </div>
+    </div>
+  <% } else { %>
+
+    <!-- Ringkasan -->
+    <div class="summary-card">
+      <div class="row">
+        <div class="col-6 col-md-4 summary-stat">
+          <div class="value"><%= grades.length %></div>
+          <div class="label">Mata Kuliah</div>
+        </div>
+        <div class="col-6 col-md-4 summary-stat">
+          <div class="value"><%= totalSKS %></div>
+          <div class="label">Total SKS</div>
+        </div>
+        <div class="col-12 col-md-4 summary-stat">
+          <div class="value" style="color: #198754;"><%= ipk %></div>
+          <div class="label">IPK (s.d. <%= semesterDipilih %>)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabel Nilai -->
+    <div class="table-responsive">
+      <table class="table transkrip-table mb-0">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Semester</th>
+            <th>Kode MK</th>
+            <th>Mata Kuliah</th>
+            <th>SKS</th>
+            <th>Nilai</th>
+            <th>Huruf</th>
+            <th>Indeks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% grades.forEach((g, i) => { %>
+          <tr<%= g.belumAdaNilai ? ' class="text-muted"' : '' %>>
+            <td class="fw-bold"><%= i + 1 %></td>
+            <td><%= g.semester %></td>
+            <td><%= g.kodeMk %></td>
+            <td><%= g.namaMk %></td>
+            <td><%= g.sks %></td>
+            <% if (g.belumAdaNilai) { %>
+              <td colspan="3"><em>Belum Ada Nilai</em></td>
+            <% } else { %>
+              <td><%= g.nilai %></td>
+              <td><span class="badge-huruf"><%= g.huruf %></span></td>
+              <td><%= g.indeks.toFixed(1) %></td>
+            <% } %>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="text-end mt-3">
+      <a href="/mahasiswa/akademik/transkrip/cetak<%= semesterDipilih ? '?semester=' + encodeURIComponent(semesterDipilih) : '' %>" class="btn btn-gradient" target="_blank">
+        <i class="bi bi-printer-fill me-1"></i> Cetak Transkrip
+      </a>
+    </div>
+
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

@@ -15,40 +15,6 @@
         { "fieldPath": "aktif", "order": "ASCENDING" },
         { "fieldPath": "urutan", "order": "ASCENDING" }
       ]
-    },
-    {
-      "collectionGroup": "komunitasChat",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "ruangId", "order": "ASCENDING" },
-        { "fieldPath": "timestamp", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "komunitasChat",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "ruangId", "order": "ASCENDING" },
-        { "fieldPath": "timestamp", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "kelasChat",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "mkId", "order": "ASCENDING" },
-        { "fieldPath": "periode", "order": "ASCENDING" },
-        { "fieldPath": "timestamp", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "kelasChat",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "mkId", "order": "ASCENDING" },
-        { "fieldPath": "periode", "order": "ASCENDING" },
-        { "fieldPath": "timestamp", "order": "DESCENDING" }
-      ]
     }
   ],
   "fieldOverrides": []

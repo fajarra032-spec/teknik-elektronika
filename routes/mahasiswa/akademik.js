@@ -515,37 +515,76 @@ router.get('/khs/:semester', async (req, res) => {
  * sampai semester yang dipilih (default: semester terbaru), bukan langsung
  * menampilkan seluruh riwayat tanpa pilihan.
  */
+/**
+ * Helper: hitung data transkrip (opsional dipotong kumulatif s.d. semester
+ * tertentu) - dipakai bareng oleh halaman biasa (/transkrip) dan halaman
+ * cetak (/transkrip/cetak) supaya logikanya tidak dobel.
+ */
+async function hitungDataTranskrip(userId, semesterQuery) {
+  const { perSemester, items: semuaItem, ipk: ipkTotal, totalSKS: totalSKSTotal } = await getTranskripMahasiswa(userId);
+  const semesterList = perSemester.map(s => s.semester);
+
+  const semesterDipilih = (semesterQuery && semesterList.includes(semesterQuery))
+    ? semesterQuery
+    : (semesterList.length > 0 ? semesterList[semesterList.length - 1] : null);
+
+  let grades = semuaItem;
+  let ipk = ipkTotal;
+  let totalSKS = totalSKSTotal;
+
+  if (semesterDipilih) {
+    const idx = semesterList.indexOf(semesterDipilih);
+    const sampaiSemesterIni = perSemester.slice(0, idx + 1);
+    grades = sampaiSemesterIni.flatMap(s => s.matkul);
+    let sksKum = 0, bobotKum = 0;
+    sampaiSemesterIni.forEach(s => { sksKum += s.totalSKS; bobotKum += s.totalSksIndeks; });
+    totalSKS = sksKum;
+    ipk = sksKum > 0 ? (bobotKum / sksKum).toFixed(2) : '0.00';
+  }
+
+  return { grades, ipk, totalSKS, semesterList, semesterDipilih };
+}
+
+/**
+ * GET /mahasiswa/akademik/transkrip
+ * Halaman biasa (bukan langsung dokumen cetak) - dropdown pilih "s.d.
+ * semester", ringkasan IPK/SKS, dan tabel nilai. Ada tombol "Cetak
+ * Transkrip" yang baru membuka dokumen resminya di tab baru
+ * (/transkrip/cetak) - sama seperti pola KHS (khs_list -> khs_detail) dan
+ * KRS (krs_list -> krs_print).
+ */
 router.get('/transkrip', async (req, res) => {
   try {
-    const { perSemester, items: semuaItem, ipk: ipkTotal, totalSKS: totalSKSTotal } = await getTranskripMahasiswa(req.user.id);
-    const semesterList = perSemester.map(s => s.semester);
-
-    const semesterDipilih = (req.query.semester && semesterList.includes(req.query.semester))
-      ? req.query.semester
-      : (semesterList.length > 0 ? semesterList[semesterList.length - 1] : null);
-
-    let grades = semuaItem;
-    let ipk = ipkTotal;
-    let totalSKS = totalSKSTotal;
-
-    if (semesterDipilih) {
-      const idx = semesterList.indexOf(semesterDipilih);
-      const sampaiSemesterIni = perSemester.slice(0, idx + 1);
-      grades = sampaiSemesterIni.flatMap(s => s.matkul);
-      let sksKum = 0, bobotKum = 0;
-      sampaiSemesterIni.forEach(s => { sksKum += s.totalSKS; bobotKum += s.totalSksIndeks; });
-      totalSKS = sksKum;
-      ipk = sksKum > 0 ? (bobotKum / sksKum).toFixed(2) : '0.00';
-    }
-
-    res.render('mahasiswa/transkrip', {
+    const data = await hitungDataTranskrip(req.user.id, req.query.semester);
+    res.render('mahasiswa/transkrip_list', {
       title: 'Transkrip Nilai',
       user: req.user,
-      grades, // nama variabel view tetap 'grades' agar template EJS tidak perlu diubah
-      ipk,
-      totalSKS,
-      semesterList,
-      semesterDipilih
+      ...data
+    });
+  } catch (error) {
+    console.error(error);
+    if (error.code === 9) {
+      return res.status(500).render('error', {
+        title: 'Error',
+        message: 'Fitur transkrip membutuhkan indeks database. Silakan hubungi administrator.'
+      });
+    }
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat transkrip' });
+  }
+});
+
+/**
+ * GET /mahasiswa/akademik/transkrip/cetak
+ * Dokumen resmi siap cetak (kop surat, tanda tangan, dll) - dibuka
+ * terpisah dari halaman biasa di atas.
+ */
+router.get('/transkrip/cetak', async (req, res) => {
+  try {
+    const data = await hitungDataTranskrip(req.user.id, req.query.semester);
+    res.render('mahasiswa/transkrip_print', {
+      title: 'Transkrip Nilai',
+      user: req.user,
+      ...data
     });
   } catch (error) {
     console.error(error);
