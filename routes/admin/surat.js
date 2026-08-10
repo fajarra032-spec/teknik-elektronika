@@ -77,6 +77,14 @@ async function getSuratFolderDosen(nip, tahunAkademik) {
   return await getOrCreateSubFolder(tahunFolder, nip);
 }
 
+// Surat tugas dengan banyak penerima (campur dosen+mahasiswa) disimpan 1 PDF
+// bersama, bukan per-nip/per-nim seperti surat individual - folder khusus
+// biar tidak numpuk di folder pribadi salah satu penerima saja.
+async function getSuratFolderTugasBersama(tahunAkademik) {
+  const parent = await getOrCreateSubFolder(DATA_WEB_FOLDER_ID, 'Surat Tugas Bersama');
+  return await getOrCreateSubFolder(parent, tahunAkademik);
+}
+
 function generateKodeValidasi() {
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -267,58 +275,420 @@ router.post('/dosen/create-izin', upload.none(), async (req, res) => {
 // ============================================================================
 router.get('/create-tugas', async (req, res) => {
   try {
-    const dosenSnapshot = await db.collection('dosen').orderBy('nama').get();
+    const [dosenSnapshot, mahasiswaList] = await Promise.all([
+      db.collection('dosen').orderBy('nama').get(),
+      getAllMahasiswa(db)
+    ]);
     const dosenList = dosenSnapshot.docs.map(doc => ({ id: doc.id, nama: doc.data().nama, nip: doc.data().nip }));
-    res.render('admin/surat/create_tugas', { title: 'Buat Surat Tugas Dosen', dosenList });
+    const daftarMahasiswa = [...mahasiswaList]
+      .map(m => ({ id: m.id, nama: m.nama, nim: m.nim }))
+      .sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
+    res.render('admin/surat/create_tugas', { title: 'Buat Surat Tugas', dosenList, daftarMahasiswa });
   } catch (err) {
     console.error(err);
-    res.status(500).send('Gagal memuat data dosen');
+    res.status(500).send('Gagal memuat data dosen/mahasiswa');
   }
 });
 
+// Surat tugas mendukung banyak penerima sekaligus, campur dosen dan
+// mahasiswa dalam satu surat (1 PDF berisi 1 tabel semua penerima).
+// PDF di-generate langsung (tanpa tahap 'pending' terpisah seperti versi
+// lama), lalu untuk setiap penerima dibuatkan 1 dokumen pointer yang saling
+// berbagi file PDF yang sama:
+//   - penerima dosen  -> disimpan ke collection 'surat_tugas' (field
+//     dosenId dsb tetap sama seperti sebelumnya, supaya halaman dosen &
+//     admin yang sudah ada tetap kompatibel tanpa perlu diubah)
+//   - penerima mahasiswa -> disimpan ke collection 'surat' (jenis: 'Surat
+//     Tugas'), otomatis muncul di halaman "Daftar Surat" mahasiswa
 router.post('/create-tugas', upload.none(), async (req, res) => {
   try {
-    const { dosenId, jabatan, namaKegiatan, penyelenggara, tanggalPelaksanaan, nomorSurat } = req.body;
-    if (!dosenId || !namaKegiatan || !penyelenggara || !tanggalPelaksanaan) {
-      return res.status(400).send('Nama kegiatan, penyelenggara, dan tanggal pelaksanaan harus diisi');
+    const {
+      namaKegiatan, tempat, tanggalAcara, waktu, nomorSurat,
+      penandatanganNama, penandatanganJabatan, penandatanganNip
+    } = req.body;
+
+    if (!namaKegiatan || !tempat || !tanggalAcara || !waktu || !penandatanganNama || !penandatanganJabatan) {
+      return res.status(400).send('Nama kegiatan, tanggal, waktu, tempat, dan data penandatangan wajib diisi');
     }
 
-    const dosenDoc = await db.collection('dosen').doc(dosenId).get();
-    if (!dosenDoc.exists) return res.status(404).send('Dosen tidak ditemukan');
-    const dosenData = dosenDoc.data();
+    // Normalisasi field array - kalau cuma 1 baris penerima, express body-parser
+    // memberi string biasa (bukan array), jadi perlu dibungkus jadi array dulu.
+    const toArray = (v) => (v === undefined ? [] : (Array.isArray(v) ? v : [v]));
+    const penerimaTipe = toArray(req.body['penerimaTipe[]']);
+    const penerimaId = toArray(req.body['penerimaId[]']);
+    const penerimaNamaArr = toArray(req.body['penerimaNama[]']);
+    const penerimaJabatanArr = toArray(req.body['penerimaJabatan[]']);
+
+    if (penerimaId.length === 0) {
+      return res.status(400).send('Minimal 1 penerima (dosen/mahasiswa) wajib diisi');
+    }
+
+    const daftarPenerimaMentah = penerimaId.map((id, i) => ({
+      tipe: penerimaTipe[i],
+      id,
+      nama: penerimaNamaArr[i] || '',
+      jabatan: penerimaJabatanArr[i] || ''
+    })).filter(p => p.id && p.tipe);
+
+    if (daftarPenerimaMentah.length === 0) {
+      return res.status(400).send('Data penerima tidak valid');
+    }
 
     const kodeValidasi = generateKodeValidasi();
-    const finalNomorSurat = nomorSurat || `TUGAS/${kodeValidasi}`;
+    const finalNomorSurat = nomorSurat && nomorSurat.trim() !== '' ? nomorSurat.trim() : `TUGAS/${kodeValidasi}`;
 
-    const tugasData = {
-      dosenId: dosenId,
-      dosenNama: dosenData.nama,
-      nip: dosenData.nip,
-      email: dosenData.email || '',
-      jabatan: jabatan || 'Dosen Teknik Elektronika',
-      namaKegiatan,
-      penyelenggara,
-      tanggalPelaksanaan,
+    const tanggalObj = new Date(tanggalAcara);
+    const hari = new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(tanggalObj);
+    const tanggalAcaraFormatted = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(tanggalObj);
+    const tanggalSurat = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+
+    // Untuk tabel di PDF, cuma butuh nama + jabatan (tanpa perlu tahu tipe)
+    const daftarPenerimaUntukTemplate = daftarPenerimaMentah.map(p => ({ nama: p.nama, jabatan: p.jabatan }));
+
+    const templateData = {
       nomorSurat: finalNomorSurat,
       kodeValidasi,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      history: [{ status: 'pending', timestamp: new Date().toISOString(), catatan: 'Surat tugas dibuat oleh admin' }]
+      namaKegiatan,
+      tempat,
+      hari,
+      tanggalAcara: tanggalAcaraFormatted,
+      waktu,
+      tanggalSurat,
+      daftarPenerima: daftarPenerimaUntukTemplate,
+      penandatanganNama,
+      penandatanganJabatan,
+      penandatanganNip: penandatanganNip || ''
     };
 
-    const docRef = await db.collection('surat_tugas').add(tugasData);
-    // Langsung generate PDF
-    res.redirect(`/admin/surat/tugas/${docRef.id}/generate`);
+    let html = await new Promise((resolve, reject) => {
+      res.render('admin/surat/surat_tugas', templateData, (err, html) => {
+        if (err) reject(err);
+        else resolve(html);
+      });
+    });
+
+    const logoPath = path.join(__dirname, '../../public/images/logo.png');
+    const ttdPath = path.join(__dirname, '../../public/images/ttd.png');
+    let logoBase64 = '', ttdBase64 = '';
+    if (fs.existsSync(logoPath)) logoBase64 = fs.readFileSync(logoPath).toString('base64');
+    if (fs.existsSync(ttdPath)) ttdBase64 = fs.readFileSync(ttdPath).toString('base64');
+    if (logoBase64) html = html.replace(/src="\/images\/logo\.png"/g, `src="data:image/png;base64,${logoBase64}"`);
+    if (ttdBase64) html = html.replace(/src="\/images\/ttd\.png"/g, `src="data:image/png;base64,${ttdBase64}"`);
+
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: 'new', timeout: 60000 });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 60000 });
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '0', bottom: '0', left: '0', right: '0' } });
+    await browser.close();
+
+    const buffer = Buffer.from(pdfBuffer);
+    const tahunAkademik = getCurrentAcademicSemester().tahunAkademik;
+    const folderId = await getSuratFolderTugasBersama(tahunAkademik);
+    const fileName = `Surat_Tugas_${kodeValidasi}.pdf`;
+    const fileMetadata = { name: fileName, parents: [folderId] };
+    const media = { mimeType: 'application/pdf', body: Readable.from(buffer) };
+    const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
+    await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+    const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
+
+    const currentSemester = getCurrentAcademicSemester();
+    const now = new Date().toISOString();
+
+    // Buat 1 dokumen pointer per penerima, semua nunjuk ke fileUrl yang sama
+    for (const p of daftarPenerimaMentah) {
+      if (p.tipe === 'dosen') {
+        const dosen = await getDosen(p.id);
+        await db.collection('surat_tugas').add({
+          dosenId: p.id,
+          dosenNama: dosen.nama || p.nama,
+          nip: dosen.nip || '',
+          email: dosen.email || '',
+          jabatan: p.jabatan || 'Dosen',
+          namaKegiatan,
+          penyelenggara: tempat, // field lama dipertahankan supaya tampilan admin/dosen lama tetap jalan
+          tempat,
+          hari,
+          tanggalAcara: tanggalAcaraFormatted,
+          waktu,
+          tanggalPelaksanaan: `${hari}, ${tanggalAcaraFormatted}, ${waktu}`, // field lama, dipertahankan
+          nomorSurat: finalNomorSurat,
+          kodeValidasi,
+          status: 'completed',
+          fileUrl,
+          fileId: driveResponse.data.id,
+          daftarPenerimaLain: daftarPenerimaUntukTemplate,
+          dikirimOleh: req.user.id,
+          dikirimOlehNama: req.user.nama || 'Admin',
+          createdAt: now,
+          updatedAt: now,
+          history: [{ status: 'completed', timestamp: now, catatan: `Surat tugas diterbitkan oleh ${req.user.nama || 'Admin'}` }]
+        });
+      } else if (p.tipe === 'mahasiswa') {
+        const mahasiswa = await getMahasiswa(p.id);
+        await db.collection('surat').add({
+          userId: p.id,
+          jenis: 'Surat Tugas',
+          keperluan: `Surat tugas: ${namaKegiatan}`,
+          semester: currentSemester.semester,
+          tahunAkademik: currentSemester.tahunAkademik,
+          nomorSurat: finalNomorSurat,
+          kodeValidasi,
+          status: 'completed',
+          fileUrl,
+          fileId: driveResponse.data.id,
+          daftarPenerimaLain: daftarPenerimaUntukTemplate,
+          dikirimOleh: req.user.id,
+          dikirimOlehNama: req.user.nama || 'Admin',
+          createdAt: now,
+          updatedAt: now,
+          history: [{ status: 'completed', timestamp: now, catatan: `Surat tugas diterbitkan oleh ${req.user.nama || 'Admin'}` }]
+        });
+      }
+    }
+
+    res.redirect('/admin/surat/tugas?success=tugas_terkirim');
   } catch (err) {
-    console.error(err);
+    console.error('Error buat surat tugas:', err);
     res.status(500).send('Gagal membuat surat tugas: ' + err.message);
   }
 });
 
 // ============================================================================
-// GENERATE SURAT TUGAS (PDF)
+// FITUR ADMIN: Kirim Undangan Seminar/Presentasi Hasil Magang ke Mahasiswa
+// Admin pilih 1 mahasiswa yang sedang magang aktif, isi jadwal presentasi,
+// dan sistem otomatis generate PDF (4 salinan: 2 pembimbing magang + Wadir I
+// + PPMA) lalu langsung tersimpan sebagai surat 'completed' milik mahasiswa
+// tsb - otomatis muncul di halaman "Daftar Surat" mahasiswa (collection
+// 'surat' yang sama dipakai fitur persuratan lain), tanpa perlu ubah apapun
+// di sisi mahasiswa.
 // ============================================================================
+router.get('/undangan-magang/create', async (req, res) => {
+  try {
+    // Ambil semua periode magang yang sedang aktif (untuk tab "Generate
+    // Otomatis"), sekaligus daftar SEMUA mahasiswa (untuk tab "Upload PDF
+    // Manual", yang tidak dibatasi status magang) - keduanya pakai cache
+    // getAllMahasiswa yang sama, jadi cuma 1x query 'users' walau dipakai
+    // untuk 2 keperluan sekaligus.
+    const [periodSnapshot, mahasiswaList] = await Promise.all([
+      db.collection('magangPeriod').where('status', '==', 'active').get(),
+      getAllMahasiswa(db)
+    ]);
+    const mahasiswaMap = {};
+    mahasiswaList.forEach(m => { mahasiswaMap[m.id] = m; });
+
+    const daftarMagangAktif = periodSnapshot.docs
+      .map(doc => {
+        const period = doc.data();
+        const mhs = mahasiswaMap[period.mahasiswaId];
+        if (!mhs) return null;
+        return {
+          mahasiswaId: period.mahasiswaId,
+          nama: mhs.nama || '-',
+          nim: mhs.nim || '-',
+          perusahaan: (period.perusahaan && period.perusahaan.nama) || '',
+          pembimbing1Nama: period.pembimbing1Nama || '',
+          pembimbing2Nama: period.pembimbing2Nama || ''
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.nama.localeCompare(b.nama));
+
+    const daftarMahasiswa = [...mahasiswaList].sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
+
+    res.render('admin/surat/undangan_magang_form', {
+      title: 'Kirim Undangan Seminar Magang',
+      daftarMagangAktif,
+      daftarMahasiswa
+    });
+  } catch (err) {
+    console.error('Error memuat form undangan magang:', err);
+    res.status(500).send('Gagal memuat data mahasiswa');
+  }
+});
+
+router.post('/undangan-magang/create', upload.none(), async (req, res) => {
+  try {
+    const {
+      mahasiswaId, nomorSurat, lampiran, perusahaanMagang,
+      tanggalAcara, waktu, tempatAcara,
+      kepada1Nama, kepada1Jabatan,
+      kepada2Nama, kepada2Jabatan,
+      kepada3Nama, kepada3Jabatan,
+      kepada4Nama, kepada4Jabatan
+    } = req.body;
+
+    if (!mahasiswaId || !nomorSurat || !tanggalAcara || !waktu || !tempatAcara || !perusahaanMagang) {
+      return res.status(400).send('Mahasiswa, nomor surat, tanggal, waktu, tempat, dan perusahaan magang wajib diisi');
+    }
+    if (!kepada1Nama) {
+      return res.status(400).send('Minimal 1 penerima ("Kepada") wajib diisi');
+    }
+
+    const mahasiswa = await getMahasiswa(mahasiswaId);
+    if (!mahasiswa.nim || mahasiswa.nim === '-') {
+      return res.status(404).send('Data mahasiswa tidak lengkap/tidak ditemukan');
+    }
+
+    // Hanya masukkan penerima yang namanya diisi - admin boleh kirim ke
+    // kurang dari 4 penerima kalau memang tidak semua relevan
+    const calonTembusan = [
+      { nama: kepada1Nama, jabatan: kepada1Jabatan },
+      { nama: kepada2Nama, jabatan: kepada2Jabatan },
+      { nama: kepada3Nama, jabatan: kepada3Jabatan },
+      { nama: kepada4Nama, jabatan: kepada4Jabatan }
+    ];
+    const tembusanList = calonTembusan.filter(t => t.nama && t.nama.trim() !== '');
+
+    const tanggalObj = new Date(tanggalAcara);
+    const hari = new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(tanggalObj);
+    const tanggalAcaraFormatted = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(tanggalObj);
+    const tanggalSurat = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+    const kodeValidasi = generateKodeValidasi();
+
+    const templateData = {
+      nomorSurat,
+      lampiran: lampiran || '',
+      tanggalSurat,
+      mahasiswa: { nama: mahasiswa.nama, nim: mahasiswa.nim },
+      prodi: 'Teknik Elektronika',
+      perusahaanMagang,
+      hari,
+      tanggalAcara: tanggalAcaraFormatted,
+      waktu,
+      tempatAcara,
+      tembusanList,
+      kodeValidasi
+    };
+
+    let html = await new Promise((resolve, reject) => {
+      res.render('admin/surat/undangan_magang', templateData, (err, html) => {
+        if (err) reject(err);
+        else resolve(html);
+      });
+    });
+
+    const logoPath = path.join(__dirname, '../../public/images/logo.png');
+    const ttdPath = path.join(__dirname, '../../public/images/ttd.png');
+    let logoBase64 = '', ttdBase64 = '';
+    if (fs.existsSync(logoPath)) logoBase64 = fs.readFileSync(logoPath).toString('base64');
+    if (fs.existsSync(ttdPath)) ttdBase64 = fs.readFileSync(ttdPath).toString('base64');
+    if (logoBase64) html = html.replace(/src="\/images\/logo\.png"/g, `src="data:image/png;base64,${logoBase64}"`);
+    if (ttdBase64) html = html.replace(/src="\/images\/ttd\.png"/g, `src="data:image/png;base64,${ttdBase64}"`);
+
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: 'new', timeout: 60000 });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 60000 });
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '0', bottom: '0', left: '0', right: '0' } });
+    await browser.close();
+
+    const buffer = Buffer.from(pdfBuffer);
+    const tahunAkademik = getCurrentAcademicSemester().tahunAkademik;
+    const folderId = await getSuratFolderMahasiswa(mahasiswa.nim, tahunAkademik);
+    const fileName = `Undangan_Seminar_Magang_${kodeValidasi}.pdf`;
+    const fileMetadata = { name: fileName, parents: [folderId] };
+    const media = { mimeType: 'application/pdf', body: Readable.from(buffer) };
+    const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
+    await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+    const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
+
+    const currentSemester = getCurrentAcademicSemester();
+    await db.collection('surat').add({
+      userId: mahasiswaId,
+      jenis: 'Undangan Seminar Magang',
+      keperluan: `Undangan menghadiri presentasi hasil magang a.n. ${mahasiswa.nama} di ${perusahaanMagang}`,
+      semester: currentSemester.semester,
+      tahunAkademik: currentSemester.tahunAkademik,
+      nomorSurat,
+      kodeValidasi,
+      status: 'completed',
+      fileUrl,
+      fileId: driveResponse.data.id,
+      dikirimOleh: req.user.id,
+      dikirimOlehNama: req.user.nama || 'Admin',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{
+        status: 'completed',
+        timestamp: new Date().toISOString(),
+        catatan: `Surat undangan seminar magang dikirim langsung oleh ${req.user.nama || 'Admin'} (${tembusanList.length} salinan tembusan)`
+      }]
+    });
+
+    res.redirect('/admin/surat?success=undangan_terkirim');
+  } catch (err) {
+    console.error('Error kirim undangan seminar magang:', err);
+    res.status(500).send('Gagal membuat & mengirim surat undangan: ' + err.message);
+  }
+});
+
+// ============================================================================
+// FITUR ADMIN: Kirim Undangan Seminar Magang - Upload PDF Manual
+// Untuk kasus admin sudah punya file PDF undangan yang dibuat sendiri
+// (mis. dari Word) dan cukup mau kirim langsung ke mahasiswa tanpa lewat
+// proses generate otomatis. Formnya ada di tab yang sama dengan generate
+// otomatis (lihat GET /undangan-magang/create di atas & view
+// undangan_magang_form.ejs) - jadi tidak perlu route GET terpisah di sini.
+// ============================================================================
+router.post('/undangan-magang/kirim-manual', upload.single('file'), async (req, res) => {
+  try {
+    const { mahasiswaId, nomorSurat, keperluan } = req.body;
+    const file = req.file;
+    if (!mahasiswaId || !file) return res.status(400).send('Mahasiswa dan file PDF wajib diisi');
+
+    const mahasiswa = await getMahasiswa(mahasiswaId);
+    if (!mahasiswa.nim || mahasiswa.nim === '-') {
+      return res.status(404).send('Data mahasiswa tidak lengkap/tidak ditemukan');
+    }
+
+    const tahunAkademik = getCurrentAcademicSemester().tahunAkademik;
+    const kodeValidasi = generateKodeValidasi();
+    const folderId = await getSuratFolderMahasiswa(mahasiswa.nim, tahunAkademik);
+    const fileName = `Undangan_Seminar_Magang_${kodeValidasi}.pdf`;
+    const fileMetadata = { name: fileName, parents: [folderId] };
+    const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
+    const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
+    await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+    const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
+
+    const currentSemester = getCurrentAcademicSemester();
+    await db.collection('surat').add({
+      userId: mahasiswaId,
+      jenis: 'Undangan Seminar Magang',
+      keperluan: keperluan && keperluan.trim() !== '' ? keperluan.trim() : `Undangan menghadiri presentasi hasil magang a.n. ${mahasiswa.nama}`,
+      semester: currentSemester.semester,
+      tahunAkademik: currentSemester.tahunAkademik,
+      nomorSurat: nomorSurat || '',
+      kodeValidasi,
+      status: 'completed',
+      fileUrl,
+      fileId: driveResponse.data.id,
+      dikirimOleh: req.user.id,
+      dikirimOlehNama: req.user.nama || 'Admin',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{
+        status: 'completed',
+        timestamp: new Date().toISOString(),
+        catatan: `Surat undangan seminar magang (file PDF manual) dikirim langsung oleh ${req.user.nama || 'Admin'}`
+      }]
+    });
+
+    res.redirect('/admin/surat?success=undangan_terkirim');
+  } catch (err) {
+    console.error('Error kirim undangan manual:', err);
+    res.status(500).send('Gagal mengirim surat undangan: ' + err.message);
+  }
+});
+
+// ============================================================================
+// GENERATE SURAT TUGAS (PDF) - LEGACY
+// Route lama untuk surat tugas versi single-dosen yang mungkin masih
+// berstatus 'pending' dari sebelum fitur multi-penerima ada. Form create
+// yang baru (di atas) sudah langsung generate PDF, jadi route ini tidak lagi
+// dipanggil dari form manapun, tapi dibiarkan tetap ada untuk kompatibilitas
+// data lama.
+// ============================================================================
+
 router.post('/tugas/:id/generate', async (req, res) => {
   try {
     const { id } = req.params;
@@ -881,231 +1251,5 @@ router.post('/:id/:role/delete', async (req, res) => {
   }
 });
 
-// ============================================================================
-// FITUR ADMIN: Kirim Undangan Seminar/Presentasi Hasil Magang ke Mahasiswa
-// Admin pilih 1 mahasiswa yang sedang magang aktif, isi jadwal presentasi,
-// dan sistem otomatis generate PDF (4 salinan: 2 pembimbing magang + Wadir I
-// + PPMA) lalu langsung tersimpan sebagai surat 'completed' milik mahasiswa
-// tsb - otomatis muncul di halaman "Daftar Surat" mahasiswa (collection
-// 'surat' yang sama dipakai fitur persuratan lain), tanpa perlu ubah apapun
-// di sisi mahasiswa.
-// ============================================================================
-router.get('/undangan-magang/create', async (req, res) => {
-  try {
-    // Ambil semua periode magang yang sedang aktif (untuk tab "Generate
-    // Otomatis"), sekaligus daftar SEMUA mahasiswa (untuk tab "Upload PDF
-    // Manual", yang tidak dibatasi status magang) - keduanya pakai cache
-    // getAllMahasiswa yang sama, jadi cuma 1x query 'users' walau dipakai
-    // untuk 2 keperluan sekaligus.
-    const [periodSnapshot, mahasiswaList] = await Promise.all([
-      db.collection('magangPeriod').where('status', '==', 'active').get(),
-      getAllMahasiswa(db)
-    ]);
-    const mahasiswaMap = {};
-    mahasiswaList.forEach(m => { mahasiswaMap[m.id] = m; });
-
-    const daftarMagangAktif = periodSnapshot.docs
-      .map(doc => {
-        const period = doc.data();
-        const mhs = mahasiswaMap[period.mahasiswaId];
-        if (!mhs) return null;
-        return {
-          mahasiswaId: period.mahasiswaId,
-          nama: mhs.nama || '-',
-          nim: mhs.nim || '-',
-          perusahaan: (period.perusahaan && period.perusahaan.nama) || '',
-          pembimbing1Nama: period.pembimbing1Nama || '',
-          pembimbing2Nama: period.pembimbing2Nama || ''
-        };
-      })
-      .filter(Boolean)
-      .sort((a, b) => a.nama.localeCompare(b.nama));
-
-    const daftarMahasiswa = [...mahasiswaList].sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
-
-    res.render('admin/surat/undangan_magang_form', {
-      title: 'Kirim Undangan Seminar Magang',
-      daftarMagangAktif,
-      daftarMahasiswa
-    });
-  } catch (err) {
-    console.error('Error memuat form undangan magang:', err);
-    res.status(500).send('Gagal memuat data mahasiswa');
-  }
-});
-
-router.post('/undangan-magang/create', upload.none(), async (req, res) => {
-  try {
-    const {
-      mahasiswaId, nomorSurat, lampiran, perusahaanMagang,
-      tanggalAcara, waktu, tempatAcara,
-      kepada1Nama, kepada1Jabatan,
-      kepada2Nama, kepada2Jabatan,
-      kepada3Nama, kepada3Jabatan,
-      kepada4Nama, kepada4Jabatan
-    } = req.body;
-
-    if (!mahasiswaId || !nomorSurat || !tanggalAcara || !waktu || !tempatAcara || !perusahaanMagang) {
-      return res.status(400).send('Mahasiswa, nomor surat, tanggal, waktu, tempat, dan perusahaan magang wajib diisi');
-    }
-    if (!kepada1Nama) {
-      return res.status(400).send('Minimal 1 penerima ("Kepada") wajib diisi');
-    }
-
-    const mahasiswa = await getMahasiswa(mahasiswaId);
-    if (!mahasiswa.nim || mahasiswa.nim === '-') {
-      return res.status(404).send('Data mahasiswa tidak lengkap/tidak ditemukan');
-    }
-
-    // Hanya masukkan penerima yang namanya diisi - admin boleh kirim ke
-    // kurang dari 4 penerima kalau memang tidak semua relevan
-    const calonTembusan = [
-      { nama: kepada1Nama, jabatan: kepada1Jabatan },
-      { nama: kepada2Nama, jabatan: kepada2Jabatan },
-      { nama: kepada3Nama, jabatan: kepada3Jabatan },
-      { nama: kepada4Nama, jabatan: kepada4Jabatan }
-    ];
-    const tembusanList = calonTembusan.filter(t => t.nama && t.nama.trim() !== '');
-
-    const tanggalObj = new Date(tanggalAcara);
-    const hari = new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(tanggalObj);
-    const tanggalAcaraFormatted = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(tanggalObj);
-    const tanggalSurat = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
-    const kodeValidasi = generateKodeValidasi();
-
-    const templateData = {
-      nomorSurat,
-      lampiran: lampiran || '',
-      tanggalSurat,
-      mahasiswa: { nama: mahasiswa.nama, nim: mahasiswa.nim },
-      prodi: 'Teknik Elektronika',
-      perusahaanMagang,
-      hari,
-      tanggalAcara: tanggalAcaraFormatted,
-      waktu,
-      tempatAcara,
-      tembusanList,
-      kodeValidasi
-    };
-
-    let html = await new Promise((resolve, reject) => {
-      res.render('admin/surat/undangan_magang', templateData, (err, html) => {
-        if (err) reject(err);
-        else resolve(html);
-      });
-    });
-
-    const logoPath = path.join(__dirname, '../../public/images/logo.png');
-    const ttdPath = path.join(__dirname, '../../public/images/ttd.png');
-    let logoBase64 = '', ttdBase64 = '';
-    if (fs.existsSync(logoPath)) logoBase64 = fs.readFileSync(logoPath).toString('base64');
-    if (fs.existsSync(ttdPath)) ttdBase64 = fs.readFileSync(ttdPath).toString('base64');
-    if (logoBase64) html = html.replace(/src="\/images\/logo\.png"/g, `src="data:image/png;base64,${logoBase64}"`);
-    if (ttdBase64) html = html.replace(/src="\/images\/ttd\.png"/g, `src="data:image/png;base64,${ttdBase64}"`);
-
-    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: 'new', timeout: 60000 });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 60000 });
-    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '0', bottom: '0', left: '0', right: '0' } });
-    await browser.close();
-
-    const buffer = Buffer.from(pdfBuffer);
-    const tahunAkademik = getCurrentAcademicSemester().tahunAkademik;
-    const folderId = await getSuratFolderMahasiswa(mahasiswa.nim, tahunAkademik);
-    const fileName = `Undangan_Seminar_Magang_${kodeValidasi}.pdf`;
-    const fileMetadata = { name: fileName, parents: [folderId] };
-    const media = { mimeType: 'application/pdf', body: Readable.from(buffer) };
-    const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
-    await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
-    const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
-
-    const currentSemester = getCurrentAcademicSemester();
-    await db.collection('surat').add({
-      userId: mahasiswaId,
-      jenis: 'Undangan Seminar Magang',
-      keperluan: `Undangan menghadiri presentasi hasil magang a.n. ${mahasiswa.nama} di ${perusahaanMagang}`,
-      semester: currentSemester.semester,
-      tahunAkademik: currentSemester.tahunAkademik,
-      nomorSurat,
-      kodeValidasi,
-      status: 'completed',
-      fileUrl,
-      fileId: driveResponse.data.id,
-      dikirimOleh: req.user.id,
-      dikirimOlehNama: req.user.nama || 'Admin',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      history: [{
-        status: 'completed',
-        timestamp: new Date().toISOString(),
-        catatan: `Surat undangan seminar magang dikirim langsung oleh ${req.user.nama || 'Admin'} (${tembusanList.length} salinan tembusan)`
-      }]
-    });
-
-    res.redirect('/admin/surat?success=undangan_terkirim');
-  } catch (err) {
-    console.error('Error kirim undangan seminar magang:', err);
-    res.status(500).send('Gagal membuat & mengirim surat undangan: ' + err.message);
-  }
-});
-
-// ============================================================================
-// FITUR ADMIN: Kirim Undangan Seminar Magang - Upload PDF Manual
-// Untuk kasus admin sudah punya file PDF undangan yang dibuat sendiri
-// (mis. dari Word) dan cukup mau kirim langsung ke mahasiswa tanpa lewat
-// proses generate otomatis. Formnya ada di tab yang sama dengan generate
-// otomatis (lihat GET /undangan-magang/create di atas & view
-// undangan_magang_form.ejs) - jadi tidak perlu route GET terpisah di sini.
-// ============================================================================
-router.post('/undangan-magang/kirim-manual', upload.single('file'), async (req, res) => {
-  try {
-    const { mahasiswaId, nomorSurat, keperluan } = req.body;
-    const file = req.file;
-    if (!mahasiswaId || !file) return res.status(400).send('Mahasiswa dan file PDF wajib diisi');
-
-    const mahasiswa = await getMahasiswa(mahasiswaId);
-    if (!mahasiswa.nim || mahasiswa.nim === '-') {
-      return res.status(404).send('Data mahasiswa tidak lengkap/tidak ditemukan');
-    }
-
-    const tahunAkademik = getCurrentAcademicSemester().tahunAkademik;
-    const kodeValidasi = generateKodeValidasi();
-    const folderId = await getSuratFolderMahasiswa(mahasiswa.nim, tahunAkademik);
-    const fileName = `Undangan_Seminar_Magang_${kodeValidasi}.pdf`;
-    const fileMetadata = { name: fileName, parents: [folderId] };
-    const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
-    const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
-    await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
-    const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
-
-    const currentSemester = getCurrentAcademicSemester();
-    await db.collection('surat').add({
-      userId: mahasiswaId,
-      jenis: 'Undangan Seminar Magang',
-      keperluan: keperluan && keperluan.trim() !== '' ? keperluan.trim() : `Undangan menghadiri presentasi hasil magang a.n. ${mahasiswa.nama}`,
-      semester: currentSemester.semester,
-      tahunAkademik: currentSemester.tahunAkademik,
-      nomorSurat: nomorSurat || '',
-      kodeValidasi,
-      status: 'completed',
-      fileUrl,
-      fileId: driveResponse.data.id,
-      dikirimOleh: req.user.id,
-      dikirimOlehNama: req.user.nama || 'Admin',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      history: [{
-        status: 'completed',
-        timestamp: new Date().toISOString(),
-        catatan: `Surat undangan seminar magang (file PDF manual) dikirim langsung oleh ${req.user.nama || 'Admin'}`
-      }]
-    });
-
-    res.redirect('/admin/surat?success=undangan_terkirim');
-  } catch (err) {
-    console.error('Error kirim undangan manual:', err);
-    res.status(500).send('Gagal mengirim surat undangan: ' + err.message);
-  }
-});
 
 module.exports = router;

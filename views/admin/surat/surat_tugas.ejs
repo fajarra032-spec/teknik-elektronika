@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Surat Tugas - <%= namaDosen %></title>
+  <title>Surat Tugas - <%= namaKegiatan %></title>
   <style>
     @page {
       size: A4;
@@ -16,7 +16,6 @@
       background-color: #fff;
       position: relative;
     }
-    /* Kop surat seperti aktif kuliah */
     .kop-surat {
       display: flex;
       align-items: center;
@@ -45,7 +44,6 @@
       margin: 0;
       color: #333;
     }
-    /* Judul */
     .judul-surat {
       text-align: center;
       margin: 30px 0 20px;
@@ -61,31 +59,62 @@
       margin-top: 5px;
       font-weight: bold;
     }
-    /* Isi */
     .isi {
       text-align: justify;
       margin-top: 20px;
     }
-    .tabel-dosen {
+    .identitas-penandatangan {
+      margin: 15px 0;
+    }
+    .identitas-penandatangan table {
+      border-collapse: collapse;
+    }
+    .identitas-penandatangan td {
+      padding: 1px 8px 1px 0;
+      vertical-align: top;
+    }
+    .identitas-penandatangan .label {
+      width: 70px;
+    }
+
+    .info-acara {
+      margin: 10px 0 10px 20px;
+      border-collapse: collapse;
+    }
+    .info-acara td {
+      padding: 2px 8px 2px 0;
+      vertical-align: top;
+    }
+    .info-acara .label {
+      width: 150px;
+      white-space: nowrap;
+    }
+
+    .tabel-penerima {
       width: 100%;
       border-collapse: collapse;
       margin: 15px 0;
     }
-    .tabel-dosen th, .tabel-dosen td {
+    .tabel-penerima th, .tabel-penerima td {
       border: 1px solid #000;
       padding: 8px;
       text-align: left;
       vertical-align: top;
     }
-    .tabel-dosen th {
+    .tabel-penerima th {
       background-color: #f2f2f2;
       font-weight: bold;
+      text-align: center;
     }
-    /* Tanda tangan dengan gaya seperti aktif kuliah */
+    .tabel-penerima td.no {
+      text-align: center;
+      width: 40px;
+    }
+
     .tanda-tangan-wrapper {
       display: flex;
       justify-content: flex-end;
-      margin-top: 50px;
+      margin-top: 40px;
     }
     .tanda-tangan {
       width: 280px;
@@ -114,7 +143,6 @@
     .nip-ttd {
       margin-top: 0;
     }
-    /* Footer */
     .footer {
       margin-top: 50px;
       font-size: 8pt;
@@ -124,7 +152,6 @@
       border-top: 1px dashed #ccc;
       padding-top: 10px;
     }
-    /* Kode validasi */
     .kode-validasi {
       position: absolute;
       bottom: 0;
@@ -151,7 +178,7 @@
   <div class="teks-kop">
     <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
     <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo. Sulawesi Selatan</p>
-    <p class="kontak">E-mail: teknik.elektronika@polidewa.ac.id | Website: elektronika.polidewa.ac.id</p>
+    <p class="kontak">E-mail: elektronika@polidewa.ac.id | Website: elektronika.polidewa.ac.id</p>
   </div>
 </div>
 
@@ -161,25 +188,45 @@
 </div>
 
 <div class="isi">
-  <p>Sehubungan dengan akan dilaksanakannya <strong><%= namaKegiatan %></strong> yang diselenggarakan oleh <strong><%= penyelenggara %></strong> yang akan dilaksanakan pada tanggal <strong><%= tanggalPelaksanaan %></strong>.</p>
-  <p>Dengan ini, kami tugaskan kepada :</p>
+  <p>Yang bertanda tangan di bawah ini:</p>
+  <div class="identitas-penandatangan">
+    <table>
+      <tr><td class="label">Nama</td><td>: <%= penandatanganNama %></td></tr>
+      <tr><td class="label">Jabatan</td><td>: <%= penandatanganJabatan %></td></tr>
+    </table>
+  </div>
 
-  <table class="tabel-dosen">
+  <p>Dengan ini memberikan tugas kepada:</p>
+
+  <table class="tabel-penerima">
     <thead>
-      <tr><th>Nama</th><th>Jabatan</th><th>NIDN</th></tr>
+      <tr><th style="width:40px;">No</th><th>Nama</th><th>Jabatan</th></tr>
     </thead>
     <tbody>
-      <tr><td><%= namaDosen %></td><td><%= jabatan %></td><td><%= nidn %></td></tr>
+      <% daftarPenerima.forEach(function(p, i) { %>
+      <tr>
+        <td class="no"><%= i + 1 %>.</td>
+        <td><%= p.nama %></td>
+        <td><%= p.jabatan || '' %></td>
+      </tr>
+      <% }) %>
     </tbody>
   </table>
 
-  <p>Untuk mengikuti kegiatan tersebut. Demikian surat tugas ini dibuat untuk dapat dilaksanakan dengan sebaik-baiknya, dan menyampaikan laporan setelah pelaksanaannya.</p>
+  <p>Untuk melaksanakan <strong><%= namaKegiatan %></strong>.</p>
+  <p>Adapun rincian pelaksanaan tugas tersebut adalah sebagai berikut:</p>
+
+  <table class="info-acara">
+    <tr><td class="label">Hari/tanggal, Waktu</td><td>: <%= hari %>, <%= tanggalAcara %>, <%= waktu %></td></tr>
+    <tr><td class="label">Tempat</td><td>: <%= tempat %></td></tr>
+  </table>
+
+  <p>Demikian surat tugas ini dibuat untuk dilaksanakan dengan penuh tanggung jawab dan melaporkan hasilnya setelah selesai.</p>
 </div>
 
-<!-- Tanda tangan digital otomatis (sama seperti aktif kuliah) -->
 <div class="tanda-tangan-wrapper">
   <div class="tanda-tangan">
-    <p style="position: relative; z-index: 1;">Palopo, <%= tanggalSurat %><br>Ketua Program Studi Elektronika,</p>
+    <p style="position: relative; z-index: 1; margin: 0;">Palopo, <%= tanggalSurat %><br><%= penandatanganJabatan %>,</p>
     <div class="area-ttd">
       <img src="/images/ttd.png" alt="Tanda Tangan Kaprodi" class="img-ttd">
     </div>

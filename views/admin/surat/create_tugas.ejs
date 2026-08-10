@@ -4,51 +4,165 @@
   .form-card .card-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; padding: 1rem 1.5rem; font-weight: 600; }
   .btn-primary-custom { background: linear-gradient(105deg, #1e3a8a, #3b82f6); border: none; border-radius: 60px; padding: 0.5rem 1.5rem; }
   .required:after { content: " *"; color: red; }
+  .baris-penerima { background: #f8f9fb; border: 1px solid #e5e7eb; border-radius: 0.6rem; padding: 0.8rem; margin-bottom: 0.6rem; }
 </style>
 <div class="container mt-4">
   <div class="page-header">
-    <h2><i class="bi bi-file-text me-2"></i>Buat Surat Tugas Dosen</h2>
-    <p>Isi form berikut untuk membuat surat tugas dosen. Setelah disimpan, PDF akan digenerate secara otomatis.</p>
+    <h2><i class="bi bi-file-text me-2"></i>Buat Surat Tugas</h2>
+    <p>Surat tugas ini bisa ditujukan ke beberapa orang sekaligus - campur dosen dan mahasiswa dalam satu surat. Setelah disimpan, PDF akan digenerate otomatis dan langsung terkirim ke masing-masing penerima (dosen lihat di halaman surat dosen, mahasiswa lihat di halaman surat mahasiswa).</p>
   </div>
   <div class="form-card">
     <div class="card-header"><h5 class="mb-0">Form Surat Tugas</h5></div>
     <div class="card-body p-4">
-      <form method="POST" action="/admin/surat/create-tugas">
-        <div class="mb-3">
-          <label class="form-label required fw-semibold">Pilih Dosen</label>
-          <select name="dosenId" class="form-select" required>
-            <option value="">-- Pilih Dosen --</option>
-            <% dosenList.forEach(dosen => { %>
-              <option value="<%= dosen.id %>"><%= dosen.nama %> - <%= dosen.nip %></option>
-            <% }) %>
-          </select>
+      <form method="POST" action="/admin/surat/create-tugas" id="formTugas">
+
+        <h6 class="fw-semibold mb-3">1. Penerima Tugas</h6>
+        <p class="text-muted small mb-2">Tambahkan satu per satu, boleh campur dosen dan mahasiswa. Jabatan bisa dikosongkan (contoh: penandatangan surat sendiri biasanya tidak perlu label jabatan di tabel).</p>
+
+        <div id="daftarPenerima"></div>
+
+        <div class="d-flex gap-2 mb-4">
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="tambahBarisPenerima('dosen')">
+            <i class="bi bi-plus-circle me-1"></i> Tambah Dosen
+          </button>
+          <button type="button" class="btn btn-outline-success btn-sm" onclick="tambahBarisPenerima('mahasiswa')">
+            <i class="bi bi-plus-circle me-1"></i> Tambah Mahasiswa
+          </button>
         </div>
-        <div class="mb-3">
-          <label class="form-label required fw-semibold">Jabatan dalam Surat</label>
-          <input type="text" name="jabatan" class="form-control" value="Dosen Teknik Elektronika" required>
-        </div>
+
+        <hr>
+        <h6 class="fw-semibold mb-3">2. Kegiatan</h6>
         <div class="mb-3">
           <label class="form-label required fw-semibold">Nama Kegiatan</label>
-          <input type="text" name="namaKegiatan" class="form-control" required>
+          <input type="text" name="namaKegiatan" class="form-control" required placeholder="Contoh: Rapat Koordinasi Program C4S dalam rangka persiapan pengabdian masyarakat di Desa Cimpu, Kecamatan Suli, Kabupaten Luwu">
         </div>
-        <div class="mb-3">
-          <label class="form-label required fw-semibold">Penyelenggara</label>
-          <input type="text" name="penyelenggara" class="form-control" required>
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label required fw-semibold">Tanggal</label>
+            <input type="date" name="tanggalAcara" class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label required fw-semibold">Waktu</label>
+            <input type="text" name="waktu" class="form-control" required placeholder="09.00 - Selesai">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label required fw-semibold">Tempat</label>
+            <input type="text" name="tempat" class="form-control" required placeholder="Kantor Desa Cimpu, Kecamatan Suli, Kabupaten Luwu">
+          </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label required fw-semibold">Tanggal Pelaksanaan</label>
-          <input type="text" name="tanggalPelaksanaan" class="form-control" placeholder="Contoh: 08-11 April 2026" required>
-        </div>
+
+        <hr>
+        <h6 class="fw-semibold mb-3">3. Nomor Surat & Penandatangan</h6>
         <div class="mb-3">
           <label class="form-label">Nomor Surat (opsional)</label>
-          <input type="text" name="nomorSurat" class="form-control" placeholder="Contoh: 614/ELK/Polidewa/TV/2026">
+          <input type="text" name="nomorSurat" class="form-control" placeholder="Contoh: 1143/ELK/Polidewa/IV/2026">
+          <div class="form-text">Kalau dikosongkan, sistem buatkan otomatis dari kode validasi.</div>
         </div>
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label required fw-semibold">Nama Penandatangan</label>
+            <input type="text" name="penandatanganNama" class="form-control" required value="Fajar Ramadhan, S.Pd., M.T.">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label required fw-semibold">Jabatan Penandatangan</label>
+            <input type="text" name="penandatanganJabatan" class="form-control" required value="Ketua Program Studi Teknik Elektronika">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">NUPTK/NIP Penandatangan</label>
+            <input type="text" name="penandatanganNip" class="form-control" value="NUPTK. 8559777678130153">
+          </div>
+        </div>
+
         <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-primary-custom"><i class="bi bi-save me-2"></i>Simpan & Generate PDF</button>
-          <a href="/admin/surat" class="btn btn-secondary">Batal</a>
+          <button type="submit" class="btn btn-primary-custom" id="btnSimpan"><i class="bi bi-save me-2"></i>Simpan & Generate PDF</button>
+          <a href="/admin/surat/tugas" class="btn btn-secondary">Batal</a>
         </div>
       </form>
     </div>
   </div>
 </div>
+
+<script>
+  // Data dosen & mahasiswa disematkan dari server untuk dropdown baris penerima
+  const DAFTAR_DOSEN = <%- JSON.stringify(dosenList) %>;
+  const DAFTAR_MAHASISWA = <%- JSON.stringify(daftarMahasiswa) %>;
+
+  let barisKe = 0;
+
+  function tambahBarisPenerima(tipe) {
+    barisKe++;
+    const idx = barisKe;
+    const opsi = tipe === 'dosen' ? DAFTAR_DOSEN : DAFTAR_MAHASISWA;
+    const labelTipe = tipe === 'dosen' ? 'Dosen' : 'Mahasiswa';
+    const jabatanDefault = tipe === 'dosen' ? 'Dosen' : 'Mahasiswa';
+
+    let optionsHtml = '<option value="">-- Pilih ' + labelTipe + ' --</option>';
+    opsi.forEach(function (o) {
+      const sub = tipe === 'dosen' ? (o.nip || '') : (o.nim || '');
+      optionsHtml += '<option value="' + o.id + '" data-nama="' + (o.nama || '').replace(/"/g, '&quot;') + '">' + o.nama + (sub ? ' - ' + sub : '') + '</option>';
+    });
+
+    const div = document.createElement('div');
+    div.className = 'baris-penerima';
+    div.id = 'baris-' + idx;
+    div.innerHTML = `
+      <div class="row g-2 align-items-end">
+        <div class="col-md-1">
+          <span class="badge bg-secondary">${labelTipe}</span>
+          <input type="hidden" name="penerimaTipe[]" value="${tipe}">
+        </div>
+        <div class="col-md-5">
+          <label class="form-label small mb-1">${labelTipe}</label>
+          <select name="penerimaId[]" class="form-select form-select-sm" required onchange="isiNamaPenerima(this, ${idx})">
+            ${optionsHtml}
+          </select>
+          <input type="hidden" name="penerimaNama[]" id="penerimaNama-${idx}">
+        </div>
+        <div class="col-md-5">
+          <label class="form-label small mb-1">Jabatan (tampil di tabel surat)</label>
+          <input type="text" name="penerimaJabatan[]" class="form-control form-control-sm" value="${jabatanDefault}">
+        </div>
+        <div class="col-md-1">
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="hapusBarisPenerima(${idx})" title="Hapus"><i class="bi bi-trash"></i></button>
+        </div>
+      </div>
+    `;
+    document.getElementById('daftarPenerima').appendChild(div);
+  }
+
+  function isiNamaPenerima(select, idx) {
+    const opt = select.options[select.selectedIndex];
+    document.getElementById('penerimaNama-' + idx).value = opt.getAttribute('data-nama') || '';
+  }
+
+  function hapusBarisPenerima(idx) {
+    const el = document.getElementById('baris-' + idx);
+    if (el) el.remove();
+  }
+
+  // Minimal 1 penerima wajib ada, dan nama harus sudah keisi (dropdown sudah dipilih)
+  document.getElementById('formTugas').addEventListener('submit', function (e) {
+    const barisAktif = document.querySelectorAll('#daftarPenerima .baris-penerima');
+    if (barisAktif.length === 0) {
+      e.preventDefault();
+      alert('Tambahkan minimal 1 penerima (dosen atau mahasiswa) terlebih dahulu.');
+      return;
+    }
+    for (const baris of barisAktif) {
+      const select = baris.querySelector('select[name="penerimaId[]"]');
+      if (!select.value) {
+        e.preventDefault();
+        alert('Ada baris penerima yang belum dipilih. Lengkapi atau hapus baris tersebut.');
+        return;
+      }
+    }
+    const btn = document.getElementById('btnSimpan');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Membuat PDF, mohon tunggu...';
+  });
+
+  // Isi 1 baris dosen secara default biar form tidak kosong melompong
+  tambahBarisPenerima('dosen');
+</script>
+
 <%- include('../../partials/footer') %>
