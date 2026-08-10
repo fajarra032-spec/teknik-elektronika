@@ -223,8 +223,20 @@
     document.getElementById('kepada2Nama').value = pembimbing2;
   });
 
-  // Cegah klik ganda saat generate PDF (proses Puppeteer butuh beberapa detik)
-  document.getElementById('formOtomatis').addEventListener('submit', function () {
+  // Cegah klik ganda saat generate PDF (proses Puppeteer butuh beberapa detik).
+  // Juga validasi ulang di sisi client bahwa ke-4 nama penerima terisi -
+  // supaya tidak pernah lagi diam-diam cuma kirim sebagian salinan.
+  document.getElementById('formOtomatis').addEventListener('submit', function (e) {
+    const namaFieldIds = ['kepada1Nama', 'kepada2Nama'];
+    const semuaNamaTerisi = namaFieldIds.every(id => document.getElementById(id).value.trim() !== '')
+      && this.querySelector('[name="kepada3Nama"]').value.trim() !== ''
+      && this.querySelector('[name="kepada4Nama"]').value.trim() !== '';
+
+    if (!semuaNamaTerisi) {
+      e.preventDefault();
+      alert('Semua 4 nama penerima (Penerima 1-4) wajib diisi supaya surat terkirim lengkap 4 rangkap. Cek lagi kolom yang masih kosong.');
+      return;
+    }
     const btn = document.getElementById('btnKirim');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Membuat PDF, mohon tunggu...';

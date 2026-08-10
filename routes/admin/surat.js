@@ -314,10 +314,16 @@ router.post('/create-tugas', upload.none(), async (req, res) => {
     // Normalisasi field array - kalau cuma 1 baris penerima, express body-parser
     // memberi string biasa (bukan array), jadi perlu dibungkus jadi array dulu.
     const toArray = (v) => (v === undefined ? [] : (Array.isArray(v) ? v : [v]));
-    const penerimaTipe = toArray(req.body['penerimaTipe[]']);
-    const penerimaId = toArray(req.body['penerimaId[]']);
-    const penerimaNamaArr = toArray(req.body['penerimaNama[]']);
-    const penerimaJabatanArr = toArray(req.body['penerimaJabatan[]']);
+    // PENTING: server pakai express.urlencoded({ extended: true }) yang
+    // memakai library 'qs' - qs otomatis MEMBUANG tanda "[]" dari nama
+    // field, jadi field HTML "penerimaId[]" diterima di sini sebagai
+    // req.body.penerimaId (tanpa kurung siku), BUKAN req.body['penerimaId[]'].
+    // (Sempat salah tulis pakai bracket, akibatnya selalu terbaca kosong
+    // walau form sudah diisi dengan benar.)
+    const penerimaTipe = toArray(req.body.penerimaTipe);
+    const penerimaId = toArray(req.body.penerimaId);
+    const penerimaNamaArr = toArray(req.body.penerimaNama);
+    const penerimaJabatanArr = toArray(req.body.penerimaJabatan);
 
     if (penerimaId.length === 0) {
       return res.status(400).send('Minimal 1 penerima (dosen/mahasiswa) wajib diisi');
@@ -520,8 +526,15 @@ router.post('/undangan-magang/create', upload.none(), async (req, res) => {
     if (!mahasiswaId || !nomorSurat || !tanggalAcara || !waktu || !tempatAcara || !perusahaanMagang) {
       return res.status(400).send('Mahasiswa, nomor surat, tanggal, waktu, tempat, dan perusahaan magang wajib diisi');
     }
-    if (!kepada1Nama) {
-      return res.status(400).send('Minimal 1 penerima ("Kepada") wajib diisi');
+    // Surat undangan ini harus terbit 4 rangkap (2 dosen pembimbing magang +
+    // Wadir I + PPMA) - jadi ke-4 nama penerima WAJIB terisi. Sebelumnya
+    // hanya Penerima 1 yang divalidasi wajib, akibatnya kalau admin lupa
+    // isi nama Penerima 3/4 (cuma placeholder abu-abu, bukan nilai asli),
+    // suratnya diam-diam cuma terbit 2-3 rangkap tanpa pemberitahuan.
+    const namaPenerimaWajib = { 1: kepada1Nama, 2: kepada2Nama, 3: kepada3Nama, 4: kepada4Nama };
+    const penerimaKosong = Object.entries(namaPenerimaWajib).filter(([, v]) => !v || v.trim() === '').map(([k]) => k);
+    if (penerimaKosong.length > 0) {
+      return res.status(400).send(`Nama Penerima ${penerimaKosong.join(', ')} masih kosong. Surat undangan wajib 4 rangkap (2 dosen pembimbing, Wadir I, PPMA) - lengkapi semua nama penerima terlebih dahulu.`);
     }
 
     const mahasiswa = await getMahasiswa(mahasiswaId);
@@ -578,7 +591,10 @@ router.post('/undangan-magang/create', upload.none(), async (req, res) => {
     const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: 'new', timeout: 60000 });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0', timeout: 60000 });
-    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '0', bottom: '0', left: '0', right: '0' } });
+    // Kertas F4/Folio (215mm x 330mm) - margin sudah diatur lewat CSS @page
+    // di dalam template (undangan_magang.ejs), jadi di sini margin di-nol-kan
+    // supaya tidak dobel dengan margin CSS.
+    const pdfBuffer = await page.pdf({ width: '215mm', height: '330mm', printBackground: true, margin: { top: '0', bottom: '0', left: '0', right: '0' } });
     await browser.close();
 
     const buffer = Buffer.from(pdfBuffer);
