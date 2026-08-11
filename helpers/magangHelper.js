@@ -2,6 +2,8 @@
 const { db } = require('../config/firebaseAdmin');
 const { getActiveMagangPeriods } = require('../models/magangPeriodModel');
 const { TTLCache } = require('./cache');
+const { saveGradeFinal } = require('./nilaiHelper');
+const { getSemesterForDate } = require('./academicHelper');
 
 // Cache 60 menit: dipakai untuk konteks publik (beranda, papan display) yang
 // tidak butuh akurasi real-time detik-per-detik. Sebelumnya logika ini
@@ -271,6 +273,57 @@ function invalidateProgressMagangHarian(mahasiswaId, pdkId) {
   progressHarianCache.delete(`${mahasiswaId}_${pdkId}`);
 }
 
+/**
+ * Menyalin nilai akhir magang (dari dokumen `magangPeriod` yang baru saja
+ * di-'complete'-kan) ke koleksi `grades` - supaya PKL yang sudah dinilai
+ * ikut muncul di KHS/Transkrip mahasiswa.
+ *
+ * SEBELUM INI, nilai magang HANYA tersimpan di dokumen magangPeriod
+ * sendiri, tidak pernah ikut ke `grades` sama sekali (KHS/Transkrip baca
+ * dari `grades`, jadi PKL yang sudah selesai & dinilai tidak akan pernah
+ * kelihatan di sana tanpa admin input manual terpisah). Dipanggil dari
+ * routes/dosen/magangPeriod.js dan routes/admin/emagang.js (dua jalur
+ * yang sama-sama bisa menyelesaikan+menilai magang), disatukan di sini
+ * supaya logikanya tidak dobel di 2 tempat.
+ *
+ * Sengaja TIDAK melempar error kalau gagal (mis. pdkId tidak valid) -
+ * proses utama "selesaikan magang" tidak boleh gagal gara-gara ini;
+ * cukup dicatat di log server untuk ditambal manual kalau perlu.
+ *
+ * @param {Object} period - data dokumen magangPeriod (SEBELUM di-update
+ *   status jadi 'completed', field yang dipakai: mahasiswaId, pdkId,
+ *   tanggalMulai)
+ * @param {number|string} nilaiAngka
+ * @returns {Promise<{berhasil: boolean, alasan?: string}>}
+ */
+async function salinNilaiMagangKeGrades(period, nilaiAngka) {
+  try {
+    if (!period.pdkId) {
+      console.warn('[salinNilaiMagangKeGrades] Periode magang tidak punya pdkId - dilewati.');
+      return { berhasil: false, alasan: 'tidak-ada-pdkId' };
+    }
+    const mkDoc = await db.collection('mataKuliah').doc(period.pdkId).get();
+    if (!mkDoc.exists) {
+      console.warn(`[salinNilaiMagangKeGrades] pdkId ${period.pdkId} tidak ketemu di mataKuliah - dilewati.`);
+      return { berhasil: false, alasan: 'mk-tidak-ketemu' };
+    }
+    const mk = mkDoc.data();
+    const semesterLabel = getSemesterForDate(period.tanggalMulai || new Date()).label;
+    await saveGradeFinal({
+      userId: period.mahasiswaId,
+      kodeMk: mk.kode,
+      namaMk: mk.nama,
+      sks: mk.sks,
+      nilai: nilaiAngka,
+      semester: semesterLabel
+    });
+    return { berhasil: true };
+  } catch (error) {
+    console.error('[salinNilaiMagangKeGrades] Gagal menyalin nilai ke grades:', error.message);
+    return { berhasil: false, alasan: error.message };
+  }
+}
+
 module.exports = {
   canSubmitLogbook,
   getActivePdkList,
@@ -279,5 +332,6 @@ module.exports = {
   getProgressMagangHarian,
   invalidateProgressMagangHarian,
   formatTanggal,
-  getNilaiHuruf
+  getNilaiHuruf,
+  salinNilaiMagangKeGrades
 };

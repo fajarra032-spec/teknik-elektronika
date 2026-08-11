@@ -25,7 +25,6 @@ const {
   hitungRubrik
 } = require('../../helpers/nilaiHelper');
 const { getSemesterForDate } = require('../../helpers/academicHelper');
-const { getNilaiMagangBanyak, hitungNilaiAkhirMagang } = require('../../helpers/nilaiMagangHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -49,55 +48,6 @@ async function getMahasiswaBanyak(uids) {
  * Kumpulkan data rubrik lengkap (komponen + hitungan) untuk semua mahasiswa
  * aktif di satu MK. Dipakai bersama oleh halaman input & halaman cetak.
  */
-/**
- * Versi ambilDataRubrik KHUSUS MK PDK/Magang - nilai akhirnya rata-rata 3
- * komponen magang (bukan dihitung dari bobot Kehadiran/Tugas/dst seperti MK
- * biasa). `mk.id` di sini SAMA dengan `pdkId` yang dipakai di seluruh sistem
- * magang (magangPeriod.pdkId, logbookMagang.pdkId, dst - karena PDK memang
- * direpresentasikan sebagai satu dokumen mataKuliah).
- */
-async function ambilDataRubrikPDK(mk, mahasiswaIds, periode) {
-  const [mahasiswaMap, nilaiMagangMap, statusKunciMap] = await Promise.all([
-    getMahasiswaBanyak(mahasiswaIds),
-    getNilaiMagangBanyak(mk.id),
-    getStatusKunciByMkId(mk.kode, periode)
-  ]);
-
-  const data = mahasiswaIds.map(uid => {
-    const mahasiswa = mahasiswaMap[uid];
-    const nm = nilaiMagangMap.get(uid) || {
-      nilaiLaporan: null, nilaiLogbook: null, nilaiLapangan: null, logbookDikunci: false
-    };
-    const hitungan = hitungNilaiAkhirMagang(nm);
-
-    const kunciInfo = statusKunciMap.get(uid);
-    let kunci = { terkunci: false, nilaiTerkunci: null, berbeda: false };
-    if (kunciInfo) {
-      const beda = hitungan.nilaiAkhir === null
-        ? true
-        : Math.round(hitungan.nilaiAkhir * 100) / 100 !== Math.round(kunciInfo.nilaiTerkunci * 100) / 100;
-      kunci = { terkunci: true, nilaiTerkunci: kunciInfo.nilaiTerkunci, berbeda: beda };
-    }
-
-    return {
-      mahasiswa,
-      komponen: {}, // tidak dipakai utk PDK
-      isPDK: true,
-      nilaiMagang: nm,
-      hasil: {
-        nilaiAkhir: hitungan.nilaiAkhir,
-        huruf: hitungan.huruf,
-        keterangan: hitungan.keterangan,
-        belumLengkap: hitungan.belumLengkap
-      },
-      kunci
-    };
-  });
-  data.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));
-
-  return { mk, bobot: null, data, isPDK: true };
-}
-
 async function ambilDataRubrik(mkId, periode) {
   const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
   if (!mkDoc.exists) return null;
@@ -108,14 +58,6 @@ async function ambilDataRubrik(mkId, periode) {
     .where('status', '==', 'active')
     .get();
   const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
-
-  // ✅ MK PDK/Magang TIDAK memakai rubrik biasa (Kehadiran/Tugas/Kuis/UTS/
-  // UAS) - nilai akhirnya adalah rata-rata 3 komponen magang (Laporan dari
-  // Pembimbing 1, Logbook dari Pembimbing 2, Lapangan dari Admin). Lihat
-  // helpers/nilaiMagangHelper.js untuk detail alurnya.
-  if (mk.isPDK === true) {
-    return await ambilDataRubrikPDK(mk, mahasiswaIds, periode);
-  }
 
   const { bobot, komponenMap, hasilMap } = await getHasilRubrikSemuaMahasiswa(mkId, periode);
   const [mahasiswaMap, statusKunciMap] = await Promise.all([
@@ -418,14 +360,13 @@ router.get('/:mkId', async (req, res) => {
     res.render('dosen/rubrik_input', {
       title: `Rubrik Penilaian - ${hasil.mk.kode} ${hasil.mk.nama}`,
       mk: hasil.mk,
-      bobot: hasil.bobot || {}, // {} kalau PDK (tidak dipakai, tapi cegah error null.field)
+      bobot: hasil.bobot,
       data: hasil.data,
       periode,
       kontrakKuliah,
       mkDuplikat,
       periodeLain,
-      jumlahNilaiTugasTanpaTugas,
-      isPDK: !!hasil.isPDK
+      jumlahNilaiTugasTanpaTugas
     });
   } catch (error) {
     console.error('Error rubrik input:', error);
@@ -534,7 +475,7 @@ router.get('/:mkId/cetak', async (req, res) => {
     res.render('rubrik_print', {
       title: `Cetak Dokumen Perkuliahan - ${hasil.mk.kode}`,
       mk: hasil.mk,
-      bobot: hasil.bobot || {},
+      bobot: hasil.bobot,
       data: hasil.data,
       periode,
       namaDosen,

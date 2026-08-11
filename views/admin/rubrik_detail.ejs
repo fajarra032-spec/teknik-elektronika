@@ -98,7 +98,6 @@
     </div>
   <% } %>
 
-  <% if (!isPDK) { %>
   <div class="bobot-note">
     <strong>Dosen Pengampu:</strong> <%= mk.namaDosen || '-' %> &nbsp;|&nbsp;
     <strong>Periode:</strong> <%= periode %> &nbsp;|&nbsp;
@@ -190,63 +189,6 @@
       </tbody>
     </table>
   </div>
-  <% } else { %>
-  <!-- MK PDK/Magang: nilai akhir = rata-rata Laporan+Logbook+Lapangan -->
-  <div class="bobot-note">
-    <strong>Dosen Pengampu:</strong> <%= mk.namaDosen || '-' %> &nbsp;|&nbsp;
-    <strong>Periode:</strong> <%= periode %> &nbsp;|&nbsp;
-    Mata kuliah ini <strong>PDK/Magang</strong> - Nilai Akhir dari rata-rata Nilai Laporan (Pembimbing 1),
-    Nilai Logbook (Pembimbing 2), dan Nilai Lapangan (Admin).
-  </div>
-  <div class="table-responsive">
-    <table class="rubrik-table">
-      <thead>
-        <tr>
-          <th>No</th><th>NIM</th><th>Nama Mahasiswa</th>
-          <th>Nilai Laporan</th><th>Nilai Logbook</th><th>Nilai Lapangan</th>
-          <th>Nilai Akhir</th><th>Huruf</th><th>Ket.</th><th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if (data.length === 0) { %>
-          <tr><td colspan="10" class="text-center py-5 text-muted">Belum ada mahasiswa aktif di MK ini.</td></tr>
-        <% } %>
-        <% data.forEach((item, idx) => { const h = item.hasil; const mid = item.mahasiswa.id; const nm = item.nilaiMagang || {}; %>
-          <tr>
-            <td><%= idx + 1 %></td>
-            <td><%= item.mahasiswa.nim %></td>
-            <td class="name-cell"><%= item.mahasiswa.nama %></td>
-            <td><%= nm.nilaiLaporan ?? '-' %></td>
-            <td><%= nm.nilaiLogbook ?? '-' %><% if (!nm.logbookDikunci) { %><br><small class="text-muted">(belum dikunci)</small><% } %></td>
-            <td><%= nm.nilaiLapangan ?? '-' %></td>
-            <td>
-              <strong><%= h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-' %></strong>
-              <% if (h.nilaiAkhir === null && h.belumLengkap && h.belumLengkap.length > 0) { %>
-                <div class="text-muted" style="font-size:0.68rem;">Belum: <%= h.belumLengkap.join(', ') %></div>
-              <% } %>
-            </td>
-            <td><span class="huruf-badge"><%= h.huruf || '-' %></span></td>
-            <td class="<%= h.keterangan === 'LULUS' ? 'lulus' : (h.keterangan === 'TIDAK LULUS' ? 'tidak-lulus' : '') %>"><%= h.keterangan || '-' %></td>
-            <td>
-              <% if (h.nilaiAkhir !== null) { %>
-                <% if (item.kunci.terkunci && !item.kunci.berbeda) { %>
-                  <span class="badge-terkunci"><i class="bi bi-lock-fill"></i> Terkunci</span>
-                <% } else if (item.kunci.terkunci && item.kunci.berbeda) { %>
-                  <button class="btn btn-sm btn-warning btn-kunci" onclick="kunciNilai('<%= mid %>', this)"><i class="bi bi-arrow-repeat"></i> Kunci Ulang</button>
-                  <span class="badge-berubah"><i class="bi bi-exclamation-triangle"></i> Berubah</span>
-                <% } else { %>
-                  <button class="btn btn-sm btn-success btn-kunci" onclick="kunciNilai('<%= mid %>', this)"><i class="bi bi-lock"></i> Kunci ke Transkrip</button>
-                <% } %>
-              <% } else { %>
-                <span class="text-muted small">Belum lengkap</span>
-              <% } %>
-            </td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-  </div>
-  <% } %>
 </div>
 
 <script>

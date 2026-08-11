@@ -143,10 +143,6 @@
     padding: 0.75rem 1rem;
     margin-bottom: 1rem;
   }
-  .nilai-lapangan-card {
-    background: #fffbeb; border: 1px solid #fde68a; border-radius: 0.9rem;
-    padding: 1rem 1.3rem; margin-bottom: 1.2rem;
-  }
 
   .filter-card {
     background: white;
@@ -335,24 +331,71 @@
       </div>
     </div>
 
-    <!-- Panel Nilai Lapangan (Admin, mewakili pembimbing lapangan perusahaan) -->
-    <div class="nilai-lapangan-card">
-      <strong><i class="bi bi-award"></i> Nilai Lapangan</strong>
-      <p class="mb-2 small text-muted">Nilai dari pembimbing lapangan perusahaan (diinput Admin karena pembimbing lapangan tidak punya akses sistem).</p>
-      <form method="POST" action="/admin/emagang/mahasiswa/<%= mahasiswa.id %>/nilai-lapangan" class="d-flex gap-2 align-items-end flex-wrap">
-        <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
-        <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
-        <div>
-          <label class="form-label small fw-semibold mb-1">Nilai Lapangan (0-100)</label>
-          <input type="number" name="nilai" min="0" max="100" step="0.01" class="form-control form-control-sm"
-                 value="<%= (typeof nilaiMagang !== 'undefined' && nilaiMagang && nilaiMagang.nilaiLapangan !== null) ? nilaiMagang.nilaiLapangan : '' %>" required style="width:120px;">
+    <!-- Nilai Magang 3-Komponen: Laporan (Pembimbing 1) + Logbook (Pembimbing 2) + Lapangan (Admin) -->
+    <% if (typeof nilaiMagangInfo !== 'undefined' && nilaiMagangInfo) { %>
+      <div class="info-period mt-3">
+        <h6 class="mb-3"><i class="bi bi-clipboard-data"></i> Nilai Magang (3 Komponen)</h6>
+        <div class="row g-2 mb-3">
+          <div class="col-md-4">
+            <div class="p-2 border rounded <%= nilaiMagangInfo.nilaiLaporan !== null ? 'bg-success-subtle' : 'bg-warning-subtle' %>">
+              <small class="text-muted d-block">Nilai Laporan (Pembimbing 1)</small>
+              <strong><%= nilaiMagangInfo.nilaiLaporan !== null ? nilaiMagangInfo.nilaiLaporan : 'Belum diisi' %></strong>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-2 border rounded <%= nilaiMagangInfo.nilaiLogbook !== null ? 'bg-success-subtle' : 'bg-warning-subtle' %>">
+              <small class="text-muted d-block">Nilai Logbook (Pembimbing 2)</small>
+              <strong><%= nilaiMagangInfo.nilaiLogbook !== null ? nilaiMagangInfo.nilaiLogbook : 'Belum diisi' %></strong>
+              <% if (!nilaiMagangInfo.logbookDikunci) { %>
+                <div class="small text-muted">(logbook belum dikunci Pembimbing 2)</div>
+              <% } %>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-2 border rounded <%= nilaiMagangInfo.nilaiLapangan !== null ? 'bg-success-subtle' : 'bg-warning-subtle' %>">
+              <small class="text-muted d-block">Nilai Lapangan (Admin)</small>
+              <strong><%= nilaiMagangInfo.nilaiLapangan !== null ? nilaiMagangInfo.nilaiLapangan : 'Belum diisi' %></strong>
+            </div>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-save"></i> Simpan Nilai Lapangan</button>
-      </form>
-      <p class="text-muted small mt-2 mb-0">
-        Digabung otomatis dengan Nilai Laporan (Pembimbing 1) dan Nilai Logbook (Pembimbing 2) menjadi Nilai Akhir Magang di Rubrik Penilaian.
-      </p>
-    </div>
+
+        <% if (nilaiMagangInfo.nilaiLapangan === null) { %>
+          <form method="POST" action="/admin/emagang/mahasiswa/<%= mahasiswa.id %>/nilai-lapangan" class="d-flex align-items-end gap-2 mb-3">
+            <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
+            <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+            <div>
+              <label class="form-label small mb-1">Input Nilai Lapangan (0-100)</label>
+              <input type="number" step="0.01" min="0" max="100" name="nilaiLapangan" class="form-control form-control-sm" required style="width: 120px;">
+            </div>
+            <button type="submit" class="btn-sm btn-primary"><i class="bi bi-save"></i> Simpan</button>
+          </form>
+        <% } %>
+
+        <% if (nilaiMagangInfo.hasil.nilaiAkhir !== null) { %>
+          <div class="alert alert-success d-flex justify-content-between align-items-center mb-0" style="border-radius: 0.6rem;">
+            <div>
+              <i class="bi bi-check-circle-fill me-1"></i>
+              Nilai Akhir Magang: <strong><%= nilaiMagangInfo.hasil.huruf %> (<%= nilaiMagangInfo.hasil.nilaiAkhir %>)</strong>
+              <% if (selectedPeriod.status === 'completed') { %>
+                <span class="badge bg-secondary ms-2">Sudah dikunci ke KHS</span>
+              <% } %>
+            </div>
+            <% if (selectedPeriod.status !== 'completed') { %>
+              <form method="POST" action="/admin/emagang/mahasiswa/<%= mahasiswa.id %>/kunci-nilai-magang" onsubmit="return confirm('Kunci nilai akhir magang ini ke KHS/Transkrip mahasiswa? Tindakan ini akan menandai periode magang sebagai selesai.');">
+                <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
+                <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+                <button type="submit" class="btn-sm btn-success"><i class="bi bi-lock-fill"></i> Kunci ke KHS</button>
+              </form>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="alert alert-warning mb-0" style="border-radius: 0.6rem;">
+            <i class="bi bi-hourglass-split me-1"></i>
+            Belum bisa dikunci - menunggu: <%= nilaiMagangInfo.hasil.belumLengkap.join(', ') %>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
   <% } else if (bimbingan && bimbingan.pembimbing1Nama) { %>
     <div class="info-period">
       <strong><i class="bi bi-person-badge"></i> Pembimbing 1:</strong> <%= bimbingan.pembimbing1Nama %> &nbsp;|&nbsp;

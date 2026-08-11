@@ -4,6 +4,7 @@ const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { nilaiKeHuruf } = require('../../helpers/nilaiHelper');
+const { salinNilaiMagangKeGrades } = require('../../helpers/magangHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -542,7 +543,11 @@ router.post('/:periodId/complete', async (req, res) => {
         }
       ]
     });
-    
+
+    // Jembatan ke KHS/Transkrip - lihat helpers/magangHelper.js -> salinNilaiMagangKeGrades
+    // untuk penjelasan lengkap kenapa ini perlu.
+    await salinNilaiMagangKeGrades(period, nilaiAngka);
+
     res.redirect(`/dosen/magang-period/${mahasiswaId}`);
   } catch (error) {
     console.error('Error:', error);

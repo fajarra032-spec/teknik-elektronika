@@ -12,17 +12,21 @@ function getSemesterForDate(dateInput) {
   const year = d.getFullYear();
   let semester, tahunAwal, tahunAkhir;
 
-  if (month >= 2 && month <= 8) {
-    semester = "Genap";
-    tahunAwal = year - 1;
-    tahunAkhir = year;
-  } else if (month >= 9 && month <= 12) {
+  // Semester Ganjil: 1 September - 28/29 Februari (6 bulan)
+  // Semester Genap : 1 Maret - 31 Agustus (6 bulan)
+  if (month >= 9 && month <= 12) {
+    // September - Desember: Ganjil, tahun ajaran baru dimulai tahun ini
     semester = "Ganjil";
     tahunAwal = year;
     tahunAkhir = year + 1;
-  } else {
-    // Januari
+  } else if (month === 1 || month === 2) {
+    // Januari - Februari: masih Ganjil, lanjutan dari September tahun lalu
     semester = "Ganjil";
+    tahunAwal = year - 1;
+    tahunAkhir = year;
+  } else {
+    // Maret - Agustus: Genap
+    semester = "Genap";
     tahunAwal = year - 1;
     tahunAkhir = year;
   }

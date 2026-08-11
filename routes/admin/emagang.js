@@ -10,8 +10,8 @@ const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { nilaiKeHuruf } = require('../../helpers/nilaiHelper');
-const { invalidateProgressMagangHarian } = require('../../helpers/magangHelper');
-const { getNilaiMagang, saveNilaiLapangan } = require('../../helpers/nilaiMagangHelper');
+const { invalidateProgressMagangHarian, salinNilaiMagangKeGrades } = require('../../helpers/magangHelper');
+const { getNilaiMagang, saveNilaiLapangan, hitungNilaiAkhirMagang, kunciNilaiMagangKeGrades } = require('../../helpers/nilaiMagangHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -345,7 +345,13 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       nama: doc.data().nama
     }));
 
-    const nilaiMagang = selectedPeriod ? await getNilaiMagang(userId, selectedPeriod.pdkId) : null;
+    // Nilai Magang 3-komponen (Laporan/Logbook/Lapangan) untuk periode yang
+    // sedang dipilih - dipakai form input Nilai Lapangan + tombol Kunci.
+    let nilaiMagangInfo = null;
+    if (selectedPeriod) {
+      const nilaiMagang = await getNilaiMagang(userId, selectedPeriod.pdkId);
+      nilaiMagangInfo = { ...nilaiMagang, hasil: hitungNilaiAkhirMagang(nilaiMagang) };
+    }
 
     res.render('admin/emagang_mahasiswa', {
       title: `Logbook - ${mahasiswa.nama}`,
@@ -358,36 +364,12 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       pdkStats,
       pdkList,
       bimbingan,
-      nilaiMagang,
+      nilaiMagangInfo,
       user: req.user
     });
   } catch (error) {
     console.error('Error:', error);
     res.status(500).render('error', { message: 'Gagal mengambil data logbook' });
-  }
-});
-
-// ============================================================================
-// SIMPAN NILAI LAPANGAN (Admin, mewakili pembimbing lapangan perusahaan)
-// ============================================================================
-router.post('/mahasiswa/:userId/nilai-lapangan', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { pdkId, nilai } = req.body;
-    if (!pdkId) return res.status(400).send('Periode magang (PDK) tidak diketahui');
-
-    const nilaiAngka = parseFloat(nilai);
-    if (isNaN(nilaiAngka) || nilaiAngka < 0 || nilaiAngka > 100) {
-      return res.status(400).send('Nilai harus angka 0-100');
-    }
-
-    await saveNilaiLapangan(userId, pdkId, nilaiAngka, req.user.id);
-    req.session.success = 'Nilai Lapangan berhasil disimpan.';
-    res.redirect(`/admin/emagang/mahasiswa/${userId}?periodId=${req.body.periodId || ''}`);
-  } catch (error) {
-    console.error('Error simpan nilai lapangan:', error);
-    req.session.error = 'Gagal menyimpan nilai lapangan: ' + error.message;
-    res.redirect('back');
   }
 });
 
@@ -664,6 +646,10 @@ router.post('/period/:periodId/complete', async (req, res) => {
         { action: 'completed', tanggal: new Date().toISOString().split('T')[0], nilai: nilaiAngka, nilaiHuruf, catatan: `Magang selesai dan dinilai oleh ${req.user.nama || 'Admin'}` }
       ]
     });
+
+    // Jembatan ke KHS/Transkrip - lihat helpers/magangHelper.js -> salinNilaiMagangKeGrades
+    await salinNilaiMagangKeGrades(period, nilaiAngka);
+
     req.session.success = `Magang ${period.pdkKode} berhasil diselesaikan dengan nilai ${nilaiHuruf} (${nilaiAngka})`;
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
   } catch (error) {
@@ -672,6 +658,60 @@ router.post('/period/:periodId/complete', async (req, res) => {
     res.redirect('back');
   }
 });
+
+// ============================================================================
+// NILAI MAGANG 3-KOMPONEN (Laporan/Logbook/Lapangan) - lihat
+// helpers/nilaiMagangHelper.js untuk penjelasan lengkap sistemnya. Ini
+// PENGGANTI dari '/period/:periodId/complete' di atas (yang masih
+// dipertahankan untuk kompatibilitas data lama / input cepat satu nilai).
+// ============================================================================
+
+/**
+ * POST /admin/emagang/mahasiswa/:userId/nilai-lapangan
+ * Admin input Nilai Lapangan (mewakili pembimbing lapangan di perusahaan,
+ * yang tidak punya akses ke sistem).
+ */
+router.post('/mahasiswa/:userId/nilai-lapangan', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { pdkId, nilaiLapangan } = req.body;
+    if (!pdkId || nilaiLapangan === undefined || nilaiLapangan === '') {
+      req.session.error = 'PDK dan nilai wajib diisi';
+      return res.redirect('back');
+    }
+    await saveNilaiLapangan(userId, pdkId, nilaiLapangan, req.user.id);
+    req.session.success = 'Nilai Lapangan berhasil disimpan';
+    res.redirect(`/admin/emagang/mahasiswa/${userId}?periodId=${req.body.periodId || ''}`);
+  } catch (error) {
+    console.error('Error menyimpan Nilai Lapangan:', error);
+    req.session.error = 'Gagal menyimpan Nilai Lapangan: ' + error.message;
+    res.redirect('back');
+  }
+});
+
+/**
+ * POST /admin/emagang/mahasiswa/:userId/kunci-nilai-magang
+ * Kunci nilai akhir magang (gabungan 3 komponen) ke koleksi grades/KHS.
+ * Ditolak kalau salah satu dari 3 komponen belum terisi.
+ */
+router.post('/mahasiswa/:userId/kunci-nilai-magang', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { pdkId, periodId } = req.body;
+    if (!pdkId) {
+      req.session.error = 'PDK tidak diketahui';
+      return res.redirect('back');
+    }
+    const hasil = await kunciNilaiMagangKeGrades(userId, pdkId, req.user.id);
+    req.session.success = `Nilai akhir magang berhasil dikunci: ${hasil.huruf} (${hasil.nilaiAkhir}) - sudah masuk ke KHS/Transkrip mahasiswa.`;
+    res.redirect(`/admin/emagang/mahasiswa/${userId}?periodId=${periodId || ''}`);
+  } catch (error) {
+    console.error('Error kunci nilai magang:', error);
+    req.session.error = 'Gagal mengunci nilai: ' + error.message;
+    res.redirect('back');
+  }
+});
+
 
 // ============================================================================
 // APPROVE/REJECT LOGBOOK

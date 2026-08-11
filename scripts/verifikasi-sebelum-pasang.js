@@ -27,17 +27,18 @@ const { db } = require('../config/firebaseAdmin');
 
 // --- Salinan mandiri logika semester (supaya skrip ini tetap jalan normal
 // walau file helpers/academicHelper.js Anda belum diperbarui) ---
+// Ganjil: 1 September - akhir Februari (6 bulan) | Genap: 1 Maret - 31 Agustus (6 bulan)
 function getSemesterForDate(dateInput) {
   const d = (dateInput instanceof Date) ? dateInput : new Date(dateInput);
   const month = d.getMonth() + 1;
   const year = d.getFullYear();
   let semester, tahunAwal, tahunAkhir;
-  if (month >= 2 && month <= 8) {
-    semester = 'Genap'; tahunAwal = year - 1; tahunAkhir = year;
-  } else if (month >= 9 && month <= 12) {
+  if (month >= 9 && month <= 12) {
     semester = 'Ganjil'; tahunAwal = year; tahunAkhir = year + 1;
-  } else {
+  } else if (month === 1 || month === 2) {
     semester = 'Ganjil'; tahunAwal = year - 1; tahunAkhir = year;
+  } else {
+    semester = 'Genap'; tahunAwal = year - 1; tahunAkhir = year;
   }
   return `${semester} ${tahunAwal}/${tahunAkhir}`;
 }

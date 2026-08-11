@@ -12,6 +12,9 @@
 // ============================================================================
 
 const { db } = require('../config/firebaseAdmin');
+const { nilaiKeHuruf, saveGradeFinal } = require('./nilaiHelper');
+const { salinNilaiMagangKeGrades } = require('./magangHelper');
+const { getMagangPeriodsByMahasiswa, setNilaiMagang } = require('../models/magangPeriodModel');
 
 /**
  * Ambil dokumen nilaiMagang untuk satu mahasiswa+PDK. Kalau belum ada,
@@ -156,17 +159,77 @@ function hitungNilaiAkhirMagang(nilaiMagang) {
   };
 }
 
-/** Konversi huruf - SAMA PERSIS dengan skema rubrik non-PDK (nilaiKeHurufRubrik
- * di nilaiHelper.js) supaya konsisten satu sistem: A/B+/B/C+/C/D/E, tanpa A-/B-. */
+/** Konversi huruf - SAMA PERSIS dengan skema resmi seluruh aplikasi
+ * (nilaiKeHuruf di helpers/nilaiHelper.js): A/B+/B/C+/C/D/E berbasis
+ * 86/76/60/50/25/10, BUKAN skala lama 85/75/65/dst - supaya huruf nilai
+ * magang konsisten dengan KHS/Transkrip/Rubrik non-PDK. */
 function nilaiKeHurufMagang(nilai) {
   if (nilai === null || nilai === undefined) return null;
-  if (nilai >= 85) return 'A';
-  if (nilai >= 75) return 'B+';
-  if (nilai >= 65) return 'B';
-  if (nilai >= 55) return 'C+';
-  if (nilai >= 45) return 'C';
-  if (nilai >= 35) return 'D';
-  return 'E';
+  return nilaiKeHuruf(nilai).huruf;
+}
+
+/**
+ * "Kunci" nilai akhir magang (gabungan Laporan+Logbook+Lapangan) ke
+ * koleksi `grades` - supaya muncul di KHS/Transkrip mahasiswa. SENGAJA
+ * berupa aksi manual yang dipicu admin (bukan otomatis begitu komponen
+ * ke-3 terisi), meniru persis pola "Kunci"/"Kunci Semua" di Rubrik
+ * Penilaian non-PDK - admin tetap yang berwenang menentukan kapan nilai
+ * dianggap final dan resmi masuk transkrip.
+ *
+ * @param {string} mahasiswaId
+ * @param {string} pdkId
+ * @param {string} dikunciOleh - userId admin yang mengunci
+ * @returns {Promise<{nilaiAkhir: number, huruf: string}>}
+ * @throws {Error} kalau salah satu dari 3 komponen belum terisi, atau
+ *   periode magang untuk mahasiswa+PDK ini tidak ditemukan
+ */
+async function kunciNilaiMagangKeGrades(mahasiswaId, pdkId, dikunciOleh) {
+  const nilaiMagang = await getNilaiMagang(mahasiswaId, pdkId);
+  const hasil = hitungNilaiAkhirMagang(nilaiMagang);
+
+  if (hasil.nilaiAkhir === null) {
+    throw new Error(`Belum bisa dikunci - komponen belum lengkap: ${hasil.belumLengkap.join(', ')}`);
+  }
+
+  const semuaPeriode = await getMagangPeriodsByMahasiswa(mahasiswaId);
+  const period = semuaPeriode.find(p => p.pdkId === pdkId);
+  if (!period) {
+    throw new Error('Periode magang untuk mahasiswa dan PDK ini tidak ditemukan');
+  }
+
+  // 1) Catat nilai akhir gabungan di dokumen magangPeriod-nya sendiri
+  // (field nilai.* - dipakai halaman-halaman yang masih baca dari sana)
+  await setNilaiMagang(
+    period.id,
+    hasil.nilaiAkhir,
+    'Nilai akhir gabungan: Laporan (Pembimbing 1) + Logbook (Pembimbing 2) + Lapangan (Admin)',
+    dikunciOleh,
+    {
+      nilaiLaporan: nilaiMagang.nilaiLaporan,
+      nilaiLogbook: nilaiMagang.nilaiLogbook,
+      nilaiLapangan: nilaiMagang.nilaiLapangan
+    }
+  );
+  await db.collection('magangPeriod').doc(period.id).update({
+    status: 'completed',
+    tanggalSelesai: period.tanggalSelesai || new Date().toISOString().split('T')[0],
+    completedAt: new Date().toISOString(),
+    history: [
+      ...(period.history || []),
+      {
+        action: 'completed',
+        tanggal: new Date().toISOString().split('T')[0],
+        nilai: hasil.nilaiAkhir,
+        nilaiHuruf: hasil.huruf,
+        catatan: `Dikunci dari gabungan 3 komponen nilai magang oleh admin`
+      }
+    ]
+  });
+
+  // 2) Salin ke koleksi 'grades' - sumber data KHS/Transkrip mahasiswa
+  await salinNilaiMagangKeGrades(period, hasil.nilaiAkhir);
+
+  return hasil;
 }
 
 module.exports = {
@@ -178,5 +241,6 @@ module.exports = {
   saveNilaiLogbook,
   saveNilaiLapangan,
   hitungNilaiAkhirMagang,
-  nilaiKeHurufMagang
+  nilaiKeHurufMagang,
+  kunciNilaiMagangKeGrades
 };
