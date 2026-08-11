@@ -26,13 +26,22 @@
   <!-- TAB 1: GENERATE OTOMATIS -->
   <!-- ============================================================ -->
   <div id="panel-otomatis">
-    <p class="text-muted small mb-3">Sistem akan buat PDF undangan otomatis (bisa sampai 4 salinan tembusan sekaligus) berdasarkan data yang kamu isi di bawah.</p>
+    <p class="text-muted small mb-3">Sistem akan membuat <strong>4 salinan PDF</strong> (1 halaman per penerima) dalam satu file. Nama Penerima 1 & 2 terisi otomatis dari data pembimbing magang mahasiswa. Penerima 3 & 4 sudah diisi default "Wadir 1" / "PPMA" - ganti dengan nama orangnya kalau perlu lebih spesifik.</p>
+    <p class="text-muted small mb-3">
+      <i class="bi bi-info-circle me-1"></i>
+      Semua 4 kolom nama wajib diisi (tidak boleh kosong), karena hanya penerima yang namanya terisi yang akan dibuatkan salinan suratnya.
+    </p>
 
     <% if (daftarMagangAktif.length === 0) { %>
       <div class="alert alert-warning">
         Tidak ada mahasiswa dengan status magang aktif saat ini. Undangan seminar otomatis hanya bisa dibuat untuk mahasiswa yang sedang menjalani PDK/magang. Kamu tetap bisa pakai tab <strong>"Upload PDF Manual"</strong> untuk mahasiswa lain.
       </div>
     <% } %>
+
+    <div class="alert alert-light border">
+      <i class="bi bi-info-circle me-1"></i>
+      Sudah punya file PDF undangan sendiri dan mau kirim langsung tanpa generate ulang? Pakai tab <strong>"Upload PDF Manual"</strong> di atas.
+    </div>
 
     <div class="info-card">
       <div class="card-body">
@@ -41,17 +50,16 @@
           <h6 class="fw-semibold mb-3">1. Mahasiswa & Tempat Magang</h6>
           <div class="mb-3">
             <label class="form-label">Mahasiswa</label>
-            <select name="mahasiswaId" id="mahasiswaId" class="form-select" required <%= daftarMagangAktif.length === 0 ? 'disabled' : '' %>>
-              <option value="">Pilih mahasiswa yang sedang magang aktif</option>
+            <input type="text" id="mahasiswaSearch" class="form-control" autocomplete="off"
+              placeholder="<%= daftarMagangAktif.length === 0 ? 'Tidak ada mahasiswa magang aktif' : 'Ketik nama atau NIM mahasiswa...' %>"
+              list="mahasiswaOptions" <%= daftarMagangAktif.length === 0 ? 'disabled' : '' %>>
+            <datalist id="mahasiswaOptions">
               <% daftarMagangAktif.forEach(function(m) { %>
-                <option value="<%= m.mahasiswaId %>"
-                  data-perusahaan="<%= m.perusahaan %>"
-                  data-pembimbing1="<%= m.pembimbing1Nama %>"
-                  data-pembimbing2="<%= m.pembimbing2Nama %>">
-                  <%= m.nama %> (<%= m.nim %>)<%= m.perusahaan ? ' - ' + m.perusahaan : '' %>
-                </option>
+                <option value="<%= m.nama %> (<%= m.nim %>)<%= m.perusahaan ? ' - ' + m.perusahaan : '' %>">
               <% }); %>
-            </select>
+            </datalist>
+            <input type="hidden" name="mahasiswaId" id="mahasiswaId" required>
+            <div class="form-text">Mulai ketik, pilih dari saran yang muncul.</div>
           </div>
           <div class="mb-3">
             <label class="form-label">Nama Perusahaan/Instansi Tempat Magang</label>
@@ -91,7 +99,7 @@
 
           <hr>
           <h6 class="fw-semibold mb-1">4. Penerima Surat ("Kepada")</h6>
-          <p class="text-muted small mb-3">Sistem akan membuat 1 salinan PDF terpisah untuk setiap penerima yang diisi di bawah (kosongkan yang tidak diperlukan). Nama pembimbing magang terisi otomatis saat memilih mahasiswa, silakan lengkapi jabatannya.</p>
+          <p class="text-muted small mb-3">Semua 4 penerima wajib diisi namanya - lihat catatan di atas.</p>
 
           <div class="row g-3 mb-3 align-items-end">
             <div class="col-md-6">
@@ -107,7 +115,7 @@
           <div class="row g-3 mb-3 align-items-end">
             <div class="col-md-6">
               <label class="form-label">Penerima 2 - Nama</label>
-              <input type="text" name="kepada2Nama" id="kepada2Nama" class="form-control" placeholder="Nama Dosen Pembimbing Magang 2">
+              <input type="text" name="kepada2Nama" id="kepada2Nama" class="form-control" required placeholder="Nama Dosen Pembimbing Magang 2">
             </div>
             <div class="col-md-6">
               <label class="form-label">Penerima 2 - Jabatan</label>
@@ -118,7 +126,7 @@
           <div class="row g-3 mb-3 align-items-end">
             <div class="col-md-6">
               <label class="form-label">Penerima 3 - Nama</label>
-              <input type="text" name="kepada3Nama" class="form-control" placeholder="Nama Wakil Direktur I">
+              <input type="text" name="kepada3Nama" class="form-control" required value="Wadir 1" placeholder="Nama Wakil Direktur I">
             </div>
             <div class="col-md-6">
               <label class="form-label">Penerima 3 - Jabatan</label>
@@ -129,7 +137,7 @@
           <div class="row g-3 mb-4 align-items-end">
             <div class="col-md-6">
               <label class="form-label">Penerima 4 - Nama</label>
-              <input type="text" name="kepada4Nama" class="form-control" placeholder="Nama Pengelola Magang">
+              <input type="text" name="kepada4Nama" class="form-control" required value="PPMA" placeholder="Nama Pengelola Magang">
             </div>
             <div class="col-md-6">
               <label class="form-label">Penerima 4 - Jabatan</label>
@@ -160,12 +168,15 @@
 
           <div class="mb-3">
             <label class="form-label">Mahasiswa Penerima</label>
-            <select name="mahasiswaId" class="form-select" required>
-              <option value="">Pilih mahasiswa</option>
+            <input type="text" id="mahasiswaSearchManual" class="form-control" autocomplete="off"
+              placeholder="Ketik nama atau NIM mahasiswa..." list="mahasiswaOptionsManual">
+            <datalist id="mahasiswaOptionsManual">
               <% daftarMahasiswa.forEach(function(m) { %>
-                <option value="<%= m.id %>"><%= m.nama %> (<%= m.nim || '-' %>)</option>
+                <option value="<%= m.nama %> (<%= m.nim || '-' %>)">
               <% }); %>
-            </select>
+            </datalist>
+            <input type="hidden" name="mahasiswaId" id="mahasiswaIdManual" required>
+            <div class="form-text">Mulai ketik, pilih dari saran yang muncul.</div>
           </div>
 
           <div class="mb-3">
@@ -210,23 +221,69 @@
     document.getElementById('tab-manual').classList.toggle('active', !isOtomatis);
   }
 
-  // Auto-isi perusahaan & nama pembimbing magang saat admin memilih mahasiswa
-  // di tab Otomatis, supaya tidak perlu ketik ulang data yang sudah ada.
-  document.getElementById('mahasiswaId').addEventListener('change', function () {
-    const opt = this.options[this.selectedIndex];
-    const perusahaan = opt.getAttribute('data-perusahaan') || '';
-    const pembimbing1 = opt.getAttribute('data-pembimbing1') || '';
-    const pembimbing2 = opt.getAttribute('data-pembimbing2') || '';
+  // ==========================================================================
+  // PENCARIAN MAHASISWA (ganti dropdown panjang dengan ketik + saran/datalist)
+  // ==========================================================================
+  const PETA_MAGANG_AKTIF = {};
+  <% daftarMagangAktif.forEach(function(m) { %>
+    PETA_MAGANG_AKTIF[<%- JSON.stringify(m.nama + ' (' + m.nim + ')' + (m.perusahaan ? ' - ' + m.perusahaan : '')) %>] = {
+      id: <%- JSON.stringify(m.mahasiswaId) %>,
+      perusahaan: <%- JSON.stringify(m.perusahaan || '') %>,
+      pembimbing1: <%- JSON.stringify(m.pembimbing1Nama || '') %>,
+      pembimbing2: <%- JSON.stringify(m.pembimbing2Nama || '') %>
+    };
+  <% }); %>
 
-    document.getElementById('perusahaanMagang').value = perusahaan;
-    document.getElementById('kepada1Nama').value = pembimbing1;
-    document.getElementById('kepada2Nama').value = pembimbing2;
-  });
+  const PETA_SEMUA_MAHASISWA = {};
+  <% daftarMahasiswa.forEach(function(m) { %>
+    PETA_SEMUA_MAHASISWA[<%- JSON.stringify(m.nama + ' (' + (m.nim || '-') + ')') %>] = <%- JSON.stringify(m.id) %>;
+  <% }); %>
+
+  function pasangPencarian(inputEl, hiddenEl, peta, onMatch) {
+    inputEl.addEventListener('input', function () {
+      const data = peta[this.value];
+      if (data !== undefined) {
+        hiddenEl.value = typeof data === 'object' ? data.id : data;
+        inputEl.classList.remove('is-invalid');
+        if (onMatch) onMatch(data);
+      } else {
+        hiddenEl.value = '';
+      }
+    });
+    inputEl.addEventListener('blur', function () {
+      if (this.value.trim() !== '' && !hiddenEl.value) {
+        inputEl.classList.add('is-invalid');
+      }
+    });
+  }
+
+  pasangPencarian(
+    document.getElementById('mahasiswaSearch'),
+    document.getElementById('mahasiswaId'),
+    PETA_MAGANG_AKTIF,
+    function (data) {
+      document.getElementById('perusahaanMagang').value = data.perusahaan;
+      document.getElementById('kepada1Nama').value = data.pembimbing1;
+      document.getElementById('kepada2Nama').value = data.pembimbing2;
+    }
+  );
+
+  pasangPencarian(
+    document.getElementById('mahasiswaSearchManual'),
+    document.getElementById('mahasiswaIdManual'),
+    PETA_SEMUA_MAHASISWA
+  );
 
   // Cegah klik ganda saat generate PDF (proses Puppeteer butuh beberapa detik).
   // Juga validasi ulang di sisi client bahwa ke-4 nama penerima terisi -
   // supaya tidak pernah lagi diam-diam cuma kirim sebagian salinan.
   document.getElementById('formOtomatis').addEventListener('submit', function (e) {
+    if (!document.getElementById('mahasiswaId').value) {
+      e.preventDefault();
+      alert('Pilih mahasiswa dari saran yang muncul saat mengetik (klik salah satu opsinya, jangan cuma ketik bebas).');
+      document.getElementById('mahasiswaSearch').classList.add('is-invalid');
+      return;
+    }
     const namaFieldIds = ['kepada1Nama', 'kepada2Nama'];
     const semuaNamaTerisi = namaFieldIds.every(id => document.getElementById(id).value.trim() !== '')
       && this.querySelector('[name="kepada3Nama"]').value.trim() !== ''
@@ -242,7 +299,13 @@
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Membuat PDF, mohon tunggu...';
   });
 
-  document.getElementById('formManual').addEventListener('submit', function () {
+  document.getElementById('formManual').addEventListener('submit', function (e) {
+    if (!document.getElementById('mahasiswaIdManual').value) {
+      e.preventDefault();
+      alert('Pilih mahasiswa dari saran yang muncul saat mengetik (klik salah satu opsinya, jangan cuma ketik bebas).');
+      document.getElementById('mahasiswaSearchManual').classList.add('is-invalid');
+      return;
+    }
     const btn = document.getElementById('btnKirimManual');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Mengunggah & mengirim...';

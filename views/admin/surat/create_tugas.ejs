@@ -88,6 +88,7 @@
   const DAFTAR_MAHASISWA = <%- JSON.stringify(daftarMahasiswa) %>;
 
   let barisKe = 0;
+  const PETA_PENERIMA = {}; // idx baris -> { "teks tampilan": {id, nama} }
 
   function tambahBarisPenerima(tipe) {
     barisKe++;
@@ -96,11 +97,17 @@
     const labelTipe = tipe === 'dosen' ? 'Dosen' : 'Mahasiswa';
     const jabatanDefault = tipe === 'dosen' ? 'Dosen' : 'Mahasiswa';
 
-    let optionsHtml = '<option value="">-- Pilih ' + labelTipe + ' --</option>';
+    // Peta "teks yang tampil di saran" -> {id, nama}, dipakai untuk
+    // mencocokkan apa yang diketik/dipilih admin di kotak pencarian baris ini
+    const peta = {};
+    let datalistHtml = '';
     opsi.forEach(function (o) {
       const sub = tipe === 'dosen' ? (o.nip || '') : (o.nim || '');
-      optionsHtml += '<option value="' + o.id + '" data-nama="' + (o.nama || '').replace(/"/g, '&quot;') + '">' + o.nama + (sub ? ' - ' + sub : '') + '</option>';
+      const teks = o.nama + (sub ? ' - ' + sub : '');
+      peta[teks] = { id: o.id, nama: o.nama };
+      datalistHtml += '<option value="' + teks.replace(/"/g, '&quot;') + '">';
     });
+    PETA_PENERIMA[idx] = peta;
 
     const div = document.createElement('div');
     div.className = 'baris-penerima';
@@ -113,9 +120,11 @@
         </div>
         <div class="col-md-5">
           <label class="form-label small mb-1">${labelTipe}</label>
-          <select name="penerimaId[]" class="form-select form-select-sm" required onchange="isiNamaPenerima(this, ${idx})">
-            ${optionsHtml}
-          </select>
+          <input type="text" class="form-control form-control-sm" autocomplete="off"
+            placeholder="Ketik nama ${labelTipe.toLowerCase()}..." list="opsi-${idx}"
+            oninput="cariPenerima(${idx}, this)" onblur="cekPenerimaValid(${idx}, this)">
+          <datalist id="opsi-${idx}">${datalistHtml}</datalist>
+          <input type="hidden" name="penerimaId[]" id="penerimaId-${idx}" required>
           <input type="hidden" name="penerimaNama[]" id="penerimaNama-${idx}">
         </div>
         <div class="col-md-5">
@@ -130,17 +139,34 @@
     document.getElementById('daftarPenerima').appendChild(div);
   }
 
-  function isiNamaPenerima(select, idx) {
-    const opt = select.options[select.selectedIndex];
-    document.getElementById('penerimaNama-' + idx).value = opt.getAttribute('data-nama') || '';
+  function cariPenerima(idx, inputEl) {
+    const data = PETA_PENERIMA[idx][inputEl.value];
+    const hiddenId = document.getElementById('penerimaId-' + idx);
+    const hiddenNama = document.getElementById('penerimaNama-' + idx);
+    if (data) {
+      hiddenId.value = data.id;
+      hiddenNama.value = data.nama;
+      inputEl.classList.remove('is-invalid');
+    } else {
+      hiddenId.value = '';
+      hiddenNama.value = '';
+    }
+  }
+
+  function cekPenerimaValid(idx, inputEl) {
+    if (inputEl.value.trim() !== '' && !document.getElementById('penerimaId-' + idx).value) {
+      inputEl.classList.add('is-invalid');
+    }
   }
 
   function hapusBarisPenerima(idx) {
     const el = document.getElementById('baris-' + idx);
     if (el) el.remove();
+    delete PETA_PENERIMA[idx];
   }
 
-  // Minimal 1 penerima wajib ada, dan nama harus sudah keisi (dropdown sudah dipilih)
+  // Minimal 1 penerima wajib ada, dan nama harus sudah dipilih dari saran
+  // (bukan cuma ketik bebas yang tidak cocok siapapun di database)
   document.getElementById('formTugas').addEventListener('submit', function (e) {
     const barisAktif = document.querySelectorAll('#daftarPenerima .baris-penerima');
     if (barisAktif.length === 0) {
@@ -149,10 +175,12 @@
       return;
     }
     for (const baris of barisAktif) {
-      const select = baris.querySelector('select[name="penerimaId[]"]');
-      if (!select.value) {
+      const hiddenId = baris.querySelector('input[name="penerimaId[]"]');
+      const searchInput = baris.querySelector('input[list^="opsi-"]');
+      if (!hiddenId.value) {
         e.preventDefault();
-        alert('Ada baris penerima yang belum dipilih. Lengkapi atau hapus baris tersebut.');
+        alert('Ada baris penerima yang belum dipilih dari saran (klik salah satu nama yang muncul saat mengetik). Lengkapi atau hapus baris tersebut.');
+        if (searchInput) searchInput.classList.add('is-invalid');
         return;
       }
     }
