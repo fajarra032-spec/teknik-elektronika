@@ -19,6 +19,7 @@ const { getSemesterForDate } = require('../../helpers/academicHelper');
 
 // Import sub‑modul
 const laporanMagangRouter = require('./laporanMagang');
+const laporanReviewRouter = require('./laporanReview');
 const seminarRouter = require('./seminar');
 const dashboardRouter = require('./dashboard');
 const magangRouter = require('./magang');
@@ -96,6 +97,7 @@ router.use((req, res, next) => {
 
 router.use('/dashboard', dashboardRouter);
 router.use('/laporan-magang', laporanMagangRouter);
+router.use('/laporan-review', laporanReviewRouter);
 router.use('/seminar', seminarRouter);
 router.use('/magang', magangRouter);
 router.use('/biodata', biodataRouter);

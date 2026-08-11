@@ -503,6 +503,10 @@
   }
 
   /* Info Period */
+  .nilai-logbook-card {
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 0.9rem;
+    padding: 1rem 1.3rem; margin-bottom: 1.2rem;
+  }
   .info-period {
     background: var(--info-bg);
     border-left: 4px solid var(--primary-start);
@@ -675,6 +679,49 @@
           </div>
         <% } %>
       </div>
+    </div>
+  <% } %>
+
+  <!-- Panel Kunci Logbook & Nilai Logbook (khusus Pembimbing 2) -->
+  <% if (isPembimbing2 && selectedPeriod) { %>
+    <div class="nilai-logbook-card">
+      <% if (!nilaiMagang || !nilaiMagang.logbookDikunci) { %>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <strong><i class="bi bi-lock"></i> Kunci Logbook Periode Ini</strong>
+            <p class="mb-0 small text-muted">Setelah semua logbook periode ini selesai ditinjau, kunci supaya Nilai Logbook bisa diisi.</p>
+          </div>
+          <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/kunci-logbook"
+                onsubmit="return confirm('Kunci logbook periode ini? Setelah dikunci, form Nilai Logbook akan muncul.');">
+            <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
+            <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+            <button type="submit" class="btn btn-warning btn-sm"><i class="bi bi-lock-fill"></i> Kunci Logbook</button>
+          </form>
+        </div>
+      <% } else { %>
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+          <div class="flex-grow-1" style="min-width:260px;">
+            <strong class="text-success"><i class="bi bi-check-circle"></i> Logbook Sudah Dikunci</strong>
+            <p class="mb-2 small text-muted">Terkunci oleh Anda pada <%= new Date(nilaiMagang.logbookDikunciAt).toLocaleDateString('id-ID') %>.</p>
+            <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/nilai-logbook" class="d-flex gap-2 align-items-end flex-wrap">
+              <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
+              <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+              <div>
+                <label class="form-label small fw-semibold mb-1">Nilai Logbook (0-100)</label>
+                <input type="number" name="nilai" min="0" max="100" step="0.01" class="form-control form-control-sm"
+                       value="<%= nilaiMagang.nilaiLogbook !== null ? nilaiMagang.nilaiLogbook : '' %>" required style="width:120px;">
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-save"></i> Simpan Nilai Logbook</button>
+            </form>
+          </div>
+          <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/buka-kunci-logbook"
+                onsubmit="return confirm('Buka kunci logbook lagi? Nilai Logbook yang sudah ada tidak akan hilang.');">
+            <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
+            <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+            <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-unlock"></i> Buka Kunci</button>
+          </form>
+        </div>
+      <% } %>
     </div>
   <% } %>
 

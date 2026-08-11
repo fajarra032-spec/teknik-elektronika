@@ -10,6 +10,12 @@ const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { invalidateProgressMagangHarian } = require('../../helpers/magangHelper');
+const {
+  getNilaiMagang,
+  kunciLogbookMagang,
+  bukaKunciLogbookMagang,
+  saveNilaiLogbook
+} = require('../../helpers/nilaiMagangHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -369,6 +375,10 @@ router.get('/:userId', async (req, res) => {
       pdkStats.push({ ...period, ...stats });
     }
     
+    // Nilai Magang (3 komponen: laporan/logbook/lapangan) - hanya relevan
+    // kalau ada periode magang yang dipilih.
+    const nilaiMagang = selectedPeriod ? await getNilaiMagang(userId, selectedPeriod.pdkId) : null;
+
     res.render('dosen/magang_detail', {
       title: `Logbook - ${mahasiswa.nama}`,
       mahasiswa,
@@ -384,11 +394,95 @@ router.get('/:userId', async (req, res) => {
       isPembimbing2: role === 'pembimbing2',
       pembimbing1Nama: mahasiswa.pembimbing1Nama,
       pembimbing2Nama: mahasiswa.pembimbing2Nama,
+      nilaiMagang,
       user: req.user
     });
   } catch (error) {
     console.error('Error ambil logbook mahasiswa:', error);
     res.status(500).render('error', { title: 'Error', message: 'Gagal memuat logbook mahasiswa' });
+  }
+});
+
+// ============================================================================
+// KUNCI LOGBOOK (Pembimbing 2) - kunci KESELURUHAN logbook periode magang
+// ini, menandai "sudah selesai ditinjau". Setelah dikunci, baru bisa isi
+// Nilai Logbook. Beda dari "Setujui 1 Minggu" yang cuma menyetujui entri
+// harian - ini kunci final utk satu periode magang penuh.
+// ============================================================================
+router.post('/:userId/kunci-logbook', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { pdkId } = req.body;
+    if (!pdkId) return res.status(400).send('Periode magang (PDK) tidak diketahui');
+
+    const { role } = await isMahasiswaBimbingan(req.dosen.id, userId);
+    if (role !== 'pembimbing2') {
+      return res.status(403).send('Hanya Pembimbing 2 yang dapat mengunci logbook');
+    }
+
+    await kunciLogbookMagang(userId, pdkId, req.dosen.id);
+    req.session.success = 'Logbook berhasil dikunci. Nilai Logbook sekarang bisa diisi.';
+    res.redirect(`/dosen/magang/${userId}?periodId=${req.body.periodId || ''}`);
+  } catch (error) {
+    console.error('Error kunci logbook magang:', error);
+    req.session.error = 'Gagal mengunci logbook: ' + error.message;
+    res.redirect('back');
+  }
+});
+
+// Buka kunci lagi (kalau Pembimbing 2 perlu koreksi setelah terlanjur kunci)
+router.post('/:userId/buka-kunci-logbook', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { pdkId } = req.body;
+    if (!pdkId) return res.status(400).send('Periode magang (PDK) tidak diketahui');
+
+    const { role } = await isMahasiswaBimbingan(req.dosen.id, userId);
+    if (role !== 'pembimbing2') {
+      return res.status(403).send('Hanya Pembimbing 2 yang dapat membuka kunci logbook');
+    }
+
+    await bukaKunciLogbookMagang(userId, pdkId);
+    req.session.success = 'Kunci logbook dibuka kembali.';
+    res.redirect(`/dosen/magang/${userId}?periodId=${req.body.periodId || ''}`);
+  } catch (error) {
+    console.error('Error buka kunci logbook magang:', error);
+    req.session.error = 'Gagal membuka kunci logbook: ' + error.message;
+    res.redirect('back');
+  }
+});
+
+// ============================================================================
+// SIMPAN NILAI LOGBOOK (Pembimbing 2) - hanya boleh kalau sudah dikunci
+// ============================================================================
+router.post('/:userId/nilai-logbook', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { pdkId, nilai } = req.body;
+    if (!pdkId) return res.status(400).send('Periode magang (PDK) tidak diketahui');
+
+    const { role } = await isMahasiswaBimbingan(req.dosen.id, userId);
+    if (role !== 'pembimbing2') {
+      return res.status(403).send('Hanya Pembimbing 2 yang dapat mengisi Nilai Logbook');
+    }
+
+    const nilaiMagang = await getNilaiMagang(userId, pdkId);
+    if (!nilaiMagang.logbookDikunci) {
+      return res.status(400).send('Kunci logbook dulu sebelum mengisi nilainya');
+    }
+
+    const nilaiAngka = parseFloat(nilai);
+    if (isNaN(nilaiAngka) || nilaiAngka < 0 || nilaiAngka > 100) {
+      return res.status(400).send('Nilai harus angka 0-100');
+    }
+
+    await saveNilaiLogbook(userId, pdkId, nilaiAngka, req.dosen.id);
+    req.session.success = 'Nilai Logbook berhasil disimpan.';
+    res.redirect(`/dosen/magang/${userId}?periodId=${req.body.periodId || ''}`);
+  } catch (error) {
+    console.error('Error simpan nilai logbook:', error);
+    req.session.error = 'Gagal menyimpan nilai logbook: ' + error.message;
+    res.redirect('back');
   }
 });
 

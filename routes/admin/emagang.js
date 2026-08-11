@@ -11,6 +11,7 @@ const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { nilaiKeHuruf } = require('../../helpers/nilaiHelper');
 const { invalidateProgressMagangHarian } = require('../../helpers/magangHelper');
+const { getNilaiMagang, saveNilaiLapangan } = require('../../helpers/nilaiMagangHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -344,6 +345,8 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       nama: doc.data().nama
     }));
 
+    const nilaiMagang = selectedPeriod ? await getNilaiMagang(userId, selectedPeriod.pdkId) : null;
+
     res.render('admin/emagang_mahasiswa', {
       title: `Logbook - ${mahasiswa.nama}`,
       mahasiswa,
@@ -355,11 +358,36 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       pdkStats,
       pdkList,
       bimbingan,
+      nilaiMagang,
       user: req.user
     });
   } catch (error) {
     console.error('Error:', error);
     res.status(500).render('error', { message: 'Gagal mengambil data logbook' });
+  }
+});
+
+// ============================================================================
+// SIMPAN NILAI LAPANGAN (Admin, mewakili pembimbing lapangan perusahaan)
+// ============================================================================
+router.post('/mahasiswa/:userId/nilai-lapangan', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { pdkId, nilai } = req.body;
+    if (!pdkId) return res.status(400).send('Periode magang (PDK) tidak diketahui');
+
+    const nilaiAngka = parseFloat(nilai);
+    if (isNaN(nilaiAngka) || nilaiAngka < 0 || nilaiAngka > 100) {
+      return res.status(400).send('Nilai harus angka 0-100');
+    }
+
+    await saveNilaiLapangan(userId, pdkId, nilaiAngka, req.user.id);
+    req.session.success = 'Nilai Lapangan berhasil disimpan.';
+    res.redirect(`/admin/emagang/mahasiswa/${userId}?periodId=${req.body.periodId || ''}`);
+  } catch (error) {
+    console.error('Error simpan nilai lapangan:', error);
+    req.session.error = 'Gagal menyimpan nilai lapangan: ' + error.message;
+    res.redirect('back');
   }
 });
 

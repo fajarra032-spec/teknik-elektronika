@@ -1,0 +1,60 @@
+<%- include('../partials/header') %>
+
+<style>
+  :root { --primary-start: #1e3a8a; --primary-end: #3b82f6; }
+  body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; }
+  .page-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-radius: 1.2rem; padding: 1.5rem 2rem; color: white; margin-bottom: 1.5rem;
+  }
+  .table-responsive { border-radius: 1rem; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.05); background: white; }
+  .rl-table th { background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); color: white; font-weight: 600; text-transform: uppercase; font-size: 0.78rem; padding: 0.8rem; }
+  .rl-table td { padding: 0.8rem; vertical-align: middle; }
+  .badge-acc { background: #d1fae5; color: #065f46; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 50px; font-size: 0.75rem; }
+  .badge-menunggu { background: #fef3c7; color: #92400e; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 50px; font-size: 0.75rem; }
+  .badge-kosong { background: #f1f5f9; color: #64748b; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 50px; font-size: 0.75rem; }
+</style>
+
+<div class="container-fluid mt-4">
+  <div class="page-header">
+    <h2 class="fw-bold mb-1"><i class="bi bi-file-earmark-check me-2"></i>Review Laporan Magang</h2>
+    <p class="mb-0 opacity-75">Sebagai Pembimbing 1 - tinjau, ACC, dan beri Nilai Laporan mahasiswa bimbingan Anda.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table rl-table mb-0">
+      <thead>
+        <tr><th>NIM</th><th>Nama</th><th>Jumlah Laporan</th><th>Status Tinjauan</th><th>Status Nilai</th><th>Aksi</th></tr>
+      </thead>
+      <tbody>
+        <% if (daftar.length === 0) { %>
+          <tr><td colspan="6" class="text-center py-5 text-muted">Belum ada mahasiswa bimbingan (Pembimbing 1).</td></tr>
+        <% } %>
+        <% daftar.forEach(d => { %>
+          <tr>
+            <td><%= d.mahasiswa.nim %></td>
+            <td><strong><%= d.mahasiswa.nama %></strong></td>
+            <td><%= d.jumlahLaporan %></td>
+            <td>
+              <% if (d.jumlahLaporan === 0) { %>
+                <span class="badge-kosong">Belum ada laporan</span>
+              <% } else if (d.adaYangAcc) { %>
+                <span class="badge-acc"><i class="bi bi-check-circle"></i> Ada yang di-ACC</span>
+              <% } else { %>
+                <span class="badge-menunggu"><i class="bi bi-hourglass-split"></i> Menunggu tinjauan</span>
+              <% } %>
+            </td>
+            <td><%= d.statusNilai %></td>
+            <td>
+              <a href="/dosen/laporan-review/mahasiswa/<%= d.mahasiswa.id %>" class="btn btn-sm btn-primary">
+                <i class="bi bi-eye"></i> Tinjau
+              </a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
