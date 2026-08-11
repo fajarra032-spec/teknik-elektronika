@@ -34,6 +34,22 @@
         { "fieldPath": "mkId", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "testimoniAlumni",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "aktif", "order": "ASCENDING" },
+        { "fieldPath": "urutan", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "videoKonten",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "aktif", "order": "ASCENDING" },
+        { "fieldPath": "urutan", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

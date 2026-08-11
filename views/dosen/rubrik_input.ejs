@@ -60,8 +60,6 @@
   .lulus { color: #15803d; } .tidak-lulus { color: #b91c1c; }
   .name-cell { text-align: left !important; white-space: nowrap; }
   .saving-note { font-size: 0.7rem; color: #64748b; }
-  .info-note-pdk { background: #eef2ff; border-left: 4px solid var(--primary-start); border-radius: 0.8rem; padding: 1rem 1.3rem; margin-bottom: 1.2rem; font-size: 0.88rem; color: #1e293b; }
-  .info-note-pdk a { color: var(--primary-start); font-weight: 600; }
 </style>
 
 <div class="container-fluid mt-4">
@@ -139,7 +137,6 @@
   <% } %>
 
   <!-- Bobot Komponen -->
-  <% if (!isPDK) { %>
   <div class="bobot-card">
     <form method="POST" action="/dosen/rubrik/<%= mk.id %>/bobot" class="row g-3 align-items-end">
       <input type="hidden" name="periode" value="<%= periode %>">
@@ -303,59 +300,6 @@
     Kolom komponen yang bobotnya diatur 0% di panel Bobot Komponen di atas otomatis <strong>disembunyikan</strong> dari tabel ini (tidak wajib diisi).
     Kalau Nilai Akhir masih tampil "-", lihat catatan kecil <em>"Belum: ..."</em> di bawah angkanya - itu menyebutkan komponen mana saja yang masih kosong.
   </p>
-  <% } else { %>
-  <!-- ============================================================ -->
-  <!-- MK PDK/MAGANG: nilai akhir = rata-rata 3 komponen magang, tidak -->
-  <!-- diisi di sini - halaman ini cuma menampilkan ringkasannya.     -->
-  <!-- ============================================================ -->
-  <div class="info-note-pdk">
-    <i class="bi bi-info-circle"></i> Mata kuliah ini adalah <strong>PDK/Magang</strong>.
-    Nilai Akhir dihitung otomatis dari rata-rata 3 komponen: <strong>Nilai Laporan</strong>
-    (diisi Pembimbing 1 di menu <a href="/dosen/laporan-review">Review Laporan Magang</a>
-    setelah laporan di-ACC), <strong>Nilai Logbook</strong> (diisi Pembimbing 2 di halaman
-    detail logbook mahasiswa, setelah logbook dikunci), dan <strong>Nilai Lapangan</strong>
-    (diisi Admin). Tidak ada yang perlu diisi langsung di halaman ini.
-  </div>
-
-  <div class="table-responsive">
-    <table class="rubrik-table">
-      <thead>
-        <tr>
-          <th>No</th><th>NIM</th><th>Nama Mahasiswa</th>
-          <th>Nilai Laporan<br><small>(Pembimbing 1)</small></th>
-          <th>Nilai Logbook<br><small>(Pembimbing 2)</small></th>
-          <th>Nilai Lapangan<br><small>(Admin)</small></th>
-          <th>Nilai Akhir</th><th>Huruf</th><th>Keterangan</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if (data.length === 0) { %>
-          <tr><td colspan="9" class="text-center py-5 text-muted">Belum ada mahasiswa aktif di MK ini.</td></tr>
-        <% } %>
-        <% data.forEach((item, idx) => { const h = item.hasil; const nm = item.nilaiMagang || {}; %>
-          <tr>
-            <td><%= idx + 1 %></td>
-            <td><%= item.mahasiswa.nim %></td>
-            <td class="name-cell"><%= item.mahasiswa.nama %></td>
-            <td><%= nm.nilaiLaporan ?? '-' %></td>
-            <td>
-              <%= nm.nilaiLogbook ?? '-' %>
-              <% if (!nm.logbookDikunci) { %><br><small class="text-muted">(belum dikunci)</small><% } %>
-            </td>
-            <td><%= nm.nilaiLapangan ?? '-' %></td>
-            <td><span class="final-cell"><%= h.nilaiAkhir !== null ? h.nilaiAkhir.toFixed(2) : '-' %></span>
-              <% if (h.nilaiAkhir === null && h.belumLengkap && h.belumLengkap.length > 0) { %>
-                <div class="belum-lengkap-hint">Belum: <%= h.belumLengkap.join(', ') %></div>
-              <% } %>
-            </td>
-            <td><span class="huruf-badge"><%= h.huruf || '-' %></span></td>
-            <td class="<%= h.keterangan === 'LULUS' ? 'lulus' : (h.keterangan === 'TIDAK LULUS' ? 'tidak-lulus' : '') %>"><%= h.keterangan || '-' %></td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-  </div>
-  <% } %>
 </div>
 
 <style>
