@@ -610,6 +610,51 @@ router.post('/period/:periodId/extend', async (req, res) => {
   }
 });
 
+// ============================================================================
+// EDIT TANGGAL MULAI (Admin) - beda dari /extend yang cuma ubah tanggal
+// selesai. Dipakai kalau tanggal mulai yang diinput waktu "Mulai Periode
+// Baru" ternyata salah/perlu dikoreksi (bukan perpanjangan).
+// ============================================================================
+router.post('/period/:periodId/edit-tanggal-mulai', async (req, res) => {
+  try {
+    const { periodId } = req.params;
+    const { tanggalMulaiBaru, catatan } = req.body;
+    if (!tanggalMulaiBaru) {
+      req.session.error = 'Tanggal mulai baru wajib diisi';
+      return res.redirect('back');
+    }
+    const periodRef = db.collection('magangPeriod').doc(periodId);
+    const periodDoc = await periodRef.get();
+    if (!periodDoc.exists) {
+      req.session.error = 'Periode magang tidak ditemukan';
+      return res.redirect('back');
+    }
+    const period = periodDoc.data();
+    const mahasiswaId = period.mahasiswaId;
+
+    if (period.tanggalSelesai && tanggalMulaiBaru > period.tanggalSelesai) {
+      req.session.error = 'Tanggal mulai baru tidak boleh setelah tanggal selesai';
+      return res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
+    }
+
+    const oldMulai = period.tanggalMulai || '-';
+    await periodRef.update({
+      tanggalMulai: tanggalMulaiBaru,
+      updatedAt: new Date().toISOString(),
+      history: [
+        ...(period.history || []),
+        { action: 'edit_tanggal_mulai', tanggal: new Date().toISOString().split('T')[0], oldMulai, newMulai: tanggalMulaiBaru, catatan: catatan || `Koreksi tanggal mulai oleh ${req.user.nama || 'Admin'}` }
+      ]
+    });
+    req.session.success = 'Tanggal mulai periode magang berhasil diubah';
+    res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
+  } catch (error) {
+    console.error('Error edit tanggal mulai:', error);
+    req.session.error = 'Gagal mengubah tanggal mulai periode magang';
+    res.redirect('back');
+  }
+});
+
 router.post('/period/:periodId/complete', async (req, res) => {
   try {
     const { periodId } = req.params;
@@ -861,6 +906,71 @@ router.post('/mahasiswa/:userId/setujui-minggu', async (req, res) => {
   } catch (error) {
     console.error('Error setujui logbook per minggu (admin):', error);
     req.session.error = 'Gagal menyetujui logbook per minggu';
+    res.redirect('back');
+  }
+});
+
+// ============================================================================
+// SETUJUI SEMUA LOGBOOK PENDING (Admin) - tanpa batas 7 hari, semua yang
+// masih 'pending' untuk mahasiswa ini (opsional difilter per periode PDK
+// kalau periodId dikirim).
+// ============================================================================
+router.post('/mahasiswa/:userId/setujui-semua', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { periodId } = req.body;
+
+    let pdkId = null;
+    if (periodId) {
+      const periodDoc = await db.collection('magangPeriod').doc(periodId).get();
+      if (!periodDoc.exists) {
+        req.session.error = 'Periode magang tidak ditemukan';
+        return res.redirect(`/admin/emagang/mahasiswa/${userId}`);
+      }
+      pdkId = periodDoc.data().pdkId;
+    }
+
+    let query = db.collection('logbookMagang')
+      .where('userId', '==', userId)
+      .where('status', '==', 'pending');
+    if (pdkId) query = query.where('pdkId', '==', pdkId);
+    const pendingSnapshot = await query.get();
+
+    if (pendingSnapshot.empty) {
+      req.session.error = 'Tidak ada logbook pending untuk disetujui';
+      return res.redirect(`/admin/emagang/mahasiswa/${userId}${periodId ? `?periodId=${periodId}` : ''}`);
+    }
+
+    const now = new Date().toISOString();
+    const catatan = 'Disetujui sekaligus (Setujui Semua) oleh Admin';
+    // Firestore batch dibatasi maks 500 operasi - pecah jadi beberapa batch
+    // kalau logbook pending-nya sangat banyak.
+    const docs = pendingSnapshot.docs;
+    for (let i = 0; i < docs.length; i += 450) {
+      const batch = db.batch();
+      docs.slice(i, i + 450).forEach(doc => {
+        batch.update(doc.ref, {
+          status: 'approved',
+          approvedAt: now,
+          approvedBy: req.user.id,
+          approvedByNama: req.user.nama || 'Admin',
+          approvedByRole: 'Admin',
+          catatan
+        });
+      });
+      await batch.commit();
+    }
+
+    const pdkIdUntukInvalidasi = pdkId
+      ? [pdkId]
+      : [...new Set(docs.map(doc => doc.data().pdkId).filter(Boolean))];
+    pdkIdUntukInvalidasi.forEach(pid => invalidateProgressMagangHarian(userId, pid));
+
+    req.session.success = `${docs.length} logbook pending berhasil disetujui semua sekaligus`;
+    res.redirect(`/admin/emagang/mahasiswa/${userId}${periodId ? `?periodId=${periodId}` : ''}`);
+  } catch (error) {
+    console.error('Error setujui semua logbook (admin):', error);
+    req.session.error = 'Gagal menyetujui semua logbook';
     res.redirect('back');
   }
 });

@@ -584,6 +584,7 @@ router.get('/transkrip/cetak', async (req, res) => {
     res.render('mahasiswa/transkrip_print', {
       title: 'Transkrip Nilai',
       user: req.user,
+      angkatan: getAngkatanFromNim(req.user.nim),
       ...data
     });
   } catch (error) {

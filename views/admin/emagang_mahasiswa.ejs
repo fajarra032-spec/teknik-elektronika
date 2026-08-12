@@ -245,6 +245,15 @@
           <i class="bi bi-check2-all"></i> Setujui 1 Minggu
         </button>
       </form>
+      <form method="POST" action="/admin/emagang/mahasiswa/<%= mahasiswa.id %>/setujui-semua" style="display:inline;"
+            onsubmit="return confirm('Setujui SEMUA logbook pending mahasiswa ini<%= (typeof selectedPeriod !== 'undefined' && selectedPeriod) ? ` untuk periode ${selectedPeriod.pdkKode}` : '' %> - tanpa batas 7 hari? Tindakan ini tidak bisa dibatalkan satu-satu.');">
+        <% if (typeof selectedPeriod !== 'undefined' && selectedPeriod) { %>
+          <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+        <% } %>
+        <button type="submit" class="btn-approve-minggu" style="background: linear-gradient(135deg, #10b981, #34d399);">
+          <i class="bi bi-check2-all"></i> Setujui Semua Logbook
+        </button>
+      </form>
       <a href="/admin/emagang/print?userId=<%= mahasiswa.id %>" class="btn-print" target="_blank">
         <i class="bi bi-printer"></i> Print
       </a>
@@ -304,6 +313,11 @@
             <button class="btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#lockModal" 
                     data-period-id="<%= selectedPeriod.id %>" data-period-name="<%= selectedPeriod.pdkNama %>">
               <i class="bi bi-lock"></i> Lock
+            </button>
+            <button class="btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#editMulaiModal" 
+                    data-period-id="<%= selectedPeriod.id %>" data-period-name="<%= selectedPeriod.pdkNama %>"
+                    data-current-mulai="<%= selectedPeriod.tanggalMulai || '' %>">
+              <i class="bi bi-calendar-event"></i> Edit Tanggal Mulai
             </button>
             <button class="btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#extendModal" 
                     data-period-id="<%= selectedPeriod.id %>" data-period-name="<%= selectedPeriod.pdkNama %>"
@@ -654,6 +668,29 @@
 </div>
 
 <!-- Modal Extend -->
+<div class="modal fade" id="editMulaiModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header modal-header-custom">
+        <h5 class="modal-title"><i class="bi bi-calendar-event"></i> Edit Tanggal Mulai Magang</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="editMulaiForm">
+        <div class="modal-body">
+          <p>Ubah tanggal mulai periode magang <strong id="editMulaiPeriodName"></strong></p>
+          <p class="text-muted small">Beda dari "Perpanjang" (yang cuma mengubah tanggal selesai) - ini untuk mengoreksi tanggal mulai yang salah diinput sebelumnya.</p>
+          <div class="mb-3"><label>Tanggal Mulai Baru</label><input type="date" name="tanggalMulaiBaru" id="editMulaiDate" class="form-control" required></div>
+          <div class="mb-3"><label>Catatan</label><textarea name="catatan" class="form-control" rows="2" placeholder="Alasan koreksi (opsional)"></textarea></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="extendModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -784,6 +821,22 @@
     });
   }
   
+  // Edit Tanggal Mulai Modal
+  const editMulaiModal = document.getElementById('editMulaiModal');
+  if (editMulaiModal) {
+    editMulaiModal.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      const periodId = button.getAttribute('data-period-id');
+      const periodName = button.getAttribute('data-period-name');
+      const currentMulai = button.getAttribute('data-current-mulai');
+
+      const form = document.getElementById('editMulaiForm');
+      form.action = '/admin/emagang/period/' + periodId + '/edit-tanggal-mulai';
+      document.getElementById('editMulaiPeriodName').textContent = periodName;
+      document.getElementById('editMulaiDate').value = currentMulai || '';
+    });
+  }
+
   // Extend Modal
   const extendModal = document.getElementById('extendModal');
   if (extendModal) {
