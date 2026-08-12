@@ -11,7 +11,7 @@ const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { nilaiKeHuruf } = require('../../helpers/nilaiHelper');
 const { invalidateProgressMagangHarian, salinNilaiMagangKeGrades } = require('../../helpers/magangHelper');
-const { getNilaiMagang, saveNilaiLapangan, hitungNilaiAkhirMagang, kunciNilaiMagangKeGrades } = require('../../helpers/nilaiMagangHelper');
+const { ITEM_PENDAMPING_LAPANGAN, getNilaiMagang, savePenilaianPendampingLapangan, hitungNilaiAkhirMagang, kunciNilaiMagangKeGrades } = require('../../helpers/nilaiMagangHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -365,6 +365,7 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       pdkList,
       bimbingan,
       nilaiMagangInfo,
+      ITEM_PENDAMPING_LAPANGAN,
       user: req.user
     });
   } catch (error) {
@@ -671,20 +672,38 @@ router.post('/period/:periodId/complete', async (req, res) => {
  * Admin input Nilai Lapangan (mewakili pembimbing lapangan di perusahaan,
  * yang tidak punya akses ke sistem).
  */
+/**
+ * POST /admin/emagang/mahasiswa/:userId/nilai-lapangan
+ * Admin input Nilai Pendamping Lapangan (mewakili pendamping lapangan di
+ * IDUKA, yang tidak punya akses ke sistem) - 9 indikator, lihat
+ * ITEM_PENDAMPING_LAPANGAN.
+ */
 router.post('/mahasiswa/:userId/nilai-lapangan', async (req, res) => {
   try {
     const { userId } = req.params;
-    const { pdkId, nilaiLapangan } = req.body;
-    if (!pdkId || nilaiLapangan === undefined || nilaiLapangan === '') {
-      req.session.error = 'PDK dan nilai wajib diisi';
+    const { pdkId } = req.body;
+    if (!pdkId) {
+      req.session.error = 'Pilih periode magang (PDK) dulu';
       return res.redirect('back');
     }
-    await saveNilaiLapangan(userId, pdkId, nilaiLapangan, req.user.id);
-    req.session.success = 'Nilai Lapangan berhasil disimpan';
+
+    const itemScores = {};
+    for (const it of ITEM_PENDAMPING_LAPANGAN) {
+      const v = req.body.item ? req.body.item[it.key] : undefined;
+      const angka = parseFloat(v);
+      if (v === undefined || v === '' || isNaN(angka) || angka < 0 || angka > 100) {
+        req.session.error = `Isi semua ${ITEM_PENDAMPING_LAPANGAN.length} indikator dengan angka 0-100 (indikator "${it.label}" belum valid).`;
+        return res.redirect('back');
+      }
+      itemScores[it.key] = angka;
+    }
+
+    await savePenilaianPendampingLapangan(userId, pdkId, itemScores, req.user.id);
+    req.session.success = 'Nilai Pendamping Lapangan berhasil disimpan';
     res.redirect(`/admin/emagang/mahasiswa/${userId}?periodId=${req.body.periodId || ''}`);
   } catch (error) {
-    console.error('Error menyimpan Nilai Lapangan:', error);
-    req.session.error = 'Gagal menyimpan Nilai Lapangan: ' + error.message;
+    console.error('Error menyimpan Nilai Pendamping Lapangan:', error);
+    req.session.error = 'Gagal menyimpan Nilai Pendamping Lapangan: ' + error.message;
     res.redirect('back');
   }
 });

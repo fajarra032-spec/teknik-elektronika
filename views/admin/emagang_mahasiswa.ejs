@@ -353,21 +353,46 @@
           </div>
           <div class="col-md-4">
             <div class="p-2 border rounded <%= nilaiMagangInfo.nilaiLapangan !== null ? 'bg-success-subtle' : 'bg-warning-subtle' %>">
-              <small class="text-muted d-block">Nilai Lapangan (Admin)</small>
+              <small class="text-muted d-block">Nilai Pendamping Lapangan (Admin)</small>
               <strong><%= nilaiMagangInfo.nilaiLapangan !== null ? nilaiMagangInfo.nilaiLapangan : 'Belum diisi' %></strong>
             </div>
           </div>
         </div>
 
         <% if (nilaiMagangInfo.nilaiLapangan === null) { %>
-          <form method="POST" action="/admin/emagang/mahasiswa/<%= mahasiswa.id %>/nilai-lapangan" class="d-flex align-items-end gap-2 mb-3">
+          <h6 class="fw-bold mb-1 mt-2"><i class="bi bi-pencil-square"></i> Nilai Pendamping Lapangan</h6>
+          <p class="text-muted small mb-2">
+            Diinput Admin mewakili pendamping lapangan IDUKA (tidak punya akses sistem). Sesuai Pedoman Magang - 9 indikator, tiap indikator diisi angka 0-100.
+          </p>
+          <form method="POST" action="/admin/emagang/mahasiswa/<%= mahasiswa.id %>/nilai-lapangan" class="mb-3">
             <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
             <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
-            <div>
-              <label class="form-label small mb-1">Input Nilai Lapangan (0-100)</label>
-              <input type="number" step="0.01" min="0" max="100" name="nilaiLapangan" class="form-control form-control-sm" required style="width: 120px;">
+            <%
+              const itemsPL = (nilaiMagangInfo && nilaiMagangInfo.nilaiLapanganItems) ? nilaiMagangInfo.nilaiLapanganItems : {};
+              let kategoriPL = null;
+            %>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr><th style="width:60%;">Indikator</th><th style="width:40%;">Nilai (0-100)</th></tr>
+                </thead>
+                <tbody>
+                  <% ITEM_PENDAMPING_LAPANGAN.forEach(it => { %>
+                    <% if (it.kategori !== kategoriPL) { kategoriPL = it.kategori; %>
+                      <tr class="table-light"><td colspan="2" class="fw-bold small text-uppercase text-muted"><%= it.kategori %></td></tr>
+                    <% } %>
+                    <tr>
+                      <td><%= it.label %></td>
+                      <td>
+                        <input type="number" name="item[<%= it.key %>]" min="0" max="100" step="0.01" class="form-control form-control-sm"
+                               value="<%= itemsPL[it.key] !== undefined ? itemsPL[it.key] : '' %>" required style="max-width:140px;">
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
             </div>
-            <button type="submit" class="btn-sm btn-primary"><i class="bi bi-save"></i> Simpan</button>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-save"></i> Simpan Nilai Pendamping Lapangan</button>
           </form>
         <% } %>
 

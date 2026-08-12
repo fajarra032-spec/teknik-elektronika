@@ -77,27 +77,58 @@
   <% if (pdkList.length > 0) { %>
     <% if (adaYangAcc) { %>
       <div class="nilai-card">
-        <h5 class="fw-bold mb-3"><i class="bi bi-pencil-square"></i> Nilai Laporan</h5>
-        <form method="POST" action="/dosen/laporan-review/mahasiswa/<%= mahasiswa.id %>/nilai" class="row g-3 align-items-end">
-          <div class="col-md-5">
+        <h5 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> Nilai Laporan (Pembimbing 1)</h5>
+        <p class="text-muted small mb-3">
+          Sesuai Pedoman Magang - 13 indikator (Laporan, Pengetahuan, Presentasi Magang), tiap indikator diisi angka 0-100.
+        </p>
+        <form method="POST" action="/dosen/laporan-review/mahasiswa/<%= mahasiswa.id %>/nilai">
+          <div class="mb-3">
             <label class="form-label small fw-semibold">Periode Magang (PDK)</label>
-            <select name="pdkId" class="form-select">
+            <select name="pdkId" class="form-select" style="max-width:420px;">
               <% pdkList.forEach(p => { %>
                 <option value="<%= p.pdkId %>" <%= p.pdkId === pdkIdDipilih ? 'selected' : '' %>><%= p.pdkKode %> - <%= p.pdkNama %></option>
               <% }) %>
             </select>
           </div>
-          <div class="col-md-3">
-            <label class="form-label small fw-semibold">Nilai Laporan (0-100)</label>
-            <input type="number" name="nilai" min="0" max="100" step="0.01" class="form-control"
-                   value="<%= nilaiMagang && nilaiMagang.nilaiLaporan !== null ? nilaiMagang.nilaiLaporan : '' %>" required>
+
+          <%
+            const items = (nilaiMagang && nilaiMagang.nilaiLaporanItems) ? nilaiMagang.nilaiLaporanItems : {};
+            let kategoriSaatIni = null;
+          %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr><th style="width:60%;">Indikator</th><th style="width:40%;">Nilai (0-100)</th></tr>
+              </thead>
+              <tbody>
+                <% ITEM_PEMBIMBING1.forEach(it => { %>
+                  <% if (it.kategori !== kategoriSaatIni) { kategoriSaatIni = it.kategori; %>
+                    <tr class="table-light"><td colspan="2" class="fw-bold small text-uppercase text-muted"><%= it.kategori %></td></tr>
+                  <% } %>
+                  <tr>
+                    <td><%= it.label %></td>
+                    <td>
+                      <input type="number" name="item[<%= it.key %>]" min="0" max="100" step="0.01" class="form-control form-control-sm"
+                             value="<%= items[it.key] !== undefined ? items[it.key] : '' %>" required style="max-width:140px;">
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
           </div>
-          <div class="col-md-4">
-            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> Simpan Nilai Laporan</button>
+
+          <% if (nilaiMagang && nilaiMagang.nilaiLaporan !== null && nilaiMagang.nilaiLaporan !== undefined) { %>
+            <div class="alert alert-primary d-inline-block px-3 py-2 mb-3">
+              Rata-rata saat ini: <strong><%= nilaiMagang.nilaiLaporan %></strong>
+            </div>
+          <% } %>
+
+          <div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Simpan Nilai Laporan</button>
           </div>
         </form>
-        <p class="text-muted small mt-2 mb-0">
-          Nilai ini akan digabung dengan Nilai Logbook (Pembimbing 2) dan Nilai Lapangan (Admin) menjadi Nilai Akhir Magang.
+        <p class="text-muted small mt-3 mb-0">
+          Rata-rata 13 indikator ini akan digabung dengan Nilai Logbook (Pembimbing 2) dan Nilai Pendamping Lapangan (Admin) menjadi Nilai Akhir Magang.
         </p>
       </div>
     <% } else { %>

@@ -143,6 +143,59 @@
     color: white;
   }
 
+  /* Tab Peran (Sebagai Pembimbing 1 / Pembimbing 2) */
+  .peran-tabs {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 1.2rem;
+    flex-wrap: wrap;
+  }
+  .peran-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: clamp(0.78rem, 2vw, 0.9rem);
+    border: 2px solid var(--gray-border);
+    background: white;
+    color: #64748b;
+    cursor: pointer;
+    transition: var(--transition);
+    user-select: none;
+  }
+  .peran-tab .peran-count {
+    background: rgba(100,116,139,0.15);
+    border-radius: 50px;
+    padding: 0.1rem 0.55rem;
+    font-size: 0.78em;
+  }
+  .peran-tab:hover {
+    border-color: var(--primary-end);
+    color: var(--primary-start);
+  }
+  .peran-tab.active {
+    color: white;
+    border-color: transparent;
+  }
+  .peran-tab.active .peran-count {
+    background: rgba(255,255,255,0.25);
+    color: white;
+  }
+  .peran-tab[data-tab="semua"].active {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    box-shadow: 0 5px 15px rgba(30,58,138,0.25);
+  }
+  .peran-tab[data-tab="pembimbing1"].active {
+    background: linear-gradient(135deg, #6c757d, #adb5bd);
+    box-shadow: 0 5px 15px rgba(108,117,125,0.3);
+  }
+  .peran-tab[data-tab="pembimbing2"].active {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    box-shadow: 0 5px 15px rgba(16,185,129,0.3);
+  }
+
   /* Statistik Ringkasan */
   .stats-row {
     display: grid;
@@ -610,6 +663,24 @@
     </div>
   <% } %>
 
+  <!-- Tab Peran: Sebagai Pembimbing 1 / Sebagai Pembimbing 2 -->
+  <% if (mahasiswaList.length > 0) {
+    const jmlPembimbing1 = mahasiswaList.filter(m => m.role === 'pembimbing1' || m.role === 'pembimbing1_dan_2').length;
+    const jmlPembimbing2 = mahasiswaList.filter(m => m.role === 'pembimbing2' || m.role === 'pembimbing1_dan_2').length;
+  %>
+    <div class="peran-tabs" id="peranTabs">
+      <button type="button" class="peran-tab active" data-tab="semua">
+        <i class="bi bi-people-fill"></i> Semua <span class="peran-count"><%= mahasiswaList.length %></span>
+      </button>
+      <button type="button" class="peran-tab" data-tab="pembimbing1">
+        <i class="bi bi-eye"></i> Sebagai Pembimbing 1 <span class="peran-count"><%= jmlPembimbing1 %></span>
+      </button>
+      <button type="button" class="peran-tab" data-tab="pembimbing2">
+        <i class="bi bi-check-circle"></i> Sebagai Pembimbing 2 <span class="peran-count"><%= jmlPembimbing2 %></span>
+      </button>
+    </div>
+  <% } %>
+
   <!-- Filter Section -->
   <div class="filter-section">
     <input type="text" id="searchInput" class="form-control" placeholder="🔍 Cari nama atau NIM...">
@@ -676,6 +747,7 @@
             <tr data-nama="<%= (m.nama || '').toLowerCase() %>" 
                 data-nim="<%= m.nim || '' %>" 
                 data-angkatan="<%= angkatan %>"
+                data-role="<%= m.role || '' %>"
                 data-total="<%= m.totalLogbook || 0 %>"
                 data-pending="<%= m.pendingCount || 0 %>">
               <td data-label="No" style="text-align: center; font-weight: 600;"><%= index + 1 %> </td>
@@ -792,6 +864,15 @@
     });
 
     // Fungsi filter
+    let activeTab = 'semua';
+
+    function cocokTab(role) {
+      if (activeTab === 'semua') return true;
+      if (activeTab === 'pembimbing1') return role === 'pembimbing1' || role === 'pembimbing1_dan_2';
+      if (activeTab === 'pembimbing2') return role === 'pembimbing2' || role === 'pembimbing1_dan_2';
+      return true;
+    }
+
     function filterTable() {
       const searchInput = document.getElementById('searchInput').value.toLowerCase().trim();
       const angkatanValue = document.getElementById('angkatanFilter').value;
@@ -802,6 +883,7 @@
         const nama = row.getAttribute('data-nama') || '';
         const nim = row.getAttribute('data-nim') || '';
         const angkatan = row.getAttribute('data-angkatan') || '';
+        const role = row.getAttribute('data-role') || '';
 
         let matchSearch = true;
         if (searchInput !== '') {
@@ -813,7 +895,9 @@
           matchAngkatan = angkatan === angkatanValue;
         }
 
-        if (matchSearch && matchAngkatan) {
+        const matchTab = cocokTab(role);
+
+        if (matchSearch && matchAngkatan && matchTab) {
           row.style.display = '';
           visibleCount++;
         } else {
@@ -829,10 +913,28 @@
       }
     }
 
+    // Ganti tab peran
+    const peranTabsEl = document.getElementById('peranTabs');
+    if (peranTabsEl) {
+      peranTabsEl.querySelectorAll('.peran-tab').forEach(btn => {
+        btn.addEventListener('click', function () {
+          peranTabsEl.querySelectorAll('.peran-tab').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          activeTab = this.getAttribute('data-tab');
+          filterTable();
+        });
+      });
+    }
+
     // Reset filter
     function resetFilter() {
       document.getElementById('searchInput').value = '';
       document.getElementById('angkatanFilter').value = '';
+      if (peranTabsEl) {
+        peranTabsEl.querySelectorAll('.peran-tab').forEach(b => b.classList.remove('active'));
+        peranTabsEl.querySelector('[data-tab="semua"]').classList.add('active');
+        activeTab = 'semua';
+      }
       const rows = document.querySelectorAll('#magangTable tbody tr');
       rows.forEach(row => row.style.display = '');
       document.getElementById('noFilterResult').style.display = 'none';

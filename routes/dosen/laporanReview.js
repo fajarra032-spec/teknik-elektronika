@@ -13,8 +13,9 @@ const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getActivePdkWithPeriod } = require('../../helpers/magangHelper');
 const {
+  ITEM_PEMBIMBING1,
   getNilaiMagang,
-  saveNilaiLaporan
+  savePenilaianPembimbing1
 } = require('../../helpers/nilaiMagangHelper');
 
 router.use(verifyToken);
@@ -125,6 +126,7 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       pdkList,
       pdkIdDipilih,
       nilaiMagang,
+      ITEM_PEMBIMBING1,
       success: req.query.success
     });
   } catch (error) {
@@ -179,7 +181,7 @@ router.post('/:laporanId/status', async (req, res) => {
 router.post('/mahasiswa/:userId/nilai', async (req, res) => {
   try {
     const { userId } = req.params;
-    const { pdkId, nilai } = req.body;
+    const { pdkId } = req.body;
 
     if (!pdkId) return res.status(400).send('Pilih periode magang (PDK) dulu');
 
@@ -197,12 +199,19 @@ router.post('/mahasiswa/:userId/nilai', async (req, res) => {
       return res.status(400).send('Laporan mahasiswa ini belum di-ACC - ACC dulu sebelum memberi nilai.');
     }
 
-    const nilaiAngka = parseFloat(nilai);
-    if (isNaN(nilaiAngka) || nilaiAngka < 0 || nilaiAngka > 100) {
-      return res.status(400).send('Nilai harus angka 0-100');
+    // Kumpulkan skor 13 indikator (lihat ITEM_PEMBIMBING1) dari body form,
+    // mis. body.item.sistematika, body.item.pendahuluan, dst.
+    const itemScores = {};
+    for (const it of ITEM_PEMBIMBING1) {
+      const v = req.body.item ? req.body.item[it.key] : undefined;
+      const angka = parseFloat(v);
+      if (v === undefined || v === '' || isNaN(angka) || angka < 0 || angka > 100) {
+        return res.status(400).send(`Isi semua ${ITEM_PEMBIMBING1.length} indikator dengan angka 0-100 (indikator "${it.label}" belum valid).`);
+      }
+      itemScores[it.key] = angka;
     }
 
-    await saveNilaiLaporan(userId, pdkId, nilaiAngka, req.dosen.id);
+    await savePenilaianPembimbing1(userId, pdkId, itemScores, req.dosen.id);
     res.redirect(`/dosen/laporan-review/mahasiswa/${userId}?pdkId=${pdkId}&success=nilai`);
   } catch (error) {
     console.error('Error simpan nilai laporan:', error);

@@ -11,10 +11,11 @@ const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { invalidateProgressMagangHarian } = require('../../helpers/magangHelper');
 const {
+  ITEM_PEMBIMBING2,
   getNilaiMagang,
   kunciLogbookMagang,
   bukaKunciLogbookMagang,
-  saveNilaiLogbook
+  savePenilaianPembimbing2
 } = require('../../helpers/nilaiMagangHelper');
 
 router.use(verifyToken);
@@ -395,6 +396,7 @@ router.get('/:userId', async (req, res) => {
       pembimbing1Nama: mahasiswa.pembimbing1Nama,
       pembimbing2Nama: mahasiswa.pembimbing2Nama,
       nilaiMagang,
+      ITEM_PEMBIMBING2,
       user: req.user
     });
   } catch (error) {
@@ -458,7 +460,7 @@ router.post('/:userId/buka-kunci-logbook', async (req, res) => {
 router.post('/:userId/nilai-logbook', async (req, res) => {
   try {
     const { userId } = req.params;
-    const { pdkId, nilai } = req.body;
+    const { pdkId } = req.body;
     if (!pdkId) return res.status(400).send('Periode magang (PDK) tidak diketahui');
 
     const { role } = await isMahasiswaBimbingan(req.dosen.id, userId);
@@ -471,12 +473,18 @@ router.post('/:userId/nilai-logbook', async (req, res) => {
       return res.status(400).send('Kunci logbook dulu sebelum mengisi nilainya');
     }
 
-    const nilaiAngka = parseFloat(nilai);
-    if (isNaN(nilaiAngka) || nilaiAngka < 0 || nilaiAngka > 100) {
-      return res.status(400).send('Nilai harus angka 0-100');
+    // Kumpulkan skor 11 indikator (lihat ITEM_PEMBIMBING2) dari body form.
+    const itemScores = {};
+    for (const it of ITEM_PEMBIMBING2) {
+      const v = req.body.item ? req.body.item[it.key] : undefined;
+      const angka = parseFloat(v);
+      if (v === undefined || v === '' || isNaN(angka) || angka < 0 || angka > 100) {
+        return res.status(400).send(`Isi semua ${ITEM_PEMBIMBING2.length} indikator dengan angka 0-100 (indikator "${it.label}" belum valid).`);
+      }
+      itemScores[it.key] = angka;
     }
 
-    await saveNilaiLogbook(userId, pdkId, nilaiAngka, req.dosen.id);
+    await savePenilaianPembimbing2(userId, pdkId, itemScores, req.dosen.id);
     req.session.success = 'Nilai Logbook berhasil disimpan.';
     res.redirect(`/dosen/magang/${userId}?periodId=${req.body.periodId || ''}`);
   } catch (error) {
