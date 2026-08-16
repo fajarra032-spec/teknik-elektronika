@@ -594,6 +594,38 @@ router.get('/', async (req, res) => {
 // LOGBOOK
 // ============================================================================
 
+/**
+ * GET /mahasiswa/magang/logbook/:id
+ * API JSON - dipakai tombol Edit di views/mahasiswa/magang/logbook.ejs
+ * (fungsi editLogbook()) untuk mengisi modal edit. SEBELUM INI RUTE INI
+ * TIDAK ADA SAMA SEKALI - tombol Edit selalu gagal fetch (dapat halaman
+ * 404, bukan JSON), makanya klik Edit tidak pernah berhasil.
+ * Diletakkan SEBELUM '/logbook' (list) di kode ini tidak masalah - Express
+ * mencocokkan berdasarkan jumlah/isi segmen path, '/logbook/:id' dan
+ * '/logbook' beda pola, tidak akan saling menimpa.
+ */
+router.get('/logbook/:id', async (req, res) => {
+  try {
+    const doc = await db.collection('logbookMagang').doc(req.params.id).get();
+    if (!doc.exists) return res.status(404).json({ error: 'Logbook tidak ditemukan' });
+    const data = doc.data();
+    if (data.userId !== req.user.id) return res.status(403).json({ error: 'Akses ditolak' });
+
+    res.json({
+      id: doc.id,
+      tanggal: data.tanggal || '',
+      semester: data.semester || '',
+      kegiatan: data.kegiatan || '',
+      lokasi: data.lokasi || '',
+      durasi: data.durasi || '',
+      status: data.status || 'pending'
+    });
+  } catch (error) {
+    console.error('Error ambil data logbook (JSON):', error);
+    res.status(500).json({ error: 'Gagal memuat data logbook' });
+  }
+});
+
 router.get('/logbook', async (req, res) => {
   try {
     const userId = req.user.id;
