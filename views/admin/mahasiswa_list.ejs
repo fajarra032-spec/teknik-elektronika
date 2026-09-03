@@ -16,6 +16,8 @@
   var filterSemester = typeof filterSemester !== 'undefined' ? filterSemester : '';
   var filterStatusMagang = typeof filterStatusMagang !== 'undefined' ? filterStatusMagang : '';
   var filterStatusMahasiswa = typeof filterStatusMahasiswa !== 'undefined' ? filterStatusMahasiswa : '';
+  var filterKelas = typeof filterKelas !== 'undefined' ? filterKelas : '';
+  var kelasList = typeof kelasList !== 'undefined' ? kelasList : [];
   var search = typeof search !== 'undefined' ? search : '';
   var angkatanList = typeof angkatanList !== 'undefined' ? angkatanList : [];
   var mahasiswa = typeof mahasiswa !== 'undefined' ? mahasiswa : [];
@@ -173,7 +175,7 @@
       <button class="btn-outline me-2" data-bs-toggle="modal" data-bs-target="#importModal">
         <i class="bi bi-upload"></i> Import CSV
       </button>
-      <a href="/admin/mahasiswa/export/csv<%= (filterAngkatan || filterSemester || filterStatusMagang || filterStatusMahasiswa || search) ? '?' + new URLSearchParams({angkatan: filterAngkatan, semester: filterSemester, statusMagang: filterStatusMagang, statusMahasiswa: filterStatusMahasiswa, search: search}).toString() : '' %>" 
+      <a href="/admin/mahasiswa/export/csv<%= (filterAngkatan || filterSemester || filterStatusMagang || filterStatusMahasiswa || filterKelas || search) ? '?' + new URLSearchParams({angkatan: filterAngkatan, semester: filterSemester, statusMagang: filterStatusMagang, statusMahasiswa: filterStatusMahasiswa, kelas: filterKelas, search: search}).toString() : '' %>" 
          class="btn-outline me-2" style="text-decoration: none;">
         <i class="bi bi-download"></i> Download CSV
       </a>
@@ -226,6 +228,17 @@
           <option value="Keluar" <%= filterStatusMahasiswa === 'Keluar' ? 'selected' : '' %>>Keluar</option>
         </select>
       </div>
+      <div class="col-md-2">
+        <label for="kelas" class="form-label fw-semibold">Kelas</label>
+        <select class="form-select" id="kelas" name="kelas">
+          <option value="">Semua Kelas</option>
+          <% if (kelasList && kelasList.length) { %>
+            <% kelasList.forEach(k => { %>
+              <option value="<%= k %>" <%= k === filterKelas ? 'selected' : '' %>><%= k %></option>
+            <% }) %>
+          <% } %>
+        </select>
+      </div>
       <div class="col-md-3">
         <label for="search" class="form-label fw-semibold">Cari (Nama/NIM)</label>
         <input type="text" class="form-control" id="search" name="search" placeholder="Nama atau NIM" value="<%= search %>">
@@ -243,11 +256,15 @@
     </div>
   <% } %>
 
-  <!-- Notifikasi hasil import -->
+  <!-- Notifikasi hasil import / bulk assign kelas -->
   <% if (importResult) { %>
     <div class="alert alert-info alert-dismissible fade show mb-4">
-      <i class="bi bi-info-circle"></i> Import selesai: <strong><%= importResult.success %></strong> berhasil, <strong><%= importResult.failed %></strong> gagal.
-      <% if (importResult.errors.length) { %>
+      <% if (importResult.pesan) { %>
+        <i class="bi bi-check-circle"></i> <%= importResult.pesan %>.
+      <% } else { %>
+        <i class="bi bi-info-circle"></i> Import selesai: <strong><%= importResult.success %></strong> berhasil, <strong><%= importResult.failed %></strong> gagal.
+      <% } %>
+      <% if (importResult.errors && importResult.errors.length) { %>
         <details>
           <summary>Detail error (<%= importResult.errors.length %>)</summary>
           <ul>
@@ -271,16 +288,34 @@
     <p class="mb-0">Menampilkan <strong><%= mahasiswa.length %></strong> mahasiswa</p>
   </div>
 
+  <!-- Toolbar assign kelas massal - muncul setelah pilih minimal 1 checkbox -->
+  <div id="bulkKelasBar" class="filter-card mb-3" style="display:none;">
+    <form method="POST" action="/admin/mahasiswa/bulk-kelas" id="bulkKelasForm" class="d-flex flex-wrap gap-2 align-items-end">
+      <div id="bulkKelasIdsContainer"></div>
+      <div>
+        <label class="form-label fw-semibold mb-1"><span id="bulkKelasCount">0</span> mahasiswa dipilih - masukkan ke kelas:</label>
+        <input type="text" name="kelas" class="form-control form-control-sm" list="kelasDatalist" placeholder="mis. ELK1A" required style="min-width:180px;">
+        <datalist id="kelasDatalist">
+          <% kelasList.forEach(k => { %><option value="<%= k %>"><% }) %>
+        </datalist>
+      </div>
+      <button type="submit" class="btn-filter btn-sm">Terapkan</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearBulkKelasSelection()">Batal Pilih</button>
+    </form>
+  </div>
+
   <div class="table-container">
     <div class="table-responsive">
       <table class="table mahasiswa-table">
         <thead>
           <tr>
+            <th><input type="checkbox" id="selectAllMahasiswa" onchange="toggleAllMahasiswaCheckbox(this)"></th>
             <th>Foto</th>
             <th>NIM</th>
             <th>Nama</th>
             <th>Email</th>
             <th>Angkatan</th>
+            <th>Kelas</th>
             <th>Semester</th>
             <th>Status Magang</th>
             <th>Status Mahasiswa</th>
@@ -290,7 +325,7 @@
         <tbody>
           <% if (mahasiswa.length === 0) { %>
             <tr>
-              <td colspan="9" class="text-center py-5">
+              <td colspan="10" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <h4>Belum Ada Data Mahasiswa</h4>
@@ -312,6 +347,7 @@
               else badgeMahasiswa = 'badge-default';
             %>
             <tr>
+              <td><input type="checkbox" class="mahasiswaCheckbox" value="<%= m.id %>" onchange="updateBulkKelasBar()"></td>
               <td>
                 <% if (m.foto) { 
                   const fileId = getFileIdFromUrl(m.foto);
@@ -331,6 +367,7 @@
               <td><strong><%= m.nama %></strong></td>
               <td><%= m.email %></td>
               <td><%= angkatan %></td>
+              <td><% if (m.kelas) { %><span class="badge bg-secondary"><%= m.kelas %></span><% } else { %><span class="text-muted">-</span><% } %></td>
               <td><span class="badge badge-semester"><%= semesterText %></span></td>
               <td><span class="badge badge-magang"><%= magangText %></span></td>
               <td><span class="badge <%= badgeMahasiswa %>"><%= mahasiswaStatus %></span></td>
@@ -404,6 +441,44 @@
       }).catch(() => alert('Terjadi kesalahan.'));
     }
   }
+
+  // ===== Assign kelas massal (checkbox pilih + toolbar) =====
+  function toggleAllMahasiswaCheckbox(source) {
+    document.querySelectorAll('.mahasiswaCheckbox').forEach(cb => { cb.checked = source.checked; });
+    updateBulkKelasBar();
+  }
+
+  function updateBulkKelasBar() {
+    const checked = document.querySelectorAll('.mahasiswaCheckbox:checked');
+    const bar = document.getElementById('bulkKelasBar');
+    const countEl = document.getElementById('bulkKelasCount');
+    const container = document.getElementById('bulkKelasIdsContainer');
+    container.innerHTML = '';
+    checked.forEach(cb => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'mahasiswaIds';
+      input.value = cb.value;
+      container.appendChild(input);
+    });
+    countEl.textContent = checked.length;
+    bar.style.display = checked.length > 0 ? 'block' : 'none';
+  }
+
+  function clearBulkKelasSelection() {
+    document.querySelectorAll('.mahasiswaCheckbox').forEach(cb => { cb.checked = false; });
+    const selectAll = document.getElementById('selectAllMahasiswa');
+    if (selectAll) selectAll.checked = false;
+    updateBulkKelasBar();
+  }
+
+  document.getElementById('bulkKelasForm').addEventListener('submit', function(e) {
+    const count = document.querySelectorAll('.mahasiswaCheckbox:checked').length;
+    const kelasVal = this.querySelector('input[name="kelas"]').value.trim();
+    if (!confirm(`Masukkan ${count} mahasiswa ke kelas "${kelasVal}"?`)) {
+      e.preventDefault();
+    }
+  });
 </script>
 
 <%- include('../partials/footer') %>

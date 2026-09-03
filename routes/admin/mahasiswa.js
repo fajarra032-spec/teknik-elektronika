@@ -42,13 +42,20 @@ const SEMESTER_OPTIONS = Array.from({ length: 12 }, (_, i) => `Semester ${i + 1}
 const MAGANG_OPTIONS = ['Magang 1', 'Magang 2', 'Magang 3', 'Selesai Magang'];
 const STATUS_MAHASISWA_OPTIONS = ['Aktif', 'Lulus', 'Cuti', 'Keluar'];
 
+// "Kelas" di sini murni label pengelompokan administratif (rombel) untuk
+// jadwal/presensi, mis. "ELK1A", "ELK1B", "ELK3A", "ELK1ON" - TIDAK
+// mengubah/membatasi mata kuliah yang bisa diambil mahasiswa. Tidak ada
+// daftar baku (bebas diisi admin), jadi tidak ada KELAS_OPTIONS di sini -
+// nilai unik yang sudah dipakai dikumpulkan dinamis dari data mahasiswa
+// yang ada (lihat kelasSet di GET '/').
+
 // ============================================================================
 // DAFTAR MAHASISWA (dengan filter lengkap)
 // ============================================================================
 
 router.get('/', async (req, res) => {
   try {
-    const { angkatan, semester, statusMagang, statusMahasiswa, search } = req.query;
+    const { angkatan, semester, statusMagang, statusMahasiswa, kelas, search } = req.query;
 
     let importResult = null, importError = null;
     if (req.query.import === 'done' && req.session.importResult) {
@@ -67,17 +74,20 @@ router.get('/', async (req, res) => {
 
     const mahasiswaList = [];
     const angkatanSet = new Set();
+    const kelasSet = new Set();
 
     for (const doc of snapshot.docs) {
       const data = doc.data();
       const m = { id: doc.id, ...data };
       const angkatanMhs = getAngkatanFromNim(m.nim);
       angkatanSet.add(angkatanMhs);
+      if (m.kelas) kelasSet.add(m.kelas);
 
       if (angkatan && angkatanMhs !== angkatan) continue;
       if (semester && m.semester !== semester) continue;
       if (statusMagang && m.statusMagang !== statusMagang) continue;
       if (statusMahasiswa && m.statusMahasiswa !== statusMahasiswa) continue;
+      if (kelas && m.kelas !== kelas) continue;
       if (search) {
         const lower = search.toLowerCase();
         const matchNama = m.nama && m.nama.toLowerCase().includes(lower);
@@ -88,15 +98,18 @@ router.get('/', async (req, res) => {
     }
 
     const angkatanList = Array.from(angkatanSet).sort().reverse();
+    const kelasList = Array.from(kelasSet).sort();
 
     res.render('admin/mahasiswa_list', {
       title: 'Kelola Mahasiswa',
       mahasiswa: mahasiswaList,
       angkatanList,
+      kelasList,
       filterAngkatan: angkatan || '',
       filterSemester: semester || '',
       filterStatusMagang: statusMagang || '',
       filterStatusMahasiswa: statusMahasiswa || '',
+      filterKelas: kelas || '',
       search: search || '',
       importResult,
       importError,
@@ -126,7 +139,7 @@ router.get('/create', (req, res) => {
 
 router.post('/', upload.single('foto'), async (req, res) => {
   try {
-    const { nim, nama, email, password, semester, statusMagang, statusMahasiswa } = req.body;
+    const { nim, nama, email, password, semester, statusMagang, statusMahasiswa, kelas } = req.body;
     const file = req.file;
 
     if (!nim || !nama || !email || !password) {
@@ -171,6 +184,7 @@ router.post('/', upload.single('foto'), async (req, res) => {
       semester: finalSemester,
       statusMagang: finalMagang,
       statusMahasiswa: finalStatus,
+      kelas: kelas ? kelas.trim().toUpperCase() : null,
       createdAt: new Date().toISOString(),
     });
 
@@ -250,7 +264,7 @@ router.get('/:id/edit', async (req, res) => {
 
 router.post('/:id/update', upload.single('foto'), async (req, res) => {
   try {
-    const { nim, nama, email, semester, statusMagang, statusMahasiswa } = req.body;
+    const { nim, nama, email, semester, statusMagang, statusMahasiswa, kelas } = req.body;
     const file = req.file;
     const mahasiswaRef = db.collection('users').doc(req.params.id);
     const mahasiswaDoc = await mahasiswaRef.get();
@@ -270,6 +284,7 @@ router.post('/:id/update', upload.single('foto'), async (req, res) => {
       semester: SEMESTER_OPTIONS.includes(semester) ? semester : (oldData.semester || null),
       statusMagang: MAGANG_OPTIONS.includes(statusMagang) ? statusMagang : (oldData.statusMagang || null),
       statusMahasiswa: STATUS_MAHASISWA_OPTIONS.includes(statusMahasiswa) ? statusMahasiswa : (oldData.statusMahasiswa || 'Aktif'),
+      kelas: kelas !== undefined ? (kelas ? kelas.trim().toUpperCase() : null) : (oldData.kelas || null),
       updatedAt: new Date().toISOString(),
     };
 
@@ -558,9 +573,57 @@ router.post('/:id/delete', async (req, res) => {
  * GET /admin/mahasiswa/template
  * Download template CSV untuk update data mahasiswa
  */
+// ============================================================================
+// ASSIGN KELAS MASSAL (pilih beberapa mahasiswa via checkbox di daftar,
+// lalu set field `kelas` mereka sekaligus - pelengkap import CSV untuk
+// penugasan cepat tanpa perlu bikin file)
+// ============================================================================
+
+router.post('/bulk-kelas', async (req, res) => {
+  try {
+    let { mahasiswaIds, kelas } = req.body;
+    if (!mahasiswaIds) {
+      req.session.importError = 'Tidak ada mahasiswa yang dipilih';
+      return res.redirect('/admin/mahasiswa');
+    }
+    if (!Array.isArray(mahasiswaIds)) mahasiswaIds = [mahasiswaIds];
+
+    const kelasFinal = kelas ? kelas.trim().toUpperCase() : null;
+
+    // Firestore batch max 500 operasi - chunking untuk jaga-jaga kalau
+    // suatu saat dipakai untuk angkatan besar sekaligus.
+    const chunkSize = 450;
+    for (let i = 0; i < mahasiswaIds.length; i += chunkSize) {
+      const chunk = mahasiswaIds.slice(i, i + chunkSize);
+      const batch = db.batch();
+      chunk.forEach(id => {
+        batch.update(db.collection('users').doc(id), {
+          kelas: kelasFinal,
+          updatedAt: new Date().toISOString()
+        });
+      });
+      await batch.commit();
+    }
+
+    req.session.importResult = {
+      success: mahasiswaIds.length,
+      failed: 0,
+      errors: [],
+      pesan: kelasFinal
+        ? `${mahasiswaIds.length} mahasiswa berhasil dimasukkan ke kelas ${kelasFinal}`
+        : `Kelas berhasil dikosongkan untuk ${mahasiswaIds.length} mahasiswa`
+    };
+    res.redirect('/admin/mahasiswa?import=done');
+  } catch (error) {
+    console.error('Error bulk assign kelas:', error);
+    req.session.importError = 'Gagal mengubah kelas mahasiswa: ' + error.message;
+    res.redirect('/admin/mahasiswa');
+  }
+});
+
 router.get('/template', (req, res) => {
-  const headers = ['nim', 'nama', 'noHp', 'semester', 'statusMagang', 'statusMahasiswa'];
-  const example = ['20230101', 'Budi Santoso', '08123456789', 'Semester 1', 'Magang 1', 'Aktif'];
+  const headers = ['nim', 'nama', 'noHp', 'semester', 'statusMagang', 'statusMahasiswa', 'kelas'];
+  const example = ['20230101', 'Budi Santoso', '08123456789', 'Semester 1', 'Magang 1', 'Aktif', 'ELK1A'];
   const csvContent = [headers, example].map(row => row.join(',')).join('\n');
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename=template_update_mahasiswa.csv');
@@ -593,6 +656,7 @@ router.post('/import', upload.single('file'), async (req, res) => {
       if (header === 'nohp') return 'noHp';
       if (header === 'statusmagang') return 'statusMagang';
       if (header === 'statusmahasiswa') return 'statusMahasiswa';
+      if (header === 'kelas') return 'kelas';
       if (header === 'nim') return 'nim';
       if (header === 'nama') return 'nama';
       if (header === 'semester') return 'semester';
@@ -603,7 +667,7 @@ router.post('/import', upload.single('file'), async (req, res) => {
     const required = ['nim']; // minimal nim untuk identifikasi
     const missing = required.filter(r => !rawHeaders.includes(r));
     if (missing.length) {
-      req.session.importError = `Header tidak lengkap: ${missing.join(', ')}. Header terbaca: ${rawHeaders.join(', ')}. Pastikan file CSV memiliki kolom: nim, dan minimal satu kolom update (nama, noHp, semester, statusMagang, statusMahasiswa)`;
+      req.session.importError = `Header tidak lengkap: ${missing.join(', ')}. Header terbaca: ${rawHeaders.join(', ')}. Pastikan file CSV memiliki kolom: nim, dan minimal satu kolom update (nama, noHp, semester, statusMagang, statusMahasiswa, kelas)`;
       return res.redirect('/admin/mahasiswa');
     }
 
@@ -699,6 +763,12 @@ router.post('/import', upload.single('file'), async (req, res) => {
         }
       }
 
+      // Update kelas (rombel, mis. "ELK1A") - boleh dikosongkan utk hapus
+      if (rawHeaders.includes('kelas')) {
+        const kelas = row.kelas?.trim();
+        updateData.kelas = kelas ? kelas.toUpperCase() : null;
+      }
+
       if (Object.keys(updateData).length === 0) {
         failed++;
         errors.push(`Baris ${i}: Tidak ada data yang akan diupdate (semua kolom kosong)`);
@@ -729,7 +799,7 @@ router.post('/import', upload.single('file'), async (req, res) => {
  */
 router.get('/export/csv', async (req, res) => {
   try {
-    const { angkatan, search, semester, statusMagang, statusMahasiswa } = req.query;
+    const { angkatan, search, semester, statusMagang, statusMahasiswa, kelas } = req.query;
     const snapshot = await db.collection('users')
       .where('role', '==', 'mahasiswa')
       .orderBy('nim')
@@ -744,6 +814,7 @@ router.get('/export/csv', async (req, res) => {
       if (semester && m.semester !== semester) continue;
       if (statusMagang && m.statusMagang !== statusMagang) continue;
       if (statusMahasiswa && m.statusMahasiswa !== statusMahasiswa) continue;
+      if (kelas && m.kelas !== kelas) continue;
       if (search) {
         const lower = search.toLowerCase();
         if (!(m.nama && m.nama.toLowerCase().includes(lower)) &&
@@ -753,7 +824,7 @@ router.get('/export/csv', async (req, res) => {
     }
 
     const rows = [
-      ['nim', 'nama', 'noHp', 'semester', 'statusMagang', 'statusMahasiswa']
+      ['nim', 'nama', 'noHp', 'semester', 'statusMagang', 'statusMahasiswa', 'kelas']
     ];
     for (const m of mahasiswaList) {
       rows.push([
@@ -762,7 +833,8 @@ router.get('/export/csv', async (req, res) => {
         m.noHp || '',
         m.semester || '',
         m.statusMagang || '',
-        m.statusMahasiswa || ''
+        m.statusMahasiswa || '',
+        m.kelas || ''
       ]);
     }
 

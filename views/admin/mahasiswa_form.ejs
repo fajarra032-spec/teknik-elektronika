@@ -124,7 +124,12 @@
 
         <!-- Tiga Status Terpisah -->
         <div class="row">
-          <div class="col-md-4 mb-3">
+          <div class="col-md-3 mb-3">
+            <label for="kelas" class="form-label">Kelas <span class="text-muted small">(rombel, mis. ELK1A)</span></label>
+            <input type="text" class="form-control" id="kelas" name="kelas" placeholder="mis. ELK1A"
+                   value="<%= mahasiswa && mahasiswa.kelas ? mahasiswa.kelas : '' %>" style="text-transform:uppercase;">
+          </div>
+          <div class="col-md-3 mb-3">
             <label for="semester" class="form-label">Semester (1-12)</label>
             <select class="form-select" id="semester" name="semester">
               <option value="">Pilih Semester</option>
@@ -133,7 +138,7 @@
               <% } %>
             </select>
           </div>
-          <div class="col-md-4 mb-3">
+          <div class="col-md-3 mb-3">
             <label for="statusMagang" class="form-label">Status Magang</label>
             <select class="form-select" id="statusMagang" name="statusMagang">
               <option value="">Pilih Status Magang</option>
@@ -143,7 +148,7 @@
               <option value="Selesai Magang" <%= mahasiswa && mahasiswa.statusMagang === 'Selesai Magang' ? 'selected' : '' %>>Selesai Magang</option>
             </select>
           </div>
-          <div class="col-md-4 mb-3">
+          <div class="col-md-3 mb-3">
             <label for="statusMahasiswa" class="form-label">Status Mahasiswa</label>
             <select class="form-select" id="statusMahasiswa" name="statusMahasiswa">
               <option value="">Pilih Status</option>
