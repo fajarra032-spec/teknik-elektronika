@@ -311,8 +311,9 @@
           </button>
           <% if (selectedPeriod.status === 'active') { %>
             <button class="btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#lockModal" 
-                    data-period-id="<%= selectedPeriod.id %>" data-period-name="<%= selectedPeriod.pdkNama %>">
-              <i class="bi bi-lock"></i> Lock
+                    data-period-id="<%= selectedPeriod.id %>" data-period-name="<%= selectedPeriod.pdkNama %>"
+                    title="Menghentikan mahasiswa isi logbook harian - bukan untuk penilaian">
+              <i class="bi bi-lock"></i> Kunci Periode
             </button>
             <button class="btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#editMulaiModal" 
                     data-period-id="<%= selectedPeriod.id %>" data-period-name="<%= selectedPeriod.pdkNama %>"
@@ -323,10 +324,6 @@
                     data-period-id="<%= selectedPeriod.id %>" data-period-name="<%= selectedPeriod.pdkNama %>"
                     data-current-end="<%= selectedPeriod.tanggalSelesai || '' %>">
               <i class="bi bi-calendar-plus"></i> Perpanjang
-            </button>
-            <button class="btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#completeModal" 
-                    data-period-id="<%= selectedPeriod.id %>" data-period-name="<%= selectedPeriod.pdkNama %>">
-              <i class="bi bi-check-circle"></i> Selesai & Nilai
             </button>
           <% } else if (selectedPeriod.status === 'locked') { %>
             <button class="btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#unlockModal" 
@@ -628,12 +625,13 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header modal-header-custom">
-        <h5 class="modal-title"><i class="bi bi-lock"></i> Kunci Periode Magang</h5>
+        <h5 class="modal-title"><i class="bi bi-lock"></i> Kunci Periode Magang (Hentikan Isi Logbook)</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <form method="POST" id="lockForm">
         <div class="modal-body">
           <p>Yakin ingin mengunci periode magang <strong id="lockPeriodName"></strong>?</p>
+          <p class="text-muted small">Mahasiswa tidak akan bisa mengisi logbook harian selama periode dikunci. <strong>Ini berbeda dari "Kunci Logbook untuk Penilaian"</strong> yang dilakukan Pembimbing 2 di halaman Kelola Logbook - lock di sini tidak membuka/menutup form Nilai Logbook.</p>
           <div class="mb-3"><label>Alasan</label><textarea name="reason" class="form-control" rows="2"></textarea></div>
         </div>
         <div class="modal-footer">
@@ -713,40 +711,8 @@
   </div>
 </div>
 
-<!-- Modal Complete -->
-<div class="modal fade" id="completeModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header modal-header-custom">
-        <h5 class="modal-title"><i class="bi bi-check-circle"></i> Selesaikan & Beri Nilai</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <form method="POST" id="completeForm">
-        <div class="modal-body">
-          <p>Selesaikan periode magang <strong id="completePeriodName"></strong></p>
-          <div class="row">
-            <div class="col-md-6 mb-3"><label>Nilai Angka (0-100) <span class="text-danger">*</span></label><input type="number" name="nilaiAngka" class="form-control" min="0" max="100" step="0.01" required></div>
-            <div class="col-md-6 mb-3"><label>Nilai Huruf</label><input type="text" id="nilaiHurufDisplay" class="form-control" readonly disabled></div>
-          </div>
-          <div class="mb-3"><label>Komentar</label><textarea name="komentarNilai" class="form-control" rows="2"></textarea></div>
-          <hr>
-          <h6 class="fw-bold">Komponen Nilai (Opsional)</h6>
-          <div class="row">
-            <div class="col-md-4 mb-2"><label>Kehadiran</label><input type="number" name="nilaiKehadiran" class="form-control" min="0" max="100" step="0.01"></div>
-            <div class="col-md-4 mb-2"><label>Logbook</label><input type="number" name="nilaiLogbook" class="form-control" min="0" max="100" step="0.01"></div>
-            <div class="col-md-4 mb-2"><label>Laporan</label><input type="number" name="nilaiLaporan" class="form-control" min="0" max="100" step="0.01"></div>
-            <div class="col-md-4 mb-2"><label>Sikap</label><input type="number" name="nilaiSikap" class="form-control" min="0" max="100" step="0.01"></div>
-            <div class="col-md-4 mb-2"><label>Presentasi</label><input type="number" name="nilaiPresentasi" class="form-control" min="0" max="100" step="0.01"></div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-success">Selesaikan</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
+<!-- Modal Complete (jalur lama) SUDAH DIHAPUS - lihat Nilai Magang
+     3-pihak (Laporan/Logbook/Lapangan) di halaman ini sebagai gantinya. -->
 
 <!-- Modal Reject -->
 <div class="modal fade" id="rejectModal" tabindex="-1">
@@ -851,37 +817,6 @@
       document.getElementById('extendPeriodName').textContent = periodName;
       document.getElementById('extendDate').value = currentEnd || '';
     });
-  }
-  
-  // Complete Modal
-  const completeModal = document.getElementById('completeModal');
-  if (completeModal) {
-    completeModal.addEventListener('show.bs.modal', function(event) {
-      const button = event.relatedTarget;
-      const periodId = button.getAttribute('data-period-id');
-      const periodName = button.getAttribute('data-period-name');
-      
-      const form = document.getElementById('completeForm');
-      form.action = '/admin/emagang/period/' + periodId + '/complete';
-      document.getElementById('completePeriodName').textContent = periodName;
-    });
-    
-    const nilaiInput = document.querySelector('#completeModal input[name="nilaiAngka"]');
-    const nilaiHurufDisplay = document.getElementById('nilaiHurufDisplay');
-    if (nilaiInput) {
-      nilaiInput.addEventListener('input', function() {
-        const nilai = parseFloat(this.value);
-        // Skala sama dengan KHS/Transkrip/Rubrik (helpers/nilaiHelper.js -> nilaiKeHuruf)
-        let huruf = 'E';
-        if (nilai >= 86) huruf = 'A';
-        else if (nilai >= 76) huruf = 'B+';
-        else if (nilai >= 60) huruf = 'B';
-        else if (nilai >= 50) huruf = 'C+';
-        else if (nilai >= 25) huruf = 'C';
-        else if (nilai >= 10) huruf = 'D';
-        nilaiHurufDisplay.value = huruf;
-      });
-    }
   }
   
   // Reject Modal

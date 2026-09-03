@@ -31,6 +31,11 @@ const multer = require('multer');
 const sharp = require('sharp');
 const crypto = require('crypto'); // <-- Tambahkan ini
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
+const {
+  getMagangPeriodsByMahasiswa: getMagangPeriodsByMahasiswaModel,
+  getCompletedMagangPeriods: getCompletedMagangPeriodsModel,
+  getMagangPeriodById: getMagangPeriodByIdModel
+} = require('../../models/magangPeriodModel');
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -477,13 +482,12 @@ async function getMagangProgress(userId, pdkId) {
   }
 }
 
+// Wrapper tipis di atas models/magangPeriodModel.js - dipertahankan di sini
+// (bukan panggil model langsung di tiap pemanggil) supaya perilaku lama
+// "kembalikan [] / null saat error" tetap sama, tanpa duplikasi query.
 async function getMagangPeriodsByMahasiswa(mahasiswaId) {
   try {
-    const snapshot = await db.collection('magangPeriod')
-      .where('mahasiswaId', '==', mahasiswaId)
-      .orderBy('pdkKode', 'asc')
-      .get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return await getMagangPeriodsByMahasiswaModel(mahasiswaId);
   } catch (error) {
     return [];
   }
@@ -491,12 +495,7 @@ async function getMagangPeriodsByMahasiswa(mahasiswaId) {
 
 async function getCompletedMagangPeriods(mahasiswaId) {
   try {
-    const snapshot = await db.collection('magangPeriod')
-      .where('mahasiswaId', '==', mahasiswaId)
-      .where('status', '==', 'completed')
-      .orderBy('completedAt', 'desc')
-      .get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return await getCompletedMagangPeriodsModel(mahasiswaId);
   } catch (error) {
     return [];
   }
@@ -504,9 +503,7 @@ async function getCompletedMagangPeriods(mahasiswaId) {
 
 async function getMagangPeriodById(periodId) {
   try {
-    const doc = await db.collection('magangPeriod').doc(periodId).get();
-    if (!doc.exists) return null;
-    return { id: doc.id, ...doc.data() };
+    return await getMagangPeriodByIdModel(periodId);
   } catch (error) {
     return null;
   }

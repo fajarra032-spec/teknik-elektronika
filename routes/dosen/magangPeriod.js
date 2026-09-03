@@ -3,8 +3,12 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const { nilaiKeHuruf } = require('../../helpers/nilaiHelper');
-const { salinNilaiMagangKeGrades } = require('../../helpers/magangHelper');
+const {
+  lockMagangPeriod,
+  unlockMagangPeriod,
+  extendMagangPeriod,
+  updatePerusahaanMagangPeriod
+} = require('../../models/magangPeriodModel');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -295,19 +299,16 @@ router.post('/:periodId/update-perusahaan', async (req, res) => {
       return res.status(403).send('Anda tidak memiliki akses');
     }
     
-    await periodRef.update({
-      'perusahaan.nama': namaPerusahaan,
-      'perusahaan.alamat': alamatPerusahaan || '',
-      'perusahaan.kontak': kontakPerusahaan || '',
-      'perusahaan.kontakHp': kontakHpPerusahaan || '',
-      'perusahaan.email': emailPerusahaan || '',
-      'perusahaan.website': websitePerusahaan || '',
-      'perusahaan.pembimbingLapangan': pembimbingLapangan || '',
-      'perusahaan.jabatanPembimbingLapangan': jabatanPembimbingLapangan || '',
-      'perusahaan.diisiOleh': req.dosen.id,
-      'perusahaan.diisiPada': new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    });
+    await updatePerusahaanMagangPeriod(periodId, {
+      nama: namaPerusahaan,
+      alamat: alamatPerusahaan,
+      kontak: kontakPerusahaan,
+      kontakHp: kontakHpPerusahaan,
+      email: emailPerusahaan,
+      website: websitePerusahaan,
+      pembimbingLapangan,
+      jabatanPembimbingLapangan
+    }, { id: req.dosen.id, nama: req.dosen.nama });
     
     res.redirect(`/dosen/magang-period/${mahasiswaId}`);
   } catch (error) {
@@ -340,38 +341,12 @@ router.post('/:periodId/lock', async (req, res) => {
       return res.status(403).send('Anda tidak memiliki akses');
     }
     
-    if (period.status === 'completed') {
-      return res.status(400).send('Magang sudah selesai, tidak bisa dikunci');
-    }
-    
-    const lockHistory = period.lockHistory || [];
-    lockHistory.push({
-      action: 'locked',
-      reason: reason || 'Tidak ada alasan',
-      lockedBy: req.dosen.id,
-      lockedByNama: req.dosen.nama,
-      lockedAt: new Date().toISOString()
-    });
-    
-    await periodRef.update({
-      status: 'locked',
-      lockHistory,
-      updatedAt: new Date().toISOString(),
-      history: [
-        ...(period.history || []),
-        {
-          action: 'locked',
-          catatan: `Periode magang dikunci oleh ${req.dosen.nama}`,
-          reason: reason || 'Tidak ada alasan',
-          tanggal: new Date().toISOString().split('T')[0]
-        }
-      ]
-    });
+    await lockMagangPeriod(periodId, reason, { id: req.dosen.id, nama: req.dosen.nama });
     
     res.redirect(`/dosen/magang-period/${mahasiswaId}`);
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).send('Gagal mengunci periode magang');
+    res.status(500).send('Gagal mengunci periode magang: ' + error.message);
   }
 });
 
@@ -399,34 +374,12 @@ router.post('/:periodId/unlock', async (req, res) => {
       return res.status(403).send('Anda tidak memiliki akses');
     }
     
-    const lockHistory = period.lockHistory || [];
-    lockHistory.push({
-      action: 'unlocked',
-      reason: reason || 'Tidak ada alasan',
-      unlockedBy: req.dosen.id,
-      unlockedByNama: req.dosen.nama,
-      unlockedAt: new Date().toISOString()
-    });
-    
-    await periodRef.update({
-      status: 'active',
-      lockHistory,
-      updatedAt: new Date().toISOString(),
-      history: [
-        ...(period.history || []),
-        {
-          action: 'unlocked',
-          catatan: `Periode magang dibuka kembali oleh ${req.dosen.nama}`,
-          reason: reason || 'Tidak ada alasan',
-          tanggal: new Date().toISOString().split('T')[0]
-        }
-      ]
-    });
+    await unlockMagangPeriod(periodId, reason, { id: req.dosen.id, nama: req.dosen.nama });
     
     res.redirect(`/dosen/magang-period/${mahasiswaId}`);
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).send('Gagal membuka kunci periode magang');
+    res.status(500).send('Gagal membuka kunci periode magang: ' + error.message);
   }
 });
 
@@ -454,22 +407,7 @@ router.post('/:periodId/extend', async (req, res) => {
       return res.status(403).send('Anda tidak memiliki akses');
     }
     
-    const oldSelesai = period.tanggalSelesai || '-';
-    
-    await periodRef.update({
-      tanggalSelesai: tanggalSelesaiBaru,
-      updatedAt: new Date().toISOString(),
-      history: [
-        ...(period.history || []),
-        {
-          action: 'extended',
-          tanggal: new Date().toISOString().split('T')[0],
-          oldSelesai,
-          newSelesai: tanggalSelesaiBaru,
-          catatan: catatan || `Perpanjangan periode magang oleh ${req.dosen.nama}`
-        }
-      ]
-    });
+    await extendMagangPeriod(periodId, tanggalSelesaiBaru, catatan, { id: req.dosen.id, nama: req.dosen.nama });
     
     res.redirect(`/dosen/magang-period/${mahasiswaId}`);
   } catch (error) {
@@ -479,80 +417,16 @@ router.post('/:periodId/extend', async (req, res) => {
 });
 
 // ============================================================================
-// BERI NILAI & SELESAIKAN MAGANG
+// CATATAN: Route lama "BERI NILAI & SELESAIKAN MAGANG" (POST
+// /:periodId/complete, input satu nilaiAngka manual) SUDAH DIHAPUS.
+// Sistem ini digantikan sepenuhnya oleh alur 3-pihak di
+// helpers/nilaiMagangHelper.js (Nilai Laporan oleh Pembimbing 1, Nilai
+// Logbook oleh Pembimbing 2 setelah kunci logbook, Nilai Pendamping
+// Lapangan oleh Admin), yang dikunci ke grades/KHS lewat
+// kunciNilaiMagangKeGrades() di routes/admin/emagang.js. Route lama
+// tidak mengecek ACC laporan maupun kunci logbook, dan menimpa nilai
+// akhir tanpa melalui rata-rata 3 pihak - berisiko menimpa nilai yang
+// sudah dikunci lewat alur baru. Jangan tambahkan lagi.
 // ============================================================================
-
-router.post('/:periodId/complete', async (req, res) => {
-  try {
-    const { periodId } = req.params;
-    const { 
-      nilaiAngka, 
-      komentarNilai,
-      nilaiKehadiran,
-      nilaiLogbook,
-      nilaiLaporan,
-      nilaiSikap,
-      nilaiPresentasi
-    } = req.body;
-    
-    const periodRef = db.collection('magangPeriod').doc(periodId);
-    const periodDoc = await periodRef.get();
-    
-    if (!periodDoc.exists) {
-      return res.status(404).send('Periode magang tidak ditemukan');
-    }
-    
-    const period = periodDoc.data();
-    const mahasiswaId = period.mahasiswaId;
-    
-    const isPembimbingDosen = await isPembimbing(req.dosen.id, mahasiswaId);
-    if (!isPembimbingDosen) {
-      return res.status(403).send('Anda tidak memiliki akses');
-    }
-    
-    // Hitung nilai huruf - pakai skala resmi yang sama dengan KHS/Transkrip/Rubrik
-    // (lihat helpers/nilaiHelper.js -> nilaiKeHuruf), supaya huruf mutu magang
-    // konsisten dengan huruf mutu akademik lain di seluruh aplikasi.
-    const nilaiHuruf = nilaiKeHuruf(nilaiAngka).huruf;
-    
-    await periodRef.update({
-      status: 'completed',
-      tanggalSelesai: new Date().toISOString().split('T')[0],
-      'nilai.angka': parseFloat(nilaiAngka),
-      'nilai.huruf': nilaiHuruf,
-      'nilai.komentar': komentarNilai || '',
-      'nilai.dinilaiOleh': req.dosen.id,
-      'nilai.dinilaiPada': new Date().toISOString(),
-      'nilai.komponenNilai': {
-        kehadiran: nilaiKehadiran ? parseFloat(nilaiKehadiran) : null,
-        logbook: nilaiLogbook ? parseFloat(nilaiLogbook) : null,
-        laporan: nilaiLaporan ? parseFloat(nilaiLaporan) : null,
-        sikap: nilaiSikap ? parseFloat(nilaiSikap) : null,
-        presentasi: nilaiPresentasi ? parseFloat(nilaiPresentasi) : null
-      },
-      completedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      history: [
-        ...(period.history || []),
-        {
-          action: 'completed',
-          tanggal: new Date().toISOString().split('T')[0],
-          nilai: nilaiAngka,
-          nilaiHuruf,
-          catatan: `Magang selesai dan dinilai oleh ${req.dosen.nama}`
-        }
-      ]
-    });
-
-    // Jembatan ke KHS/Transkrip - lihat helpers/magangHelper.js -> salinNilaiMagangKeGrades
-    // untuk penjelasan lengkap kenapa ini perlu.
-    await salinNilaiMagangKeGrades(period, nilaiAngka);
-
-    res.redirect(`/dosen/magang-period/${mahasiswaId}`);
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).send('Gagal menyelesaikan magang: ' + error.message);
-  }
-});
 
 module.exports = router;

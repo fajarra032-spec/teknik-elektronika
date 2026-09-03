@@ -234,12 +234,18 @@ async function setNilaiMagang(periodId, nilaiAngka, komentar, dinilaiOleh, kompo
 }
 
 /**
- * Lock periode magang (hentikan sementara)
+ * Lock periode magang (hentikan sementara - mahasiswa tidak bisa isi
+ * logbook harian baru selama status ini, lihat helpers/magangHelper.js
+ * -> canSubmitLogbook). CATATAN: ini BEDA dari "kunci logbook untuk
+ * penilaian" (nilaiMagang.logbookDikunci di helpers/nilaiMagangHelper.js)
+ * - itu flag terpisah, di collection lain, khusus Pembimbing 2, dan
+ * gunanya membuka form Nilai Logbook. Keduanya sama-sama disebut "kunci"
+ * tapi tidak saling mempengaruhi.
  * @param {string} periodId - ID periode
  * @param {string} reason - Alasan lock
- * @param {string} lockedBy - UID dosen
+ * @param {{id: string, nama: string}} actor - Pengguna yang mengunci (dosen atau admin)
  */
-async function lockMagangPeriod(periodId, reason, lockedBy) {
+async function lockMagangPeriod(periodId, reason, actor) {
   const periodRef = db.collection('magangPeriod').doc(periodId);
   const periodDoc = await periodRef.get();
   
@@ -248,13 +254,17 @@ async function lockMagangPeriod(periodId, reason, lockedBy) {
   }
   
   const period = periodDoc.data();
+  if (period.status === MAGANG_STATUS.COMPLETED) {
+    throw new Error('Magang sudah selesai, tidak bisa dikunci');
+  }
   const now = new Date().toISOString();
   
   const lockHistory = period.lockHistory || [];
   lockHistory.push({
     action: 'locked',
     reason: reason || 'Tidak ada alasan',
-    lockedBy,
+    lockedBy: actor.id,
+    lockedByNama: actor.nama,
     lockedAt: now
   });
   
@@ -267,20 +277,22 @@ async function lockMagangPeriod(periodId, reason, lockedBy) {
       {
         action: 'locked',
         tanggal: now.split('T')[0],
-        catatan: reason,
-        oleh: lockedBy
+        catatan: `Periode magang dikunci oleh ${actor.nama}`,
+        reason: reason || 'Tidak ada alasan',
+        oleh: actor.id
       }
     ]
   });
+  return { mahasiswaId: period.mahasiswaId };
 }
 
 /**
- * Unlock periode magang
+ * Unlock periode magang (buka kembali dari status locked ke active).
  * @param {string} periodId - ID periode
  * @param {string} reason - Alasan unlock
- * @param {string} unlockedBy - UID dosen
+ * @param {{id: string, nama: string}} actor - Pengguna yang membuka kunci (dosen atau admin)
  */
-async function unlockMagangPeriod(periodId, reason, unlockedBy) {
+async function unlockMagangPeriod(periodId, reason, actor) {
   const periodRef = db.collection('magangPeriod').doc(periodId);
   const periodDoc = await periodRef.get();
   
@@ -295,7 +307,8 @@ async function unlockMagangPeriod(periodId, reason, unlockedBy) {
   lockHistory.push({
     action: 'unlocked',
     reason: reason || 'Tidak ada alasan',
-    unlockedBy,
+    unlockedBy: actor.id,
+    unlockedByNama: actor.nama,
     unlockedAt: now
   });
   
@@ -308,21 +321,23 @@ async function unlockMagangPeriod(periodId, reason, unlockedBy) {
       {
         action: 'unlocked',
         tanggal: now.split('T')[0],
-        catatan: reason,
-        oleh: unlockedBy
+        catatan: `Periode magang dibuka kembali oleh ${actor.nama}`,
+        reason: reason || 'Tidak ada alasan',
+        oleh: actor.id
       }
     ]
   });
+  return { mahasiswaId: period.mahasiswaId };
 }
 
 /**
- * Perpanjang periode magang
+ * Perpanjang periode magang (ubah tanggal selesai).
  * @param {string} periodId - ID periode
  * @param {string} tanggalSelesaiBaru - Tanggal selesai baru
  * @param {string} catatan - Catatan perpanjangan
- * @param {string} extendedBy - UID dosen
+ * @param {{id: string, nama: string}} actor - Pengguna yang memperpanjang (dosen atau admin)
  */
-async function extendMagangPeriod(periodId, tanggalSelesaiBaru, catatan, extendedBy) {
+async function extendMagangPeriod(periodId, tanggalSelesaiBaru, catatan, actor) {
   const periodRef = db.collection('magangPeriod').doc(periodId);
   const periodDoc = await periodRef.get();
   
@@ -343,11 +358,82 @@ async function extendMagangPeriod(periodId, tanggalSelesaiBaru, catatan, extende
         tanggal: now.split('T')[0],
         oldSelesai: period.tanggalSelesai || '-',
         newSelesai: tanggalSelesaiBaru,
-        catatan: catatan || `Perpanjangan oleh ${extendedBy}`,
-        oleh: extendedBy
+        catatan: catatan || `Perpanjangan periode magang oleh ${actor.nama}`,
+        oleh: actor.id
       }
     ]
   });
+  return { mahasiswaId: period.mahasiswaId };
+}
+
+/**
+ * Koreksi tanggal mulai periode magang - BEDA dari extendMagangPeriod
+ * yang mengubah tanggal SELESAI. Dipakai kalau tanggal mulai yang
+ * diinput waktu "Mulai Periode Baru" ternyata salah/perlu dikoreksi.
+ * @param {string} periodId - ID periode
+ * @param {string} tanggalMulaiBaru - Tanggal mulai baru
+ * @param {string} catatan - Catatan koreksi
+ * @param {{id: string, nama: string}} actor - Pengguna yang mengoreksi (dosen atau admin)
+ */
+async function editTanggalMulaiMagangPeriod(periodId, tanggalMulaiBaru, catatan, actor) {
+  const periodRef = db.collection('magangPeriod').doc(periodId);
+  const periodDoc = await periodRef.get();
+
+  if (!periodDoc.exists) {
+    throw new Error('Periode magang tidak ditemukan');
+  }
+
+  const period = periodDoc.data();
+  const now = new Date().toISOString();
+  const oldMulai = period.tanggalMulai || '-';
+
+  await periodRef.update({
+    tanggalMulai: tanggalMulaiBaru,
+    updatedAt: now,
+    history: [
+      ...(period.history || []),
+      {
+        action: 'edit_tanggal_mulai',
+        tanggal: now.split('T')[0],
+        oldMulai,
+        newMulai: tanggalMulaiBaru,
+        catatan: catatan || `Koreksi tanggal mulai oleh ${actor.nama}`,
+        oleh: actor.id
+      }
+    ]
+  });
+  return { mahasiswaId: period.mahasiswaId };
+}
+
+/**
+ * Update data perusahaan tempat magang pada satu periode.
+ * @param {string} periodId - ID periode
+ * @param {Object} perusahaan - { nama, alamat, kontak, kontakHp, email, website, pembimbingLapangan, jabatanPembimbingLapangan }
+ * @param {{id: string, nama: string}} actor - Pengguna yang mengubah (dosen atau admin)
+ */
+async function updatePerusahaanMagangPeriod(periodId, perusahaan, actor) {
+  const periodRef = db.collection('magangPeriod').doc(periodId);
+  const periodDoc = await periodRef.get();
+
+  if (!periodDoc.exists) {
+    throw new Error('Periode magang tidak ditemukan');
+  }
+  const period = periodDoc.data();
+
+  await periodRef.update({
+    'perusahaan.nama': perusahaan.nama,
+    'perusahaan.alamat': perusahaan.alamat || '',
+    'perusahaan.kontak': perusahaan.kontak || '',
+    'perusahaan.kontakHp': perusahaan.kontakHp || '',
+    'perusahaan.email': perusahaan.email || '',
+    'perusahaan.website': perusahaan.website || '',
+    'perusahaan.pembimbingLapangan': perusahaan.pembimbingLapangan || '',
+    'perusahaan.jabatanPembimbingLapangan': perusahaan.jabatanPembimbingLapangan || '',
+    'perusahaan.diisiOleh': actor.id,
+    'perusahaan.diisiPada': new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
+  return { mahasiswaId: period.mahasiswaId };
 }
 
 module.exports = {
@@ -361,5 +447,7 @@ module.exports = {
   setNilaiMagang,
   lockMagangPeriod,
   unlockMagangPeriod,
-  extendMagangPeriod
+  extendMagangPeriod,
+  editTanggalMulaiMagangPeriod,
+  updatePerusahaanMagangPeriod
 };

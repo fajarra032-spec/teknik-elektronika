@@ -9,9 +9,15 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const { nilaiKeHuruf } = require('../../helpers/nilaiHelper');
-const { invalidateProgressMagangHarian, salinNilaiMagangKeGrades } = require('../../helpers/magangHelper');
+const { invalidateProgressMagangHarian } = require('../../helpers/magangHelper');
 const { ITEM_PENDAMPING_LAPANGAN, getNilaiMagang, savePenilaianPendampingLapangan, hitungNilaiAkhirMagang, kunciNilaiMagangKeGrades } = require('../../helpers/nilaiMagangHelper');
+const {
+  lockMagangPeriod,
+  unlockMagangPeriod,
+  extendMagangPeriod,
+  editTanggalMulaiMagangPeriod,
+  updatePerusahaanMagangPeriod
+} = require('../../models/magangPeriodModel');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -474,22 +480,18 @@ router.post('/period/:periodId/update-perusahaan', async (req, res) => {
       req.session.error = 'Periode magang tidak ditemukan';
       return res.redirect('back');
     }
-    const period = periodDoc.data();
-    const mahasiswaId = period.mahasiswaId;
+    const mahasiswaId = periodDoc.data().mahasiswaId;
     
-    await periodRef.update({
-      'perusahaan.nama': namaPerusahaan,
-      'perusahaan.alamat': alamatPerusahaan || '',
-      'perusahaan.kontak': kontakPerusahaan || '',
-      'perusahaan.kontakHp': kontakHpPerusahaan || '',
-      'perusahaan.email': emailPerusahaan || '',
-      'perusahaan.website': websitePerusahaan || '',
-      'perusahaan.pembimbingLapangan': pembimbingLapangan || '',
-      'perusahaan.jabatanPembimbingLapangan': jabatanPembimbingLapangan || '',
-      'perusahaan.diisiOleh': req.user.id,
-      'perusahaan.diisiPada': new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    });
+    await updatePerusahaanMagangPeriod(periodId, {
+      nama: namaPerusahaan,
+      alamat: alamatPerusahaan,
+      kontak: kontakPerusahaan,
+      kontakHp: kontakHpPerusahaan,
+      email: emailPerusahaan,
+      website: websitePerusahaan,
+      pembimbingLapangan,
+      jabatanPembimbingLapangan
+    }, { id: req.user.id, nama: req.user.nama || 'Admin' });
     
     req.session.success = 'Informasi perusahaan berhasil diupdate';
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
@@ -504,40 +506,20 @@ router.post('/period/:periodId/lock', async (req, res) => {
   try {
     const { periodId } = req.params;
     const { reason } = req.body;
-    const periodRef = db.collection('magangPeriod').doc(periodId);
-    const periodDoc = await periodRef.get();
+    const periodDoc = await db.collection('magangPeriod').doc(periodId).get();
     if (!periodDoc.exists) {
       req.session.error = 'Periode magang tidak ditemukan';
       return res.redirect('back');
     }
-    const period = periodDoc.data();
-    const mahasiswaId = period.mahasiswaId;
-    if (period.status === 'completed') {
-      req.session.error = 'Magang sudah selesai, tidak bisa dikunci';
-      return res.redirect('back');
-    }
-    const lockHistory = period.lockHistory || [];
-    lockHistory.push({
-      action: 'locked',
-      reason: reason || 'Tidak ada alasan',
-      lockedBy: req.user.id,
-      lockedByNama: req.user.nama || 'Admin',
-      lockedAt: new Date().toISOString()
-    });
-    await periodRef.update({
-      status: 'locked',
-      lockHistory,
-      updatedAt: new Date().toISOString(),
-      history: [
-        ...(period.history || []),
-        { action: 'locked', catatan: `Periode magang dikunci oleh ${req.user.nama || 'Admin'}`, reason: reason || 'Tidak ada alasan', tanggal: new Date().toISOString().split('T')[0] }
-      ]
-    });
+    const mahasiswaId = periodDoc.data().mahasiswaId;
+    
+    await lockMagangPeriod(periodId, reason, { id: req.user.id, nama: req.user.nama || 'Admin' });
+    
     req.session.success = 'Periode magang berhasil dikunci';
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
   } catch (error) {
     console.error('Error:', error);
-    req.session.error = 'Gagal mengunci periode magang';
+    req.session.error = 'Gagal mengunci periode magang: ' + error.message;
     res.redirect('back');
   }
 });
@@ -546,36 +528,20 @@ router.post('/period/:periodId/unlock', async (req, res) => {
   try {
     const { periodId } = req.params;
     const { reason } = req.body;
-    const periodRef = db.collection('magangPeriod').doc(periodId);
-    const periodDoc = await periodRef.get();
+    const periodDoc = await db.collection('magangPeriod').doc(periodId).get();
     if (!periodDoc.exists) {
       req.session.error = 'Periode magang tidak ditemukan';
       return res.redirect('back');
     }
-    const period = periodDoc.data();
-    const mahasiswaId = period.mahasiswaId;
-    const lockHistory = period.lockHistory || [];
-    lockHistory.push({
-      action: 'unlocked',
-      reason: reason || 'Tidak ada alasan',
-      unlockedBy: req.user.id,
-      unlockedByNama: req.user.nama || 'Admin',
-      unlockedAt: new Date().toISOString()
-    });
-    await periodRef.update({
-      status: 'active',
-      lockHistory,
-      updatedAt: new Date().toISOString(),
-      history: [
-        ...(period.history || []),
-        { action: 'unlocked', catatan: `Periode magang dibuka kembali oleh ${req.user.nama || 'Admin'}`, reason: reason || 'Tidak ada alasan', tanggal: new Date().toISOString().split('T')[0] }
-      ]
-    });
+    const mahasiswaId = periodDoc.data().mahasiswaId;
+    
+    await unlockMagangPeriod(periodId, reason, { id: req.user.id, nama: req.user.nama || 'Admin' });
+    
     req.session.success = 'Periode magang berhasil dibuka';
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
   } catch (error) {
     console.error('Error:', error);
-    req.session.error = 'Gagal membuka kunci periode magang';
+    req.session.error = 'Gagal membuka kunci periode magang: ' + error.message;
     res.redirect('back');
   }
 });
@@ -584,28 +550,20 @@ router.post('/period/:periodId/extend', async (req, res) => {
   try {
     const { periodId } = req.params;
     const { tanggalSelesaiBaru, catatan } = req.body;
-    const periodRef = db.collection('magangPeriod').doc(periodId);
-    const periodDoc = await periodRef.get();
+    const periodDoc = await db.collection('magangPeriod').doc(periodId).get();
     if (!periodDoc.exists) {
       req.session.error = 'Periode magang tidak ditemukan';
       return res.redirect('back');
     }
-    const period = periodDoc.data();
-    const mahasiswaId = period.mahasiswaId;
-    const oldSelesai = period.tanggalSelesai || '-';
-    await periodRef.update({
-      tanggalSelesai: tanggalSelesaiBaru,
-      updatedAt: new Date().toISOString(),
-      history: [
-        ...(period.history || []),
-        { action: 'extended', tanggal: new Date().toISOString().split('T')[0], oldSelesai, newSelesai: tanggalSelesaiBaru, catatan: catatan || `Perpanjangan periode magang oleh ${req.user.nama || 'Admin'}` }
-      ]
-    });
+    const mahasiswaId = periodDoc.data().mahasiswaId;
+    
+    await extendMagangPeriod(periodId, tanggalSelesaiBaru, catatan, { id: req.user.id, nama: req.user.nama || 'Admin' });
+    
     req.session.success = 'Periode magang berhasil diperpanjang';
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
   } catch (error) {
     console.error('Error:', error);
-    req.session.error = 'Gagal memperpanjang periode magang';
+    req.session.error = 'Gagal memperpanjang periode magang: ' + error.message;
     res.redirect('back');
   }
 });
@@ -637,15 +595,7 @@ router.post('/period/:periodId/edit-tanggal-mulai', async (req, res) => {
       return res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
     }
 
-    const oldMulai = period.tanggalMulai || '-';
-    await periodRef.update({
-      tanggalMulai: tanggalMulaiBaru,
-      updatedAt: new Date().toISOString(),
-      history: [
-        ...(period.history || []),
-        { action: 'edit_tanggal_mulai', tanggal: new Date().toISOString().split('T')[0], oldMulai, newMulai: tanggalMulaiBaru, catatan: catatan || `Koreksi tanggal mulai oleh ${req.user.nama || 'Admin'}` }
-      ]
-    });
+    await editTanggalMulaiMagangPeriod(periodId, tanggalMulaiBaru, catatan, { id: req.user.id, nama: req.user.nama || 'Admin' });
     req.session.success = 'Tanggal mulai periode magang berhasil diubah';
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
   } catch (error) {
@@ -655,56 +605,14 @@ router.post('/period/:periodId/edit-tanggal-mulai', async (req, res) => {
   }
 });
 
-router.post('/period/:periodId/complete', async (req, res) => {
-  try {
-    const { periodId } = req.params;
-    const { nilaiAngka, komentarNilai, nilaiKehadiran, nilaiLogbook, nilaiLaporan, nilaiSikap, nilaiPresentasi } = req.body;
-    const periodRef = db.collection('magangPeriod').doc(periodId);
-    const periodDoc = await periodRef.get();
-    if (!periodDoc.exists) {
-      req.session.error = 'Periode magang tidak ditemukan';
-      return res.redirect('back');
-    }
-    const period = periodDoc.data();
-    const mahasiswaId = period.mahasiswaId;
-    // Hitung nilai huruf - skala resmi yang sama dengan KHS/Transkrip/Rubrik
-    // (helpers/nilaiHelper.js -> nilaiKeHuruf), supaya konsisten di seluruh app.
-    const nilaiHuruf = nilaiKeHuruf(nilaiAngka).huruf;
-    await periodRef.update({
-      status: 'completed',
-      tanggalSelesai: new Date().toISOString().split('T')[0],
-      'nilai.angka': parseFloat(nilaiAngka),
-      'nilai.huruf': nilaiHuruf,
-      'nilai.komentar': komentarNilai || '',
-      'nilai.dinilaiOleh': req.user.id,
-      'nilai.dinilaiPada': new Date().toISOString(),
-      'nilai.komponenNilai': {
-        kehadiran: nilaiKehadiran ? parseFloat(nilaiKehadiran) : null,
-        logbook: nilaiLogbook ? parseFloat(nilaiLogbook) : null,
-        laporan: nilaiLaporan ? parseFloat(nilaiLaporan) : null,
-        sikap: nilaiSikap ? parseFloat(nilaiSikap) : null,
-        presentasi: nilaiPresentasi ? parseFloat(nilaiPresentasi) : null
-      },
-      completedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      history: [
-        ...(period.history || []),
-        { action: 'completed', tanggal: new Date().toISOString().split('T')[0], nilai: nilaiAngka, nilaiHuruf, catatan: `Magang selesai dan dinilai oleh ${req.user.nama || 'Admin'}` }
-      ]
-    });
-
-    // Jembatan ke KHS/Transkrip - lihat helpers/magangHelper.js -> salinNilaiMagangKeGrades
-    await salinNilaiMagangKeGrades(period, nilaiAngka);
-
-    req.session.success = `Magang ${period.pdkKode} berhasil diselesaikan dengan nilai ${nilaiHuruf} (${nilaiAngka})`;
-    res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
-  } catch (error) {
-    console.error('Error:', error);
-    req.session.error = 'Gagal menyelesaikan magang';
-    res.redirect('back');
-  }
-});
-
+// ============================================================================
+// CATATAN: Route lama POST /period/:periodId/complete ("Selesaikan &
+// Beri Nilai" - input satu nilaiAngka manual) SUDAH DIHAPUS. Digantikan
+// sepenuhnya oleh alur 3-pihak di bawah (Nilai Laporan Pembimbing 1,
+// Nilai Logbook Pembimbing 2, Nilai Pendamping Lapangan Admin) yang
+// dikunci lewat kunciNilaiMagangKeGrades(). Route lama tidak mengecek
+// ACC laporan/kunci logbook dan bisa menimpa nilai yang sudah dikunci
+// lewat alur baru. Jangan tambahkan lagi.
 // ============================================================================
 // NILAI MAGANG 3-KOMPONEN (Laporan/Logbook/Lapangan) - lihat
 // helpers/nilaiMagangHelper.js untuk penjelasan lengkap sistemnya. Ini
