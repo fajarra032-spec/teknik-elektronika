@@ -11,6 +11,7 @@ const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { invalidateProgressMagangHarian } = require('../../helpers/magangHelper');
 const {
+  ITEM_PEMBIMBING1,
   ITEM_PEMBIMBING2,
   getNilaiMagang,
   kunciLogbookMagang,
@@ -169,8 +170,11 @@ async function isMahasiswaBimbingan(dosenId, mahasiswaId) {
       .get();
     if (snapshot.empty) return { isBimbingan: false, role: null };
     const bimbingan = snapshot.docs[0].data();
-    if (bimbingan.pembimbing1Id === dosenId) return { isBimbingan: true, role: 'pembimbing1' };
-    if (bimbingan.pembimbing2Id === dosenId) return { isBimbingan: true, role: 'pembimbing2' };
+    const isP1 = bimbingan.pembimbing1Id === dosenId;
+    const isP2 = bimbingan.pembimbing2Id === dosenId;
+    if (isP1 && isP2) return { isBimbingan: true, role: 'pembimbing1_dan_2' };
+    if (isP1) return { isBimbingan: true, role: 'pembimbing1' };
+    if (isP2) return { isBimbingan: true, role: 'pembimbing2' };
     return { isBimbingan: false, role: null };
   } catch (error) {
     console.error('Error isMahasiswaBimbingan:', error);
@@ -180,7 +184,7 @@ async function isMahasiswaBimbingan(dosenId, mahasiswaId) {
 
 async function canApprove(dosenId, mahasiswaId) {
   const { role } = await isMahasiswaBimbingan(dosenId, mahasiswaId);
-  return role === 'pembimbing2';
+  return role === 'pembimbing2' || role === 'pembimbing1_dan_2';
 }
 
 async function isMagangPeriodActive(mahasiswaId, pdkId) {
@@ -324,6 +328,8 @@ router.get('/:userId', async (req, res) => {
         message: 'Anda tidak memiliki akses ke logbook mahasiswa ini.'
       });
     }
+    const isPembimbing1 = role === 'pembimbing1' || role === 'pembimbing1_dan_2';
+    const isPembimbing2 = role === 'pembimbing2' || role === 'pembimbing1_dan_2';
     
     const mahasiswa = await getMahasiswa(userId);
     if (mahasiswa.nama === 'Unknown') {
@@ -345,9 +351,16 @@ router.get('/:userId', async (req, res) => {
     // Ambil juga semua logbook untuk semester list
     const allLogbookQuery = db.collection('logbookMagang').where('userId', '==', userId);
     
-    const [logbookSnapshot, allLogbookSnapshot] = await Promise.all([
+    // Laporan magang (Pembimbing 1) - hanya perlu di-query kalau dosen ini
+    // berperan sebagai Pembimbing 1 untuk mahasiswa ini.
+    const laporanQuery = isPembimbing1
+      ? db.collection('laporanMagang').where('userId', '==', userId).orderBy('laporanKe', 'asc').get()
+      : Promise.resolve(null);
+    
+    const [logbookSnapshot, allLogbookSnapshot, laporanSnapshot] = await Promise.all([
       logbookQuery.get(),
-      allLogbookQuery.get()
+      allLogbookQuery.get(),
+      laporanQuery
     ]);
     
     const logbookList = logbookSnapshot.docs.map(doc => {
@@ -357,9 +370,12 @@ router.get('/:userId', async (req, res) => {
         ...data,
         tanggalFormatted: formatDate(data.tanggal),
         tanggalWaktuFormatted: formatDateTime(data.tanggal),
-        canApprove: role === 'pembimbing2' && data.status === 'pending'
+        canApprove: isPembimbing2 && data.status === 'pending'
       };
     });
+    
+    const laporanList = laporanSnapshot ? laporanSnapshot.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+    const adaLaporanYangAcc = laporanList.some(l => l.status === 'approved');
     
     // Semester list
     const semesterSet = new Set();
@@ -381,7 +397,7 @@ router.get('/:userId', async (req, res) => {
     const nilaiMagang = selectedPeriod ? await getNilaiMagang(userId, selectedPeriod.pdkId) : null;
 
     res.render('dosen/magang_detail', {
-      title: `Logbook - ${mahasiswa.nama}`,
+      title: `ELK Magang - ${mahasiswa.nama}`,
       mahasiswa,
       logbookList,
       semesterList,
@@ -390,13 +406,16 @@ router.get('/:userId', async (req, res) => {
       selectedPeriod,
       pdkStats,
       role,
-      canApprove: role === 'pembimbing2',
-      isPembimbing1: role === 'pembimbing1',
-      isPembimbing2: role === 'pembimbing2',
+      canApprove: isPembimbing2,
+      isPembimbing1,
+      isPembimbing2,
       pembimbing1Nama: mahasiswa.pembimbing1Nama,
       pembimbing2Nama: mahasiswa.pembimbing2Nama,
       nilaiMagang,
       ITEM_PEMBIMBING2,
+      ITEM_PEMBIMBING1,
+      laporanList,
+      adaLaporanYangAcc,
       user: req.user
     });
   } catch (error) {
@@ -418,7 +437,7 @@ router.post('/:userId/kunci-logbook', async (req, res) => {
     if (!pdkId) return res.status(400).send('Periode magang (PDK) tidak diketahui');
 
     const { role } = await isMahasiswaBimbingan(req.dosen.id, userId);
-    if (role !== 'pembimbing2') {
+    if (role !== 'pembimbing2' && role !== 'pembimbing1_dan_2') {
       return res.status(403).send('Hanya Pembimbing 2 yang dapat mengunci logbook');
     }
 
@@ -440,7 +459,7 @@ router.post('/:userId/buka-kunci-logbook', async (req, res) => {
     if (!pdkId) return res.status(400).send('Periode magang (PDK) tidak diketahui');
 
     const { role } = await isMahasiswaBimbingan(req.dosen.id, userId);
-    if (role !== 'pembimbing2') {
+    if (role !== 'pembimbing2' && role !== 'pembimbing1_dan_2') {
       return res.status(403).send('Hanya Pembimbing 2 yang dapat membuka kunci logbook');
     }
 
@@ -464,7 +483,7 @@ router.post('/:userId/nilai-logbook', async (req, res) => {
     if (!pdkId) return res.status(400).send('Periode magang (PDK) tidak diketahui');
 
     const { role } = await isMahasiswaBimbingan(req.dosen.id, userId);
-    if (role !== 'pembimbing2') {
+    if (role !== 'pembimbing2' && role !== 'pembimbing1_dan_2') {
       return res.status(403).send('Hanya Pembimbing 2 yang dapat mengisi Nilai Logbook');
     }
 
@@ -517,7 +536,7 @@ router.get('/logbook/:id', async (req, res) => {
       tanggalFormatted: formatDate(logbook.tanggal),
       tanggalWaktuFormatted: formatDateTime(logbook.tanggal),
       role,
-      canApprove: role === 'pembimbing2' && logbook.status === 'pending',
+      canApprove: (role === 'pembimbing2' || role === 'pembimbing1_dan_2') && logbook.status === 'pending',
       user: req.user
     });
   } catch (error) {

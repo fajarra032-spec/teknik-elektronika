@@ -12,6 +12,9 @@
   if (typeof role === 'undefined') role = null;
   if (typeof isPembimbing1 === 'undefined') isPembimbing1 = false;
   if (typeof isPembimbing2 === 'undefined') isPembimbing2 = false;
+  if (typeof laporanList === 'undefined') laporanList = [];
+  if (typeof adaLaporanYangAcc === 'undefined') adaLaporanYangAcc = false;
+  if (typeof ITEM_PEMBIMBING1 === 'undefined') ITEM_PEMBIMBING1 = [];
   
   // Fungsi untuk mendapatkan URL gambar dari Google Drive
   const getImageUrl = (url, size = 200) => {
@@ -581,20 +584,24 @@
   </div>
 
   <!-- Role Badge -->
-  <% if (isPembimbing2) { %>
+  <% if (role === 'pembimbing1_dan_2') { %>
     <div class="role-badge role-pembimbing2">
-      <i class="bi bi-check-circle-fill"></i> Anda sebagai Pembimbing 2 - Anda dapat menyetujui/menolak logbook
+      <i class="bi bi-star-fill"></i> Anda sebagai Pembimbing 1 & 2 - Anda dapat menyetujui/menolak logbook, mengisi Nilai Logbook, dan meninjau/menilai Laporan
+    </div>
+  <% } else if (isPembimbing2) { %>
+    <div class="role-badge role-pembimbing2">
+      <i class="bi bi-check-circle-fill"></i> Anda sebagai Pembimbing 2 - Anda dapat menyetujui/menolak logbook dan mengisi Nilai Logbook
     </div>
   <% } else if (isPembimbing1) { %>
     <div class="role-badge role-pembimbing1">
-      <i class="bi bi-eye-fill"></i> Anda sebagai Pembimbing 1 - Hanya dapat melihat logbook (Read Only)
+      <i class="bi bi-file-earmark-check-fill"></i> Anda sebagai Pembimbing 1 - Tinjau/ACC Laporan & isi Nilai Laporan di bawah. Logbook mahasiswa ditampilkan Read Only.
     </div>
   <% } %>
 
   <!-- Header dengan judul dan tombol -->
   <div class="page-header">
     <h4>
-      <i class="bi bi-journal-bookmark-fill" style="color: var(--primary-start);"></i> Logbook Magang
+      <i class="bi bi-journal-bookmark-fill" style="color: var(--primary-start);"></i> ELK Magang
     </h4>
     <div class="btn-group">
       <% if (isPembimbing2) { %>
@@ -753,6 +760,109 @@
           <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
           <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-unlock"></i> Buka Kunci Logbook</button>
         </form>
+      <% } %>
+    </div>
+  <% } %>
+
+  <!-- Panel Laporan Magang & Nilai Laporan (khusus Pembimbing 1) -->
+  <% if (isPembimbing1) { %>
+    <div class="nilai-logbook-card mb-3">
+      <h6 class="fw-bold mb-1"><i class="bi bi-file-earmark-check"></i> Laporan Magang (Pembimbing 1)</h6>
+      <p class="text-muted small mb-3">Tinjau laporan yang diunggah mahasiswa, ACC atau minta revisi. Setelah minimal satu laporan di-ACC, isi Nilai Laporan di bawah.</p>
+
+      <% if (!laporanList || laporanList.length === 0) { %>
+        <div class="text-center text-muted py-3">Mahasiswa ini belum mengunggah laporan.</div>
+      <% } else { %>
+        <% laporanList.forEach(l => { %>
+          <div class="border rounded-3 p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+              <div>
+                <strong>Laporan ke-<%= l.laporanKe %></strong><% if (l.judulPublik) { %>: <%= l.judulPublik %><% } %>
+                <% if (l.catatanPembimbing1) { %>
+                  <div class="small text-muted mt-1"><i class="bi bi-chat-left-text"></i> Catatan Anda: <%= l.catatanPembimbing1 %></div>
+                <% } %>
+              </div>
+              <span class="badge <%= l.status === 'approved' ? 'bg-success' : (l.status === 'revisi' ? 'bg-danger' : 'bg-warning text-dark') %>">
+                <%= l.status === 'approved' ? 'Di-ACC' : (l.status === 'revisi' ? 'Perlu Revisi' : 'Menunggu Tinjauan') %>
+              </span>
+            </div>
+            <% if (l.status !== 'approved') { %>
+              <form method="POST" action="/dosen/laporan-review/<%= l.id %>/status" class="mt-2 d-flex gap-2 flex-wrap align-items-end">
+                <div class="flex-grow-1" style="min-width:200px;">
+                  <input type="text" name="catatan" class="form-control form-control-sm" placeholder="Catatan untuk mahasiswa (opsional)...">
+                </div>
+                <input type="hidden" name="status" value="approved">
+                <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-circle"></i> ACC</button>
+              </form>
+              <form method="POST" action="/dosen/laporan-review/<%= l.id %>/status" class="mt-2 d-flex gap-2 flex-wrap align-items-end">
+                <div class="flex-grow-1" style="min-width:200px;">
+                  <input type="text" name="catatan" class="form-control form-control-sm" placeholder="Alasan revisi...">
+                </div>
+                <input type="hidden" name="status" value="revisi">
+                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-arrow-counterclockwise"></i> Minta Revisi</button>
+              </form>
+            <% } %>
+          </div>
+        <% }) %>
+      <% } %>
+
+      <% if (adaLaporanYangAcc) { %>
+        <hr>
+        <h6 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> Nilai Laporan (Pembimbing 1)</h6>
+        <p class="text-muted small mb-2">Sesuai Pedoman Magang - 13 indikator (Laporan, Pengetahuan, Presentasi Magang), tiap indikator diisi angka 0-100.</p>
+        <form method="POST" action="/dosen/laporan-review/mahasiswa/<%= mahasiswa.id %>/nilai">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Periode Magang (PDK)</label>
+            <select name="pdkId" class="form-select" style="max-width:420px;">
+              <% (allPeriods || []).forEach(p => { %>
+                <option value="<%= p.pdkId %>" <%= selectedPeriod && p.pdkId === selectedPeriod.pdkId ? 'selected' : '' %>><%= p.pdkKode %> - <%= p.pdkNama %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <%
+            const itemsP1 = (nilaiMagang && nilaiMagang.nilaiLaporanItems) ? nilaiMagang.nilaiLaporanItems : {};
+            let kategoriP1 = null;
+          %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr><th style="width:60%;">Indikator</th><th style="width:40%;">Nilai (0-100)</th></tr>
+              </thead>
+              <tbody>
+                <% ITEM_PEMBIMBING1.forEach(it => { %>
+                  <% if (it.kategori !== kategoriP1) { kategoriP1 = it.kategori; %>
+                    <tr class="table-light"><td colspan="2" class="fw-bold small text-uppercase text-muted"><%= it.kategori %></td></tr>
+                  <% } %>
+                  <tr>
+                    <td><%= it.label %></td>
+                    <td>
+                      <input type="number" name="item[<%= it.key %>]" min="0" max="100" step="0.01" class="form-control form-control-sm"
+                             value="<%= itemsP1[it.key] !== undefined ? itemsP1[it.key] : '' %>" required style="max-width:140px;">
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+
+          <% if (nilaiMagang && nilaiMagang.nilaiLaporan !== null && nilaiMagang.nilaiLaporan !== undefined) { %>
+            <div class="alert alert-primary d-inline-block px-3 py-2 mb-3">
+              Rata-rata saat ini: <strong><%= nilaiMagang.nilaiLaporan %></strong>
+            </div>
+          <% } %>
+
+          <div>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-save"></i> Simpan Nilai Laporan</button>
+          </div>
+        </form>
+        <p class="text-muted small mt-2 mb-0">
+          Rata-rata 13 indikator ini digabung dengan Nilai Logbook (Pembimbing 2) dan Nilai Pendamping Lapangan (Admin) menjadi Nilai Akhir Magang.
+        </p>
+      <% } else { %>
+        <div class="text-center text-muted small py-2 border-top mt-2">
+          <i class="bi bi-lock"></i> Form Nilai Laporan baru muncul setelah minimal satu laporan di-ACC.
+        </div>
       <% } %>
     </div>
   <% } %>

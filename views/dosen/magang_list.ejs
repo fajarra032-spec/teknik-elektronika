@@ -820,8 +820,9 @@
                </td>
               <td data-label="Aksi" style="text-align: center;">
                 <div class="btn-actions">
-                  <a href="/dosen/magang/<%= m.id %>" class="btn-action btn-view" title="Lihat Logbook">
-                    <i class="bi bi-eye"></i> Logbook
+                  <a href="/dosen/magang/<%= m.id %>" class="btn-action btn-view" title="Buka ELK Magang">
+                    <i class="bi bi-eye"></i>
+                    <%= m.role === 'pembimbing1' ? 'Laporan' : (m.role === 'pembimbing2' ? 'Logbook' : 'Logbook & Laporan') %>
                   </a>
                   <a href="/dosen/magang-period/<%= m.id %>" class="btn-action btn-manage" title="Kelola Magang">
                     <i class="bi bi-gear-fill"></i> Kelola

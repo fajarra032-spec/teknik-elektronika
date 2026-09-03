@@ -168,7 +168,8 @@ router.post('/:laporanId/status', async (req, res) => {
     }
 
     await docRef.update(updateData);
-    res.redirect(`/dosen/laporan-review/mahasiswa/${userId}?success=status`);
+    req.session.success = status === 'approved' ? 'Laporan berhasil di-ACC.' : 'Laporan ditolak, menunggu revisi mahasiswa.';
+    res.redirect(`/dosen/magang/${userId}`);
   } catch (error) {
     console.error('Error update status laporan:', error);
     res.status(500).send('Gagal memperbarui status laporan: ' + error.message);
@@ -212,7 +213,8 @@ router.post('/mahasiswa/:userId/nilai', async (req, res) => {
     }
 
     await savePenilaianPembimbing1(userId, pdkId, itemScores, req.dosen.id);
-    res.redirect(`/dosen/laporan-review/mahasiswa/${userId}?pdkId=${pdkId}&success=nilai`);
+    req.session.success = 'Nilai Laporan berhasil disimpan.';
+    res.redirect(`/dosen/magang/${userId}`);
   } catch (error) {
     console.error('Error simpan nilai laporan:', error);
     res.status(500).send('Gagal menyimpan nilai laporan: ' + error.message);
