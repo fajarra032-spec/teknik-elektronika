@@ -123,11 +123,25 @@
         <% } %>
 
         <!-- Tiga Status Terpisah -->
+        <% if (mahasiswa) { %>
+        <div class="alert alert-info small mb-3">
+          <i class="bi bi-info-circle"></i> Kalau <strong>Semester</strong> atau <strong>Status Mahasiswa</strong> diubah dan hasilnya "Aktif", paket KRS semester tersebut akan <strong>otomatis diaktifkan</strong> (lihat <code>helpers/paketKurikulumHelper.js</code>). Mulai Semester 3, isi <strong>Konsentrasi</strong> dulu supaya paket yang benar bisa ditentukan.
+        </div>
+        <% } %>
         <div class="row">
           <div class="col-md-3 mb-3">
             <label for="kelas" class="form-label">Kelas <span class="text-muted small">(rombel, mis. ELK1A)</span></label>
             <input type="text" class="form-control" id="kelas" name="kelas" placeholder="mis. ELK1A"
                    value="<%= mahasiswa && mahasiswa.kelas ? mahasiswa.kelas : '' %>" style="text-transform:uppercase;">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="konsentrasi" class="form-label">Konsentrasi <span class="text-muted small">(mulai smt 3)</span></label>
+            <select class="form-select" id="konsentrasi" name="konsentrasi">
+              <option value="">- Belum ditentukan -</option>
+              <% (typeof konsentrasiOptions !== 'undefined' ? konsentrasiOptions : []).forEach(k => { %>
+                <option value="<%= k %>" <%= mahasiswa && mahasiswa.konsentrasi === k ? 'selected' : '' %>><%= k %></option>
+              <% }) %>
+            </select>
           </div>
           <div class="col-md-3 mb-3">
             <label for="semester" class="form-label">Semester (1-12)</label>

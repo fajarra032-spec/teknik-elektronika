@@ -10,6 +10,8 @@ const { db, auth } = require('../../config/firebaseAdmin');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
+const { KONSENTRASI_OPTIONS, parseSemesterNumber, aktifkanPaketKrs, SEMESTER_MULAI_KONSENTRASI } = require('../../helpers/paketKurikulumHelper');
+const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.use(verifyToken);
@@ -48,6 +50,10 @@ const STATUS_MAHASISWA_OPTIONS = ['Aktif', 'Lulus', 'Cuti', 'Keluar'];
 // daftar baku (bebas diisi admin), jadi tidak ada KELAS_OPTIONS di sini -
 // nilai unik yang sudah dipakai dikumpulkan dinamis dari data mahasiswa
 // yang ada (lihat kelasSet di GET '/').
+//
+// "Konsentrasi" (KONSENTRASI_OPTIONS, dari paketKurikulumHelper) BEDA -
+// ini menentukan PAKET KRS mana yang otomatis diaktifkan mulai semester 3
+// (lihat helpers/paketKurikulumHelper.js), jadi nilainya baku/tetap.
 
 // ============================================================================
 // DAFTAR MAHASISWA (dengan filter lengkap)
@@ -133,13 +139,14 @@ router.get('/create', (req, res) => {
     mahasiswa: null,
     semesterOptions: SEMESTER_OPTIONS,
     magangOptions: MAGANG_OPTIONS,
-    statusMahasiswaOptions: STATUS_MAHASISWA_OPTIONS
+    statusMahasiswaOptions: STATUS_MAHASISWA_OPTIONS,
+    konsentrasiOptions: KONSENTRASI_OPTIONS
   });
 });
 
 router.post('/', upload.single('foto'), async (req, res) => {
   try {
-    const { nim, nama, email, password, semester, statusMagang, statusMahasiswa, kelas } = req.body;
+    const { nim, nama, email, password, semester, statusMagang, statusMahasiswa, kelas, konsentrasi } = req.body;
     const file = req.file;
 
     if (!nim || !nama || !email || !password) {
@@ -185,6 +192,7 @@ router.post('/', upload.single('foto'), async (req, res) => {
       statusMagang: finalMagang,
       statusMahasiswa: finalStatus,
       kelas: kelas ? kelas.trim().toUpperCase() : null,
+      konsentrasi: KONSENTRASI_OPTIONS.includes(konsentrasi) ? konsentrasi : null,
       createdAt: new Date().toISOString(),
     });
 
@@ -221,7 +229,9 @@ router.get('/:id', async (req, res) => {
     res.render('admin/mahasiswa_detail', {
       title: 'Detail Mahasiswa',
       mahasiswa,
-      tagihan
+      tagihan,
+      krsSuccess: req.query.krsSuccess || null,
+      error: req.query.error || null
     });
   } catch (error) {
     console.error('Error mengambil detail mahasiswa:', error);
@@ -251,7 +261,8 @@ router.get('/:id/edit', async (req, res) => {
       mahasiswa,
       semesterOptions: SEMESTER_OPTIONS,
       magangOptions: MAGANG_OPTIONS,
-      statusMahasiswaOptions: STATUS_MAHASISWA_OPTIONS
+      statusMahasiswaOptions: STATUS_MAHASISWA_OPTIONS,
+      konsentrasiOptions: KONSENTRASI_OPTIONS
     });
   } catch (error) {
     console.error('Error memuat form edit mahasiswa:', error);
@@ -264,7 +275,7 @@ router.get('/:id/edit', async (req, res) => {
 
 router.post('/:id/update', upload.single('foto'), async (req, res) => {
   try {
-    const { nim, nama, email, semester, statusMagang, statusMahasiswa, kelas } = req.body;
+    const { nim, nama, email, semester, statusMagang, statusMahasiswa, kelas, konsentrasi } = req.body;
     const file = req.file;
     const mahasiswaRef = db.collection('users').doc(req.params.id);
     const mahasiswaDoc = await mahasiswaRef.get();
@@ -285,6 +296,7 @@ router.post('/:id/update', upload.single('foto'), async (req, res) => {
       statusMagang: MAGANG_OPTIONS.includes(statusMagang) ? statusMagang : (oldData.statusMagang || null),
       statusMahasiswa: STATUS_MAHASISWA_OPTIONS.includes(statusMahasiswa) ? statusMahasiswa : (oldData.statusMahasiswa || 'Aktif'),
       kelas: kelas !== undefined ? (kelas ? kelas.trim().toUpperCase() : null) : (oldData.kelas || null),
+      konsentrasi: konsentrasi !== undefined ? (KONSENTRASI_OPTIONS.includes(konsentrasi) ? konsentrasi : null) : (oldData.konsentrasi || null),
       updatedAt: new Date().toISOString(),
     };
 
@@ -320,6 +332,41 @@ router.post('/:id/update', upload.single('foto'), async (req, res) => {
     }
 
     await mahasiswaRef.update(updateData);
+
+    // ========================================================================
+    // AUTO-AKTIFKAN PAKET KRS: begitu progres semester mahasiswa berubah
+    // (atau status berubah jadi Aktif) DAN hasil akhirnya adalah semester
+    // tertentu + status Aktif, otomatis aktifkan paket KRS semester itu -
+    // lihat helpers/paketKurikulumHelper.js. Hanya jalan kalau semester
+    // atau statusMahasiswa BENAR-BENAR berubah (bukan tiap kali admin
+    // simpan form), supaya tidak membuat KRS duplikat tiap edit data lain.
+    // ========================================================================
+    let krsAutoMessage = null;
+    let krsAutoOk = true;
+    const semesterBerubah = oldData.semester !== updateData.semester;
+    const statusBerubah = oldData.statusMahasiswa !== updateData.statusMahasiswa;
+    if ((semesterBerubah || statusBerubah) && updateData.statusMahasiswa === 'Aktif') {
+      const semesterNumber = parseSemesterNumber(updateData.semester);
+      if (semesterNumber) {
+        try {
+          const hasil = await aktifkanPaketKrs(
+            db, req.params.id, semesterNumber, updateData.konsentrasi,
+            getCurrentAcademicSemester().label, req.user.id
+          );
+          krsAutoMessage = hasil.message;
+          krsAutoOk = hasil.ok;
+        } catch (krsError) {
+          console.error('Gagal auto-aktifkan paket KRS:', krsError);
+          krsAutoMessage = 'Gagal mengaktifkan paket KRS otomatis: ' + krsError.message;
+          krsAutoOk = false;
+        }
+      }
+    }
+
+    if (krsAutoMessage) {
+      const param = krsAutoOk ? 'krsSuccess' : 'error';
+      return res.redirect(`/admin/mahasiswa/${req.params.id}?${param}=` + encodeURIComponent(krsAutoMessage));
+    }
     res.redirect('/admin/mahasiswa');
   } catch (error) {
     console.error('Error update mahasiswa:', error);
@@ -622,8 +669,8 @@ router.post('/bulk-kelas', async (req, res) => {
 });
 
 router.get('/template', (req, res) => {
-  const headers = ['nim', 'nama', 'noHp', 'semester', 'statusMagang', 'statusMahasiswa', 'kelas'];
-  const example = ['20230101', 'Budi Santoso', '08123456789', 'Semester 1', 'Magang 1', 'Aktif', 'ELK1A'];
+  const headers = ['nim', 'nama', 'noHp', 'semester', 'statusMagang', 'statusMahasiswa', 'kelas', 'konsentrasi'];
+  const example = ['20230101', 'Budi Santoso', '08123456789', 'Semester 1', 'Magang 1', 'Aktif', 'ELK1A', 'Instrumentasi'];
   const csvContent = [headers, example].map(row => row.join(',')).join('\n');
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename=template_update_mahasiswa.csv');
@@ -657,6 +704,7 @@ router.post('/import', upload.single('file'), async (req, res) => {
       if (header === 'statusmagang') return 'statusMagang';
       if (header === 'statusmahasiswa') return 'statusMahasiswa';
       if (header === 'kelas') return 'kelas';
+      if (header === 'konsentrasi') return 'konsentrasi';
       if (header === 'nim') return 'nim';
       if (header === 'nama') return 'nama';
       if (header === 'semester') return 'semester';
@@ -769,6 +817,13 @@ router.post('/import', upload.single('file'), async (req, res) => {
         updateData.kelas = kelas ? kelas.toUpperCase() : null;
       }
 
+      // Update konsentrasi (hanya diterima kalau sesuai KONSENTRASI_OPTIONS,
+      // dipakai untuk menentukan paket KRS semester 3 ke atas)
+      if (rawHeaders.includes('konsentrasi')) {
+        const konsentrasi = row.konsentrasi?.trim();
+        updateData.konsentrasi = KONSENTRASI_OPTIONS.includes(konsentrasi) ? konsentrasi : null;
+      }
+
       if (Object.keys(updateData).length === 0) {
         failed++;
         errors.push(`Baris ${i}: Tidak ada data yang akan diupdate (semua kolom kosong)`);
@@ -824,7 +879,7 @@ router.get('/export/csv', async (req, res) => {
     }
 
     const rows = [
-      ['nim', 'nama', 'noHp', 'semester', 'statusMagang', 'statusMahasiswa', 'kelas']
+      ['nim', 'nama', 'noHp', 'semester', 'statusMagang', 'statusMahasiswa', 'kelas', 'konsentrasi']
     ];
     for (const m of mahasiswaList) {
       rows.push([
@@ -834,7 +889,8 @@ router.get('/export/csv', async (req, res) => {
         m.semester || '',
         m.statusMagang || '',
         m.statusMahasiswa || '',
-        m.kelas || ''
+        m.kelas || '',
+        m.konsentrasi || ''
       ]);
     }
 

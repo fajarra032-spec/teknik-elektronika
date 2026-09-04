@@ -1,0 +1,230 @@
+<%- include('../partials/header') %>
+
+<style>
+  :root {
+    --primary-start: #1e3a8a;
+    --primary-end: #3b82f6;
+  }
+  .form-card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+  .form-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    padding: 2rem;
+    color: white;
+  }
+  .form-header h2 { font-weight: 700; margin-bottom: 0.25rem; }
+  .form-body { padding: 2rem; }
+  .course-item {
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+  }
+  .course-item:hover { background-color: #f8f9fa; border-color: var(--primary-end); }
+  .course-item.selected { background-color: #eef2ff; border-color: var(--primary-end); }
+  .course-item.already-active { background-color: #f1f5f9; opacity: 0.75; }
+  .recommended-badge {
+    background: #16a34a; color: white; font-size: 0.7rem;
+    padding: 0.2rem 0.6rem; border-radius: 50px; margin-left: 0.5rem;
+  }
+  .active-badge {
+    background: #64748b; color: white; font-size: 0.7rem;
+    padding: 0.2rem 0.6rem; border-radius: 50px; margin-left: 0.5rem;
+  }
+  .btn-gradient {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border: none; color: white; font-weight: 600;
+    padding: 0.6rem 2rem; border-radius: 50px; transition: all 0.3s;
+  }
+  .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(30,58,138,0.3); color: white; }
+  .btn-gradient:disabled { opacity: 0.5; transform: none; box-shadow: none; }
+  .info-semester {
+    background: #f8f9fa; border-left: 4px solid var(--primary-end);
+    padding: 1rem; margin-bottom: 1.5rem; border-radius: 0.5rem;
+  }
+</style>
+
+<div class="container-fluid mt-4">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <a href="/admin/mahasiswa/<%= mahasiswa.id %>" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Kembali ke Profil Mahasiswa
+    </a>
+  </div>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> <%= error %></div>
+  <% } %>
+
+  <div class="form-card">
+    <div class="form-header">
+      <h2><i class="bi bi-journal-plus"></i> Buat KRS untuk <%= mahasiswa.nama %></h2>
+      <p class="mb-0">NIM <%= mahasiswa.nim %> - Semester aktif: <strong><%= academicLabel %></strong><% if (currentSemester) { %> (Semester <%= currentSemester %>)<% } %></p>
+    </div>
+    <div class="form-body">
+      <div class="info-semester">
+        <i class="bi bi-info-circle me-2"></i>
+        KRS ini akan langsung <strong>disetujui otomatis</strong> begitu disimpan (tidak perlu approve terpisah lagi),
+        karena diinput langsung oleh admin. Mata kuliah berlabel <span class="recommended-badge">Rekomendasi</span>
+        adalah paket semester berjalan mahasiswa ini - klik "Terapkan Paket Rekomendasi" untuk mencentang semuanya
+        sekaligus, lalu tambah/kurangi sesuai kebutuhan mahasiswa ini secara bebas (halaman ini bukan cuma untuk
+        paket otomatis). Mata kuliah berlabel <span class="active-badge">Sudah Aktif</span> sudah lebih dulu
+        diprogram mahasiswa ini di semester ini - tercentang otomatis; kalau centangnya <strong>dilepas lalu
+        disimpan, mata kuliah itu akan DIBATALKAN</strong> dari KRS aktif mahasiswa (bukan cuma disembunyikan).
+      </div>
+
+      <form id="krsForm" method="POST" action="/admin/krs/buat/<%= mahasiswa.id %>">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <label class="form-label fw-bold mb-0">Cari Mata Kuliah</label>
+          <button type="button" class="btn btn-sm btn-outline-success" id="btnTerapkanPaket">
+            <i class="bi bi-magic"></i> Terapkan Paket Rekomendasi
+          </button>
+        </div>
+        <div class="mb-4">
+          <input type="text" class="form-control" id="searchCourse" placeholder="Ketik kode atau nama mata kuliah...">
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-bold">Daftar Mata Kuliah</label>
+          <div id="courseList">
+            <% if (courses && courses.length > 0) { %>
+              <% courses.forEach(course => {
+                const sudahAktif = existingMkIds.includes(course.id);
+              %>
+                <div class="course-item<%= sudahAktif ? ' already-active' : '' %>" data-id="<%= course.id %>" data-kode="<%= course.kode %>" data-nama="<%= course.nama %>" data-sks="<%= course.sks %>">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong><%= course.kode %></strong> - <%= course.nama %>
+                      <span class="badge bg-secondary ms-2"><%= course.sks %> SKS</span>
+                      <% if (course.isRecommended) { %><span class="recommended-badge">Rekomendasi</span><% } %>
+                      <% if (sudahAktif) { %><span class="active-badge">Sudah Aktif</span><% } %>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input course-checkbox" type="checkbox" value="<%= course.id %>" <%= sudahAktif ? 'checked' : '' %>>
+                    </div>
+                  </div>
+                </div>
+              <% }) %>
+            <% } else { %>
+              <div class="alert alert-warning">Tidak ada mata kuliah tersedia.</div>
+            <% } %>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold">Total SKS: <span id="totalSks">0</span></span>
+            <span class="text-muted">Maksimal 24 SKS</span>
+          </div>
+        </div>
+
+        <input type="hidden" name="courses" id="selectedCourses" required>
+
+        <div class="d-flex gap-3">
+          <button type="submit" class="btn-gradient" id="submitBtn" disabled>
+            <i class="bi bi-save me-2"></i>Simpan &amp; Aktifkan KRS
+          </button>
+          <a href="/admin/mahasiswa/<%= mahasiswa.id %>" class="btn btn-outline-secondary">Batal</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const searchInput = document.getElementById('searchCourse');
+  const courseItems = document.querySelectorAll('.course-item');
+  searchInput.addEventListener('keyup', function() {
+    const keyword = this.value.toLowerCase();
+    courseItems.forEach(item => {
+      const kode = item.dataset.kode.toLowerCase();
+      const nama = item.dataset.nama.toLowerCase();
+      item.style.display = (kode.includes(keyword) || nama.includes(keyword)) ? 'flex' : 'none';
+    });
+  });
+
+  const checkboxes = document.querySelectorAll('.course-checkbox');
+  const totalSpan = document.getElementById('totalSks');
+  const selectedCoursesInput = document.getElementById('selectedCourses');
+  const submitBtn = document.getElementById('submitBtn');
+  const krsForm = document.getElementById('krsForm');
+
+  // Mata kuliah yang berstatus "Sudah Aktif" saat halaman dimuat - dipakai
+  // untuk mendeteksi kalau admin melepas centang salah satunya (artinya
+  // mau membatalkan mata kuliah itu), supaya bisa dikonfirmasi dulu
+  // sebelum submit - mencegah pembatalan tidak sengaja.
+  const awalnyaAktifIds = new Set(
+    Array.from(document.querySelectorAll('.course-item.already-active'))
+      .map(item => item.dataset.id)
+  );
+
+  function updateTotal() {
+    let total = 0;
+    const selected = [];
+    checkboxes.forEach(cb => {
+      if (cb.checked) {
+        total += parseInt(cb.closest('.course-item').dataset.sks) || 0;
+        selected.push(cb.value);
+      }
+    });
+    totalSpan.textContent = total;
+    selectedCoursesInput.value = JSON.stringify(selected);
+    submitBtn.disabled = selected.length === 0;
+  }
+
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', function() {
+      this.closest('.course-item').classList.toggle('selected', this.checked);
+      updateTotal();
+    });
+  });
+
+  // Tombol "Terapkan Paket Rekomendasi" - centang semua MK berlabel
+  // Rekomendasi (paket semester berjalan mahasiswa ini), tanpa
+  // menghapus centang MK "Sudah Aktif" yang sudah tercentang duluan.
+  const btnTerapkanPaket = document.getElementById('btnTerapkanPaket');
+  if (btnTerapkanPaket) {
+    btnTerapkanPaket.addEventListener('click', function() {
+      let jumlah = 0;
+      document.querySelectorAll('.course-item .recommended-badge').forEach(badge => {
+        const item = badge.closest('.course-item');
+        const cb = item.querySelector('.course-checkbox');
+        if (cb && !cb.checked) {
+          cb.checked = true;
+          item.classList.add('selected');
+          jumlah++;
+        }
+      });
+      updateTotal();
+      if (jumlah === 0) {
+        alert('Tidak ada mata kuliah paket rekomendasi untuk semester mahasiswa ini (atau semuanya sudah tercentang).');
+      }
+    });
+  }
+
+  // Konfirmasi sebelum submit kalau ada mata kuliah "Sudah Aktif" yang
+  // dilepas centangnya (berarti akan dibatalkan dari KRS mahasiswa).
+  krsForm.addEventListener('submit', function(e) {
+    const dilepas = [];
+    document.querySelectorAll('.course-item.already-active').forEach(item => {
+      const cb = item.querySelector('.course-checkbox');
+      if (awalnyaAktifIds.has(item.dataset.id) && !cb.checked) {
+        dilepas.push(`${item.dataset.kode} - ${item.dataset.nama}`);
+      }
+    });
+    if (dilepas.length > 0) {
+      const pesan = `${dilepas.length} mata kuliah yang sudah aktif akan DIBATALKAN dari KRS mahasiswa ini:\n\n- ${dilepas.join('\n- ')}\n\nLanjutkan?`;
+      if (!confirm(pesan)) {
+        e.preventDefault();
+      }
+    }
+  });
+
+  updateTotal();
+</script>
+
+<%- include('../partials/footer') %>

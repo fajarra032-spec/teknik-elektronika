@@ -10,6 +10,12 @@ const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const drive = require('../../config/googleDrive');
+const {
+  getCurrentAcademicSemester,
+  getAngkatanFromNim,
+  getStudentCurrentSemester
+} = require('../../helpers/academicHelper');
+const { syncKrsDanEnrollment } = require('../../helpers/paketKurikulumHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -138,6 +144,85 @@ router.get('/', async (req, res) => {
       title: 'Error',
       message: 'Gagal memuat daftar KRS'
     });
+  }
+});
+
+// ============================================================================
+// BUAT KRS UNTUK MAHASISWA (input oleh admin, langsung approved)
+// KRS mahasiswa sekarang diinput oleh admin, bukan diajukan sendiri oleh
+// mahasiswa - jadi begitu admin submit form ini, KRS + enrollment langsung
+// aktif (skip status 'pending' & tombol approve terpisah).
+// ============================================================================
+
+router.get('/buat/:mahasiswaId', async (req, res) => {
+  try {
+    const mahasiswaDoc = await db.collection('users').doc(req.params.mahasiswaId).get();
+    if (!mahasiswaDoc.exists || mahasiswaDoc.data().role !== 'mahasiswa') {
+      return res.redirect('/admin/mahasiswa?error=' + encodeURIComponent('Mahasiswa tidak ditemukan'));
+    }
+    const mahasiswa = { id: mahasiswaDoc.id, ...mahasiswaDoc.data() };
+
+    const angkatan = getAngkatanFromNim(mahasiswa.nim);
+    const currentSemesterNumber = angkatan ? getStudentCurrentSemester(angkatan) : null;
+    const academicLabel = getCurrentAcademicSemester().label;
+
+    const coursesSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
+    const courses = coursesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    courses.forEach(c => { c.isRecommended = (c.semester === currentSemesterNumber); });
+
+    // Mata kuliah yang SUDAH aktif untuk mahasiswa ini di semester berjalan
+    // (supaya admin tidak double-input / bisa lihat apa yang sudah diambil)
+    const existingEnrollSnapshot = await db.collection('enrollment')
+      .where('userId', '==', mahasiswa.id)
+      .where('status', '==', 'active')
+      .where('semester', '==', academicLabel)
+      .get();
+    const existingMkIds = existingEnrollSnapshot.docs.map(d => d.data().mkId);
+
+    res.render('admin/krs_buat', {
+      title: `Buat KRS - ${mahasiswa.nama}`,
+      mahasiswa,
+      courses,
+      currentSemester: currentSemesterNumber,
+      academicLabel,
+      existingMkIds,
+      error: req.query.error || null
+    });
+  } catch (error) {
+    console.error('Error memuat form buat KRS:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat form buat KRS' });
+  }
+});
+
+router.post('/buat/:mahasiswaId', async (req, res) => {
+  try {
+    const { mahasiswaId } = req.params;
+    const { courses } = req.body;
+    if (!courses) {
+      return res.redirect(`/admin/krs/buat/${mahasiswaId}?error=` + encodeURIComponent('Pilih minimal satu mata kuliah'));
+    }
+    const mkIds = JSON.parse(courses);
+    if (!Array.isArray(mkIds) || mkIds.length === 0) {
+      return res.redirect(`/admin/krs/buat/${mahasiswaId}?error=` + encodeURIComponent('Pilih minimal satu mata kuliah'));
+    }
+
+    const mahasiswaDoc = await db.collection('users').doc(mahasiswaId).get();
+    if (!mahasiswaDoc.exists) {
+      return res.redirect('/admin/mahasiswa?error=' + encodeURIComponent('Mahasiswa tidak ditemukan'));
+    }
+
+    const academicLabel = getCurrentAcademicSemester().label;
+    const { jumlahBaru, jumlahDibatalkan } = await syncKrsDanEnrollment(db, mahasiswaId, mkIds, academicLabel, req.user.id);
+
+    let pesanSukses = `KRS berhasil disimpan untuk ${mahasiswaDoc.data().nama} (${academicLabel}): ${jumlahBaru} mata kuliah baru ditambahkan`;
+    if (jumlahDibatalkan > 0) {
+      pesanSukses += `, ${jumlahDibatalkan} mata kuliah dibatalkan karena dihapus centangnya`;
+    }
+    pesanSukses += '.';
+    res.redirect(`/admin/mahasiswa/${mahasiswaId}?krsSuccess=` + encodeURIComponent(pesanSukses));
+  } catch (error) {
+    console.error('Error membuat KRS:', error);
+    res.redirect(`/admin/krs/buat/${req.params.mahasiswaId}?error=` + encodeURIComponent('Gagal membuat KRS: ' + error.message));
   }
 });
 
