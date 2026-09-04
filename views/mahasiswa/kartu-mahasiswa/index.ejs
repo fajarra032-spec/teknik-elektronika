@@ -1,0 +1,227 @@
+<%- include('../../partials/header') %>
+
+<%
+  const getDriveImageUrl = (url) => {
+    if (!url) return null;
+    const raw = String(url);
+    const idMatch = raw.match(/[?&]id=([^&]+)/) || raw.match(/\/d\/([^/]+)/) || raw.match(/uc\?id=([^&]+)/);
+    if (idMatch && idMatch[1]) return `https://drive.google.com/thumbnail?id=${encodeURIComponent(idMatch[1])}&sz=w1200`;
+    return raw;
+  };
+
+  const fotoUrl = getDriveImageUrl(user.foto);
+  const nama = String(user.nama || 'Mahasiswa').trim();
+  const nim = String(user.nim || '-').trim();
+%>
+
+<style>
+  :root {
+    --ktm-navy: #102f5c;
+    --ktm-text: #173461;
+    --ktm-gold: #f4b400;
+    --ktm-card-width: 713px;
+    --ktm-card-height: 1004px;
+  }
+
+  .ktm-page { max-width: 1550px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  .ktm-toolbar { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1.25rem; }
+  .ktm-toolbar h1 { margin:0; color:var(--ktm-navy); font-weight:800; font-size:clamp(1.4rem,3vw,2rem); }
+  .ktm-toolbar p { margin:.3rem 0 0; color:#64748b; }
+  .ktm-actions { display:flex; gap:.5rem; flex-wrap:wrap; }
+
+  .ktm-shell { background:#fff; border-radius:24px; padding:clamp(.75rem,2.5vw,2rem); box-shadow:0 18px 45px rgba(16,47,92,.12); overflow:auto; }
+  .ktm-grid { display:grid; grid-template-columns:repeat(2,minmax(320px,713px)); justify-content:center; gap:2rem; min-width:720px; }
+  .ktm-side-wrap { min-width:0; }
+  .ktm-side-title { text-align:center; margin:0 0 .7rem; font-weight:800; color:var(--ktm-navy); font-size:1rem; letter-spacing:.04em; text-transform:uppercase; }
+
+  .ktm-card {
+    position:relative;
+    width:100%;
+    max-width:var(--ktm-card-width);
+    aspect-ratio:713 / 1004;
+    margin:0 auto;
+    overflow:hidden;
+    background:#fff;
+    box-shadow:0 10px 30px rgba(15,43,92,.2);
+  }
+
+  /* Template dibuat sebagai IMG, bukan CSS background.
+     Ini memastikan gambar KTM ikut tercetak walaupun browser mematikan
+     opsi "print background graphics". */
+  .ktm-template {
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+    object-fit:fill;
+    z-index:0;
+    pointer-events:none;
+    user-select:none;
+  }
+
+  /* FOTO: area bebas pada template depan */
+  .ktm-photo {
+    position:absolute;
+    left:31.5%; top:25%; width:59.5%; height:34%;
+    overflow:hidden; z-index:2; background:transparent;
+  }
+  .ktm-photo img { width:100%; height:100%; display:block; object-fit:cover; object-position:center top; }
+  .ktm-photo-empty { width:100%; height:100%; display:grid; place-items:center; color:rgba(23,52,97,.28); font-size:clamp(2.5rem,8vw,6rem); }
+
+  /* DATA PROFIL: nilai ditimpa di atas template */
+  .ktm-name-value,
+  .ktm-nim-value {
+    position:absolute; left:54%; width:34%; height:4.3%; z-index:3;
+    display:flex; align-items:center;
+    font-family:'Segoe UI', Arial, Helvetica, sans-serif;
+    color:var(--ktm-text); line-height:1;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .ktm-name-value { top:61.7%; font-size:clamp(12px,1.75vw,18px); font-weight:700; letter-spacing:.01em; }
+  .ktm-nim-value { top:69.8%; font-size:clamp(12px,1.7vw,17px); font-weight:600; letter-spacing:.05em; }
+
+  .ktm-note { margin:1rem auto 0; color:#64748b; font-size:.9rem; text-align:center; }
+  .ktm-legend { margin:.8rem auto 0; max-width:713px; text-align:center; color:#64748b; font-size:.82rem; }
+
+  @media (max-width:1100px) {
+    .ktm-grid { grid-template-columns:minmax(320px,713px); min-width:0; }
+  }
+  @media (max-width:575px) {
+    .ktm-page { padding:.8rem .35rem 2rem; }
+    .ktm-shell { padding:.5rem; border-radius:18px; }
+    .ktm-toolbar { align-items:flex-start; }
+    .ktm-actions .btn { flex:1 1 auto; }
+    .ktm-grid { gap:1.2rem; }
+  }
+
+  @media print {
+    /* Hasil cetak hanya KTM, tanpa layout dashboard/web. */
+    html, body {
+      width:85.6mm !important;
+      margin:0 !important;
+      padding:0 !important;
+      background:#fff !important;
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+    }
+
+    body * { visibility:hidden !important; }
+    .ktm-page, .ktm-page *, .ktm-card, .ktm-card * { visibility:visible !important; }
+
+    .navbar, .ktm-toolbar, .ktm-note, .ktm-legend,
+    .ktm-side-title, .no-print, footer { display:none !important; }
+
+    .ktm-page {
+      width:85.6mm !important;
+      margin:0 !important;
+      padding:0 !important;
+      max-width:none !important;
+    }
+
+    .ktm-shell {
+      width:85.6mm !important;
+      margin:0 !important;
+      padding:0 !important;
+      border:0 !important;
+      border-radius:0 !important;
+      box-shadow:none !important;
+      background:transparent !important;
+      overflow:visible !important;
+    }
+
+    .ktm-grid { display:block !important; min-width:0 !important; }
+    .ktm-side-wrap {
+      width:85.6mm !important;
+      height:120.6mm !important;
+      margin:0 !important;
+      padding:0 !important;
+      break-after:page !important;
+      page-break-after:always !important;
+    }
+    .ktm-side-wrap:last-child {
+      break-after:auto !important;
+      page-break-after:auto !important;
+    }
+
+    .ktm-card {
+      display:block !important;
+      width:85.6mm !important;
+      height:120.6mm !important;
+      max-width:none !important;
+      aspect-ratio:auto !important;
+      margin:0 !important;
+      padding:0 !important;
+      overflow:hidden !important;
+      box-shadow:none !important;
+      background:#fff !important;
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+    }
+
+    .ktm-template {
+      display:block !important;
+      position:absolute !important;
+      inset:0 !important;
+      width:100% !important;
+      height:100% !important;
+      max-width:none !important;
+      max-height:none !important;
+      object-fit:fill !important;
+    }
+
+    @page {
+      size:85.6mm 120.6mm;
+      margin:0;
+    }
+  }
+
+</style>
+
+<div class="ktm-page">
+  <div class="ktm-toolbar">
+    <div>
+      <h1><i class="bi bi-person-vcard-fill me-2"></i>Kartu Mahasiswa</h1>
+      <p>Foto, nama, dan NIM diambil otomatis dari Profile Card mahasiswa.</p>
+    </div>
+    <div class="ktm-actions no-print">
+      <a href="/mahasiswa/biodata" class="btn btn-outline-primary"><i class="bi bi-pencil-square me-1"></i>Perbarui Profil</a>
+      <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('ktm-belakang').scrollIntoView({behavior:'smooth',block:'center'})"><i class="bi bi-arrow-down-up me-1"></i>Lihat Belakang</button>
+      <button type="button" class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer-fill me-1"></i>Cetak Depan & Belakang</button>
+    </div>
+  </div>
+
+  <div class="ktm-shell">
+    <div class="ktm-grid">
+      <section class="ktm-side-wrap">
+        <h2 class="ktm-side-title">Sisi Depan</h2>
+        <article class="ktm-card ktm-front" aria-label="Kartu Mahasiswa depan <%= nama %>">
+          <img class="ktm-template" src="/images/ktm/ktm-depan.png" alt="Template KTM depan">
+          <div class="ktm-photo">
+            <% if (fotoUrl) { %>
+              <img src="<%= fotoUrl %>" alt="Foto <%= nama %>" crossorigin="anonymous" onerror="this.style.display='none'; this.parentElement.querySelector('.ktm-photo-empty').style.display='grid';">
+              <div class="ktm-photo-empty" style="display:none;"><i class="bi bi-person-fill"></i></div>
+            <% } else { %>
+              <div class="ktm-photo-empty"><i class="bi bi-person-fill"></i></div>
+            <% } %>
+          </div>
+          <div class="ktm-name-value" title="<%= nama %>"><%= nama %></div>
+          <div class="ktm-nim-value" title="<%= nim %>"><%= nim %></div>
+        </article>
+        <p class="ktm-legend">Depan: foto, Nama, dan NIM otomatis dari profil.</p>
+      </section>
+
+      <section class="ktm-side-wrap" id="ktm-belakang">
+        <h2 class="ktm-side-title">Sisi Belakang</h2>
+        <article class="ktm-card ktm-back" aria-label="Kartu Mahasiswa belakang <%= nama %>">
+          <img class="ktm-template" src="/images/ktm/ktm-belakang.png" alt="Template KTM belakang">
+        </article>
+        <p class="ktm-legend">Belakang: ketentuan, Ketua Program Studi Teknik Elektronika, tanda tangan, dan stempel.</p>
+      </section>
+    </div>
+  </div>
+
+  <p class="ktm-note">Jika foto, nama, atau NIM belum sesuai, silakan perbarui melalui menu <strong>Biodata</strong>.</p>
+</div>
+
+<%- include('../../partials/footer') %>
