@@ -33,6 +33,7 @@ const mahasiswaRouter = require('./mahasiswa');
 const magangPeriodRouter = require('./magangPeriod');
 const chatRouter = require('./chat');
 const sertifikatRouter = require('./sertifikat');
+const kartuDosenRouter = require('./kartuDosen');
 // ============================================================================
 // KONSTANTA FOLDER UTAMA (Data WEB)
 // ============================================================================
@@ -557,4 +558,6 @@ router.use((err, req, res, next) => {
 });
 
 console.log('Dosen index.js loaded, submodules: dashboard, biodata, elearning, kurikulum, mahasiswa, nilai, mk, laporan-magang, seminar, magang');
+router.use('/kartu-dosen', kartuDosenRouter);
+
 module.exports = router;
