@@ -9,6 +9,7 @@ const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { mataKuliahCache } = require('../../helpers/cache');
+const academicHelper = require('../../helpers/academicHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -19,6 +20,84 @@ router.use(isAdmin);
 async function getDosenList() {
   const dosenSnapshot = await db.collection('dosen').orderBy('nama').get();
   return dosenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+// ============================================================================
+// HELPER: PENGAMPU PER PERIODE (Ganjil/Genap tahun ajaran)
+// ============================================================================
+// Setiap MK bisa punya dosen pengampu berbeda tiap periode. Riwayatnya
+// disimpan di subcollection mataKuliah/{id}/pengampuPeriode/{periodeId}.
+// Field mataKuliah.dosenIds tetap dipertahankan sebagai "cermin" pengampu
+// periode AKTIF saat ini, supaya fitur lain (dashboard dosen, elearning,
+// nilai, rubrik, kurikulum, dll) yang selama ini membaca mk.dosenIds tidak
+// perlu diubah sama sekali.
+
+/**
+ * Simpan/perbarui pengampu untuk satu periode tertentu.
+ * Jika periode tsb adalah periode aktif saat ini, mk.dosenIds ikut disinkronkan.
+ */
+async function savePengampuPeriode(mkId, periodeId, dosenArray) {
+  const semuaPeriode = academicHelper.generatePeriodeOptions(50, 5);
+  const info = semuaPeriode.find(p => p.id === periodeId);
+
+  const label = info ? info.label : periodeId;
+  const semester = info ? info.semester : null;
+  const tahunAwal = info ? info.tahunAwal : null;
+  const tahunAkhir = info ? info.tahunAkhir : null;
+  const urutan = info ? info.urutan : 0;
+
+  await db.collection('mataKuliah').doc(mkId)
+    .collection('pengampuPeriode').doc(periodeId)
+    .set({
+      periodeId,
+      label,
+      semester,
+      tahunAwal,
+      tahunAkhir,
+      urutan,
+      dosenIds: dosenArray,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+  // Sinkronkan ke field utama jika ini periode yang sedang berjalan
+  const activePeriodeId = academicHelper.getActivePeriodeId();
+  if (periodeId === activePeriodeId) {
+    await db.collection('mataKuliah').doc(mkId).update({
+      dosenIds: dosenArray,
+      periodeAktifId: periodeId,
+      periodeAktifLabel: label
+    });
+  }
+
+  mataKuliahCache.delete('all');
+}
+
+/**
+ * Ambil dosenIds yang tersimpan untuk satu periode tertentu.
+ * Kalau periode itu belum pernah disimpan tapi kebetulan periode aktif,
+ * fallback ke mk.dosenIds (data lama sebelum fitur per-periode ada).
+ */
+async function getPengampuUntukPeriode(mkId, periodeId, fallbackDosenIds) {
+  const doc = await db.collection('mataKuliah').doc(mkId)
+    .collection('pengampuPeriode').doc(periodeId).get();
+  if (doc.exists) return doc.data().dosenIds || [];
+
+  const activePeriodeId = academicHelper.getActivePeriodeId();
+  if (periodeId === activePeriodeId && fallbackDosenIds) return fallbackDosenIds;
+  return [];
+}
+
+/**
+ * Ambil seluruh riwayat pengampu (semua periode) untuk ditampilkan di form/detail.
+ */
+async function getRiwayatPengampu(mkId, dosenMap) {
+  const snap = await db.collection('mataKuliah').doc(mkId)
+    .collection('pengampuPeriode').orderBy('urutan', 'desc').get();
+  return snap.docs.map(doc => {
+    const data = doc.data();
+    const dosenNames = (data.dosenIds || []).map(id => dosenMap[id] || 'Unknown');
+    return { ...data, dosenNames };
+  });
 }
 
 // ============================================================================
@@ -79,10 +158,19 @@ router.get('/', async (req, res) => {
 router.get('/create', async (req, res) => {
   try {
     const dosenList = await getDosenList();
+    const periodeOptions = academicHelper.generatePeriodeOptions();
+    const activePeriodeId = academicHelper.getActivePeriodeId();
+    const selectedPeriodeId = req.query.periode || activePeriodeId;
+
     res.render('admin/matakuliah_form', {
       title: 'Tambah Mata Kuliah',
       mk: null,
-      dosenList
+      dosenList,
+      periodeOptions,
+      activePeriodeId,
+      selectedPeriodeId,
+      selectedDosenIds: [],
+      pengampuHistori: []
     });
   } catch (error) {
     console.error('Error:', error);
@@ -92,7 +180,7 @@ router.get('/create', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { kode, nama, sks, semester, dosenIds, jadwal, isPDK } = req.body;
+    const { kode, nama, sks, semester, periodeId, dosenIds, jadwal, isPDK } = req.body;
 
     // Validasi
     if (!kode || !nama || !sks || !semester) {
@@ -105,12 +193,6 @@ router.post('/', async (req, res) => {
       return res.status(400).send('Kode MK sudah digunakan');
     }
 
-    // Proses dosenIds
-    let dosenArray = [];
-    if (dosenIds) {
-      dosenArray = Array.isArray(dosenIds) ? dosenIds : [dosenIds];
-    }
-
     // Proses isPDK (checkbox)
     const isPDKFlag = isPDK === '1' || isPDK === true; // karena dari form berupa string '1'
 
@@ -120,17 +202,26 @@ router.post('/', async (req, res) => {
       topik: ''
     }));
 
-    await db.collection('mataKuliah').add({
+    const docRef = await db.collection('mataKuliah').add({
       kode,
       nama,
       sks: parseInt(sks),
       semester: parseInt(semester),
-      dosenIds: dosenArray,
+      dosenIds: [], // akan diisi lewat savePengampuPeriode di bawah kalau ada
       jadwal: jadwal || '',
       isPDK: isPDKFlag,
       materi,
       createdAt: new Date().toISOString()
     });
+
+    // Simpan pengampu untuk periode yang dipilih di form (kalau diisi)
+    if (periodeId) {
+      let dosenArray = [];
+      if (dosenIds) {
+        dosenArray = Array.isArray(dosenIds) ? dosenIds : [dosenIds];
+      }
+      await savePengampuPeriode(docRef.id, periodeId, dosenArray);
+    }
 
     mataKuliahCache.delete('all');
     res.redirect('/admin/matakuliah');
@@ -158,10 +249,13 @@ router.get('/:id', async (req, res) => {
       dosenMap[doc.id] = doc.data().nama;
     });
 
+    const pengampuHistori = await getRiwayatPengampu(mk.id, dosenMap);
+
     res.render('admin/matakuliah_detail', {
       title: `Detail MK: ${mk.kode}`,
       mk,
-      dosenMap
+      dosenMap,
+      pengampuHistori
     });
   } catch (error) {
     console.error('Error:', error);
@@ -181,10 +275,25 @@ router.get('/:id/edit', async (req, res) => {
     const mk = { id: mkDoc.id, ...mkDoc.data() };
     const dosenList = await getDosenList();
 
+    const periodeOptions = academicHelper.generatePeriodeOptions();
+    const activePeriodeId = academicHelper.getActivePeriodeId();
+    const selectedPeriodeId = req.query.periode || activePeriodeId;
+
+    const selectedDosenIds = await getPengampuUntukPeriode(mk.id, selectedPeriodeId, mk.dosenIds);
+
+    const dosenMap = {};
+    dosenList.forEach(d => { dosenMap[d.id] = d.nama; });
+    const pengampuHistori = await getRiwayatPengampu(mk.id, dosenMap);
+
     res.render('admin/matakuliah_form', {
       title: 'Edit Mata Kuliah',
       mk,
-      dosenList
+      dosenList,
+      periodeOptions,
+      activePeriodeId,
+      selectedPeriodeId,
+      selectedDosenIds,
+      pengampuHistori
     });
   } catch (error) {
     console.error('Error:', error);
@@ -194,7 +303,7 @@ router.get('/:id/edit', async (req, res) => {
 
 router.post('/:id/update', async (req, res) => {
   try {
-    const { kode, nama, sks, semester, dosenIds, jadwal, isPDK } = req.body;
+    const { kode, nama, sks, semester, periodeId, dosenIds, jadwal, isPDK } = req.body;
     const mkRef = db.collection('mataKuliah').doc(req.params.id);
 
     // Validasi kode unik
@@ -207,11 +316,6 @@ router.post('/:id/update', async (req, res) => {
       }
     }
 
-    let dosenArray = [];
-    if (dosenIds) {
-      dosenArray = Array.isArray(dosenIds) ? dosenIds : [dosenIds];
-    }
-
     const isPDKFlag = isPDK === '1' || isPDK === true;
 
     await mkRef.update({
@@ -219,14 +323,22 @@ router.post('/:id/update', async (req, res) => {
       nama,
       sks: parseInt(sks),
       semester: parseInt(semester),
-      dosenIds: dosenArray,
       jadwal: jadwal || '',
       isPDK: isPDKFlag,
       updatedAt: new Date().toISOString()
     });
 
+    // Simpan pengampu untuk periode yang sedang dipilih di form
+    if (periodeId) {
+      let dosenArray = [];
+      if (dosenIds) {
+        dosenArray = Array.isArray(dosenIds) ? dosenIds : [dosenIds];
+      }
+      await savePengampuPeriode(req.params.id, periodeId, dosenArray);
+    }
+
     mataKuliahCache.delete('all');
-    res.redirect('/admin/matakuliah');
+    res.redirect(`/admin/matakuliah/${req.params.id}/edit?periode=${periodeId || ''}`);
   } catch (error) {
     console.error('Error update MK:', error);
     res.status(500).send('Gagal update MK: ' + error.message);

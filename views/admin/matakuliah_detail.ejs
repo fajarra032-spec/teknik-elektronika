@@ -59,6 +59,40 @@
     </div>
 
     <div class="col-md-8">
+      <div class="info-card mb-4">
+        <div class="card-header">Riwayat Dosen Pengampu per Periode</div>
+        <div class="card-body">
+          <% if (pengampuHistori && pengampuHistori.length) { %>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Periode</th>
+                    <th>Dosen Pengampu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% pengampuHistori.forEach(function(h) { %>
+                    <tr>
+                      <td><%= h.label %></td>
+                      <td>
+                        <% if (h.dosenNames && h.dosenNames.length) { %>
+                          <%= h.dosenNames.join(', ') %>
+                        <% } else { %>
+                          <span class="text-muted">-</span>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <p class="text-muted mb-0">Belum ada riwayat pengampu tercatat.</p>
+          <% } %>
+        </div>
+      </div>
+
       <div class="info-card">
         <div class="card-header">Materi Per Pertemuan</div>
         <div class="card-body">

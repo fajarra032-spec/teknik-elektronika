@@ -60,9 +60,84 @@ function getStudentCurrentSemester(angkatan) {
   return semester;
 }
 
+/**
+ * ===== PERIODE / TAHUN AJARAN =====
+ * Dipakai untuk fitur "Dosen Pengampu per Periode" di Kelola Mata Kuliah,
+ * supaya pengampu satu MK bisa berbeda tiap semester tanpa menghapus
+ * riwayat semester sebelumnya.
+ *
+ * Direpresentasikan sebagai deret angka (urutan) supaya mudah diurutkan &
+ * digeser maju/mundur: setiap tahun ajaran punya 2 periode (Ganjil lalu Genap).
+ *   urutan = 2 * tahunAwal + (0 untuk Ganjil, 1 untuk Genap)
+ */
+function periodeKeUrutan(tahunAwal, semester) {
+  return 2 * tahunAwal + (semester === 'Genap' ? 1 : 0);
+}
+
+function urutanKePeriode(urutan) {
+  const tahunAwal = Math.floor(urutan / 2);
+  const semester = (((urutan % 2) + 2) % 2 === 0) ? 'Ganjil' : 'Genap';
+  return { tahunAwal, tahunAkhir: tahunAwal + 1, semester };
+}
+
+/**
+ * ID unik & konsisten untuk satu periode, dipakai sebagai doc ID Firestore.
+ * Contoh: getPeriodeId('Ganjil', 2026, 2027) -> "ganjil-2026-2027"
+ */
+function getPeriodeId(semester, tahunAwal, tahunAkhir) {
+  return `${String(semester).toLowerCase()}-${tahunAwal}-${tahunAkhir}`;
+}
+
+/**
+ * Label yang ditampilkan ke user. Contoh: "Ganjil 2026/2027"
+ */
+function getPeriodeLabel(semester, tahunAwal, tahunAkhir) {
+  return `${semester} ${tahunAwal}/${tahunAkhir}`;
+}
+
+/**
+ * ID periode akademik yang sedang berjalan saat ini (berdasarkan tanggal hari ini).
+ */
+function getActivePeriodeId() {
+  const current = getCurrentAcademicSemester();
+  return getPeriodeId(current.semester, current.tahunAwal, current.tahunAkhir);
+}
+
+/**
+ * Menghasilkan daftar periode untuk dropdown, urut dari yang terbaru ke
+ * yang terlama (periode mendatang muncul paling atas).
+ * @param {number} keBelakang jumlah periode sebelum periode aktif yang ikut ditampilkan
+ * @param {number} keDepan jumlah periode setelah periode aktif yang ikut ditampilkan
+ */
+function generatePeriodeOptions(keBelakang = 6, keDepan = 1) {
+  const current = getCurrentAcademicSemester();
+  const urutanAktif = periodeKeUrutan(current.tahunAwal, current.semester);
+  const options = [];
+
+  for (let u = urutanAktif + keDepan; u >= urutanAktif - keBelakang; u--) {
+    const { tahunAwal, tahunAkhir, semester } = urutanKePeriode(u);
+    options.push({
+      id: getPeriodeId(semester, tahunAwal, tahunAkhir),
+      label: getPeriodeLabel(semester, tahunAwal, tahunAkhir),
+      semester,
+      tahunAwal,
+      tahunAkhir,
+      urutan: u,
+      isActive: u === urutanAktif
+    });
+  }
+  return options;
+}
+
 module.exports = {
   getCurrentAcademicSemester,
   getSemesterForDate,
   getAngkatanFromNim,
-  getStudentCurrentSemester
+  getStudentCurrentSemester,
+  getPeriodeId,
+  getPeriodeLabel,
+  getActivePeriodeId,
+  generatePeriodeOptions,
+  periodeKeUrutan,
+  urutanKePeriode
 };
