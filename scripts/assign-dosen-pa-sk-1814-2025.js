@@ -231,13 +231,26 @@ function buatPasswordMahasiswa(nim) {
  * Cari dosen di Firestore berdasarkan nama persis. Kalau tidak ada, buat
  * akun Auth + dokumen `dosen` baru. Return { id, nama, identitas, dibuatBaru }.
  */
+function normalisasiNama(nama) {
+  return (nama || '')
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 async function pastikanDosenAda(dosenInfo) {
-  const snapshot = await db.collection('dosen').where('nama', '==', dosenInfo.nama).limit(1).get();
-  if (!snapshot.empty) {
-    const doc = snapshot.docs[0];
-    const data = doc.data();
+  // Cocokkan berdasarkan nama yang DINORMALISASI (bukan exact match) supaya
+  // tidak bikin dosen dobel gara-gara beda spasi/tanda baca/kapitalisasi
+  // dengan data yang sudah ada (mis. diinput manual lewat /admin/dosen).
+  const semuaDosenSnapshot = await db.collection('dosen').get();
+  const targetNormal = normalisasiNama(dosenInfo.nama);
+  const cocok = semuaDosenSnapshot.docs.find(doc => normalisasiNama(doc.data().nama) === targetNormal);
+
+  if (cocok) {
+    const data = cocok.data();
     return {
-      id: doc.id,
+      id: cocok.id,
       nama: data.nama,
       identitas: data.nidn || data.nip || data.nuptk || dosenInfo.identitas,
       dibuatBaru: false
