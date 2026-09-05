@@ -66,6 +66,21 @@
             <div class="col-sm-8"><%= mahasiswa.konsentrasi || '-' %></div>
           </div>
           <div class="row mb-2">
+            <div class="col-sm-4 text-muted">Agama</div>
+            <div class="col-sm-8"><%= mahasiswa.agama || 'Islam (default)' %></div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-sm-4 text-muted">Status Biodata</div>
+            <div class="col-sm-8">
+              <% if (biodataKosong && biodataKosong.length > 0) { %>
+                <span class="badge bg-warning text-dark">Belum lengkap</span>
+                <div class="small text-muted mt-1">Belum diisi: <%= biodataKosong.join(', ') %></div>
+              <% } else { %>
+                <span class="badge bg-success">Lengkap</span>
+              <% } %>
+            </div>
+          </div>
+          <div class="row mb-2">
             <div class="col-sm-4 text-muted">Semester</div>
             <div class="col-sm-8"><%= mahasiswa.semester || '-' %></div>
           </div>
@@ -79,6 +94,20 @@
           </div>
         </div>
       </div>
+
+      <% ['pribadi', 'alamat', 'ortu', 'sekolah'].forEach(group => { %>
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-header"><%= groupLabels[group] %></div>
+          <div class="card-body">
+            <% biodataFields.filter(f => f.group === group && !['agama','noHp'].includes(f.key)).forEach(field => { %>
+              <div class="row mb-2">
+                <div class="col-sm-4 text-muted"><%= field.label %></div>
+                <div class="col-sm-8"><%= mahasiswa[field.key] || '-' %></div>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% }) %>
 
       <div class="info-card">
         <div class="card-header d-flex justify-content-between align-items-center">

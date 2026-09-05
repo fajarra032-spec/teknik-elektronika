@@ -78,6 +78,20 @@
     padding: clamp(0.8rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem);
   }
 
+  /* ===== BADGE KONSENTRASI MATA KULIAH (read-only, dipakai di halaman
+     admin/matakuliah_list.ejs dan admin/matakuliah_detail.ejs) ===== */
+  .badge-konsentrasi {
+    padding: 0.25rem 0.65rem;
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: inline-block;
+    white-space: nowrap;
+  }
+  .badge-konsentrasi.instrumentasi { background: rgba(13,110,253,0.1); color: #0d6efd; }
+  .badge-konsentrasi.telekomunikasi { background: rgba(111,66,193,0.1); color: #6f42c1; }
+  .badge-konsentrasi.umum { background: rgba(108,117,125,0.12); color: #6c757d; }
+
   /* ===== PROFILE / HERO CARD ===== */
   .profile-card {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));

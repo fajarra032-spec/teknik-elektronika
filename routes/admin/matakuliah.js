@@ -22,6 +22,19 @@ async function getDosenList() {
   return dosenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
+// Konsentrasi mata kuliah semester 3 disimpan sebagai bagian dari teks
+// bebas field `jenis` (mis. "Pilihan Teknik Elektronika (Instrumentasi)"),
+// BUKAN field terpisah - fungsi ini menerjemahkannya jadi label singkat
+// untuk ditampilkan sebagai badge (read-only, belum ada di form edit).
+// Kalau `jenis` tidak menyebut konsentrasi tertentu, MK itu dianggap
+// berlaku untuk SEMUA konsentrasi (label "Umum").
+function getKonsentrasiLabel(jenis) {
+  if (!jenis) return 'Umum';
+  if (jenis.includes('(Instrumentasi)')) return 'Instrumentasi';
+  if (jenis.includes('(Telekomunikasi)')) return 'Telekomunikasi';
+  return 'Umum';
+}
+
 // ============================================================================
 // HELPER: PENGAMPU PER PERIODE (Ganjil/Genap tahun ajaran)
 // ============================================================================
@@ -135,9 +148,10 @@ router.get('/', async (req, res) => {
     });
 
     // Untuk setiap matakuliah, tambahkan field dosenNames (array nama dosen)
+    // dan label konsentrasi (derivasi read-only dari field `jenis`)
     const matakuliahWithDosen = matakuliah.map(mk => {
       const dosenNames = (mk.dosenIds || []).map(id => dosenMap[id] || 'Unknown').filter(Boolean);
-      return { ...mk, dosenNames };
+      return { ...mk, dosenNames, konsentrasiLabel: getKonsentrasiLabel(mk.jenis) };
     });
 
     res.render('admin/matakuliah_list', {
@@ -241,6 +255,7 @@ router.get('/:id', async (req, res) => {
       return res.status(404).send('Mata kuliah tidak ditemukan');
     }
     const mk = { id: mkDoc.id, ...mkDoc.data() };
+    mk.konsentrasiLabel = getKonsentrasiLabel(mk.jenis);
 
     // Ambil nama dosen untuk ditampilkan
     const dosenMap = {};

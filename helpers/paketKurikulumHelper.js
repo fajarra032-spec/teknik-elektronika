@@ -23,22 +23,13 @@
 const PAKET_KURIKULUM = {
   1: {
     null: [
-      // CATATAN PERBAIKAN: mata kuliah agama TIDAK dimasukkan ke paket
-      // otomatis. Di data Mata Kuliah, "Pendidikan Agama" adalah 5 kode
-      // terpisah menurut agama (WUD2201 Islam, WUD2202 Kristen, WUD2203
-      // Katolik, WUD2204 Hindu, WUD2205 Budha) - lihat scripts/seed-
-      // matakuliah-2026.js. Sebelumnya kode 'WUD2201-5' dipakai di sini
-      // sebagai singkatan rentang, tapi lookup di bawah mencari kode
-      // PERSIS itu ke koleksi mataKuliah - karena 'WUD2201-5' tidak
-      // pernah benar-benar ada sebagai kode MK, mata kuliah agama gagal
-      // diaktifkan otomatis untuk SETIAP mahasiswa semester 1, tanpa
-      // pernah ketahuan (cuma numpuk di kodeTidakDitemukan). Sistem ini
-      // juga belum punya field "agama" di profil mahasiswa untuk bisa
-      // memilih salah satu dari 5 kode itu secara otomatis. Jadi untuk
-      // sekarang, mata kuliah agama sengaja DIKELUARKAN dari paket
-      // otomatis - admin perlu menambahkannya manual (sesuai agama
-      // mahasiswa) lewat "Buat KRS" setelah paket ini diaktifkan. Lihat
-      // juga peringatan yang ditambahkan di aktifkanPaketKrs() di bawah.
+      // CATATAN: mata kuliah "Pendidikan Agama" TIDAK ditaruh statis di sini,
+      // karena kodenya berbeda per agama (WUD2201 Islam, WUD2202 Kristen,
+      // WUD2203 Katolik, WUD2204 Hindu, WUD2205 Budha - lihat scripts/seed-
+      // matakuliah-2026.js). Sejak profil mahasiswa (collection `users`)
+      // punya field `agama`, aktifkanPaketKrs() di bawah membaca field itu
+      // dan MENAMBAHKAN kode yang sesuai secara dinamis ke paket semester 1
+      // sebelum enrollment dibuat - lihat KODE_AGAMA + AGAMA_OPTIONS.
       { kode: 'WUD3208', jenis: 'Wajib Umum' },
       { kode: 'WUD3209', jenis: 'Wajib Umum' },
       { kode: 'PD3201', jenis: 'Penciri Dewantara' },
@@ -80,8 +71,11 @@ const PAKET_KURIKULUM = {
   }
 };
 
-// Kode MK "Pendidikan Agama" per agama (semester 1) - referensi untuk admin,
-// TIDAK dipakai otomatis karena profil mahasiswa belum punya field agama.
+// Kode MK "Pendidikan Agama" per agama (semester 1). Urutan array di bawah
+// ("AGAMA_OPTIONS") SENGAJA mengikuti urutan kode WUD2201-5 di RPS:
+// 1=Islam, 2=Kristen, 3=Katolik, 4=Hindu, 5=Budha - dipakai otomatis oleh
+// aktifkanPaketKrs() di bawah untuk menentukan mata kuliah agama mahasiswa
+// semester 1 berdasarkan field `agama` di profil (collection `users`).
 const KODE_AGAMA = {
   Islam: 'WUD2201',
   Kristen: 'WUD2202',
@@ -89,6 +83,16 @@ const KODE_AGAMA = {
   Hindu: 'WUD2204',
   Budha: 'WUD2205'
 };
+
+// Pilihan agama yang valid (dipakai di form profil mahasiswa & validasi).
+// Urutan ini = urutan kode WUD2201-5 (1 Islam, 2 Kristen, 3 Katolik,
+// 4 Hindu, 5 Budha).
+const AGAMA_OPTIONS = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Budha'];
+
+// Default agama untuk mahasiswa baru kalau tidak diisi eksplisit saat
+// pembuatan akun - admin bisa mengubahnya kapan saja lewat form edit
+// mahasiswa (field ini TIDAK mengunci apa pun, murni nilai awal).
+const DEFAULT_AGAMA = 'Islam';
 
 // Daftar pilihan konsentrasi yang valid (dipakai di form profil mahasiswa)
 const KONSENTRASI_OPTIONS = ['Instrumentasi', 'Telekomunikasi'];
@@ -140,8 +144,8 @@ function parseSemesterNumber(semesterLabel) {
  * @returns {Promise<{ok:boolean, message:string, jumlahBaru?:number, kodeTidakDitemukan?:string[]}>}
  */
 async function aktifkanPaketKrs(db, mahasiswaId, semesterNumber, konsentrasi, academicLabel, actorId) {
-  const paket = getPaketMk(semesterNumber, konsentrasi);
-  if (!paket) {
+  const paketDasar = getPaketMk(semesterNumber, konsentrasi);
+  if (!paketDasar) {
     if (semesterNumber >= SEMESTER_MULAI_KONSENTRASI && !konsentrasi) {
       return {
         ok: false,
@@ -152,6 +156,22 @@ async function aktifkanPaketKrs(db, mahasiswaId, semesterNumber, konsentrasi, ac
       ok: false,
       message: `Belum ada konfigurasi paket kurikulum untuk Semester ${semesterNumber}${konsentrasi ? ' / ' + konsentrasi : ''}. Silakan tambahkan KRS secara manual, atau lengkapi PAKET_KURIKULUM di helpers/paketKurikulumHelper.js.`
     };
+  }
+
+  // Salin paket dasar supaya tidak mengubah PAKET_KURIKULUM asli.
+  let paket = [...paketDasar];
+
+  // Khusus Semester 1: sisipkan mata kuliah "Pendidikan Agama" yang sesuai
+  // berdasarkan field `agama` di profil mahasiswa (collection `users`).
+  // Default ke DEFAULT_AGAMA kalau field-nya kosong/belum diisi/tidak valid
+  // (mis. data lama sebelum field ini ada) - admin bisa mengoreksi lewat
+  // form edit mahasiswa lalu jalankan ulang aktivasi paket kapan saja.
+  let agamaDipakai = null;
+  if (semesterNumber === 1) {
+    const mahasiswaSnap = await db.collection('users').doc(mahasiswaId).get();
+    const agamaProfil = mahasiswaSnap.exists ? mahasiswaSnap.data().agama : null;
+    agamaDipakai = AGAMA_OPTIONS.includes(agamaProfil) ? agamaProfil : DEFAULT_AGAMA;
+    paket = [...paket, { kode: KODE_AGAMA[agamaDipakai], jenis: 'Wajib Umum' }];
   }
 
   // Cari mataKuliah berdasarkan kode (paralel)
@@ -184,8 +204,8 @@ async function aktifkanPaketKrs(db, mahasiswaId, semesterNumber, konsentrasi, ac
   if (kodeTidakDitemukan.length > 0) {
     message += ` PERHATIAN: kode berikut tidak ditemukan di data Mata Kuliah dan DILEWATI: ${kodeTidakDitemukan.join(', ')}.`;
   }
-  if (semesterNumber === 1) {
-    message += ` INGAT: mata kuliah Pendidikan Agama TIDAK termasuk paket otomatis (kodenya berbeda per agama - lihat KODE_AGAMA di helpers/paketKurikulumHelper.js). Tambahkan manual lewat "Buat KRS" sesuai agama mahasiswa.`;
+  if (semesterNumber === 1 && agamaDipakai) {
+    message += ` Mata kuliah Pendidikan Agama disertakan otomatis: ${agamaDipakai} (${KODE_AGAMA[agamaDipakai]}) - sesuai field "Agama" di profil mahasiswa. Kalau agamanya salah/berubah, ubah dulu lewat form edit mahasiswa, lalu jalankan ulang aktivasi paket (mata kuliah agama lama TIDAK otomatis dihapus - hapus manual lewat "Buat KRS" kalau perlu).`;
   }
 
   return { ok: true, message, jumlahBaru: hasil.jumlahBaru, kodeTidakDitemukan };
@@ -334,6 +354,8 @@ async function syncKrsDanEnrollment(db, mahasiswaId, mkIds, academicLabel, actor
 module.exports = {
   PAKET_KURIKULUM,
   KODE_AGAMA,
+  AGAMA_OPTIONS,
+  DEFAULT_AGAMA,
   KONSENTRASI_OPTIONS,
   SEMESTER_MULAI_KONSENTRASI,
   getPaketMk,

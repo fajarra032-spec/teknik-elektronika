@@ -10,7 +10,8 @@ const { db, auth } = require('../../config/firebaseAdmin');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
-const { KONSENTRASI_OPTIONS, parseSemesterNumber, aktifkanPaketKrs, SEMESTER_MULAI_KONSENTRASI } = require('../../helpers/paketKurikulumHelper');
+const { KONSENTRASI_OPTIONS, AGAMA_OPTIONS, DEFAULT_AGAMA, parseSemesterNumber, aktifkanPaketKrs, SEMESTER_MULAI_KONSENTRASI } = require('../../helpers/paketKurikulumHelper');
+const { isBiodataLengkap, getBiodataKosong, BIODATA_FIELDS, GROUP_LABELS } = require('../../helpers/biodataHelper');
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -85,6 +86,11 @@ router.get('/', async (req, res) => {
     for (const doc of snapshot.docs) {
       const data = doc.data();
       const m = { id: doc.id, ...data };
+      // Status kelengkapan biodata (NIK, TTL, alamat, data ortu, data
+      // sekolah, dst - lihat helpers/biodataHelper.js), ditampilkan sebagai
+      // badge di daftar supaya admin bisa lihat sekilas mana yang belum
+      // lengkap tanpa buka detail satu-satu.
+      m.biodataLengkap = isBiodataLengkap(m);
       const angkatanMhs = getAngkatanFromNim(m.nim);
       angkatanSet.add(angkatanMhs);
       if (m.kelas) kelasSet.add(m.kelas);
@@ -140,13 +146,15 @@ router.get('/create', (req, res) => {
     semesterOptions: SEMESTER_OPTIONS,
     magangOptions: MAGANG_OPTIONS,
     statusMahasiswaOptions: STATUS_MAHASISWA_OPTIONS,
-    konsentrasiOptions: KONSENTRASI_OPTIONS
+    konsentrasiOptions: KONSENTRASI_OPTIONS,
+    agamaOptions: AGAMA_OPTIONS,
+    defaultAgama: DEFAULT_AGAMA
   });
 });
 
 router.post('/', upload.single('foto'), async (req, res) => {
   try {
-    const { nim, nama, email, password, semester, statusMagang, statusMahasiswa, kelas, konsentrasi } = req.body;
+    const { nim, nama, email, password, semester, statusMagang, statusMahasiswa, kelas, konsentrasi, agama } = req.body;
     const file = req.file;
 
     if (!nim || !nama || !email || !password) {
@@ -193,6 +201,9 @@ router.post('/', upload.single('foto'), async (req, res) => {
       statusMahasiswa: finalStatus,
       kelas: kelas ? kelas.trim().toUpperCase() : null,
       konsentrasi: KONSENTRASI_OPTIONS.includes(konsentrasi) ? konsentrasi : null,
+      // Agama: kalau tidak dipilih/tidak valid, default ke Islam (bisa
+      // diubah admin kapan saja lewat form edit).
+      agama: AGAMA_OPTIONS.includes(agama) ? agama : DEFAULT_AGAMA,
       createdAt: new Date().toISOString(),
     });
 
@@ -230,6 +241,9 @@ router.get('/:id', async (req, res) => {
       title: 'Detail Mahasiswa',
       mahasiswa,
       tagihan,
+      biodataFields: BIODATA_FIELDS,
+      groupLabels: GROUP_LABELS,
+      biodataKosong: getBiodataKosong(mahasiswa),
       krsSuccess: req.query.krsSuccess || null,
       error: req.query.error || null
     });
@@ -262,7 +276,9 @@ router.get('/:id/edit', async (req, res) => {
       semesterOptions: SEMESTER_OPTIONS,
       magangOptions: MAGANG_OPTIONS,
       statusMahasiswaOptions: STATUS_MAHASISWA_OPTIONS,
-      konsentrasiOptions: KONSENTRASI_OPTIONS
+      konsentrasiOptions: KONSENTRASI_OPTIONS,
+      agamaOptions: AGAMA_OPTIONS,
+      defaultAgama: DEFAULT_AGAMA
     });
   } catch (error) {
     console.error('Error memuat form edit mahasiswa:', error);
@@ -275,7 +291,7 @@ router.get('/:id/edit', async (req, res) => {
 
 router.post('/:id/update', upload.single('foto'), async (req, res) => {
   try {
-    const { nim, nama, email, semester, statusMagang, statusMahasiswa, kelas, konsentrasi } = req.body;
+    const { nim, nama, email, semester, statusMagang, statusMahasiswa, kelas, konsentrasi, agama } = req.body;
     const file = req.file;
     const mahasiswaRef = db.collection('users').doc(req.params.id);
     const mahasiswaDoc = await mahasiswaRef.get();
@@ -297,6 +313,12 @@ router.post('/:id/update', upload.single('foto'), async (req, res) => {
       statusMahasiswa: STATUS_MAHASISWA_OPTIONS.includes(statusMahasiswa) ? statusMahasiswa : (oldData.statusMahasiswa || 'Aktif'),
       kelas: kelas !== undefined ? (kelas ? kelas.trim().toUpperCase() : null) : (oldData.kelas || null),
       konsentrasi: konsentrasi !== undefined ? (KONSENTRASI_OPTIONS.includes(konsentrasi) ? konsentrasi : null) : (oldData.konsentrasi || null),
+      // Agama: admin bisa ubah kapan saja lewat form ini. Kalau field tidak
+      // dikirim/tidak valid, pertahankan nilai lama - kalau belum pernah
+      // diisi sama sekali, jatuh ke default (Islam).
+      agama: agama !== undefined
+        ? (AGAMA_OPTIONS.includes(agama) ? agama : (oldData.agama || DEFAULT_AGAMA))
+        : (oldData.agama || DEFAULT_AGAMA),
       updatedAt: new Date().toISOString(),
     };
 
@@ -669,8 +691,8 @@ router.post('/bulk-kelas', async (req, res) => {
 });
 
 router.get('/template', (req, res) => {
-  const headers = ['nim', 'nama', 'noHp', 'semester', 'statusMagang', 'statusMahasiswa', 'kelas', 'konsentrasi'];
-  const example = ['20230101', 'Budi Santoso', '08123456789', 'Semester 1', 'Magang 1', 'Aktif', 'ELK1A', 'Instrumentasi'];
+  const headers = ['nim', 'nama', 'noHp', 'semester', 'statusMagang', 'statusMahasiswa', 'kelas', 'konsentrasi', 'agama'];
+  const example = ['20230101', 'Budi Santoso', '08123456789', 'Semester 1', 'Magang 1', 'Aktif', 'ELK1A', 'Instrumentasi', 'Islam'];
   const csvContent = [headers, example].map(row => row.join(',')).join('\n');
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename=template_update_mahasiswa.csv');
@@ -705,6 +727,7 @@ router.post('/import', upload.single('file'), async (req, res) => {
       if (header === 'statusmahasiswa') return 'statusMahasiswa';
       if (header === 'kelas') return 'kelas';
       if (header === 'konsentrasi') return 'konsentrasi';
+      if (header === 'agama') return 'agama';
       if (header === 'nim') return 'nim';
       if (header === 'nama') return 'nama';
       if (header === 'semester') return 'semester';
@@ -824,6 +847,15 @@ router.post('/import', upload.single('file'), async (req, res) => {
         updateData.konsentrasi = KONSENTRASI_OPTIONS.includes(konsentrasi) ? konsentrasi : null;
       }
 
+      // Update agama (hanya diterima kalau sesuai AGAMA_OPTIONS, dipakai
+      // untuk memilih otomatis mata kuliah Pendidikan Agama semester 1).
+      // Kosong/tidak valid -> dibiarkan (tidak menimpa dengan null, karena
+      // agama tidak boleh "dikosongkan" seperti kelas/konsentrasi).
+      if (rawHeaders.includes('agama')) {
+        const agama = row.agama?.trim();
+        if (AGAMA_OPTIONS.includes(agama)) updateData.agama = agama;
+      }
+
       if (Object.keys(updateData).length === 0) {
         failed++;
         errors.push(`Baris ${i}: Tidak ada data yang akan diupdate (semua kolom kosong)`);
@@ -879,7 +911,7 @@ router.get('/export/csv', async (req, res) => {
     }
 
     const rows = [
-      ['nim', 'nama', 'noHp', 'semester', 'statusMagang', 'statusMahasiswa', 'kelas', 'konsentrasi']
+      ['nim', 'nama', 'noHp', 'semester', 'statusMagang', 'statusMahasiswa', 'kelas', 'konsentrasi', 'agama']
     ];
     for (const m of mahasiswaList) {
       rows.push([
@@ -890,7 +922,8 @@ router.get('/export/csv', async (req, res) => {
         m.statusMagang || '',
         m.statusMahasiswa || '',
         m.kelas || '',
-        m.konsentrasi || ''
+        m.konsentrasi || '',
+        m.agama || ''
       ]);
     }
 

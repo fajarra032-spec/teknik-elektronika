@@ -1,5 +1,18 @@
 // middleware/auth.js
 const { auth, db } = require('../config/firebaseAdmin');
+const { isBiodataLengkap } = require('../helpers/biodataHelper');
+
+/**
+ * Path yang tetap boleh diakses mahasiswa WALAUPUN biodatanya belum lengkap
+ * - supaya mahasiswa bisa melengkapi biodatanya sendiri, dan tetap bisa
+ * logout. Dicek dengan startsWith terhadap req.originalUrl (jadi tidak
+ * peduli lewat router mana request itu masuk).
+ */
+const BIODATA_GATE_PENGECUALIAN = ['/mahasiswa/biodata', '/auth/logout'];
+
+function bolehLewatiGateBiodata(originalUrl) {
+  return BIODATA_GATE_PENGECUALIAN.some(prefix => originalUrl.startsWith(prefix));
+}
 
 /**
  * Middleware untuk memverifikasi token sesi dan mendapatkan data user
@@ -19,6 +32,21 @@ const verifyToken = async (req, res, next) => {
 
     if (userDoc.exists) {
       req.user = { id: uid, ...userDoc.data() };
+
+      // ======================================================================
+      // GATE BIODATA MAHASISWA: kalau role-nya mahasiswa dan biodata wajibnya
+      // (NIK, TTL, alamat, data ortu, data sekolah, dst - lihat
+      // helpers/biodataHelper.js) belum lengkap, paksa ke halaman lengkapi
+      // biodata dulu sebelum bisa akses menu lain manapun. Berlaku untuk
+      // SEMUA angkatan (bukan hanya mahasiswa baru), karena dicek di sini -
+      // satu-satunya titik yang dilewati semua route mahasiswa (verifyToken
+      // dipakai oleh routes/mahasiswa/index.js DAN router-router mahasiswa
+      // lain yang di-mount langsung di app.js seperti edom/inspeksi/servisan/
+      // kalender), jadi tidak perlu ditambahkan satu-satu di tiap router.
+      // ======================================================================
+      if (req.user.role === 'mahasiswa' && !bolehLewatiGateBiodata(req.originalUrl) && !isBiodataLengkap(req.user)) {
+        return res.redirect('/mahasiswa/biodata/edit?wajib=1');
+      }
     } else {
       // Coba cek di collection dosen
       const dosenSnapshot = await db.collection('dosen').where('userId', '==', uid).limit(1).get();

@@ -152,9 +152,22 @@
 <div class="container mt-4">
   <div class="form-card">
     <div class="form-header">
-      <h3><i class="bi bi-pencil-square"></i> Edit Biodata</h3>
+      <h3><i class="bi bi-pencil-square"></i> <%= wajib ? 'Lengkapi Biodata Anda' : 'Edit Biodata' %></h3>
     </div>
     <div class="form-body">
+      <% if (wajib) { %>
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <strong>Lengkapi biodata Anda dulu</strong> sebelum bisa mengakses menu lain di sistem ini.
+          <% if (biodataKosong && biodataKosong.length > 0) { %>
+            <div class="mt-2 small">Yang masih perlu diisi/dibetulkan:
+              <ul class="mb-0 mt-1">
+                <% biodataKosong.forEach(k => { %><li><%= k %></li><% }) %>
+              </ul>
+            </div>
+          <% } %>
+        </div>
+      <% } %>
       <!-- Preview Foto -->
       <% if (fotoPreview) { %>
         <div class="preview-container">
@@ -166,7 +179,7 @@
         </div>
       <% } %>
 
-      <form method="POST" action="/mahasiswa/biodata/edit" enctype="multipart/form-data">
+      <form method="POST" action="/mahasiswa/biodata/edit<%= wajib ? '?wajib=1' : '' %>" enctype="multipart/form-data">
         <div class="mb-3">
           <label for="nama" class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="nama" name="nama" value="<%= user.nama || '' %>" required>
@@ -175,10 +188,38 @@
           <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
           <input type="email" class="form-control" id="email" name="email" value="<%= user.email || '' %>" required>
         </div>
-        <div class="mb-3">
-          <label for="noHp" class="form-label">Nomor HP</label>
-          <input type="text" class="form-control" id="noHp" name="noHp" value="<%= user.noHp || '' %>">
-        </div>
+
+        <% ['pribadi', 'alamat', 'ortu', 'sekolah'].forEach(group => { %>
+          <hr class="my-4">
+          <h6 class="fw-bold text-muted mb-3"><%= groupLabels[group] %></h6>
+          <div class="row">
+            <% biodataFields.filter(f => f.group === group).forEach(field => { %>
+              <div class="col-md-6 mb-3">
+                <label for="<%= field.key %>" class="form-label">
+                  <%= field.label %>
+                  <% if (field.wajib) { %><span class="text-danger">*</span><% } %>
+                </label>
+                <% if (field.type === 'select') { %>
+                  <select class="form-select" id="<%= field.key %>" name="<%= field.key %>" <%= field.wajib ? 'required' : '' %>>
+                    <option value="">- Pilih -</option>
+                    <% field.options.forEach(opt => { %>
+                      <option value="<%= opt %>" <%= user[field.key] === opt ? 'selected' : '' %>><%= opt %></option>
+                    <% }) %>
+                  </select>
+                <% } else if (field.type === 'date') { %>
+                  <input type="date" class="form-control" id="<%= field.key %>" name="<%= field.key %>"
+                         value="<%= user[field.key] || '' %>" <%= field.wajib ? 'required' : '' %>>
+                <% } else { %>
+                  <input type="text" class="form-control" id="<%= field.key %>" name="<%= field.key %>"
+                         value="<%= user[field.key] || '' %>" <%= field.wajib ? 'required' : '' %>>
+                <% } %>
+                <% if (field.hint) { %><small class="text-muted"><%= field.hint %></small><% } %>
+              </div>
+            <% }) %>
+          </div>
+        <% }) %>
+
+        <hr class="my-4">
         <div class="mb-3">
           <label for="foto" class="form-label">Foto Profil</label>
           <input type="file" class="form-control" id="foto" name="foto" accept="image/*">
@@ -186,9 +227,13 @@
         </div>
 
         <div class="d-flex justify-content-between mt-4">
-          <a href="/mahasiswa/biodata" class="btn-outline-gradient">
-            <i class="bi bi-arrow-left"></i> Kembali
-          </a>
+          <% if (!wajib) { %>
+            <a href="/mahasiswa/biodata" class="btn-outline-gradient">
+              <i class="bi bi-arrow-left"></i> Kembali
+            </a>
+          <% } else { %>
+            <span></span>
+          <% } %>
           <button type="submit" class="btn-gradient">
             <i class="bi bi-save"></i> Simpan
           </button>

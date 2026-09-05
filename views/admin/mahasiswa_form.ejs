@@ -125,7 +125,7 @@
         <!-- Tiga Status Terpisah -->
         <% if (mahasiswa) { %>
         <div class="alert alert-info small mb-3">
-          <i class="bi bi-info-circle"></i> Kalau <strong>Semester</strong> atau <strong>Status Mahasiswa</strong> diubah dan hasilnya "Aktif", paket KRS semester tersebut akan <strong>otomatis diaktifkan</strong> (lihat <code>helpers/paketKurikulumHelper.js</code>). Mulai Semester 3, isi <strong>Konsentrasi</strong> dulu supaya paket yang benar bisa ditentukan.
+          <i class="bi bi-info-circle"></i> Kalau <strong>Semester</strong> atau <strong>Status Mahasiswa</strong> diubah dan hasilnya "Aktif", paket KRS semester tersebut akan <strong>otomatis diaktifkan</strong> (lihat <code>helpers/paketKurikulumHelper.js</code>). Mulai Semester 3, isi <strong>Konsentrasi</strong> dulu supaya paket yang benar bisa ditentukan. Untuk Semester 1, mata kuliah <strong>Pendidikan Agama</strong> otomatis dipilih sesuai field <strong>Agama</strong> di bawah.
         </div>
         <% } %>
         <div class="row">
@@ -171,6 +171,16 @@
               <option value="Cuti" <%= mahasiswa && mahasiswa.statusMahasiswa === 'Cuti' ? 'selected' : '' %>>Cuti</option>
               <option value="Keluar" <%= mahasiswa && mahasiswa.statusMahasiswa === 'Keluar' ? 'selected' : '' %>>Keluar</option>
             </select>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="agama" class="form-label">Agama</label>
+            <select class="form-select" id="agama" name="agama">
+              <% const agamaTerpilih = mahasiswa && mahasiswa.agama ? mahasiswa.agama : (typeof defaultAgama !== 'undefined' ? defaultAgama : 'Islam'); %>
+              <% (typeof agamaOptions !== 'undefined' ? agamaOptions : []).forEach(a => { %>
+                <option value="<%= a %>" <%= agamaTerpilih === a ? 'selected' : '' %>><%= a %></option>
+              <% }) %>
+            </select>
+            <small class="text-muted">Menentukan mata kuliah Pendidikan Agama semester 1 otomatis</small>
           </div>
         </div>
 

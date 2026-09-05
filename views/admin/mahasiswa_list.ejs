@@ -129,6 +129,7 @@
   }
   .btn-detail { background: var(--primary-start); }
   .btn-edit { background: #ffc107; }
+  .btn-krs { background: #198754; }
   .btn-reset { background: #6c757d; }
   .btn-delete { background: #dc3545; }
   .avatar-circle {
@@ -319,13 +320,14 @@
             <th>Semester</th>
             <th>Status Magang</th>
             <th>Status Mahasiswa</th>
+            <th>Biodata</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
           <% if (mahasiswa.length === 0) { %>
             <tr>
-              <td colspan="10" class="text-center py-5">
+              <td colspan="11" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <h4>Belum Ada Data Mahasiswa</h4>
@@ -372,9 +374,19 @@
               <td><span class="badge badge-magang"><%= magangText %></span></td>
               <td><span class="badge <%= badgeMahasiswa %>"><%= mahasiswaStatus %></span></td>
               <td>
+                <% if (m.biodataLengkap) { %>
+                  <span class="badge bg-success"><i class="bi bi-check-circle"></i> Lengkap</span>
+                <% } else { %>
+                  <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle"></i> Belum</span>
+                <% } %>
+              </td>
+              <td>
                 <div class="d-flex gap-1">
                   <a href="/admin/mahasiswa/<%= m.id %>" class="btn-icon-sm btn-detail" title="Detail">
                     <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="/admin/krs/buat/<%= m.id %>" class="btn-icon-sm btn-krs" title="Buat KRS">
+                    <i class="bi bi-journal-plus"></i>
                   </a>
                   <a href="/admin/nilai/mahasiswa/<%= m.id %>/tambah" class="btn-icon-sm btn-detail" title="Kelola Nilai">
                     <i class="bi bi-bar-chart-line"></i>

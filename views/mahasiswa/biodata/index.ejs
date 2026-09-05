@@ -237,10 +237,6 @@
           <span class="info-value">: <%= user.email || '-' %></span>
         </div>
         <div class="info-item">
-          <span class="info-label">No. HP</span>
-          <span class="info-value">: <%= user.noHp || '-' %></span>
-        </div>
-        <div class="info-item">
           <span class="info-label">Program Studi</span>
           <span class="info-value">: Teknik Elektronika</span>
         </div>
@@ -251,6 +247,31 @@
       </div>
     </div>
   </div>
+
+  <% if (biodataKosong && biodataKosong.length > 0) { %>
+    <div class="alert alert-warning mt-3">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      Biodata Anda <strong>belum lengkap</strong> - lengkapi lewat tombol "Edit Profil" di atas.
+    </div>
+  <% } else { %>
+    <div class="alert alert-success mt-3">
+      <i class="bi bi-check-circle-fill me-2"></i> Biodata Anda sudah lengkap.
+    </div>
+  <% } %>
+
+  <% ['pribadi', 'alamat', 'ortu', 'sekolah'].forEach(group => { %>
+    <div class="profile-card mt-3">
+      <div class="info-items">
+        <h6 class="fw-bold text-muted mb-2"><%= groupLabels[group] %></h6>
+        <% biodataFields.filter(f => f.group === group).forEach(field => { %>
+          <div class="info-item">
+            <span class="info-label"><%= field.label %></span>
+            <span class="info-value">: <%= user[field.key] || '-' %></span>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% }) %>
 </div>
 
 <%- include('../../partials/footer') %>

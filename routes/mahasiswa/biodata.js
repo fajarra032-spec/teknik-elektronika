@@ -11,6 +11,7 @@ const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
 const sharp = require('sharp'); // <-- tambahkan sharp untuk kompresi
+const { BIODATA_FIELDS, GROUP_LABELS, isNikFormatValid, getBiodataKosong, isBiodataLengkap } = require('../../helpers/biodataHelper');
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 } // Batas 10MB sebelum kompresi
@@ -72,6 +73,9 @@ router.get('/', (req, res) => {
     res.render('mahasiswa/biodata/index', {
       title: 'Biodata Saya',
       user,
+      biodataFields: BIODATA_FIELDS,
+      groupLabels: GROUP_LABELS,
+      biodataKosong: getBiodataKosong(user),
       success: req.query.success,
       reset: req.query.reset
     });
@@ -92,7 +96,15 @@ router.get('/edit', (req, res) => {
   try {
     res.render('mahasiswa/biodata/edit', {
       title: 'Edit Biodata',
-      user: req.user
+      user: req.user,
+      biodataFields: BIODATA_FIELDS,
+      groupLabels: GROUP_LABELS,
+      biodataKosong: getBiodataKosong(req.user),
+      // ?wajib=1 dikirim oleh gate (middleware/auth.js) saat biodata belum
+      // lengkap - dipakai di view untuk menampilkan banner "wajib lengkapi"
+      // dan menyembunyikan link "Kembali" (supaya tidak bisa lompat balik
+      // sebelum benar-benar lengkap).
+      wajib: req.query.wajib === '1'
     });
   } catch (error) {
     console.error('Error memuat form edit:', error);
@@ -105,12 +117,14 @@ router.get('/edit', (req, res) => {
 
 /**
  * POST /mahasiswa/biodata/edit
- * Memperbarui biodata mahasiswa (nama, email, noHp, foto)
+ * Memperbarui biodata mahasiswa (nama, email, noHp, foto, + seluruh field
+ * biodata lengkap: NIK, TTL, jenis kelamin, agama, alamat, data ortu, data
+ * asal sekolah - lihat helpers/biodataHelper.js untuk daftar lengkapnya)
  */
 router.post('/edit', upload.single('foto'), async (req, res) => {
   try {
     console.log('🚀 Route POST /mahasiswa/biodata/edit dipanggil');
-    const { nama, email, noHp } = req.body;
+    const { nama, email } = req.body;
     const file = req.file;
     const userId = req.user.id;
     const userRef = db.collection('users').doc(userId);
@@ -126,12 +140,27 @@ router.post('/edit', upload.single('foto'), async (req, res) => {
       return res.status(400).send('Nama dan email wajib diisi');
     }
 
+    // Validasi format NIK kalau diisi (harus 16 digit angka)
+    if (req.body.nik && !isNikFormatValid(req.body.nik)) {
+      return res.status(400).send('NIK tidak valid - harus 16 digit angka sesuai KTP');
+    }
+
     const updateData = {
       nama,
       email,
-      noHp: noHp || '',
       updatedAt: new Date().toISOString()
     };
+
+    // Simpan seluruh field biodata (BIODATA_FIELDS) apa adanya dari form -
+    // termasuk noHp & agama (menggantikan handling noHp lama di bawah ini,
+    // dan mengizinkan mahasiswa mengoreksi agamanya sendiri kalau salah/
+    // masih default). Field kosong disimpan string kosong (BUKAN dihapus),
+    // supaya getBiodataKosong() tetap bisa mendeteksinya "belum diisi".
+    BIODATA_FIELDS.forEach(field => {
+      if (Object.prototype.hasOwnProperty.call(req.body, field.key)) {
+        updateData[field.key] = (req.body[field.key] || '').toString().trim();
+      }
+    });
 
     // Proses foto jika ada file baru
     if (file) {
@@ -233,6 +262,13 @@ router.post('/edit', upload.single('foto'), async (req, res) => {
     await userRef.update(updateData);
     console.log('Data Firestore berhasil diperbarui');
 
+    // Kalau request ini datang dari gate "wajib lengkapi" (?wajib=1) dan
+    // biodatanya SEKARANG sudah lengkap, langsung arahkan ke dashboard -
+    // supaya mahasiswa tidak perlu klik lagi setelah selesai onboarding.
+    const dataTerbaru = { ...oldData, ...updateData };
+    if (req.query.wajib === '1' && isBiodataLengkap(dataTerbaru)) {
+      return res.redirect('/mahasiswa/dashboard?biodataLengkap=1');
+    }
     res.redirect('/mahasiswa/biodata?success=updated');
   } catch (error) {
     console.error('Error update biodata:', error);

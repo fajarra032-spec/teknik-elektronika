@@ -30,6 +30,12 @@
             <div class="col-7"><%= mk.semester %></div>
           </div>
           <div class="row mb-2">
+            <div class="col-5 text-muted">Konsentrasi</div>
+            <div class="col-7">
+              <span class="badge-konsentrasi <%= mk.konsentrasiLabel.toLowerCase() %>"><%= mk.konsentrasiLabel %></span>
+            </div>
+          </div>
+          <div class="row mb-2">
             <div class="col-5 text-muted">Jadwal</div>
             <div class="col-7"><%= mk.jadwal || '-' %></div>
           </div>
