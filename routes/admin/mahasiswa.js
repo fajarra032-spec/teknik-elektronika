@@ -22,6 +22,25 @@ router.use(isAdmin);
 // FUNGSI BANTU
 // ============================================================================
 
+/**
+ * Daftar dosen (untuk dropdown assign "Dosen PA" / Pembimbing Akademik) -
+ * dipakai di form tambah/edit mahasiswa, assign massal, dan detail.
+ */
+async function getAllDosenPa() {
+  const snapshot = await db.collection('dosen').orderBy('nama').get();
+  return snapshot.docs.map(doc => {
+    const d = doc.data();
+    return {
+      id: doc.id,
+      nama: d.nama,
+      // Dosen yang dibuat lewat form standar (/admin/dosen atau /admin/users)
+      // menyimpan identitasnya di field `nip`, sementara sebagian data lama
+      // (mis. hasil impor SK) memakai `nidn`/`nuptk` - tampilkan yang ada.
+      nidn: d.nidn || d.nip || d.nuptk || ''
+    };
+  });
+}
+
 async function getMahasiswaFotoFolderId() {
   const folderName = 'Foto_Mahasiswa';
   const query = await drive.files.list({
@@ -111,12 +130,14 @@ router.get('/', async (req, res) => {
 
     const angkatanList = Array.from(angkatanSet).sort().reverse();
     const kelasList = Array.from(kelasSet).sort();
+    const dosenPaList = await getAllDosenPa();
 
     res.render('admin/mahasiswa_list', {
       title: 'Kelola Mahasiswa',
       mahasiswa: mahasiswaList,
       angkatanList,
       kelasList,
+      dosenPaList,
       filterAngkatan: angkatan || '',
       filterSemester: semester || '',
       filterStatusMagang: statusMagang || '',
@@ -139,7 +160,7 @@ router.get('/', async (req, res) => {
 // TAMBAH MAHASISWA
 // ============================================================================
 
-router.get('/create', (req, res) => {
+router.get('/create', async (req, res) => {
   res.render('admin/mahasiswa_form', {
     title: 'Tambah Mahasiswa',
     mahasiswa: null,
@@ -148,13 +169,14 @@ router.get('/create', (req, res) => {
     statusMahasiswaOptions: STATUS_MAHASISWA_OPTIONS,
     konsentrasiOptions: KONSENTRASI_OPTIONS,
     agamaOptions: AGAMA_OPTIONS,
-    defaultAgama: DEFAULT_AGAMA
+    defaultAgama: DEFAULT_AGAMA,
+    dosenPaList: await getAllDosenPa()
   });
 });
 
 router.post('/', upload.single('foto'), async (req, res) => {
   try {
-    const { nim, nama, email, password, semester, statusMagang, statusMahasiswa, kelas, konsentrasi, agama } = req.body;
+    const { nim, nama, email, password, semester, statusMagang, statusMahasiswa, kelas, konsentrasi, agama, dosenPaId } = req.body;
     const file = req.file;
 
     if (!nim || !nama || !email || !password) {
@@ -189,6 +211,20 @@ router.post('/', upload.single('foto'), async (req, res) => {
     const finalMagang = MAGANG_OPTIONS.includes(statusMagang) ? statusMagang : null;
     const finalStatus = STATUS_MAHASISWA_OPTIONS.includes(statusMahasiswa) ? statusMahasiswa : 'Aktif';
 
+    // Dosen PA (Pembimbing Akademik): simpan id + nama/nidn ter-denormalisasi
+    // supaya tidak perlu join tiap kali ditampilkan (mis. di cetak KRS).
+    let dosenPaData = { dosenPaId: null, dosenPaNama: null, dosenPaNidn: null };
+    if (dosenPaId) {
+      const dosenDoc = await db.collection('dosen').doc(dosenPaId).get();
+      if (dosenDoc.exists) {
+        dosenPaData = {
+          dosenPaId,
+          dosenPaNama: dosenDoc.data().nama || null,
+          dosenPaNidn: dosenDoc.data().nidn || null
+        };
+      }
+    }
+
     await db.collection('users').doc(userRecord.uid).set({
       nim,
       nama,
@@ -204,6 +240,7 @@ router.post('/', upload.single('foto'), async (req, res) => {
       // Agama: kalau tidak dipilih/tidak valid, default ke Islam (bisa
       // diubah admin kapan saja lewat form edit).
       agama: AGAMA_OPTIONS.includes(agama) ? agama : DEFAULT_AGAMA,
+      ...dosenPaData,
       createdAt: new Date().toISOString(),
     });
 
@@ -278,7 +315,8 @@ router.get('/:id/edit', async (req, res) => {
       statusMahasiswaOptions: STATUS_MAHASISWA_OPTIONS,
       konsentrasiOptions: KONSENTRASI_OPTIONS,
       agamaOptions: AGAMA_OPTIONS,
-      defaultAgama: DEFAULT_AGAMA
+      defaultAgama: DEFAULT_AGAMA,
+      dosenPaList: await getAllDosenPa()
     });
   } catch (error) {
     console.error('Error memuat form edit mahasiswa:', error);
@@ -291,7 +329,7 @@ router.get('/:id/edit', async (req, res) => {
 
 router.post('/:id/update', upload.single('foto'), async (req, res) => {
   try {
-    const { nim, nama, email, semester, statusMagang, statusMahasiswa, kelas, konsentrasi, agama } = req.body;
+    const { nim, nama, email, semester, statusMagang, statusMahasiswa, kelas, konsentrasi, agama, dosenPaId } = req.body;
     const file = req.file;
     const mahasiswaRef = db.collection('users').doc(req.params.id);
     const mahasiswaDoc = await mahasiswaRef.get();
@@ -321,6 +359,28 @@ router.post('/:id/update', upload.single('foto'), async (req, res) => {
         : (oldData.agama || DEFAULT_AGAMA),
       updatedAt: new Date().toISOString(),
     };
+
+    // Dosen PA (Pembimbing Akademik): kalau field dikirim dan kosong berarti
+    // admin sengaja mengosongkan penugasan. Kalau diisi, lookup nama/nidn
+    // dosennya untuk disimpan ter-denormalisasi (dipakai di cetak KRS, dll).
+    if (dosenPaId !== undefined) {
+      if (dosenPaId) {
+        const dosenDoc = await db.collection('dosen').doc(dosenPaId).get();
+        if (dosenDoc.exists) {
+          updateData.dosenPaId = dosenPaId;
+          updateData.dosenPaNama = dosenDoc.data().nama || null;
+          updateData.dosenPaNidn = dosenDoc.data().nidn || null;
+        } else {
+          updateData.dosenPaId = null;
+          updateData.dosenPaNama = null;
+          updateData.dosenPaNidn = null;
+        }
+      } else {
+        updateData.dosenPaId = null;
+        updateData.dosenPaNama = null;
+        updateData.dosenPaNidn = null;
+      }
+    }
 
     if (file) {
       const folderId = await getMahasiswaFotoFolderId();
@@ -686,6 +746,65 @@ router.post('/bulk-kelas', async (req, res) => {
   } catch (error) {
     console.error('Error bulk assign kelas:', error);
     req.session.importError = 'Gagal mengubah kelas mahasiswa: ' + error.message;
+    res.redirect('/admin/mahasiswa');
+  }
+});
+
+// ============================================================================
+// ASSIGN DOSEN PA MASSAL (pilih beberapa mahasiswa via checkbox di daftar,
+// lalu set Dosen Pembimbing Akademik mereka sekaligus)
+// ============================================================================
+
+router.post('/bulk-dosen-pa', async (req, res) => {
+  try {
+    let { mahasiswaIds, dosenPaId } = req.body;
+    if (!mahasiswaIds) {
+      req.session.importError = 'Tidak ada mahasiswa yang dipilih';
+      return res.redirect('/admin/mahasiswa');
+    }
+    if (!Array.isArray(mahasiswaIds)) mahasiswaIds = [mahasiswaIds];
+
+    let dosenPaData = { dosenPaId: null, dosenPaNama: null, dosenPaNidn: null };
+    if (dosenPaId) {
+      const dosenDoc = await db.collection('dosen').doc(dosenPaId).get();
+      if (!dosenDoc.exists) {
+        req.session.importError = 'Dosen PA yang dipilih tidak ditemukan';
+        return res.redirect('/admin/mahasiswa');
+      }
+      dosenPaData = {
+        dosenPaId,
+        dosenPaNama: dosenDoc.data().nama || null,
+        dosenPaNidn: dosenDoc.data().nidn || null
+      };
+    }
+
+    // Firestore batch max 500 operasi - chunking untuk jaga-jaga kalau
+    // suatu saat dipakai untuk angkatan besar sekaligus.
+    const chunkSize = 450;
+    for (let i = 0; i < mahasiswaIds.length; i += chunkSize) {
+      const chunk = mahasiswaIds.slice(i, i + chunkSize);
+      const batch = db.batch();
+      chunk.forEach(id => {
+        batch.update(db.collection('users').doc(id), {
+          ...dosenPaData,
+          updatedAt: new Date().toISOString()
+        });
+      });
+      await batch.commit();
+    }
+
+    req.session.importResult = {
+      success: mahasiswaIds.length,
+      failed: 0,
+      errors: [],
+      pesan: dosenPaData.dosenPaNama
+        ? `${mahasiswaIds.length} mahasiswa berhasil ditugaskan ke Dosen PA ${dosenPaData.dosenPaNama}`
+        : `Dosen PA berhasil dikosongkan untuk ${mahasiswaIds.length} mahasiswa`
+    };
+    res.redirect('/admin/mahasiswa?import=done');
+  } catch (error) {
+    console.error('Error bulk assign dosen PA:', error);
+    req.session.importError = 'Gagal menugaskan Dosen PA: ' + error.message;
     res.redirect('/admin/mahasiswa');
   }
 });

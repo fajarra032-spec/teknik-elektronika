@@ -285,8 +285,8 @@
         <p class="mb-0">Disetujui</p>
         <p>Pembimbing Akademik,</p>
         <div class="area-ttd"></div>
-        <p class="nama-ttd">Ariani Amri, S.Pd.,M.Pd.</p>
-        <p class="nip-ttd">NIDN. 0918029701</p>
+        <p class="nama-ttd"><%= user.dosenPaNama || '-' %></p>
+        <p class="nip-ttd"><%= user.dosenPaNidn ? 'NIDN. ' + user.dosenPaNidn : '' %></p>
       </div>
 
       <div class="kolom-tanda">

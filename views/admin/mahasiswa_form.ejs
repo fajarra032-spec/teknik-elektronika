@@ -182,6 +182,15 @@
             </select>
             <small class="text-muted">Menentukan mata kuliah Pendidikan Agama semester 1 otomatis</small>
           </div>
+          <div class="col-md-3 mb-3">
+            <label for="dosenPaId" class="form-label">Dosen PA (Pembimbing Akademik)</label>
+            <select class="form-select" id="dosenPaId" name="dosenPaId">
+              <option value="">- Belum ditentukan -</option>
+              <% (typeof dosenPaList !== 'undefined' ? dosenPaList : []).forEach(d => { %>
+                <option value="<%= d.id %>" <%= mahasiswa && mahasiswa.dosenPaId === d.id ? 'selected' : '' %>><%= d.nama %><%= d.nidn ? ' (NIDN ' + d.nidn + ')' : '' %></option>
+              <% }) %>
+            </select>
+          </div>
         </div>
 
         <div class="row">

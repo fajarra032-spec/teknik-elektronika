@@ -305,6 +305,25 @@
     </form>
   </div>
 
+  <!-- Toolbar assign Dosen PA massal - toolbar terpisah, pakai checkbox yang sama -->
+  <div id="bulkDosenPaBar" class="filter-card mb-3" style="display:none;">
+    <form method="POST" action="/admin/mahasiswa/bulk-dosen-pa" id="bulkDosenPaForm" class="d-flex flex-wrap gap-2 align-items-end">
+      <div id="bulkDosenPaIdsContainer"></div>
+      <div>
+        <label class="form-label fw-semibold mb-1"><span id="bulkDosenPaCount">0</span> mahasiswa dipilih - tetapkan Dosen PA:</label>
+        <select name="dosenPaId" class="form-select form-select-sm" required style="min-width:220px;">
+          <option value="">- Pilih Dosen PA -</option>
+          <% dosenPaList.forEach(d => { %>
+            <option value="<%= d.id %>"><%= d.nama %><%= d.nidn ? ' (NIDN ' + d.nidn + ')' : '' %></option>
+          <% }) %>
+        </select>
+      </div>
+      <button type="submit" class="btn-filter btn-sm">Terapkan</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearBulkKelasSelection()">Batal Pilih</button>
+    </form>
+  </div>
+
+
   <div class="table-container">
     <div class="table-responsive">
       <table class="table mahasiswa-table">
@@ -321,13 +340,14 @@
             <th>Status Magang</th>
             <th>Status Mahasiswa</th>
             <th>Biodata</th>
+            <th>Dosen PA</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
           <% if (mahasiswa.length === 0) { %>
             <tr>
-              <td colspan="11" class="text-center py-5">
+              <td colspan="12" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <h4>Belum Ada Data Mahasiswa</h4>
@@ -378,6 +398,13 @@
                   <span class="badge bg-success"><i class="bi bi-check-circle"></i> Lengkap</span>
                 <% } else { %>
                   <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle"></i> Belum</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (m.dosenPaNama) { %>
+                  <span class="badge bg-info text-dark"><%= m.dosenPaNama %></span>
+                <% } else { %>
+                  <span class="text-muted">-</span>
                 <% } %>
               </td>
               <td>
@@ -454,7 +481,7 @@
     }
   }
 
-  // ===== Assign kelas massal (checkbox pilih + toolbar) =====
+  // ===== Assign kelas / Dosen PA massal (checkbox pilih + toolbar) =====
   function toggleAllMahasiswaCheckbox(source) {
     document.querySelectorAll('.mahasiswaCheckbox').forEach(cb => { cb.checked = source.checked; });
     updateBulkKelasBar();
@@ -462,19 +489,35 @@
 
   function updateBulkKelasBar() {
     const checked = document.querySelectorAll('.mahasiswaCheckbox:checked');
+
     const bar = document.getElementById('bulkKelasBar');
     const countEl = document.getElementById('bulkKelasCount');
     const container = document.getElementById('bulkKelasIdsContainer');
     container.innerHTML = '';
+
+    const paBar = document.getElementById('bulkDosenPaBar');
+    const paCountEl = document.getElementById('bulkDosenPaCount');
+    const paContainer = document.getElementById('bulkDosenPaIdsContainer');
+    paContainer.innerHTML = '';
+
     checked.forEach(cb => {
       const input = document.createElement('input');
       input.type = 'hidden';
       input.name = 'mahasiswaIds';
       input.value = cb.value;
       container.appendChild(input);
+
+      const input2 = document.createElement('input');
+      input2.type = 'hidden';
+      input2.name = 'mahasiswaIds';
+      input2.value = cb.value;
+      paContainer.appendChild(input2);
     });
+
     countEl.textContent = checked.length;
     bar.style.display = checked.length > 0 ? 'block' : 'none';
+    paCountEl.textContent = checked.length;
+    paBar.style.display = checked.length > 0 ? 'block' : 'none';
   }
 
   function clearBulkKelasSelection() {
@@ -488,6 +531,15 @@
     const count = document.querySelectorAll('.mahasiswaCheckbox:checked').length;
     const kelasVal = this.querySelector('input[name="kelas"]').value.trim();
     if (!confirm(`Masukkan ${count} mahasiswa ke kelas "${kelasVal}"?`)) {
+      e.preventDefault();
+    }
+  });
+
+  document.getElementById('bulkDosenPaForm').addEventListener('submit', function(e) {
+    const count = document.querySelectorAll('.mahasiswaCheckbox:checked').length;
+    const select = this.querySelector('select[name="dosenPaId"]');
+    const dosenNama = select.options[select.selectedIndex].text;
+    if (!confirm(`Tetapkan Dosen PA "${dosenNama}" untuk ${count} mahasiswa terpilih?`)) {
       e.preventDefault();
     }
   });

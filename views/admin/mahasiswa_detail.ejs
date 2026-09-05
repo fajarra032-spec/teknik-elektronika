@@ -66,6 +66,13 @@
             <div class="col-sm-8"><%= mahasiswa.konsentrasi || '-' %></div>
           </div>
           <div class="row mb-2">
+            <div class="col-sm-4 text-muted">Dosen PA</div>
+            <div class="col-sm-8">
+              <%= mahasiswa.dosenPaNama || '-' %>
+              <% if (mahasiswa.dosenPaNidn) { %><span class="text-muted small">(NIDN <%= mahasiswa.dosenPaNidn %>)</span><% } %>
+            </div>
+          </div>
+          <div class="row mb-2">
             <div class="col-sm-4 text-muted">Agama</div>
             <div class="col-sm-8"><%= mahasiswa.agama || 'Islam (default)' %></div>
           </div>
