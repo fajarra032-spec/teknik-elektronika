@@ -30,6 +30,7 @@ const kurikulumRouter = require('./kurikulum');
 const nilaiRouter = require('./nilai');
 const rubrikRouter = require('./rubrik');
 const mahasiswaRouter = require('./mahasiswa');
+const mahasiswaPaRouter = require('./mahasiswaPa');
 const magangPeriodRouter = require('./magangPeriod');
 const chatRouter = require('./chat');
 const sertifikatRouter = require('./sertifikat');
@@ -113,6 +114,7 @@ router.use('/kurikulum', kurikulumRouter);
 router.use('/nilai', nilaiRouter);
 router.use('/rubrik', rubrikRouter);
 router.use('/mahasiswa', mahasiswaRouter);
+router.use('/mahasiswa-pa', mahasiswaPaRouter);
 
 // ============================================================================
 // RUTE UTAMA DOSEN

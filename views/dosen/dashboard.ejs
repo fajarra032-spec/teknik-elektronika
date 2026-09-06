@@ -392,6 +392,7 @@
         <div class="profile-stats-vertical">
           <div><i class="bi bi-book me-2"></i> Mata Kuliah: <strong><%= mkCount || 0 %></strong></div>
           <div><i class="bi bi-people me-2"></i> Mahasiswa Bimbingan: <strong><%= totalMahasiswa || 0 %></strong></div>
+          <div><i class="bi bi-person-check me-2"></i> Mahasiswa PA: <strong><%= totalMahasiswaPa || 0 %></strong></div>
           <div><i class="bi bi-calendar-week me-2"></i> Semester: <strong><%= currentSemester.label %></strong></div>
         </div>
       </div>
@@ -531,6 +532,7 @@
       <div class="row g-4">
         <div class="col-6 col-md-3"><a href="/dosen/tugas/create" class="quick-card"><div class="quick-icon"><i class="bi bi-plus-circle"></i></div><h6>Buat Tugas</h6><p>Buat tugas baru</p></a></div>
         <div class="col-6 col-md-3"><a href="/dosen/tugas" class="quick-card"><div class="quick-icon"><i class="bi bi-list-task"></i></div><h6>Daftar Tugas</h6><p>Lihat semua tugas</p></a></div>
+        <div class="col-6 col-md-3"><a href="/dosen/mahasiswa-pa" class="quick-card"><div class="quick-icon"><i class="bi bi-person-check-fill"></i></div><h6>Mahasiswa PA</h6><p>Bimbingan akademik Anda</p></a></div>
         <div class="col-6 col-md-3"><a href="/dosen/mk" class="quick-card"><div class="quick-icon"><i class="bi bi-book"></i></div><h6>Mata Kuliah</h6><p>Lihat progress</p></a></div>
         <div class="col-6 col-md-3"><a href="/dosen/nilai" class="quick-card"><div class="quick-icon"><i class="bi bi-bar-chart"></i></div><h6>Input Nilai</h6><p>Rekap nilai</p></a></div>
         <div class="col-6 col-md-3"><a href="/dosen/rubrik" class="quick-card"><div class="quick-icon"><i class="bi bi-clipboard-data"></i></div><h6>Rubrik Penilaian</h6><p>Kehadiran, sikap, keaktifan, dll</p></a></div>

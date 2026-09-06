@@ -247,6 +247,23 @@
                    placeholder="Senin 08:00-10:30, Ruang A101">
           </div>
 
+          <!-- Kelas paralel (opsional) -->
+          <div class="col-md-4">
+            <label for="kelas" class="form-label">Kelas (kalau ada kelas paralel)</label>
+            <input type="text" class="form-control" id="kelas" name="kelas" list="kelasDatalist"
+                   value="<%= mk && mk.kelas ? mk.kelas : '' %>"
+                   placeholder="mis. ELK1A (kosongkan kalau tidak dipisah per kelas)">
+            <datalist id="kelasDatalist">
+              <% (typeof kelasList !== 'undefined' ? kelasList : []).forEach(k => { %><option value="<%= k %>"><% }) %>
+            </datalist>
+            <small class="text-muted">
+              Kode MK yang sama boleh dibuat lebih dari sekali dengan Kelas berbeda
+              (mis. WUD3208 untuk ELK1A dan WUD3208 untuk ELK1B) - masing-masing
+              bisa punya dosen & jadwal sendiri, dan mahasiswa otomatis masuk ke
+              MK sesuai kelasnya sendiri saat KRS diaktifkan.
+            </small>
+          </div>
+
           <!-- Dosen Pengampu per Periode -->
           <div class="col-12">
             <label class="form-label">Dosen Pengampu</label>

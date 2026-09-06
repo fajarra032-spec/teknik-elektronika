@@ -244,6 +244,14 @@
           <span class="info-label">Angkatan</span>
           <span class="info-value">: <%= angkatan %></span>
         </div>
+        <div class="info-item">
+          <span class="info-label">Kelas</span>
+          <span class="info-value">: <%= user.kelas || 'Belum ditentukan' %></span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Dosen PA</span>
+          <span class="info-value">: <%= user.dosenPaNama || 'Belum ditentukan' %></span>
+        </div>
       </div>
     </div>
   </div>

@@ -256,6 +256,7 @@
         <thead>
           <tr>
             <th>Kode</th>
+            <th>Kelas</th>
             <th>Nama MK</th>
             <th>SKS</th>
             <th>Semester</th>
@@ -268,7 +269,7 @@
         <tbody>
           <% if (matakuliah.length === 0) { %>
             <tr>
-              <td colspan="8" class="text-center py-5">
+              <td colspan="9" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <h4>Belum Ada Data Mata Kuliah</h4>
@@ -280,6 +281,13 @@
             <% matakuliah.forEach(mk => { %>
             <tr>
               <td><span class="badge bg-primary bg-opacity-10 text-primary"><%= mk.kode %></span></td>
+              <td>
+                <% if (mk.kelas) { %>
+                  <span class="badge bg-info text-dark"><%= mk.kelas %></span>
+                <% } else { %>
+                  <span class="text-muted">semua kelas</span>
+                <% } %>
+              </td>
               <td><strong><%= mk.nama %></strong></td>
               <td class="text-center"><span class="fw-semibold"><%= mk.sks %></span></td>
               <td class="text-center"><%= mk.semester || '-' %></td>

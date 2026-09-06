@@ -161,6 +161,10 @@ async function aktifkanPaketKrs(db, mahasiswaId, semesterNumber, konsentrasi, ac
   // Salin paket dasar supaya tidak mengubah PAKET_KURIKULUM asli.
   let paket = [...paketDasar];
 
+  // Ambil profil mahasiswa sekali saja (dipakai untuk agama & kelas).
+  const mahasiswaSnap = await db.collection('users').doc(mahasiswaId).get();
+  const mahasiswaData = mahasiswaSnap.exists ? mahasiswaSnap.data() : {};
+
   // Khusus Semester 1: sisipkan mata kuliah "Pendidikan Agama" yang sesuai
   // berdasarkan field `agama` di profil mahasiswa (collection `users`).
   // Default ke DEFAULT_AGAMA kalau field-nya kosong/belum diisi/tidak valid
@@ -168,23 +172,43 @@ async function aktifkanPaketKrs(db, mahasiswaId, semesterNumber, konsentrasi, ac
   // form edit mahasiswa lalu jalankan ulang aktivasi paket kapan saja.
   let agamaDipakai = null;
   if (semesterNumber === 1) {
-    const mahasiswaSnap = await db.collection('users').doc(mahasiswaId).get();
-    const agamaProfil = mahasiswaSnap.exists ? mahasiswaSnap.data().agama : null;
+    const agamaProfil = mahasiswaData.agama;
     agamaDipakai = AGAMA_OPTIONS.includes(agamaProfil) ? agamaProfil : DEFAULT_AGAMA;
     paket = [...paket, { kode: KODE_AGAMA[agamaDipakai], jenis: 'Wajib Umum' }];
   }
 
-  // Cari mataKuliah berdasarkan kode (paralel)
+  // Cari mataKuliah berdasarkan kode (paralel). Kalau satu kode punya lebih
+  // dari satu dokumen (kelas paralel, mis. WUD3208 untuk ELK1A & ELK1B -
+  // masing-masing dosen/jadwal beda, lihat field `kelas` di helpers admin
+  // matakuliah), pilih dokumen yang `kelas`-nya PERSIS SAMA dengan kelas
+  // mahasiswa ini - supaya mahasiswa tidak digabung ke kelas paralel lain.
+  const kelasMahasiswa = mahasiswaData.kelas || null;
+
   const kodeList = paket.map(p => p.kode);
   const mkSnapshots = await Promise.all(
-    kodeList.map(kode => db.collection('mataKuliah').where('kode', '==', kode).limit(1).get())
+    kodeList.map(kode => db.collection('mataKuliah').where('kode', '==', kode).get())
   );
 
   const mkIds = [];
   const kodeTidakDitemukan = [];
+  const kelasTidakCocok = []; // kode yang ADA tapi tidak ada versi untuk kelas mahasiswa ini
   mkSnapshots.forEach((snap, i) => {
-    if (snap.empty) kodeTidakDitemukan.push(kodeList[i]);
-    else mkIds.push(snap.docs[0].id);
+    if (snap.empty) {
+      kodeTidakDitemukan.push(kodeList[i]);
+      return;
+    }
+    if (snap.size === 1) {
+      // Cuma satu dokumen untuk kode ini -> tidak dipisah per kelas, dipakai bareng semua kelas (perilaku lama)
+      mkIds.push(snap.docs[0].id);
+      return;
+    }
+    // Lebih dari satu dokumen dengan kode sama -> MK ini dipisah per kelas paralel
+    const cocok = snap.docs.find(doc => (doc.data().kelas || null) === kelasMahasiswa);
+    if (cocok) {
+      mkIds.push(cocok.id);
+    } else {
+      kelasTidakCocok.push(kodeList[i]);
+    }
   });
 
   if (mkIds.length === 0) {
@@ -204,11 +228,14 @@ async function aktifkanPaketKrs(db, mahasiswaId, semesterNumber, konsentrasi, ac
   if (kodeTidakDitemukan.length > 0) {
     message += ` PERHATIAN: kode berikut tidak ditemukan di data Mata Kuliah dan DILEWATI: ${kodeTidakDitemukan.join(', ')}.`;
   }
+  if (kelasTidakCocok.length > 0) {
+    message += ` PERHATIAN: kode berikut sudah dipisah per kelas paralel tapi belum ada versi untuk kelas mahasiswa ini ("${kelasMahasiswa || 'belum diisi'}") dan DILEWATI: ${kelasTidakCocok.join(', ')} - buat dulu MK dengan kode sama & field Kelas = "${kelasMahasiswa || '(isi kelas mahasiswa dulu)'}" di menu Mata Kuliah.`;
+  }
   if (semesterNumber === 1 && agamaDipakai) {
     message += ` Mata kuliah Pendidikan Agama disertakan otomatis: ${agamaDipakai} (${KODE_AGAMA[agamaDipakai]}) - sesuai field "Agama" di profil mahasiswa. Kalau agamanya salah/berubah, ubah dulu lewat form edit mahasiswa, lalu jalankan ulang aktivasi paket (mata kuliah agama lama TIDAK otomatis dihapus - hapus manual lewat "Buat KRS" kalau perlu).`;
   }
 
-  return { ok: true, message, jumlahBaru: hasil.jumlahBaru, kodeTidakDitemukan };
+  return { ok: true, message, jumlahBaru: hasil.jumlahBaru, kodeTidakDitemukan, kelasTidakCocok };
 }
 
 /**

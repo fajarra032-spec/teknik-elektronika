@@ -22,6 +22,19 @@ async function getDosenList() {
   return dosenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
+/**
+ * Daftar kelas yang sedang dipakai mahasiswa (mis. ELK1A, ELK1B, ELK1ON) -
+ * dipakai sebagai saran (datalist) saat admin membuat/mengedit mata kuliah
+ * untuk kelas paralel tertentu. Sumbernya field `kelas` di collection
+ * `users`, SAMA seperti yang dipakai di /admin/mahasiswa, supaya konsisten.
+ */
+async function getDistinctKelasMahasiswa() {
+  const snapshot = await db.collection('users').where('role', '==', 'mahasiswa').get();
+  const kelasSet = new Set();
+  snapshot.docs.forEach(doc => { if (doc.data().kelas) kelasSet.add(doc.data().kelas); });
+  return Array.from(kelasSet).sort();
+}
+
 // Konsentrasi mata kuliah semester 3 disimpan sebagai bagian dari teks
 // bebas field `jenis` (mis. "Pilihan Teknik Elektronika (Instrumentasi)"),
 // BUKAN field terpisah - fungsi ini menerjemahkannya jadi label singkat
@@ -175,6 +188,7 @@ router.get('/create', async (req, res) => {
     const periodeOptions = academicHelper.generatePeriodeOptions();
     const activePeriodeId = academicHelper.getActivePeriodeId();
     const selectedPeriodeId = req.query.periode || activePeriodeId;
+    const kelasList = await getDistinctKelasMahasiswa();
 
     res.render('admin/matakuliah_form', {
       title: 'Tambah Mata Kuliah',
@@ -184,7 +198,8 @@ router.get('/create', async (req, res) => {
       activePeriodeId,
       selectedPeriodeId,
       selectedDosenIds: [],
-      pengampuHistori: []
+      pengampuHistori: [],
+      kelasList
     });
   } catch (error) {
     console.error('Error:', error);
@@ -194,17 +209,27 @@ router.get('/create', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { kode, nama, sks, semester, periodeId, dosenIds, jadwal, isPDK } = req.body;
+    const { kode, nama, sks, semester, periodeId, dosenIds, jadwal, isPDK, kelas } = req.body;
 
     // Validasi
     if (!kode || !nama || !sks || !semester) {
       return res.status(400).send('Kode, Nama, SKS, dan Semester wajib diisi');
     }
 
-    // Cek duplikasi kode
-    const existing = await db.collection('mataKuliah').where('kode', '==', kode).get();
-    if (!existing.empty) {
-      return res.status(400).send('Kode MK sudah digunakan');
+    const kelasFinal = kelas ? kelas.trim().toUpperCase() : null;
+
+    // Cek duplikasi kode+kelas (BUKAN kode saja) - supaya satu kode MK boleh
+    // punya beberapa dokumen untuk kelas paralel berbeda (mis. WUD3208 untuk
+    // ELK1A dan ELK1B, masing-masing dengan dosen/jadwal sendiri), tapi tetap
+    // mencegah entri persis sama (kode+kelas identik) dibuat dobel.
+    const existingSnapshot = await db.collection('mataKuliah').where('kode', '==', kode).get();
+    const sudahAdaKelasSama = existingSnapshot.docs.some(doc => (doc.data().kelas || null) === kelasFinal);
+    if (sudahAdaKelasSama) {
+      return res.status(400).send(
+        kelasFinal
+          ? `Kode MK "${kode}" untuk kelas "${kelasFinal}" sudah ada. Kalau mau tambah kelas paralel lain untuk kode yang sama, isi field Kelas dengan nama kelas yang BEDA (mis. ELK1B).`
+          : `Kode MK "${kode}" sudah ada (tanpa kelas spesifik). Kalau mau membuat versi per-kelas, isi field Kelas.`
+      );
     }
 
     // Proses isPDK (checkbox)
@@ -221,6 +246,7 @@ router.post('/', async (req, res) => {
       nama,
       sks: parseInt(sks),
       semester: parseInt(semester),
+      kelas: kelasFinal,
       dosenIds: [], // akan diisi lewat savePengampuPeriode di bawah kalau ada
       jadwal: jadwal || '',
       isPDK: isPDKFlag,
@@ -299,6 +325,7 @@ router.get('/:id/edit', async (req, res) => {
     const dosenMap = {};
     dosenList.forEach(d => { dosenMap[d.id] = d.nama; });
     const pengampuHistori = await getRiwayatPengampu(mk.id, dosenMap);
+    const kelasList = await getDistinctKelasMahasiswa();
 
     res.render('admin/matakuliah_form', {
       title: 'Edit Mata Kuliah',
@@ -308,7 +335,8 @@ router.get('/:id/edit', async (req, res) => {
       activePeriodeId,
       selectedPeriodeId,
       selectedDosenIds,
-      pengampuHistori
+      pengampuHistori,
+      kelasList
     });
   } catch (error) {
     console.error('Error:', error);
@@ -318,16 +346,23 @@ router.get('/:id/edit', async (req, res) => {
 
 router.post('/:id/update', async (req, res) => {
   try {
-    const { kode, nama, sks, semester, periodeId, dosenIds, jadwal, isPDK } = req.body;
+    const { kode, nama, sks, semester, periodeId, dosenIds, jadwal, isPDK, kelas } = req.body;
     const mkRef = db.collection('mataKuliah').doc(req.params.id);
+    const kelasFinal = kelas ? kelas.trim().toUpperCase() : null;
 
-    // Validasi kode unik
+    // Validasi kode+kelas unik (lihat penjelasan lengkap di POST '/' - satu
+    // kode boleh dipakai lebih dari sekali asal kelasnya beda)
     const mkDoc = await mkRef.get();
     const oldData = mkDoc.data();
-    if (kode !== oldData.kode) {
-      const existing = await db.collection('mataKuliah').where('kode', '==', kode).get();
-      if (!existing.empty) {
-        return res.status(400).send('Kode MK sudah digunakan');
+    if (kode !== oldData.kode || kelasFinal !== (oldData.kelas || null)) {
+      const existingSnapshot = await db.collection('mataKuliah').where('kode', '==', kode).get();
+      const bentrok = existingSnapshot.docs.some(doc => doc.id !== req.params.id && (doc.data().kelas || null) === kelasFinal);
+      if (bentrok) {
+        return res.status(400).send(
+          kelasFinal
+            ? `Kode MK "${kode}" untuk kelas "${kelasFinal}" sudah dipakai MK lain.`
+            : `Kode MK "${kode}" (tanpa kelas spesifik) sudah dipakai MK lain.`
+        );
       }
     }
 
@@ -338,6 +373,7 @@ router.post('/:id/update', async (req, res) => {
       nama,
       sks: parseInt(sks),
       semester: parseInt(semester),
+      kelas: kelasFinal,
       jadwal: jadwal || '',
       isPDK: isPDKFlag,
       updatedAt: new Date().toISOString()

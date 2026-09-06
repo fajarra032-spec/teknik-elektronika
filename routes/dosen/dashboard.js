@@ -90,6 +90,14 @@ router.get('/', async (req, res) => {
     const totalMahasiswa = mahasiswaBimbinganIds.size;
 
     // ========================================================================
+    // 2b. Total mahasiswa PA (Pembimbing Akademik) - beda dari bimbingan
+    // magang di atas, ini berdasarkan field dosenPaId di dokumen mahasiswa
+    // ========================================================================
+    const totalMahasiswaPa = await hitungJumlah(
+      db.collection('users').where('role', '==', 'mahasiswa').where('dosenPaId', '==', dosen.id)
+    );
+
+    // ========================================================================
     // 3 & 4. Tugas aktif + Pengumpulan belum dinilai
     // ========================================================================
     let tugasAktif = 0;
@@ -203,6 +211,7 @@ router.get('/', async (req, res) => {
       totalPertemuanMax,
       persentasePengajaran,
       totalMahasiswa,
+      totalMahasiswaPa,
       tugasAktif,
       pengumpulanBelumDinilai,
       events,
