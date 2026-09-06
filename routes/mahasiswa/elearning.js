@@ -13,6 +13,7 @@ const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif } = require('../../helpers/nilaiHelper');
+const { periodeKeUrutan } = require('../../helpers/academicHelper');
 const { mataKuliahCache, tugasAktifCache, dosenCache } = require('../../helpers/cache');
 
 // ============================================================================
@@ -38,16 +39,50 @@ function sanitizeName(str) {
 }
 
 /**
+ * Ubah label periode ("Ganjil 2026/2027") jadi angka urutan yang bisa
+ * dibandingkan, supaya daftar periode di dropdown bisa diurutkan dari yang
+ * terbaru. Label yang tidak dikenali formatnya ditaruh paling belakang.
+ */
+function parseLabelKeUrutan(label) {
+  const match = (label || '').match(/^(Ganjil|Genap)\s+(\d{4})\/(\d{4})$/);
+  if (!match) return -1;
+  const [, semester, tahunAwal] = match;
+  return periodeKeUrutan(parseInt(tahunAwal, 10), semester);
+}
+
+/**
+ * Daftar SEMUA periode/tahun akademik yang pernah dipunyai mahasiswa ini
+ * (dari field `semester` di dokumen enrollment - lihat aktifkanPaketKrs()
+ * di helpers/paketKurikulumHelper.js, yang mengisi field ini dengan label
+ * seperti "Ganjil 2025/2026"). Diurutkan terbaru dulu - dipakai untuk
+ * mengisi dropdown "Tahun Akademik" di halaman ELK-Learning, supaya
+ * mahasiswa semester 3 ke atas tidak melihat mata kuliah semester
+ * lama-nya bercampur dengan yang sekarang.
+ */
+async function getDaftarPeriodeMahasiswa(userId) {
+  const snapshot = await db.collection('enrollment').where('userId', '==', userId).get();
+  const labelSet = new Set();
+  snapshot.docs.forEach(doc => {
+    if (doc.data().semester) labelSet.add(doc.data().semester);
+  });
+  return Array.from(labelSet).sort((a, b) => parseLabelKeUrutan(b) - parseLabelKeUrutan(a));
+}
+
+/**
  * Mendapatkan mata kuliah yang diambil mahasiswa (dari enrollment)
  * @param {string} userId - UID mahasiswa
+ * @param {string} [periodeLabel] - kalau diisi, cuma ambil enrollment periode
+ *   ini (mis. "Ganjil 2026/2027"). Kalau kosong, ambil SEMUA periode
+ *   (perilaku lama, dipakai tempat lain yang belum butuh filter periode).
  * @returns {Promise<Array>} daftar mata kuliah dengan detail
  */
-async function getMataKuliahDiambil(userId) {
+async function getMataKuliahDiambil(userId, periodeLabel) {
   try {
-    const enrollmentSnapshot = await db.collection('enrollment')
+    let query = db.collection('enrollment')
       .where('userId', '==', userId)
-      .where('status', '==', 'active')
-      .get();
+      .where('status', '==', 'active');
+    if (periodeLabel) query = query.where('semester', '==', periodeLabel);
+    const enrollmentSnapshot = await query.get();
 
     // Ambil data mata kuliah lewat cache (mataKuliah jarang berubah, jadi
     // tidak perlu baca ulang ke Firestore di setiap kunjungan dashboard oleh
@@ -162,7 +197,20 @@ async function getOrCreateJawabanFolder(mk, nim, tahunAjaran) {
 
 router.get('/', async (req, res) => {
   try {
-    let mkList = await getMataKuliahDiambil(req.user.id);
+    const daftarPeriode = await getDaftarPeriodeMahasiswa(req.user.id);
+    const periodeAktif = getPeriodeAktif();
+
+    // Tentukan periode yang ditampilkan: dari query ?periode=... kalau valid
+    // (mahasiswa memang punya enrollment di periode itu), kalau tidak pakai
+    // periode aktif (kalau mahasiswa punya enrollment di periode aktif), atau
+    // periode PALING BARU yang dia punya (jaga-jaga kalau periode aktif belum
+    // ada KRS-nya, mis. semester depan belum diaktifkan).
+    let periodeDipilih = req.query.periode;
+    if (!periodeDipilih || !daftarPeriode.includes(periodeDipilih)) {
+      periodeDipilih = daftarPeriode.includes(periodeAktif) ? periodeAktif : (daftarPeriode[0] || periodeAktif);
+    }
+
+    let mkList = await getMataKuliahDiambil(req.user.id, periodeDipilih);
     
     // Filter: JANGAN tampilkan mata kuliah PDK (Praktik Dunia Kerja)
     mkList = mkList.filter(mk => !mk.isPDK);
@@ -201,7 +249,13 @@ router.get('/', async (req, res) => {
       });
     }));
 
-    res.render('mahasiswa/elearning/index', { title: 'ELK‑Learning', mkList });
+    res.render('mahasiswa/elearning/index', {
+      title: 'ELK‑Learning',
+      mkList,
+      daftarPeriode,
+      periodeDipilih,
+      periodeAktif
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send('Gagal memuat halaman e‑learning');

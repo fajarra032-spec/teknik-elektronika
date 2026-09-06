@@ -263,6 +263,21 @@
     </a>
   </div>
 
+  <!-- Dropdown Tahun Akademik - supaya MK semester lama tidak tercampur -->
+  <% if (typeof daftarPeriode !== 'undefined' && daftarPeriode.length > 0) { %>
+    <form method="GET" class="mb-3 d-flex align-items-center gap-2 flex-wrap">
+      <label for="periode" class="fw-semibold mb-0"><i class="bi bi-calendar3"></i> Tahun Akademik:</label>
+      <select name="periode" id="periode" class="form-select" style="max-width: 260px;" onchange="this.form.submit()">
+        <% daftarPeriode.forEach(p => { %>
+          <option value="<%= p %>" <%= p === periodeDipilih ? 'selected' : '' %>>
+            <%= p %><%= p === periodeAktif ? ' (aktif)' : '' %>
+          </option>
+        <% }) %>
+      </select>
+      <noscript><button type="submit" class="btn btn-sm btn-primary">Tampilkan</button></noscript>
+    </form>
+  <% } %>
+
   <!-- Tabel Mata Kuliah -->
   <div class="table-wrapper">
     <div class="table-responsive">
