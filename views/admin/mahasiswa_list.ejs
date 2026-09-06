@@ -180,6 +180,10 @@
          class="btn-outline me-2" style="text-decoration: none;">
         <i class="bi bi-download"></i> Download CSV
       </a>
+      <a href="/admin/mahasiswa/print<%= (filterAngkatan || filterSemester || filterStatusMagang || filterStatusMahasiswa || filterKelas || search) ? '?' + new URLSearchParams({angkatan: filterAngkatan, semester: filterSemester, statusMagang: filterStatusMagang, statusMahasiswa: filterStatusMahasiswa, kelas: filterKelas, search: search}).toString() : '' %>"
+         class="btn-outline me-2" style="text-decoration: none;" target="_blank">
+        <i class="bi bi-printer"></i> Cetak Daftar
+      </a>
       <a href="/admin/mahasiswa/create" class="btn-gradient">
         <i class="bi bi-plus-circle"></i> Tambah Mahasiswa
       </a>

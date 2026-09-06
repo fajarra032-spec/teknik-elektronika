@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cetak Daftar Mahasiswa</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    @media print {
+      .no-print { display: none; }
+      body { font-size: 11pt; }
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; page-break-after: auto; }
+      thead { display: table-header-group; }
+    }
+    body { background: #f1f3f5; }
+    .sheet {
+      max-width: 950px;
+      margin: 1.5rem auto;
+      background: white;
+      padding: 2rem 2.5rem;
+      box-shadow: 0 0 15px rgba(0,0,0,0.08);
+    }
+    .kop-surat {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 1rem;
+      border-bottom: 3px solid #0d6efd;
+      padding-bottom: 12px;
+    }
+    .logo-kop { width: 90px; height: auto; }
+    .teks-kop { flex: 1; text-align: left; }
+    .teks-kop h2 { font-size: 22px; font-weight: bold; margin: 0; color: #212529; }
+    .teks-kop h3 { font-size: 17px; font-weight: 600; margin: 0; color: #0d6efd; text-transform: uppercase; }
+    .teks-kop p { font-size: 10pt; margin: 2px 0; color: #6c757d; }
+    .judul-dokumen { text-align: center; margin: 1rem 0 0.25rem; }
+    .judul-dokumen h4 { font-weight: 700; margin-bottom: 0.2rem; text-decoration: underline; }
+    .info-filter { text-align: center; font-size: 10.5pt; color: #495057; margin-bottom: 1rem; }
+    table.daftar-mahasiswa { width: 100%; border-collapse: collapse; }
+    table.daftar-mahasiswa th, table.daftar-mahasiswa td {
+      border: 1px solid #adb5bd;
+      padding: 6px 8px;
+      font-size: 10.5pt;
+      vertical-align: middle;
+    }
+    table.daftar-mahasiswa th { background: #e9ecef; text-align: center; font-weight: 700; }
+    .foto-cetak {
+      width: 45px; height: 55px; object-fit: cover; border: 1px solid #adb5bd; display: block; margin: 0 auto;
+    }
+    .avatar-cetak {
+      width: 45px; height: 55px; display: flex; align-items: center; justify-content: center;
+      background: #dee2e6; color: #495057; font-weight: 700; margin: 0 auto; border: 1px solid #adb5bd;
+    }
+    .ttd-area { margin-top: 3rem; display: flex; justify-content: flex-end; }
+    .ttd-box { text-align: center; width: 260px; }
+    .ttd-box .area-ttd { height: 70px; }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <button onclick="window.print()" class="btn btn-primary no-print mb-3">
+      <i class="bi bi-printer"></i> Print / Simpan PDF
+    </button>
+    <a href="javascript:history.back()" class="btn btn-outline-secondary no-print mb-3">
+      <i class="bi bi-arrow-left"></i> Kembali
+    </a>
+
+    <div class="kop-surat">
+      <img src="https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png"
+           alt="Logo" class="logo-kop">
+      <div class="teks-kop">
+        <h2>POLITEKNIK DEWANTARA</h2>
+        <h3>Program Studi Teknik Elektronika</h3>
+        <p>Jl. KH Ahmad Razak 2 No. 7, Kota Palopo, Sulawesi Selatan &middot; polidewa.ac.id</p>
+      </div>
+    </div>
+
+    <div class="judul-dokumen">
+      <h4>DAFTAR MAHASISWA</h4>
+    </div>
+    <div class="info-filter">
+      <%
+        const bagianFilter = [];
+        if (filterInfo.angkatan) bagianFilter.push(`Angkatan ${filterInfo.angkatan}`);
+        if (filterInfo.semester) bagianFilter.push(filterInfo.semester);
+        if (filterInfo.kelas) bagianFilter.push(`Kelas ${filterInfo.kelas}`);
+        if (filterInfo.statusMahasiswa) bagianFilter.push(`Status ${filterInfo.statusMahasiswa}`);
+        if (filterInfo.search) bagianFilter.push(`Pencarian "${filterInfo.search}"`);
+      %>
+      <%= bagianFilter.length > 0 ? bagianFilter.join(' &middot; ') : 'Seluruh Mahasiswa' %>
+      &nbsp;|&nbsp; Total: <%= mahasiswaList.length %> mahasiswa
+      <br><small>Dicetak: <%= generatedAt %></small>
+    </div>
+
+    <table class="daftar-mahasiswa">
+      <thead>
+        <tr>
+          <th style="width: 3%;">No</th>
+          <th style="width: 8%;">Foto</th>
+          <th style="width: 12%;">NIM</th>
+          <th>Nama Mahasiswa</th>
+          <th style="width: 10%;">Kelas</th>
+          <th style="width: 22%;">Dosen Pembimbing Akademik</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%
+          const getFileIdFromUrl = (url) => {
+            if (!url) return null;
+            let match = url.match(/[?&]id=([^&]+)/);
+            if (match) return match[1];
+            match = url.match(/\/d\/([^\/]+)/);
+            if (match) return match[1];
+            return null;
+          };
+        %>
+        <% if (mahasiswaList.length === 0) { %>
+          <tr><td colspan="6" class="text-center py-4">Tidak ada mahasiswa yang cocok dengan filter ini.</td></tr>
+        <% } else { %>
+          <% mahasiswaList.forEach((m, i) => { %>
+            <tr>
+              <td class="text-center"><%= i + 1 %></td>
+              <td>
+                <% if (m.foto) {
+                  const fileId = getFileIdFromUrl(m.foto);
+                  const src = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w100` : m.foto;
+                %>
+                  <img src="<%= src %>" class="foto-cetak">
+                <% } else { %>
+                  <div class="avatar-cetak"><%= (m.nama || '?').charAt(0).toUpperCase() %></div>
+                <% } %>
+              </td>
+              <td><%= m.nim || '-' %></td>
+              <td><%= m.nama || '-' %></td>
+              <td class="text-center"><%= m.kelas || '-' %></td>
+              <td><%= m.dosenPaNama || '-' %></td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+
+    <div class="ttd-area">
+      <div class="ttd-box">
+        <p class="mb-0">Palopo, <%= generatedAt %></p>
+        <p>Ketua Program Studi Teknik Elektronika,</p>
+        <div class="area-ttd"></div>
+        <p class="mb-0"><strong>&nbsp;</strong></p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -79,6 +79,53 @@ const STATUS_MAHASISWA_OPTIONS = ['Aktif', 'Lulus', 'Cuti', 'Keluar'];
 // DAFTAR MAHASISWA (dengan filter lengkap)
 // ============================================================================
 
+/**
+ * Ambil daftar mahasiswa sesuai filter query (angkatan, semester,
+ * statusMagang, statusMahasiswa, kelas, search) - dipakai bareng oleh
+ * halaman daftar ('/') dan halaman cetak ('/print') supaya filter yang
+ * sedang aktif di layar bisa langsung dicetak persis yang terlihat.
+ */
+async function getFilteredMahasiswaList(query) {
+  const { angkatan, semester, statusMagang, statusMahasiswa, kelas, search } = query;
+
+  const snapshot = await db.collection('users')
+    .where('role', '==', 'mahasiswa')
+    .orderBy('nim')
+    .get();
+
+  const mahasiswaList = [];
+  const angkatanSet = new Set();
+  const kelasSet = new Set();
+
+  for (const doc of snapshot.docs) {
+    const data = doc.data();
+    const m = { id: doc.id, ...data };
+    m.biodataLengkap = isBiodataLengkap(m);
+    const angkatanMhs = getAngkatanFromNim(m.nim);
+    angkatanSet.add(angkatanMhs);
+    if (m.kelas) kelasSet.add(m.kelas);
+
+    if (angkatan && angkatanMhs !== angkatan) continue;
+    if (semester && m.semester !== semester) continue;
+    if (statusMagang && m.statusMagang !== statusMagang) continue;
+    if (statusMahasiswa && m.statusMahasiswa !== statusMahasiswa) continue;
+    if (kelas && m.kelas !== kelas) continue;
+    if (search) {
+      const lower = search.toLowerCase();
+      const matchNama = m.nama && m.nama.toLowerCase().includes(lower);
+      const matchNim = m.nim && m.nim.includes(search);
+      if (!matchNama && !matchNim) continue;
+    }
+    mahasiswaList.push(m);
+  }
+
+  return {
+    mahasiswaList,
+    angkatanList: Array.from(angkatanSet).sort().reverse(),
+    kelasList: Array.from(kelasSet).sort()
+  };
+}
+
 router.get('/', async (req, res) => {
   try {
     const { angkatan, semester, statusMagang, statusMahasiswa, kelas, search } = req.query;
@@ -93,43 +140,7 @@ router.get('/', async (req, res) => {
       delete req.session.importError;
     }
 
-    const snapshot = await db.collection('users')
-      .where('role', '==', 'mahasiswa')
-      .orderBy('nim')
-      .get();
-
-    const mahasiswaList = [];
-    const angkatanSet = new Set();
-    const kelasSet = new Set();
-
-    for (const doc of snapshot.docs) {
-      const data = doc.data();
-      const m = { id: doc.id, ...data };
-      // Status kelengkapan biodata (NIK, TTL, alamat, data ortu, data
-      // sekolah, dst - lihat helpers/biodataHelper.js), ditampilkan sebagai
-      // badge di daftar supaya admin bisa lihat sekilas mana yang belum
-      // lengkap tanpa buka detail satu-satu.
-      m.biodataLengkap = isBiodataLengkap(m);
-      const angkatanMhs = getAngkatanFromNim(m.nim);
-      angkatanSet.add(angkatanMhs);
-      if (m.kelas) kelasSet.add(m.kelas);
-
-      if (angkatan && angkatanMhs !== angkatan) continue;
-      if (semester && m.semester !== semester) continue;
-      if (statusMagang && m.statusMagang !== statusMagang) continue;
-      if (statusMahasiswa && m.statusMahasiswa !== statusMahasiswa) continue;
-      if (kelas && m.kelas !== kelas) continue;
-      if (search) {
-        const lower = search.toLowerCase();
-        const matchNama = m.nama && m.nama.toLowerCase().includes(lower);
-        const matchNim = m.nim && m.nim.includes(search);
-        if (!matchNama && !matchNim) continue;
-      }
-      mahasiswaList.push(m);
-    }
-
-    const angkatanList = Array.from(angkatanSet).sort().reverse();
-    const kelasList = Array.from(kelasSet).sort();
+    const { mahasiswaList, angkatanList, kelasList } = await getFilteredMahasiswaList(req.query);
     const dosenPaList = await getAllDosenPa();
 
     res.render('admin/mahasiswa_list', {
@@ -152,6 +163,38 @@ router.get('/', async (req, res) => {
     res.status(500).render('error', {
       title: 'Error',
       message: 'Gagal mengambil data mahasiswa'
+    });
+  }
+});
+
+// ============================================================================
+// CETAK DAFTAR MAHASISWA (foto, nama, kelas, Dosen PA) - pakai filter yang
+// sama dengan yang lagi aktif di halaman daftar, supaya cetakannya persis
+// apa yang sedang dilihat admin.
+// ============================================================================
+
+router.get('/print', async (req, res) => {
+  try {
+    const { mahasiswaList } = await getFilteredMahasiswaList(req.query);
+    mahasiswaList.sort((a, b) => (a.nim || '').localeCompare(b.nim || ''));
+
+    res.render('admin/mahasiswa_cetak', {
+      title: 'Cetak Daftar Mahasiswa',
+      mahasiswaList,
+      filterInfo: {
+        angkatan: req.query.angkatan || null,
+        semester: req.query.semester || null,
+        kelas: req.query.kelas || null,
+        statusMahasiswa: req.query.statusMahasiswa || null,
+        search: req.query.search || null
+      },
+      generatedAt: new Date().toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })
+    });
+  } catch (error) {
+    console.error('Error mencetak daftar mahasiswa:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Gagal memuat halaman cetak'
     });
   }
 });
