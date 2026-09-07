@@ -9,6 +9,24 @@ const { db } = require('../config/firebaseAdmin');
 const { getPeriodeAktif } = require('./nilaiHelper');
 
 /**
+ * Ubah URL foto Google Drive (link "share"/"view" biasa, mis.
+ * https://drive.google.com/file/d/XXXX/view atau .../uc?id=XXXX) jadi URL
+ * thumbnail yang BISA langsung dipakai sebagai <img src>. Link Drive biasa
+ * TIDAK bisa langsung dipakai sebagai src gambar (itu link ke halaman
+ * viewer, bukan file gambar mentah) - makanya foto tidak muncul kalau
+ * dipakai apa adanya. Pola yang sama dipakai di halaman lain (mis. daftar
+ * mahasiswa admin, kartu Mahasiswa PA dosen).
+ */
+function toFotoUrl(foto) {
+  if (!foto) return null;
+  let match = foto.match(/[?&]id=([^&]+)/);
+  if (match) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w200`;
+  match = foto.match(/\/d\/([^/]+)/);
+  if (match) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w200`;
+  return foto; // sudah berupa URL gambar langsung (bukan link Drive) - pakai apa adanya
+}
+
+/**
  * Mengambil daftar peserta kelas (mahasiswa yang aktif terdaftar + dosen
  * pengampu) untuk satu mata kuliah pada periode aktif, lengkap dengan foto
  * profil untuk ditampilkan sebagai kartu profil saat diklik.
@@ -32,7 +50,7 @@ async function getPesertaKelas(mkId) {
         role: 'dosen',
         nama: d.nama || '-',
         identitas: d.nip || '-',
-        foto: d.foto || null,
+        foto: toFotoUrl(d.foto),
         email: d.email || '',
         kontak: d.kontak || ''
       });
@@ -56,7 +74,7 @@ async function getPesertaKelas(mkId) {
         role: 'mahasiswa',
         nama: u.nama || '-',
         identitas: u.nim || '-',
-        foto: u.foto || null,
+        foto: toFotoUrl(u.foto),
         email: u.email || '',
         kontak: u.noHp || u.telepon || '',
         angkatan: u.angkatan || '-',
