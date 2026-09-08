@@ -267,6 +267,7 @@ router.get('/krs/:id', async (req, res) => {
             id: mkIds[i],
             kode: mkDoc.data().kode,
             nama: mkDoc.data().nama,
+            kelas: mkDoc.data().kelas || null,
             sks: mkDoc.data().sks
           });
         }
