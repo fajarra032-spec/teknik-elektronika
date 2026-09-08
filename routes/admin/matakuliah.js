@@ -131,7 +131,28 @@ async function getRiwayatPengampu(mkId, dosenMap) {
 // ============================================================================
 router.get('/', async (req, res) => {
   try {
-    const { semester, search } = req.query;
+    // Filter berdasarkan semester if ada
+    const { semester, semesterAktif, search } = req.query;
+
+    // ========================================================================
+    // FILTER "SEMESTER AKTIF" (Ganjil/Genap) - dosen yang mengajar biasanya
+    // beda antara semester ganjil & genap, jadi daftar MK yang ditampilkan
+    // default disaring cuma yang relevan untuk periode yang SEDANG berjalan
+    // (semester ganjil = nomor semester 1,3,5,7..., genap = 2,4,6,8...).
+    // MK Praktik Dunia Kerja (isPDK) SELALU tampil apa pun filternya - PDK
+    // tidak terikat semester ganjil/genap.
+    //
+    // req.query.semesterAktif === undefined  -> belum pernah difilter user
+    //   (kunjungan pertama ke halaman) -> DEFAULT ke periode yang sedang
+    //   aktif sekarang (otomatis, dari academicHelper).
+    // req.query.semesterAktif === ''         -> user SENGAJA pilih "Semua"
+    //   di dropdown -> jangan difilter sama sekali.
+    // req.query.semesterAktif === 'Ganjil'/'Genap' -> filter sesuai pilihan.
+    // ========================================================================
+    const semesterAktifDipilihEksplisit = semesterAktif !== undefined;
+    const semesterAktifDipakai = semesterAktifDipilihEksplisit
+      ? semesterAktif
+      : academicHelper.getCurrentAcademicSemester().semester; // default: periode aktif sekarang
 
     // Bangun query dasar
     let query = db.collection('mataKuliah').orderBy('kode');
@@ -162,15 +183,26 @@ router.get('/', async (req, res) => {
 
     // Untuk setiap matakuliah, tambahkan field dosenNames (array nama dosen)
     // dan label konsentrasi (derivasi read-only dari field `jenis`)
-    const matakuliahWithDosen = matakuliah.map(mk => {
+    let matakuliahWithDosen = matakuliah.map(mk => {
       const dosenNames = (mk.dosenIds || []).map(id => dosenMap[id] || 'Unknown').filter(Boolean);
       return { ...mk, dosenNames, konsentrasiLabel: getKonsentrasiLabel(mk.jenis) };
     });
+
+    // Terapkan filter Semester Aktif (Ganjil/Genap) - PDK selalu lolos filter ini
+    if (semesterAktifDipakai) {
+      matakuliahWithDosen = matakuliahWithDosen.filter(mk => {
+        if (mk.isPDK) return true; // Praktik Dunia Kerja tidak terikat ganjil/genap
+        if (!mk.semester) return true; // jangan sembunyikan data yang semesternya belum keisi
+        const parity = mk.semester % 2 === 1 ? 'Ganjil' : 'Genap';
+        return parity === semesterAktifDipakai;
+      });
+    }
 
     res.render('admin/matakuliah_list', {
       title: 'Daftar Mata Kuliah',
       matakuliah: matakuliahWithDosen,
       filterSemester: semester || '',
+      filterSemesterAktif: semesterAktifDipakai || '',
       search: search || ''
     });
   } catch (error) {

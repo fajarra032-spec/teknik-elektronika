@@ -13,6 +13,7 @@ const multer = require('multer');
 const { KONSENTRASI_OPTIONS, AGAMA_OPTIONS, DEFAULT_AGAMA, parseSemesterNumber, aktifkanPaketKrs, SEMESTER_MULAI_KONSENTRASI } = require('../../helpers/paketKurikulumHelper');
 const { isBiodataLengkap, getBiodataKosong, BIODATA_FIELDS, GROUP_LABELS } = require('../../helpers/biodataHelper');
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
+const { buatDokumenSkPa } = require('../../helpers/skPaHelper');
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.use(verifyToken);
@@ -196,6 +197,83 @@ router.get('/print', async (req, res) => {
       title: 'Error',
       message: 'Gagal memuat halaman cetak'
     });
+  }
+});
+
+// ============================================================================
+// RILIS SK PA (Surat Keputusan Penetapan Dosen Pembimbing Akademik) - .docx
+// Hanya mengikutkan mahasiswa berstatus "Aktif" yang SUDAH punya Dosen PA.
+// ============================================================================
+
+router.get('/sk-pa', async (req, res) => {
+  try {
+    const { mahasiswaList, angkatanList, kelasList } = await getFilteredMahasiswaList({});
+    const aktifPunyaPa = mahasiswaList.filter(m => m.statusMahasiswa === 'Aktif' && m.dosenPaNama);
+    const aktifBelumPa = mahasiswaList.filter(m => m.statusMahasiswa === 'Aktif' && !m.dosenPaNama);
+
+    const academic = getCurrentAcademicSemester(); // { label, semester, tahunAwal, tahunAkhir, tahunAkademik }
+
+    res.render('admin/mahasiswa_sk_pa', {
+      title: 'Rilis SK PA',
+      angkatanList,
+      kelasList,
+      jumlahAktifPunyaPa: aktifPunyaPa.length,
+      jumlahAktifBelumPa: aktifBelumPa.length,
+      daftarBelumPa: aktifBelumPa,
+      semesterDefault: academic.semester || 'Ganjil',
+      tahunAjaranDefault: academic.tahunAkademik || ''
+    });
+  } catch (error) {
+    console.error('Error memuat form SK PA:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat form Rilis SK PA' });
+  }
+});
+
+router.post('/sk-pa/generate', async (req, res) => {
+  try {
+    const { nomorSk, semester, tahunAjaran, tanggal, kota, namaKaprodi, nidnKaprodi, angkatan, kelas } = req.body;
+
+    if (!nomorSk || !semester || !tahunAjaran || !namaKaprodi) {
+      return res.status(400).send('Nomor SK, Semester, Tahun Ajaran, dan Nama Ketua Program Studi wajib diisi.');
+    }
+
+    // Filter: SELALU cuma mahasiswa Aktif (dipaksa, terlepas dari input form)
+    // + opsional angkatan/kelas kalau admin mau mempersempit lampirannya.
+    const { mahasiswaList } = await getFilteredMahasiswaList({ angkatan, kelas });
+    const daftarMahasiswa = mahasiswaList
+      .filter(m => m.statusMahasiswa === 'Aktif' && m.dosenPaNama)
+      .map(m => ({ nim: m.nim, nama: m.nama, dosenPaNama: m.dosenPaNama, dosenPaNidn: m.dosenPaNidn }))
+      .sort((a, b) => {
+        const cmp = (a.dosenPaNama || '').localeCompare(b.dosenPaNama || '');
+        return cmp !== 0 ? cmp : (a.nim || '').localeCompare(b.nim || '');
+      });
+
+    if (daftarMahasiswa.length === 0) {
+      return res.status(400).send('Tidak ada mahasiswa Aktif yang sudah punya Dosen PA sesuai filter ini - tidak ada yang bisa dicetak di lampiran.');
+    }
+
+    const tanggalTampil = tanggal
+      ? new Date(tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+      : new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const buffer = await buatDokumenSkPa({
+      nomorSk,
+      semester,
+      tahunAjaran,
+      tanggal: tanggalTampil,
+      kota: kota || 'Palopo',
+      namaKaprodi,
+      nidnKaprodi: nidnKaprodi || '-',
+      logoUrl: 'https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png'
+    }, daftarMahasiswa);
+
+    const namaFile = `SK_PA_${semester}_${tahunAjaran.replace('/', '-')}.docx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${namaFile}"`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('Error generate SK PA:', error);
+    res.status(500).send('Gagal membuat dokumen SK PA: ' + error.message);
   }
 });
 

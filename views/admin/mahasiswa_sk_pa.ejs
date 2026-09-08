@@ -1,0 +1,126 @@
+<%- include('../partials/header') %>
+
+<style>
+  .sk-card { max-width: 720px; margin: 1.5rem auto; }
+  .sk-card .card { border-radius: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: none; }
+  .sk-card .card-header {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: white; border-radius: 1.25rem 1.25rem 0 0 !important;
+    padding: 1.25rem 1.5rem;
+  }
+  .info-box { background: #f8fafc; border-radius: 0.75rem; padding: 0.9rem 1.1rem; font-size: 0.9rem; }
+  .info-box.warning { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; }
+</style>
+
+<div class="container">
+  <div class="sk-card">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="mb-0"><i class="bi bi-file-earmark-word"></i> Rilis SK PA</h4>
+        <small>Surat Keputusan Penetapan Dosen Pembimbing Akademik (.docx)</small>
+      </div>
+      <div class="card-body p-4">
+
+        <div class="info-box mb-3">
+          <i class="bi bi-info-circle text-primary"></i>
+          Lampiran akan otomatis berisi <strong><%= jumlahAktifPunyaPa %> mahasiswa</strong>
+          berstatus <strong>Aktif</strong> yang sudah punya Dosen PA, dikelompokkan per dosen
+          (sama seperti contoh SK PA resmi) - tidak perlu diketik manual.
+        </div>
+
+        <% if (jumlahAktifBelumPa > 0) { %>
+          <div class="info-box warning mb-3">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong><%= jumlahAktifBelumPa %> mahasiswa Aktif belum punya Dosen PA</strong>
+            dan otomatis TIDAK ikut di lampiran. Tetapkan dulu PA-nya lewat
+            <a href="/admin/mahasiswa">Kelola Mahasiswa</a> kalau mereka seharusnya ikut.
+            <details class="mt-1">
+              <summary style="cursor:pointer;">Lihat daftar (<%= jumlahAktifBelumPa %>)</summary>
+              <ul class="mb-0 mt-1 small">
+                <% daftarBelumPa.slice(0, 30).forEach(m => { %>
+                  <li><%= m.nim %> - <%= m.nama %></li>
+                <% }) %>
+                <% if (daftarBelumPa.length > 30) { %><li>&hellip; dan <%= daftarBelumPa.length - 30 %> lainnya</li><% } %>
+              </ul>
+            </details>
+          </div>
+        <% } %>
+
+        <form method="POST" action="/admin/mahasiswa/sk-pa/generate">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nomor SK <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="nomorSk" placeholder="mis. 045/EK/Polidewa/IX/2026" required>
+            <small class="text-muted">Nomor surat ditentukan sendiri oleh prodi (format bebas) - belum ada penomoran otomatis di sistem.</small>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">Semester <span class="text-danger">*</span></label>
+              <select class="form-select" name="semester" required>
+                <option value="Ganjil" <%= semesterDefault === 'Ganjil' ? 'selected' : '' %>>Ganjil</option>
+                <option value="Genap" <%= semesterDefault === 'Genap' ? 'selected' : '' %>>Genap</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">Tahun Akademik <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="tahunAjaran" value="<%= tahunAjaranDefault %>" placeholder="2026/2027" required>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">Tanggal Ditetapkan</label>
+              <input type="date" class="form-control" name="tanggal">
+              <small class="text-muted">Kosongkan = hari ini</small>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">Kota</label>
+              <input type="text" class="form-control" name="kota" value="Palopo">
+            </div>
+          </div>
+
+          <hr>
+          <div class="row">
+            <div class="col-md-7 mb-3">
+              <label class="form-label fw-semibold">Nama Ketua Program Studi <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="namaKaprodi" placeholder="mis. Fajar Ramadhan, S.Pd., M.T" required>
+            </div>
+            <div class="col-md-5 mb-3">
+              <label class="form-label fw-semibold">NIDN/NUPTK Kaprodi</label>
+              <input type="text" class="form-control" name="nidnKaprodi" placeholder="mis. 8559777678130153">
+            </div>
+          </div>
+
+          <hr>
+          <p class="fw-semibold mb-2">Persempit lampiran (opsional)</p>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Angkatan</label>
+              <select class="form-select" name="angkatan">
+                <option value="">Semua angkatan</option>
+                <% angkatanList.forEach(a => { %><option value="<%= a %>"><%= a %></option><% }) %>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Kelas</label>
+              <select class="form-select" name="kelas">
+                <option value="">Semua kelas</option>
+                <% kelasList.forEach(k => { %><option value="<%= k %>"><%= k %></option><% }) %>
+              </select>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between mt-4">
+            <a href="/admin/mahasiswa" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-download"></i> Rilis & Download SK PA (.docx)
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
