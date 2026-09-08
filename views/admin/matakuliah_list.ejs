@@ -211,7 +211,7 @@
   <% if (filterSemesterAktif) { %>
     <div class="alert alert-info d-flex align-items-center mb-3" style="border-radius: 1rem;">
       <i class="bi bi-info-circle me-2"></i>
-      Menampilkan mata kuliah Semester <strong><%= filterSemesterAktif %></strong>
+      Menampilkan mata kuliah Semester <strong><%= filterSemesterAktif %> <%= tahunAjaranAktif %></strong>
       (+ semua MK Praktik Dunia Kerja). Pilih "Semua (Ganjil & Genap)" di filter kalau mau lihat semuanya.
     </div>
   <% } %>
@@ -223,8 +223,8 @@
         <label for="semesterAktif" class="form-label fw-semibold"><i class="bi bi-calendar2-week me-1"></i>Semester Aktif</label>
         <select class="form-select" id="semesterAktif" name="semesterAktif">
           <option value="" <%= filterSemesterAktif === '' ? 'selected' : '' %>>Semua (Ganjil & Genap)</option>
-          <option value="Ganjil" <%= filterSemesterAktif === 'Ganjil' ? 'selected' : '' %>>Ganjil</option>
-          <option value="Genap" <%= filterSemesterAktif === 'Genap' ? 'selected' : '' %>>Genap</option>
+          <option value="Ganjil" <%= filterSemesterAktif === 'Ganjil' ? 'selected' : '' %>>Ganjil <%= tahunAjaranAktif %></option>
+          <option value="Genap" <%= filterSemesterAktif === 'Genap' ? 'selected' : '' %>>Genap <%= tahunAjaranAktif %></option>
         </select>
         <small class="text-muted">MK Praktik Dunia Kerja selalu tampil, tidak terikat Ganjil/Genap</small>
       </div>

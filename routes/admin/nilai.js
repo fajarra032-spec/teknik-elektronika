@@ -156,6 +156,19 @@ router.get('/:mkId', async (req, res) => {
     }
     const mk = { id: mkId, ...mkDoc.data() };
 
+    // Semua periode yang PERNAH punya enrollment untuk MK ini (termasuk
+    // periode histori, mis. dari input nilai lama lewat script) - dipakai
+    // untuk dropdown pemilih periode, supaya admin tidak perlu menebak-nebak
+    // atau mengedit URL manual untuk melihat data semester yang sudah lewat.
+    const semuaEnrollmentMkSnapshot = await db.collection('enrollment')
+      .where('mkId', '==', mkId)
+      .where('status', '==', 'active')
+      .get();
+    const periodeSet = new Set(semuaEnrollmentMkSnapshot.docs.map(d => d.data().semester).filter(Boolean));
+    periodeSet.add(getPeriodeAktif()); // selalu sertakan periode aktif sekarang walau belum ada enrollment-nya
+    periodeSet.add(periode); // jaga-jaga kalau periode dari URL belum ada di enrollment manapun
+    const periodeOptions = Array.from(periodeSet).sort().reverse();
+
     // Mahasiswa yang terdaftar aktif (KRS disetujui) untuk MK+periode ini
     const enrollmentSnapshot = await db.collection('enrollment')
       .where('mkId', '==', mkId)
@@ -184,7 +197,8 @@ router.get('/:mkId', async (req, res) => {
       mahasiswaList,
       tugasList,
       tipeKomponen: TIPE_RUBRIK_KOMPONEN,
-      periode
+      periode,
+      periodeOptions
     });
   } catch (error) {
     console.error('Error detail nilai:', error);

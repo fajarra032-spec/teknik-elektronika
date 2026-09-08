@@ -203,6 +203,7 @@ router.get('/', async (req, res) => {
       matakuliah: matakuliahWithDosen,
       filterSemester: semester || '',
       filterSemesterAktif: semesterAktifDipakai || '',
+      tahunAjaranAktif: academicHelper.getCurrentAcademicSemester().tahunAkademik, // mis. "2026/2027"
       search: search || ''
     });
   } catch (error) {

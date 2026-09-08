@@ -47,7 +47,16 @@
   <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-2">
     <div>
       <h2><i class="bi bi-table me-2"></i><%= mk.kode %> - <%= mk.nama %></h2>
-      <p class="mb-0 opacity-75">SKS: <%= mk.sks %> &middot; Periode: <%= periode %></p>
+      <p class="mb-0 opacity-75">SKS: <%= mk.sks %></p>
+      <form method="GET" class="d-flex align-items-center gap-2 mt-2">
+        <label for="periode" class="mb-0 small">Periode:</label>
+        <select name="periode" id="periode" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+          <% periodeOptions.forEach(p => { %>
+            <option value="<%= p %>" <%= p === periode ? 'selected' : '' %>><%= p %></option>
+          <% }) %>
+        </select>
+        <noscript><button type="submit" class="btn btn-sm btn-light">Tampilkan</button></noscript>
+      </form>
     </div>
     <div class="d-flex gap-2">
       <a href="/admin/rubrik/<%= mk.id %>?periode=<%= encodeURIComponent(periode) %>" class="btn-cetak">
