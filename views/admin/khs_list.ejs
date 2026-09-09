@@ -63,14 +63,43 @@
     object-fit: cover;
     border-radius: 50%;
   }
+  .stat-card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    padding: 1.1rem 1.3rem;
+    height: 100%;
+  }
+  .stat-card .stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .stat-card .stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  @media print {
+    .filter-card, .btn-action, .no-print { display: none !important; }
+  }
 </style>
 
 <div class="container-fluid mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 no-print">
     <h2 class="fw-bold">Daftar KHS</h2>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+        <i class="bi bi-printer-fill me-1"></i> Cetak
+      </button>
+      <button type="button" class="btn btn-outline-success" onclick="exportKhsCsv()">
+        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+      </button>
+    </div>
   </div>
 
-  <div class="alert alert-light border d-flex align-items-center mb-4" style="border-radius: 1rem;">
+  <div class="alert alert-light border d-flex align-items-center mb-4 no-print" style="border-radius: 1rem;">
     <i class="bi bi-info-circle-fill me-2" style="color: #2193b0;"></i>
     <span class="small text-muted">
       KHS di sini dihitung otomatis dari nilai akhir yang sudah dikunci di menu
@@ -79,8 +108,42 @@
     </span>
   </div>
 
+  <!-- Statistik -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card border-start border-4" style="border-color: #2193b0 !important;">
+        <div class="stat-value"><%= khsList.length %></div>
+        <div class="stat-label">Jumlah Mahasiswa (baris KHS)</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card border-start border-4 border-warning">
+        <div class="stat-value"><%= khsList.filter(k => (k.jumlahBelumNilai || 0) > 0).length %></div>
+        <div class="stat-label">Belum Lengkap Nilainya</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card border-start border-4 border-success">
+        <div class="stat-value">
+          <%
+            const validIps = khsList.map(k => parseFloat(k.ips)).filter(n => !isNaN(n));
+            const rataIps = validIps.length ? (validIps.reduce((a,b) => a+b, 0) / validIps.length).toFixed(2) : '0.00';
+          %>
+          <%= rataIps %>
+        </div>
+        <div class="stat-label">Rata-rata IPS</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card border-start border-4 border-secondary">
+        <div class="stat-value"><%= new Set(khsList.map(k => k.userId)).size %></div>
+        <div class="stat-label">Mahasiswa Unik</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Filter Card -->
-  <div class="filter-card">
+  <div class="filter-card no-print">
     <form method="GET" class="row g-3 align-items-end">
       <div class="col-md-4">
         <label for="semester" class="form-label fw-semibold">Filter Semester</label>
@@ -115,7 +178,7 @@
 
   <!-- Tabel KHS -->
   <div class="table-responsive">
-    <table class="table khs-table">
+    <table class="table khs-table" id="khsTable">
       <thead>
         <tr>
           <th>No</th>
@@ -124,7 +187,7 @@
           <th>Jml Matkul</th>
           <th>Total SKS</th>
           <th>IPS</th>
-          <th>Aksi</th>
+          <th class="no-print">Aksi</th>
         </tr>
       </thead>
       <tbody>
@@ -154,16 +217,16 @@
             </td>
             <td><%= khs.semester || '-' %></td>
             <td>
-              <%= khs.jumlahMatkul %>
+              <%= khs.jumlahMatkul ?? 0 %>
               <% if (khs.jumlahBelumNilai > 0) { %>
                 <span class="badge bg-warning text-dark ms-1" title="<%= khs.jumlahBelumNilai %> matkul belum ada nilai"><%= khs.jumlahBelumNilai %> belum dinilai</span>
               <% } %>
             </td>
-            <td><%= khs.totalSKS %> SKS</td>
+            <td><%= khs.totalSKS ?? 0 %> SKS</td>
             <td>
-              <span class="badge-ip"><%= khs.ips %></span>
+              <span class="badge-ip"><%= khs.ips || '0.00' %></span>
             </td>
-            <td>
+            <td class="no-print">
               <a href="/admin/khs/<%= khs.userId %>/<%= encodeURIComponent(khs.semester) %>" class="btn btn-sm btn-outline-primary btn-action" title="Detail / Cetak">
                 <i class="bi bi-eye"></i> Detail
               </a>
@@ -175,5 +238,31 @@
     </table>
   </div>
 </div>
+
+<script>
+  // Export tabel KHS yang sedang tampil (sesuai filter aktif) ke CSV,
+  // langsung dari data yang sudah dirender - tidak perlu endpoint baru.
+  function exportKhsCsv() {
+    const table = document.getElementById('khsTable');
+    if (!table) return;
+    const rows = Array.from(table.querySelectorAll('tr'));
+    const csv = rows.map(row => {
+      const cells = Array.from(row.querySelectorAll('th, td'));
+      return cells
+        .filter(c => !c.classList.contains('no-print'))
+        .map(c => '"' + c.innerText.replace(/\s+/g, ' ').trim().replace(/"/g, '""') + '"')
+        .join(',');
+    }).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'daftar_khs_' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+</script>
 
 <%- include('../partials/footer') %>

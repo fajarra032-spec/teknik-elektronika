@@ -100,21 +100,25 @@
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
     <h2 class="fw-bold"><i class="bi bi-journal-text me-2" style="color: #2193b0;"></i>Kartu Hasil Studi (KHS)</h2>
     <div>
-      <span class="badge bg-gradient p-3" style="background: linear-gradient(135deg, #2193b0, #6dd5ed); color: white; font-size: 1rem;"><i class="bi bi-qr-code me-1"></i><%= user.nim %></span>
+      <span class="badge bg-gradient p-3" style="background: linear-gradient(135deg, #2193b0, #6dd5ed); color: white; font-size: 1rem;"><i class="bi bi-qr-code me-1"></i><%= user?.nim || '-' %></span>
     </div>
   </div>
 
   <div class="info-card">
-    <div class="d-flex align-items-center">
-      <% if (user.foto) { %>
+    <div class="d-flex flex-wrap align-items-center">
+      <% if (user?.foto) { %>
         <img src="<%= user.foto %>" alt="foto" class="rounded-circle me-3"
-             style="width: 60px; height: 60px; object-fit: cover; border: 3px solid #2193b0;">
+             style="width: 60px; height: 60px; object-fit: cover; border: 3px solid #2193b0;"
+             onerror="this.onerror=null;this.src='/images/default-avatar.png';">
       <% } else { %>
-        <div class="avatar-circle me-3"><%= (user.nama || '?').charAt(0).toUpperCase() %></div>
+        <div class="avatar-circle me-3"><%= (user?.nama || '?').charAt(0).toUpperCase() %></div>
       <% } %>
-      <div>
-        <h4 class="fw-bold mb-1"><%= user.nama %></h4>
-        <p class="text-muted mb-0"><i class="bi bi-building me-2"></i>Program Studi Teknik Elektronika</p>
+      <div class="flex-grow-1">
+        <h4 class="fw-bold mb-1"><%= user?.nama || '-' %></h4>
+        <div class="d-flex flex-wrap gap-3 text-muted" style="font-size: 0.9rem;">
+          <span><i class="bi bi-person-badge me-1"></i>NIM <%= user?.nim || '-' %></span>
+          <span><i class="bi bi-building me-1"></i><%= user?.prodi || 'Program Studi Teknik Elektronika' %></span>
+        </div>
       </div>
     </div>
   </div>
@@ -153,22 +157,22 @@
 
     <!-- Ringkasan Semester Terpilih -->
     <div class="summary-card">
-      <div class="row">
+      <div class="row text-center g-3">
         <div class="col-6 col-md-3 summary-stat">
-          <div class="value"><%= khs.semester %></div>
-          <div class="label">Semester</div>
+          <div class="badge-ip"><%= khs.ips || '0.00' %></div>
+          <div class="label mt-1">IPS</div>
         </div>
         <div class="col-6 col-md-3 summary-stat">
-          <div class="value"><%= khs.matkul.length %></div>
-          <div class="label">Mata Kuliah Diprogram</div>
+          <div class="value"><%= khs.totalSKSDiprogram ?? khs.totalSKS ?? 0 %></div>
+          <div class="label">SKS Diambil</div>
         </div>
         <div class="col-6 col-md-3 summary-stat">
-          <div class="value"><%= khs.totalSKS %><% if (khs.totalSKSDiprogram !== khs.totalSKS) { %><span class="text-muted" style="font-size: 0.9rem;"> / <%= khs.totalSKSDiprogram %></span><% } %></div>
-          <div class="label">SKS Dinilai <% if (khs.totalSKSDiprogram !== khs.totalSKS) { %>/ Diprogram<% } %></div>
+          <div class="value"><%= khs.totalSKS ?? 0 %></div>
+          <div class="label">SKS Lulus</div>
         </div>
         <div class="col-6 col-md-3 summary-stat">
-          <div class="badge-ip"><%= khs.ips %></div>
-          <div class="label mt-1">IP Semester</div>
+          <div class="value"><%= khs.matkul?.length ?? 0 %></div>
+          <div class="label">Jumlah MK</div>
         </div>
       </div>
       <% if (khs.jumlahBelumNilai > 0) { %>
@@ -195,18 +199,18 @@
           </tr>
         </thead>
         <tbody>
-          <% khs.matkul.forEach((m, i) => { %>
+          <% (khs.matkul || []).forEach((m, i) => { %>
           <tr<%= m.belumAdaNilai ? ' class="text-muted"' : '' %>>
             <td class="fw-bold"><%= i + 1 %></td>
-            <td><%= m.kodeMk %></td>
-            <td><%= m.namaMk %></td>
-            <td><%= m.sks %></td>
+            <td><%= m.kodeMk || '-' %></td>
+            <td><%= m.namaMk || '-' %></td>
+            <td><%= m.sks ?? '-' %></td>
             <% if (m.belumAdaNilai) { %>
               <td colspan="3"><em>Belum Ada Nilai</em></td>
             <% } else { %>
-              <td><%= m.nilai %></td>
-              <td><span class="fw-semibold"><%= m.huruf %></span></td>
-              <td><%= m.indeks.toFixed(1) %></td>
+              <td><%= m.nilai ?? '-' %></td>
+              <td><span class="fw-semibold"><%= m.huruf || '-' %></span></td>
+              <td><%= typeof m.indeks === 'number' ? m.indeks.toFixed(1) : '-' %></td>
             <% } %>
           </tr>
           <% }) %>
