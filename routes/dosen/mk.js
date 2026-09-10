@@ -115,6 +115,7 @@ router.get('/', async (req, res) => {
         nama: data.nama,
         semester: data.semester,
         sks: data.sks,
+        kelas: data.kelas || null,
         jumlahMahasiswa,
         progress
       });

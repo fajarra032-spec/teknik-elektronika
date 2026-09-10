@@ -229,7 +229,7 @@
         <div class="col-md-4">
           <div class="mk-card">
             <div class="mk-header">
-              <h5><%= mk.kode %></h5>
+              <h5><%= mk.kode %><% if (mk.kelas) { %> <span class="badge bg-light text-dark ms-1" style="font-size: 0.75rem;">Kelas <%= mk.kelas %></span><% } %></h5>
             </div>
             <div class="mk-body">
               <h6 class="fw-bold mb-3" style="font-size: 1.1rem; color: #1e293b;"><%= mk.nama %></h6>

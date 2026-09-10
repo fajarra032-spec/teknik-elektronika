@@ -204,7 +204,8 @@ router.get('/tugas/create', async (req, res) => {
     const mkList = mkSnapshot.docs.map(doc => ({
       id: doc.id,
       kode: doc.data().kode,
-      nama: doc.data().nama
+      nama: doc.data().nama,
+      kelas: doc.data().kelas || null
     }));
 
     res.render('dosen/tugas_form', {
