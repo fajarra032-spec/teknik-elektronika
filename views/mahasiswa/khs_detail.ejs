@@ -43,7 +43,19 @@
 
     .tanda-tangan-container { display: flex; justify-content: flex-end; margin-top: 40px; font-size: 10pt; }
     .kolom-tanda { width: 32%; text-align: center; }
-    .area-ttd { height: 80px; }
+    .area-ttd {
+      position: relative;
+      height: 45px;
+    }
+    .img-ttd {
+      position: absolute;
+      top: -50px;
+      left: -15px;
+      height: 150px;
+      width: auto;
+      z-index: 10;
+      mix-blend-mode: multiply;
+    }
     .nama-ttd { margin-bottom: 0; font-weight: bold; text-decoration: underline; }
     .nip-ttd { margin-top: 0; }
 
@@ -51,6 +63,7 @@
       body { margin: 0; }
       .btn, .print-btn, .back-btn { display: none !important; }
       .table-khs th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .img-ttd { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
   </style>
 </head>
@@ -87,7 +100,7 @@
         <tr>
           <td>PROGRAM STUDI</td>
           <td class="titik-dua">:</td>
-          <td>TEKNIK ELEKTRONIKA</td>
+          <td>D3 Teknik Elektronika</td>
         </tr>
       </table>
 
@@ -176,7 +189,9 @@
       <div class="kolom-tanda">
         <p class="mb-0">Palopo, <%= new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %></p>
         <p>Ketua Program Studi Teknik Elektronika</p>
-        <div class="area-ttd"></div>
+        <div class="area-ttd">
+          <img src="/images/ttd.png" alt="Tanda Tangan Kaprodi" class="img-ttd">
+        </div>
         <p class="nama-ttd">Fajar Ramadhan, S.Pd., M.T</p>
         <p class="nip-ttd">NUPTK: 8559777678130153</p>
       </div>

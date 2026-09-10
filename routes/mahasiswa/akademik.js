@@ -532,6 +532,10 @@ async function hitungDataTranskrip(userId, semesterQuery) {
   let grades = semuaItem;
   let ipk = ipkTotal;
   let totalSKS = totalSKSTotal;
+  // Total "mutu" (SKS x Indeks) - dipakai di baris "Jumlah" pada dokumen
+  // cetak (transkrip_print.ejs). Dihitung dari perSemester.totalSksIndeks
+  // (bukan cuma totalSKS/ipk) supaya konsisten dengan cara IPK dihitung.
+  let totalSksIndeks = perSemester.reduce((sum, s) => sum + (s.totalSksIndeks || 0), 0);
 
   if (semesterDipilih) {
     const idx = semesterList.indexOf(semesterDipilih);
@@ -540,10 +544,11 @@ async function hitungDataTranskrip(userId, semesterQuery) {
     let sksKum = 0, bobotKum = 0;
     sampaiSemesterIni.forEach(s => { sksKum += s.totalSKS; bobotKum += s.totalSksIndeks; });
     totalSKS = sksKum;
+    totalSksIndeks = bobotKum;
     ipk = sksKum > 0 ? (bobotKum / sksKum).toFixed(2) : '0.00';
   }
 
-  return { grades, ipk, totalSKS, semesterList, semesterDipilih };
+  return { grades, ipk, totalSKS, totalSksIndeks, semesterList, semesterDipilih };
 }
 
 /**
