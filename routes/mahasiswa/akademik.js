@@ -14,7 +14,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 const {
   getCurrentAcademicSemester,
   getAngkatanFromNim,
-  getStudentCurrentSemester
+  getStudentCurrentSemester,
+  normalizeKelas
 } = require('../../helpers/academicHelper');
 const { getTranskripMahasiswa } = require('../../helpers/nilaiHelper');
 
@@ -160,8 +161,20 @@ router.get('/krs/baru', async (req, res) => {
     const currentSemesterNumber = getStudentCurrentSemester(angkatan);
     const academicLabel = getCurrentAcademicSemester().label;
 
+    // Kelas mahasiswa sendiri (mis. "ELK1B") - dipakai untuk memfilter mata
+    // kuliah yang dipecah per kelas paralel, supaya mahasiswa tidak salah
+    // pilih kelas paralel yang bukan miliknya (dosen/jadwal beda).
+    const kelasMahasiswa = normalizeKelas(req.user.kelas);
+
     const coursesSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
-    const courses = coursesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    let courses = coursesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Mata kuliah dibedakan jadi 2 macam:
+    // - kelas kosong/null -> gabungan, dipakai bareng semua kelas (tampilkan ke semua)
+    // - kelas terisi -> paralel per kelas, HANYA tampilkan yang kelas-nya sama
+    //   dengan kelas mahasiswa ini (dibandingkan lewat normalizeKelas supaya
+    //   variasi penulisan seperti "ELK 1B" vs "ELK1B" tetap dianggap cocok).
+    courses = courses.filter(c => !c.kelas || normalizeKelas(c.kelas) === kelasMahasiswa);
 
     // Tandai mata kuliah yang direkomendasikan (sesuai semester saat ini)
     courses.forEach(c => {
@@ -172,7 +185,8 @@ router.get('/krs/baru', async (req, res) => {
       user: req.user,
       courses,
       currentSemester: currentSemesterNumber,
-      academicLabel
+      academicLabel,
+      kelasMahasiswa: req.user.kelas || null
     });
   } catch (error) {
     console.error(error);
