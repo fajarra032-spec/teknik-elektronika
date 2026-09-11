@@ -1,0 +1,138 @@
+<%- include('../../partials/header') %>
+
+<style>
+  :root {
+    --primary-start: #1e3a8a;
+    --primary-end: #3b82f6;
+    --primary-light: rgba(30,58,138,0.1);
+    --primary-dark: #0f2b5c;
+  }
+  body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; }
+
+  .page-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-radius: 1.2rem; padding: 1.5rem; color: white; margin-bottom: 1.2rem;
+    box-shadow: 0 10px 20px rgba(30,58,138,0.2);
+  }
+  .page-header h2 { font-weight: 700; margin-bottom: 0.3rem; }
+  .page-header p { margin: 0; opacity: 0.9; }
+  .btn-back {
+    background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); border: none; color: white;
+    border-radius: 50px; padding: 0.4rem 1rem; font-size: 0.8rem; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 0.4rem;
+  }
+
+  .info-card {
+    background: white; border-radius: 1.2rem; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    padding: 1.2rem; margin-bottom: 1.2rem; border: 1px solid rgba(30,58,138,0.1);
+  }
+  .table-materi th { background: #f8fafc; font-weight: 600; font-size: 0.8rem; padding: 0.5rem; }
+  .table-materi td { font-size: 0.8rem; padding: 0.5rem; vertical-align: middle; }
+  .badge-status { padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.7rem; white-space: nowrap; }
+  .badge-selesai { background: #d1fae5; color: #065f46; }
+  .badge-belum { background: #fef3c7; color: #b45309; }
+  .badge-hadir { background: #d1fae5; color: #065f46; }
+  .badge-izin { background: #dbeafe; color: #1d4ed8; }
+  .badge-sakit { background: #fef3c7; color: #b45309; }
+  .badge-alpa { background: #fee2e2; color: #b91c1c; }
+  .badge-belum-absen { background: #f1f5f9; color: #64748b; }
+
+  /* ===== KARTU PERTEMUAN (khusus HP, gantikan tabel lebar) ===== */
+  .pertemuan-card {
+    background: white; border-radius: 1rem; padding: 1rem; margin-bottom: 0.8rem;
+    border: 1px solid rgba(30,58,138,0.1); box-shadow: 0 5px 15px rgba(0,0,0,0.04);
+  }
+  .pertemuan-card .nomor {
+    display: inline-flex; align-items: center; justify-content: center; width: 1.8rem; height: 1.8rem;
+    background: var(--primary-light); color: var(--primary-dark); border-radius: 50%; font-weight: 700; font-size: 0.8rem;
+  }
+  .pertemuan-card .topik { font-weight: 600; color: #1e293b; font-size: 0.92rem; }
+  .pertemuan-card .tanggal { font-size: 0.78rem; color: #64748b; }
+  .pertemuan-card .badges { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.5rem; }
+</style>
+
+<div class="container mt-3">
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+      <h2><i class="bi bi-calendar-week me-2"></i>Pertemuan</h2>
+      <p><%= mk.kode %> - <%= mk.nama %></p>
+    </div>
+    <a href="/mahasiswa/elearning/mk/<%= mk.id %>" class="btn-back"><i class="bi bi-arrow-left"></i> Kembali</a>
+  </div>
+
+  <%- include('./partials/mk_tabs', { mk, activeTab: 'pertemuan' }) %>
+
+  <!-- Tampilan kartu untuk HP -->
+  <div class="d-md-none">
+    <% pertemuanList.forEach(m => { %>
+      <div class="pertemuan-card">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="nomor"><%= m.pertemuan %></span>
+          <span class="topik"><%= m.topik %></span>
+        </div>
+        <div class="tanggal mb-1"><i class="bi bi-calendar3 me-1"></i><%= m.tanggal ? new Date(m.tanggal).toLocaleDateString('id-ID') : 'Tanggal belum diatur' %></div>
+        <div class="badges">
+          <span class="badge-status <%= m.status === 'selesai' ? 'badge-selesai' : 'badge-belum' %>">
+            <%= m.status === 'selesai' ? 'Selesai' : 'Belum' %>
+          </span>
+          <% if (m.kehadiranSaya) { %>
+            <span class="badge-status badge-<%= m.kehadiranSaya.toLowerCase() %>"><%= m.kehadiranSaya %></span>
+          <% } else { %>
+            <span class="badge-status badge-belum-absen">Belum diambil absen</span>
+          <% } %>
+          <% if (m.fileUrl) { %>
+            <a href="<%= m.fileUrl %>" target="_blank" class="badge-status" style="background:var(--primary-light); color:var(--primary-dark); text-decoration:none;">
+              <i class="bi bi-paperclip"></i> Materi
+            </a>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+
+  <!-- Tampilan tabel untuk tablet/desktop -->
+  <div class="info-card d-none d-md-block">
+    <div class="table-responsive">
+      <table class="table table-bordered table-materi mb-0">
+        <thead>
+          <tr>
+            <th>Pertemuan</th>
+            <th>Topik</th>
+            <th>Tanggal</th>
+            <th>Status</th>
+            <th>Materi</th>
+            <th>Kehadiran Saya</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% pertemuanList.forEach(m => { %>
+            <tr>
+              <td class="text-center"><%= m.pertemuan %></td>
+              <td><%= m.topik %></td>
+              <td><%= m.tanggal ? new Date(m.tanggal).toLocaleDateString('id-ID') : '-' %></td>
+              <td>
+                <span class="badge-status <%= m.status === 'selesai' ? 'badge-selesai' : 'badge-belum' %>">
+                  <%= m.status === 'selesai' ? 'Selesai' : 'Belum' %>
+                </span>
+              </td>
+              <td>
+                <% if (m.fileUrl) { %>
+                  <a href="<%= m.fileUrl %>" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2">Lihat</a>
+                <% } else { %>-<% } %>
+              </td>
+              <td>
+                <% if (m.kehadiranSaya) { %>
+                  <span class="badge-status badge-<%= m.kehadiranSaya.toLowerCase() %>"><%= m.kehadiranSaya %></span>
+                <% } else { %>
+                  <span class="badge-status badge-belum-absen">Belum diambil</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

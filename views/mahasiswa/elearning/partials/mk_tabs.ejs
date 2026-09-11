@@ -1,0 +1,47 @@
+<%
+/**
+ * Tab navigasi workspace kelas mahasiswa: Ringkasan | Pertemuan | Tugas | Modul
+ * Locals: mk { id, kode, nama }, activeTab: 'ringkasan'|'pertemuan'|'tugas'|'modul'
+ */
+%>
+<style>
+  .mk-tabs-mhs {
+    display: flex; gap: 0.5rem; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    background: white; border-radius: 1rem; padding: 0.5rem; margin-bottom: 1.2rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.04); border: 1px solid rgba(30,58,138,0.08);
+    scrollbar-width: none;
+  }
+  .mk-tabs-mhs::-webkit-scrollbar { display: none; }
+  .mk-tab-mhs {
+    flex: 0 0 auto; text-align: center; padding: 0.55rem 1.1rem;
+    border-radius: 0.75rem; font-weight: 600; font-size: 0.85rem; color: #64748b;
+    text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .mk-tab-mhs:hover { background: rgba(30,58,138,0.06); color: #1e3a8a; }
+  .mk-tab-mhs.active {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white;
+    box-shadow: 0 6px 15px rgba(30,58,138,0.3);
+  }
+  @media (min-width: 768px) {
+    .mk-tabs-mhs { flex-wrap: wrap; overflow-x: visible; }
+    .mk-tab-mhs { flex: 1 1 auto; min-width: 120px; }
+  }
+  @media (max-width: 576px) {
+    .mk-tab-mhs { padding: 0.5rem 0.9rem; font-size: 0.8rem; }
+  }
+</style>
+<div class="mk-tabs-mhs">
+  <a href="/mahasiswa/elearning/mk/<%= mk.id %>" class="mk-tab-mhs <%= activeTab === 'ringkasan' ? 'active' : '' %>">
+    <i class="bi bi-house"></i> Ringkasan
+  </a>
+  <a href="/mahasiswa/elearning/mk/<%= mk.id %>/pertemuan" class="mk-tab-mhs <%= activeTab === 'pertemuan' ? 'active' : '' %>">
+    <i class="bi bi-calendar-week"></i> Pertemuan
+  </a>
+  <a href="/mahasiswa/elearning/mk/<%= mk.id %>/tugas" class="mk-tab-mhs <%= activeTab === 'tugas' ? 'active' : '' %>">
+    <i class="bi bi-file-earmark-text"></i> Tugas
+  </a>
+  <a href="/mahasiswa/elearning/mk/<%= mk.id %>/modul" class="mk-tab-mhs <%= activeTab === 'modul' ? 'active' : '' %>">
+    <i class="bi bi-journal-richtext"></i> Modul
+  </a>
+</div>

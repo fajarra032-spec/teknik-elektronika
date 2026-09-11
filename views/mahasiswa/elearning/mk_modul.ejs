@@ -35,6 +35,11 @@
 
   .empty-state { text-align: center; padding: 3rem 1rem; color: #6c757d; }
   .empty-state i { font-size: 3rem; color: #adb5bd; margin-bottom: 1rem; display: block; }
+
+  @media (max-width: 576px) {
+    .modul-card { padding: 1rem; }
+    .modul-card iframe { height: 320px !important; }
+  }
 </style>
 
 <div class="container mt-4">
@@ -45,6 +50,8 @@
     </div>
     <a href="/mahasiswa/elearning/mk/<%= mk.id %>" class="btn-back"><i class="bi bi-arrow-left"></i> Kembali</a>
   </div>
+
+  <%- include('./partials/mk_tabs', { mk, activeTab: 'modul' }) %>
 
   <% if (!modulList || modulList.length === 0) { %>
     <div class="modul-card">

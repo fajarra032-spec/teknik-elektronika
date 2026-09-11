@@ -12,7 +12,7 @@ const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
-const { getPeriodeAktif } = require('../../helpers/nilaiHelper');
+const { getPeriodeAktif, getHasilRubrikSatuMahasiswa } = require('../../helpers/nilaiHelper');
 const { periodeKeUrutan } = require('../../helpers/academicHelper');
 const { mataKuliahCache, tugasAktifCache, dosenCache } = require('../../helpers/cache');
 
@@ -275,38 +275,73 @@ router.get('/', async (req, res) => {
 // DETAIL MATA KULIAH (JADWAL, MATERI, TUGAS)
 // ============================================================================
 
+// ============================================================================
+// HELPER: cek mahasiswa terdaftar aktif di satu MK (dipakai di semua tab)
+// ============================================================================
+async function cekAksesKelas(mkId, userId) {
+  const mkData = await mataKuliahCache.getOrFetch(mkId, async () => {
+    const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
+    return mkDoc.exists ? mkDoc.data() : null;
+  });
+  if (!mkData) return { ok: false, status: 404, message: 'Mata kuliah tidak ditemukan' };
+  const mk = { id: mkId, ...mkData };
+
+  const enrollmentSnapshot = await db.collection('enrollment')
+    .where('userId', '==', userId)
+    .where('mkId', '==', mkId)
+    .where('status', '==', 'active')
+    .get();
+  if (enrollmentSnapshot.empty) {
+    return { ok: false, status: 403, message: 'Anda tidak terdaftar di mata kuliah ini' };
+  }
+  return { ok: true, mk };
+}
+
+/**
+ * Bangun daftar 16 pertemuan (topik/tanggal/status/file) + status kehadiran
+ * MAHASISWA YANG SEDANG LOGIN untuk tiap pertemuan (dari subcollection
+ * absensi yang diisi dosen) - dipakai di Ringkasan & tab Pertemuan.
+ */
+async function getPertemuanDenganKehadiran(mk, userId) {
+  const materi = mk.materi || [];
+  const absensiSnapshot = await db.collection('mataKuliah').doc(mk.id).collection('absensi').get();
+  const kehadiranPerPertemuan = {}; // pertemuan (number) -> status
+  absensiSnapshot.docs.forEach(doc => {
+    const data = doc.data();
+    const status = (data.kehadiran || {})[userId];
+    if (status) kehadiranPerPertemuan[data.pertemuan] = status;
+  });
+
+  const pertemuanList = [];
+  for (let i = 1; i <= 16; i++) {
+    const existing = materi.find(m => m.pertemuan === i) || {};
+    pertemuanList.push({
+      pertemuan: i,
+      topik: existing.topik || `Pertemuan ${i}`,
+      tanggal: existing.tanggal || null,
+      status: existing.status || 'belum',
+      fileUrl: existing.fileUrl || null,
+      kehadiranSaya: kehadiranPerPertemuan[i] || null
+    });
+  }
+
+  const totalDiambilAbsensi = absensiSnapshot.size;
+  const jumlahHadirSaya = Object.values(kehadiranPerPertemuan).filter(s => s === 'Hadir').length;
+
+  return { pertemuanList, totalDiambilAbsensi, jumlahHadirSaya };
+}
+
+// ============================================================================
+// RINGKASAN KELAS (tab utama)
+// ============================================================================
 router.get('/mk/:id', async (req, res) => {
   try {
     const mkId = req.params.id;
-    const mkData = await mataKuliahCache.getOrFetch(mkId, async () => {
-      const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
-      return mkDoc.exists ? mkDoc.data() : null;
-    });
-    if (!mkData) return res.status(404).send('Mata kuliah tidak ditemukan');
-    const mk = { id: mkId, ...mkData };
-
-    const enrollmentSnapshot = await db.collection('enrollment')
-      .where('userId', '==', req.user.id)
-      .where('mkId', '==', mkId)
-      .where('status', '==', 'active')
-      .get();
-    if (enrollmentSnapshot.empty) {
-      return res.status(403).send('Anda tidak terdaftar di mata kuliah ini');
-    }
+    const akses = await cekAksesKelas(mkId, req.user.id);
+    if (!akses.ok) return res.status(akses.status).send(akses.message);
+    const mk = akses.mk;
 
     const jadwal = mk.jadwal || 'Jadwal belum diatur';
-    const materi = mk.materi || [];
-    const pertemuanList = [];
-    for (let i = 1; i <= 16; i++) {
-      const existing = materi.find(m => m.pertemuan === i) || {};
-      pertemuanList.push({
-        pertemuan: i,
-        topik: existing.topik || `Pertemuan ${i}`,
-        tanggal: existing.tanggal || null,
-        status: existing.status || 'belum',
-        fileUrl: existing.fileUrl || null
-      });
-    }
 
     const dosenList = (await Promise.all((mk.dosenIds || []).map(async (dId) => {
       const dData = await dosenCache.getOrFetch(dId, async () => {
@@ -316,8 +351,7 @@ router.get('/mk/:id', async (req, res) => {
       return dData ? { id: dId, nama: dData.nama, foto: dData.foto || null, kontak: dData.kontak || null } : null;
     }))).filter(Boolean);
 
-    // Daftar teman sekelas (mahasiswa lain yang aktif di MK ini periode ini)
-    // supaya bisa lihat foto teman sekelas, bukan cuma jumlahnya.
+    // Teman sekelas
     const periodeAktifUntukKelas = getPeriodeAktif();
     const kelasEnrollmentSnapshot = await db.collection('enrollment')
       .where('mkId', '==', mkId)
@@ -344,6 +378,82 @@ router.get('/mk/:id', async (req, res) => {
       .get();
     const jumlahMahasiswa = countSnapshot.data().count;
 
+    // Progress belajar: pertemuan terlaksana vs sudah lewat tanggal tapi
+    // belum ditandai selesai oleh dosen (perlu perhatian)
+    const materi = mk.materi || [];
+    const terlaksana = materi.filter(m => m.status === 'selesai').length;
+    const now = new Date();
+    const terlambatDiisi = materi.filter(m => {
+      if (m.status === 'selesai' || !m.tanggal) return false;
+      return new Date(m.tanggal) < now;
+    }).length;
+    const persenProgress = Math.round((terlaksana / 16) * 100);
+
+    // Kehadiran saya (ringkasan)
+    const { totalDiambilAbsensi, jumlahHadirSaya } = await getPertemuanDenganKehadiran(mk, req.user.id);
+    const persenHadirSaya = totalDiambilAbsensi > 0 ? Math.round((jumlahHadirSaya / totalDiambilAbsensi) * 100) : null;
+
+    // Nilai saya (rincian rubrik)
+    const periodeAktif = getPeriodeAktif();
+    const hasilRubrikSaya = await getHasilRubrikSatuMahasiswa(req.user.id, mkId, periodeAktif);
+
+    res.render('mahasiswa/elearning/mk_detail', {
+      title: `${mk.kode} - ${mk.nama}`,
+      mk,
+      jadwal,
+      dosenList,
+      mahasiswaList,
+      jumlahMahasiswa,
+      terlaksana,
+      terlambatDiisi,
+      persenProgress,
+      totalDiambilAbsensi,
+      jumlahHadirSaya,
+      persenHadirSaya,
+      hasilRubrikSaya
+    });
+  } catch (error) {
+    console.error('Error ringkasan MK:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Gagal memuat ringkasan mata kuliah'
+    });
+  }
+});
+
+// ============================================================================
+// TAB PERTEMUAN (16 pertemuan + kehadiran saya per pertemuan)
+// ============================================================================
+router.get('/mk/:id/pertemuan', async (req, res) => {
+  try {
+    const mkId = req.params.id;
+    const akses = await cekAksesKelas(mkId, req.user.id);
+    if (!akses.ok) return res.status(akses.status).send(akses.message);
+    const mk = akses.mk;
+
+    const { pertemuanList } = await getPertemuanDenganKehadiran(mk, req.user.id);
+
+    res.render('mahasiswa/elearning/mk_pertemuan', {
+      title: `Pertemuan - ${mk.kode} ${mk.nama}`,
+      mk,
+      pertemuanList
+    });
+  } catch (error) {
+    console.error('Error pertemuan MK:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat daftar pertemuan' });
+  }
+});
+
+// ============================================================================
+// TAB TUGAS (khusus satu MK)
+// ============================================================================
+router.get('/mk/:id/tugas', async (req, res) => {
+  try {
+    const mkId = req.params.id;
+    const akses = await cekAksesKelas(mkId, req.user.id);
+    if (!akses.ok) return res.status(akses.status).send(akses.message);
+    const mk = akses.mk;
+
     const periodeAktif = getPeriodeAktif();
     let tugasSnapshot;
     try {
@@ -353,13 +463,11 @@ router.get('/mk/:id', async (req, res) => {
         .orderBy('deadline', 'asc')
         .get();
     } catch (indexError) {
-      // Index composite belum siap di Firestore - mundur ke query aman
       console.error('Index tugas(mkId,periode,deadline) belum siap, fallback:', indexError.message);
       tugasSnapshot = await db.collection('tugas').where('mkId', '==', mkId).get();
     }
 
     if (tugasSnapshot.empty) {
-      // Fallback + self-heal: data lama mungkin belum ditandai periode
       const semuaSnapshot = await db.collection('tugas').where('mkId', '==', mkId).get();
       const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
       if (perluDitandai.length > 0) {
@@ -371,35 +479,66 @@ router.get('/mk/:id', async (req, res) => {
     const tugasList = [];
     for (const doc of tugasSnapshot.docs) {
       const tugas = { id: doc.id, ...doc.data() };
-      if ((tugas.periode || periodeAktif) !== periodeAktif) continue; // data lama tanpa periode dianggap periode aktif
+      if ((tugas.periode || periodeAktif) !== periodeAktif) continue;
       const pengumpulan = await getPengumpulan(tugas.id, req.user.id);
       tugas.pengumpulan = pengumpulan;
       tugasList.push(tugas);
     }
     tugasList.sort((a, b) => (a.deadline || '').localeCompare(b.deadline || ''));
 
-    res.render('mahasiswa/elearning/mk_detail', {
-      title: `${mk.kode} - ${mk.nama}`,
+    res.render('mahasiswa/elearning/mk_tugas', {
+      title: `Tugas - ${mk.kode} ${mk.nama}`,
       mk,
-      jadwal,
-      materi: pertemuanList,
-      dosenList,
-      mahasiswaList,
-      jumlahMahasiswa,
       tugasList
     });
   } catch (error) {
-    console.error('Error detail MK:', error);
-    res.status(500).render('error', { 
-      title: 'Error', 
-      message: 'Gagal memuat detail mata kuliah' 
-    });
+    console.error('Error tugas MK:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat daftar tugas' });
   }
 });
 
 // ============================================================================
 // TUGAS AKTIF
 // ============================================================================
+
+// ============================================================================
+// MODUL PEMBELAJARAN (read-only untuk mahasiswa) - konten dibuat & dikustom
+// bebas oleh dosen di sisi dosen; di sini mahasiswa hanya bisa membaca.
+// ============================================================================
+router.get('/mk/:id/modul', async (req, res) => {
+  try {
+    const mkId = req.params.id;
+    const mkData = await mataKuliahCache.getOrFetch(mkId, async () => {
+      const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
+      return mkDoc.exists ? mkDoc.data() : null;
+    });
+    if (!mkData) return res.status(404).send('Mata kuliah tidak ditemukan');
+    const mk = { id: mkId, ...mkData };
+
+    const enrollmentSnapshot = await db.collection('enrollment')
+      .where('userId', '==', req.user.id)
+      .where('mkId', '==', mkId)
+      .where('status', '==', 'active')
+      .get();
+    if (enrollmentSnapshot.empty) {
+      return res.status(403).send('Anda tidak terdaftar di mata kuliah ini');
+    }
+
+    const modulSnapshot = await db.collection('mataKuliah').doc(mkId).collection('modul').get();
+    const modulList = modulSnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
+
+    res.render('mahasiswa/elearning/mk_modul', {
+      title: `Modul - ${mk.kode} ${mk.nama}`,
+      mk,
+      modulList
+    });
+  } catch (error) {
+    console.error('Error modul mahasiswa:', error);
+    res.status(500).send('Gagal memuat modul');
+  }
+});
 
 router.get('/tugas-aktif', async (req, res) => {
   try {
