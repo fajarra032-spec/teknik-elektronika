@@ -129,6 +129,23 @@ function generatePeriodeOptions(keBelakang = 6, keDepan = 1) {
   return options;
 }
 
+/**
+ * Normalisasi label kelas (mis. field `kelas` pada dokumen mahasiswa &
+ * mataKuliah) supaya variasi penulisan seperti "ELK 1B", "elk1b", " ELK1B "
+ * semuanya dianggap SAMA ("ELK1B"). Tanpa ini, mahasiswa yang kelasnya
+ * ke-input dengan spasi (mis. "ELK 1B") tidak akan pernah cocok dengan
+ * mata kuliah kelas paralel yang kelasnya tersimpan "ELK1B" (tanpa spasi) -
+ * gejalanya: paket KRS/kelas tidak terbaca/tidak ditemukan padahal secara
+ * kasat mata terlihat sama.
+ * @param {string|null|undefined} kelas
+ * @returns {string|null}
+ */
+function normalizeKelas(kelas) {
+  if (!kelas) return null;
+  const bersih = String(kelas).trim().toUpperCase().replace(/\s+/g, '');
+  return bersih || null;
+}
+
 module.exports = {
   getCurrentAcademicSemester,
   getSemesterForDate,
@@ -139,5 +156,6 @@ module.exports = {
   getActivePeriodeId,
   generatePeriodeOptions,
   periodeKeUrutan,
-  urutanKePeriode
+  urutanKePeriode,
+  normalizeKelas
 };

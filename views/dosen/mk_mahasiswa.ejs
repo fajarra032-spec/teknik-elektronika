@@ -299,9 +299,28 @@
         <option value="">Semua Angkatan</option>
         <!-- Options akan diisi dengan JavaScript -->
       </select>
+      <select id="kelasFilter" class="form-select">
+        <option value="">Semua Kelas</option>
+        <!-- Options akan diisi dengan JavaScript -->
+      </select>
       <button class="btn-filter" id="applyFilter">Terapkan</button>
       <button class="btn-reset" id="resetFilter">Reset</button>
     </div>
+  <% } %>
+
+  <% if (!mk.kelas) { %>
+    <% const kelasUnik = Array.from(new Set(mahasiswaList.map(m => m.kelas).filter(Boolean))).sort(); %>
+    <% if (kelasUnik.length > 1) { %>
+      <div class="alert alert-info d-flex align-items-start" style="border-radius: 0.75rem;">
+        <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+        <div>
+          Mata kuliah ini belum dipisah per kelas di data Mata Kuliah, jadi mahasiswa dari
+          beberapa kelas (<strong><%= kelasUnik.join(', ') %></strong>) tergabung dalam satu daftar ini.
+          Gunakan filter <strong>Kelas</strong> di bawah untuk melihat per kelas, atau minta admin
+          memisahkan mata kuliah ini per kelas di menu Mata Kuliah kalau perlu roster/nilai terpisah.
+        </div>
+      </div>
+    <% } %>
   <% } %>
 
   <!-- Tabel Mahasiswa -->
@@ -314,13 +333,14 @@
             <th>Foto</th>
             <th>NIM</th>
             <th>Nama</th>
+            <th>Kelas</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
           <% if (mahasiswaList.length === 0) { %>
             <tr>
-              <td colspan="5" class="text-center py-5">
+              <td colspan="6" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <p>Belum ada mahasiswa yang terdaftar.</p>
@@ -341,7 +361,7 @@
                 }
               }
             %>
-            <tr data-nama="<%= m.nama.toLowerCase() %>" data-nim="<%= nim %>" data-angkatan="<%= angkatan %>">
+            <tr data-nama="<%= m.nama.toLowerCase() %>" data-nim="<%= nim %>" data-angkatan="<%= angkatan %>" data-kelas="<%= m.kelas || '' %>">
               <td class="fw-bold text-center"><%= index + 1 %></td>
               <td class="text-center">
                 <% if (fotoUrl) { %>
@@ -352,6 +372,7 @@
               </td>
               <td class="text-center"><span class="nim-text"><%= nim || '-' %></span></td>
               <td><strong><%= m.nama %></strong></td>
+              <td class="text-center"><% if (m.kelas) { %><span class="badge bg-secondary"><%= m.kelas %></span><% } else { %><span class="text-muted">-</span><% } %></td>
               <td class="text-center">
                 <a href="/dosen/mahasiswa/<%= m.id %>" class="btn-detail">
                   <i class="bi bi-eye"></i> Detail
@@ -381,6 +402,17 @@
       return Array.from(angkatanSet).sort();
     }
 
+    // Fungsi untuk mendapatkan daftar kelas unik dari data attribute
+    function getUniqueKelas() {
+      const rows = document.querySelectorAll('.mahasiswa-table tbody tr[data-kelas]');
+      const kelasSet = new Set();
+      rows.forEach(row => {
+        const kelas = row.getAttribute('data-kelas');
+        if (kelas) kelasSet.add(kelas);
+      });
+      return Array.from(kelasSet).sort();
+    }
+
     // Isi dropdown angkatan
     const angkatanFilter = document.getElementById('angkatanFilter');
     const angkatanList = getUniqueAngkatan();
@@ -391,10 +423,21 @@
       angkatanFilter.appendChild(option);
     });
 
+    // Isi dropdown kelas
+    const kelasFilter = document.getElementById('kelasFilter');
+    const kelasList = getUniqueKelas();
+    kelasList.forEach(kelas => {
+      const option = document.createElement('option');
+      option.value = kelas;
+      option.textContent = kelas;
+      kelasFilter.appendChild(option);
+    });
+
     // Fungsi filter
     function filterTable() {
       const searchInput = document.getElementById('searchInput').value.toLowerCase().trim();
       const angkatanValue = document.getElementById('angkatanFilter').value;
+      const kelasValue = document.getElementById('kelasFilter').value;
       const rows = document.querySelectorAll('.mahasiswa-table tbody tr[data-nama]');
       let visibleCount = 0;
 
@@ -402,6 +445,7 @@
         const nama = row.getAttribute('data-nama') || '';
         const nim = row.getAttribute('data-nim') || '';
         const angkatan = row.getAttribute('data-angkatan') || '';
+        const kelas = row.getAttribute('data-kelas') || '';
 
         let matchSearch = true;
         if (searchInput !== '') {
@@ -413,7 +457,12 @@
           matchAngkatan = angkatan === angkatanValue;
         }
 
-        if (matchSearch && matchAngkatan) {
+        let matchKelas = true;
+        if (kelasValue !== '') {
+          matchKelas = kelas === kelasValue;
+        }
+
+        if (matchSearch && matchAngkatan && matchKelas) {
           row.style.display = '';
           visibleCount++;
         } else {
@@ -433,6 +482,7 @@
     function resetFilter() {
       document.getElementById('searchInput').value = '';
       document.getElementById('angkatanFilter').value = '';
+      document.getElementById('kelasFilter').value = '';
       const rows = document.querySelectorAll('.mahasiswa-table tbody tr[data-nama]');
       rows.forEach(row => row.style.display = '');
       document.getElementById('noFilterResult').style.display = 'none';
@@ -445,6 +495,7 @@
       if (e.key === 'Enter') filterTable();
     });
     document.getElementById('angkatanFilter').addEventListener('change', filterTable);
+    document.getElementById('kelasFilter').addEventListener('change', filterTable);
   })();
 </script>
 <% } %>

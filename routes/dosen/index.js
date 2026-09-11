@@ -271,7 +271,10 @@ router.post('/tugas', upload.single('file'), async (req, res) => {
       createdAt: new Date().toISOString()
     });
 
-    res.redirect('/dosen/tugas');
+    // Kalau tugas dibuat dari dalam workspace satu MK (tab Tugas), kembali
+    // ke halaman itu, bukan ke daftar tugas global.
+    const redirectTo = req.body.redirectTo;
+    res.redirect(redirectTo && redirectTo.startsWith('/dosen/mk/') ? redirectTo : '/dosen/tugas');
   } catch (error) {
     console.error('Error buat tugas:', error);
     res.status(500).send('Gagal membuat tugas');
@@ -311,9 +314,12 @@ router.get('/tugas/:id', async (req, res) => {
     tugas.mkKode = mkKode;
     tugas.mkNama = mkNama;
 
-    // Ambil daftar mahasiswa yang terdaftar di MK ini
+    // Ambil daftar mahasiswa yang terdaftar di MK ini, DI PERIODE BERJALAN
+    // SAJA - lihat catatan di routes/dosen/mk.js soal kenapa filter
+    // semester wajib (kalau tidak, peserta periode lama ikut ketarik).
     const enrollmentSnapshot = await db.collection('enrollment')
       .where('mkId', '==', tugas.mkId)
+      .where('semester', '==', getPeriodeAktif())
       .where('status', '==', 'active')
       .get();
     
@@ -532,8 +538,9 @@ router.post('/tugas/:id/delete', async (req, res) => {
     // Hapus dokumen tugas dari Firestore
     await db.collection('tugas').doc(tugasId).delete();
 
-    // Redirect ke halaman daftar tugas
-    res.redirect('/dosen/tugas');
+    // Kembali ke halaman asal (workspace MK) kalau ada, atau daftar tugas global
+    const redirectTo = req.body.redirectTo;
+    res.redirect(redirectTo && redirectTo.startsWith('/dosen/mk/') ? redirectTo : '/dosen/tugas');
   } catch (error) {
     console.error('Error hapus tugas:', error);
     res.status(500).send('Gagal menghapus tugas');

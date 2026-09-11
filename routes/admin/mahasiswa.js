@@ -12,7 +12,7 @@ const { Readable } = require('stream');
 const multer = require('multer');
 const { KONSENTRASI_OPTIONS, AGAMA_OPTIONS, DEFAULT_AGAMA, parseSemesterNumber, aktifkanPaketKrs, SEMESTER_MULAI_KONSENTRASI } = require('../../helpers/paketKurikulumHelper');
 const { isBiodataLengkap, getBiodataKosong, BIODATA_FIELDS, GROUP_LABELS } = require('../../helpers/biodataHelper');
-const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
+const { getCurrentAcademicSemester, normalizeKelas } = require('../../helpers/academicHelper');
 const { buatDokumenSkPa } = require('../../helpers/skPaHelper');
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -356,7 +356,7 @@ router.post('/', upload.single('foto'), async (req, res) => {
       semester: finalSemester,
       statusMagang: finalMagang,
       statusMahasiswa: finalStatus,
-      kelas: kelas ? kelas.trim().toUpperCase() : null,
+      kelas: normalizeKelas(kelas),
       konsentrasi: KONSENTRASI_OPTIONS.includes(konsentrasi) ? konsentrasi : null,
       // Agama: kalau tidak dipilih/tidak valid, default ke Islam (bisa
       // diubah admin kapan saja lewat form edit).
@@ -470,7 +470,7 @@ router.post('/:id/update', upload.single('foto'), async (req, res) => {
       semester: SEMESTER_OPTIONS.includes(semester) ? semester : (oldData.semester || null),
       statusMagang: MAGANG_OPTIONS.includes(statusMagang) ? statusMagang : (oldData.statusMagang || null),
       statusMahasiswa: STATUS_MAHASISWA_OPTIONS.includes(statusMahasiswa) ? statusMahasiswa : (oldData.statusMahasiswa || 'Aktif'),
-      kelas: kelas !== undefined ? (kelas ? kelas.trim().toUpperCase() : null) : (oldData.kelas || null),
+      kelas: kelas !== undefined ? normalizeKelas(kelas) : (oldData.kelas || null),
       konsentrasi: konsentrasi !== undefined ? (KONSENTRASI_OPTIONS.includes(konsentrasi) ? konsentrasi : null) : (oldData.konsentrasi || null),
       // Agama: admin bisa ubah kapan saja lewat form ini. Kalau field tidak
       // dikirim/tidak valid, pertahankan nilai lama - kalau belum pernah
@@ -838,7 +838,7 @@ router.post('/bulk-kelas', async (req, res) => {
     }
     if (!Array.isArray(mahasiswaIds)) mahasiswaIds = [mahasiswaIds];
 
-    const kelasFinal = kelas ? kelas.trim().toUpperCase() : null;
+    const kelasFinal = normalizeKelas(kelas);
 
     // Firestore batch max 500 operasi - chunking untuk jaga-jaga kalau
     // suatu saat dipakai untuk angkatan besar sekaligus.
@@ -1076,8 +1076,7 @@ router.post('/import', upload.single('file'), async (req, res) => {
 
       // Update kelas (rombel, mis. "ELK1A") - boleh dikosongkan utk hapus
       if (rawHeaders.includes('kelas')) {
-        const kelas = row.kelas?.trim();
-        updateData.kelas = kelas ? kelas.toUpperCase() : null;
+        updateData.kelas = normalizeKelas(row.kelas);
       }
 
       // Update konsentrasi (hanya diterima kalau sesuai KONSENTRASI_OPTIONS,

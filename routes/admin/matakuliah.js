@@ -249,14 +249,14 @@ router.post('/', async (req, res) => {
       return res.status(400).send('Kode, Nama, SKS, dan Semester wajib diisi');
     }
 
-    const kelasFinal = kelas ? kelas.trim().toUpperCase() : null;
+    const kelasFinal = academicHelper.normalizeKelas(kelas);
 
     // Cek duplikasi kode+kelas (BUKAN kode saja) - supaya satu kode MK boleh
     // punya beberapa dokumen untuk kelas paralel berbeda (mis. WUD3208 untuk
     // ELK1A dan ELK1B, masing-masing dengan dosen/jadwal sendiri), tapi tetap
     // mencegah entri persis sama (kode+kelas identik) dibuat dobel.
     const existingSnapshot = await db.collection('mataKuliah').where('kode', '==', kode).get();
-    const sudahAdaKelasSama = existingSnapshot.docs.some(doc => (doc.data().kelas || null) === kelasFinal);
+    const sudahAdaKelasSama = existingSnapshot.docs.some(doc => academicHelper.normalizeKelas(doc.data().kelas) === kelasFinal);
     if (sudahAdaKelasSama) {
       return res.status(400).send(
         kelasFinal
@@ -381,15 +381,15 @@ router.post('/:id/update', async (req, res) => {
   try {
     const { kode, nama, sks, semester, periodeId, dosenIds, jadwal, isPDK, kelas } = req.body;
     const mkRef = db.collection('mataKuliah').doc(req.params.id);
-    const kelasFinal = kelas ? kelas.trim().toUpperCase() : null;
+    const kelasFinal = academicHelper.normalizeKelas(kelas);
 
     // Validasi kode+kelas unik (lihat penjelasan lengkap di POST '/' - satu
     // kode boleh dipakai lebih dari sekali asal kelasnya beda)
     const mkDoc = await mkRef.get();
     const oldData = mkDoc.data();
-    if (kode !== oldData.kode || kelasFinal !== (oldData.kelas || null)) {
+    if (kode !== oldData.kode || kelasFinal !== academicHelper.normalizeKelas(oldData.kelas)) {
       const existingSnapshot = await db.collection('mataKuliah').where('kode', '==', kode).get();
-      const bentrok = existingSnapshot.docs.some(doc => doc.id !== req.params.id && (doc.data().kelas || null) === kelasFinal);
+      const bentrok = existingSnapshot.docs.some(doc => doc.id !== req.params.id && academicHelper.normalizeKelas(doc.data().kelas) === kelasFinal);
       if (bentrok) {
         return res.status(400).send(
           kelasFinal

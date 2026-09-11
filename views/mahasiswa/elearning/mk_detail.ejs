@@ -313,6 +313,61 @@
           <p class="text-muted small">Belum ada tugas.</p>
         <% } %>
       </div>
+
+      <!-- Modul Praktikum (hanya muncul jika dosen mempublikasikan) -->
+      <% if (modulPraktikumList && modulPraktikumList.length) { %>
+        <div class="info-card">
+          <h5><i class="bi bi-tools"></i> Modul Praktikum &mdash; <%= jenisPraktikumLabel %></h5>
+          <div class="accordion" id="accordionPraktikum">
+            <% modulPraktikumList.forEach((m, i) => { %>
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#praktikum-<%= m.id %>">
+                    <span class="me-2 fw-bold">#<%= i + 1 %></span> <%= m.judul %>
+                  </button>
+                </h2>
+                <div id="praktikum-<%= m.id %>" class="accordion-collapse collapse" data-bs-parent="#accordionPraktikum">
+                  <div class="accordion-body small">
+                    <p class="text-muted mb-2">
+                      <i class="bi bi-clock-history"></i> <%= m.estimasiWaktu %>
+                      <% if (m.tanggal) { %> &middot; <i class="bi bi-calendar-check"></i> <%= new Date(m.tanggal).toLocaleDateString('id-ID') %><% } %>
+                    </p>
+                    <p class="fw-semibold mb-1">Tujuan:</p>
+                    <ul>
+                      <% m.tujuan.forEach(t => { %><li><%= t %></li><% }) %>
+                    </ul>
+                    <p class="fw-semibold mb-1">Alat &amp; Bahan:</p>
+                    <ul>
+                      <% m.alatBahan.forEach(a => { %><li><%= a %></li><% }) %>
+                    </ul>
+                    <p class="fw-semibold mb-1">Dasar Teori:</p>
+                    <p><%= m.dasarTeori %></p>
+                    <p class="fw-semibold mb-1">Langkah Kerja:</p>
+                    <ol>
+                      <% m.langkahKerja.forEach(l => { %><li><%= l %></li><% }) %>
+                    </ol>
+                    <p class="fw-semibold mb-1">Tugas / Isi Laporan:</p>
+                    <ul>
+                      <% m.tugasLaporan.forEach(t => { %><li><%= t %></li><% }) %>
+                    </ul>
+                    <% if (m.k3) { %>
+                      <div class="alert alert-warning py-2 px-3 small mb-2"><i class="bi bi-exclamation-triangle"></i> <strong>Keselamatan Kerja:</strong> <%= m.k3 %></div>
+                    <% } %>
+                    <% if (m.catatanDosen) { %>
+                      <p class="text-muted"><i class="bi bi-chat-left-text"></i> Catatan dosen: <%= m.catatanDosen %></p>
+                    <% } %>
+                    <% if (m.fileUrl) { %>
+                      <a href="<%= m.fileUrl %>" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-file-earmark-pdf"></i> Unduh Job Sheet (<%= m.fileNama || 'PDF' %>)
+                      </a>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% } %>
     </div>
   </div>
 </div>

@@ -1,0 +1,125 @@
+<%- include('../partials/header') %>
+
+<style>
+  :root {
+    --primary-start: #1e3a8a;
+    --primary-end: #3b82f6;
+    --primary-light: rgba(30,58,138,0.1);
+    --primary-dark: #0f2b5c;
+  }
+  body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; }
+
+  .page-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-radius: 1.5rem; padding: 1.8rem 2rem; color: white; margin-bottom: 1.5rem;
+    box-shadow: 0 15px 30px rgba(30,58,138,0.25);
+  }
+  .page-header h2 { font-weight: 700; margin-bottom: 0.3rem; }
+  .page-header p { margin: 0; opacity: 0.9; }
+  .page-header .btn-back {
+    background: white; border: none; border-radius: 50px; padding: 0.5rem 1.4rem; font-weight: 600;
+    color: var(--primary-start); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+
+  .form-card {
+    background: white; border-radius: 1.2rem; padding: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(30,58,138,0.08); margin-bottom: 1.5rem;
+  }
+
+  .absensi-row {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;
+    padding: 0.75rem 0; border-bottom: 1px solid #e9ecef;
+  }
+  .absensi-row:last-child { border-bottom: none; }
+  .mhs-info strong { color: #1e293b; }
+  .mhs-info small { color: #64748b; display: block; }
+
+  .status-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .status-option input { display: none; }
+  .status-option span {
+    display: inline-block; padding: 0.4rem 0.9rem; border-radius: 50px; font-size: 0.82rem; font-weight: 600;
+    border: 1.5px solid #cbd5e1; color: #64748b; cursor: pointer; transition: all 0.15s;
+  }
+  .status-option input:checked + span.hadir { background: #dcfce7; border-color: #16a34a; color: #15803d; }
+  .status-option input:checked + span.izin { background: #dbeafe; border-color: #2563eb; color: #1d4ed8; }
+  .status-option input:checked + span.sakit { background: #fef3c7; border-color: #d97706; color: #b45309; }
+  .status-option input:checked + span.alpa { background: #fee2e2; border-color: #dc2626; color: #b91c1c; }
+
+  .btn-simpan {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); border: none; color: white;
+    font-weight: 600; padding: 0.7rem 2rem; border-radius: 50px; box-shadow: 0 8px 20px rgba(30,58,138,0.3);
+  }
+  .btn-tandai-semua {
+    background: transparent; border: 1.5px solid var(--primary-start); color: var(--primary-start);
+    border-radius: 50px; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 600;
+  }
+</style>
+
+<div class="container mt-4">
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+      <h2><i class="bi bi-clipboard-check me-2"></i>Absensi Pertemuan <%= pertemuan %></h2>
+      <p><%= mk.kode %> - <%= mk.nama %> &middot; <%= topik %></p>
+    </div>
+    <a href="/dosen/mk/<%= mk.id %>" class="btn-back"><i class="bi bi-arrow-left"></i> Kembali</a>
+  </div>
+
+  <div class="alert alert-info" style="border-radius: 1rem;">
+    <i class="bi bi-info-circle me-1"></i>
+    Hasil absensi di sini otomatis dihitung ulang menjadi komponen <strong>Kehadiran</strong> di Rubrik Penilaian
+    untuk semua mahasiswa - dosen tidak perlu mengetik ulang jumlah hadir secara manual.
+  </div>
+
+  <form method="POST" action="/dosen/mk/<%= mk.id %>/pertemuan/<%= pertemuan %>/absensi">
+    <div class="form-card">
+      <div class="row g-3 align-items-end mb-3">
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold">Tanggal Pertemuan</label>
+          <input type="date" class="form-control" name="tanggal" value="<%= tanggal ? tanggal.split('T')[0] : '' %>">
+        </div>
+        <div class="col-md-8 text-md-end">
+          <button type="button" class="btn-tandai-semua" onclick="tandaiSemua('Hadir')">Tandai Semua Hadir</button>
+        </div>
+      </div>
+
+      <% if (mahasiswaList.length === 0) { %>
+        <p class="text-muted text-center py-4 mb-0">Belum ada mahasiswa terdaftar aktif di mata kuliah ini.</p>
+      <% } else { %>
+        <% mahasiswaList.forEach(m => { %>
+          <input type="hidden" name="mahasiswaIds" value="<%= m.id %>">
+          <div class="absensi-row">
+            <div class="mhs-info">
+              <strong><%= m.nama %></strong>
+              <small><%= m.nim %></small>
+            </div>
+            <div class="status-group" data-mhs="<%= m.id %>">
+              <% statusList.forEach(s => { %>
+                <label class="status-option">
+                  <input type="radio" name="status_<%= m.id %>" value="<%= s %>"
+                    <%= (kehadiranSekarang[m.id] || 'Hadir') === s ? 'checked' : '' %>>
+                  <span class="<%= s.toLowerCase() %>"><%= s %></span>
+                </label>
+              <% }) %>
+            </div>
+          </div>
+        <% }) %>
+      <% } %>
+    </div>
+
+    <div class="text-end">
+      <button type="submit" class="btn-simpan"><i class="bi bi-check-circle me-1"></i> Simpan Absensi</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function tandaiSemua(status) {
+    document.querySelectorAll('.status-group').forEach(group => {
+      const mhs = group.dataset.mhs;
+      const input = group.querySelector(`input[value="${status}"]`);
+      if (input) input.checked = true;
+    });
+  }
+</script>
+
+<%- include('../partials/footer') %>

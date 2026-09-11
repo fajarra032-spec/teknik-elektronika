@@ -1,0 +1,78 @@
+<%
+/**
+ * Partial tab navigasi untuk "workspace" satu mata kuliah.
+ * Dipakai bersama oleh mk_detail.ejs (Pertemuan), mk_tugas.ejs (Tugas),
+ * rubrik_input.ejs (Rubrik), dan mk_praktikum.ejs (Modul Praktikum),
+ * supaya semuanya terasa seperti SATU tampilan (tab) alih-alih menu
+ * terpisah-pisah.
+ *
+ * Locals yang dibutuhkan:
+ *   mk        - { id, kode, nama }
+ *   activeTab - 'pertemuan' | 'tugas' | 'rubrik' | 'praktikum'
+ *
+ * Tab "Modul Praktikum" hanya muncul untuk MK yang kode/namanya cocok
+ * dengan salah satu jenis praktikum yang tersedia (Elektronika Digital,
+ * Mikrokontroler, PLC) - lihat helpers/modulPraktikumHelper.js. Dicek
+ * inline di sini (bukan lewat require helper) supaya partial ini tetap
+ * bisa dipakai apa adanya oleh semua controller tanpa perlu tiap
+ * controller meneruskan flag tambahan.
+ */
+const __teksMkTabs = ` ${(mk.kode || '')} ${(mk.nama || '')} `.toLowerCase();
+const __tampilkanTabPraktikum = ['elektronika digital', 'mikrokontroler', 'mikrokontroller', 'programmable logic control', 'plc']
+  .some(kw => __teksMkTabs.includes(kw));
+%>
+<style>
+  .mk-tabs {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    background: white;
+    border-radius: 1rem;
+    padding: 0.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+    border: 1px solid rgba(30,58,138,0.08);
+  }
+  .mk-tab {
+    flex: 1 1 auto;
+    min-width: 140px;
+    text-align: center;
+    padding: 0.6rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #64748b;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+  .mk-tab:hover {
+    background: rgba(30,58,138,0.06);
+    color: #1e3a8a;
+  }
+  .mk-tab.active {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: white;
+    box-shadow: 0 6px 15px rgba(30,58,138,0.3);
+  }
+</style>
+
+<div class="mk-tabs">
+  <a href="/dosen/mk/<%= mk.id %>" class="mk-tab <%= activeTab === 'pertemuan' ? 'active' : '' %>">
+    <i class="bi bi-calendar-week"></i> Pertemuan
+  </a>
+  <a href="/dosen/mk/<%= mk.id %>/tugas" class="mk-tab <%= activeTab === 'tugas' ? 'active' : '' %>">
+    <i class="bi bi-file-earmark-text"></i> Tugas
+  </a>
+  <a href="/dosen/rubrik/<%= mk.id %>" class="mk-tab <%= activeTab === 'rubrik' ? 'active' : '' %>">
+    <i class="bi bi-clipboard-data"></i> Rubrik Penilaian
+  </a>
+  <% if (__tampilkanTabPraktikum) { %>
+    <a href="/dosen/mk/<%= mk.id %>/praktikum" class="mk-tab <%= activeTab === 'praktikum' ? 'active' : '' %>">
+      <i class="bi bi-tools"></i> Modul Praktikum
+    </a>
+  <% } %>
+</div>

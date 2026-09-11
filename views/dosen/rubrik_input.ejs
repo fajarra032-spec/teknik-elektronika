@@ -76,6 +76,8 @@
     </div>
   </div>
 
+  <%- include('./partials/mk_tabs', { mk, activeTab: 'rubrik' }) %>
+
   <% if (typeof mkDuplikat !== 'undefined' && mkDuplikat.length > 0) { %>
     <div class="alert alert-danger" style="border-radius: 0.8rem;">
       <i class="bi bi-exclamation-triangle-fill me-1"></i>

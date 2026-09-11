@@ -151,29 +151,68 @@
         print-color-adjust: exact;
       }
     }
+
+    /* ===== Toolbar layar (tidak ikut tercetak) - konsisten dengan tombol pill di halaman lain ===== */
+    .toolbar-cetak {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .btn-pill-outline {
+      border: 2px solid #1e3a8a;
+      color: #1e3a8a;
+      background: transparent;
+      border-radius: 50px;
+      padding: 0.5rem 1.5rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-pill-outline:hover {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      border-color: transparent;
+      color: white;
+    }
+    .btn-pill-gradient {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      border: none;
+      color: white;
+      font-weight: 600;
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+      box-shadow: 0 5px 15px rgba(30,58,138,0.25);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-pill-gradient:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(30,58,138,0.35);
+      color: white;
+    }
   </style>
 </head>
 <body>
   <div class="container-fluid px-4 py-3">
     
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3 print-btn">
-      <a href="/mahasiswa/akademik/krs" class="btn btn-outline-secondary btn-sm back-btn">
+    <div class="toolbar-cetak mb-4 border-bottom pb-3 print-btn">
+      <a href="/mahasiswa/akademik/krs" class="btn-pill-outline back-btn">
         <i class="bi bi-arrow-left"></i> Kembali
       </a>
-      <button onclick="window.print()" class="btn btn-primary btn-sm print-btn shadow-sm">
-        <i class="bi bi-printer-fill"></i> Cetak Dokumen
+      <button onclick="window.print()" class="btn-pill-gradient print-btn">
+        <i class="bi bi-printer-fill"></i> Cetak Ulang
       </button>
     </div>
 
-    <div class="kop-surat">
-      <img src="https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png" 
-           alt="Logo Politeknik Dewantara" class="logo-kop">
-      <div class="teks-kop">
-        <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
-        <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo. Sulawesi Selatan</p>
-        <p class="kontak">E-mail: elektronika@polidewa.ac.id, Website: elektronika.polidewa.ac.id</p>
-      </div>
-    </div>
+    <%- include('../partials/kop_surat') %>
 
     <div class="judul-dokumen">
       KARTU RENCANA STUDI (KRS)
@@ -300,5 +339,13 @@
     </div>
 
   </div>
+
+  <script>
+    // Langsung buka dialog cetak begitu halaman & gambar (kop surat) selesai dimuat,
+    // tanpa perlu klik tombol "Cetak" terlebih dahulu.
+    window.addEventListener('load', function () {
+      setTimeout(function () { window.print(); }, 250);
+    });
+  </script>
 </body>
 </html>

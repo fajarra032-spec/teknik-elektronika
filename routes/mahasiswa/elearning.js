@@ -15,6 +15,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif } = require('../../helpers/nilaiHelper');
 const { periodeKeUrutan } = require('../../helpers/academicHelper');
 const { mataKuliahCache, tugasAktifCache, dosenCache } = require('../../helpers/cache');
+const { getPublishedModulPraktikum } = require('../../helpers/modulPraktikumHelper');
 
 // ============================================================================
 // KONSTANTA FOLDER UTAMA (Data WEB)
@@ -348,6 +349,16 @@ router.get('/mk/:id', async (req, res) => {
     }
     tugasList.sort((a, b) => (a.deadline || '').localeCompare(b.deadline || ''));
 
+    // Modul Praktikum - hanya ditampilkan jika dosen sudah mempublikasikan
+    // (mk.praktikumPublished) DAN minimal ada satu modul yang diaktifkan.
+    let modulPraktikumList = [];
+    let jenisPraktikumLabel = null;
+    if (mk.praktikumPublished === true) {
+      const hasilPraktikum = getPublishedModulPraktikum(mk);
+      modulPraktikumList = hasilPraktikum.modulList;
+      jenisPraktikumLabel = hasilPraktikum.jenisLabel;
+    }
+
     res.render('mahasiswa/elearning/mk_detail', {
       title: `${mk.kode} - ${mk.nama}`,
       mk,
@@ -355,7 +366,9 @@ router.get('/mk/:id', async (req, res) => {
       materi: pertemuanList,
       dosenList,
       jumlahMahasiswa,
-      tugasList
+      tugasList,
+      modulPraktikumList,
+      jenisPraktikumLabel
     });
   } catch (error) {
     console.error('Error detail MK:', error);

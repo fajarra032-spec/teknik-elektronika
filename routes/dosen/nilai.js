@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const { getNilaiByMkId, getTugasByMkId } = require('../../helpers/nilaiHelper');
+const { getNilaiByMkId, getTugasByMkId, getPeriodeAktif } = require('../../helpers/nilaiHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -42,8 +42,11 @@ router.get('/', async (req, res) => {
     for (const doc of mkSnapshot.docs) {
       const mk = { id: doc.id, ...doc.data() };
       
+      // Filter semester juga - lihat catatan di routes/dosen/mk.js soal
+      // kenapa ini wajib supaya mahasiswa periode lama tidak ikut kehitung.
       const enrollmentSnapshot = await db.collection('enrollment')
         .where('mkId', '==', doc.id)
+        .where('semester', '==', getPeriodeAktif())
         .where('status', '==', 'active')
         .get();
       mk.jumlahMahasiswa = enrollmentSnapshot.size;
@@ -79,9 +82,10 @@ router.get('/:mkId', async (req, res) => {
     }
     const mk = { id: mkDoc.id, ...mkDoc.data() };
 
-    // 2. Ambil semua mahasiswa yang terdaftar
+    // 2. Ambil semua mahasiswa yang terdaftar DI PERIODE BERJALAN SAJA
     const enrollmentSnapshot = await db.collection('enrollment')
       .where('mkId', '==', mkId)
+      .where('semester', '==', getPeriodeAktif())
       .where('status', '==', 'active')
       .get();
     const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
@@ -179,6 +183,7 @@ router.get('/:mkId/export', async (req, res) => {
 
     const enrollmentSnapshot = await db.collection('enrollment')
       .where('mkId', '==', mkId)
+      .where('semester', '==', getPeriodeAktif())
       .where('status', '==', 'active')
       .get();
     const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);

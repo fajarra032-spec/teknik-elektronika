@@ -20,6 +20,8 @@
  * Untuk menambah semester baru, cukup tambah entri baru di PAKET_KURIKULUM.
  */
 
+const { normalizeKelas } = require('./academicHelper');
+
 const PAKET_KURIKULUM = {
   1: {
     null: [
@@ -182,7 +184,7 @@ async function aktifkanPaketKrs(db, mahasiswaId, semesterNumber, konsentrasi, ac
   // masing-masing dosen/jadwal beda, lihat field `kelas` di helpers admin
   // matakuliah), pilih dokumen yang `kelas`-nya PERSIS SAMA dengan kelas
   // mahasiswa ini - supaya mahasiswa tidak digabung ke kelas paralel lain.
-  const kelasMahasiswa = mahasiswaData.kelas || null;
+  const kelasMahasiswa = normalizeKelas(mahasiswaData.kelas);
 
   const kodeList = paket.map(p => p.kode);
   const mkSnapshots = await Promise.all(
@@ -202,8 +204,10 @@ async function aktifkanPaketKrs(db, mahasiswaId, semesterNumber, konsentrasi, ac
       mkIds.push(snap.docs[0].id);
       return;
     }
-    // Lebih dari satu dokumen dengan kode sama -> MK ini dipisah per kelas paralel
-    const cocok = snap.docs.find(doc => (doc.data().kelas || null) === kelasMahasiswa);
+    // Lebih dari satu dokumen dengan kode sama -> MK ini dipisah per kelas paralel.
+    // Dibandingkan pakai normalizeKelas() di kedua sisi (bukan string mentah)
+    // supaya variasi penulisan seperti "ELK 1B" vs "ELK1B" tetap dianggap cocok.
+    const cocok = snap.docs.find(doc => normalizeKelas(doc.data().kelas) === kelasMahasiswa);
     if (cocok) {
       mkIds.push(cocok.id);
     } else {

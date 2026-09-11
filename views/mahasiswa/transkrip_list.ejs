@@ -1,64 +1,117 @@
 <%- include('../partials/header') %>
 
 <style>
-  @media (max-width: 480px) {
-    body { zoom: 0.72; }
+  /* ===== VARIABEL WARNA (sesuai navbar & halaman akademik lain) ===== */
+  :root {
+    --primary-start: #1e3a8a;
+    --primary-end: #3b82f6;
+    --primary-light: rgba(30,58,138,0.1);
+    --primary-dark: #0f2b5c;
+    --success-text: #198754;
+    --font-base: 16px;
   }
-  .transkrip-table th {
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
+
+  html {
+    font-size: 16px;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f8fafc;
+  }
+
+  /* ===== PAGE HEADER ===== */
+  .page-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-radius: 1.5rem;
+    padding: 1.5rem 2rem;
     color: white;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-    border: none;
-    padding: 1rem 0.75rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 15px 30px rgba(30,58,138,0.25);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
   }
-  .transkrip-table td {
-    vertical-align: middle;
-    padding: 0.85rem 0.75rem;
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    transform: rotate(25deg);
+  }
+  .page-header h2 {
+    font-weight: 700;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 2rem;
+  }
+  .page-header .nim-badge {
+    background: white;
+    color: var(--primary-start);
+    border-radius: 50px;
+    padding: 0.5rem 1.2rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+  }
+
+  /* ===== INFO CARD (data mahasiswa) ===== */
+  .info-card {
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    padding: 1.8rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(30,58,138,0.1);
   }
   .avatar-circle {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 2rem;
-    box-shadow: 0 5px 15px rgba(33,147,176,0.3);
+    text-transform: uppercase;
+    box-shadow: 0 4px 10px rgba(30,58,138,0.3);
+    flex-shrink: 0;
   }
-  .table-responsive {
-    border-radius: 1.2rem;
-    overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    background: white;
-    padding: 0.5rem;
+  .info-card h4 {
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.2rem;
+    font-size: 1.2rem;
   }
-  .info-card, .selector-card, .summary-card {
+  .info-card .text-muted { color: #64748b; }
+
+  /* ===== SELECTOR CARD ===== */
+  .selector-card {
     background: white;
-    border-radius: 1.2rem;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    padding: 1.5rem;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    padding: 1.5rem 1.8rem;
     margin-bottom: 1.5rem;
-    border: 1px solid rgba(33,147,176,0.1);
-  }
-  .btn-gradient {
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
-    border: none;
-    color: white;
-    font-weight: 500;
-    padding: 0.6rem 1.5rem;
-    border-radius: 50px;
-    transition: all 0.3s;
-  }
-  .btn-gradient:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(33,147,176,0.4);
-    color: white;
+    border: 1px solid rgba(30,58,138,0.1);
   }
   .selector-form .form-select {
     border-radius: 50px;
@@ -67,64 +120,180 @@
     transition: all 0.2s;
   }
   .selector-form .form-select:focus {
-    border-color: #2193b0;
-    box-shadow: 0 0 0 0.25rem rgba(33,147,176,0.25);
+    border-color: var(--primary-end);
+    box-shadow: 0 0 0 0.25rem rgba(30,58,138,0.15);
   }
-  .summary-stat {
-    text-align: center;
+
+  /* ===== TOMBOL GRADIEN ===== */
+  .btn-gradient {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 0.6rem 1.5rem;
+    border-radius: 50px;
+    transition: all 0.3s;
+    box-shadow: 0 5px 15px rgba(30,58,138,0.2);
   }
+  .btn-gradient:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(30,58,138,0.4);
+    color: white;
+  }
+
+  /* ===== RINGKASAN (SUMMARY) ===== */
+  .summary-card {
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    padding: 1.5rem 1.8rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(30,58,138,0.1);
+  }
+  .summary-stat { text-align: center; }
   .summary-stat .value {
     font-size: 1.6rem;
     font-weight: 700;
-    color: #2193b0;
+    color: var(--primary-start);
   }
   .summary-stat .label {
     font-size: 0.8rem;
-    color: #6c757d;
+    color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  .badge-huruf {
-    background: #e2e3e5;
+
+  /* ===== HEADING PER SEMESTER ===== */
+  .semester-heading {
+    background: var(--primary-light);
+    border-left: 4px solid var(--primary-start);
+    padding: 0.6rem 1rem;
     font-weight: 700;
-    padding: 0.3rem 0.7rem;
+    color: var(--primary-dark);
+    margin: 1.5rem 0 0.75rem 0;
+    border-radius: 0.6rem;
+  }
+
+  /* ===== TABEL NILAI ===== */
+  .table-container {
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    overflow: hidden;
+    border: 1px solid rgba(30,58,138,0.1);
+    padding: 1.5rem;
+  }
+  .table-responsive {
+    margin: 0;
+    border-radius: 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .transkrip-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0;
+  }
+  .transkrip-table th {
+    background: #f8f9fa;
+    color: #1e293b;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid #dee2e6;
+    padding: 0.85rem 0.75rem;
+    white-space: nowrap;
+  }
+  .transkrip-table td {
+    vertical-align: middle;
+    padding: 0.85rem 0.75rem;
+    border: 1px solid #dee2e6;
+    font-size: 0.9rem;
+  }
+  .transkrip-table tbody tr:hover {
+    background-color: #f2f6ff;
+  }
+  .badge-huruf {
+    background: var(--primary-light);
+    color: var(--primary-start);
+    font-weight: 700;
+    padding: 0.3rem 0.8rem;
     border-radius: 50px;
     font-size: 0.85rem;
   }
-  .semester-heading {
-    background: #f1f6f8;
-    border-left: 4px solid #2193b0;
-    padding: 0.6rem 1rem;
-    font-weight: 700;
-    color: #145d70;
-    margin: 1.25rem 0 0.5rem 0;
-    border-radius: 0.4rem;
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8f9fa;
+    border-radius: 1.5rem;
+  }
+  .empty-state i {
+    font-size: 4rem;
+    color: #adb5bd;
+    margin-bottom: 1rem;
+  }
+  .empty-state p {
+    color: #64748b;
+    font-size: 1rem;
+  }
+
+  /* ===== RESPONSIF ===== */
+  @media (max-width: 768px) {
+    html { font-size: 15px; }
+    .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .page-header h2 { font-size: 1.6rem; }
+    .info-card .d-flex { flex-direction: column; text-align: center; }
+    .info-card .ms-3 { margin-left: 0 !important; margin-top: 0.5rem; }
+    .transkrip-table th { font-size: 0.8rem; padding: 0.5rem; }
+    .transkrip-table td { font-size: 0.85rem; padding: 0.5rem; }
+  }
+
+  @media (max-width: 576px) {
+    html { font-size: 14px; }
+    .page-header h2 { font-size: 1.4rem; }
+    .btn-gradient { padding: 0.5rem 1.5rem; font-size: 0.85rem; }
+    .summary-stat .value { font-size: 1.2rem; }
+  }
+
+  @media (max-width: 400px) {
+    html { font-size: 13px; }
+    .page-header h2 { font-size: 1.2rem; }
+  }
+
+  @media (max-width: 340px) {
+    html { font-size: 12px; }
   }
 </style>
 
-<div class="container-fluid mt-4">
-  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold"><i class="bi bi-journal-bookmark me-2" style="color: #2193b0;"></i>Transkrip Akademik</h2>
-    <div>
-      <span class="badge bg-gradient p-3" style="background: linear-gradient(135deg, #2193b0, #6dd5ed); color: white; font-size: 1rem;"><i class="bi bi-qr-code me-1"></i><%= user?.nim || '-' %></span>
+<div class="container mt-4">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h2><i class="bi bi-journal-bookmark"></i> Transkrip Akademik</h2>
+    <div class="nim-badge">
+      <i class="bi bi-qr-code"></i> <%= user?.nim || '-' %>
     </div>
   </div>
 
+  <!-- Info Mahasiswa -->
   <div class="info-card">
-    <div class="d-flex flex-wrap align-items-center">
+    <div class="d-flex align-items-center">
       <% if (user?.foto) { %>
         <img src="<%= user.foto %>" alt="foto" class="rounded-circle me-3"
-             style="width: 60px; height: 60px; object-fit: cover; border: 3px solid #2193b0;"
+             style="width: 60px; height: 60px; object-fit: cover; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"
              onerror="this.onerror=null;this.src='/images/default-avatar.png';">
       <% } else { %>
         <div class="avatar-circle me-3"><%= (user?.nama || '?').charAt(0).toUpperCase() %></div>
       <% } %>
-      <div class="flex-grow-1">
-        <h4 class="fw-bold mb-1"><%= user?.nama || '-' %></h4>
-        <div class="d-flex flex-wrap gap-3 text-muted" style="font-size: 0.9rem;">
-          <span><i class="bi bi-person-badge me-1"></i>NIM <%= user?.nim || '-' %></span>
-          <span><i class="bi bi-building me-1"></i><%= user?.prodi || 'Program Studi Teknik Elektronika' %></span>
-        </div>
+      <div class="flex-grow-1 ms-3">
+        <h4><%= user?.nama || '-' %></h4>
+        <p class="text-muted mb-0">
+          <i class="bi bi-person-badge me-2"></i>NIM <%= user?.nim || '-' %>
+          <span class="mx-2">&middot;</span>
+          <i class="bi bi-building me-2"></i><%= user?.prodi || 'Program Studi Teknik Elektronika' %>
+        </p>
       </div>
     </div>
   </div>
@@ -153,10 +322,10 @@
   </div>
 
   <% if (!grades || grades.length === 0) { %>
-    <div class="table-responsive">
-      <div class="text-center py-5">
-        <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
-        <p class="text-muted">Belum ada nilai yang tercatat.</p>
+    <div class="table-container">
+      <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p>Belum ada nilai yang tercatat.</p>
       </div>
     </div>
   <% } else { %>
@@ -185,7 +354,7 @@
     <div class="summary-card">
       <div class="row text-center g-3">
         <div class="col-6 col-md-3 summary-stat">
-          <div class="value" style="color: #198754;"><%= ipk %></div>
+          <div class="value" style="color: var(--success-text);"><%= ipk %></div>
           <div class="label">IPK</div>
         </div>
         <div class="col-6 col-md-3 summary-stat">
@@ -204,41 +373,43 @@
     </div>
 
     <!-- Tabel Nilai per Semester -->
-    <% Array.from(grouped.keys()).forEach(sem => { %>
-      <div class="semester-heading"><i class="bi bi-calendar-week me-1"></i><%= sem %></div>
-      <div class="table-responsive">
-        <table class="table transkrip-table mb-0">
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>Kode MK</th>
-              <th>Mata Kuliah</th>
-              <th>SKS</th>
-              <th>Nilai</th>
-              <th>Huruf</th>
-              <th>Indeks</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% grouped.get(sem).forEach((g, i) => { %>
-            <tr<%= g.belumAdaNilai ? ' class="text-muted"' : '' %>>
-              <td class="fw-bold"><%= i + 1 %></td>
-              <td><%= g.kodeMk || '-' %></td>
-              <td><%= g.namaMk || '-' %></td>
-              <td><%= g.sks ?? '-' %></td>
-              <% if (g.belumAdaNilai) { %>
-                <td colspan="3"><em>Belum Ada Nilai</em></td>
-              <% } else { %>
-                <td><%= g.nilai ?? '-' %></td>
-                <td><span class="badge-huruf"><%= g.huruf || '-' %></span></td>
-                <td><%= typeof g.indeks === 'number' ? g.indeks.toFixed(1) : '-' %></td>
-              <% } %>
-            </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
-    <% }) %>
+    <div class="table-container">
+      <% Array.from(grouped.keys()).forEach((sem, idx) => { %>
+        <div class="semester-heading" style="<%= idx === 0 ? 'margin-top:0;' : '' %>"><i class="bi bi-calendar-week me-1"></i><%= sem %></div>
+        <div class="table-responsive mb-3">
+          <table class="table transkrip-table mb-0">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Kode MK</th>
+                <th>Mata Kuliah</th>
+                <th>SKS</th>
+                <th>Nilai</th>
+                <th>Huruf</th>
+                <th>Indeks</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% grouped.get(sem).forEach((g, i) => { %>
+              <tr<%= g.belumAdaNilai ? ' class="text-muted"' : '' %>>
+                <td class="fw-bold"><%= i + 1 %></td>
+                <td><%= g.kodeMk || '-' %></td>
+                <td><%= g.namaMk || '-' %></td>
+                <td><%= g.sks ?? '-' %></td>
+                <% if (g.belumAdaNilai) { %>
+                  <td colspan="3"><em>Belum Ada Nilai</em></td>
+                <% } else { %>
+                  <td><%= g.nilai ?? '-' %></td>
+                  <td><span class="badge-huruf"><%= g.huruf || '-' %></span></td>
+                  <td><%= typeof g.indeks === 'number' ? g.indeks.toFixed(1) : '-' %></td>
+                <% } %>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% }) %>
+    </div>
 
     <div class="text-end mt-3">
       <a href="/mahasiswa/akademik/transkrip/cetak<%= semesterDipilih ? '?semester=' + encodeURIComponent(semesterDipilih) : '' %>" class="btn btn-gradient" target="_blank">
