@@ -19,7 +19,6 @@ const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getTranskripMahasiswa } = require('../../helpers/nilaiHelper');
-const { bandingkanLabelPeriode } = require('../../helpers/academicHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -85,10 +84,10 @@ router.get('/list', async (req, res) => {
 
     khsList.sort((a, b) =>
       String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)) ||
-      bandingkanLabelPeriode(a.semester, b.semester)
+      String(a.semester).localeCompare(String(b.semester))
     );
 
-    const semesterList = Array.from(semesterSet).sort(bandingkanLabelPeriode);
+    const semesterList = Array.from(semesterSet).sort();
     const angkatanList = Array.from(new Set(khsList.map(k => k.mahasiswa.angkatan))).sort().reverse();
 
     res.render('admin/khs_list', {

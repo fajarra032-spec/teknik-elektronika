@@ -73,16 +73,6 @@ async function getTugasAktif(mkIds) {
     // SETIAP mata kuliah (N query utk N MK yang diambil mahasiswa - mahasiswa
     // dg 8 MK = 8 query serial). Sekarang di-batch pakai `where(...,'in',...)`
     // per 10 mkId sekaligus, jadi maksimal N/10 query, dijalankan paralel.
-    //
-    // ⚠️ PENTING: filter deadline SENGAJA tidak ditaruh di query Firestore
-    // (mis. .where('deadline','>',now)) karena kombinasi filter `in` +
-    // filter rentang (>) pada field BERBEDA butuh composite index manual di
-    // Firestore Console. Kalau index itu belum dibuat, query akan gagal
-    // (exception), ketangkap oleh catch di bawah, dan diam-diam SELALU
-    // mengembalikan array kosong - akibatnya "Tugas Aktif" di dashboard
-    // tampak selalu kosong walau sebenarnya ada tugas aktif. Makanya filter
-    // deadline dilakukan di JS setelah data diambil, supaya tidak
-    // bergantung pada index tambahan apa pun.
     function chunkArray(arr, size) {
       const chunks = [];
       for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
@@ -92,18 +82,13 @@ async function getTugasAktif(mkIds) {
     const snapshots = await Promise.all(chunks.map(chunk =>
       db.collection('tugas')
         .where('mkId', 'in', chunk)
+        .where('deadline', '>', now)
         .get()
     ));
 
     const tugasList = [];
     snapshots.forEach(snapshot => {
-      snapshot.docs.forEach(doc => {
-        const data = doc.data();
-        // Hanya tugas yang deadline-nya masih di depan (belum lewat)
-        if (data.deadline && data.deadline > now) {
-          tugasList.push({ id: doc.id, ...data });
-        }
-      });
+      snapshot.docs.forEach(doc => tugasList.push({ id: doc.id, ...doc.data() }));
     });
     tugasList.sort((a, b) => (a.deadline || '').localeCompare(b.deadline || ''));
     return tugasList;

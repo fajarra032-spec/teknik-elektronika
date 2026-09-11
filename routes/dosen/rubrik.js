@@ -53,12 +53,8 @@ async function ambilDataRubrik(mkId, periode) {
   if (!mkDoc.exists) return null;
   const mk = { id: mkId, ...mkDoc.data() };
 
-  // Filter juga by semester (periode aktif) - kalau tidak, mahasiswa yang
-  // PERNAH ikut MK ini di periode lalu ikut kehitung terus (lihat bug yang
-  // sama yang sudah diperbaiki di routes/dosen/mk.js dan nilai.js).
   const enrollmentSnapshot = await db.collection('enrollment')
     .where('mkId', '==', mkId)
-    .where('semester', '==', periode)
     .where('status', '==', 'active')
     .get();
   const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
@@ -140,7 +136,6 @@ function ambilDataPertemuan(mk) {
 // ============================================================================
 router.get('/', async (req, res) => {
   try {
-    const periode = getPeriodeAktif();
     const mkSnapshot = await db.collection('mataKuliah')
       .where('dosenIds', 'array-contains', req.dosen.id)
       .orderBy('semester', 'desc')
@@ -152,7 +147,6 @@ router.get('/', async (req, res) => {
       try {
         const countSnap = await db.collection('enrollment')
           .where('mkId', '==', doc.id)
-          .where('semester', '==', periode)
           .where('status', '==', 'active')
           .count().get();
         mk.jumlahMahasiswa = countSnap.data().count;
@@ -160,7 +154,6 @@ router.get('/', async (req, res) => {
         // Fallback kalau versi firebase-admin belum dukung count()
         const enrollmentSnapshot = await db.collection('enrollment')
           .where('mkId', '==', doc.id)
-          .where('semester', '==', periode)
           .where('status', '==', 'active')
           .get();
         mk.jumlahMahasiswa = enrollmentSnapshot.size;
@@ -250,7 +243,6 @@ router.get('/:mkId/rincian-tugas', async (req, res) => {
 
     const enrollmentSnapshot = await db.collection('enrollment')
       .where('mkId', '==', mkId)
-      .where('semester', '==', periode)
       .where('status', '==', 'active')
       .get();
     const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);

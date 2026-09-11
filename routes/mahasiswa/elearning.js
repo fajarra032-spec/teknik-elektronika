@@ -401,6 +401,45 @@ router.get('/mk/:id', async (req, res) => {
 // TUGAS AKTIF
 // ============================================================================
 
+// ============================================================================
+// MODUL PEMBELAJARAN (read-only untuk mahasiswa) - konten dibuat & dikustom
+// bebas oleh dosen di sisi dosen; di sini mahasiswa hanya bisa membaca.
+// ============================================================================
+router.get('/mk/:id/modul', async (req, res) => {
+  try {
+    const mkId = req.params.id;
+    const mkData = await mataKuliahCache.getOrFetch(mkId, async () => {
+      const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
+      return mkDoc.exists ? mkDoc.data() : null;
+    });
+    if (!mkData) return res.status(404).send('Mata kuliah tidak ditemukan');
+    const mk = { id: mkId, ...mkData };
+
+    const enrollmentSnapshot = await db.collection('enrollment')
+      .where('userId', '==', req.user.id)
+      .where('mkId', '==', mkId)
+      .where('status', '==', 'active')
+      .get();
+    if (enrollmentSnapshot.empty) {
+      return res.status(403).send('Anda tidak terdaftar di mata kuliah ini');
+    }
+
+    const modulSnapshot = await db.collection('mataKuliah').doc(mkId).collection('modul').get();
+    const modulList = modulSnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
+
+    res.render('mahasiswa/elearning/mk_modul', {
+      title: `Modul - ${mk.kode} ${mk.nama}`,
+      mk,
+      modulList
+    });
+  } catch (error) {
+    console.error('Error modul mahasiswa:', error);
+    res.status(500).send('Gagal memuat modul');
+  }
+});
+
 router.get('/tugas-aktif', async (req, res) => {
   try {
     const userId = req.user.id;

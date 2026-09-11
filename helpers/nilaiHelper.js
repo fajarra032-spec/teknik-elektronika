@@ -1,6 +1,6 @@
 // helpers/nilaiHelper.js
 const { db } = require('../config/firebaseAdmin');
-const { getCurrentAcademicSemester, getSemesterForDate, bandingkanLabelPeriode } = require('./academicHelper');
+const { getCurrentAcademicSemester, getSemesterForDate } = require('./academicHelper');
 
 /**
  * Label periode akademik aktif saat ini (mis. "Ganjil 2025/2026").
@@ -440,7 +440,7 @@ async function getTranskripMahasiswa(mahasiswaId) {
     });
   });
 
-  items.sort((a, b) => bandingkanLabelPeriode(a.semester, b.semester));
+  items.sort((a, b) => String(a.semester).localeCompare(String(b.semester)));
 
   let totalSKSDihitung = 0;
   let totalBobotNilai = 0;
@@ -484,7 +484,7 @@ async function getTranskripMahasiswa(mahasiswaId) {
       ...s,
       ips: s.totalSKS > 0 ? (s.totalSksIndeks / s.totalSKS).toFixed(2) : '0.00'
     }))
-    .sort((a, b) => bandingkanLabelPeriode(a.semester, b.semester));
+    .sort((a, b) => String(a.semester).localeCompare(String(b.semester)));
 
   return { items, totalSKS: totalSKSDihitung, ipk, perSemester };
 }
