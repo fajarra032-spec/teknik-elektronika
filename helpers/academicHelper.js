@@ -81,6 +81,43 @@ function urutanKePeriode(urutan) {
 }
 
 /**
+ * Urutan KRONOLOGIS (angka) dari LABEL periode akademik (mis. "Ganjil
+ * 2025/2026"). Dipakai untuk mengurutkan transkrip/KHS/rekap supaya
+ * semester tersusun urut WAKTU - BUKAN alfabetis.
+ *
+ * Kenapa perlu fungsi khusus (tidak cukup `localeCompare` biasa): secara
+ * alfabet huruf "a" pada "Ganjil" lebih kecil dari huruf "e" pada
+ * "Genap", jadi `localeCompare` akan SELALU menaruh semua label "Ganjil
+ * ..." sebelum semua label "Genap ...", BERAPA PUN TAHUNNYA. Akibatnya
+ * begitu data mencakup lebih dari 1 tahun ajaran, urutannya kacau - mis.
+ * "Ganjil 2026/2027" (semester 3, lebih baru) muncul SEBELUM "Genap
+ * 2025/2026" (semester 2, lebih lama), padahal seharusnya sebaliknya.
+ *
+ * @param {string} label mis. "Ganjil 2025/2026"
+ * @returns {number} makin besar = makin baru. Label yang formatnya tidak
+ *   dikenali (mis. "-", kosong, atau format lama) diberi -Infinity supaya
+ *   tetap konsisten ditaruh paling awal (gampang dicurigai kalau muncul),
+ *   bukan malah mengacaukan urutan label lain yang valid.
+ */
+function urutanDariLabelPeriode(label) {
+  const match = String(label || '').match(/^(Ganjil|Genap)\s+(\d{4})\/(\d{4})$/i);
+  if (!match) return -Infinity;
+  const semester = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+  const tahunAwal = parseInt(match[2], 10);
+  return periodeKeUrutan(tahunAwal, semester);
+}
+
+/**
+ * Comparator siap pakai untuk Array.prototype.sort(), mengurutkan label
+ * periode akademik (mis. "Ganjil 2025/2026") secara KRONOLOGIS - lihat
+ * urutanDariLabelPeriode() di atas untuk alasan kenapa `localeCompare`
+ * biasa tidak cukup untuk label seperti ini.
+ */
+function bandingkanLabelPeriode(a, b) {
+  return urutanDariLabelPeriode(a) - urutanDariLabelPeriode(b);
+}
+
+/**
  * ID unik & konsisten untuk satu periode, dipakai sebagai doc ID Firestore.
  * Contoh: getPeriodeId('Ganjil', 2026, 2027) -> "ganjil-2026-2027"
  */
@@ -157,5 +194,7 @@ module.exports = {
   generatePeriodeOptions,
   periodeKeUrutan,
   urutanKePeriode,
+  urutanDariLabelPeriode,
+  bandingkanLabelPeriode,
   normalizeKelas
 };
