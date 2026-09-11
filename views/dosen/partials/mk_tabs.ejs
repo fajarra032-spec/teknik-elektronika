@@ -2,24 +2,13 @@
 /**
  * Partial tab navigasi untuk "workspace" satu mata kuliah.
  * Dipakai bersama oleh mk_detail.ejs (Pertemuan), mk_tugas.ejs (Tugas),
- * rubrik_input.ejs (Rubrik), dan mk_praktikum.ejs (Modul Praktikum),
- * supaya semuanya terasa seperti SATU tampilan (tab) alih-alih menu
- * terpisah-pisah.
+ * dan rubrik_input.ejs (Rubrik), supaya ketiganya terasa seperti SATU
+ * tampilan (tab) alih-alih tiga menu terpisah.
  *
  * Locals yang dibutuhkan:
  *   mk        - { id, kode, nama }
- *   activeTab - 'pertemuan' | 'tugas' | 'rubrik' | 'praktikum'
- *
- * Tab "Modul Praktikum" hanya muncul untuk MK yang kode/namanya cocok
- * dengan salah satu jenis praktikum yang tersedia (Elektronika Digital,
- * Mikrokontroler, PLC) - lihat helpers/modulPraktikumHelper.js. Dicek
- * inline di sini (bukan lewat require helper) supaya partial ini tetap
- * bisa dipakai apa adanya oleh semua controller tanpa perlu tiap
- * controller meneruskan flag tambahan.
+ *   activeTab - 'pertemuan' | 'tugas' | 'rubrik'
  */
-const __teksMkTabs = ` ${(mk.kode || '')} ${(mk.nama || '')} `.toLowerCase();
-const __tampilkanTabPraktikum = ['elektronika digital', 'mikrokontroler', 'mikrokontroller', 'programmable logic control', 'plc']
-  .some(kw => __teksMkTabs.includes(kw));
 %>
 <style>
   .mk-tabs {
@@ -70,9 +59,7 @@ const __tampilkanTabPraktikum = ['elektronika digital', 'mikrokontroler', 'mikro
   <a href="/dosen/rubrik/<%= mk.id %>" class="mk-tab <%= activeTab === 'rubrik' ? 'active' : '' %>">
     <i class="bi bi-clipboard-data"></i> Rubrik Penilaian
   </a>
-  <% if (__tampilkanTabPraktikum) { %>
-    <a href="/dosen/mk/<%= mk.id %>/praktikum" class="mk-tab <%= activeTab === 'praktikum' ? 'active' : '' %>">
-      <i class="bi bi-tools"></i> Modul Praktikum
-    </a>
-  <% } %>
+  <a href="/dosen/mk/<%= mk.id %>/modul" class="mk-tab <%= activeTab === 'modul' ? 'active' : '' %>">
+    <i class="bi bi-journal-richtext"></i> Modul
+  </a>
 </div>

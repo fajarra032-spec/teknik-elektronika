@@ -15,7 +15,6 @@ const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif, saveKomponenRubrik } = require('../../helpers/nilaiHelper');
-const { detectJenisPraktikum, getModulPraktikumList } = require('../../helpers/modulPraktikumHelper');
 
 console.log('mk.js loaded');
 
@@ -579,11 +578,6 @@ router.get('/:id', async (req, res) => {
       // biarkan tugasList kosong
     }
 
-    const jenisPraktikum = detectJenisPraktikum(mk);
-    const jumlahModulAktif = jenisPraktikum
-      ? getModulPraktikumList(mk).modulList.filter(m => m.aktif).length
-      : 0;
-
     res.render('dosen/mk_detail', {
       title: `${mk.kode} - ${mk.nama}`,
       mk,
@@ -592,9 +586,7 @@ router.get('/:id', async (req, res) => {
       dosenList,
       terlaksana,
       persentase,
-      tugasList,
-      jenisPraktikum,
-      jumlahModulAktif
+      tugasList
     });
   } catch (error) {
     console.error('Error detail mk:', error);
@@ -643,165 +635,181 @@ router.get('/:id/tugas', async (req, res) => {
 });
 
 // ============================================================================
-// MODUL PRAKTIKUM (khusus MK laboratorium: Elektronika Digital, Mikrokontroler, PLC)
-// Konsep: setiap MK yang cocok dengan jenis praktikum (lihat
-// helpers/modulPraktikumHelper.js) mendapat set job sheet default. Dosen
-// bebas memilih modul mana yang dipublikasikan ke ELK-Learning mahasiswa
-// (toggle "aktif" per modul), menambahkan catatan/tanggal pelaksanaan,
-// serta (opsional) mengunggah job sheet versi sendiri yang menggantikan
-// tampilan default.
+// MODUL PEMBELAJARAN (khusus satu MK) - konten BEBAS diatur oleh dosen
+// sendiri (bukan format baku seperti Pertemuan yang terkunci 16 minggu).
+// Dosen bisa bikin sebanyak apa pun modul, urutan bebas, isi pakai rich
+// text editor (heading, list, tabel, gambar via link, dst).
+// Disimpan di subcollection mataKuliah/{id}/modul/{modulId}.
 // ============================================================================
 
-async function getMkUntukPraktikum(req, res) {
-  const mkId = req.params.id;
+async function getModulMkFolder(kodeMK) {
+  const parentDosen = await getOrCreateSubFolder(DATA_WEB_FOLDER_ID, 'Dosen');
+  const parentModul = await getOrCreateSubFolder(parentDosen, 'Modul MK');
+  return getOrCreateSubFolder(parentModul, kodeMK);
+}
+
+async function cekAksesMk(mkId, dosenId) {
   const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
-  if (!mkDoc.exists) {
-    res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Mata kuliah tidak ditemukan' });
-    return null;
-  }
+  if (!mkDoc.exists) return { ok: false, status: 404, message: 'Mata kuliah tidak ditemukan' };
   const mk = { id: mkId, ...mkDoc.data() };
-  if (!mk.dosenIds || !mk.dosenIds.includes(req.dosen.id)) {
-    res.status(403).render('error', { title: 'Akses Ditolak', message: 'Anda tidak memiliki akses ke mata kuliah ini' });
-    return null;
+  if (!mk.dosenIds || !mk.dosenIds.includes(dosenId)) {
+    return { ok: false, status: 403, message: 'Anda tidak memiliki akses ke mata kuliah ini' };
   }
-  return mk;
+  return { ok: true, mk };
 }
 
 /**
- * GET /dosen/mk/:id/praktikum
- * Halaman kelola Modul Praktikum untuk satu MK.
+ * GET /dosen/mk/:id/modul
+ * Daftar modul + form tambah modul baru (inline, collapsible).
  */
-router.get('/:id/praktikum', async (req, res) => {
+router.get('/:id/modul', async (req, res) => {
   try {
-    const mk = await getMkUntukPraktikum(req, res);
-    if (!mk) return;
+    const akses = await cekAksesMk(req.params.id, req.dosen.id);
+    if (!akses.ok) return res.status(akses.status).render('error', { title: 'Error', message: akses.message });
 
-    const jenis = detectJenisPraktikum(mk);
-    if (!jenis) {
-      return res.status(404).render('error', {
-        title: 'Tidak Tersedia',
-        message: 'Modul Praktikum belum disediakan untuk mata kuliah ini. Fitur ini saat ini hanya tersedia untuk mata kuliah Elektronika Digital, Mikrokontroler, dan PLC.'
-      });
-    }
+    const snapshot = await db.collection('mataKuliah').doc(req.params.id).collection('modul').get();
+    const modulList = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
 
-    const { jenisLabel, modulList } = getModulPraktikumList(mk);
-    const jumlahAktif = modulList.filter(m => m.aktif).length;
-
-    res.render('dosen/mk_praktikum', {
-      title: `Modul Praktikum - ${mk.kode} ${mk.nama}`,
-      mk,
-      jenisLabel,
-      modulList,
-      jumlahAktif,
-      praktikumPublished: mk.praktikumPublished === true
+    res.render('dosen/mk_modul', {
+      title: `Modul - ${akses.mk.kode} ${akses.mk.nama}`,
+      mk: akses.mk,
+      modulList
     });
   } catch (error) {
-    console.error('Error memuat Modul Praktikum:', error);
-    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat Modul Praktikum' });
+    console.error('Error daftar modul:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat daftar modul' });
   }
 });
 
 /**
- * POST /dosen/mk/:id/praktikum/publish
- * Saklar utama per-MK: dosen memutuskan apakah bagian "Modul Praktikum"
- * boleh muncul sama sekali di ELK-Learning mahasiswa untuk MK ini.
- * (Modul individual tetap harus diaktifkan satu-satu lewat toggle di bawah.)
+ * POST /dosen/mk/:id/modul
+ * Tambah modul baru.
  */
-router.post('/:id/praktikum/publish', async (req, res) => {
+router.post('/:id/modul', upload.single('file'), async (req, res) => {
   try {
-    const mk = await getMkUntukPraktikum(req, res);
-    if (!mk) return;
+    const akses = await cekAksesMk(req.params.id, req.dosen.id);
+    if (!akses.ok) return res.status(akses.status).send(akses.message);
 
-    const publishedBaru = !(mk.praktikumPublished === true);
-    await db.collection('mataKuliah').doc(mk.id).update({
-      praktikumPublished: publishedBaru,
-      updatedAt: new Date().toISOString()
-    });
-    res.redirect(`/dosen/mk/${mk.id}/praktikum`);
-  } catch (error) {
-    console.error('Error toggle publish Modul Praktikum:', error);
-    res.status(500).send('Gagal mengubah status publikasi Modul Praktikum');
-  }
-});
+    const { judul, konten, urutan } = req.body;
+    if (!judul || !judul.trim()) return res.status(400).send('Judul modul wajib diisi');
 
-/**
- * POST /dosen/mk/:id/praktikum/:modulId/toggle
- * Aktif/nonaktifkan satu modul praktikum tertentu (tampil/tidak di ELK-Learning).
- */
-router.post('/:id/praktikum/:modulId/toggle', async (req, res) => {
-  try {
-    const mk = await getMkUntukPraktikum(req, res);
-    if (!mk) return;
-
-    const modulId = req.params.modulId;
-    let modulPraktikum = mk.modulPraktikum || [];
-    const idx = modulPraktikum.findIndex(m => m.id === modulId);
-    const old = idx !== -1 ? modulPraktikum[idx] : { id: modulId };
-    const updated = { ...old, id: modulId, aktif: !(old.aktif === true), updatedAt: new Date().toISOString() };
-
-    if (idx !== -1) modulPraktikum[idx] = updated;
-    else modulPraktikum.push(updated);
-
-    await db.collection('mataKuliah').doc(mk.id).update({
-      modulPraktikum,
-      updatedAt: new Date().toISOString()
-    });
-    res.redirect(`/dosen/mk/${mk.id}/praktikum`);
-  } catch (error) {
-    console.error('Error toggle modul praktikum:', error);
-    res.status(500).send('Gagal mengubah status modul praktikum');
-  }
-});
-
-/**
- * POST /dosen/mk/:id/praktikum/:modulId/catatan
- * Simpan catatan/tanggal pelaksanaan + (opsional) upload job sheet versi
- * dosen sendiri untuk satu modul (menggantikan tampilan default di
- * ELK-Learning bila diisi).
- */
-router.post('/:id/praktikum/:modulId/catatan', upload.single('file'), async (req, res) => {
-  try {
-    const mk = await getMkUntukPraktikum(req, res);
-    if (!mk) return;
-
-    const modulId = req.params.modulId;
-    const { tanggal, catatanDosen } = req.body;
-
-    let modulPraktikum = mk.modulPraktikum || [];
-    const idx = modulPraktikum.findIndex(m => m.id === modulId);
-    const old = idx !== -1 ? modulPraktikum[idx] : { id: modulId };
-
-    const updated = {
-      ...old,
-      id: modulId,
-      tanggal: tanggal !== undefined ? tanggal : (old.tanggal || null),
-      catatanDosen: catatanDosen !== undefined ? catatanDosen : (old.catatanDosen || ''),
+    const data = {
+      judul: judul.trim(),
+      konten: konten || '',
+      urutan: parseInt(urutan) || 0,
+      fileUrl: null,
+      fileId: null,
+      fileNama: null,
+      createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
     if (req.file) {
-      const folderId = await getMateriMkFolder(mk.kode);
-      const fileName = `Praktikum_${modulId}_${Date.now()}.pdf`;
-      const fileMetadata = { name: fileName, parents: [folderId] };
-      const media = { mimeType: req.file.mimetype, body: Readable.from(req.file.buffer) };
-      const response = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
+      if (req.file.mimetype !== 'application/pdf') {
+        return res.status(400).send('File modul harus berformat PDF');
+      }
+      const folderId = await getModulMkFolder(akses.mk.kode);
+      const fileName = `${Date.now()}_${req.file.originalname}`;
+      const response = await drive.files.create({
+        resource: { name: fileName, parents: [folderId] },
+        media: { mimeType: req.file.mimetype, body: Readable.from(req.file.buffer) },
+        fields: 'id'
+      });
       await drive.permissions.create({ fileId: response.data.id, requestBody: { role: 'reader', type: 'anyone' } });
-      updated.fileUrl = `https://drive.google.com/uc?export=view&id=${response.data.id}`;
-      updated.fileNama = req.file.originalname || fileName;
+      data.fileId = response.data.id;
+      data.fileUrl = `https://drive.google.com/file/d/${response.data.id}/view`;
+      data.fileNama = req.file.originalname;
     }
 
-    removeUndefined(updated);
-    if (idx !== -1) modulPraktikum[idx] = updated;
-    else modulPraktikum.push(updated);
-
-    await db.collection('mataKuliah').doc(mk.id).update({
-      modulPraktikum,
-      updatedAt: new Date().toISOString()
-    });
-    res.redirect(`/dosen/mk/${mk.id}/praktikum`);
+    await db.collection('mataKuliah').doc(req.params.id).collection('modul').add(data);
+    res.redirect(`/dosen/mk/${req.params.id}/modul`);
   } catch (error) {
-    console.error('Error simpan catatan modul praktikum:', error);
-    res.status(500).send('Gagal menyimpan catatan modul praktikum');
+    console.error('Error tambah modul:', error);
+    res.status(500).send('Gagal menambah modul: ' + error.message);
+  }
+});
+
+/**
+ * GET /dosen/mk/:id/modul/:modulId/edit
+ * Form edit satu modul (editor terpisah supaya tidak bentrok dgn form tambah).
+ */
+router.get('/:id/modul/:modulId/edit', async (req, res) => {
+  try {
+    const akses = await cekAksesMk(req.params.id, req.dosen.id);
+    if (!akses.ok) return res.status(akses.status).render('error', { title: 'Error', message: akses.message });
+
+    const modulDoc = await db.collection('mataKuliah').doc(req.params.id).collection('modul').doc(req.params.modulId).get();
+    if (!modulDoc.exists) return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Modul tidak ditemukan' });
+
+    res.render('dosen/mk_modul_edit', {
+      title: `Edit Modul - ${akses.mk.kode}`,
+      mk: akses.mk,
+      modul: { id: modulDoc.id, ...modulDoc.data() }
+    });
+  } catch (error) {
+    console.error('Error form edit modul:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat form edit modul' });
+  }
+});
+
+/**
+ * POST /dosen/mk/:id/modul/:modulId/update
+ */
+router.post('/:id/modul/:modulId/update', upload.single('file'), async (req, res) => {
+  try {
+    const akses = await cekAksesMk(req.params.id, req.dosen.id);
+    if (!akses.ok) return res.status(akses.status).send(akses.message);
+
+    const { judul, konten, urutan } = req.body;
+    if (!judul || !judul.trim()) return res.status(400).send('Judul modul wajib diisi');
+
+    const update = {
+      judul: judul.trim(),
+      konten: konten || '',
+      urutan: parseInt(urutan) || 0,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (req.file) {
+      if (req.file.mimetype !== 'application/pdf') {
+        return res.status(400).send('File modul harus berformat PDF');
+      }
+      const folderId = await getModulMkFolder(akses.mk.kode);
+      const fileName = `${Date.now()}_${req.file.originalname}`;
+      const response = await drive.files.create({
+        resource: { name: fileName, parents: [folderId] },
+        media: { mimeType: req.file.mimetype, body: Readable.from(req.file.buffer) },
+        fields: 'id'
+      });
+      await drive.permissions.create({ fileId: response.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+      update.fileId = response.data.id;
+      update.fileUrl = `https://drive.google.com/file/d/${response.data.id}/view`;
+      update.fileNama = req.file.originalname;
+    }
+
+    await db.collection('mataKuliah').doc(req.params.id).collection('modul').doc(req.params.modulId).update(update);
+    res.redirect(`/dosen/mk/${req.params.id}/modul`);
+  } catch (error) {
+    console.error('Error update modul:', error);
+    res.status(500).send('Gagal memperbarui modul: ' + error.message);
+  }
+});
+
+/**
+ * POST /dosen/mk/:id/modul/:modulId/delete
+ */
+router.post('/:id/modul/:modulId/delete', async (req, res) => {
+  try {
+    const akses = await cekAksesMk(req.params.id, req.dosen.id);
+    if (!akses.ok) return res.status(akses.status).send(akses.message);
+
+    await db.collection('mataKuliah').doc(req.params.id).collection('modul').doc(req.params.modulId).delete();
+    res.redirect(`/dosen/mk/${req.params.id}/modul`);
+  } catch (error) {
+    console.error('Error hapus modul:', error);
+    res.status(500).send('Gagal menghapus modul: ' + error.message);
   }
 });
 

@@ -1,6 +1,18 @@
 <%- include('../../partials/header') %>
 
 <%
+  // Fungsi untuk mendapatkan thumbnail dari Google Drive (jika diperlukan)
+  const getDriveThumbnail = (url) => {
+    if (!url) return null;
+    let match = url.match(/[?&]id=([^&]+)/);
+    if (match) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w100-h100`;
+    match = url.match(/\/d\/([^\/]+)/);
+    if (match) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w100-h100`;
+    return url;
+  };
+%>
+
+<%
   // Fungsi untuk mengekstrak ID file dari URL Google Drive
   const getFileIdFromUrl = (url) => {
     if (!url) return null;
@@ -225,7 +237,21 @@
         <h5><i class="bi bi-person-badge"></i> Dosen Pengampu</h5>
         <% if (dosenList && dosenList.length) { %>
           <% dosenList.forEach(d => { %>
-            <p><i class="bi bi-person-circle me-2"></i> <%= d.nama %></p>
+            <%
+              const fotoDosenUrl = d.foto ? getDriveThumbnail(d.foto) : null;
+              const fallbackDosen = `https://ui-avatars.com/api/?name=${encodeURIComponent(d.nama)}&background=1e3a8a&color=fff&size=40`;
+            %>
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <img src="<%= fotoDosenUrl || fallbackDosen %>" alt="foto <%= d.nama %>"
+                style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #e2e8f0;"
+                onerror="this.onerror=null; this.src='<%= fallbackDosen %>';">
+              <div>
+                <div><%= d.nama %></div>
+                <% if (d.kontak) { %>
+                  <div class="text-muted small"><i class="bi bi-telephone me-1"></i><%= d.kontak %></div>
+                <% } %>
+              </div>
+            </div>
           <% }) %>
         <% } else { %>
           <p class="text-muted small">Belum ada dosen pengampu.</p>
@@ -236,8 +262,29 @@
         <p><%= jadwal || 'Belum diatur' %></p>
       </div>
       <div class="info-card">
-        <h5><i class="bi bi-people"></i> Mahasiswa</h5>
-        <p>Jumlah mahasiswa: <strong><%= jumlahMahasiswa || 0 %></strong></p>
+        <h5><i class="bi bi-people"></i> Teman Sekelas</h5>
+        <p class="text-muted small mb-2">Jumlah mahasiswa: <strong><%= jumlahMahasiswa || 0 %></strong></p>
+        <% if (mahasiswaList && mahasiswaList.length) { %>
+          <div style="max-height: 320px; overflow-y: auto;">
+            <% mahasiswaList.forEach(m => { %>
+              <%
+                const fotoMhsUrl = m.foto ? getDriveThumbnail(m.foto) : null;
+                const fallbackMhs = `https://ui-avatars.com/api/?name=${encodeURIComponent(m.nama)}&background=3b82f6&color=fff&size=36`;
+              %>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <img src="<%= fotoMhsUrl || fallbackMhs %>" alt="foto <%= m.nama %>"
+                  style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:1.5px solid #e2e8f0;"
+                  onerror="this.onerror=null; this.src='<%= fallbackMhs %>';">
+                <div>
+                  <div style="font-size:0.88rem; font-weight:600; color:#1e293b;"><%= m.nama %></div>
+                  <div style="font-size:0.75rem; color:#64748b;"><%= m.nim %></div>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <p class="text-muted small mb-0">Belum ada mahasiswa lain terdaftar di kelas ini.</p>
+        <% } %>
       </div>
     </div>
 
@@ -313,61 +360,6 @@
           <p class="text-muted small">Belum ada tugas.</p>
         <% } %>
       </div>
-
-      <!-- Modul Praktikum (hanya muncul jika dosen mempublikasikan) -->
-      <% if (modulPraktikumList && modulPraktikumList.length) { %>
-        <div class="info-card">
-          <h5><i class="bi bi-tools"></i> Modul Praktikum &mdash; <%= jenisPraktikumLabel %></h5>
-          <div class="accordion" id="accordionPraktikum">
-            <% modulPraktikumList.forEach((m, i) => { %>
-              <div class="accordion-item">
-                <h2 class="accordion-header">
-                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#praktikum-<%= m.id %>">
-                    <span class="me-2 fw-bold">#<%= i + 1 %></span> <%= m.judul %>
-                  </button>
-                </h2>
-                <div id="praktikum-<%= m.id %>" class="accordion-collapse collapse" data-bs-parent="#accordionPraktikum">
-                  <div class="accordion-body small">
-                    <p class="text-muted mb-2">
-                      <i class="bi bi-clock-history"></i> <%= m.estimasiWaktu %>
-                      <% if (m.tanggal) { %> &middot; <i class="bi bi-calendar-check"></i> <%= new Date(m.tanggal).toLocaleDateString('id-ID') %><% } %>
-                    </p>
-                    <p class="fw-semibold mb-1">Tujuan:</p>
-                    <ul>
-                      <% m.tujuan.forEach(t => { %><li><%= t %></li><% }) %>
-                    </ul>
-                    <p class="fw-semibold mb-1">Alat &amp; Bahan:</p>
-                    <ul>
-                      <% m.alatBahan.forEach(a => { %><li><%= a %></li><% }) %>
-                    </ul>
-                    <p class="fw-semibold mb-1">Dasar Teori:</p>
-                    <p><%= m.dasarTeori %></p>
-                    <p class="fw-semibold mb-1">Langkah Kerja:</p>
-                    <ol>
-                      <% m.langkahKerja.forEach(l => { %><li><%= l %></li><% }) %>
-                    </ol>
-                    <p class="fw-semibold mb-1">Tugas / Isi Laporan:</p>
-                    <ul>
-                      <% m.tugasLaporan.forEach(t => { %><li><%= t %></li><% }) %>
-                    </ul>
-                    <% if (m.k3) { %>
-                      <div class="alert alert-warning py-2 px-3 small mb-2"><i class="bi bi-exclamation-triangle"></i> <strong>Keselamatan Kerja:</strong> <%= m.k3 %></div>
-                    <% } %>
-                    <% if (m.catatanDosen) { %>
-                      <p class="text-muted"><i class="bi bi-chat-left-text"></i> Catatan dosen: <%= m.catatanDosen %></p>
-                    <% } %>
-                    <% if (m.fileUrl) { %>
-                      <a href="<%= m.fileUrl %>" target="_blank" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-file-earmark-pdf"></i> Unduh Job Sheet (<%= m.fileNama || 'PDF' %>)
-                      </a>
-                    <% } %>
-                  </div>
-                </div>
-              </div>
-            <% }) %>
-          </div>
-        </div>
-      <% } %>
     </div>
   </div>
 </div>

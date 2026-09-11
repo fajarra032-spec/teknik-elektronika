@@ -10,6 +10,12 @@
     if (match) return match[1];
     return null;
   };
+
+  // Thumbnail foto dosen untuk ditampilkan di card MK
+  const getDosenThumb = (fotoUrl) => {
+    const fid = getFileIdFromUrl(fotoUrl);
+    return fid ? `https://drive.google.com/thumbnail?id=${fid}&sz=w60-h60` : fotoUrl;
+  };
 %>
 
 <style>
@@ -366,6 +372,23 @@
             <div class="mk-card-jadwal"><i class="bi bi-clock"></i> <%= mk.jadwal %></div>
           <% } %>
 
+          <% if (mk.dosenList && mk.dosenList.length) { %>
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              <% mk.dosenList.forEach(d => { %>
+                <%
+                  const fotoDosenThumb = d.foto ? getDosenThumb(d.foto) : null;
+                  const fallbackDosenThumb = `https://ui-avatars.com/api/?name=${encodeURIComponent(d.nama)}&background=1e3a8a&color=fff&size=24`;
+                %>
+                <span class="text-muted small d-inline-flex align-items-center gap-1">
+                  <img src="<%= fotoDosenThumb || fallbackDosenThumb %>" alt=""
+                    style="width:22px; height:22px; border-radius:50%; object-fit:cover;"
+                    onerror="this.onerror=null; this.src='<%= fallbackDosenThumb %>';">
+                  <%= d.nama %>
+                </span>
+              <% }) %>
+            </div>
+          <% } %>
+
           <div class="mk-card-progress">
             <div class="progress-text">
               <span>Progress: <%= mk.progressPertemuan.terlaksana %>/16 pertemuan</span>
@@ -395,6 +418,7 @@
           <tr>
             <th>Mata Kuliah</th>
             <th>Kelas</th>
+            <th>Dosen</th>
             <th>Jadwal</th>
             <th>Jml Mhs</th>
             <th>Progress</th>
@@ -405,7 +429,7 @@
         <tbody>
           <% if (mkList.length === 0) { %>
             <tr>
-              <td colspan="7" class="empty-state">
+              <td colspan="8" class="empty-state">
                 <i class="bi bi-inbox"></i>
                 <h5>Belum Ada Mata Kuliah</h5>
                 <p class="text-muted small">Anda belum terdaftar di mata kuliah manapun.</p>
@@ -417,6 +441,24 @@
               <tr>
                 <td class="fw-semibold text-start"><%= mk.kode %> - <%= mk.nama %></td>
                 <td><%= mk.kelas || '-' %></td>
+                <td class="text-start">
+                  <% if (mk.dosenList && mk.dosenList.length) { %>
+                    <% mk.dosenList.forEach(d => { %>
+                      <%
+                        const fotoDosenThumbTbl = d.foto ? getDosenThumb(d.foto) : null;
+                        const fallbackDosenThumbTbl = `https://ui-avatars.com/api/?name=${encodeURIComponent(d.nama)}&background=1e3a8a&color=fff&size=24`;
+                      %>
+                      <div class="d-flex align-items-center gap-1 small text-nowrap">
+                        <img src="<%= fotoDosenThumbTbl || fallbackDosenThumbTbl %>" alt=""
+                          style="width:22px; height:22px; border-radius:50%; object-fit:cover;"
+                          onerror="this.onerror=null; this.src='<%= fallbackDosenThumbTbl %>';">
+                        <%= d.nama %>
+                      </div>
+                    <% }) %>
+                  <% } else { %>
+                    <span class="text-muted small">-</span>
+                  <% } %>
+                </td>
                 <td class="small"><%= mk.jadwal || '-' %></td>
                 <td><%= mk.jumlahMahasiswa || 0 %></td>
                 <td>

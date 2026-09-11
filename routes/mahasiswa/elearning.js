@@ -15,7 +15,6 @@ const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif } = require('../../helpers/nilaiHelper');
 const { periodeKeUrutan } = require('../../helpers/academicHelper');
 const { mataKuliahCache, tugasAktifCache, dosenCache } = require('../../helpers/cache');
-const { getPublishedModulPraktikum } = require('../../helpers/modulPraktikumHelper');
 
 // ============================================================================
 // KONSTANTA FOLDER UTAMA (Data WEB)
@@ -248,6 +247,15 @@ router.get('/', async (req, res) => {
           .get();
         return !tugasSnapshot.empty;
       });
+
+      // Info dosen pengampu (nama, foto, kontak) supaya tampil langsung di card MK
+      mk.dosenList = (await Promise.all((mk.dosenIds || []).map(async (dId) => {
+        const dData = await dosenCache.getOrFetch(dId, async () => {
+          const dDoc = await db.collection('dosen').doc(dId).get();
+          return dDoc.exists ? dDoc.data() : null;
+        });
+        return dData ? { id: dId, nama: dData.nama, foto: dData.foto || null, kontak: dData.kontak || null } : null;
+      }))).filter(Boolean);
     }));
 
     res.render('mahasiswa/elearning/index', {
@@ -305,8 +313,29 @@ router.get('/mk/:id', async (req, res) => {
         const dDoc = await db.collection('dosen').doc(dId).get();
         return dDoc.exists ? dDoc.data() : null;
       });
-      return dData ? { id: dId, nama: dData.nama } : null;
+      return dData ? { id: dId, nama: dData.nama, foto: dData.foto || null, kontak: dData.kontak || null } : null;
     }))).filter(Boolean);
+
+    // Daftar teman sekelas (mahasiswa lain yang aktif di MK ini periode ini)
+    // supaya bisa lihat foto teman sekelas, bukan cuma jumlahnya.
+    const periodeAktifUntukKelas = getPeriodeAktif();
+    const kelasEnrollmentSnapshot = await db.collection('enrollment')
+      .where('mkId', '==', mkId)
+      .where('semester', '==', periodeAktifUntukKelas)
+      .where('status', '==', 'active')
+      .get();
+    const mahasiswaIdsKelas = kelasEnrollmentSnapshot.docs
+      .map(doc => doc.data().userId)
+      .filter(uid => uid && typeof uid === 'string' && uid.trim() !== '');
+
+    let mahasiswaList = [];
+    if (mahasiswaIdsKelas.length > 0) {
+      const userDocsKelas = await db.getAll(...mahasiswaIdsKelas.map(uid => db.collection('users').doc(uid)));
+      mahasiswaList = userDocsKelas
+        .filter(d => d.exists)
+        .map(d => ({ id: d.id, nama: d.data().nama, nim: d.data().nim, foto: d.data().foto || null }));
+      mahasiswaList.sort((a, b) => String(a.nim).localeCompare(String(b.nim)));
+    }
 
     const countSnapshot = await db.collection('enrollment')
       .where('mkId', '==', mkId)
@@ -349,26 +378,15 @@ router.get('/mk/:id', async (req, res) => {
     }
     tugasList.sort((a, b) => (a.deadline || '').localeCompare(b.deadline || ''));
 
-    // Modul Praktikum - hanya ditampilkan jika dosen sudah mempublikasikan
-    // (mk.praktikumPublished) DAN minimal ada satu modul yang diaktifkan.
-    let modulPraktikumList = [];
-    let jenisPraktikumLabel = null;
-    if (mk.praktikumPublished === true) {
-      const hasilPraktikum = getPublishedModulPraktikum(mk);
-      modulPraktikumList = hasilPraktikum.modulList;
-      jenisPraktikumLabel = hasilPraktikum.jenisLabel;
-    }
-
     res.render('mahasiswa/elearning/mk_detail', {
       title: `${mk.kode} - ${mk.nama}`,
       mk,
       jadwal,
       materi: pertemuanList,
       dosenList,
+      mahasiswaList,
       jumlahMahasiswa,
-      tugasList,
-      modulPraktikumList,
-      jenisPraktikumLabel
+      tugasList
     });
   } catch (error) {
     console.error('Error detail MK:', error);

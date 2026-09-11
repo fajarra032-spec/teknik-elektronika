@@ -325,11 +325,19 @@ router.get('/:id', async (req, res) => {
 
     const pengampuHistori = await getRiwayatPengampu(mk.id, dosenMap);
 
+    // Modul pembelajaran (dibuat & dikustomisasi bebas oleh dosen di sisi
+    // dosen) - di sini admin hanya melihat, tidak mengedit.
+    const modulSnapshot = await db.collection('mataKuliah').doc(mk.id).collection('modul').get();
+    const modulList = modulSnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
+
     res.render('admin/matakuliah_detail', {
       title: `Detail MK: ${mk.kode}`,
       mk,
       dosenMap,
-      pengampuHistori
+      pengampuHistori,
+      modulList
     });
   } catch (error) {
     console.error('Error:', error);

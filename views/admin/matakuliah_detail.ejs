@@ -104,6 +104,41 @@
       </div>
 
       <div class="info-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Modul Pembelajaran</span>
+          <span class="text-muted small fw-normal">Dibuat &amp; dikustomisasi bebas oleh dosen</span>
+        </div>
+        <div class="card-body">
+          <% if (modulList && modulList.length > 0) { %>
+            <% modulList.forEach(function(m) { %>
+              <div class="border rounded-3 p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                  <strong><span class="badge bg-secondary me-2"><%= m.urutan %></span><%= m.judul %></strong>
+                  <% if (m.updatedAt) { %>
+                    <span class="text-muted small">Diperbarui: <%= new Date(m.updatedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) %></span>
+                  <% } %>
+                </div>
+                <% if (m.fileId) { %>
+                  <div class="d-flex justify-content-between align-items-center mb-1 small">
+                    <span><i class="bi bi-file-earmark-pdf text-danger me-1"></i><%= m.fileNama || 'Modul.pdf' %></span>
+                    <a href="<%= m.fileUrl %>" target="_blank" class="btn btn-sm btn-outline-secondary">Buka Penuh</a>
+                  </div>
+                  <iframe src="https://drive.google.com/file/d/<%= m.fileId %>/preview" style="width:100%; height:380px; border:1px solid #e2e8f0; border-radius:0.5rem;" allow="autoplay"></iframe>
+                <% } else if (m.fileUrl) { %>
+                  <div class="small mb-1"><a href="<%= m.fileUrl %>" target="_blank"><i class="bi bi-paperclip me-1"></i><%= m.fileNama || 'Lampiran' %></a></div>
+                <% } %>
+                <% if (m.konten) { %>
+                  <div class="mt-2 small text-muted" style="max-height:150px; overflow:auto;"><%- m.konten %></div>
+                <% } %>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <p class="text-muted mb-0">Dosen pengampu belum membuat modul untuk mata kuliah ini.</p>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="info-card">
         <div class="card-header">Materi Per Pertemuan</div>
         <div class="card-body">
           <% if (mk.materi && mk.materi.length > 0) { %>
