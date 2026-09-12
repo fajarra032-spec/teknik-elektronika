@@ -46,6 +46,33 @@
     border-color: transparent;
     color: white;
   }
+  .form-label {
+    color: #1e293b;
+  }
+  .form-control, .form-select {
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #cbd5e1;
+    transition: all 0.2s;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: #1e3a8a;
+    box-shadow: 0 0 0 0.2rem rgba(30,58,138,0.25);
+  }
+
+  /* ===== RESPONSIF ===== */
+  @media (max-width: 768px) {
+    html { font-size: 15px; }
+    .form-header { padding: 1.2rem; }
+    .form-body { padding: 1.2rem; }
+    .form-header h2 { font-size: 1.4rem; }
+  }
+  @media (max-width: 576px) {
+    html { font-size: 14px; }
+    .form-header h2 { font-size: 1.2rem; }
+    .d-flex.gap-3.mt-4 { flex-direction: column; }
+    .btn-gradient, .btn-outline-gradient { width: 100%; justify-content: center; text-align: center; }
+  }
 </style>
 
 <div class="container-fluid mt-4">

@@ -56,10 +56,15 @@
     z-index: 1;
   }
   .page-header .btn-light {
+    background: white;
+    color: var(--primary-start);
     border-radius: 50px;
     padding: 0.6rem 1.5rem;
     font-weight: 500;
     border: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     transition: all 0.3s;
     position: relative;
@@ -194,6 +199,20 @@
     color: #6c757d;
     margin-bottom: 1.5rem;
   }
+
+  /* ===== RESPONSIF ===== */
+  @media (max-width: 768px) {
+    html { font-size: 15px; }
+    .page-header { padding: 1.2rem 1.5rem; }
+    .page-header h2 { font-size: 1.3rem; }
+    .table-container { padding: 1rem; }
+  }
+  @media (max-width: 576px) {
+    html { font-size: 14px; }
+    .page-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+    .page-header .btn-light { width: 100%; justify-content: center; display: flex; }
+    .seminar-table th, .seminar-table td { font-size: 0.8rem; padding: 0.6rem 0.5rem; }
+  }
 </style>
 
 <div class="container-fluid mt-4">
@@ -203,7 +222,7 @@
       <h2><i class="bi bi-calendar-event-fill me-2"></i>Permohonan Seminar Magang</h2>
       <p class="mb-0">Ajukan jadwal seminar dan lihat status permohonan</p>
     </div>
-    <a href="/mahasiswa/magang/seminar/baru" class="btn-light btn" style="background:white; border-radius:50px; padding:0.6rem 1.5rem; font-weight:500; text-decoration:none;">
+    <a href="/mahasiswa/magang/seminar/baru" class="btn-light">
       <i class="bi bi-plus-circle me-2" style="color:var(--primary-start);"></i>Ajukan Baru
     </a>
   </div>

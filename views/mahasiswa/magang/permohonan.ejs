@@ -60,6 +60,19 @@
   .badge-pending { background: #ffc107; color: #212529; }
   .badge-approved { background: #28a745; color: white; }
   .badge-rejected { background: #dc3545; color: white; }
+
+  /* ===== RESPONSIF ===== */
+  @media (max-width: 768px) {
+    html { font-size: 15px; }
+    .magang-header { padding: 1.2rem; }
+    .magang-header h2 { font-size: 1.3rem; }
+  }
+  @media (max-width: 576px) {
+    html { font-size: 14px; }
+    .magang-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+    .magang-header .btn-light { width: 100%; justify-content: center; }
+    .permohonan-table th, .permohonan-table td { font-size: 0.85rem; }
+  }
 </style>
 
 <div class="container-fluid mt-4">

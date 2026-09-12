@@ -214,6 +214,22 @@
     font-size: 0.85rem;
     color: #64748b;
   }
+
+  /* ===== RESPONSIF ===== */
+  @media (max-width: 768px) {
+    html { font-size: 15px; }
+    .page-header { padding: 1.2rem 1.5rem; }
+    .page-header h2 { font-size: 1.3rem; }
+    .info-card { padding: 1.2rem; }
+  }
+  @media (max-width: 576px) {
+    html { font-size: 14px; }
+    .page-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+    .btn-back { width: 100%; justify-content: center; }
+    .info-table th { width: 110px; font-size: 0.85rem; }
+    .info-table td { font-size: 0.85rem; }
+    .history-item { flex-direction: column; align-items: flex-start; gap: 0.3rem; }
+  }
 </style>
 
 <div class="container-fluid mt-4">
