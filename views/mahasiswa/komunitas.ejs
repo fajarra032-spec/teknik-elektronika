@@ -1,16 +1,85 @@
 <%- include('../partials/header') %>
 
 <style>
+  :root {
+    --primary-start: #1e3a8a;
+    --primary-end: #3b82f6;
+    --primary-light: rgba(30,58,138,0.1);
+  }
+
+  html { font-size: 16px; }
+
+  /* ===== PAGE HEADER (pola sama dengan halaman lain) ===== */
+  .page-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-radius: 1.5rem;
+    padding: 1.2rem 1.8rem;
+    color: white;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 15px 30px rgba(30,58,138,0.25);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 260px;
+    height: 260px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    transform: rotate(25deg);
+  }
+  .page-header h1 {
+    font-weight: 700;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.5rem;
+  }
+  .btn-pill-outline {
+    border: 2px solid white;
+    color: white;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(4px);
+    border-radius: 50px;
+    padding: 0.45rem 1.2rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 1;
+  }
+  .btn-pill-outline:hover {
+    background: rgba(255,255,255,0.25);
+    transform: translateY(-2px);
+    color: white;
+  }
+
   .komunitas-wrap {
-    display: flex; flex-direction: column; height: calc(100vh - 180px); min-height: 500px;
-    background: white; border-radius: 1rem; box-shadow: var(--shadow-sm, 0 0.5rem 1rem rgba(0,0,0,0.05));
+    display: flex; flex-direction: column; height: calc(100vh - 240px); min-height: 500px;
+    background: white; border-radius: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    border: 1px solid rgba(30,58,138,0.1);
     overflow: hidden; max-width: 800px; margin: 0 auto;
   }
   .komunitas-header {
     padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0;
     display: flex; align-items: center; gap: 0.6rem;
   }
-  .komunitas-header i { font-size: 1.3rem; color: var(--primary-start, #1e3a8a); }
+  .komunitas-header i { font-size: 1.3rem; color: var(--primary-start); }
   .komunitas-header .subtitle { font-size: 0.78rem; color: #64748b; }
   .chat-messages { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 10px; }
   .bubble-wrap { max-width: 78%; position: relative; }
@@ -21,7 +90,7 @@
   .role-badge.dosen { background: #fef3c7; color: #92400e; }
   .role-badge.mahasiswa { background: #dbeafe; color: #1e40af; }
   .bubble { padding: 8px 12px; border-radius: 12px; font-size: 0.9rem; word-break: break-word; }
-  .bubble.me { background: var(--primary-start, #1e3a8a); color: white; border-bottom-right-radius: 3px; }
+  .bubble.me { background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); color: white; border-bottom-right-radius: 3px; }
   .bubble.other { background: #f1f5f9; color: #0f172a; border-bottom-left-radius: 3px; }
   .bubble-time { font-size: 0.65rem; opacity: 0.7; display: block; margin-top: 3px; }
   .bubble-delete {
@@ -31,16 +100,50 @@
   .bubble-wrap:hover .bubble-delete { opacity: 1; }
   .bubble-delete:hover { color: #dc2626; }
   .chat-input-row { border-top: 1px solid #e2e8f0; padding: 0.75rem; display: flex; gap: 0.5rem; }
+  .chat-input-row .form-control {
+    border-radius: 50px;
+    border: 1px solid #dee2e6;
+    padding: 0.55rem 1.1rem;
+  }
+  .chat-input-row .form-control:focus {
+    border-color: var(--primary-end);
+    box-shadow: 0 0 0 0.2rem rgba(30,58,138,0.15);
+  }
+  .btn-kirim {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border: none;
+    color: white;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .btn-kirim:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(30,58,138,0.3); color: white; }
+
   @media (max-width: 768px) {
-    .komunitas-wrap { height: calc(100vh - 140px); }
+    html { font-size: 15px; }
+    .page-header { padding: 1rem 1.3rem; }
+    .page-header h1 { font-size: 1.25rem; }
+    .komunitas-wrap { height: calc(100vh - 200px); border-radius: 1.2rem; }
+  }
+  @media (max-width: 576px) {
+    html { font-size: 14px; }
+    .page-header { flex-direction: column; align-items: flex-start; }
+    .btn-pill-outline { width: 100%; justify-content: center; }
+    .komunitas-header { padding: 0.8rem 1rem; }
+    .bubble-wrap { max-width: 88%; }
   }
 </style>
 
 <div class="container-fluid mt-4" style="max-width: 850px;">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="fw-bold mb-0"><i class="bi bi-people-fill me-2"></i>Komunitas</h5>
-    <a href="/mahasiswa/dashboard" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-arrow-left me-1"></i> Kembali
+  <div class="page-header">
+    <h1><i class="bi bi-people-fill"></i>Komunitas</h1>
+    <a href="/mahasiswa/dashboard" class="btn-pill-outline">
+      <i class="bi bi-arrow-left"></i> Kembali
     </a>
   </div>
 
@@ -57,7 +160,7 @@
     </div>
     <form id="chat-form" class="chat-input-row">
       <input type="text" id="chat-input" class="form-control" placeholder="Tulis pesan ke komunitas..." autocomplete="off" maxlength="1000" required>
-      <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i></button>
+      <button type="submit" class="btn-kirim"><i class="bi bi-send"></i></button>
     </form>
   </div>
 </div>

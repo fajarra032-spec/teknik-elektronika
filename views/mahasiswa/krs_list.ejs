@@ -260,6 +260,27 @@
     box-shadow: 0 8px 15px rgba(30,58,138,0.3);
   }
 
+  /* Tombol ikon kecil untuk aksi sekunder di baris tabel (mis. dokumen
+     resmi yang sudah ditandatangani & diupload admin, kalau ada) */
+  .btn-icon-sm {
+    background: transparent;
+    border: 1.5px solid #cbd5e1;
+    color: #64748b;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .btn-icon-sm:hover {
+    border-color: var(--primary-start);
+    color: var(--primary-start);
+    background: var(--primary-light);
+  }
+
   /* Empty State */
   .empty-state {
     padding: 4rem 2rem;
@@ -411,9 +432,16 @@
               </td>
               <td><%= krs.createdAt ? new Date(krs.createdAt).toLocaleDateString('id-ID') : '-' %></td>
               <td>
-                <a href="/mahasiswa/akademik/krs/<%= krs.id %>" class="btn-detail">
-                  <i class="bi bi-eye"></i> Detail
-                </a>
+                <div class="d-flex align-items-center gap-2">
+                  <a href="/mahasiswa/akademik/krs/krs_print/<%= krs.id %>" target="_blank" class="btn-detail">
+                    <i class="bi bi-printer-fill"></i> Cetak KRS
+                  </a>
+                  <% if (krs.driveFileLink) { %>
+                    <a href="<%= krs.driveFileLink %>" target="_blank" class="btn-icon-sm" title="Lihat dokumen resmi yang sudah ditandatangani">
+                      <i class="bi bi-file-earmark-check"></i>
+                    </a>
+                  <% } %>
+                </div>
               </td>
             </tr>
             <% }) %>

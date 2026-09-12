@@ -15,6 +15,7 @@ const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif, saveKomponenRubrik } = require('../../helpers/nilaiHelper');
+const { detectJenisPraktikum, getModulPraktikumList } = require('../../helpers/modulPraktikumHelper');
 
 console.log('mk.js loaded');
 
@@ -661,6 +662,16 @@ async function cekAksesMk(mkId, dosenId) {
 /**
  * GET /dosen/mk/:id/modul
  * Daftar modul + form tambah modul baru (inline, collapsible).
+ *
+ * Halaman ini menggabungkan DUA sumber modul, dan dosen bebas memakai
+ * salah satu, keduanya, atau tidak sama sekali:
+ *   1. Modul MANUAL - dibuat sendiri oleh dosen (subcollection
+ *      mataKuliah/{id}/modul), bebas format, sudah ada sebelumnya.
+ *   2. Modul TEMPLATE (job sheet) - konten siap pakai dari
+ *      data/modulPraktikumData.js, HANYA muncul untuk MK yang cocok
+ *      (lihat helpers/modulPraktikumHelper.js). Tiap modul template
+ *      punya saklar aktif/nonaktif sendiri dan tersembunyi dari
+ *      mahasiswa sampai dosen memilih menampilkannya.
  */
 router.get('/:id/modul', async (req, res) => {
   try {
@@ -672,10 +683,21 @@ router.get('/:id/modul', async (req, res) => {
       .map(doc => ({ id: doc.id, ...doc.data() }))
       .sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
 
+    // Modul template (job sheet) - hanya terisi kalau MK ini cocok jenisnya
+    const jenisPraktikum = detectJenisPraktikum(akses.mk);
+    const templateHasil = jenisPraktikum ? getModulPraktikumList(akses.mk) : { jenisLabel: null, modulList: [] };
+    const templateModulList = templateHasil.modulList;
+    const jumlahTemplateAktif = templateModulList.filter(m => m.aktif).length;
+
     res.render('dosen/mk_modul', {
       title: `Modul - ${akses.mk.kode} ${akses.mk.nama}`,
       mk: akses.mk,
-      modulList
+      modulList,
+      jenisPraktikum,
+      jenisPraktikumLabel: templateHasil.jenisLabel,
+      templateModulList,
+      jumlahTemplateAktif,
+      templatePublished: akses.mk.praktikumPublished === true
     });
   } catch (error) {
     console.error('Error daftar modul:', error);
@@ -810,6 +832,112 @@ router.post('/:id/modul/:modulId/delete', async (req, res) => {
   } catch (error) {
     console.error('Error hapus modul:', error);
     res.status(500).send('Gagal menghapus modul: ' + error.message);
+  }
+});
+
+/**
+ * POST /dosen/mk/:id/modul-template/publish
+ * Saklar utama: apakah bagian "Modul Template" boleh tampil sama sekali
+ * di ELK-Learning mahasiswa untuk MK ini. Modul individual tetap harus
+ * diaktifkan satu-satu lewat toggle di bawah.
+ */
+router.post('/:id/modul-template/publish', async (req, res) => {
+  try {
+    const akses = await cekAksesMk(req.params.id, req.dosen.id);
+    if (!akses.ok) return res.status(akses.status).send(akses.message);
+
+    const publishedBaru = !(akses.mk.praktikumPublished === true);
+    await db.collection('mataKuliah').doc(akses.mk.id).update({
+      praktikumPublished: publishedBaru,
+      updatedAt: new Date().toISOString()
+    });
+    res.redirect(`/dosen/mk/${akses.mk.id}/modul`);
+  } catch (error) {
+    console.error('Error toggle publish modul template:', error);
+    res.status(500).send('Gagal mengubah status publikasi modul template');
+  }
+});
+
+/**
+ * POST /dosen/mk/:id/modul-template/:modulId/toggle
+ * Aktif/nonaktifkan satu modul template tertentu.
+ */
+router.post('/:id/modul-template/:modulId/toggle', async (req, res) => {
+  try {
+    const akses = await cekAksesMk(req.params.id, req.dosen.id);
+    if (!akses.ok) return res.status(akses.status).send(akses.message);
+
+    const modulId = req.params.modulId;
+    let modulPraktikum = akses.mk.modulPraktikum || [];
+    const idx = modulPraktikum.findIndex(m => m.id === modulId);
+    const old = idx !== -1 ? modulPraktikum[idx] : { id: modulId };
+    const updated = { ...old, id: modulId, aktif: !(old.aktif === true), updatedAt: new Date().toISOString() };
+
+    if (idx !== -1) modulPraktikum[idx] = updated;
+    else modulPraktikum.push(updated);
+
+    await db.collection('mataKuliah').doc(akses.mk.id).update({
+      modulPraktikum,
+      updatedAt: new Date().toISOString()
+    });
+    res.redirect(`/dosen/mk/${akses.mk.id}/modul`);
+  } catch (error) {
+    console.error('Error toggle modul template:', error);
+    res.status(500).send('Gagal mengubah status modul template');
+  }
+});
+
+/**
+ * POST /dosen/mk/:id/modul-template/:modulId/catatan
+ * Simpan catatan/tanggal pelaksanaan + (opsional) upload job sheet versi
+ * dosen sendiri untuk satu modul template (menggantikan tampilan default
+ * di ELK-Learning bila diisi).
+ */
+router.post('/:id/modul-template/:modulId/catatan', upload.single('file'), async (req, res) => {
+  try {
+    const akses = await cekAksesMk(req.params.id, req.dosen.id);
+    if (!akses.ok) return res.status(akses.status).send(akses.message);
+
+    const modulId = req.params.modulId;
+    const { tanggal, catatanDosen } = req.body;
+
+    let modulPraktikum = akses.mk.modulPraktikum || [];
+    const idx = modulPraktikum.findIndex(m => m.id === modulId);
+    const old = idx !== -1 ? modulPraktikum[idx] : { id: modulId };
+
+    const updated = {
+      ...old,
+      id: modulId,
+      tanggal: tanggal !== undefined ? tanggal : (old.tanggal || null),
+      catatanDosen: catatanDosen !== undefined ? catatanDosen : (old.catatanDosen || ''),
+      updatedAt: new Date().toISOString()
+    };
+
+    if (req.file) {
+      const folderId = await getModulMkFolder(akses.mk.kode);
+      const fileName = `${Date.now()}_Template_${modulId}_${req.file.originalname}`;
+      const response = await drive.files.create({
+        resource: { name: fileName, parents: [folderId] },
+        media: { mimeType: req.file.mimetype, body: Readable.from(req.file.buffer) },
+        fields: 'id'
+      });
+      await drive.permissions.create({ fileId: response.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+      updated.fileId = response.data.id;
+      updated.fileUrl = `https://drive.google.com/file/d/${response.data.id}/view`;
+      updated.fileNama = req.file.originalname;
+    }
+
+    if (idx !== -1) modulPraktikum[idx] = updated;
+    else modulPraktikum.push(updated);
+
+    await db.collection('mataKuliah').doc(akses.mk.id).update({
+      modulPraktikum,
+      updatedAt: new Date().toISOString()
+    });
+    res.redirect(`/dosen/mk/${akses.mk.id}/modul`);
+  } catch (error) {
+    console.error('Error simpan catatan modul template:', error);
+    res.status(500).send('Gagal menyimpan catatan modul template: ' + error.message);
   }
 });
 

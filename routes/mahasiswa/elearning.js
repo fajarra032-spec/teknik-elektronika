@@ -15,6 +15,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif, getHasilRubrikSatuMahasiswa } = require('../../helpers/nilaiHelper');
 const { periodeKeUrutan } = require('../../helpers/academicHelper');
 const { mataKuliahCache, tugasAktifCache, dosenCache } = require('../../helpers/cache');
+const { getPublishedModulPraktikum } = require('../../helpers/modulPraktikumHelper');
 
 // ============================================================================
 // KONSTANTA FOLDER UTAMA (Data WEB)
@@ -529,10 +530,22 @@ router.get('/mk/:id/modul', async (req, res) => {
       .map(doc => ({ id: doc.id, ...doc.data() }))
       .sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
 
+    // Modul template (job sheet) - hanya ikut tampil kalau dosen sudah
+    // mempublikasikannya (mk.praktikumPublished) DAN modul tsb diaktifkan.
+    let templateModulList = [];
+    let jenisPraktikumLabel = null;
+    if (mk.praktikumPublished === true) {
+      const hasilTemplate = getPublishedModulPraktikum(mk);
+      templateModulList = hasilTemplate.modulList;
+      jenisPraktikumLabel = hasilTemplate.jenisLabel;
+    }
+
     res.render('mahasiswa/elearning/mk_modul', {
       title: `Modul - ${mk.kode} ${mk.nama}`,
       mk,
-      modulList
+      modulList,
+      templateModulList,
+      jenisPraktikumLabel
     });
   } catch (error) {
     console.error('Error modul mahasiswa:', error);

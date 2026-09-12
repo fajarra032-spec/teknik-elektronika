@@ -36,6 +36,13 @@
   .empty-state { text-align: center; padding: 3rem 1rem; color: #6c757d; }
   .empty-state i { font-size: 3rem; color: #adb5bd; margin-bottom: 1rem; display: block; }
 
+  .section-divider {
+    display: flex; align-items: center; gap: 0.75rem; margin: 1.6rem 0 1rem 0; color: #94a3b8; font-weight: 700;
+    font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
+  .k3-box { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 0.6rem 0.9rem; border-radius: 0.7rem; font-size: 0.82rem; margin-top: 0.6rem; }
+
   @media (max-width: 576px) {
     .modul-card { padding: 1rem; }
     .modul-card iframe { height: 320px !important; }
@@ -53,14 +60,60 @@
 
   <%- include('./partials/mk_tabs', { mk, activeTab: 'modul' }) %>
 
-  <% if (!modulList || modulList.length === 0) { %>
+  <!-- Modul Template (job sheet) - hanya muncul kalau dosen mempublikasikan -->
+  <% if (templateModulList && templateModulList.length) { %>
+    <div class="section-divider">Modul Template &mdash; <%= jenisPraktikumLabel %></div>
+    <div class="accordion mb-3" id="accordionTemplate">
+      <% templateModulList.forEach((m, i) => { %>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tpl-<%= m.id %>">
+              <span class="me-2 fw-bold">#<%= i + 1 %></span> <%= m.judul %>
+            </button>
+          </h2>
+          <div id="tpl-<%= m.id %>" class="accordion-collapse collapse" data-bs-parent="#accordionTemplate">
+            <div class="accordion-body small">
+              <p class="text-muted mb-2">
+                <i class="bi bi-clock-history"></i> <%= m.estimasiWaktu %>
+                <% if (m.tanggal) { %> &middot; <i class="bi bi-calendar-check"></i> <%= new Date(m.tanggal).toLocaleDateString('id-ID') %><% } %>
+              </p>
+              <p class="fw-semibold mb-1">Tujuan:</p>
+              <ul><% m.tujuan.forEach(t => { %><li><%= t %></li><% }) %></ul>
+              <p class="fw-semibold mb-1">Alat &amp; Bahan:</p>
+              <ul><% m.alatBahan.forEach(a => { %><li><%= a %></li><% }) %></ul>
+              <p class="fw-semibold mb-1">Dasar Teori:</p>
+              <p><%= m.dasarTeori %></p>
+              <p class="fw-semibold mb-1">Langkah Kerja:</p>
+              <ol><% m.langkahKerja.forEach(l => { %><li><%= l %></li><% }) %></ol>
+              <p class="fw-semibold mb-1">Tugas / Isi Laporan:</p>
+              <ul><% m.tugasLaporan.forEach(t => { %><li><%= t %></li><% }) %></ul>
+              <% if (m.k3) { %>
+                <div class="k3-box"><i class="bi bi-exclamation-triangle"></i> <strong>Keselamatan Kerja:</strong> <%= m.k3 %></div>
+              <% } %>
+              <% if (m.catatanDosen) { %>
+                <p class="text-muted mt-2"><i class="bi bi-chat-left-text"></i> Catatan dosen: <%= m.catatanDosen %></p>
+              <% } %>
+              <% if (m.fileUrl) { %>
+                <a href="<%= m.fileUrl %>" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                  <i class="bi bi-file-earmark-pdf"></i> Unduh Job Sheet (<%= m.fileNama || 'PDF' %>)
+                </a>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+    <div class="section-divider">Modul Manual</div>
+  <% } %>
+
+  <% if ((!modulList || modulList.length === 0) && (!templateModulList || templateModulList.length === 0)) { %>
     <div class="modul-card">
       <div class="empty-state">
         <i class="bi bi-journal-x"></i>
         Dosen pengampu belum membuat modul untuk mata kuliah ini.
       </div>
     </div>
-  <% } else { %>
+  <% } else if (modulList && modulList.length) { %>
     <% modulList.forEach(m => { %>
       <div class="modul-card">
         <div class="d-flex align-items-center gap-2 mb-2">

@@ -7,11 +7,13 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
   <style>
-    /* Kertas A4 dengan margin proporsional supaya transkrip tetap rapi
-       satu halaman untuk jumlah mata kuliah yang wajar. */
+    /* Kertas F4/Folio (ukuran umum di Indonesia) dengan margin proporsional.
+       Isi transkrip dipaksa muat 1 halaman lewat JS (lihat #cetak-scale +
+       script di bawah) - bukan cuma mengandalkan ukuran kertas saja, karena
+       jumlah mata kuliah/semester tiap mahasiswa beda-beda. */
     @page {
-      size: A4;
-      margin: 1.5cm;
+      size: 215mm 330mm;
+      margin: 1.2cm;
     }
 
     body {
@@ -228,6 +230,20 @@
       box-shadow: 0 10px 20px rgba(30,58,138,0.35);
       color: white;
     }
+
+    /* Wrapper yang di-scale (zoom) otomatis lewat JS supaya seluruh isi
+       transkrip DIPAKSA muat dalam 1 halaman F4, tidak meluber ke halaman
+       ke-2, berapa pun jumlah mata kuliah/semesternya. `zoom` dipakai
+       (bukan transform:scale) karena `zoom` benar-benar mengubah ukuran
+       tata letak (layout box), sehingga ikut mempengaruhi perhitungan
+       page-break saat cetak - transform:scale tidak begitu (ruang
+       kosongnya tetap tercadang seukuran asli, bisa memicu halaman ke-2
+       kosong walau isinya kelihatan sudah mengecil).
+       transform-origin dipasang sebagai fallback untuk browser yang
+       tidak mendukung `zoom` (mis. Firefox). */
+    #cetak-scale {
+      transform-origin: top left;
+    }
   </style>
 </head>
 <body>
@@ -237,10 +253,12 @@
       <a href="/mahasiswa/akademik/transkrip<%= semesterDipilih ? '?semester=' + encodeURIComponent(semesterDipilih) : '' %>" class="btn-pill-outline back-btn">
         <i class="bi bi-arrow-left"></i> Kembali
       </a>
-      <button onclick="window.print()" class="btn-pill-gradient print-btn">
+      <button onclick="fitTranskripKeF4(); window.print();" class="btn-pill-gradient print-btn">
         <i class="bi bi-printer-fill"></i> Cetak Ulang
       </button>
     </div>
+
+    <div id="cetak-scale">
 
     <%- include('../partials/kop_surat') %>
 
@@ -344,13 +362,65 @@
       </div>
     </div>
 
+    </div><!-- /#cetak-scale -->
+
   </div>
 
   <script>
-    // Langsung buka dialog cetak begitu halaman & gambar (kop/ttd) selesai dimuat,
-    // tanpa perlu klik tombol "Cetak" terlebih dahulu.
+    /**
+     * Paksa isi transkrip (#cetak-scale) muat dalam SATU halaman F4 dengan
+     * mengecilkan `zoom` secara proporsional kalau kontennya lebih tinggi
+     * dari area cetak - supaya tidak pernah meluber ke halaman ke-2,
+     * berapa pun jumlah mata kuliah/semester yang dimuat.
+     */
+    function fitTranskripKeF4() {
+      var wrapper = document.getElementById('cetak-scale');
+      if (!wrapper) return;
+
+      // Reset dulu supaya pengukuran scrollHeight selalu dari ukuran asli
+      // (100%), bukan dari hasil zoom sebelumnya (penting kalau fungsi ini
+      // dipanggil ulang, mis. tombol "Cetak Ulang" ditekan lagi).
+      wrapper.style.zoom = 1;
+      wrapper.style.transform = 'none';
+
+      // Ukur tinggi area cetak F4 yang sebenarnya (330mm dikurangi margin
+      // atas+bawah @page 1.2cm x2) dengan elemen referensi tersembunyi,
+      // supaya konversi mm->px SELALU akurat di device/browser mana pun
+      // (tidak menebak 96dpi secara manual yang bisa meleset).
+      var ref = document.createElement('div');
+      ref.style.position = 'absolute';
+      ref.style.visibility = 'hidden';
+      ref.style.height = '305.6mm'; // 330mm - (1.2cm margin atas + bawah)
+      ref.style.width = '0';
+      document.body.appendChild(ref);
+      var tinggiHalamanPx = ref.offsetHeight;
+      document.body.removeChild(ref);
+
+      var tinggiKontenPx = wrapper.scrollHeight;
+
+      if (tinggiKontenPx > tinggiHalamanPx) {
+        // Beri sedikit ruang aman (2%) supaya tidak pas-pasan/terpotong
+        // akibat pembulatan render browser.
+        var skala = (tinggiHalamanPx / tinggiKontenPx) * 0.98;
+        if (typeof wrapper.style.zoom !== 'undefined') {
+          wrapper.style.zoom = skala;
+        } else {
+          // Fallback untuk browser yang tidak kenal `zoom` (mis. Firefox):
+          // transform:scale tidak seideal `zoom` untuk print, tapi lebih
+          // baik daripada terpotong sama sekali.
+          wrapper.style.transform = 'scale(' + skala + ')';
+        }
+      }
+    }
+
+    // Langsung buka dialog cetak begitu halaman & gambar (kop/ttd) selesai
+    // dimuat, setelah dipaksa fit ke 1 halaman F4 - tanpa perlu klik
+    // tombol "Cetak" terlebih dahulu.
     window.addEventListener('load', function () {
-      setTimeout(function () { window.print(); }, 250);
+      setTimeout(function () {
+        fitTranskripKeF4();
+        window.print();
+      }, 250);
     });
   </script>
 </body>

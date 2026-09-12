@@ -2,7 +2,7 @@
 
 <style>
   .detail-hero {
-    background: linear-gradient(135deg, #d97706, #f59e0b);
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
     border-radius: 1.5rem;
     padding: 2rem;
     color: white;
@@ -23,10 +23,11 @@
     background: white;
     border-radius: 1.25rem;
     padding: 2rem;
-    border: 1px solid #f1e4c8;
+    border: 1px solid rgba(30,58,138,0.1);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
   }
   .btn-download-buku {
-    background: #d97706;
+    background: #1e3a8a;
     color: white;
     width: 100%;
     padding: 0.9rem;
@@ -38,7 +39,37 @@
     gap: 0.6rem;
     text-decoration: none;
   }
-  .btn-download-buku:hover { background: #b45309; color: white; }
+  .btn-download-buku:hover { background: #0f2b5c; color: white; }
+  .btn-kembali {
+    border: 2px solid #1e3a8a;
+    color: #1e3a8a;
+    border-radius: 50px;
+    padding: 0.5rem 1.4rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+  }
+  .btn-kembali:hover {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    border-color: transparent;
+    color: white;
+  }
+
+  /* ===== RESPONSIF ===== */
+  @media (max-width: 768px) {
+    html { font-size: 15px; }
+    .detail-hero { padding: 1.2rem; border-radius: 1.2rem; }
+    .main-card { padding: 1.2rem; }
+  }
+  @media (max-width: 576px) {
+    html { font-size: 14px; }
+    .detail-hero h1 { font-size: 1.15rem; }
+    .meta-badge { font-size: 0.78rem; padding: 0.35rem 0.8rem; }
+  }
 </style>
 
 <div class="container mt-4 mb-5">
@@ -59,7 +90,7 @@
         <h6 class="fw-bold text-muted text-uppercase mb-3">Deskripsi</h6>
         <p style="line-height:1.8;"><%= item.deskripsi || 'Deskripsi tidak tersedia untuk buku ini.' %></p>
       </div>
-      <a href="/mahasiswa/elk-library" class="btn btn-link mt-3"><i class="bi bi-arrow-left"></i> Kembali ke ELK Library</a>
+      <a href="/mahasiswa/elk-library" class="btn-kembali mt-3"><i class="bi bi-arrow-left"></i> Kembali ke ELK Library</a>
     </div>
     <div class="col-lg-4">
       <% if (item.fileUrl) { %>

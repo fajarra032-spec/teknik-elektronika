@@ -14,17 +14,12 @@
 %>
 
 <style>
-  @media (max-width: 480px) {
-    body {
-        zoom: 0.72; 
-    }
-}
   /* ===== TEMA KONSISTEN ===== */
   :root {
-    --primary-start: #2193b0;
-    --primary-end: #6dd5ed;
-    --primary-light: rgba(33,147,176,0.1);
-    --primary-dark: #1a7a8f;
+    --primary-start: #1e3a8a;
+    --primary-end: #3b82f6;
+    --primary-light: rgba(30,58,138,0.1);
+    --primary-dark: #0f2b5c;
   }
 
   /* Form Card */
@@ -35,7 +30,7 @@
     overflow: hidden;
     max-width: 700px;
     margin: 0 auto;
-    border: 1px solid rgba(33,147,176,0.1);
+    border: 1px solid rgba(30,58,138,0.1);
   }
   .form-header {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
@@ -68,7 +63,7 @@
   }
   .form-control:focus {
     border-color: var(--primary-start);
-    box-shadow: 0 0 0 0.25rem rgba(33,147,176,0.25);
+    box-shadow: 0 0 0 0.25rem rgba(30,58,138,0.25);
   }
 
   /* Preview Foto */
@@ -78,7 +73,7 @@
     border-radius: 50%;
     object-fit: cover;
     border: 4px solid white;
-    box-shadow: 0 10px 20px rgba(33,147,176,0.3);
+    box-shadow: 0 10px 20px rgba(30,58,138,0.3);
     margin-bottom: 1rem;
   }
   .preview-container {
@@ -99,12 +94,12 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    box-shadow: 0 5px 15px rgba(33,147,176,0.2);
+    box-shadow: 0 5px 15px rgba(30,58,138,0.2);
     border: none;
   }
   .btn-gradient:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(33,147,176,0.4);
+    box-shadow: 0 10px 25px rgba(30,58,138,0.4);
     color: white;
   }
   .btn-outline-gradient {
@@ -125,7 +120,7 @@
     border-color: transparent;
     color: white;
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(33,147,176,0.3);
+    box-shadow: 0 10px 20px rgba(30,58,138,0.3);
   }
 
   /* Keterangan kecil */
@@ -135,6 +130,7 @@
 
   /* Responsif */
   @media (max-width: 768px) {
+    html { font-size: 15px; }
     .form-body {
       padding: 1.5rem;
     }
@@ -146,6 +142,19 @@
       width: 100%;
       justify-content: center;
     }
+  }
+
+  @media (max-width: 576px) {
+    html { font-size: 14px; }
+    .form-header { padding: 1.2rem 1.5rem; }
+    .form-header h3 { font-size: 1.2rem; }
+    .form-body { padding: 1.2rem; }
+    .avatar-preview { width: 96px; height: 96px; }
+  }
+
+  @media (max-width: 400px) {
+    html { font-size: 13px; }
+    .form-header h3 { font-size: 1.05rem; }
   }
 </style>
 
@@ -171,7 +180,7 @@
       <!-- Preview Foto -->
       <% if (fotoPreview) { %>
         <div class="preview-container">
-          <img src="<%= fotoPreview %>" alt="foto" class="avatar-preview" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(user.nama) %>&background=2193b0&color=fff&size=120';">
+          <img src="<%= fotoPreview %>" alt="foto" class="avatar-preview" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(user.nama) %>&background=1e3a8a&color=fff&size=120';">
         </div>
       <% } else if (user.foto) { %>
         <div class="preview-container">

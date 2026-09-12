@@ -3,7 +3,9 @@
  *
  * Logika untuk fitur "Modul Praktikum": menampilkan job sheet praktikum
  * (lihat data/modulPraktikumData.js) pada mata kuliah yang bersifat
- * laboratorium - saat ini: Elektronika Digital, Mikrokontroler, dan PLC.
+ * praktik - saat ini: Elektronika Digital, Mikrokontroler, PLC,
+ * Perangkat Lunak Aplikasi, Aplikasi Komputer, Data dan Sistem Informasi,
+ * Rangkaian Elektronika, Teknik Pengukuran, dan Menggambar Teknik.
  *
  * Deteksi jenis praktikum dilakukan lewat pencocokan kata kunci pada
  * kode/nama mata kuliah (bukan hardcode 1 kode saja), supaya tetap
@@ -27,14 +29,29 @@ const TEMPLATE = require('../data/modulPraktikumData');
 const JENIS_LABEL = {
   elektronika_digital: 'Elektronika Digital',
   mikrokontroler: 'Mikrokontroler',
-  plc: 'PLC (Programmable Logic Control)'
+  plc: 'PLC (Programmable Logic Control)',
+  perangkat_lunak_aplikasi: 'Perangkat Lunak Aplikasi',
+  aplikasi_komputer: 'Aplikasi Komputer',
+  data_sistem_informasi: 'Data dan Sistem Informasi',
+  rangkaian_elektronika: 'Rangkaian Elektronika',
+  teknik_pengukuran: 'Teknik Pengukuran',
+  menggambar_teknik: 'Menggambar Teknik'
 };
 
-// Kata kunci pencocokan (huruf kecil semua) - dicek terhadap "kode + nama" MK
+// Kata kunci pencocokan (huruf kecil semua) - dicek terhadap "kode + nama" MK.
+// Urutan penting untuk frasa yang saling beririsan: 'perangkat lunak aplikasi'
+// dan 'aplikasi komputer' dicek sebagai frasa utuh supaya tidak saling
+// tertukar (keduanya sama-sama mengandung kata 'aplikasi').
 const KEYWORDS = {
   elektronika_digital: ['elektronika digital'],
   mikrokontroler: ['mikrokontroler', 'mikrokontroller', 'mikrokontrol'],
-  plc: ['programmable logic control', 'plc']
+  plc: ['programmable logic control', 'plc'],
+  perangkat_lunak_aplikasi: ['perangkat lunak aplikasi'],
+  aplikasi_komputer: ['aplikasi komputer'],
+  data_sistem_informasi: ['data dan sistem informasi'],
+  rangkaian_elektronika: ['rangkaian elektronika'],
+  teknik_pengukuran: ['teknik pengukuran'],
+  menggambar_teknik: ['menggambar teknik']
 };
 
 /**
