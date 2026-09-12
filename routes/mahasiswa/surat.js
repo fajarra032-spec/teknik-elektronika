@@ -133,6 +133,95 @@ router.post('/aktif-kuliah', async (req, res) => {
 });
 
 // ============================================================================
+// PENGAJUAN SURAT PERMOHONAN KEBIJAKAN SPP
+// ============================================================================
+
+router.get('/kebijakan-spp', (req, res) => {
+  const currentSemester = getCurrentAcademicSemester();
+  res.render('mahasiswa/persuratan/kebijakan_spp_form', {
+    title: 'Ajukan Surat Permohonan Kebijakan SPP',
+    user: req.user,
+    semesterSekarang: currentSemester.label,
+    tahunAkademik: currentSemester.tahunAkademik
+  });
+});
+
+router.post('/kebijakan-spp', async (req, res) => {
+  try {
+    const { noHp, alasan, batasWaktu } = req.body;
+    // Rincian pembayaran dikirim sebagai array (name="jenisPembayaran[]" dst)
+    let { jenisPembayaran, jumlahBiaya, waktuPembayaran, keteranganItem } = req.body;
+
+    // Normalisasi: kalau cuma 1 baris, express tidak membungkusnya jadi array
+    const toArray = (v) => (v === undefined ? [] : (Array.isArray(v) ? v : [v]));
+    jenisPembayaran = toArray(jenisPembayaran);
+    jumlahBiaya = toArray(jumlahBiaya);
+    waktuPembayaran = toArray(waktuPembayaran);
+    keteranganItem = toArray(keteranganItem);
+
+    if (!alasan || !batasWaktu) {
+      return res.status(400).send('Alasan dan batas waktu pembayaran harus diisi');
+    }
+    if (jenisPembayaran.length === 0 || jenisPembayaran.every(v => !v)) {
+      return res.status(400).send('Minimal 1 rincian pembayaran harus diisi');
+    }
+
+    // Susun rincian pembayaran + hitung total (angka polos, tanpa "Rp"/titik)
+    const rincianPembayaran = [];
+    let totalBiaya = 0;
+    for (let i = 0; i < jenisPembayaran.length; i++) {
+      if (!jenisPembayaran[i]) continue;
+      const angka = parseInt(String(jumlahBiaya[i] || '0').replace(/[^0-9]/g, ''), 10) || 0;
+      totalBiaya += angka;
+      rincianPembayaran.push({
+        jenis: jenisPembayaran[i],
+        jumlah: angka,
+        waktu: waktuPembayaran[i] || '',
+        keterangan: keteranganItem[i] || ''
+      });
+    }
+
+    const current = getCurrentAcademicSemester();
+    const semester = current.label;
+    const tahunAkademik = current.tahunAkademik;
+    const kodeValidasi = generateKodeValidasi();
+
+    const suratData = {
+      userId: req.user.id,
+      nim: req.user.nim,
+      nama: req.user.nama,
+      jenis: 'Permohonan Kebijakan SPP',
+      kodeValidasi,
+      keperluan: 'Permohonan kebijakan penyelesaian pembayaran SPP',
+      noHp: noHp || req.user.noHp || '',
+      alasan,
+      batasWaktu,
+      rincianPembayaran,
+      totalBiaya,
+      semester,
+      tahunAkademik,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{
+        status: 'pending',
+        timestamp: new Date().toISOString(),
+        catatan: 'Pengajuan surat diterima'
+      }]
+    };
+
+    await db.collection('surat').add(suratData);
+    res.redirect('/mahasiswa/persuratan');
+  } catch (error) {
+    console.error('Error mengajukan surat kebijakan SPP:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Gagal mengajukan surat'
+    });
+  }
+});
+
+// ============================================================================
 // PENGAJUAN SURAT LAINNYA
 // ============================================================================
 

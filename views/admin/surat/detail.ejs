@@ -152,6 +152,43 @@
         <% if (surat.tujuan) { %>
           <p class="mb-1"><strong>Tujuan Instansi:</strong> <%= surat.tujuan %></p>
         <% } %>
+
+        <% if (surat.jenis === 'Permohonan Kebijakan SPP') { %>
+          <div class="p-3 bg-light rounded-3 mb-3">
+            <div class="data-label">Alasan Permohonan</div>
+            <div class="data-value" style="font-weight: 400;"><%= surat.alasan %></div>
+          </div>
+          <p class="mb-2"><strong>Batas Waktu Pelunasan:</strong>
+            <%= surat.batasWaktu ? new Date(surat.batasWaktu).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-' %>
+          </p>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead class="table-light">
+                <tr>
+                  <th>Jenis Pembayaran</th>
+                  <th class="text-end">Jumlah (Rp)</th>
+                  <th>Waktu</th>
+                  <th>Keterangan</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% (surat.rincianPembayaran || []).forEach(function(item) { %>
+                <tr>
+                  <td><%= item.jenis %></td>
+                  <td class="text-end"><%= Number(item.jumlah || 0).toLocaleString('id-ID') %></td>
+                  <td><%= item.waktu %></td>
+                  <td><%= item.keterangan || '-' %></td>
+                </tr>
+                <% }) %>
+                <tr class="fw-bold">
+                  <td>Total</td>
+                  <td class="text-end"><%= Number(surat.totalBiaya || 0).toLocaleString('id-ID') %></td>
+                  <td colspan="2"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
       </div>
     </div>
 
@@ -219,9 +256,10 @@
   <div class="info-card border-primary border-top border-4">
     <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-magic"></i> Generate Surat Otomatis</h5>
     <form method="POST" action="/admin/surat/<%= surat.id %>/<%= role %>/generate">
+      <% var nomorWajib = (role === 'mahasiswa' && surat.jenis === 'Aktif Kuliah'); %>
       <div class="mb-3">
-        <label class="form-label">Nomor Surat <span class="text-danger">*</span></label>
-        <input type="text" name="nomorSurat" class="form-control" placeholder="Contoh: 001/ELK/PDW/V/2025" required>
+        <label class="form-label">Nomor Surat <% if (nomorWajib) { %><span class="text-danger">*</span><% } else { %><span class="text-muted">(opsional)</span><% } %></label>
+        <input type="text" name="nomorSurat" class="form-control" placeholder="Contoh: 001/ELK/PDW/V/2025" <% if (nomorWajib) { %>required<% } %>>
       </div>
       <button type="submit" class="btn btn-primary w-100 btn-action" onclick="return confirm('Generate surat otomatis? File PDF akan dibuat dan diupload.')">
         <i class="bi bi-file-earmark-pdf me-2"></i>Generate & Upload PDF

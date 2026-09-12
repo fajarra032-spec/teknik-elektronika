@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Surat Permohonan Kebijakan SPP - <%= nama %></title>
+  <style>
+    /* Pengaturan Kertas Default */
+    @page {
+      size: A4;
+      margin: 2cm;
+    }
+
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      color: #000;
+      background-color: #fff;
+      position: relative;
+    }
+
+    /* === KOP SURAT STANDAR (sama seperti Surat Aktif Kuliah) === */
+    .kop-surat {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 3px double #000;
+      padding-bottom: 10px;
+    }
+    .logo-kop {
+      width: 90px;
+      height: auto;
+      margin-right: 20px;
+    }
+    .teks-kop {
+      flex: 1;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .teks-kop .nama-kampus {
+      font-size: 27pt;
+      font-weight: bold;
+      margin: 0;
+      color: #3b60a3;
+      text-transform: uppercase;
+    }
+    .teks-kop .alamat,
+    .teks-kop .kontak {
+      font-size: 13pt;
+      margin: 0;
+      color: #333;
+    }
+
+    /* === JUDUL & ISI SURAT === */
+    .judul-surat {
+      text-align: center;
+      margin: 30px 0 20px 0;
+    }
+    .judul-surat h3 {
+      font-size: 14pt;
+      font-weight: bold;
+      text-decoration: underline;
+      margin: 0;
+      letter-spacing: 1px;
+    }
+    .judul-surat p {
+      margin: 5px 0 0 0;
+      font-size: 12pt;
+    }
+
+    .isi {
+      text-align: justify;
+      margin: 20px 0;
+    }
+    .isi p {
+      margin: 10px 0;
+    }
+    .indent {
+      text-indent: 2em;
+    }
+
+    /* Tabel Data Mahasiswa */
+    .tabel-data {
+      width: 100%;
+      margin: 15px 0 15px 30px;
+      border-collapse: collapse;
+    }
+    .tabel-data td {
+      padding: 3px 0;
+      vertical-align: top;
+    }
+    .col-label {
+      width: 200px;
+    }
+    .col-titik {
+      width: 15px;
+    }
+
+    /* Tabel Rincian Pembayaran */
+    .tabel-rincian {
+      width: 100%;
+      margin: 15px 0;
+      border-collapse: collapse;
+    }
+    .tabel-rincian th, .tabel-rincian td {
+      border: 1px solid #000;
+      padding: 6px 8px;
+      font-size: 11pt;
+    }
+    .tabel-rincian th {
+      background-color: #f0f0f0;
+      text-align: center;
+    }
+    .tabel-rincian td.angka {
+      text-align: right;
+    }
+    .tabel-rincian tr.baris-total td {
+      font-weight: bold;
+    }
+
+    /* === TANDA TANGAN (3 kolom: Mahasiswa, Kaprodi, Keuangan) === */
+    .tanda-tangan-tunggal {
+      margin-top: 40px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .tanda-tangan-tunggal .blok-ttd {
+      width: 280px;
+      text-align: left;
+    }
+
+    .tanda-tangan-ganda {
+      margin-top: 50px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .blok-ttd-ganda {
+      width: 47%;
+      text-align: left;
+    }
+
+    /* Area TTD Overlap (Menimpa Teks) - sama seperti Surat Aktif Kuliah */
+    .area-ttd {
+      position: relative;
+      height: 50px;
+    }
+    .img-ttd {
+      position: absolute;
+      top: -55px;
+      left: -20px;
+      height: 180px;
+      width: auto;
+      z-index: 10;
+      mix-blend-mode: multiply;
+    }
+
+    .nama-ttd {
+      font-weight: bold;
+      text-decoration: underline;
+      margin-bottom: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .nip-ttd {
+      margin-top: 0;
+    }
+
+    /* === FOOTER VALIDASI === */
+    .footer {
+      margin-top: 50px;
+      font-size: 8pt;
+      text-align: left;
+      font-family: Arial, sans-serif;
+      color: #555;
+      border-top: 1px dashed #ccc;
+      padding-top: 10px;
+    }
+
+    .kode-validasi-print {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      font-size: 8pt;
+      color: #555;
+      font-family: Arial, sans-serif;
+    }
+
+    @media print {
+      body { margin: 0; }
+      .footer {
+        position: fixed;
+        bottom: 20px;
+        width: 100%;
+      }
+      .img-ttd {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .kode-validasi-print {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        display: block !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- KOP SURAT -->
+  <div class="kop-surat">
+    <img src="/images/logo.png" alt="Logo Politeknik Dewantara" class="logo-kop">
+    <div class="teks-kop">
+      <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
+      <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo. Sulawesi Selatan</p>
+      <p class="kontak">E-mail: elektronika@polidewa.ac.id | Website: elektronika.polidewa.ac.id</p>
+    </div>
+  </div>
+
+  <!-- JUDUL SURAT -->
+  <div class="judul-surat">
+    <h3>SURAT PERMOHONAN KEBIJAKAN PEMBAYARAN</h3>
+    <% if (nomorSurat) { %><p>Nomor: <%= nomorSurat %></p><% } %>
+  </div>
+
+  <!-- ISI SURAT -->
+  <div class="isi">
+    <p>Saya yang bertanda tangan di bawah ini:</p>
+
+    <table class="tabel-data">
+      <tr>
+        <td class="col-label">Nama</td>
+        <td class="col-titik">:</td>
+        <td><strong><%= nama %></strong></td>
+      </tr>
+      <tr>
+        <td class="col-label">NIM</td>
+        <td class="col-titik">:</td>
+        <td><%= nim %></td>
+      </tr>
+      <tr>
+        <td class="col-label">Program Studi</td>
+        <td class="col-titik">:</td>
+        <td>Teknik Elektronika</td>
+      </tr>
+      <tr>
+        <td class="col-label">No. Telepon/WA</td>
+        <td class="col-titik">:</td>
+        <td><%= noHp || '-' %></td>
+      </tr>
+    </table>
+
+    <p class="indent">Dengan ini saya mengajukan permohonan kebijakan untuk menyelesaikan pembayaran sesuai yang tertera sebagai berikut:</p>
+
+    <table class="tabel-rincian">
+      <thead>
+        <tr>
+          <th>Jenis Pembayaran</th>
+          <th>Jumlah Biaya (Rp)</th>
+          <th>Waktu Pembayaran</th>
+          <th>Keterangan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% rincianPembayaran.forEach(function(item) { %>
+        <tr>
+          <td><%= item.jenis %></td>
+          <td class="angka"><%= Number(item.jumlah || 0).toLocaleString('id-ID') %>,-</td>
+          <td><%= item.waktu %></td>
+          <td><%= item.keterangan || '' %></td>
+        </tr>
+        <% }) %>
+        <tr class="baris-total">
+          <td>Total</td>
+          <td class="angka"><%= Number(totalBiaya || 0).toLocaleString('id-ID') %>,-</td>
+          <td colspan="2"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="indent"><%= alasan %> Apabila hingga batas waktu <strong><%= batasWaktuFormatted %></strong> saya belum menyelesaikan pembayaran sebagaimana tersebut di atas, maka saya bersedia dinyatakan non-aktif sebagai mahasiswa Program Studi Teknik Elektronika Politeknik Dewantara pada tahun akademik <%= tahunAkademik %>.</p>
+
+    <p class="indent">Demikian Surat Permohonan ini saya buat dengan penuh kesadaran dan tanggung jawab, atas perhatiannya saya ucapkan terima kasih.</p>
+  </div>
+
+  <!-- TANDA TANGAN MAHASISWA (Yang Menyatakan) -->
+  <div class="tanda-tangan-tunggal">
+    <div class="blok-ttd">
+      <p>Palopo, <%= tanggalSuratFormatted %><br>
+      Yang Menyatakan,</p>
+      <div style="height: 60px;"></div>
+      <p class="nama-ttd"><%= nama %></p>
+      <p class="nip-ttd">NIM. <%= nim %></p>
+    </div>
+  </div>
+
+  <!-- TANDA TANGAN MENGETAHUI (Kaprodi) & MENYETUJUI (Keuangan) -->
+  <div class="tanda-tangan-ganda">
+    <div class="blok-ttd-ganda">
+      <p>Mengetahui,<br>Ketua Program Studi</p>
+      <div class="area-ttd">
+        <img src="/images/ttd.png" alt="Tanda Tangan Kaprodi" class="img-ttd">
+      </div>
+      <p class="nama-ttd">Fajar Ramadhan, S.Pd., M.T.</p>
+      <p class="nip-ttd">NUPTK. 8559777678130153</p>
+    </div>
+    <div class="blok-ttd-ganda">
+      <p>Menyetujui,<br>Kepala Bagian Keuangan</p>
+      <div style="height: 50px;"></div>
+      <p class="nama-ttd">Besse Mardiah Sari, S.E.</p>
+      <p class="nip-ttd">&nbsp;</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <p>Dokumen ini dicetak dan disahkan secara digital oleh Sistem Informasi Elektronika Polidewa.<br>
+    Periksa keaslian dokumen di: <em>https://elektronika.polidewa.ac.id</em></p>
+  </div>
+
+  <!-- KODE VALIDASI DI POJOK KANAN BAWAH -->
+  <div class="kode-validasi-print print-only">
+    Kode Validasi: <strong><%= kodeValidasi %></strong>
+  </div>
+
+</body>
+</html>

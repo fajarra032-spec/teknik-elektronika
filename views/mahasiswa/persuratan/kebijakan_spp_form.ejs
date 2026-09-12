@@ -1,0 +1,221 @@
+<%- include('../../partials/header') %>
+
+<style>
+.form-card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    overflow: hidden;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .form-header {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    padding: 1.5rem;
+    color: white;
+  }
+  .form-header h3 {
+    margin: 0;
+    font-weight: 600;
+  }
+  .form-body {
+    padding: 2rem;
+  }
+  .btn-gradient {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    border: none;
+    color: white;
+    font-weight: 500;
+    padding: 0.6rem 2rem;
+    border-radius: 50px;
+    transition: all 0.3s;
+  }
+  .btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(30,58,138,0.3);
+    color: white;
+  }
+  .btn-outline-gradient {
+    background: transparent;
+    border: 2px solid #1e3a8a;
+    color: #1e3a8a;
+    font-weight: 500;
+    padding: 0.6rem 2rem;
+    border-radius: 50px;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-outline-gradient:hover {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    border-color: transparent;
+    color: white;
+  }
+  .form-label {
+    font-weight: 600;
+    color: #1e293b;
+  }
+  .form-control, .form-select {
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #cbd5e1;
+    transition: all 0.3s;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: #1e3a8a;
+    box-shadow: 0 0 0 0.2rem rgba(30,58,138,0.25);
+  }
+  .rincian-table th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+  .rincian-table input {
+    border-radius: 0.5rem;
+  }
+  .btn-hapus-baris {
+    color: #dc2626;
+    border: none;
+    background: transparent;
+  }
+  #totalBiayaDisplay {
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+</style>
+
+<div class="container mt-4">
+  <div class="form-card">
+    <div class="form-header">
+      <h3><i class="bi bi-cash-coin me-2"></i>Pengajuan Surat Permohonan Kebijakan SPP</h3>
+    </div>
+    <div class="form-body">
+      <form method="POST" action="/mahasiswa/persuratan/kebijakan-spp" id="formKebijakanSpp">
+        <!-- Data Mahasiswa (readonly) -->
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label class="form-label">NIM</label>
+            <input type="text" class="form-control" value="<%= user.nim %>" readonly disabled>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Nama</label>
+            <input type="text" class="form-control" value="<%= user.nama %>" readonly disabled>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Program Studi</label>
+            <input type="text" class="form-control" value="Teknik Elektronika" readonly disabled>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="noHp" class="form-label">No. Telepon/WA <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="noHp" name="noHp" value="<%= user.noHp || '' %>" required>
+          </div>
+          <div class="col-md-6">
+            <label for="batasWaktu" class="form-label">Batas Waktu Pelunasan <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" id="batasWaktu" name="batasWaktu" required>
+          </div>
+        </div>
+
+        <hr class="my-4">
+
+        <label class="form-label mb-2">Rincian Pembayaran <span class="text-danger">*</span></label>
+        <div class="table-responsive">
+          <table class="table rincian-table align-middle" id="tabelRincian">
+            <thead>
+              <tr>
+                <th style="min-width:180px;">Jenis Pembayaran</th>
+                <th style="min-width:150px;">Jumlah Biaya (Rp)</th>
+                <th style="min-width:150px;">Waktu Pembayaran</th>
+                <th style="min-width:150px;">Keterangan</th>
+                <th style="width:40px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="text" class="form-control" name="jenisPembayaran[]" placeholder="Contoh: SPP Semester 3" required></td>
+                <td><input type="number" class="form-control jumlah-input" name="jumlahBiaya[]" placeholder="0" min="0" required></td>
+                <td><input type="text" class="form-control" name="waktuPembayaran[]" placeholder="Contoh: September 2026" required></td>
+                <td><input type="text" class="form-control" name="keteranganItem[]" placeholder="(opsional)"></td>
+                <td><button type="button" class="btn-hapus-baris" onclick="hapusBaris(this)"><i class="bi bi-trash"></i></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button type="button" class="btn btn-sm btn-outline-gradient mb-3" onclick="tambahBaris()">
+          <i class="bi bi-plus-lg"></i> Tambah Baris
+        </button>
+
+        <div class="text-end mb-4">
+          Total: <span id="totalBiayaDisplay">Rp 0</span>
+        </div>
+
+        <div class="mb-3">
+          <label for="alasan" class="form-label">Alasan Permohonan <span class="text-danger">*</span></label>
+          <textarea class="form-control" id="alasan" name="alasan" rows="4" placeholder="Jelaskan alasan permohonan kebijakan pembayaran, misalnya kondisi keuangan orang tua, dsb." required></textarea>
+        </div>
+
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i> Surat akan diverifikasi oleh Program Studi dan Bagian Keuangan sebelum disetujui. Status pengajuan dapat dilihat di riwayat surat.
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <a href="/mahasiswa/persuratan" class="btn-outline-gradient">
+            <i class="bi bi-arrow-left me-2"></i>Batal
+          </a>
+          <button type="submit" class="btn-gradient">
+            <i class="bi bi-send me-2"></i>Ajukan Surat
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function baruBaris() {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" class="form-control" name="jenisPembayaran[]" placeholder="Contoh: SPP Semester 3" required></td>
+      <td><input type="number" class="form-control jumlah-input" name="jumlahBiaya[]" placeholder="0" min="0" required></td>
+      <td><input type="text" class="form-control" name="waktuPembayaran[]" placeholder="Contoh: September 2026" required></td>
+      <td><input type="text" class="form-control" name="keteranganItem[]" placeholder="(opsional)"></td>
+      <td><button type="button" class="btn-hapus-baris" onclick="hapusBaris(this)"><i class="bi bi-trash"></i></button></td>
+    `;
+    return tr;
+  }
+
+  function tambahBaris() {
+    document.querySelector('#tabelRincian tbody').appendChild(baruBaris());
+    pasangListenerTotal();
+  }
+
+  function hapusBaris(btn) {
+    const tbody = document.querySelector('#tabelRincian tbody');
+    if (tbody.rows.length > 1) {
+      btn.closest('tr').remove();
+      hitungTotal();
+    }
+  }
+
+  function hitungTotal() {
+    const inputs = document.querySelectorAll('.jumlah-input');
+    let total = 0;
+    inputs.forEach(i => total += (parseInt(i.value, 10) || 0));
+    document.getElementById('totalBiayaDisplay').textContent =
+      'Rp ' + total.toLocaleString('id-ID');
+  }
+
+  function pasangListenerTotal() {
+    document.querySelectorAll('.jumlah-input').forEach(i => {
+      i.removeEventListener('input', hitungTotal);
+      i.addEventListener('input', hitungTotal);
+    });
+  }
+
+  pasangListenerTotal();
+</script>
+
+<%- include('../../partials/footer') %>

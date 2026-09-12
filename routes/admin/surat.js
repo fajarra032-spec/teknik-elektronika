@@ -832,34 +832,65 @@ router.post('/:id/:role/generate', async (req, res) => {
     const { id, role } = req.params;
     const { nomorSurat } = req.body;
 
-    // --- ROLE MAHASISWA (Aktif Kuliah) ---
+    // --- ROLE MAHASISWA (Aktif Kuliah / Permohonan Kebijakan SPP) ---
     if (role === 'mahasiswa') {
-      if (!nomorSurat) return res.status(400).send('Nomor surat wajib diisi');
       const suratRef = db.collection('surat').doc(id);
       const suratDoc = await suratRef.get();
       if (!suratDoc.exists) return res.status(404).send('Surat tidak ditemukan');
       const surat = suratDoc.data();
-      if (surat.jenis !== 'Aktif Kuliah') {
-        return res.status(400).send('Generate otomatis hanya untuk surat jenis "Aktif Kuliah"');
+      const JENIS_BISA_DIGENERATE = ['Aktif Kuliah', 'Permohonan Kebijakan SPP'];
+      if (!JENIS_BISA_DIGENERATE.includes(surat.jenis)) {
+        return res.status(400).send('Generate otomatis hanya untuk surat jenis "Aktif Kuliah" atau "Permohonan Kebijakan SPP"');
       }
 
       const mahasiswa = await getMahasiswa(surat.userId);
       if (!mahasiswa.nim) return res.status(404).send('Data mahasiswa tidak lengkap');
 
-      const templateData = {
-        nomorSurat,
-        nama: mahasiswa.nama,
-        nim: mahasiswa.nim,
-        tempatLahir: surat.tempatLahir || '-',
-        tanggalLahir: surat.tanggalLahir ? new Date(surat.tanggalLahir) : new Date(),
-        semester: surat.semester,
-        tahunAkademik: surat.tahunAkademik,
-        keperluan: surat.keperluan,
-        kodeValidasi: surat.kodeValidasi
-      };
+      let template, templateData, fileNamePrefix;
+
+      if (surat.jenis === 'Permohonan Kebijakan SPP') {
+        // --- SURAT PERMOHONAN KEBIJAKAN SPP ---
+        const formatTanggal = (dateStr) => {
+          if (!dateStr) return '';
+          const date = new Date(dateStr);
+          return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+        };
+
+        template = 'admin/surat/kebijakan_spp';
+        templateData = {
+          nomorSurat: nomorSurat || '',
+          nama: mahasiswa.nama,
+          nim: mahasiswa.nim,
+          noHp: surat.noHp || '-',
+          alasan: surat.alasan || '',
+          rincianPembayaran: surat.rincianPembayaran || [],
+          totalBiaya: surat.totalBiaya || 0,
+          batasWaktuFormatted: formatTanggal(surat.batasWaktu),
+          tanggalSuratFormatted: formatTanggal(surat.createdAt) || formatTanggal(new Date()),
+          tahunAkademik: surat.tahunAkademik,
+          kodeValidasi: surat.kodeValidasi
+        };
+        fileNamePrefix = `${surat.kodeValidasi}_${(nomorSurat || 'KebijakanSPP').replace(/\//g, '_')}`;
+      } else {
+        // --- SURAT AKTIF KULIAH (default) ---
+        if (!nomorSurat) return res.status(400).send('Nomor surat wajib diisi');
+        template = 'admin/surat/aktif_kuliah';
+        templateData = {
+          nomorSurat,
+          nama: mahasiswa.nama,
+          nim: mahasiswa.nim,
+          tempatLahir: surat.tempatLahir || '-',
+          tanggalLahir: surat.tanggalLahir ? new Date(surat.tanggalLahir) : new Date(),
+          semester: surat.semester,
+          tahunAkademik: surat.tahunAkademik,
+          keperluan: surat.keperluan,
+          kodeValidasi: surat.kodeValidasi
+        };
+        fileNamePrefix = `${surat.kodeValidasi}_${nomorSurat.replace(/\//g, '_')}`;
+      }
 
       let html = await new Promise((resolve, reject) => {
-        res.render('admin/surat/aktif_kuliah', templateData, (err, html) => {
+        res.render(template, templateData, (err, html) => {
           if (err) reject(err);
           else resolve(html);
         });
@@ -872,7 +903,7 @@ router.post('/:id/:role/generate', async (req, res) => {
       if (fs.existsSync(ttdPath)) ttdBase64 = fs.readFileSync(ttdPath).toString('base64');
 
       if (logoBase64) html = html.replace('src="/images/logo.png"', `src="data:image/png;base64,${logoBase64}"`);
-      if (ttdBase64) html = html.replace('src="/images/ttd.png"', `src="data:image/png;base64,${ttdBase64}"`);
+      if (ttdBase64) html = html.replace(/src="\/images\/ttd\.png"/g, `src="data:image/png;base64,${ttdBase64}"`);
 
       const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: 'new', timeout: 60000 });
       const page = await browser.newPage();
@@ -883,7 +914,7 @@ router.post('/:id/:role/generate', async (req, res) => {
       const buffer = Buffer.from(pdfBuffer);
 
       const folderId = await getSuratFolderMahasiswa(mahasiswa.nim, surat.tahunAkademik);
-      const fileName = `${surat.kodeValidasi}_${nomorSurat.replace(/\//g, '_')}.pdf`;
+      const fileName = `${fileNamePrefix}.pdf`;
       const fileMetadata = { name: fileName, parents: [folderId] };
       const media = { mimeType: 'application/pdf', body: Readable.from(buffer) };
       const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
@@ -894,9 +925,9 @@ router.post('/:id/:role/generate', async (req, res) => {
         status: 'completed',
         fileUrl,
         fileId: driveResponse.data.id,
-        nomorSurat,
+        nomorSurat: nomorSurat || '',
         updatedAt: new Date().toISOString(),
-        history: [...(surat.history || []), { status: 'completed', timestamp: new Date().toISOString(), catatan: `Surat diterbitkan otomatis dengan nomor ${nomorSurat}` }]
+        history: [...(surat.history || []), { status: 'completed', timestamp: new Date().toISOString(), catatan: `Surat diterbitkan otomatis${nomorSurat ? ' dengan nomor ' + nomorSurat : ''}` }]
       });
 
       return res.redirect(`/admin/surat/${id}/${role}`);
