@@ -43,7 +43,9 @@
     margin-bottom: 2rem;
     box-shadow: 0 15px 30px rgba(30,58,138,0.25);
     position: relative;
-    overflow: hidden;
+    /* overflow:hidden dilepas supaya dropdown menu "Buat / Kirim Surat" tidak
+       ikut terpotong; dekorasi lingkaran di ::before dikompensasi lewat
+       clip-path pada elemen itu sendiri, bukan pada container. */
   }
   .page-header::before {
     content: '';
@@ -55,6 +57,8 @@
     background: rgba(255,255,255,0.1);
     border-radius: 50%;
     transform: rotate(25deg);
+    z-index: 0;
+    pointer-events: none;
   }
   .page-header h2 {
     font-weight: 700;
@@ -62,6 +66,27 @@
     position: relative;
     z-index: 1;
     font-size: 2rem;
+  }
+
+  /* Dropdown "Buat / Kirim Surat" */
+  .page-header .dropdown-menu {
+    z-index: 5;
+  }
+  .page-header .dropdown-header {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary-start);
+    font-weight: 700;
+  }
+  .page-header .dropdown-item {
+    font-weight: 500;
+    color: #1e293b;
+  }
+  .page-header .dropdown-item:hover,
+  .page-header .dropdown-item:focus {
+    background: var(--primary-light);
+    color: var(--primary-start);
   }
 
   /* Filter Card */
@@ -283,16 +308,44 @@
     <div>
       <h2><i class="bi bi-envelope-paper me-2"></i>Manajemen Surat (Mahasiswa, Dosen, & Tugas)</h2>
     </div>
-    <div class="d-flex gap-2">
-      <a href="/admin/surat/undangan-magang/create" class="btn btn-light rounded-pill px-4">
-        <i class="bi bi-envelope-paper-heart me-2"></i>Kirim Undangan Seminar Magang
-      </a>
-      <a href="/admin/surat/create" class="btn btn-light rounded-pill px-4">
-        <i class="bi bi-plus-circle me-2"></i>Kirim Surat ke Dosen
-      </a>
-      <a href="/admin/surat/create-tugas" class="btn btn-outline-light rounded-pill px-4">
-        <i class="bi bi-file-text me-2"></i>Buat Surat Tugas
-      </a>
+    <div class="d-flex gap-2" style="position: relative; z-index: 1;">
+    <div class="dropdown">
+      <button class="btn btn-light rounded-pill px-4 dropdown-toggle" type="button" id="menuBuatSurat" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-plus-lg me-2"></i>Buat / Kirim Surat
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2" aria-labelledby="menuBuatSurat" style="min-width: 300px;">
+        <li><h6 class="dropdown-header">Ke Mahasiswa</h6></li>
+        <li>
+          <a class="dropdown-item rounded-3 py-2" href="/admin/surat/kirim-mahasiswa">
+            <i class="bi bi-send-check me-2 text-primary"></i>Kirim Surat ke Mahasiswa
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item rounded-3 py-2" href="/admin/surat/undangan-magang/create">
+            <i class="bi bi-envelope-paper-heart me-2 text-primary"></i>Kirim Undangan Seminar Magang
+          </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li><h6 class="dropdown-header">Ke Dosen</h6></li>
+        <li>
+          <a class="dropdown-item rounded-3 py-2" href="/admin/surat/create">
+            <i class="bi bi-send-check me-2 text-primary"></i>Kirim Surat ke Dosen
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item rounded-3 py-2" href="/admin/surat/dosen/create-izin">
+            <i class="bi bi-calendar2-check me-2 text-primary"></i>Buat Izin Dosen
+          </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li><h6 class="dropdown-header">Lainnya</h6></li>
+        <li>
+          <a class="dropdown-item rounded-3 py-2" href="/admin/surat/create-tugas">
+            <i class="bi bi-file-text me-2 text-primary"></i>Buat Surat Tugas
+          </a>
+        </li>
+      </ul>
+    </div>
     </div>
   </div>
 

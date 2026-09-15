@@ -1,0 +1,55 @@
+<%- include('../../partials/header') %>
+<%- include('./_form_style') %>
+
+<div class="container mt-4">
+  <div class="form-card">
+    <div class="form-header">
+      <h3><i class="bi bi-patch-check me-2"></i>Pengajuan Surat Keterangan Berkelakuan Baik</h3>
+    </div>
+    <div class="form-body">
+      <form method="POST" action="/mahasiswa/persuratan/berkelakuan-baik">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">NIM</label>
+            <input type="text" class="form-control" value="<%= user.nim %>" readonly disabled>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nama</label>
+            <input type="text" class="form-control" value="<%= user.nama %>" readonly disabled>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Program Studi</label>
+            <input type="text" class="form-control" value="Teknik Elektronika" readonly disabled>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Semester</label>
+            <p class="form-control-static"><%= semesterSekarang %></p>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="keperluan" class="form-label">Keperluan <span class="text-danger">*</span></label>
+          <textarea class="form-control" id="keperluan" name="keperluan" rows="3" placeholder="Contoh: Untuk melamar pekerjaan, mendaftar organisasi, dll." required></textarea>
+        </div>
+
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i> Surat akan diproses setelah diverifikasi oleh Program Studi.
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <a href="/mahasiswa/persuratan" class="btn-outline-gradient">
+            <i class="bi bi-arrow-left me-2"></i>Batal
+          </a>
+          <button type="submit" class="btn-gradient">
+            <i class="bi bi-send me-2"></i>Ajukan Surat
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

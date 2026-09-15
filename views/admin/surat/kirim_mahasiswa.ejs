@@ -44,7 +44,6 @@
     padding: 2.5rem 3rem;
   }
 
-  /* Form Styling */
   .form-label {
     font-weight: 600;
     color: #334155;
@@ -73,7 +72,6 @@
     background-color: #fff;
   }
 
-  /* Custom File Input */
   .file-upload-wrapper {
     position: relative;
     border: 2px dashed #cbd5e1;
@@ -89,7 +87,6 @@
     background-color: #eff6ff;
   }
 
-  /* Buttons */
   .btn-submit {
     background: var(--primary-gradient);
     border: none;
@@ -132,89 +129,27 @@
       <div class="mb-2">
         <i class="bi bi-send-check-fill fs-1"></i>
       </div>
-      <h3>Kirim Surat ke Dosen</h3>
-      <p>Lengkapi formulir di bawah untuk mendistribusikan dokumen secara digital ke satu atau beberapa dosen sekaligus</p>
+      <h3>Kirim Surat ke Mahasiswa</h3>
+      <p>Kirim dokumen langsung ke satu mahasiswa tanpa perlu ada pengajuan terlebih dahulu</p>
     </div>
 
     <div class="form-body">
-      <form method="POST" action="/admin/surat/create" enctype="multipart/form-data">
-        
-        <!-- Dosen Selection (bisa lebih dari 1) -->
+      <form method="POST" action="/admin/surat/kirim-mahasiswa" enctype="multipart/form-data">
+
+        <!-- Mahasiswa Selection -->
         <div class="mb-4">
           <label class="form-label">
-            <i class="bi bi-person-badge"></i> Pilih Dosen Penerima <span class="text-danger">*</span>
-            <span class="text-muted small fw-normal">(boleh lebih dari satu)</span>
+            <i class="bi bi-person-badge"></i> Pilih Mahasiswa Penerima <span class="text-danger">*</span>
           </label>
-          <div class="input-group">
-            <input type="text" id="cariDosen" class="form-control" autocomplete="off"
-              placeholder="Ketik nama atau NIP dosen, lalu klik Tambah..." list="opsiDosen">
-            <button type="button" class="btn btn-outline-primary" onclick="tambahDosen()">
-              <i class="bi bi-plus-lg"></i> Tambah
-            </button>
-          </div>
-          <datalist id="opsiDosen">
-            <% if (dosenList && dosenList.length) { %>
-              <% dosenList.forEach(d => { %>
-                <option value="<%= d.nama %><%= d.nip ? ' - ' + d.nip : '' %>">
+          <select name="mahasiswaId" class="form-select" required>
+            <option value="">Cari dan pilih nama mahasiswa...</option>
+            <% if (daftarMahasiswa && daftarMahasiswa.length) { %>
+              <% daftarMahasiswa.forEach(m => { %>
+                <option value="<%= m.id %>"><%= m.nama %> — NIM: <%= m.nim || 'N/A' %></option>
               <% }) %>
             <% } %>
-          </datalist>
-          <div id="daftarDosenTerpilih" class="d-flex flex-wrap gap-2 mt-2"></div>
-          <div class="form-text">Cari lalu klik "Tambah" untuk setiap dosen yang ingin dikirimi surat ini. File PDF yang sama akan dikirim ke semua dosen yang dipilih.</div>
+          </select>
         </div>
-
-        <script>
-          const PETA_DOSEN = {};
-          <% if (dosenList && dosenList.length) { %>
-            <% dosenList.forEach(d => { %>
-              PETA_DOSEN[<%- JSON.stringify(d.nama + (d.nip ? ' - ' + d.nip : '')) %>] = { id: <%- JSON.stringify(d.id) %>, nama: <%- JSON.stringify(d.nama) %> };
-            <% }) %>
-          <% } %>
-          const dosenTerpilih = {}; // id -> nama
-
-          function renderDosenTerpilih() {
-            const wrap = document.getElementById('daftarDosenTerpilih');
-            wrap.innerHTML = '';
-            Object.entries(dosenTerpilih).forEach(([id, nama]) => {
-              const chip = document.createElement('span');
-              chip.className = 'badge rounded-pill text-bg-primary d-inline-flex align-items-center gap-2 py-2 px-3';
-              chip.innerHTML = nama + ' <i class="bi bi-x-circle-fill" style="cursor:pointer;" onclick="hapusDosen(\'' + id + '\')"></i>';
-              chip.appendChild((() => {
-                const inp = document.createElement('input');
-                inp.type = 'hidden';
-                inp.name = 'dosenIds[]';
-                inp.value = id;
-                return inp;
-              })());
-              wrap.appendChild(chip);
-            });
-          }
-
-          function tambahDosen() {
-            const inputEl = document.getElementById('cariDosen');
-            const data = PETA_DOSEN[inputEl.value];
-            if (!data) {
-              inputEl.classList.add('is-invalid');
-              return;
-            }
-            inputEl.classList.remove('is-invalid');
-            dosenTerpilih[data.id] = data.nama;
-            inputEl.value = '';
-            renderDosenTerpilih();
-          }
-
-          function hapusDosen(id) {
-            delete dosenTerpilih[id];
-            renderDosenTerpilih();
-          }
-
-          document.querySelector('form[action="/admin/surat/create"]').addEventListener('submit', function (e) {
-            if (Object.keys(dosenTerpilih).length === 0) {
-              e.preventDefault();
-              alert('Pilih minimal 1 dosen penerima terlebih dahulu.');
-            }
-          });
-        </script>
 
         <div class="row">
           <!-- Jenis Surat -->
@@ -222,24 +157,44 @@
             <label class="form-label">
               <i class="bi bi-tag"></i> Jenis Surat <span class="text-danger">*</span>
             </label>
-            <select name="jenisSurat" class="form-select" required>
+            <select name="jenisSurat" id="jenisSurat" class="form-select" required onchange="toggleJenisLainnya()">
               <option value="">Pilih kategori...</option>
-              <option value="Surat Tugas">Surat Tugas</option>
-              <option value="Surat Keterangan">Surat Keterangan</option>
-              <option value="Surat Rekomendasi">Surat Rekomendasi</option>
-              <option value="Surat Pengantar">Surat Pengantar</option>
-              <option value="Surat Undangan">Surat Undangan</option>
-              <option value="Lainnya">Lainnya</option>
+              <option value="Aktif Kuliah">Surat Aktif Kuliah</option>
+              <option value="Keterangan Lulus Sementara">Keterangan Lulus Sementara</option>
+              <option value="Keterangan Berkelakuan Baik">Keterangan Berkelakuan Baik</option>
+              <option value="Rekomendasi">Rekomendasi</option>
+              <option value="Keterangan Cuti/Aktif Kembali">Keterangan Cuti/Aktif Kembali</option>
+              <option value="Keterangan Dosen PA">Keterangan Dosen PA</option>
+              <option value="Pengantar Magang/PKL">Pengantar Magang/PKL</option>
+              <option value="Undangan Seminar Magang">Undangan Seminar Magang</option>
+              <option value="Peringatan Akademik">Peringatan Akademik</option>
+              <option value="Pemberitahuan">Pemberitahuan</option>
+              <option value="Lainnya">Lainnya (isi manual)</option>
             </select>
           </div>
 
-          <!-- Judul / Keperluan -->
+          <!-- Nomor Surat -->
           <div class="col-md-6 mb-4">
             <label class="form-label">
-              <i class="bi bi-bookmark-star"></i> Judul / Perihal <span class="text-danger">*</span>
+              <i class="bi bi-hash"></i> Nomor Surat <span class="text-muted small">(Opsional)</span>
             </label>
-            <input type="text" name="keperluan" class="form-control" placeholder="Contoh: Pengabdian Masyarakat" required>
+            <input type="text" name="nomorSurat" class="form-control" placeholder="Contoh: 001/ELK/PDW/IX/2026">
           </div>
+        </div>
+
+        <div class="mb-4" id="wrapperJenisLainnya" style="display:none;">
+          <label class="form-label">
+            <i class="bi bi-pencil"></i> Nama Jenis Surat <span class="text-danger">*</span>
+          </label>
+          <input type="text" name="jenisSuratLainnya" class="form-control" placeholder="Contoh: Surat Panggilan Orang Tua">
+        </div>
+
+        <!-- Keperluan -->
+        <div class="mb-4">
+          <label class="form-label">
+            <i class="bi bi-bookmark-star"></i> Perihal / Keperluan <span class="text-danger">*</span>
+          </label>
+          <input type="text" name="keperluan" class="form-control" placeholder="Contoh: Pemberitahuan jadwal her-registrasi semester genap" required>
         </div>
 
         <!-- Keterangan -->
@@ -263,6 +218,10 @@
           </div>
         </div>
 
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i> Surat akan langsung berstatus <strong>selesai</strong> dan muncul di halaman "Daftar Surat" mahasiswa yang dipilih, tanpa perlu mahasiswa mengajukan lebih dulu.
+        </div>
+
         <!-- Form Actions -->
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-5 gap-3 border-top pt-4">
           <a href="/admin/surat" class="btn btn-cancel order-2 order-md-1 w-100 w-md-auto">
@@ -277,5 +236,13 @@
     </div>
   </div>
 </div>
+
+<script>
+  function toggleJenisLainnya() {
+    const sel = document.getElementById('jenisSurat');
+    const wrap = document.getElementById('wrapperJenisLainnya');
+    wrap.style.display = (sel.value === 'Lainnya') ? 'block' : 'none';
+  }
+</script>
 
 <%- include('../../partials/footer') %>

@@ -153,6 +153,54 @@
           <p class="mb-1"><strong>Tujuan Instansi:</strong> <%= surat.tujuan %></p>
         <% } %>
 
+        <% if (surat.jenis === 'Keterangan Lulus Sementara') { %>
+          <div class="row g-3">
+            <div class="col-md-4"><div class="data-label">Tanggal Lulus</div><div class="data-value"><%= surat.tanggalLulus ? new Date(surat.tanggalLulus).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-' %></div></div>
+            <div class="col-md-4"><div class="data-label">IPK</div><div class="data-value"><%= surat.ipk %></div></div>
+            <div class="col-md-4"><div class="data-label">No. SK Yudisium</div><div class="data-value"><%= surat.noSkYudisium || '-' %></div></div>
+            <div class="col-12"><div class="data-label">Judul Tugas Akhir</div><div class="data-value" style="font-weight:400;"><%= surat.judulTA %></div></div>
+          </div>
+        <% } %>
+
+        <% if (surat.jenis === 'Rekomendasi') { %>
+          <div class="row g-3">
+            <div class="col-md-6"><div class="data-label">Tujuan</div><div class="data-value"><%= surat.namaTujuan %></div></div>
+            <div class="col-md-6"><div class="data-label">IPK</div><div class="data-value"><%= surat.ipk || '-' %></div></div>
+            <% if (surat.prestasi) { %>
+              <div class="col-12"><div class="data-label">Prestasi/Kegiatan</div><div class="data-value" style="font-weight:400; white-space:pre-line;"><%= surat.prestasi %></div></div>
+            <% } %>
+          </div>
+        <% } %>
+
+        <% if (surat.jenis === 'Keterangan Cuti/Aktif Kembali') { %>
+          <div class="row g-3">
+            <div class="col-md-4"><div class="data-label">Jenis Pengajuan</div><div class="data-value"><%= surat.jenisPengajuan %></div></div>
+            <div class="col-md-4"><div class="data-label">Semester</div><div class="data-value"><%= surat.semester %> (<%= surat.tahunAkademik %>)</div></div>
+            <div class="col-md-4"><div class="data-label">Periode</div><div class="data-value" style="font-weight:400;">
+              <%= surat.tanggalMulai ? new Date(surat.tanggalMulai).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}) : '-' %>
+              <% if (surat.tanggalSelesai) { %> s.d. <%= new Date(surat.tanggalSelesai).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}) %><% } %>
+            </div></div>
+            <div class="col-12"><div class="data-label">Alasan</div><div class="data-value" style="font-weight:400;"><%= surat.alasan %></div></div>
+          </div>
+        <% } %>
+
+        <% if (surat.jenis === 'Keterangan Dosen PA') { %>
+          <div class="row g-3">
+            <div class="col-12"><div class="data-label">Dosen Pembimbing Akademik</div><div class="data-value"><%= surat.dosenPaNama %> <% if (surat.dosenPaNidn) { %>(NIDN. <%= surat.dosenPaNidn %>)<% } %></div></div>
+          </div>
+        <% } %>
+
+        <% if (surat.jenis === 'Pengantar Magang/PKL') { %>
+          <div class="row g-3">
+            <div class="col-md-6"><div class="data-label">Perusahaan/Instansi Tujuan</div><div class="data-value"><%= surat.namaPerusahaan %></div></div>
+            <div class="col-md-6"><div class="data-label">Alamat</div><div class="data-value" style="font-weight:400;"><%= surat.alamatPerusahaan %></div></div>
+            <div class="col-12"><div class="data-label">Periode Magang/PKL</div><div class="data-value" style="font-weight:400;">
+              <%= surat.tanggalMulai ? new Date(surat.tanggalMulai).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-' %>
+              s.d. <%= surat.tanggalSelesai ? new Date(surat.tanggalSelesai).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-' %>
+            </div></div>
+          </div>
+        <% } %>
+
         <% if (surat.jenis === 'Permohonan Kebijakan SPP') { %>
           <div class="p-3 bg-light rounded-3 mb-3">
             <div class="data-label">Alasan Permohonan</div>

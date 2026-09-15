@@ -222,6 +222,263 @@ router.post('/kebijakan-spp', async (req, res) => {
 });
 
 // ============================================================================
+// PENGAJUAN SURAT KETERANGAN LULUS (SKL) SEMENTARA
+// ============================================================================
+
+router.get('/skl-sementara', (req, res) => {
+  res.render('mahasiswa/persuratan/skl_form', {
+    title: 'Ajukan Surat Keterangan Lulus Sementara',
+    user: req.user
+  });
+});
+
+router.post('/skl-sementara', async (req, res) => {
+  try {
+    const { keperluan, tanggalLulus, ipk, judulTA, noSkYudisium } = req.body;
+    if (!keperluan || !tanggalLulus || !ipk || !judulTA) {
+      return res.status(400).send('Keperluan, tanggal lulus, IPK, dan judul TA harus diisi');
+    }
+    const kodeValidasi = generateKodeValidasi();
+    const suratData = {
+      userId: req.user.id,
+      nim: req.user.nim,
+      nama: req.user.nama,
+      jenis: 'Keterangan Lulus Sementara',
+      kodeValidasi,
+      keperluan,
+      tanggalLulus,
+      ipk,
+      judulTA,
+      noSkYudisium: noSkYudisium || '',
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{ status: 'pending', timestamp: new Date().toISOString(), catatan: 'Pengajuan surat diterima' }]
+    };
+    await db.collection('surat').add(suratData);
+    res.redirect('/mahasiswa/persuratan');
+  } catch (error) {
+    console.error('Error mengajukan surat SKL sementara:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal mengajukan surat' });
+  }
+});
+
+// ============================================================================
+// PENGAJUAN SURAT KETERANGAN BERKELAKUAN BAIK
+// ============================================================================
+
+router.get('/berkelakuan-baik', (req, res) => {
+  const currentSemester = getCurrentAcademicSemester();
+  res.render('mahasiswa/persuratan/berkelakuan_baik_form', {
+    title: 'Ajukan Surat Keterangan Berkelakuan Baik',
+    user: req.user,
+    semesterSekarang: currentSemester.label,
+    tahunAkademik: currentSemester.tahunAkademik
+  });
+});
+
+router.post('/berkelakuan-baik', async (req, res) => {
+  try {
+    const { keperluan } = req.body;
+    if (!keperluan) return res.status(400).send('Keperluan harus diisi');
+    const current = getCurrentAcademicSemester();
+    const kodeValidasi = generateKodeValidasi();
+    const suratData = {
+      userId: req.user.id,
+      nim: req.user.nim,
+      nama: req.user.nama,
+      jenis: 'Keterangan Berkelakuan Baik',
+      kodeValidasi,
+      keperluan,
+      semester: current.label,
+      tahunAkademik: current.tahunAkademik,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{ status: 'pending', timestamp: new Date().toISOString(), catatan: 'Pengajuan surat diterima' }]
+    };
+    await db.collection('surat').add(suratData);
+    res.redirect('/mahasiswa/persuratan');
+  } catch (error) {
+    console.error('Error mengajukan surat berkelakuan baik:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal mengajukan surat' });
+  }
+});
+
+// ============================================================================
+// PENGAJUAN SURAT REKOMENDASI (BEASISWA/ORGANISASI)
+// ============================================================================
+
+router.get('/rekomendasi', (req, res) => {
+  res.render('mahasiswa/persuratan/rekomendasi_form', {
+    title: 'Ajukan Surat Rekomendasi',
+    user: req.user
+  });
+});
+
+router.post('/rekomendasi', async (req, res) => {
+  try {
+    const { namaTujuan, keperluan, ipk, prestasi } = req.body;
+    if (!namaTujuan || !keperluan) {
+      return res.status(400).send('Nama tujuan dan keperluan harus diisi');
+    }
+    const kodeValidasi = generateKodeValidasi();
+    const suratData = {
+      userId: req.user.id,
+      nim: req.user.nim,
+      nama: req.user.nama,
+      jenis: 'Rekomendasi',
+      kodeValidasi,
+      namaTujuan,
+      keperluan,
+      ipk: ipk || '',
+      prestasi: prestasi || '',
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{ status: 'pending', timestamp: new Date().toISOString(), catatan: 'Pengajuan surat diterima' }]
+    };
+    await db.collection('surat').add(suratData);
+    res.redirect('/mahasiswa/persuratan');
+  } catch (error) {
+    console.error('Error mengajukan surat rekomendasi:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal mengajukan surat' });
+  }
+});
+
+// ============================================================================
+// PENGAJUAN SURAT KETERANGAN CUTI / AKTIF KEMBALI KULIAH
+// ============================================================================
+
+router.get('/cuti-aktif-kembali', (req, res) => {
+  const currentSemester = getCurrentAcademicSemester();
+  res.render('mahasiswa/persuratan/cuti_form', {
+    title: 'Ajukan Surat Keterangan Cuti / Aktif Kembali Kuliah',
+    user: req.user,
+    tahunAkademik: currentSemester.tahunAkademik
+  });
+});
+
+router.post('/cuti-aktif-kembali', async (req, res) => {
+  try {
+    const { jenisPengajuan, semester, tahunAkademik, tanggalMulai, tanggalSelesai, alasan } = req.body;
+    if (!jenisPengajuan || !semester || !tahunAkademik || !tanggalMulai || !alasan) {
+      return res.status(400).send('Semua field wajib (kecuali tanggal selesai) harus diisi');
+    }
+    if (!['Cuti Akademik', 'Aktif Kembali'].includes(jenisPengajuan)) {
+      return res.status(400).send('Jenis pengajuan tidak valid');
+    }
+    const kodeValidasi = generateKodeValidasi();
+    const suratData = {
+      userId: req.user.id,
+      nim: req.user.nim,
+      nama: req.user.nama,
+      jenis: 'Keterangan Cuti/Aktif Kembali',
+      kodeValidasi,
+      keperluan: jenisPengajuan,
+      jenisPengajuan,
+      semester,
+      tahunAkademik,
+      tanggalMulai,
+      tanggalSelesai: tanggalSelesai || '',
+      alasan,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{ status: 'pending', timestamp: new Date().toISOString(), catatan: 'Pengajuan surat diterima' }]
+    };
+    await db.collection('surat').add(suratData);
+    res.redirect('/mahasiswa/persuratan');
+  } catch (error) {
+    console.error('Error mengajukan surat cuti/aktif kembali:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal mengajukan surat' });
+  }
+});
+
+// ============================================================================
+// PENGAJUAN SURAT KETERANGAN DOSEN PEMBIMBING AKADEMIK (PA)
+// ============================================================================
+
+router.get('/keterangan-pa', (req, res) => {
+  res.render('mahasiswa/persuratan/keterangan_pa_form', {
+    title: 'Ajukan Surat Keterangan Dosen PA',
+    user: req.user
+  });
+});
+
+router.post('/keterangan-pa', async (req, res) => {
+  try {
+    const { keperluan } = req.body;
+    if (!keperluan) return res.status(400).send('Keperluan harus diisi');
+    if (!req.user.dosenPaNama) {
+      return res.status(400).send('Anda belum memiliki Dosen Pembimbing Akademik terdaftar di sistem. Silakan hubungi admin terlebih dahulu.');
+    }
+    const kodeValidasi = generateKodeValidasi();
+    const suratData = {
+      userId: req.user.id,
+      nim: req.user.nim,
+      nama: req.user.nama,
+      jenis: 'Keterangan Dosen PA',
+      kodeValidasi,
+      keperluan,
+      dosenPaNama: req.user.dosenPaNama,
+      dosenPaNidn: req.user.dosenPaNidn || '-',
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{ status: 'pending', timestamp: new Date().toISOString(), catatan: 'Pengajuan surat diterima' }]
+    };
+    await db.collection('surat').add(suratData);
+    res.redirect('/mahasiswa/persuratan');
+  } catch (error) {
+    console.error('Error mengajukan surat keterangan PA:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal mengajukan surat' });
+  }
+});
+
+// ============================================================================
+// PENGAJUAN SURAT PENGANTAR MAGANG/PKL INDIVIDU
+// ============================================================================
+
+router.get('/pengantar-magang', (req, res) => {
+  res.render('mahasiswa/persuratan/pengantar_magang_form', {
+    title: 'Ajukan Surat Pengantar Magang/PKL',
+    user: req.user
+  });
+});
+
+router.post('/pengantar-magang', async (req, res) => {
+  try {
+    const { namaPerusahaan, alamatPerusahaan, tanggalMulai, tanggalSelesai, keperluan } = req.body;
+    if (!namaPerusahaan || !alamatPerusahaan || !tanggalMulai || !tanggalSelesai) {
+      return res.status(400).send('Nama perusahaan, alamat, tanggal mulai, dan tanggal selesai harus diisi');
+    }
+    const kodeValidasi = generateKodeValidasi();
+    const suratData = {
+      userId: req.user.id,
+      nim: req.user.nim,
+      nama: req.user.nama,
+      jenis: 'Pengantar Magang/PKL',
+      kodeValidasi,
+      namaPerusahaan,
+      alamatPerusahaan,
+      tanggalMulai,
+      tanggalSelesai,
+      keperluan: keperluan || 'Pelaksanaan Magang/Praktik Kerja Lapangan',
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{ status: 'pending', timestamp: new Date().toISOString(), catatan: 'Pengajuan surat diterima' }]
+    };
+    await db.collection('surat').add(suratData);
+    res.redirect('/mahasiswa/persuratan');
+  } catch (error) {
+    console.error('Error mengajukan surat pengantar magang:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal mengajukan surat' });
+  }
+});
+
+// ============================================================================
 // PENGAJUAN SURAT LAINNYA
 // ============================================================================
 

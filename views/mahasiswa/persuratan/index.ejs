@@ -119,6 +119,58 @@
     flex-wrap: wrap;
   }
 
+  /* ===== GRID JENIS SURAT (kartu pilihan) ===== */
+  .jenis-surat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .kartu-jenis-surat {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    background: white;
+    border: 1px solid rgba(30,58,138,0.12);
+    border-radius: 1rem;
+    padding: 1rem 1.1rem;
+    text-decoration: none;
+    color: #1e293b;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    transition: all 0.25s;
+  }
+  .kartu-jenis-surat:hover {
+    color: white;
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    transform: translateY(-3px);
+    box-shadow: 0 10px 22px rgba(30,58,138,0.25);
+  }
+  .kartu-jenis-surat:hover .kartu-jenis-surat-icon {
+    background: rgba(255,255,255,0.2);
+    color: white;
+  }
+  .kartu-jenis-surat-icon {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 0.75rem;
+    background: var(--primary-light);
+    color: var(--primary-start);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+  }
+  .kartu-jenis-surat-label {
+    font-weight: 600;
+    font-size: 0.92rem;
+    line-height: 1.25;
+  }
+  .kartu-jenis-surat.outline-lainnya {
+    border-style: dashed;
+    background: transparent;
+  }
+
   /* ===== TABEL MINIMALIS (seperti di MK) ===== */
   .table-container {
     background: white;
@@ -243,7 +295,7 @@
     margin: 2rem 0;
   }
   .empty-state i {
-    font-size: clamp(2rem, 9vw, 4rem);
+    font-size: 4rem;
     color: #adb5bd;
     margin-bottom: 1.5rem;
   }
@@ -291,16 +343,43 @@
     <p class="mb-0">Kelola pengajuan surat aktif kuliah dan surat lainnya</p>
   </div>
 
-  <!-- TOMBOL AKSI (dipisah dari header) -->
-  <div class="action-buttons">
-    <a href="/mahasiswa/persuratan/aktif-kuliah" class="btn-gradient btn-icon">
-      <i class="bi bi-envelope-paper"></i> Surat Aktif Kuliah
+  <!-- PILIHAN JENIS SURAT (grid kartu) -->
+  <div class="jenis-surat-grid">
+    <a href="/mahasiswa/persuratan/aktif-kuliah" class="kartu-jenis-surat">
+      <span class="kartu-jenis-surat-icon"><i class="bi bi-envelope-paper"></i></span>
+      <span class="kartu-jenis-surat-label">Surat Aktif Kuliah</span>
     </a>
-    <a href="/mahasiswa/persuratan/kebijakan-spp" class="btn-gradient btn-icon">
-      <i class="bi bi-cash-coin"></i> Permohonan Kebijakan SPP
+    <a href="/mahasiswa/persuratan/kebijakan-spp" class="kartu-jenis-surat">
+      <span class="kartu-jenis-surat-icon"><i class="bi bi-cash-coin"></i></span>
+      <span class="kartu-jenis-surat-label">Permohonan Kebijakan SPP</span>
     </a>
-    <a href="/mahasiswa/persuratan/lainnya" class="btn-outline-gradient btn-icon">
-      <i class="bi bi-envelope-plus"></i> Surat Lainnya
+    <a href="/mahasiswa/persuratan/skl-sementara" class="kartu-jenis-surat">
+      <span class="kartu-jenis-surat-icon"><i class="bi bi-mortarboard"></i></span>
+      <span class="kartu-jenis-surat-label">Keterangan Lulus Sementara</span>
+    </a>
+    <a href="/mahasiswa/persuratan/berkelakuan-baik" class="kartu-jenis-surat">
+      <span class="kartu-jenis-surat-icon"><i class="bi bi-patch-check"></i></span>
+      <span class="kartu-jenis-surat-label">Keterangan Berkelakuan Baik</span>
+    </a>
+    <a href="/mahasiswa/persuratan/rekomendasi" class="kartu-jenis-surat">
+      <span class="kartu-jenis-surat-icon"><i class="bi bi-star"></i></span>
+      <span class="kartu-jenis-surat-label">Surat Rekomendasi</span>
+    </a>
+    <a href="/mahasiswa/persuratan/cuti-aktif-kembali" class="kartu-jenis-surat">
+      <span class="kartu-jenis-surat-icon"><i class="bi bi-pause-circle"></i></span>
+      <span class="kartu-jenis-surat-label">Cuti / Aktif Kembali Kuliah</span>
+    </a>
+    <a href="/mahasiswa/persuratan/keterangan-pa" class="kartu-jenis-surat">
+      <span class="kartu-jenis-surat-icon"><i class="bi bi-person-badge"></i></span>
+      <span class="kartu-jenis-surat-label">Keterangan Dosen PA</span>
+    </a>
+    <a href="/mahasiswa/persuratan/pengantar-magang" class="kartu-jenis-surat">
+      <span class="kartu-jenis-surat-icon"><i class="bi bi-briefcase"></i></span>
+      <span class="kartu-jenis-surat-label">Pengantar Magang/PKL</span>
+    </a>
+    <a href="/mahasiswa/persuratan/lainnya" class="kartu-jenis-surat outline-lainnya">
+      <span class="kartu-jenis-surat-icon"><i class="bi bi-envelope-plus"></i></span>
+      <span class="kartu-jenis-surat-label">Surat Lainnya</span>
     </a>
   </div>
 

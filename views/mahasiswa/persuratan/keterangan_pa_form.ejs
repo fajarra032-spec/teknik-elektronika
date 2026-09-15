@@ -1,0 +1,59 @@
+<%- include('../../partials/header') %>
+<%- include('./_form_style') %>
+
+<div class="container mt-4">
+  <div class="form-card">
+    <div class="form-header">
+      <h3><i class="bi bi-person-badge me-2"></i>Pengajuan Surat Keterangan Dosen Pembimbing Akademik</h3>
+    </div>
+    <div class="form-body">
+      <% if (!user.dosenPaNama) { %>
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle"></i>
+          Anda belum memiliki Dosen Pembimbing Akademik (PA) yang terdaftar di sistem. Silakan hubungi admin akademik terlebih dahulu sebelum mengajukan surat ini.
+        </div>
+        <a href="/mahasiswa/persuratan" class="btn-outline-gradient">
+          <i class="bi bi-arrow-left me-2"></i>Kembali
+        </a>
+      <% } else { %>
+      <form method="POST" action="/mahasiswa/persuratan/keterangan-pa">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">NIM</label>
+            <input type="text" class="form-control" value="<%= user.nim %>" readonly disabled>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nama</label>
+            <input type="text" class="form-control" value="<%= user.nama %>" readonly disabled>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Dosen Pembimbing Akademik (tercatat di sistem)</label>
+          <input type="text" class="form-control" value="<%= user.dosenPaNama %><%= user.dosenPaNidn ? ' (NIDN. ' + user.dosenPaNidn + ')' : '' %>" readonly disabled>
+        </div>
+
+        <div class="mb-3">
+          <label for="keperluan" class="form-label">Keperluan <span class="text-danger">*</span></label>
+          <textarea class="form-control" id="keperluan" name="keperluan" rows="3" placeholder="Contoh: Untuk keperluan administrasi beasiswa, dll." required></textarea>
+        </div>
+
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i> Data dosen PA diambil otomatis dari sistem sehingga tidak perlu diinput manual.
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <a href="/mahasiswa/persuratan" class="btn-outline-gradient">
+            <i class="bi bi-arrow-left me-2"></i>Batal
+          </a>
+          <button type="submit" class="btn-gradient">
+            <i class="bi bi-send me-2"></i>Ajukan Surat
+          </button>
+        </div>
+      </form>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

@@ -153,6 +153,175 @@ function getTemplateAndDataForSuratDosen(suratDosen, dosen) {
 }
 
 // ============================================================================
+// FUNGSI BANTU UNTUK GENERATE SURAT MAHASISWA (Aktif Kuliah, Kebijakan SPP,
+// SKL Sementara, Berkelakuan Baik, Rekomendasi, Cuti/Aktif Kembali,
+// Keterangan Dosen PA, Pengantar Magang/PKL)
+// ============================================================================
+const JENIS_SURAT_MAHASISWA_OTOMATIS = [
+  'Aktif Kuliah',
+  'Permohonan Kebijakan SPP',
+  'Keterangan Lulus Sementara',
+  'Keterangan Berkelakuan Baik',
+  'Rekomendasi',
+  'Keterangan Cuti/Aktif Kembali',
+  'Keterangan Dosen PA',
+  'Pengantar Magang/PKL'
+];
+
+function getTemplateAndDataForSuratMahasiswa(surat, mahasiswa, nomorSurat) {
+  const formatTanggal = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+  };
+  const tanggalSuratFormatted = formatTanggal(surat.createdAt) || formatTanggal(new Date());
+  const kode = (nomorSurat || surat.jenis.replace(/\s+/g, '')).replace(/\//g, '_');
+
+  switch (surat.jenis) {
+    case 'Permohonan Kebijakan SPP':
+      return {
+        template: 'admin/surat/kebijakan_spp',
+        templateData: {
+          nomorSurat: nomorSurat || '',
+          nama: mahasiswa.nama,
+          nim: mahasiswa.nim,
+          noHp: surat.noHp || '-',
+          alasan: surat.alasan || '',
+          rincianPembayaran: surat.rincianPembayaran || [],
+          totalBiaya: surat.totalBiaya || 0,
+          batasWaktuFormatted: formatTanggal(surat.batasWaktu),
+          tanggalSuratFormatted,
+          tahunAkademik: surat.tahunAkademik,
+          kodeValidasi: surat.kodeValidasi
+        },
+        fileNamePrefix: `${surat.kodeValidasi}_${kode}`
+      };
+
+    case 'Keterangan Lulus Sementara':
+      return {
+        template: 'admin/surat/skl_sementara',
+        templateData: {
+          nomorSurat: nomorSurat || '',
+          nama: mahasiswa.nama,
+          nim: mahasiswa.nim,
+          keperluan: surat.keperluan,
+          tanggalLulusFormatted: formatTanggal(surat.tanggalLulus),
+          ipk: surat.ipk,
+          judulTA: surat.judulTA,
+          noSkYudisium: surat.noSkYudisium || '',
+          tanggalSuratFormatted,
+          kodeValidasi: surat.kodeValidasi
+        },
+        fileNamePrefix: `${surat.kodeValidasi}_${kode}`
+      };
+
+    case 'Keterangan Berkelakuan Baik':
+      return {
+        template: 'admin/surat/berkelakuan_baik',
+        templateData: {
+          nomorSurat: nomorSurat || '',
+          nama: mahasiswa.nama,
+          nim: mahasiswa.nim,
+          keperluan: surat.keperluan,
+          semester: surat.semester,
+          tahunAkademik: surat.tahunAkademik,
+          tanggalSuratFormatted,
+          kodeValidasi: surat.kodeValidasi
+        },
+        fileNamePrefix: `${surat.kodeValidasi}_${kode}`
+      };
+
+    case 'Rekomendasi':
+      return {
+        template: 'admin/surat/rekomendasi',
+        templateData: {
+          nomorSurat: nomorSurat || '',
+          nama: mahasiswa.nama,
+          nim: mahasiswa.nim,
+          namaTujuan: surat.namaTujuan,
+          keperluan: surat.keperluan,
+          ipk: surat.ipk || '',
+          prestasi: (surat.prestasi || '').split('\n').map(s => s.trim()).filter(Boolean),
+          tanggalSuratFormatted,
+          kodeValidasi: surat.kodeValidasi
+        },
+        fileNamePrefix: `${surat.kodeValidasi}_${kode}`
+      };
+
+    case 'Keterangan Cuti/Aktif Kembali':
+      return {
+        template: 'admin/surat/cuti_aktif_kembali',
+        templateData: {
+          nomorSurat: nomorSurat || '',
+          nama: mahasiswa.nama,
+          nim: mahasiswa.nim,
+          jenisPengajuan: surat.jenisPengajuan,
+          semester: surat.semester,
+          tahunAkademik: surat.tahunAkademik,
+          tanggalMulaiFormatted: formatTanggal(surat.tanggalMulai),
+          tanggalSelesaiFormatted: formatTanggal(surat.tanggalSelesai),
+          alasan: surat.alasan,
+          tanggalSuratFormatted,
+          kodeValidasi: surat.kodeValidasi
+        },
+        fileNamePrefix: `${surat.kodeValidasi}_${kode}`
+      };
+
+    case 'Keterangan Dosen PA':
+      return {
+        template: 'admin/surat/keterangan_pa',
+        templateData: {
+          nomorSurat: nomorSurat || '',
+          nama: mahasiswa.nama,
+          nim: mahasiswa.nim,
+          keperluan: surat.keperluan,
+          dosenPaNama: surat.dosenPaNama,
+          dosenPaNidn: surat.dosenPaNidn || '-',
+          tanggalSuratFormatted,
+          kodeValidasi: surat.kodeValidasi
+        },
+        fileNamePrefix: `${surat.kodeValidasi}_${kode}`
+      };
+
+    case 'Pengantar Magang/PKL':
+      return {
+        template: 'admin/surat/pengantar_magang',
+        templateData: {
+          nomorSurat: nomorSurat || '',
+          nama: mahasiswa.nama,
+          nim: mahasiswa.nim,
+          namaPerusahaan: surat.namaPerusahaan,
+          alamatPerusahaan: surat.alamatPerusahaan,
+          tanggalMulaiFormatted: formatTanggal(surat.tanggalMulai),
+          tanggalSelesaiFormatted: formatTanggal(surat.tanggalSelesai),
+          keperluan: surat.keperluan,
+          tanggalSuratFormatted,
+          kodeValidasi: surat.kodeValidasi
+        },
+        fileNamePrefix: `${surat.kodeValidasi}_${kode}`
+      };
+
+    case 'Aktif Kuliah':
+    default:
+      return {
+        template: 'admin/surat/aktif_kuliah',
+        templateData: {
+          nomorSurat: nomorSurat || '',
+          nama: mahasiswa.nama,
+          nim: mahasiswa.nim,
+          tempatLahir: surat.tempatLahir || '-',
+          tanggalLahir: surat.tanggalLahir ? new Date(surat.tanggalLahir) : new Date(),
+          semester: surat.semester,
+          tahunAkademik: surat.tahunAkademik,
+          keperluan: surat.keperluan,
+          kodeValidasi: surat.kodeValidasi
+        },
+        fileNamePrefix: `${surat.kodeValidasi}_${kode}`
+      };
+  }
+}
+
+// ============================================================================
 // FITUR ADMIN: Kirim Surat Langsung ke Dosen (umum, upload PDF)
 // ============================================================================
 router.get('/create', async (req, res) => {
@@ -168,48 +337,146 @@ router.get('/create', async (req, res) => {
 
 router.post('/create', upload.single('file'), async (req, res) => {
   try {
-    const { dosenId, jenisSurat, keperluan, isiLain } = req.body;
+    const { jenisSurat, keperluan, isiLain } = req.body;
+    let { dosenIds } = req.body;
     const file = req.file;
-    if (!dosenId || !jenisSurat || !keperluan || !file) return res.status(400).send('Semua field wajib diisi');
 
-    const dosenDoc = await db.collection('dosen').doc(dosenId).get();
-    if (!dosenDoc.exists) return res.status(404).send('Dosen tidak ditemukan');
-    const dosenData = dosenDoc.data();
-    const dosenIdFirestore = dosenDoc.id;
+    // Normalisasi dosenIds: bisa string tunggal (1 dosen) atau array (banyak dosen)
+    dosenIds = dosenIds === undefined ? [] : (Array.isArray(dosenIds) ? dosenIds : [dosenIds]);
+    dosenIds = [...new Set(dosenIds.filter(Boolean))]; // hilangkan duplikat/kosong
+
+    if (dosenIds.length === 0 || !jenisSurat || !keperluan || !file) {
+      return res.status(400).send('Minimal 1 dosen penerima, jenis surat, keperluan, dan file PDF wajib diisi');
+    }
 
     const tahunAkademik = getCurrentAcademicSemester().tahunAkademik;
-    const folderId = await getSuratFolderDosen(dosenData.nip || dosenIdFirestore, tahunAkademik);
-    const fileName = `${dosenData.nip || dosenIdFirestore}_${jenisSurat.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+    const gagalKirim = [];
+
+    // Kirim file PDF yang sama ke setiap dosen terpilih - masing-masing
+    // dapat salinannya sendiri di folder Drive-nya dan record surat_dosen
+    // terpisah, supaya riwayat & kode validasi per dosen tetap unik.
+    for (const dosenId of dosenIds) {
+      try {
+        const dosenDoc = await db.collection('dosen').doc(dosenId).get();
+        if (!dosenDoc.exists) { gagalKirim.push(dosenId); continue; }
+        const dosenData = dosenDoc.data();
+        const dosenIdFirestore = dosenDoc.id;
+
+        const folderId = await getSuratFolderDosen(dosenData.nip || dosenIdFirestore, tahunAkademik);
+        const kodeValidasi = generateKodeValidasi();
+        const fileName = `${dosenData.nip || dosenIdFirestore}_${jenisSurat.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+        const fileMetadata = { name: fileName, parents: [folderId] };
+        const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
+        const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
+        await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+        const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
+        const fileId = driveResponse.data.id;
+
+        await db.collection('surat_dosen').add({
+          dosenId: dosenIdFirestore,
+          dosenNama: dosenData.nama,
+          nip: dosenData.nip || '',
+          email: dosenData.email || '',
+          jenisSurat,
+          keperluan,
+          isiLain: isiLain || '',
+          kodeValidasi,
+          status: 'completed',
+          fileUrl,
+          fileId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          dikirimOleh: req.user.id,
+          dikirimOlehNama: req.user.nama || 'Admin',
+          history: [{ status: 'completed', timestamp: new Date().toISOString(), catatan: `Surat dikirim langsung oleh ${req.user.nama || 'Admin'} (${dosenIds.length} penerima sekaligus)` }]
+        });
+      } catch (errPerDosen) {
+        console.error(`Gagal kirim surat ke dosen ${dosenId}:`, errPerDosen);
+        gagalKirim.push(dosenId);
+      }
+    }
+
+    if (gagalKirim.length > 0 && gagalKirim.length === dosenIds.length) {
+      return res.status(500).send('Gagal mengirim surat ke semua dosen yang dipilih.');
+    }
+
+    res.redirect('/admin/surat' + (gagalKirim.length > 0 ? '?warning=sebagian_gagal_kirim' : ''));
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Gagal mengirim surat: ' + err.message);
+  }
+});
+
+// ============================================================================
+// FITUR ADMIN: Kirim Surat Langsung ke Mahasiswa (umum, upload PDF, TANPA
+// perlu mahasiswa mengajukan lebih dulu) - mirip pola "Kirim Surat ke Dosen"
+// di atas, tapi tersimpan ke collection 'surat' (bukan 'surat_dosen') supaya
+// otomatis muncul di halaman "Daftar Surat" milik mahasiswa yang dituju.
+// ============================================================================
+router.get('/kirim-mahasiswa', async (req, res) => {
+  try {
+    const mahasiswaList = await getAllMahasiswa(db);
+    const daftarMahasiswa = [...mahasiswaList].sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
+    res.render('admin/surat/kirim_mahasiswa', { title: 'Kirim Surat ke Mahasiswa', daftarMahasiswa });
+  } catch (err) {
+    console.error('Error memuat form kirim surat mahasiswa:', err);
+    res.status(500).send('Gagal memuat data mahasiswa');
+  }
+});
+
+router.post('/kirim-mahasiswa', upload.single('file'), async (req, res) => {
+  try {
+    const { mahasiswaId, jenisSurat, jenisSuratLainnya, keperluan, isiLain, nomorSurat } = req.body;
+    const file = req.file;
+    if (!mahasiswaId || !jenisSurat || !keperluan || !file) {
+      return res.status(400).send('Mahasiswa, jenis surat, keperluan, dan file PDF wajib diisi');
+    }
+
+    const jenisFinal = jenisSurat === 'Lainnya' ? (jenisSuratLainnya || 'Lainnya').trim() : jenisSurat;
+
+    const mahasiswa = await getMahasiswa(mahasiswaId);
+    if (!mahasiswa.nim || mahasiswa.nim === '-') {
+      return res.status(404).send('Data mahasiswa tidak lengkap/tidak ditemukan');
+    }
+
+    const currentSemester = getCurrentAcademicSemester();
+    const folderId = await getSuratFolderMahasiswa(mahasiswa.nim, currentSemester.tahunAkademik);
+    const kodeValidasi = generateKodeValidasi();
+    const fileName = `${mahasiswa.nim}_${jenisFinal.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
     const fileMetadata = { name: fileName, parents: [folderId] };
     const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
     const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
     await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
     const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
-    const fileId = driveResponse.data.id;
 
-    const kodeValidasi = generateKodeValidasi();
-    const suratData = {
-      dosenId: dosenIdFirestore,
-      dosenNama: dosenData.nama,
-      nip: dosenData.nip || '',
-      email: dosenData.email || '',
-      jenisSurat,
+    await db.collection('surat').add({
+      userId: mahasiswaId,
+      nim: mahasiswa.nim,
+      nama: mahasiswa.nama,
+      jenis: jenisFinal,
       keperluan,
       isiLain: isiLain || '',
+      nomorSurat: nomorSurat || '',
+      semester: currentSemester.semester,
+      tahunAkademik: currentSemester.tahunAkademik,
       kodeValidasi,
       status: 'completed',
       fileUrl,
-      fileId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      fileId: driveResponse.data.id,
       dikirimOleh: req.user.id,
       dikirimOlehNama: req.user.nama || 'Admin',
-      history: [{ status: 'completed', timestamp: new Date().toISOString(), catatan: `Surat dikirim langsung oleh ${req.user.nama || 'Admin'}` }]
-    };
-    await db.collection('surat_dosen').add(suratData);
-    res.redirect('/admin/surat');
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{
+        status: 'completed',
+        timestamp: new Date().toISOString(),
+        catatan: `Surat "${jenisFinal}" dikirim langsung oleh ${req.user.nama || 'Admin'} tanpa pengajuan`
+      }]
+    });
+
+    res.redirect('/admin/surat?success=surat_mahasiswa_terkirim');
   } catch (err) {
-    console.error(err);
+    console.error('Error kirim surat langsung ke mahasiswa:', err);
     res.status(500).send('Gagal mengirim surat: ' + err.message);
   }
 });
@@ -838,56 +1105,18 @@ router.post('/:id/:role/generate', async (req, res) => {
       const suratDoc = await suratRef.get();
       if (!suratDoc.exists) return res.status(404).send('Surat tidak ditemukan');
       const surat = suratDoc.data();
-      const JENIS_BISA_DIGENERATE = ['Aktif Kuliah', 'Permohonan Kebijakan SPP'];
-      if (!JENIS_BISA_DIGENERATE.includes(surat.jenis)) {
-        return res.status(400).send('Generate otomatis hanya untuk surat jenis "Aktif Kuliah" atau "Permohonan Kebijakan SPP"');
+      if (!JENIS_SURAT_MAHASISWA_OTOMATIS.includes(surat.jenis)) {
+        return res.status(400).send(`Generate otomatis belum didukung untuk jenis surat "${surat.jenis}"`);
+      }
+
+      if (surat.jenis === 'Aktif Kuliah' && !nomorSurat) {
+        return res.status(400).send('Nomor surat wajib diisi untuk Surat Aktif Kuliah');
       }
 
       const mahasiswa = await getMahasiswa(surat.userId);
       if (!mahasiswa.nim) return res.status(404).send('Data mahasiswa tidak lengkap');
 
-      let template, templateData, fileNamePrefix;
-
-      if (surat.jenis === 'Permohonan Kebijakan SPP') {
-        // --- SURAT PERMOHONAN KEBIJAKAN SPP ---
-        const formatTanggal = (dateStr) => {
-          if (!dateStr) return '';
-          const date = new Date(dateStr);
-          return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
-        };
-
-        template = 'admin/surat/kebijakan_spp';
-        templateData = {
-          nomorSurat: nomorSurat || '',
-          nama: mahasiswa.nama,
-          nim: mahasiswa.nim,
-          noHp: surat.noHp || '-',
-          alasan: surat.alasan || '',
-          rincianPembayaran: surat.rincianPembayaran || [],
-          totalBiaya: surat.totalBiaya || 0,
-          batasWaktuFormatted: formatTanggal(surat.batasWaktu),
-          tanggalSuratFormatted: formatTanggal(surat.createdAt) || formatTanggal(new Date()),
-          tahunAkademik: surat.tahunAkademik,
-          kodeValidasi: surat.kodeValidasi
-        };
-        fileNamePrefix = `${surat.kodeValidasi}_${(nomorSurat || 'KebijakanSPP').replace(/\//g, '_')}`;
-      } else {
-        // --- SURAT AKTIF KULIAH (default) ---
-        if (!nomorSurat) return res.status(400).send('Nomor surat wajib diisi');
-        template = 'admin/surat/aktif_kuliah';
-        templateData = {
-          nomorSurat,
-          nama: mahasiswa.nama,
-          nim: mahasiswa.nim,
-          tempatLahir: surat.tempatLahir || '-',
-          tanggalLahir: surat.tanggalLahir ? new Date(surat.tanggalLahir) : new Date(),
-          semester: surat.semester,
-          tahunAkademik: surat.tahunAkademik,
-          keperluan: surat.keperluan,
-          kodeValidasi: surat.kodeValidasi
-        };
-        fileNamePrefix = `${surat.kodeValidasi}_${nomorSurat.replace(/\//g, '_')}`;
-      }
+      const { template, templateData, fileNamePrefix } = getTemplateAndDataForSuratMahasiswa(surat, mahasiswa, nomorSurat);
 
       let html = await new Promise((resolve, reject) => {
         res.render(template, templateData, (err, html) => {
