@@ -38,6 +38,31 @@
     --danger-text: #991b1b;
   }
 
+  /* ===== ADAPTIF iPHONE / iOS SAFARI =====
+     - safe-area-inset-*: mencegah konten ketutupan notch/Dynamic Island
+       (atas) dan home indicator (bawah) saat dibuka via "Add to Home
+       Screen" (mode standalone). Di tab Safari biasa nilainya 0, jadi
+       aman ditambahkan di semua kondisi.
+     - -webkit-tap-highlight-color: menghilangkan kotak abu-abu bawaan
+       iOS saat menekan link/tombol.
+     - -webkit-font-smoothing: teks lebih tajam di layar Retina iPhone. */
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Input/select/textarea di iOS Safari otomatis di-zoom kalau
+     font-size < 16px saat difokus - dipatok minimal 16px supaya halaman
+     tidak "meloncat" zoom setiap kali mahasiswa mengetik di form. */
+  input, select, textarea {
+    font-size: max(16px, 1em);
+  }
+
   /* Tipografi fluid: menyesuaikan ukuran layar, dipakai di seluruh app
      (sebelumnya hanya ada di dashboard dosen/mahasiswa; halaman lain memakai
      ukuran tetap 14px dari header.ejs, jadi tidak ikut menyesuaikan layar). */
