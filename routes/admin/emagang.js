@@ -351,6 +351,33 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       nama: doc.data().nama
     }));
 
+    // Paginasi tampilan logbook (10 per halaman) - potong array di memori,
+    // datanya sudah dibaca sekali dari Firestore di atas jadi tidak ada
+    // biaya baca tambahan, tapi halaman jauh lebih ringan untuk dirender.
+    const LOGBOOK_PER_PAGE = 10;
+    const logbookTampilkanSemua = req.query.semuaLogbook === '1';
+    const logbookTotal = logbookList.length;
+    const logbookTotalHalaman = Math.max(1, Math.ceil(logbookTotal / LOGBOOK_PER_PAGE));
+    let logbookHalaman = parseInt(req.query.pageLogbook, 10) || 1;
+    if (logbookHalaman < 1) logbookHalaman = 1;
+    if (logbookHalaman > logbookTotalHalaman) logbookHalaman = logbookTotalHalaman;
+    const logbookListTampil = logbookTampilkanSemua
+      ? logbookList
+      : logbookList.slice((logbookHalaman - 1) * LOGBOOK_PER_PAGE, logbookHalaman * LOGBOOK_PER_PAGE);
+    const logbookPaging = {
+      halaman: logbookHalaman,
+      totalHalaman: logbookTotalHalaman,
+      totalData: logbookTotal,
+      perPage: LOGBOOK_PER_PAGE,
+      tampilkanSemua: logbookTampilkanSemua,
+      queryTanpaPaging: (() => {
+        const q = { ...req.query };
+        delete q.pageLogbook;
+        delete q.semuaLogbook;
+        return q;
+      })()
+    };
+
     // Nilai Magang 3-komponen (Laporan/Logbook/Lapangan) untuk periode yang
     // sedang dipilih - dipakai form input Nilai Lapangan + tombol Kunci.
     let nilaiMagangInfo = null;
@@ -362,7 +389,8 @@ router.get('/mahasiswa/:userId', async (req, res) => {
     res.render('admin/emagang_mahasiswa', {
       title: `Logbook - ${mahasiswa.nama}`,
       mahasiswa,
-      logbookList,
+      logbookList: logbookListTampil,
+      logbookPaging,
       semesterList,
       selectedSemester: semester || '',
       allPeriods,

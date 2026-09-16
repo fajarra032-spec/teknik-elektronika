@@ -14,6 +14,7 @@ const { KONSENTRASI_OPTIONS, AGAMA_OPTIONS, DEFAULT_AGAMA, parseSemesterNumber, 
 const { isBiodataLengkap, getBiodataKosong, BIODATA_FIELDS, GROUP_LABELS } = require('../../helpers/biodataHelper');
 const { getCurrentAcademicSemester, normalizeKelas } = require('../../helpers/academicHelper');
 const { buatDokumenSkPa } = require('../../helpers/skPaHelper');
+const { getOrSet, invalidate } = require('../../helpers/cacheHelper');
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.use(verifyToken);
@@ -86,50 +87,73 @@ const STATUS_MAHASISWA_OPTIONS = ['Aktif', 'Lulus', 'Cuti', 'Keluar'];
  * halaman daftar ('/') dan halaman cetak ('/print') supaya filter yang
  * sedang aktif di layar bisa langsung dicetak persis yang terlihat.
  */
+const CACHE_KEY_SEMUA_MAHASISWA = 'admin_mahasiswa_semua';
+const CACHE_TTL_MAHASISWA_MS = 3 * 60 * 1000; // 3 menit
+
+/**
+ * Baca SELURUH mahasiswa dari Firestore - tapi lewat cache ber-TTL supaya
+ * tidak membaca ulang ratusan dokumen `users` di SETIAP request (list,
+ * print, sk-pa, dsb semuanya lewat sini). Data baru dibaca ulang dari
+ * Firestore paling lambat tiap 3 menit, atau segera setelah ada
+ * tambah/edit/hapus/impor mahasiswa (lihat invalidate() di route terkait).
+ */
+async function getSemuaMahasiswaMentah() {
+  return getOrSet(CACHE_KEY_SEMUA_MAHASISWA, CACHE_TTL_MAHASISWA_MS, async () => {
+    const snapshot = await db.collection('users')
+      .where('role', '==', 'mahasiswa')
+      .orderBy('nim')
+      .get();
+
+    const semua = [];
+    const angkatanSet = new Set();
+    const kelasSet = new Set();
+
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      const m = { id: doc.id, ...data };
+      m.biodataLengkap = isBiodataLengkap(m);
+      m.angkatanHitung = getAngkatanFromNim(m.nim);
+      angkatanSet.add(m.angkatanHitung);
+      if (m.kelas) kelasSet.add(m.kelas);
+      semua.push(m);
+    });
+
+    return {
+      semua,
+      angkatanList: Array.from(angkatanSet).sort().reverse(),
+      kelasList: Array.from(kelasSet).sort()
+    };
+  });
+}
+
 async function getFilteredMahasiswaList(query) {
   const { angkatan, semester, statusMagang, statusMahasiswa, kelas, search } = query;
 
-  const snapshot = await db.collection('users')
-    .where('role', '==', 'mahasiswa')
-    .orderBy('nim')
-    .get();
+  const { semua, angkatanList, kelasList } = await getSemuaMahasiswaMentah();
 
-  const mahasiswaList = [];
-  const angkatanSet = new Set();
-  const kelasSet = new Set();
-
-  for (const doc of snapshot.docs) {
-    const data = doc.data();
-    const m = { id: doc.id, ...data };
-    m.biodataLengkap = isBiodataLengkap(m);
-    const angkatanMhs = getAngkatanFromNim(m.nim);
-    angkatanSet.add(angkatanMhs);
-    if (m.kelas) kelasSet.add(m.kelas);
-
-    if (angkatan && angkatanMhs !== angkatan) continue;
-    if (semester && m.semester !== semester) continue;
-    if (statusMagang && m.statusMagang !== statusMagang) continue;
-    if (statusMahasiswa && m.statusMahasiswa !== statusMahasiswa) continue;
-    if (kelas && m.kelas !== kelas) continue;
+  // Filter dilakukan di memori (murah, tanpa biaya baca Firestore tambahan)
+  // terhadap data yang sudah di-cache di atas.
+  const mahasiswaList = semua.filter(m => {
+    if (angkatan && m.angkatanHitung !== angkatan) return false;
+    if (semester && m.semester !== semester) return false;
+    if (statusMagang && m.statusMagang !== statusMagang) return false;
+    if (statusMahasiswa && m.statusMahasiswa !== statusMahasiswa) return false;
+    if (kelas && m.kelas !== kelas) return false;
     if (search) {
       const lower = search.toLowerCase();
       const matchNama = m.nama && m.nama.toLowerCase().includes(lower);
       const matchNim = m.nim && m.nim.includes(search);
-      if (!matchNama && !matchNim) continue;
+      if (!matchNama && !matchNim) return false;
     }
-    mahasiswaList.push(m);
-  }
+    return true;
+  });
 
-  return {
-    mahasiswaList,
-    angkatanList: Array.from(angkatanSet).sort().reverse(),
-    kelasList: Array.from(kelasSet).sort()
-  };
+  return { mahasiswaList, angkatanList, kelasList };
 }
 
 router.get('/', async (req, res) => {
   try {
-    const { angkatan, semester, statusMagang, statusMahasiswa, kelas, search } = req.query;
+    const { angkatan, semester, statusMagang, statusMahasiswa, kelas, search, semua } = req.query;
 
     let importResult = null, importError = null;
     if (req.query.import === 'done' && req.session.importResult) {
@@ -144,9 +168,25 @@ router.get('/', async (req, res) => {
     const { mahasiswaList, angkatanList, kelasList } = await getFilteredMahasiswaList(req.query);
     const dosenPaList = await getAllDosenPa();
 
+    // Paginasi tampilan: 10 per halaman secara default (murni potong array
+    // di memori, tidak ada biaya baca Firestore tambahan karena datanya
+    // sudah di-cache di getFilteredMahasiswaList). Admin bisa klik
+    // "Tampilkan Semua" kalau memang perlu lihat semuanya sekaligus.
+    const PER_PAGE = 10;
+    const tampilkanSemua = semua === '1';
+    const totalData = mahasiswaList.length;
+    const totalHalaman = Math.max(1, Math.ceil(totalData / PER_PAGE));
+    let halaman = parseInt(req.query.page, 10) || 1;
+    if (halaman < 1) halaman = 1;
+    if (halaman > totalHalaman) halaman = totalHalaman;
+
+    const mahasiswaTampil = tampilkanSemua
+      ? mahasiswaList
+      : mahasiswaList.slice((halaman - 1) * PER_PAGE, halaman * PER_PAGE);
+
     res.render('admin/mahasiswa_list', {
       title: 'Kelola Mahasiswa',
-      mahasiswa: mahasiswaList,
+      mahasiswa: mahasiswaTampil,
       angkatanList,
       kelasList,
       dosenPaList,
@@ -158,6 +198,19 @@ router.get('/', async (req, res) => {
       search: search || '',
       importResult,
       importError,
+      paging: {
+        halaman,
+        totalHalaman,
+        totalData,
+        perPage: PER_PAGE,
+        tampilkanSemua,
+        queryTanpaPaging: (() => {
+          const q = { ...req.query };
+          delete q.page;
+          delete q.semua;
+          return q;
+        })()
+      }
     });
   } catch (error) {
     console.error('Error mengambil data mahasiswa:', error);
@@ -370,6 +423,7 @@ router.post('/', upload.single('foto'), async (req, res) => {
       semester: [],
     });
 
+    invalidate(CACHE_KEY_SEMUA_MAHASISWA);
     res.redirect('/admin/mahasiswa');
   } catch (error) {
     console.error('Error menambah mahasiswa:', error);
@@ -568,8 +622,10 @@ router.post('/:id/update', upload.single('foto'), async (req, res) => {
 
     if (krsAutoMessage) {
       const param = krsAutoOk ? 'krsSuccess' : 'error';
+      invalidate(CACHE_KEY_SEMUA_MAHASISWA);
       return res.redirect(`/admin/mahasiswa/${req.params.id}?${param}=` + encodeURIComponent(krsAutoMessage));
     }
+    invalidate(CACHE_KEY_SEMUA_MAHASISWA);
     res.redirect('/admin/mahasiswa');
   } catch (error) {
     console.error('Error update mahasiswa:', error);
@@ -807,6 +863,7 @@ router.post('/:id/delete', async (req, res) => {
     await db.collection('tagihan').doc(req.params.id).delete();
     await mahasiswaRef.delete();
 
+    invalidate(CACHE_KEY_SEMUA_MAHASISWA);
     res.redirect('/admin/mahasiswa');
   } catch (error) {
     console.error('Error hapus mahasiswa:', error);
@@ -863,6 +920,7 @@ router.post('/bulk-kelas', async (req, res) => {
         ? `${mahasiswaIds.length} mahasiswa berhasil dimasukkan ke kelas ${kelasFinal}`
         : `Kelas berhasil dikosongkan untuk ${mahasiswaIds.length} mahasiswa`
     };
+    invalidate(CACHE_KEY_SEMUA_MAHASISWA);
     res.redirect('/admin/mahasiswa?import=done');
   } catch (error) {
     console.error('Error bulk assign kelas:', error);
@@ -922,6 +980,7 @@ router.post('/bulk-dosen-pa', async (req, res) => {
         ? `${mahasiswaIds.length} mahasiswa berhasil ditugaskan ke Dosen PA ${dosenPaData.dosenPaNama}`
         : `Dosen PA berhasil dikosongkan untuk ${mahasiswaIds.length} mahasiswa`
     };
+    invalidate(CACHE_KEY_SEMUA_MAHASISWA);
     res.redirect('/admin/mahasiswa?import=done');
   } catch (error) {
     console.error('Error bulk assign dosen PA:', error);
@@ -1111,6 +1170,7 @@ router.post('/import', upload.single('file'), async (req, res) => {
     }
 
     req.session.importResult = { success, failed, errors };
+    invalidate(CACHE_KEY_SEMUA_MAHASISWA);
     res.redirect('/admin/mahasiswa?import=done');
   } catch (error) {
     console.error('Import error:', error);

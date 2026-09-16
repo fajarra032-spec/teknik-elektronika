@@ -444,6 +444,50 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Kontrol Paginasi: 10 per halaman secara default, hemat kuota baca
+         Firestore karena datanya sudah di-cache di server (lihat
+         getSemuaMahasiswaMentah di routes/admin/mahasiswa.js) - jadi
+         menampilkan sedikit atau banyak baris sekaligus di sini TIDAK
+         menambah biaya baca ke Firestore. -->
+    <% if (typeof paging !== 'undefined' && paging.totalData > 0) { %>
+      <% 
+        const qs = (overrides) => {
+          const params = new URLSearchParams({ ...paging.queryTanpaPaging, ...overrides });
+          for (const [k, v] of [...params]) { if (v === undefined || v === null || v === '') params.delete(k); }
+          return '/admin/mahasiswa?' + params.toString();
+        };
+      %>
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+        <div class="text-muted small">
+          <% if (paging.tampilkanSemua) { %>
+            Menampilkan semua <%= paging.totalData %> mahasiswa
+          <% } else { %>
+            Menampilkan <%= (paging.halaman - 1) * paging.perPage + 1 %>–<%= Math.min(paging.halaman * paging.perPage, paging.totalData) %>
+            dari <%= paging.totalData %> mahasiswa (Halaman <%= paging.halaman %>/<%= paging.totalHalaman %>)
+          <% } %>
+        </div>
+        <div class="btn-group">
+          <% if (!paging.tampilkanSemua) { %>
+            <a href="<%= qs({ page: paging.halaman - 1 }) %>"
+               class="btn btn-sm btn-outline-secondary <%= paging.halaman <= 1 ? 'disabled' : '' %>">
+              <i class="bi bi-chevron-left"></i> Sebelumnya
+            </a>
+            <a href="<%= qs({ page: paging.halaman + 1 }) %>"
+               class="btn btn-sm btn-outline-secondary <%= paging.halaman >= paging.totalHalaman ? 'disabled' : '' %>">
+              Berikutnya <i class="bi bi-chevron-right"></i>
+            </a>
+            <a href="<%= qs({ semua: '1' }) %>" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-list-ul"></i> Tampilkan Semua
+            </a>
+          <% } else { %>
+            <a href="<%= qs({ semua: null, page: 1 }) %>" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-collection"></i> Kembali ke 10 per Halaman
+            </a>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
   </div>
 </div>
 

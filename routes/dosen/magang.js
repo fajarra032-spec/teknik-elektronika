@@ -384,6 +384,34 @@ router.get('/:userId', async (req, res) => {
       if (data.semester) semesterSet.add(data.semester);
     });
     const semesterList = Array.from(semesterSet).sort();
+
+    // Paginasi tampilan logbook (10 per halaman) - datanya sudah dibaca dari
+    // Firestore di atas (query sudah difilter periode/semester), jadi ini
+    // cuma memotong render di server, bukan baca ulang - tapi bikin halaman
+    // jauh lebih ringan untuk mahasiswa yang logbook-nya sudah puluhan/ratusan.
+    const LOGBOOK_PER_PAGE = 10;
+    const logbookTampilkanSemua = req.query.semuaLogbook === '1';
+    const logbookTotal = logbookList.length;
+    const logbookTotalHalaman = Math.max(1, Math.ceil(logbookTotal / LOGBOOK_PER_PAGE));
+    let logbookHalaman = parseInt(req.query.pageLogbook, 10) || 1;
+    if (logbookHalaman < 1) logbookHalaman = 1;
+    if (logbookHalaman > logbookTotalHalaman) logbookHalaman = logbookTotalHalaman;
+    const logbookListTampil = logbookTampilkanSemua
+      ? logbookList
+      : logbookList.slice((logbookHalaman - 1) * LOGBOOK_PER_PAGE, logbookHalaman * LOGBOOK_PER_PAGE);
+    const logbookPaging = {
+      halaman: logbookHalaman,
+      totalHalaman: logbookTotalHalaman,
+      totalData: logbookTotal,
+      perPage: LOGBOOK_PER_PAGE,
+      tampilkanSemua: logbookTampilkanSemua,
+      queryTanpaPaging: (() => {
+        const q = { ...req.query };
+        delete q.pageLogbook;
+        delete q.semuaLogbook;
+        return q;
+      })()
+    };
     
     // Statistik per PDK
     const pdkStats = [];
@@ -399,7 +427,8 @@ router.get('/:userId', async (req, res) => {
     res.render('dosen/magang_detail', {
       title: `ELK Magang - ${mahasiswa.nama}`,
       mahasiswa,
-      logbookList,
+      logbookList: logbookListTampil,
+      logbookPaging,
       semesterList,
       selectedSemester: semester || '',
       allPeriods,
