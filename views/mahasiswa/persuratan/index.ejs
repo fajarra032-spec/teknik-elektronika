@@ -20,9 +20,11 @@
     --font-base: 16px;
   }
 
-  html {
-    font-size: 16px;
-  }
+  /* html font-size sengaja TIDAK dikunci di sini - dibiarkan mengikuti
+     sistem font fluid/responsif dari partials/design-system.ejs supaya
+     konsisten dengan halaman lain di situs (tidak terasa "zoom" kebesaran).
+     Media query "RESPONSIVE" di bawah tetap mengecilkan lebih lanjut khusus
+     utk layar sempit (termasuk lebar iPhone). */
 
   body {
     font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;

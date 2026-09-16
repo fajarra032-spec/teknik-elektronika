@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <style>
+    @page { size: A4 portrait; margin: 1.4cm 1.5cm; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; font-size: 10pt; }
+    .print-btn, .back-btn { margin: 20px 5px; font-family: Arial, sans-serif; }
+
+    .kop-surat { display: flex; align-items: center; margin-bottom: 12px; }
+    .logo-kop { width: 60px; height: auto; margin-right: 14px; }
+    .teks-kop { flex: 1; }
+    .teks-kop .nama-kampus { font-size: 15pt; font-weight: bold; margin: 0; color: #3b60a3; letter-spacing: 0.5px; }
+    .teks-kop .alamat, .teks-kop .kontak { font-size: 8pt; margin: 1px 0; color: #333; }
+    .garis-kop { border-bottom: 3px solid #3b60a3; margin-bottom: 12px; }
+
+    .judul-dokumen { text-align: center; font-size: 13pt; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
+    .sub-judul { text-align: center; font-size: 10.5pt; margin-bottom: 12px; font-weight: 600; color: #333; }
+
+    table.info-lkm { width: 100%; margin-bottom: 12px; font-size: 9.5pt; border-collapse: collapse; }
+    table.info-lkm td { padding: 2px 4px; vertical-align: top; }
+    table.info-lkm .label { width: 130px; }
+    table.info-lkm .isian-titik { border-bottom: 1px dotted #000; display: inline-block; min-width: 150px; }
+
+    .sect-title {
+      font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin: 14px 0 6px 0;
+      background: #eef2f7; padding: 4px 8px; border-left: 4px solid #3b60a3;
+    }
+    .ref-box { font-size: 9.3pt; background: #fafafa; border: 1px solid #ddd; border-radius: 4px; padding: 8px 10px; margin-bottom: 4px; }
+    .ref-box ul, .ref-box ol { margin: 4px 0 0 0; padding-left: 18px; }
+    .ref-box li { margin-bottom: 2px; }
+    .ref-box p { margin: 4px 0 0 0; }
+
+    .garis-isi { border-bottom: 1px solid #999; height: 22px; margin-bottom: 2px; }
+    .garis-isi:last-child { margin-bottom: 0; }
+
+    table.tabel-data { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-top: 4px; }
+    table.tabel-data th, table.tabel-data td { border: 1px solid #000; padding: 5px; text-align: center; }
+    table.tabel-data th { background: #dbe5f1; font-weight: bold; }
+    table.tabel-data td.isi { height: 26px; }
+
+    .pertanyaan-item { margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid; }
+    .pertanyaan-item .no-pertanyaan { font-weight: bold; font-size: 9.7pt; margin-bottom: 3px; }
+
+    .k3-box { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 6px 10px; border-radius: 4px; font-size: 9pt; margin-bottom: 10px; }
+
+    .ttd-wrap { display: flex; justify-content: space-between; margin-top: 30px; page-break-inside: avoid; break-inside: avoid; }
+    .ttd-box { text-align: center; width: 250px; font-size: 9.5pt; page-break-inside: avoid; break-inside: avoid; }
+    .ttd-box .nama-ttd { font-weight: bold; text-decoration: underline; margin-top: 55px; }
+    .nilai-box { text-align: center; width: 140px; font-size: 9.5pt; border: 1px solid #000; border-radius: 4px; padding: 8px; }
+    .nilai-box .angka { font-size: 20pt; font-weight: bold; height: 32px; }
+
+    .halaman-2 { page-break-before: always; }
+
+    @media print {
+      .btn, .print-btn, .back-btn { display: none !important; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3 print-btn">
+      <a href="<%= backUrl %>" class="btn btn-outline-secondary btn-sm back-btn">
+        <i class="bi bi-arrow-left"></i> Kembali
+      </a>
+      <button onclick="window.print()" class="btn btn-primary btn-sm print-btn shadow-sm">
+        <i class="bi bi-printer"></i> Cetak / Simpan PDF
+      </button>
+    </div>
+
+    <%- include('partials/kop_surat') %>
+
+    <div class="judul-dokumen">Lembar Kerja Mahasiswa (LKM)</div>
+    <div class="sub-judul">Modul Praktikum <%= nomorModul %> dari <%= totalModul %>: <%= modul.judul %></div>
+
+    <table class="info-lkm">
+      <tr>
+        <td class="label">Mata Kuliah</td><td>: <%= mk.kode %> - <%= mk.nama %></td>
+        <td class="label">Estimasi Waktu</td><td>: <%= modul.estimasiWaktu %></td>
+      </tr>
+      <tr>
+        <td class="label">Nama Mahasiswa</td>
+        <td>: <span class="isian-titik">&nbsp;<%= namaMahasiswa || '' %>&nbsp;</span></td>
+        <td class="label">NIM</td>
+        <td>: <span class="isian-titik">&nbsp;<%= nimMahasiswa || '' %>&nbsp;</span></td>
+      </tr>
+      <tr>
+        <td class="label">Kelas</td>
+        <td>: <span class="isian-titik">&nbsp;<%= mk.kelas || '' %>&nbsp;</span></td>
+        <td class="label">Hari / Tanggal</td>
+        <td>: <span class="isian-titik">&nbsp;</span></td>
+      </tr>
+      <tr>
+        <td class="label">Dosen Pengampu</td>
+        <td colspan="3">: <span class="isian-titik">&nbsp;<%= namaDosen || '' %>&nbsp;</span></td>
+      </tr>
+    </table>
+
+    <div class="sect-title">Tujuan Praktikum</div>
+    <div class="ref-box">
+      <ol>
+        <% modul.tujuan.forEach(t => { %><li><%= t %></li><% }) %>
+      </ol>
+    </div>
+
+    <div class="sect-title">Alat &amp; Bahan</div>
+    <div class="ref-box">
+      <ul>
+        <% modul.alatBahan.forEach(a => { %><li><%= a %></li><% }) %>
+      </ul>
+    </div>
+
+    <% if (modul.k3) { %>
+      <div class="k3-box"><strong>&#9888; Keselamatan Kerja:</strong> <%= modul.k3 %></div>
+    <% } %>
+
+    <div class="sect-title">I. Data Hasil Pengamatan</div>
+    <table class="tabel-data">
+      <thead>
+        <tr>
+          <th style="width: 8%;">No</th>
+          <th style="width: 42%;">Parameter / Langkah yang Diamati</th>
+          <th>Hasil Pengamatan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (let i = 1; i <= 8; i++) { %>
+          <tr>
+            <td><%= i %></td>
+            <td class="isi"></td>
+            <td class="isi"></td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+
+    <!-- ====================== HALAMAN 2 ====================== -->
+    <div class="halaman-2">
+      <%- include('partials/kop_surat') %>
+
+      <div class="sect-title">II. Analisis dan Pembahasan</div>
+      <% for (let i = 0; i < 10; i++) { %><div class="garis-isi"></div><% } %>
+
+      <div class="sect-title">III. Pertanyaan / Tugas</div>
+      <% modul.tugasLaporan.forEach((t, i) => { %>
+        <div class="pertanyaan-item">
+          <div class="no-pertanyaan"><%= i + 1 %>. <%= t %></div>
+          <% for (let j = 0; j < 3; j++) { %><div class="garis-isi"></div><% } %>
+        </div>
+      <% }) %>
+
+      <div class="sect-title">IV. Kesimpulan</div>
+      <% for (let i = 0; i < 6; i++) { %><div class="garis-isi"></div><% } %>
+
+      <div class="ttd-wrap">
+        <div class="ttd-box">
+          <div>Mahasiswa,</div>
+          <div class="nama-ttd"><%= namaMahasiswa || '..........................' %></div>
+          <div>NIM. <%= nimMahasiswa || '..........................' %></div>
+        </div>
+        <div class="nilai-box">
+          <div>Nilai Praktikum</div>
+          <div class="angka">&nbsp;</div>
+        </div>
+        <div class="ttd-box">
+          <div>Dosen / Asisten Praktikum,</div>
+          <div class="nama-ttd"><%= namaDosen || '..........................' %></div>
+          <div>&nbsp;</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -686,8 +686,19 @@ router.get('/:id/modul', async (req, res) => {
     // Modul template (job sheet) - hanya terisi kalau MK ini cocok jenisnya
     const jenisPraktikum = detectJenisPraktikum(akses.mk);
     const templateHasil = jenisPraktikum ? getModulPraktikumList(akses.mk) : { jenisLabel: null, modulList: [] };
-    const templateModulList = templateHasil.modulList;
+    let templateModulList = templateHasil.modulList;
     const jumlahTemplateAktif = templateModulList.filter(m => m.aktif).length;
+
+    // Hitung jumlah pengumpulan LKM per modul (untuk badge "X sudah kumpul")
+    if (templateModulList.length > 0) {
+      const lkmSnapshot = await db.collection('lkmPengumpulan').where('mkId', '==', akses.mk.id).get();
+      const jumlahPerModul = new Map();
+      lkmSnapshot.docs.forEach(doc => {
+        const mid = doc.data().modulId;
+        jumlahPerModul.set(mid, (jumlahPerModul.get(mid) || 0) + 1);
+      });
+      templateModulList = templateModulList.map(m => ({ ...m, jumlahKumpul: jumlahPerModul.get(m.id) || 0 }));
+    }
 
     res.render('dosen/mk_modul', {
       title: `Modul - ${akses.mk.kode} ${akses.mk.nama}`,
@@ -938,6 +949,138 @@ router.post('/:id/modul-template/:modulId/catatan', upload.single('file'), async
   } catch (error) {
     console.error('Error simpan catatan modul template:', error);
     res.status(500).send('Gagal menyimpan catatan modul template: ' + error.message);
+  }
+});
+
+/**
+ * GET /dosen/mk/:id/modul-template/:modulId/cetak
+ * Preview/cetak LKM kosong (mis. untuk dicetak beberapa rangkap dan
+ * dibagikan langsung ke kelas). Nama/NIM dikosongkan karena ini bukan
+ * untuk satu mahasiswa tertentu.
+ */
+router.get('/:id/modul-template/:modulId/cetak', async (req, res) => {
+  try {
+    const akses = await cekAksesMk(req.params.id, req.dosen.id);
+    if (!akses.ok) return res.status(akses.status).render('error', { title: 'Error', message: akses.message });
+
+    const jenis = detectJenisPraktikum(akses.mk);
+    if (!jenis) return res.status(404).render('error', { title: 'Tidak Tersedia', message: 'Modul template tidak tersedia untuk mata kuliah ini.' });
+
+    const { modulList } = getModulPraktikumList(akses.mk);
+    const modul = modulList.find(m => m.id === req.params.modulId);
+    if (!modul) return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Modul tidak ditemukan.' });
+    const nomorModul = modulList.findIndex(m => m.id === req.params.modulId) + 1;
+
+    res.render('lkm_praktikum_print', {
+      title: `LKM - ${modul.judul}`,
+      mk: akses.mk,
+      modul,
+      nomorModul,
+      totalModul: modulList.length,
+      namaMahasiswa: null,
+      nimMahasiswa: null,
+      namaDosen: req.dosen.nama || null,
+      backUrl: `/dosen/mk/${akses.mk.id}/modul`
+    });
+  } catch (error) {
+    console.error('Error cetak LKM (dosen):', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat LKM' });
+  }
+});
+
+/**
+ * GET /dosen/mk/:id/modul-template/:modulId/kumpulan
+ * Rekap pengumpulan LKM (foto/scan hasil tulis tangan) satu modul untuk
+ * seluruh mahasiswa terdaftar - siapa yang sudah kumpul, link filenya,
+ * dan form catatan + nilai praktikum sederhana (terpisah dari sistem
+ * rubrik/nilai resmi - murni catatan praktik per modul).
+ */
+router.get('/:id/modul-template/:modulId/kumpulan', async (req, res) => {
+  try {
+    const akses = await cekAksesMk(req.params.id, req.dosen.id);
+    if (!akses.ok) return res.status(akses.status).render('error', { title: 'Error', message: akses.message });
+
+    const jenis = detectJenisPraktikum(akses.mk);
+    if (!jenis) return res.status(404).render('error', { title: 'Tidak Tersedia', message: 'Modul template tidak tersedia untuk mata kuliah ini.' });
+
+    const { modulList } = getModulPraktikumList(akses.mk);
+    const modul = modulList.find(m => m.id === req.params.modulId);
+    if (!modul) return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Modul tidak ditemukan.' });
+
+    const periodeAktif = getPeriodeAktif();
+    const enrollmentSnapshot = await db.collection('enrollment')
+      .where('mkId', '==', akses.mk.id)
+      .where('semester', '==', periodeAktif)
+      .where('status', '==', 'active')
+      .get();
+    const mahasiswaIds = enrollmentSnapshot.docs
+      .map(doc => doc.data().userId)
+      .filter(uid => uid && typeof uid === 'string' && uid.trim() !== '');
+
+    const lkmSnapshot = await db.collection('lkmPengumpulan')
+      .where('mkId', '==', akses.mk.id)
+      .where('modulId', '==', modul.id)
+      .get();
+    const lkmMap = new Map();
+    lkmSnapshot.docs.forEach(doc => lkmMap.set(doc.data().mahasiswaId, { id: doc.id, ...doc.data() }));
+
+    let mahasiswaList = [];
+    if (mahasiswaIds.length > 0) {
+      const userDocs = await db.getAll(...mahasiswaIds.map(uid => db.collection('users').doc(uid)));
+      userDocs.forEach((userDoc, i) => {
+        if (userDoc.exists) {
+          mahasiswaList.push({
+            id: mahasiswaIds[i],
+            nama: userDoc.data().nama,
+            nim: userDoc.data().nim,
+            pengumpulan: lkmMap.get(mahasiswaIds[i]) || null
+          });
+        }
+      });
+    }
+    mahasiswaList.sort((a, b) => (a.nim || '').localeCompare(b.nim || ''));
+    const jumlahSudahKumpul = mahasiswaList.filter(m => m.pengumpulan).length;
+
+    res.render('dosen/mk_modul_kumpulan', {
+      title: `Kumpulan LKM - ${modul.judul}`,
+      mk: akses.mk,
+      modul,
+      mahasiswaList,
+      jumlahSudahKumpul
+    });
+  } catch (error) {
+    console.error('Error kumpulan LKM:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat kumpulan LKM' });
+  }
+});
+
+/**
+ * POST /dosen/mk/:id/modul-template/:modulId/kumpulan/:pengumpulanId/periksa
+ * Simpan catatan + nilai praktikum sederhana untuk satu pengumpulan LKM.
+ */
+router.post('/:id/modul-template/:modulId/kumpulan/:pengumpulanId/periksa', async (req, res) => {
+  try {
+    const akses = await cekAksesMk(req.params.id, req.dosen.id);
+    if (!akses.ok) return res.status(akses.status).send(akses.message);
+
+    const { nilaiPraktikum, catatanDosen } = req.body;
+    const pengumpulanRef = db.collection('lkmPengumpulan').doc(req.params.pengumpulanId);
+    const pengumpulanDoc = await pengumpulanRef.get();
+    if (!pengumpulanDoc.exists || pengumpulanDoc.data().mkId !== akses.mk.id) {
+      return res.status(404).send('Pengumpulan LKM tidak ditemukan');
+    }
+
+    await pengumpulanRef.update({
+      nilaiPraktikum: nilaiPraktikum !== undefined && nilaiPraktikum !== '' ? parseFloat(nilaiPraktikum) : null,
+      catatanDosen: catatanDosen || '',
+      status: 'diperiksa',
+      diperiksaPada: new Date().toISOString()
+    });
+
+    res.redirect(`/dosen/mk/${akses.mk.id}/modul-template/${req.params.modulId}/kumpulan`);
+  } catch (error) {
+    console.error('Error periksa LKM:', error);
+    res.status(500).send('Gagal menyimpan pemeriksaan LKM');
   }
 });
 

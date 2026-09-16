@@ -352,6 +352,12 @@ async function startServer() {
     app.use('/admin/spmp', adminSpmpRouter);
     app.use('/dosen/spmp', dosenSpmpRouter);
 
+    // Akreditasi Program Studi (LAM Teknik)
+    const adminAkreditasiRouter = require('./routes/admin/akreditasi');
+    const dosenAkreditasiRouter = require('./routes/dosen/akreditasiRoute');
+    app.use('/admin/akreditasi', adminAkreditasiRouter);
+    app.use('/dosen/akreditasi', dosenAkreditasiRouter);
+
     // Perusahaan magang
     const adminPerusahaanRouter = require('./routes/admin/perusahaan');
     const dosenPerusahaanRouter = require('./routes/dosen/perusahaan');

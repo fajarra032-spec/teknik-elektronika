@@ -1,0 +1,47 @@
+<%- include('../../partials/header') %>
+<div class="container mt-4 mb-5" style="max-width: 640px;">
+  <h2><%= periode ? 'Edit Periode Akreditasi' : 'Periode Akreditasi Baru' %></h2>
+  <form method="POST" action="<%= periode ? `/admin/akreditasi/periode/${periode.id}/edit` : '/admin/akreditasi/periode' %>" class="mt-3">
+    <div class="mb-3">
+      <label class="form-label">Nama Periode</label>
+      <input type="text" name="nama" class="form-control" required
+             placeholder="Contoh: Akreditasi LAM Teknik 2026"
+             value="<%= periode ? periode.nama : '' %>">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Jenjang / Program</label>
+      <input type="text" name="jenjang" class="form-control"
+             placeholder="Contoh: D3 Vokasi Teknik Elektronika"
+             value="<%= periode ? periode.jenjang : 'D3 Vokasi' %>">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Lembaga Akreditasi</label>
+      <input type="text" name="lembaga" class="form-control"
+             value="<%= periode ? periode.lembaga : 'LAM Teknik' %>">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Target Tanggal Pengajuan</label>
+      <input type="date" name="tanggalTarget" class="form-control"
+             value="<%= periode && periode.tanggalTarget ? periode.tanggalTarget : '' %>">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Status Periode</label>
+      <select name="status" class="form-select">
+        <option value="berjalan" <%= periode && periode.status === 'berjalan' ? 'selected' : '' %>>Berjalan</option>
+        <option value="selesai" <%= periode && periode.status === 'selesai' ? 'selected' : '' %>>Selesai</option>
+        <option value="draft" <%= periode && periode.status === 'draft' ? 'selected' : '' %>>Draft</option>
+      </select>
+    </div>
+    <% if (!periode) { %>
+      <div class="alert alert-secondary small">
+        Setelah disimpan, sistem otomatis membuat 9 kriteria standar akreditasi
+        (Visi-Misi, Tata Pamong, Mahasiswa, SDM, Sarana-Prasarana, Pendidikan,
+        Penelitian, PkM, dan Luaran Tridarma) yang bisa Anda sesuaikan di
+        masing-masing workspace kriteria.
+      </div>
+    <% } %>
+    <button type="submit" class="btn btn-primary">Simpan</button>
+    <a href="/admin/akreditasi" class="btn btn-secondary">Batal</a>
+  </form>
+</div>
+<%- include('../../partials/footer') %>

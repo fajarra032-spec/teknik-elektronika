@@ -1,0 +1,45 @@
+<%- include('../../partials/header') %>
+<div class="container mt-4 mb-5" style="max-width: 640px;">
+  <h2><%= kriteria ? 'Edit Kriteria' : 'Tambah Kriteria' %></h2>
+  <% if (periode) { %>
+    <p class="text-muted">Periode: <strong><%= periode.nama %></strong></p>
+  <% } %>
+
+  <form method="POST"
+        action="<%= kriteria ? `/admin/akreditasi/kriteria/${kriteria.id}/edit` : `/admin/akreditasi/periode/${periode.id}/kriteria` %>"
+        class="mt-3">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Kode</label>
+        <input type="text" name="kode" class="form-control" required
+               placeholder="I, II, III, ..."
+               value="<%= kriteria ? kriteria.kode : '' %>">
+      </div>
+      <div class="col-md-9">
+        <label class="form-label">Nama Kriteria</label>
+        <input type="text" name="nama" class="form-control" required
+               value="<%= kriteria ? kriteria.nama : '' %>">
+      </div>
+      <div class="col-12">
+        <label class="form-label">Deskripsi / Cakupan</label>
+        <textarea name="deskripsi" class="form-control" rows="4"><%= kriteria ? kriteria.deskripsi : '' %></textarea>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Urutan Tampil</label>
+        <input type="number" name="urutan" class="form-control"
+               value="<%= kriteria ? kriteria.urutan : '' %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Target Tanggal Selesai</label>
+        <input type="date" name="targetTanggal" class="form-control"
+               value="<%= kriteria && kriteria.targetTanggal ? kriteria.targetTanggal : '' %>">
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <button type="submit" class="btn btn-primary">Simpan</button>
+      <a href="/admin/akreditasi?periodeId=<%= periode ? periode.id : '' %>" class="btn btn-secondary">Batal</a>
+    </div>
+  </form>
+</div>
+<%- include('../../partials/footer') %>

@@ -6,6 +6,7 @@
   if (typeof tagihan === 'undefined') tagihan = [];
   if (typeof upcomingEvents === 'undefined') upcomingEvents = [];
   if (typeof tugasAktif === 'undefined') tugasAktif = [];
+  if (typeof lkmBelumDikumpulkan === 'undefined') lkmBelumDikumpulkan = [];
   if (typeof totalSks === 'undefined') totalSks = 0;
   if (typeof semesterSekarang === 'undefined') semesterSekarang = 'Genap 2025/2026';
   if (typeof uploadSuccess === 'undefined') uploadSuccess = false;
@@ -26,6 +27,7 @@
   const isLunas = totalBelumLunas <= 0;
   const unpaidTagihan = tagihanList.filter(t => t.status !== 'lunas');
   const tugasAktifList = Array.isArray(tugasAktif) ? tugasAktif : [];
+  const lkmBelumList = Array.isArray(lkmBelumDikumpulkan) ? lkmBelumDikumpulkan : [];
 %>
 
 <style>
@@ -33,6 +35,7 @@
   :root {
     /* Tambahan dari landing */
     --primary: #0d6efd;
+    --primary-dark: #0b5ed7;
     --secondary: #0dcaf0;
     --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
     --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
@@ -461,7 +464,12 @@
   <div class="ringkasan-card">
     <div class="ringkasan-header d-flex justify-content-between align-items-center">
       <h5 class="fw-bold mb-0"><i class="bi bi-mortarboard me-2"></i>Informasi Mahasiswa</h5>
-      <span class="badge-tugas"><i class="bi bi-file-earmark-text me-1"></i><%= tugasAktifList.length %> tugas</span>
+      <div class="d-flex gap-2">
+        <span class="badge-tugas"><i class="bi bi-file-earmark-text me-1"></i><%= tugasAktifList.length %> tugas</span>
+        <% if (lkmBelumList.length > 0) { %>
+          <span class="badge-tugas" style="background: rgba(16,185,129,0.15); color: #065f46;"><i class="bi bi-pencil-square me-1"></i><%= lkmBelumList.length %> LKM</span>
+        <% } %>
+      </div>
     </div>
     <div class="card-body p-4">
       <!-- Jadwal Penting Mendatang -->
@@ -519,6 +527,44 @@
               <a href="/mahasiswa/elearning/tugas-aktif" class="btn btn-sm btn-outline-secondary rounded-pill px-4">
                 Lihat <%= tugasAktifList.length - 5 %> tugas lainnya
               </a>
+            </div>
+          <% } %>
+        </div>
+      <% } %>
+
+      <!-- Daftar LKM Praktikum Belum Dikumpulkan -->
+      <hr class="my-4">
+      <h6 class="fw-semibold mb-3"><i class="bi bi-pencil-square me-2"></i>LKM Praktikum Belum Dikumpulkan</h6>
+      <% if (lkmBelumList.length === 0) { %>
+        <div class="text-center py-3">
+          <i class="bi bi-check-circle-fill fs-1 text-success mb-2"></i>
+          <p class="text-muted mb-0">Semua LKM praktikum yang tersedia sudah dikumpulkan.</p>
+        </div>
+      <% } else { %>
+        <div style="max-height: 300px; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 8px;">
+          <% lkmBelumList.slice(0, 5).forEach(m => { %>
+            <div class="d-flex flex-wrap justify-content-between align-items-center py-3 border-bottom border-light">
+              <div style="min-width: 0; flex: 1;">
+                <strong class="fs-6"><%= m.modulJudul %></strong>
+                <p class="mb-0 text-muted small">
+                  <i class="bi bi-journal-bookmark-fill me-1"></i><%= m.mkKode || '-' %> <%= m.mkNama ? '- ' + m.mkNama : '' %>
+                </p>
+                <% if (m.tanggal) { %>
+                  <p class="mb-0 text-muted small">
+                    <i class="bi bi-calendar3 me-1"></i>Jadwal praktikum: <%= new Date(m.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                  </p>
+                <% } %>
+              </div>
+              <div class="mt-2 mt-sm-0 ms-2">
+                <a href="/mahasiswa/elearning/mk/<%= m.mkId %>/modul" class="btn btn-sm btn-success rounded-pill px-3">
+                  <i class="bi bi-cloud-upload me-1"></i>Kumpul
+                </a>
+              </div>
+            </div>
+          <% }) %>
+          <% if (lkmBelumList.length > 5) { %>
+            <div class="text-center mt-3">
+              <span class="text-muted small">dan <%= lkmBelumList.length - 5 %> LKM lainnya - buka halaman Modul tiap mata kuliah untuk melihat semuanya.</span>
             </div>
           <% } %>
         </div>

@@ -1,0 +1,62 @@
+<%- include('../../partials/header') %>
+<div class="container mt-4 mb-5">
+  <h2>Akreditasi Program Studi</h2>
+  <small class="text-muted">Workspace persiapan akreditasi LAM Teknik - tempat pembahasan &amp; pengumpulan dokumen per kriteria</small>
+
+  <% if (!periode) { %>
+    <div class="alert alert-info mt-4">Belum ada periode akreditasi yang sedang berjalan.</div>
+  <% } else { %>
+    <div class="card mt-3">
+      <div class="card-body">
+        <h5 class="card-title mb-1"><%= periode.nama %></h5>
+        <div class="text-muted small mb-2"><%= periode.jenjang %> &middot; <%= periode.lembaga %></div>
+        <div class="progress" style="height: 20px;">
+          <div class="progress-bar bg-success" style="width: <%= progresKeseluruhan %>%;"><%= progresKeseluruhan %>%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive mt-4">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th style="width:60px;">Kode</th>
+            <th>Nama Kriteria</th>
+            <th style="width:140px;">Status</th>
+            <th style="width:110px;">Target</th>
+            <th style="width:110px;">Dokumen</th>
+            <th style="width:130px;">PIC Saya?</th>
+            <th style="width:150px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% kriteriaList.forEach(k => { %>
+            <tr class="<%= k.terlambat ? 'table-danger' : (k.sayaPic ? 'table-warning' : '') %>">
+              <td class="fw-bold"><%= k.kode %></td>
+              <td><%= k.nama %></td>
+              <td>
+                <% const badge = k.status === 'selesai' ? 'success' : (k.status === 'proses' ? 'warning' : 'secondary'); %>
+                <span class="badge bg-<%= badge %>">
+                  <%= k.status === 'selesai' ? 'Selesai' : (k.status === 'proses' ? 'Sedang Diproses' : 'Belum Dimulai') %>
+                </span>
+              </td>
+              <td>
+                <% if (k.targetTanggal) { %>
+                  <span class="small <%= k.terlambat ? 'text-danger fw-bold' : 'text-muted' %>">
+                    <%= k.targetTanggal %><% if (k.terlambat) { %> <i class="bi bi-exclamation-triangle-fill"></i><% } %>
+                  </span>
+                <% } else { %>
+                  <span class="text-muted small">-</span>
+                <% } %>
+              </td>
+              <td><span class="badge bg-light text-dark border"><%= k.jumlahDokumen %> file</span></td>
+              <td><%- k.sayaPic ? '<span class="badge bg-warning text-dark">Ya, PIC</span>' : '-' %></td>
+              <td><a href="/dosen/akreditasi/kriteria/<%= k.id %>" class="btn btn-sm btn-primary">Buka Workspace</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+<%- include('../../partials/footer') %>

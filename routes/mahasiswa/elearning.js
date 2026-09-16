@@ -538,6 +538,19 @@ router.get('/mk/:id/modul', async (req, res) => {
       const hasilTemplate = getPublishedModulPraktikum(mk);
       templateModulList = hasilTemplate.modulList;
       jenisPraktikumLabel = hasilTemplate.jenisLabel;
+
+      // Ambil status pengumpulan LKM mahasiswa ini untuk tiap modul template
+      // yang sedang tampil, supaya halaman bisa menunjukkan "sudah
+      // dikumpulkan" / form upload, tanpa mahasiswa perlu buka halaman lain.
+      if (templateModulList.length > 0) {
+        const lkmSnapshot = await db.collection('lkmPengumpulan')
+          .where('mkId', '==', mkId)
+          .where('mahasiswaId', '==', req.user.id)
+          .get();
+        const lkmMap = new Map();
+        lkmSnapshot.docs.forEach(doc => lkmMap.set(doc.data().modulId, { id: doc.id, ...doc.data() }));
+        templateModulList = templateModulList.map(m => ({ ...m, pengumpulanLkm: lkmMap.get(m.id) || null }));
+      }
     }
 
     res.render('mahasiswa/elearning/mk_modul', {
@@ -550,6 +563,217 @@ router.get('/mk/:id/modul', async (req, res) => {
   } catch (error) {
     console.error('Error modul mahasiswa:', error);
     res.status(500).send('Gagal memuat modul');
+  }
+});
+
+// ============================================================================
+// LKM (LEMBAR KERJA MAHASISWA) - per modul template praktikum
+// ============================================================================
+
+/**
+ * GET /mk/:id/modul-template/:modulId/cetak
+ * Halaman cetak LKM kosong (format A4, untuk ditulis tangan) - nama & NIM
+ * mahasiswa sudah terisi otomatis, sisanya (data pengamatan, pembahasan,
+ * jawaban, kesimpulan) memang dikosongkan untuk diisi tangan lalu difoto/
+ * discan dan diunggah lewat tombol "Kumpul LKM" di halaman Modul.
+ */
+router.get('/mk/:id/modul-template/:modulId/cetak', async (req, res) => {
+  try {
+    const mkId = req.params.id;
+    const enrollmentSnapshot = await db.collection('enrollment')
+      .where('userId', '==', req.user.id)
+      .where('mkId', '==', mkId)
+      .where('status', '==', 'active')
+      .get();
+    if (enrollmentSnapshot.empty) return res.status(403).send('Anda tidak terdaftar di mata kuliah ini');
+
+    const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
+    if (!mkDoc.exists) return res.status(404).send('Mata kuliah tidak ditemukan');
+    const mk = { id: mkId, ...mkDoc.data() };
+
+    if (mk.praktikumPublished !== true) {
+      return res.status(403).send('Modul praktikum belum dipublikasikan dosen untuk mata kuliah ini');
+    }
+    const { modulList } = getPublishedModulPraktikum(mk);
+    const modul = modulList.find(m => m.id === req.params.modulId);
+    if (!modul) return res.status(404).send('Modul tidak ditemukan atau belum diaktifkan dosen');
+    const nomorModul = modulList.findIndex(m => m.id === req.params.modulId) + 1;
+
+    res.render('lkm_praktikum_print', {
+      title: `LKM - ${modul.judul}`,
+      mk,
+      modul,
+      nomorModul,
+      totalModul: modulList.length,
+      namaMahasiswa: req.user.nama,
+      nimMahasiswa: req.user.nim,
+      namaDosen: null,
+      backUrl: `/mahasiswa/elearning/mk/${mkId}/modul`
+    });
+  } catch (error) {
+    console.error('Error cetak LKM mahasiswa:', error);
+    res.status(500).send('Gagal memuat LKM');
+  }
+});
+
+/**
+ * Mengambil dokumen pengumpulan LKM milik satu mahasiswa untuk satu modul.
+ */
+async function getLkmPengumpulan(mkId, modulId, mahasiswaId) {
+  const snap = await db.collection('lkmPengumpulan')
+    .where('mkId', '==', mkId)
+    .where('modulId', '==', modulId)
+    .where('mahasiswaId', '==', mahasiswaId)
+    .limit(1)
+    .get();
+  return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+}
+
+/**
+ * Folder Drive khusus LKM (terpisah dari folder "Tugas" biasa), dengan
+ * struktur: Data WEB / LKM Praktikum / [TahunAjaran] / [NamaMK] / [NIM] /
+ */
+async function getOrCreateLkmFolder(mk, nim, tahunAjaran) {
+  const lkmRootFolder = await getOrCreateSubFolder(DATA_WEB_FOLDER_ID, 'LKM Praktikum');
+  const tahunFolder = await getOrCreateSubFolder(lkmRootFolder, tahunAjaran);
+  const sanitizedNamaMK = sanitizeName(mk.nama);
+  const mkFolder = await getOrCreateSubFolder(tahunFolder, sanitizedNamaMK);
+  const nimFolder = await getOrCreateSubFolder(mkFolder, nim);
+  return nimFolder;
+}
+
+/**
+ * POST /mk/:id/modul-template/:modulId/kumpul
+ * Unggah foto/scan LKM yang sudah diisi tangan untuk satu modul praktikum.
+ */
+router.post('/mk/:id/modul-template/:modulId/kumpul', upload.single('file'), async (req, res) => {
+  try {
+    const mkId = req.params.id;
+    const modulId = req.params.modulId;
+    const mahasiswaId = req.user.id;
+    const file = req.file;
+    if (!file) return res.status(400).send('Pilih file (foto/scan LKM) terlebih dahulu');
+
+    const enrollmentSnapshot = await db.collection('enrollment')
+      .where('userId', '==', mahasiswaId)
+      .where('mkId', '==', mkId)
+      .where('status', '==', 'active')
+      .get();
+    if (enrollmentSnapshot.empty) return res.status(403).send('Anda tidak terdaftar di mata kuliah ini');
+
+    const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
+    if (!mkDoc.exists) return res.status(404).send('Mata kuliah tidak ditemukan');
+    const mk = { id: mkId, ...mkDoc.data() };
+
+    if (mk.praktikumPublished !== true) return res.status(403).send('Modul praktikum belum dipublikasikan dosen');
+    const { modulList } = getPublishedModulPraktikum(mk);
+    const modulTemplate = modulList.find(m => m.id === modulId);
+    if (!modulTemplate) return res.status(404).send('Modul tidak ditemukan atau belum diaktifkan dosen');
+
+    const existing = await getLkmPengumpulan(mkId, modulId, mahasiswaId);
+    if (existing) {
+      if (existing.status === 'diperiksa') return res.status(400).send('LKM sudah diperiksa dosen, tidak dapat mengubah jawaban.');
+      return res.status(400).send('Anda sudah mengumpulkan LKM ini. Gunakan tombol "Kumpul Ulang" jika ingin mengganti file.');
+    }
+
+    const enrollment = enrollmentSnapshot.docs[0].data();
+    const tahunAjaran = enrollment.tahunAjaran || '2025/2026';
+    const nim = req.user.nim;
+    const nama = req.user.nama;
+    const folderId = await getOrCreateLkmFolder(mk, nim, tahunAjaran);
+
+    const sanitizedNama = sanitizeName(nama);
+    const sanitizedJudul = sanitizeName(modulTemplate.judul);
+    const ext = file.originalname.split('.').pop();
+    const fileName = `LKM_${sanitizedNama}_${nim}_${sanitizedJudul}_${Date.now()}.${ext}`;
+
+    const response = await drive.files.create({
+      resource: { name: fileName, parents: [folderId] },
+      media: { mimeType: file.mimetype, body: Readable.from(file.buffer) },
+      fields: 'id, webViewLink'
+    });
+    await drive.permissions.create({ fileId: response.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+
+    await db.collection('lkmPengumpulan').add({
+      mkId,
+      modulId,
+      modulJudul: modulTemplate.judul,
+      mahasiswaId,
+      fileUrl: response.data.webViewLink,
+      fileId: response.data.id,
+      fileNama: file.originalname,
+      submittedAt: new Date().toISOString(),
+      status: 'dikumpulkan',
+      nilaiPraktikum: null,
+      catatanDosen: null
+    });
+
+    res.redirect(`/mahasiswa/elearning/mk/${mkId}/modul`);
+  } catch (error) {
+    console.error('Gagal upload LKM:', error);
+    res.status(500).send('Upload LKM gagal: ' + error.message);
+  }
+});
+
+/**
+ * POST /mk/:id/modul-template/:modulId/kumpul/revisi
+ * Ganti file LKM yang sudah dikumpulkan (selama belum diperiksa dosen).
+ */
+router.post('/mk/:id/modul-template/:modulId/kumpul/revisi', upload.single('file'), async (req, res) => {
+  try {
+    const mkId = req.params.id;
+    const modulId = req.params.modulId;
+    const mahasiswaId = req.user.id;
+    const file = req.file;
+    if (!file) return res.status(400).send('Pilih file terlebih dahulu');
+
+    const existing = await getLkmPengumpulan(mkId, modulId, mahasiswaId);
+    if (!existing) return res.status(404).send('Belum ada pengumpulan LKM untuk direvisi. Gunakan tombol "Kumpul LKM".');
+    if (existing.status === 'diperiksa') return res.status(400).send('LKM sudah diperiksa dosen, tidak dapat direvisi.');
+
+    const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
+    if (!mkDoc.exists) return res.status(404).send('Mata kuliah tidak ditemukan');
+    const mk = { id: mkId, ...mkDoc.data() };
+
+    const enrollmentSnapshot = await db.collection('enrollment')
+      .where('userId', '==', mahasiswaId)
+      .where('mkId', '==', mkId)
+      .where('status', '==', 'active')
+      .get();
+    const enrollment = enrollmentSnapshot.empty ? {} : enrollmentSnapshot.docs[0].data();
+    const tahunAjaran = enrollment.tahunAjaran || '2025/2026';
+    const nim = req.user.nim;
+    const nama = req.user.nama;
+    const folderId = await getOrCreateLkmFolder(mk, nim, tahunAjaran);
+
+    const sanitizedNama = sanitizeName(nama);
+    const sanitizedJudul = sanitizeName(existing.modulJudul || modulId);
+    const ext = file.originalname.split('.').pop();
+    const fileName = `LKM_${sanitizedNama}_${nim}_${sanitizedJudul}_${Date.now()}.${ext}`;
+
+    const response = await drive.files.create({
+      resource: { name: fileName, parents: [folderId] },
+      media: { mimeType: file.mimetype, body: Readable.from(file.buffer) },
+      fields: 'id, webViewLink'
+    });
+    await drive.permissions.create({ fileId: response.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+
+    if (existing.fileId) {
+      try { await drive.files.delete({ fileId: existing.fileId }); } catch (e) { console.error('Gagal hapus file LKM lama:', e.message); }
+    }
+
+    await db.collection('lkmPengumpulan').doc(existing.id).update({
+      fileUrl: response.data.webViewLink,
+      fileId: response.data.id,
+      fileNama: file.originalname,
+      submittedAt: new Date().toISOString(),
+      status: 'dikumpulkan'
+    });
+
+    res.redirect(`/mahasiswa/elearning/mk/${mkId}/modul`);
+  } catch (error) {
+    console.error('Gagal revisi LKM:', error);
+    res.status(500).send('Revisi LKM gagal: ' + error.message);
   }
 });
 

@@ -1,0 +1,90 @@
+<%- include('../../partials/header') %>
+<style>
+  @media print {
+    .no-print { display: none !important; }
+    .container { max-width: 100% !important; }
+  }
+</style>
+<div class="container mt-4 mb-5">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 no-print">
+    <div>
+      <h2 class="mb-0">Rekap &amp; Laporan Akreditasi</h2>
+      <small class="text-muted">Ringkasan kesiapan seluruh kriteria untuk dicetak atau diekspor</small>
+    </div>
+    <a href="/admin/akreditasi" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Kembali</a>
+  </div>
+
+  <% if (!periodeList.length) { %>
+    <div class="alert alert-info mt-4 no-print">Belum ada periode akreditasi.</div>
+  <% } else { %>
+    <form method="GET" action="/admin/akreditasi/rekap" class="row row-cols-auto g-2 align-items-center mt-3 no-print">
+      <div class="col"><label class="col-form-label">Periode:</label></div>
+      <div class="col">
+        <select name="periodeId" class="form-select" onchange="this.form.submit()">
+          <% periodeList.forEach(p => { %>
+            <option value="<%= p.id %>" <%= p.id === periodeId ? 'selected' : '' %>><%= p.nama %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col">
+        <a href="/admin/akreditasi/rekap/export?periodeId=<%= periodeId %>" class="btn btn-success btn-sm">
+          <i class="bi bi-file-earmark-spreadsheet me-1"></i>Ekspor CSV/Excel
+        </a>
+      </div>
+      <div class="col">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">
+          <i class="bi bi-printer me-1"></i>Cetak / Simpan PDF
+        </button>
+      </div>
+    </form>
+
+    <% if (periodeAktif) { %>
+      <div class="mt-4">
+        <h4 class="mb-0"><%= periodeAktif.nama %></h4>
+        <div class="text-muted small">
+          <%= periodeAktif.jenjang %> &middot; <%= periodeAktif.lembaga %>
+          <% if (periodeAktif.tanggalTarget) { %> &middot; Target pengajuan: <%= periodeAktif.tanggalTarget %><% } %>
+        </div>
+        <div class="text-muted small">Dicetak pada: <%= tanggalCetak %></div>
+      </div>
+
+      <div class="progress mt-3" style="height: 22px;">
+        <div class="progress-bar bg-success" style="width: <%= progresKeseluruhan %>%;"><%= progresKeseluruhan %>% Kriteria Selesai</div>
+      </div>
+
+      <table class="table table-bordered mt-4">
+        <thead class="table-light">
+          <tr>
+            <th style="width:50px;">Kode</th>
+            <th>Nama Kriteria</th>
+            <th>Status</th>
+            <th>Target</th>
+            <th>Dokumen</th>
+            <th>Checklist</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% kriteriaList.forEach(k => { %>
+            <tr class="<%= k.terlambat ? 'table-danger' : '' %>">
+              <td class="fw-bold"><%= k.kode %></td>
+              <td><%= k.nama %></td>
+              <td>
+                <% const badge = k.status === 'selesai' ? 'success' : (k.status === 'proses' ? 'warning' : 'secondary'); %>
+                <span class="badge bg-<%= badge %>">
+                  <%= k.status === 'selesai' ? 'Selesai' : (k.status === 'proses' ? 'Sedang Diproses' : 'Belum Dimulai') %>
+                </span>
+              </td>
+              <td>
+                <%= k.targetTanggal || '-' %>
+                <% if (k.terlambat) { %><span class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Lewat</span><% } %>
+              </td>
+              <td><%= k.jumlahDokumen %> file</td>
+              <td><%= k.checklistSelesai %> / <%= k.checklistTotal %> (<%= k.checklistPersen %>%)</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  <% } %>
+</div>
+<%- include('../../partials/footer') %>

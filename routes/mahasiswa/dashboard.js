@@ -8,6 +8,7 @@ const router = express.Router();
 const { verifyToken } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
+const { getPublishedModulPraktikum } = require('../../helpers/modulPraktikumHelper');
 const semesterSekarang = getCurrentAcademicSemester().label;
 router.use(verifyToken);
 
@@ -129,6 +130,46 @@ async function getUpcomingEvents(limit = 3) {
   }
 }
 
+/**
+ * LKM Praktikum yang sudah dipublikasikan dosen (mk.praktikumPublished +
+ * modul individual aktif) tapi belum diunggah mahasiswa ini. Dipakai untuk
+ * widget "LKM Belum Dikumpulkan" di dashboard, sama semangatnya dengan
+ * "Tugas Aktif" di atas.
+ */
+async function getLkmBelumDikumpulkan(mkList, userId) {
+  try {
+    const mkPublished = mkList.filter(mk => mk.praktikumPublished === true);
+    if (mkPublished.length === 0) return [];
+
+    // Modul yang tersedia (aktif) per MK yang dipublikasikan
+    const daftarModul = [];
+    mkPublished.forEach(mk => {
+      const { modulList } = getPublishedModulPraktikum(mk);
+      modulList.forEach(m => daftarModul.push({
+        mkId: mk.id, mkKode: mk.kode, mkNama: mk.nama, modulId: m.id, modulJudul: m.judul, tanggal: m.tanggal || null
+      }));
+    });
+    if (daftarModul.length === 0) return [];
+
+    // Ambil semua pengumpulan LKM milik mahasiswa ini (satu query, cukup
+    // kecil karena per-mahasiswa), lalu jadikan Set "mkId::modulId" supaya
+    // gampang dicek mana yang sudah kumpul.
+    const lkmSnapshot = await db.collection('lkmPengumpulan').where('mahasiswaId', '==', userId).get();
+    const sudahKumpul = new Set();
+    lkmSnapshot.docs.forEach(doc => {
+      const d = doc.data();
+      sudahKumpul.add(`${d.mkId}::${d.modulId}`);
+    });
+
+    const belumKumpul = daftarModul.filter(m => !sudahKumpul.has(`${m.mkId}::${m.modulId}`));
+    belumKumpul.sort((a, b) => (a.tanggal || '9999').localeCompare(b.tanggal || '9999'));
+    return belumKumpul;
+  } catch (error) {
+    console.error('Error getLkmBelumDikumpulkan:', error);
+    return [];
+  }
+}
+
 // ============================================================================
 // RUTE UTAMA DASHBOARD
 // ============================================================================
@@ -150,6 +191,7 @@ router.get('/', async (req, res) => {
     const mkIds = mkList.map(mk => mk.id);
     const totalSks = mkList.reduce((acc, mk) => acc + (mk.sks || 0), 0);
     const tugasAktif = await getTugasAktif(mkIds);
+    const lkmBelumDikumpulkan = await getLkmBelumDikumpulkan(mkList, userId);
 
     const currentSemester = getCurrentAcademicSemester();
     const semesterSekarang = currentSemester.label;
@@ -183,6 +225,7 @@ router.get('/', async (req, res) => {
       semesterSekarang,
       pertemuanRata,
       tugasAktif,
+      lkmBelumDikumpulkan,
       upcomingEvents  // <-- ditambahkan
     });
 

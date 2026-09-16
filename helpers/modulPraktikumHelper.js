@@ -35,7 +35,11 @@ const JENIS_LABEL = {
   data_sistem_informasi: 'Data dan Sistem Informasi',
   rangkaian_elektronika: 'Rangkaian Elektronika',
   teknik_pengukuran: 'Teknik Pengukuran',
-  menggambar_teknik: 'Menggambar Teknik'
+  menggambar_teknik: 'Menggambar Teknik',
+  dasar_sistem_tenaga_listrik: 'Dasar Sistem Tenaga Listrik',
+  peralatan_teknik: 'Peralatan Teknik',
+  keselamatan_kesehatan_kerja: 'Keselamatan dan Kesehatan Kerja (K3)',
+  perawatan_dan_perbaikan: 'Perawatan dan Perbaikan'
 };
 
 // Kata kunci pencocokan (huruf kecil semua) - dicek terhadap "kode + nama" MK.
@@ -51,7 +55,11 @@ const KEYWORDS = {
   data_sistem_informasi: ['data dan sistem informasi'],
   rangkaian_elektronika: ['rangkaian elektronika'],
   teknik_pengukuran: ['teknik pengukuran'],
-  menggambar_teknik: ['menggambar teknik']
+  menggambar_teknik: ['menggambar teknik'],
+  dasar_sistem_tenaga_listrik: ['dasar sistem tenaga listrik'],
+  peralatan_teknik: ['peralatan teknik'],
+  keselamatan_kesehatan_kerja: ['keselamatan dan kesehatan kerja'],
+  perawatan_dan_perbaikan: ['perawatan dan perbaikan']
 };
 
 /**

@@ -2,11 +2,11 @@
  * data/modulPraktikumData.js
  *
  * Konten default "Modul Praktikum" (job sheet) untuk mata kuliah yang
- * bersifat praktik: lihat helpers/modulPraktikumHelper.js (objek JENIS_LABEL)
- * untuk daftar mata kuliah yang didukung saat ini.
+ * bersifat praktik: lihat helpers/modulPraktikumHelper.js (objek
+ * JENIS_LABEL) untuk daftar mata kuliah yang didukung saat ini.
  *
- * Ini adalah TEMPLATE/KONSEP AWAL yang mengacu pada topik umum RPS ketiga
- * mata kuliah tersebut (lihat scripts/sync-matakuliah-dari-rps.js untuk
+ * Ini adalah TEMPLATE/KONSEP AWAL yang mengacu pada topik umum RPS
+ * masing-masing mata kuliah (lihat scripts/sync-matakuliah-dari-rps.js untuk
  * kode & nama MK). Isi tiap modul (tujuan, alat/bahan, dasar teori, langkah
  * kerja, tugas laporan) bisa disesuaikan/ditimpa oleh dosen pengampu lewat
  * halaman "Modul Praktikum" pada workspace MK - lihat helpers/modulPraktikumHelper.js
@@ -1647,6 +1647,811 @@ module.exports = {
         'Paket gambar kerja lengkap (pandangan, dimensi, toleransi, etiket, dan skematik bila relevan)',
         'Penjelasan singkat proses penyusunan gambar kerja',
         'Refleksi kendala dan solusi yang dilakukan selama proyek'
+      ],
+      estimasiWaktu: '3 x 50 menit (dapat dikerjakan lintas pertemuan)'
+    }
+  ],
+
+  // ==========================================================================
+  // DASAR SISTEM TENAGA LISTRIK (kode PEK3201 - Pilihan Teknik
+  // Elektronika/Instrumentasi). Fokus: kelistrikan arus kuat dasar (AC
+  // satu fasa/tiga fasa, transformator, motor, dan keselamatan kelistrikan)
+  // ==========================================================================
+  dasar_sistem_tenaga_listrik: [
+    {
+      id: 'dstl-01',
+      judul: 'Pengukuran Besaran Listrik pada Rangkaian AC Satu Fasa',
+      pertemuanSaran: 2,
+      tujuan: [
+        'Mengukur tegangan, arus, dan daya pada rangkaian arus bolak-balik (AC) satu fasa',
+        'Membedakan daya aktif, daya reaktif, dan daya semu pada beban AC',
+        'Menggunakan alat ukur yang sesuai (voltmeter, amperemeter, wattmeter) untuk rangkaian AC'
+      ],
+      alatBahan: [
+        'Sumber tegangan AC satu fasa (dari jala-jala/trainer kelistrikan)',
+        'Voltmeter AC, amperemeter AC (tang ampere/clamp meter), wattmeter (bila tersedia)',
+        'Beban uji (lampu pijar, elemen pemanas) sebagai beban resistif'
+      ],
+      dasarTeori: 'Pada rangkaian AC, daya listrik terdiri dari daya aktif (P, satuan watt, daya yang benar-benar terpakai), daya reaktif (Q, satuan VAR, terkait medan magnet/listrik pada beban induktif/kapasitif), dan daya semu (S, satuan VA, hasil kali tegangan dan arus). Pengukuran besaran-besaran ini penting untuk memahami karakteristik beban listrik dan efisiensi sistem kelistrikan.',
+      langkahKerja: [
+        'Rangkai pengukuran tegangan dan arus pada beban resistif murni (lampu pijar) menggunakan sumber AC satu fasa',
+        'Ukur daya menggunakan wattmeter (atau hitung dari V x I untuk beban resistif murni)',
+        'Amati dan catat nilai tegangan, arus, dan daya pada beberapa nilai beban berbeda',
+        'Diskusikan perbedaan antara daya aktif, reaktif, dan semu berdasarkan hasil pengukuran',
+        'Terapkan prosedur K3 kelistrikan (matikan sumber sebelum mengubah rangkaian) selama praktikum'
+      ],
+      tugasLaporan: [
+        'Tabel hasil pengukuran tegangan, arus, dan daya pada beberapa kondisi beban',
+        'Penjelasan konsep daya aktif, reaktif, dan semu berdasarkan hasil praktik',
+        'Kesimpulan pentingnya pengukuran besaran listrik yang akurat pada sistem kelistrikan'
+      ],
+      k3: 'Bekerja dengan tegangan jala-jala AC berisiko tinggi - pastikan didampingi dosen/instruktur, matikan sumber sebelum wiring, dan gunakan alat pelindung diri (APD) sesuai prosedur bengkel.',
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'dstl-02',
+      judul: 'Rangkaian Beban R-L-C dan Faktor Daya (Power Factor)',
+      pertemuanSaran: 4,
+      tujuan: [
+        'Mengamati pengaruh beban resistif, induktif, dan kapasitif terhadap faktor daya rangkaian AC',
+        'Mengukur faktor daya (cos phi) pada beban campuran R-L',
+        'Memahami konsep perbaikan faktor daya menggunakan kapasitor'
+      ],
+      alatBahan: [
+        'Sumber AC satu fasa, beban resistif (lampu pijar), beban induktif (motor kecil/lilitan induktor, atau kumparan trainer)',
+        'Kapasitor daya (untuk perbaikan faktor daya), voltmeter, amperemeter, wattmeter/power factor meter (bila tersedia)'
+      ],
+      dasarTeori: 'Faktor daya (cos phi) menunjukkan seberapa efektif daya listrik dimanfaatkan oleh beban, dengan nilai ideal 1 (seluruh daya termanfaatkan sebagai daya aktif). Beban induktif (seperti motor) cenderung menurunkan faktor daya karena menyerap daya reaktif, sehingga sering diperbaiki dengan menambahkan kapasitor yang bersifat menyuplai daya reaktif berlawanan arah.',
+      langkahKerja: [
+        'Ukur tegangan, arus, dan daya pada beban resistif murni, hitung/ukur faktor dayanya (idealnya mendekati 1)',
+        'Ganti/tambahkan beban induktif (motor kecil), ukur kembali tegangan, arus, dan daya, amati perubahan faktor daya',
+        'Pasang kapasitor secara paralel dengan beban induktif untuk perbaikan faktor daya',
+        'Ukur kembali faktor daya setelah pemasangan kapasitor dan bandingkan dengan sebelum perbaikan',
+        'Analisis pengaruh nilai kapasitor terhadap perbaikan faktor daya'
+      ],
+      tugasLaporan: [
+        'Tabel hasil pengukuran V, I, P, dan faktor daya pada tiap kondisi beban (resistif, resistif-induktif, setelah perbaikan)',
+        'Analisis pengaruh beban induktif dan kapasitor terhadap faktor daya',
+        'Kesimpulan manfaat perbaikan faktor daya bagi efisiensi sistem kelistrikan'
+      ],
+      k3: 'Perhatikan tegangan kerja kapasitor yang digunakan dan pastikan kapasitor benar-benar dikosongkan (discharge) sebelum disentuh setelah rangkaian dimatikan.',
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'dstl-03',
+      judul: 'Transformator Satu Fasa: Prinsip Kerja dan Pengujian',
+      pertemuanSaran: 6,
+      tujuan: [
+        'Memahami prinsip kerja transformator sebagai pengubah level tegangan AC',
+        'Melakukan pengujian beban nol (no-load test) dan berbeban pada transformator satu fasa',
+        'Menghitung rasio transformasi dan efisiensi transformator dari hasil pengujian'
+      ],
+      alatBahan: [
+        'Transformator satu fasa (step-down/step-up) untuk keperluan praktikum',
+        'Voltmeter, amperemeter, wattmeter, beban uji (resistor daya/lampu)'
+      ],
+      dasarTeori: 'Transformator bekerja berdasarkan prinsip induksi elektromagnetik untuk menaikkan atau menurunkan level tegangan AC, dengan rasio tegangan sebanding dengan rasio jumlah lilitan kumparan primer dan sekunder. Pengujian beban nol dilakukan untuk mengetahui rugi-rugi inti (core loss), sedangkan pengujian berbeban digunakan untuk mengetahui performa transformator saat menyuplai beban, termasuk efisiensinya.',
+      langkahKerja: [
+        'Ukur tegangan sisi primer dan sekunder transformator tanpa beban, hitung rasio transformasi',
+        'Lakukan pengujian beban nol: ukur arus dan daya pada sisi primer saat sisi sekunder tidak berbeban',
+        'Pasang beban pada sisi sekunder secara bertahap, ukur tegangan, arus, dan daya pada sisi primer dan sekunder',
+        'Hitung efisiensi transformator pada beberapa kondisi pembebanan',
+        'Analisis perubahan tegangan sekunder (voltage drop) seiring bertambahnya beban'
+      ],
+      tugasLaporan: [
+        'Data hasil pengujian beban nol dan berbeban beserta perhitungan rasio transformasi dan efisiensi',
+        'Grafik/tabel hubungan antara beban dan tegangan sekunder (voltage drop)',
+        'Kesimpulan karakteristik transformator berdasarkan hasil pengujian'
+      ],
+      k3: 'Perhatikan rating tegangan dan arus transformator, jangan membebani melebihi kapasitas nominalnya.',
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'dstl-04',
+      judul: 'Sistem Tiga Fasa: Hubungan Bintang (Y) dan Segitiga (Delta)',
+      pertemuanSaran: 8,
+      tujuan: [
+        'Memahami konsep dasar sistem kelistrikan tiga fasa',
+        'Merangkai dan mengukur besaran listrik pada beban tiga fasa hubungan bintang (Y) dan segitiga (delta)',
+        'Membandingkan hubungan antara tegangan fasa-netral dan fasa-fasa pada hubungan bintang'
+      ],
+      alatBahan: [
+        'Sumber tegangan tiga fasa (trainer kelistrikan tiga fasa)',
+        'Beban tiga fasa seimbang (mis. 3 lampu identik atau elemen pemanas), voltmeter, amperemeter'
+      ],
+      dasarTeori: 'Sistem tiga fasa umum digunakan pada instalasi listrik industri karena lebih efisien dalam penyaluran daya dibanding sistem satu fasa. Pada hubungan bintang (Y), tegangan fasa-fasa (line-to-line) adalah akar tiga (~1.73) kali tegangan fasa-netral (line-to-neutral), sedangkan pada hubungan segitiga (delta), tegangan fasa-fasa sama dengan tegangan pada tiap kumparan beban.',
+      langkahKerja: [
+        'Rangkai beban tiga fasa seimbang dengan hubungan bintang (Y), ukur tegangan fasa-netral dan fasa-fasa',
+        'Verifikasi hubungan matematis antara tegangan fasa-netral dan fasa-fasa (rasio akar tiga) dari data pengukuran',
+        'Ukur arus pada tiap fasa dan pada kawat netral (idealnya mendekati nol untuk beban seimbang)',
+        'Rangkai ulang beban yang sama dengan hubungan segitiga (delta), ukur kembali tegangan dan arus pada tiap fasa',
+        'Bandingkan karakteristik tegangan dan arus antara hubungan bintang dan segitiga'
+      ],
+      tugasLaporan: [
+        'Data hasil pengukuran tegangan dan arus untuk hubungan bintang dan segitiga',
+        'Verifikasi hubungan matematis tegangan fasa-netral vs fasa-fasa pada hubungan bintang',
+        'Kesimpulan perbedaan karakteristik hubungan bintang dan segitiga'
+      ],
+      k3: 'Sistem tiga fasa bekerja pada tegangan yang lebih tinggi dari satu fasa - wajib didampingi dosen/instruktur dan matikan sumber sebelum mengubah wiring.',
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'dstl-05',
+      judul: 'Motor Listrik Dasar: Prinsip Kerja dan Pengujian Motor Induksi Satu Fasa',
+      pertemuanSaran: 10,
+      tujuan: [
+        'Memahami prinsip kerja motor listrik, khususnya motor induksi satu fasa',
+        'Mengidentifikasi bagian-bagian utama motor induksi satu fasa (stator, rotor, kapasitor start/run)',
+        'Melakukan pengujian dasar motor induksi satu fasa (arus start, arus nominal, arah putaran)'
+      ],
+      alatBahan: [
+        'Motor induksi satu fasa (dengan kapasitor start/run), sumber AC satu fasa',
+        'Amperemeter (clamp meter direkomendasikan untuk arus start), voltmeter, tachometer (bila tersedia)'
+      ],
+      dasarTeori: 'Motor induksi satu fasa mengubah energi listrik menjadi energi mekanik (putaran) berdasarkan prinsip induksi elektromagnetik antara stator dan rotor. Karena medan putar tidak dapat terbentuk langsung dari sumber satu fasa, motor jenis ini umumnya memerlukan bantuan kapasitor start untuk menghasilkan pergeseran fasa yang memungkinkan motor mulai berputar.',
+      langkahKerja: [
+        'Identifikasi terminal-terminal motor induksi satu fasa (kumparan utama, kumparan bantu, kapasitor) berdasarkan name plate/manual',
+        'Ukur arus start (saat motor pertama kali dinyalakan) dan arus nominal (setelah motor berputar stabil)',
+        'Amati arah putaran motor dan cara membalik arah putaran (jika berlaku untuk jenis motor yang digunakan)',
+        'Ukur kecepatan putar motor menggunakan tachometer (bila tersedia) dan bandingkan dengan spesifikasi name plate',
+        'Diskusikan fungsi kapasitor start/run berdasarkan hasil pengamatan'
+      ],
+      tugasLaporan: [
+        'Data hasil pengukuran arus start, arus nominal, dan kecepatan putar motor',
+        'Penjelasan fungsi kapasitor start/run pada motor induksi satu fasa',
+        'Kesimpulan hasil pengujian dibandingkan dengan spesifikasi name plate motor'
+      ],
+      k3: 'Jaga jarak dari bagian motor yang berputar, pastikan motor terpasang kokoh pada dudukannya sebelum dioperasikan.',
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'dstl-06',
+      judul: 'Sistem Pembumian (Grounding) dan Keselamatan Kelistrikan',
+      pertemuanSaran: 12,
+      tujuan: [
+        'Memahami fungsi dan prinsip sistem pembumian (grounding) pada instalasi listrik',
+        'Mengukur tahanan pembumian menggunakan earth tester/megger (bila tersedia)',
+        'Menerapkan prinsip keselamatan kelistrikan (K3) pada pekerjaan instalasi listrik'
+      ],
+      alatBahan: [
+        'Elektroda pembumian (grounding rod) contoh/trainer, earth tester atau megger (bila tersedia)',
+        'Kabel penghubung, alat pelindung diri (APD) untuk kerja kelistrikan'
+      ],
+      dasarTeori: 'Sistem pembumian (grounding) berfungsi mengalirkan arus bocor atau arus gangguan ke tanah, melindungi manusia dari bahaya sengatan listrik dan melindungi peralatan dari kerusakan akibat gangguan listrik. Nilai tahanan pembumian yang baik (umumnya di bawah nilai ambang tertentu sesuai standar) penting untuk memastikan sistem proteksi bekerja efektif.',
+      langkahKerja: [
+        'Identifikasi komponen sistem pembumian pada instalasi/trainer yang tersedia (elektroda, kawat penghantar, terminal pembumian)',
+        'Ukur tahanan pembumian menggunakan earth tester/megger (bila tersedia) dan bandingkan dengan standar yang berlaku',
+        'Diskusikan dampak sistem pembumian yang buruk terhadap keselamatan pengguna instalasi listrik',
+        'Identifikasi potensi bahaya kelistrikan pada beberapa contoh instalasi (kabel terkelupas, sambungan tidak sempurna, dsb.)',
+        'Susun daftar praktik K3 kelistrikan yang wajib diterapkan saat bekerja dengan instalasi listrik'
+      ],
+      tugasLaporan: [
+        'Hasil pengukuran tahanan pembumian (bila alat tersedia) beserta interpretasinya',
+        'Daftar potensi bahaya kelistrikan yang teridentifikasi dan cara pencegahannya',
+        'Kesimpulan pentingnya sistem pembumian dan penerapan K3 kelistrikan'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'dstl-07',
+      judul: 'Proyek Akhir: Instalasi dan Pengujian Sistem Tenaga Listrik Sederhana',
+      pertemuanSaran: 14,
+      tujuan: [
+        'Merancang dan memasang instalasi listrik sederhana sesuai studi kasus (mis. instalasi penerangan dengan beberapa titik lampu dan saklar)',
+        'Mengintegrasikan prinsip pengukuran besaran listrik, keselamatan kelistrikan, dan pembumian pada instalasi yang dibuat',
+        'Menguji dan mendokumentasikan hasil instalasi yang telah dibuat'
+      ],
+      alatBahan: [
+        'Kabel instalasi, saklar, fitting lampu, MCB (pengaman), papan instalasi/trainer',
+        'Alat ukur (multimeter, earth tester bila tersedia), alat tangan kelistrikan (obeng, tang, dsb.)'
+      ],
+      dasarTeori: 'Proyek akhir melatih kemampuan merancang dan memasang instalasi listrik sederhana yang aman dan sesuai kaidah teknik, mengintegrasikan seluruh konsep yang telah dipelajari (pengukuran besaran listrik, sistem pembumian, dan prinsip keselamatan kelistrikan) dalam satu pekerjaan instalasi yang nyata.',
+      langkahKerja: [
+        'Tentukan studi kasus instalasi (mis. 2-3 titik lampu dengan saklar tunggal/seri) dan buat gambar rencana instalasi',
+        'Siapkan material dan alat sesuai rencana instalasi',
+        'Lakukan pemasangan instalasi sesuai gambar rencana, dengan memperhatikan prosedur keselamatan kerja',
+        'Uji instalasi yang telah dipasang (fungsi saklar, kondisi tegangan pada tiap titik) sebelum dan sesudah energize',
+        'Dokumentasikan hasil instalasi dan lakukan presentasi/demonstrasi di depan dosen/kelas'
+      ],
+      tugasLaporan: [
+        'Gambar rencana instalasi dan daftar material yang digunakan',
+        'Dokumentasi proses pemasangan dan hasil pengujian instalasi',
+        'Refleksi kendala dan penerapan prosedur keselamatan kerja selama proyek'
+      ],
+      k3: 'Pastikan sumber listrik dalam keadaan mati (MCB off) selama proses pemasangan, dan lakukan pengujian akhir dengan pengawasan dosen/instruktur.',
+      estimasiWaktu: '3 x 50 menit (dapat dikerjakan lintas pertemuan)'
+    }
+  ],
+
+  // ==========================================================================
+  // PERALATAN TEKNIK (kode PD3208, semester 2 - "Penciri Dewantara")
+  // Fokus: perkakas tangan, alat ukur mekanik, dan peralatan bengkel -
+  // berbeda dari Teknik Pengukuran (PD3207) yang fokus pada alat ukur
+  // listrik/elektronik
+  // ==========================================================================
+  peralatan_teknik: [
+    {
+      id: 'pt-01',
+      judul: 'K3 Bengkel dan Pengenalan Perkakas Tangan Dasar',
+      pertemuanSaran: 2,
+      tujuan: [
+        'Memahami dan menerapkan prosedur Keselamatan dan Kesehatan Kerja (K3) di bengkel/laboratorium',
+        'Mengidentifikasi jenis dan fungsi perkakas tangan dasar (obeng, tang, kunci pas/ring, palu)',
+        'Menggunakan alat pelindung diri (APD) yang sesuai saat bekerja di bengkel'
+      ],
+      alatBahan: [
+        'Berbagai jenis obeng, tang (kombinasi, potong, lancip), kunci pas/ring, palu',
+        'Alat pelindung diri (APD): sarung tangan, kacamata pelindung, sepatu safety (bila tersedia)'
+      ],
+      dasarTeori: 'K3 (Keselamatan dan Kesehatan Kerja) adalah prinsip dasar yang wajib diterapkan setiap kali bekerja di bengkel/laboratorium teknik untuk mencegah kecelakaan kerja dan menjaga kesehatan pekerja. Perkakas tangan dasar seperti obeng, tang, kunci pas/ring, dan palu adalah alat yang paling sering digunakan dalam pekerjaan teknik, sehingga penting untuk mengetahui jenis, fungsi, dan cara penggunaan yang benar dan aman.',
+      langkahKerja: [
+        'Pelajari tata tertib dan prosedur K3 yang berlaku di bengkel/laboratorium kampus',
+        'Identifikasi dan kelompokkan jenis-jenis obeng, tang, kunci pas/ring, dan palu beserta fungsinya masing-masing',
+        'Latihan menggunakan tiap jenis perkakas tangan pada studi kasus sederhana (mis. melepas-memasang baut, mengupas kabel)',
+        'Diskusikan potensi bahaya penggunaan perkakas tangan yang tidak sesuai prosedur',
+        'Praktikkan penggunaan APD yang sesuai selama sesi praktikum'
+      ],
+      tugasLaporan: [
+        'Daftar jenis perkakas tangan yang dipelajari beserta fungsi dan cara penggunaannya',
+        'Rangkuman poin-poin K3 bengkel yang wajib diterapkan',
+        'Kesimpulan pentingnya penggunaan APD dan prosedur K3 dalam pekerjaan teknik'
+      ],
+      k3: 'Selalu gunakan alat sesuai fungsinya (jangan memaksakan alat untuk pekerjaan di luar fungsinya) dan kembalikan alat ke tempatnya setelah digunakan.',
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'pt-02',
+      judul: 'Penggunaan Alat Ukur Mekanik Dasar (Jangka Sorong dan Mikrometer)',
+      pertemuanSaran: 4,
+      tujuan: [
+        'Membaca skala jangka sorong (vernier caliper) dan mikrometer sekrup dengan benar',
+        'Mengukur dimensi benda kerja (panjang, diameter, kedalaman) menggunakan kedua alat tersebut',
+        'Memahami tingkat ketelitian dan batas kemampuan ukur masing-masing alat'
+      ],
+      alatBahan: [
+        'Jangka sorong (vernier caliper) analog/digital, mikrometer sekrup',
+        'Beberapa benda kerja dengan dimensi berbeda (mis. baut, pipa, pelat) untuk latihan pengukuran'
+      ],
+      dasarTeori: 'Jangka sorong digunakan untuk mengukur dimensi luar, dalam, dan kedalaman suatu benda dengan ketelitian hingga 0,05 mm atau 0,02 mm tergantung jenisnya, sedangkan mikrometer sekrup memiliki ketelitian lebih tinggi (hingga 0,01 mm) dan umumnya digunakan untuk mengukur dimensi yang lebih presisi seperti ketebalan atau diameter kecil. Pemilihan alat ukur yang tepat bergantung pada tingkat ketelitian yang dibutuhkan.',
+      langkahKerja: [
+        'Pelajari bagian-bagian dan cara membaca skala pada jangka sorong (skala utama dan skala nonius/vernier)',
+        'Latihan mengukur dimensi luar, dalam, dan kedalaman beberapa benda kerja menggunakan jangka sorong',
+        'Pelajari bagian-bagian dan cara membaca skala pada mikrometer sekrup',
+        'Latihan mengukur dimensi (mis. diameter/tebal) beberapa benda kerja menggunakan mikrometer sekrup',
+        'Bandingkan hasil pengukuran benda yang sama menggunakan jangka sorong dan mikrometer, diskusikan perbedaan ketelitian'
+      ],
+      tugasLaporan: [
+        'Tabel hasil pengukuran beberapa benda kerja menggunakan jangka sorong dan mikrometer',
+        'Penjelasan cara pembacaan skala kedua alat ukur',
+        'Kesimpulan perbandingan ketelitian dan kegunaan jangka sorong vs mikrometer'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'pt-03',
+      judul: 'Perkakas Tangan untuk Pemotongan dan Pembentukan (Gergaji, Kikir, Tap-Snei)',
+      pertemuanSaran: 6,
+      tujuan: [
+        'Menggunakan gergaji tangan dan kikir untuk memotong dan membentuk benda kerja sederhana',
+        'Memahami prinsip dan langkah penggunaan tap dan snei untuk membuat ulir dalam dan ulir luar',
+        'Menghasilkan benda kerja sederhana sesuai ukuran yang ditentukan menggunakan perkakas tersebut'
+      ],
+      alatBahan: [
+        'Gergaji tangan, berbagai jenis kikir (kasar, halus, bentuk), ragum (vice)',
+        'Set tap dan snei, benda kerja logam sederhana (mis. batang/pelat aluminium atau besi lunak)'
+      ],
+      dasarTeori: 'Gergaji tangan digunakan untuk memotong benda kerja sesuai ukuran yang dibutuhkan, sedangkan kikir digunakan untuk menghaluskan atau membentuk permukaan benda kerja setelah dipotong. Tap digunakan untuk membuat ulir dalam (pada lubang), sedangkan snei digunakan untuk membuat ulir luar (pada batang/poros) - keduanya penting dalam pekerjaan perakitan komponen mekanik menggunakan baut dan mur.',
+      langkahKerja: [
+        'Cekam benda kerja pada ragum dengan benar dan aman',
+        'Latihan memotong benda kerja menggunakan gergaji tangan sesuai ukuran yang ditentukan',
+        'Latihan menghaluskan/membentuk permukaan benda kerja hasil potongan menggunakan kikir',
+        'Latihan membuat ulir dalam pada lubang benda kerja menggunakan tap',
+        'Latihan membuat ulir luar pada batang benda kerja menggunakan snei, lalu uji kesesuaian ulir dalam dan luar yang dibuat'
+      ],
+      tugasLaporan: [
+        'Foto/dokumentasi benda kerja hasil pemotongan, pengikiran, dan pembuatan ulir',
+        'Penjelasan langkah kerja yang dilakukan beserta kendala yang dihadapi',
+        'Kesimpulan ketepatan ukuran benda kerja terhadap target yang ditentukan'
+      ],
+      k3: 'Pastikan benda kerja tercekam kuat pada ragum sebelum dipotong/dikikir, dan jauhkan tangan dari arah mata gergaji/kikir saat bekerja.',
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'pt-04',
+      judul: 'Peralatan Listrik Portabel (Bor, Gerinda, Solder) dan Prosedur Aman Penggunaannya',
+      pertemuanSaran: 8,
+      tujuan: [
+        'Mengoperasikan bor listrik portabel untuk membuat lubang pada benda kerja',
+        'Mengoperasikan gerinda tangan untuk memotong/menghaluskan benda kerja logam dengan aman',
+        'Menggunakan solder listrik untuk menyambung komponen elektronik sederhana'
+      ],
+      alatBahan: [
+        'Bor listrik portabel beserta mata bor berbagai ukuran',
+        'Gerinda tangan beserta mata gerinda potong/asah, solder listrik dan timah solder',
+        'Benda kerja logam sederhana, PCB/komponen elektronik sederhana untuk latihan menyolder'
+      ],
+      dasarTeori: 'Peralatan listrik portabel seperti bor dan gerinda mempercepat pekerjaan pemotongan, penghalusan, dan pelubangan dibanding perkakas tangan manual, namun memiliki risiko kecelakaan kerja yang lebih tinggi sehingga wajib dioperasikan sesuai prosedur keselamatan. Solder listrik digunakan untuk menyambung komponen elektronik secara permanen menggunakan timah solder yang dilelehkan pada suhu tertentu.',
+      langkahKerja: [
+        'Pelajari bagian-bagian dan prosedur pengoperasian aman bor listrik portabel',
+        'Latihan membuat lubang pada benda kerja menggunakan bor listrik sesuai ukuran yang ditentukan',
+        'Pelajari prosedur pengoperasian aman gerinda tangan, termasuk posisi tubuh dan arah percikan',
+        'Latihan memotong/menghaluskan benda kerja logam sederhana menggunakan gerinda tangan (dengan pengawasan ketat)',
+        'Latihan menyolder komponen elektronik sederhana pada PCB menggunakan solder listrik'
+      ],
+      tugasLaporan: [
+        'Dokumentasi hasil pekerjaan menggunakan bor, gerinda, dan solder',
+        'Daftar prosedur keselamatan yang diterapkan untuk tiap alat',
+        'Kesimpulan tantangan dan tips penggunaan aman peralatan listrik portabel'
+      ],
+      k3: 'Gerinda dan bor wajib dioperasikan dengan pengawasan dosen/instruktur; gunakan kacamata pelindung, jauhkan benda mudah terbakar dari percikan gerinda, dan cabut steker alat saat mengganti mata bor/gerinda.',
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'pt-05',
+      judul: 'Perawatan, Kalibrasi Sederhana, dan Penyimpanan Peralatan Teknik',
+      pertemuanSaran: 10,
+      tujuan: [
+        'Memahami prosedur perawatan berkala untuk perkakas tangan dan peralatan listrik portabel',
+        'Melakukan pengecekan sederhana kondisi alat ukur (mis. titik nol jangka sorong/mikrometer) sebelum digunakan',
+        'Menerapkan tata cara penyimpanan peralatan teknik yang baik dan aman'
+      ],
+      alatBahan: [
+        'Perkakas tangan dan alat ukur yang telah digunakan pada modul-modul sebelumnya',
+        'Bahan pembersih/pelumas sederhana (kain lap, minyak pelumas ringan) sesuai kebutuhan'
+      ],
+      dasarTeori: 'Perawatan berkala memperpanjang usia pakai peralatan teknik dan menjaga keakuratannya, misalnya membersihkan sisa kotoran/korosi pada perkakas tangan atau memeriksa titik nol alat ukur sebelum digunakan. Penyimpanan yang baik (tempat kering, tersusun rapi, terlindung dari benturan) juga penting untuk mencegah kerusakan dan mempermudah pencarian alat saat dibutuhkan.',
+      langkahKerja: [
+        'Periksa kondisi fisik perkakas tangan yang telah digunakan (karat, keausan, kerusakan) dan bersihkan sesuai kebutuhan',
+        'Lakukan pengecekan titik nol (kalibrasi sederhana) pada jangka sorong dan mikrometer sebelum digunakan',
+        'Diskusikan tanda-tanda alat ukur yang perlu dikalibrasi ulang secara resmi (di luar kemampuan kalibrasi sederhana mahasiswa)',
+        'Susun daftar periksa (checklist) perawatan rutin untuk beberapa jenis peralatan teknik',
+        'Praktikkan penyimpanan peralatan teknik sesuai jenis dan fungsinya pada tempat penyimpanan yang tersedia'
+      ],
+      tugasLaporan: [
+        'Daftar periksa (checklist) perawatan rutin yang disusun untuk beberapa jenis peralatan',
+        'Hasil pengecekan titik nol alat ukur yang dilakukan',
+        'Kesimpulan pentingnya perawatan dan penyimpanan peralatan yang baik'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'pt-06',
+      judul: 'Proyek Akhir: Praktik Kerja Bangku (Pembuatan Benda Kerja Sederhana)',
+      pertemuanSaran: 14,
+      tujuan: [
+        'Mengintegrasikan keterampilan penggunaan perkakas tangan, alat ukur, dan peralatan listrik portabel dalam satu pekerjaan',
+        'Membuat benda kerja sederhana sesuai gambar kerja dan ukuran yang ditentukan',
+        'Menerapkan prosedur K3 secara konsisten selama proses pengerjaan'
+      ],
+      alatBahan: [
+        'Seluruh perkakas tangan dan alat ukur yang telah dipelajari (gergaji, kikir, jangka sorong, bor, dsb.)',
+        'Bahan kerja (mis. pelat/batang logam ringan) sesuai studi kasus benda kerja yang ditentukan'
+      ],
+      dasarTeori: 'Praktik kerja bangku adalah kegiatan mengerjakan benda kerja logam menggunakan perkakas tangan dan peralatan bengkel dasar untuk menghasilkan bentuk dan ukuran sesuai gambar kerja, melatih ketelitian, kesabaran, dan penerapan K3 secara menyeluruh sebagai bekal dasar sebelum bekerja dengan peralatan yang lebih kompleks.',
+      langkahKerja: [
+        'Pelajari gambar kerja benda yang akan dibuat (dimensi dan toleransi yang ditentukan)',
+        'Potong bahan kerja sesuai ukuran awal menggunakan gergaji tangan',
+        'Bentuk dan haluskan benda kerja menggunakan kikir hingga mendekati ukuran akhir yang ditentukan',
+        'Lubangi bagian yang diperlukan menggunakan bor listrik sesuai gambar kerja',
+        'Ukur dan verifikasi dimensi akhir benda kerja menggunakan jangka sorong/mikrometer, bandingkan dengan gambar kerja'
+      ],
+      tugasLaporan: [
+        'Gambar kerja yang diacu dan dokumentasi tahapan pengerjaan benda kerja',
+        'Hasil pengukuran akhir benda kerja dibandingkan dengan ukuran target pada gambar kerja',
+        'Refleksi kendala, penerapan K3, dan pembelajaran yang diperoleh selama praktik kerja bangku'
+      ],
+      k3: 'Terapkan seluruh prosedur K3 dari modul-modul sebelumnya secara konsisten; gunakan APD lengkap selama proses pengerjaan.',
+      estimasiWaktu: '3 x 50 menit (dapat dikerjakan lintas pertemuan)'
+    }
+  ],
+
+  // ==========================================================================
+  // KESELAMATAN DAN KESEHATAN KERJA / K3 (kode PD3205, semester 2 -
+  // "Penciri Dewantara"). Fokus: identifikasi bahaya, APD, tanggap
+  // darurat, dan budaya kerja aman di bengkel/laboratorium
+  // ==========================================================================
+  keselamatan_kesehatan_kerja: [
+    {
+      id: 'k3-01',
+      judul: 'Identifikasi Bahaya dan Penilaian Risiko (HIRA) di Tempat Kerja',
+      pertemuanSaran: 2,
+      tujuan: [
+        'Mengidentifikasi sumber bahaya (hazard) yang ada di lingkungan bengkel/laboratorium',
+        'Melakukan penilaian risiko sederhana (kemungkinan x keparahan) terhadap bahaya yang teridentifikasi',
+        'Menyusun rekomendasi pengendalian risiko sesuai hierarki pengendalian (eliminasi, substitusi, rekayasa, administratif, APD)'
+      ],
+      alatBahan: [
+        'Lembar kerja/formulir identifikasi bahaya dan penilaian risiko (HIRA)',
+        'Lingkungan bengkel/laboratorium kampus sebagai objek observasi'
+      ],
+      dasarTeori: 'HIRA (Hazard Identification and Risk Assessment) adalah proses sistematis untuk mengenali potensi bahaya di suatu area kerja, menilai tingkat risikonya (berdasarkan kemungkinan terjadi dan tingkat keparahan dampaknya), lalu menentukan langkah pengendalian yang sesuai. Hierarki pengendalian risiko mengutamakan eliminasi bahaya sebagai solusi terbaik, diikuti substitusi, rekayasa teknik, pengendalian administratif, dan APD sebagai lapisan terakhir.',
+      langkahKerja: [
+        'Lakukan observasi langsung pada satu area bengkel/laboratorium yang ditentukan',
+        'Identifikasi dan catat seluruh potensi bahaya yang ditemukan (fisik, kimia, ergonomi, listrik, dsb.)',
+        'Nilai tingkat risiko tiap bahaya menggunakan matriks kemungkinan x keparahan sederhana',
+        'Urutkan bahaya berdasarkan tingkat risiko dari yang tertinggi',
+        'Susun rekomendasi pengendalian untuk 3 bahaya dengan risiko tertinggi sesuai hierarki pengendalian'
+      ],
+      tugasLaporan: [
+        'Tabel HIRA lengkap (bahaya, penilaian risiko, rekomendasi pengendalian) dari area yang diobservasi',
+        'Penjelasan alasan pemilihan metode pengendalian untuk 3 bahaya prioritas',
+        'Kesimpulan pentingnya identifikasi bahaya sejak dini di tempat kerja'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'k3-02',
+      judul: 'Alat Pelindung Diri (APD): Jenis, Pemilihan, dan Cara Penggunaan',
+      pertemuanSaran: 4,
+      tujuan: [
+        'Mengidentifikasi jenis-jenis APD dan fungsinya masing-masing',
+        'Memilih APD yang sesuai untuk jenis pekerjaan/bahaya tertentu',
+        'Menggunakan dan merawat APD dengan cara yang benar'
+      ],
+      alatBahan: [
+        'Contoh APD: kacamata pelindung, sarung tangan (berbagai jenis), masker, ear plug/ear muff, sepatu safety, helm (bila tersedia)',
+        'Studi kasus pekerjaan bengkel/laboratorium untuk latihan pemilihan APD'
+      ],
+      dasarTeori: 'APD (Alat Pelindung Diri) adalah lapisan pertahanan terakhir untuk melindungi pekerja dari bahaya yang tidak dapat sepenuhnya dihilangkan melalui pengendalian lain. Pemilihan APD harus disesuaikan dengan jenis bahaya yang dihadapi (mis. kacamata untuk bahaya percikan/serpihan, ear protection untuk kebisingan tinggi, sarung tangan sesuai jenis bahan yang ditangani), dan APD yang tidak dirawat dengan baik dapat kehilangan fungsi perlindungannya.',
+      langkahKerja: [
+        'Identifikasi jenis-jenis APD yang tersedia beserta fungsi perlindungannya masing-masing',
+        'Diskusikan studi kasus beberapa jenis pekerjaan bengkel dan tentukan APD yang sesuai untuk tiap pekerjaan',
+        'Latihan memakai dan melepas APD dengan cara yang benar (terutama untuk APD yang memerlukan prosedur khusus)',
+        'Periksa kondisi beberapa contoh APD dan identifikasi tanda-tanda APD yang sudah tidak layak pakai',
+        'Diskusikan cara perawatan dan penyimpanan APD yang baik'
+      ],
+      tugasLaporan: [
+        'Tabel jenis APD, fungsi, dan contoh pekerjaan yang memerlukannya',
+        'Hasil analisis pemilihan APD untuk studi kasus pekerjaan yang didiskusikan',
+        'Kesimpulan pentingnya penggunaan dan perawatan APD yang benar'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'k3-03',
+      judul: 'Penanganan Kebakaran Dasar dan Penggunaan Alat Pemadam Api Ringan (APAR)',
+      pertemuanSaran: 6,
+      tujuan: [
+        'Memahami konsep segitiga api dan klasifikasi jenis kebakaran (kelas A, B, C, D, K)',
+        'Mengidentifikasi jenis-jenis APAR dan kesesuaiannya dengan klasifikasi kebakaran',
+        'Mempraktikkan teknik dasar penggunaan APAR (metode PASS: Pull, Aim, Squeeze, Sweep)'
+      ],
+      alatBahan: [
+        'APAR (jenis dry chemical/CO2, sesuai yang tersedia di kampus - untuk pembelajaran/simulasi, gunakan APAR latihan/expired bila tersedia)',
+        'Media edukasi (poster/video) segitiga api dan klasifikasi kebakaran'
+      ],
+      dasarTeori: 'Api dapat terjadi jika tiga unsur segitiga api (bahan bakar, oksigen, dan panas/sumber pemicu) terpenuhi secara bersamaan; memutus salah satu unsur ini adalah prinsip dasar pemadaman kebakaran. Klasifikasi kebakaran dibagi berdasarkan jenis bahan yang terbakar (kelas A: bahan padat biasa, kelas B: cairan/gas mudah terbakar, kelas C: instalasi listrik bertegangan, kelas D: logam, kelas K: minyak/lemak masak), dan tiap kelas memerlukan jenis APAR yang sesuai agar pemadaman efektif dan aman.',
+      langkahKerja: [
+        'Pelajari konsep segitiga api dan klasifikasi jenis-jenis kebakaran',
+        'Identifikasi jenis APAR yang tersedia di lingkungan kampus dan kesesuaiannya dengan klasifikasi kebakaran di area tersebut',
+        'Pelajari dan praktikkan teknik dasar penggunaan APAR dengan metode PASS (di bawah pengawasan instruktur, gunakan APAR latihan bila tersedia)',
+        'Diskusikan langkah-langkah yang harus dilakukan saat mendeteksi kebakaran di lingkungan kerja (termasuk kapan harus mengevakuasi diri, bukan memadamkan sendiri)',
+        'Identifikasi lokasi APAR dan jalur evakuasi di gedung/bengkel kampus'
+      ],
+      tugasLaporan: [
+        'Penjelasan segitiga api dan klasifikasi kebakaran beserta jenis APAR yang sesuai',
+        'Dokumentasi praktik penggunaan APAR (metode PASS)',
+        'Denah sederhana lokasi APAR dan jalur evakuasi di area yang diamati'
+      ],
+      k3: 'Praktik penggunaan APAR wajib didampingi instruktur/petugas terlatih; jangan mencoba memadamkan kebakaran besar sendirian - prioritaskan evakuasi dan hubungi pihak berwenang.',
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'k3-04',
+      judul: 'Pertolongan Pertama pada Kecelakaan (P3K) Dasar',
+      pertemuanSaran: 8,
+      tujuan: [
+        'Memahami prinsip dasar pertolongan pertama pada kecelakaan kerja ringan',
+        'Mempraktikkan penanganan dasar untuk luka ringan, luka bakar ringan, dan sengatan listrik ringan',
+        'Mengetahui kapan dan bagaimana merujuk korban ke penanganan medis lanjutan'
+      ],
+      alatBahan: [
+        'Kotak P3K (kasa steril, plester, antiseptik, dsb.)',
+        'Boneka/manekin latihan (bila tersedia) atau simulasi antar mahasiswa untuk latihan penanganan dasar'
+      ],
+      dasarTeori: 'Pertolongan pertama adalah bantuan awal yang diberikan kepada korban kecelakaan sebelum mendapat penanganan medis profesional, bertujuan mencegah kondisi korban memburuk. Prinsip dasarnya meliputi memastikan keamanan penolong dan korban, menilai kondisi korban, memberikan pertolongan sesuai jenis cedera, dan segera merujuk ke fasilitas kesehatan bila diperlukan.',
+      langkahKerja: [
+        'Pelajari isi dan fungsi kotak P3K standar',
+        'Latihan penanganan dasar luka ringan (pembersihan dan penutupan luka) menggunakan simulasi',
+        'Latihan penanganan dasar luka bakar ringan (pendinginan dengan air mengalir, penutupan luka)',
+        'Diskusikan langkah penanganan awal korban sengatan listrik (memastikan sumber listrik telah diputus sebelum menyentuh korban)',
+        'Diskusikan kriteria kondisi yang memerlukan rujukan segera ke fasilitas kesehatan'
+      ],
+      tugasLaporan: [
+        'Ringkasan langkah P3K untuk luka ringan, luka bakar ringan, dan sengatan listrik ringan',
+        'Dokumentasi hasil praktik/simulasi penanganan dasar yang dilakukan',
+        'Kesimpulan pentingnya kesigapan P3K di lingkungan kerja teknik'
+      ],
+      k3: 'Pertolongan pertama pada sengatan listrik: JANGAN menyentuh korban sebelum sumber listrik benar-benar diputus, untuk menghindari penolong ikut tersengat.',
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'k3-05',
+      judul: 'Ergonomi Kerja dan Pencegahan Cedera Akibat Postur Kerja',
+      pertemuanSaran: 10,
+      tujuan: [
+        'Memahami prinsip dasar ergonomi dalam pekerjaan teknik (postur kerja, tata letak alat, durasi kerja)',
+        'Mengidentifikasi postur kerja yang berisiko menyebabkan cedera otot/rangka',
+        'Menerapkan perbaikan sederhana pada postur dan tata letak kerja untuk mengurangi risiko cedera'
+      ],
+      alatBahan: [
+        'Meja kerja/bangku praktikum yang tersedia di bengkel/laboratorium',
+        'Lembar observasi postur kerja sederhana'
+      ],
+      dasarTeori: 'Ergonomi mempelajari kesesuaian antara pekerja dengan lingkungan dan peralatan kerjanya, bertujuan meminimalkan risiko cedera otot rangka (musculoskeletal disorders) akibat postur kerja yang tidak alami, gerakan berulang, atau durasi kerja statis yang terlalu lama. Penyesuaian sederhana seperti ketinggian meja kerja, posisi duduk/berdiri, dan jeda istirahat berkala dapat secara signifikan mengurangi risiko cedera jangka panjang.',
+      langkahKerja: [
+        'Amati postur kerja mahasiswa/teknisi saat melakukan salah satu pekerjaan bengkel (mis. mengikir, menyolder, merangkai)',
+        'Identifikasi postur yang berpotensi menyebabkan cedera (membungkuk berlebihan, posisi tangan tidak alami, dsb.)',
+        'Diskusikan dan terapkan perbaikan sederhana pada postur/tata letak kerja yang diamati',
+        'Bandingkan tingkat kenyamanan/kelelahan sebelum dan sesudah perbaikan postur (berdasarkan pengalaman subjektif)',
+        'Susun rekomendasi ergonomi sederhana untuk area kerja yang diamati'
+      ],
+      tugasLaporan: [
+        'Dokumentasi (foto/gambar) postur kerja sebelum dan sesudah perbaikan',
+        'Analisis risiko postur kerja yang diamati',
+        'Rekomendasi perbaikan ergonomi untuk area kerja tersebut'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'k3-06',
+      judul: 'Prosedur Tanggap Darurat dan Simulasi Evakuasi',
+      pertemuanSaran: 12,
+      tujuan: [
+        'Memahami komponen prosedur tanggap darurat (jalur evakuasi, titik kumpul, tim tanggap darurat)',
+        'Mengikuti simulasi evakuasi darurat sesuai prosedur yang berlaku di kampus',
+        'Mengevaluasi kelancaran proses evakuasi dan mengidentifikasi area perbaikan'
+      ],
+      alatBahan: [
+        'Denah jalur evakuasi dan titik kumpul gedung kampus',
+        'Peluit/alarm simulasi (bila tersedia) untuk keperluan latihan'
+      ],
+      dasarTeori: 'Prosedur tanggap darurat adalah rangkaian langkah yang harus diikuti saat terjadi keadaan darurat (kebakaran, gempa, dsb.) untuk menyelamatkan seluruh penghuni gedung secara tertib dan cepat, meliputi jalur evakuasi yang jelas, titik kumpul yang aman, serta peran tim tanggap darurat dalam mengoordinasikan proses evakuasi. Simulasi berkala penting untuk memastikan seluruh penghuni gedung familiar dengan prosedur dan dapat bertindak cepat saat kejadian sesungguhnya.',
+      langkahKerja: [
+        'Pelajari denah jalur evakuasi dan lokasi titik kumpul gedung yang digunakan untuk perkuliahan',
+        'Ikuti simulasi evakuasi darurat sesuai arahan dosen/tim K3 kampus',
+        'Catat waktu yang dibutuhkan untuk mencapai titik kumpul dari ruang kelas/laboratorium',
+        'Identifikasi kendala yang ditemui selama proses evakuasi (mis. jalur terhalang, kebingungan arah)',
+        'Diskusikan dan susun rekomendasi perbaikan proses evakuasi berdasarkan hasil simulasi'
+      ],
+      tugasLaporan: [
+        'Denah jalur evakuasi yang diikuti beserta catatan waktu evakuasi',
+        'Kendala yang ditemukan selama simulasi evakuasi',
+        'Rekomendasi perbaikan prosedur tanggap darurat berdasarkan hasil simulasi'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'k3-07',
+      judul: 'Proyek Akhir: Audit K3 Sederhana pada Area Kerja/Laboratorium',
+      pertemuanSaran: 14,
+      tujuan: [
+        'Melakukan audit K3 sederhana pada satu area bengkel/laboratorium secara menyeluruh',
+        'Mengintegrasikan konsep HIRA, APD, kesiapan tanggap darurat, dan ergonomi dalam satu laporan audit',
+        'Menyusun rekomendasi perbaikan K3 yang dapat diterapkan secara nyata di area yang diaudit'
+      ],
+      alatBahan: [
+        'Formulir audit K3 sederhana (checklist)',
+        'Area bengkel/laboratorium yang ditentukan sebagai objek audit'
+      ],
+      dasarTeori: 'Audit K3 adalah proses evaluasi sistematis terhadap penerapan aspek keselamatan dan kesehatan kerja pada suatu area, mencakup pemeriksaan bahaya fisik, ketersediaan dan kondisi APD, kesiapan sarana tanggap darurat (APAR, jalur evakuasi), serta aspek ergonomi. Hasil audit digunakan untuk menyusun rekomendasi perbaikan agar area kerja tersebut lebih aman dan sesuai standar K3.',
+      langkahKerja: [
+        'Tentukan area bengkel/laboratorium yang akan diaudit dan susun checklist audit berdasarkan modul-modul sebelumnya',
+        'Lakukan observasi dan pemeriksaan menyeluruh sesuai checklist (bahaya, APD, sarana tanggap darurat, ergonomi)',
+        'Dokumentasikan temuan (foto/catatan) untuk setiap poin checklist',
+        'Susun rekomendasi perbaikan untuk setiap temuan yang tidak sesuai standar',
+        'Presentasikan hasil audit dan rekomendasi di depan dosen/kelas'
+      ],
+      tugasLaporan: [
+        'Checklist audit K3 lengkap beserta hasil temuan dan dokumentasi',
+        'Daftar rekomendasi perbaikan berdasarkan temuan audit',
+        'Refleksi proses audit dan pembelajaran yang diperoleh'
+      ],
+      estimasiWaktu: '3 x 50 menit (dapat dikerjakan lintas pertemuan)'
+    }
+  ],
+
+  // ==========================================================================
+  // PERAWATAN DAN PERBAIKAN (kode PEK3205 - Pilihan Teknik
+  // Elektronika/Instrumentasi). Fokus: pemeliharaan preventif dan
+  // troubleshooting/perbaikan peralatan elektronik
+  // ==========================================================================
+  perawatan_dan_perbaikan: [
+    {
+      id: 'pp-01',
+      judul: 'Konsep Dasar Perawatan (Preventif, Korektif, Prediktif) dan Dokumentasi Peralatan',
+      pertemuanSaran: 2,
+      tujuan: [
+        'Membedakan jenis-jenis perawatan: preventif, korektif, dan prediktif',
+        'Menyusun kartu riwayat (maintenance record) untuk sebuah peralatan elektronik',
+        'Menyusun jadwal perawatan preventif sederhana untuk peralatan laboratorium'
+      ],
+      alatBahan: [
+        'Contoh peralatan elektronik/laboratorium (mis. power supply, osiloskop, atau alat lain yang tersedia)',
+        'Formulir kartu riwayat perawatan (maintenance record card)'
+      ],
+      dasarTeori: 'Perawatan preventif dilakukan secara terjadwal untuk mencegah kerusakan sebelum terjadi, perawatan korektif dilakukan setelah kerusakan terjadi untuk mengembalikan fungsi alat, sedangkan perawatan prediktif menggunakan data kondisi alat (mis. hasil pengukuran berkala) untuk memperkirakan kapan perawatan perlu dilakukan. Dokumentasi riwayat perawatan penting untuk melacak kondisi alat dari waktu ke waktu dan menjadi dasar pengambilan keputusan perawatan selanjutnya.',
+      langkahKerja: [
+        'Pilih satu peralatan elektronik/laboratorium yang tersedia sebagai objek pembelajaran',
+        'Identifikasi jenis perawatan yang sesuai untuk alat tersebut (preventif/korektif/prediktif) berdasarkan karakteristiknya',
+        'Buat kartu riwayat perawatan untuk alat tersebut (identitas alat, riwayat pemakaian, riwayat perawatan/perbaikan)',
+        'Susun jadwal perawatan preventif sederhana (mis. pembersihan berkala, pengecekan kabel/konektor) untuk alat tersebut',
+        'Diskusikan konsekuensi bila perawatan preventif diabaikan pada alat tersebut'
+      ],
+      tugasLaporan: [
+        'Kartu riwayat perawatan yang dibuat untuk alat yang dipilih',
+        'Jadwal perawatan preventif sederhana beserta alasan penyusunannya',
+        'Kesimpulan perbedaan dan kegunaan masing-masing jenis perawatan'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'pp-02',
+      judul: 'Teknik Troubleshooting dan Diagnosa Kerusakan Rangkaian Elektronik',
+      pertemuanSaran: 4,
+      tujuan: [
+        'Menerapkan pendekatan sistematis (systematic troubleshooting) untuk mendiagnosa kerusakan rangkaian elektronik',
+        'Menggunakan alat ukur (multimeter, osiloskop) untuk melacak titik kerusakan pada rangkaian',
+        'Membedakan gejala kerusakan komponen umum (short, open, komponen terbakar)'
+      ],
+      alatBahan: [
+        'Rangkaian elektronik sederhana yang sengaja dibuat rusak (fault-inserted) untuk latihan diagnosa',
+        'Multimeter, osiloskop, kaca pembesar (untuk inspeksi visual komponen)'
+      ],
+      dasarTeori: 'Troubleshooting sistematis dimulai dari pemeriksaan visual (komponen terbakar, solderan retak, kabel putus), dilanjutkan pengukuran titik-titik kunci rangkaian (tegangan, kontinuitas) dari sumber ke beban secara bertahap (metode half-split atau signal tracing) untuk mempersempit lokasi kerusakan, sebelum akhirnya mengidentifikasi komponen yang rusak secara spesifik.',
+      langkahKerja: [
+        'Lakukan inspeksi visual pada rangkaian uji untuk mencari tanda-tanda kerusakan fisik (komponen gosong, solderan retak, dsb.)',
+        'Ukur tegangan pada beberapa titik kunci rangkaian dan bandingkan dengan nilai yang seharusnya',
+        'Terapkan metode half-split (memeriksa titik tengah rangkaian) untuk mempersempit lokasi kerusakan',
+        'Identifikasi komponen yang diduga rusak dan verifikasi menggunakan multimeter (mode dioda/kontinuitas/resistansi)',
+        'Dokumentasikan proses diagnosa dari gejala awal hingga ditemukannya komponen yang rusak'
+      ],
+      tugasLaporan: [
+        'Dokumentasi langkah-langkah troubleshooting yang dilakukan beserta hasil pengukuran tiap tahap',
+        'Kesimpulan komponen yang teridentifikasi rusak dan alasan diagnosanya',
+        'Refleksi efektivitas metode troubleshooting yang digunakan'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'pp-03',
+      judul: 'Perawatan dan Perbaikan Catu Daya (Power Supply)',
+      pertemuanSaran: 6,
+      tujuan: [
+        'Melakukan pemeriksaan dan perawatan rutin pada rangkaian catu daya (power supply)',
+        'Mendiagnosa dan memperbaiki kerusakan umum pada catu daya (mis. output tidak stabil, tidak ada output)',
+        'Menguji ulang catu daya setelah perbaikan untuk memastikan kinerjanya sesuai spesifikasi'
+      ],
+      alatBahan: [
+        'Catu daya (power supply) yang mengalami gangguan/kerusakan umum untuk bahan praktik',
+        'Multimeter, osiloskop, komponen pengganti (dioda, kapasitor, IC regulator, sekring) sesuai kebutuhan'
+      ],
+      dasarTeori: 'Kerusakan umum pada catu daya sering disebabkan oleh komponen yang aus/rusak seperti kapasitor filter yang mengering (menyebabkan riak tegangan tinggi), dioda penyearah yang short/putus, atau IC regulator yang rusak akibat panas berlebih. Perawatan rutin (pembersihan debu, pengecekan sekring, pengukuran output berkala) dapat mendeteksi tanda-tanda kerusakan sejak dini sebelum catu daya benar-benar gagal berfungsi.',
+      langkahKerja: [
+        'Lakukan pemeriksaan visual pada catu daya (kondisi kapasitor, sekring, solderan, komponen yang menggelembung/gosong)',
+        'Ukur tegangan output catu daya dalam kondisi tanpa beban dan berbeban, bandingkan dengan spesifikasi',
+        'Diagnosa penyebab gangguan/kerusakan berdasarkan gejala yang ditemukan (mis. riak tinggi menunjukkan kapasitor filter bermasalah)',
+        'Ganti komponen yang teridentifikasi rusak dengan komponen pengganti yang sesuai spesifikasi',
+        'Uji ulang catu daya setelah perbaikan (tegangan output, riak, regulasi beban) untuk memastikan kinerjanya pulih'
+      ],
+      tugasLaporan: [
+        'Dokumentasi gejala kerusakan awal dan hasil diagnosa penyebabnya',
+        'Daftar komponen yang diganti beserta alasan penggantiannya',
+        'Hasil pengujian catu daya setelah perbaikan dibandingkan dengan sebelum perbaikan'
+      ],
+      k3: 'Kapasitor pada rangkaian catu daya dapat menyimpan muatan listrik meski sumber sudah dimatikan - pastikan dikosongkan (discharge) dengan aman sebelum disentuh/diganti.',
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'pp-04',
+      judul: 'Perbaikan Peralatan Elektronik Sederhana (Studi Kasus Peralatan Rumah Tangga)',
+      pertemuanSaran: 8,
+      tujuan: [
+        'Mendiagnosa kerusakan pada peralatan elektronik rumah tangga sederhana (mis. kipas angin, radio, charger)',
+        'Melakukan perbaikan sesuai hasil diagnosa dengan mengikuti prosedur keselamatan yang sesuai',
+        'Menguji kembali fungsi peralatan setelah diperbaiki'
+      ],
+      alatBahan: [
+        'Peralatan elektronik rumah tangga sederhana yang mengalami kerusakan (mis. kipas angin, radio, charger) sebagai bahan praktik',
+        'Obeng, multimeter, solder, komponen pengganti sesuai kebutuhan'
+      ],
+      dasarTeori: 'Peralatan elektronik rumah tangga sederhana umumnya memiliki rangkaian yang relatif mudah dipahami, sehingga cocok digunakan sebagai bahan latihan penerapan teknik troubleshooting dan perbaikan yang telah dipelajari, sekaligus melatih kehati-hatian dalam membongkar-pasang casing/komponen tanpa merusak bagian yang masih baik.',
+      langkahKerja: [
+        'Pastikan peralatan dalam keadaan tidak terhubung ke sumber listrik sebelum dibongkar',
+        'Bongkar casing peralatan dengan hati-hati dan amati rangkaian/komponen di dalamnya',
+        'Lakukan diagnosa kerusakan menggunakan teknik troubleshooting yang telah dipelajari',
+        'Perbaiki/ganti komponen yang rusak sesuai hasil diagnosa',
+        'Pasang kembali casing dan uji fungsi peralatan setelah perbaikan (dengan pengawasan sebelum dihubungkan ke sumber listrik)'
+      ],
+      tugasLaporan: [
+        'Dokumentasi proses pembongkaran, diagnosa, dan perbaikan yang dilakukan',
+        'Daftar komponen yang diperbaiki/diganti',
+        'Hasil pengujian akhir peralatan setelah diperbaiki'
+      ],
+      k3: 'Selalu cabut steker dari sumber listrik sebelum membongkar peralatan; uji coba pertama setelah perbaikan sebaiknya dengan pengawasan dan menggunakan pengaman arus (mis. MCB/RCD) bila tersedia.',
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'pp-05',
+      judul: 'Perawatan Berkala Peralatan Praktikum/Laboratorium Elektronika',
+      pertemuanSaran: 10,
+      tujuan: [
+        'Melakukan perawatan berkala pada peralatan laboratorium elektronika (mis. trainer, alat ukur)',
+        'Memeriksa kalibrasi/keakuratan dasar alat ukur sebelum digunakan',
+        'Menyusun jadwal dan checklist perawatan berkala untuk peralatan laboratorium'
+      ],
+      alatBahan: [
+        'Peralatan laboratorium elektronika (trainer, power supply, multimeter, dsb.) yang digunakan sehari-hari',
+        'Kain pembersih, kuas kecil, checklist perawatan berkala'
+      ],
+      dasarTeori: 'Peralatan laboratorium yang digunakan berulang kali oleh banyak mahasiswa memerlukan perawatan berkala untuk menjaga keandalan dan keakuratannya, meliputi pembersihan debu/kotoran, pengecekan kabel dan konektor, serta verifikasi dasar keakuratan alat ukur (mis. membandingkan dengan alat ukur referensi) sebelum digunakan pada praktikum berikutnya.',
+      langkahKerja: [
+        'Susun checklist perawatan berkala untuk beberapa jenis peralatan laboratorium yang umum digunakan',
+        'Lakukan pembersihan fisik pada peralatan (debu, kotoran pada konektor/tombol)',
+        'Periksa kondisi kabel, probe, dan konektor pada alat ukur (retak, kendor, karat)',
+        'Lakukan verifikasi dasar keakuratan alat ukur dengan membandingkan hasil ukur pada nilai referensi yang diketahui',
+        'Catat hasil perawatan pada checklist dan tandai peralatan yang memerlukan tindak lanjut (perbaikan/kalibrasi resmi)'
+      ],
+      tugasLaporan: [
+        'Checklist perawatan berkala yang telah diisi untuk peralatan yang diperiksa',
+        'Daftar peralatan yang memerlukan tindak lanjut beserta alasannya',
+        'Kesimpulan pentingnya perawatan berkala bagi keandalan peralatan laboratorium'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'pp-06',
+      judul: 'Dokumentasi dan Pelaporan Hasil Perawatan/Perbaikan',
+      pertemuanSaran: 12,
+      tujuan: [
+        'Menyusun laporan perawatan/perbaikan yang informatif dan terstruktur',
+        'Mendokumentasikan riwayat perawatan/perbaikan suatu alat secara berkelanjutan',
+        'Memahami pentingnya dokumentasi bagi pengambilan keputusan perawatan di masa depan (mis. kapan alat perlu diganti)'
+      ],
+      alatBahan: [
+        'Data/hasil perawatan-perbaikan dari modul-modul sebelumnya',
+        'Template laporan perawatan/perbaikan'
+      ],
+      dasarTeori: 'Dokumentasi yang baik atas setiap kegiatan perawatan dan perbaikan membentuk riwayat (history) suatu alat yang berguna untuk menganalisis pola kerusakan berulang, memperkirakan usia pakai alat, dan menjadi dasar keputusan apakah suatu alat masih layak diperbaiki atau sebaiknya diganti (repair vs replace decision).',
+      langkahKerja: [
+        'Kumpulkan seluruh catatan perawatan/perbaikan yang telah dilakukan pada modul-modul sebelumnya',
+        'Susun laporan perawatan/perbaikan yang terstruktur (identitas alat, gejala awal, tindakan, hasil akhir) untuk salah satu alat',
+        'Analisis pola kerusakan (bila alat pernah mengalami lebih dari satu kali perbaikan) dari riwayat yang ada',
+        'Diskusikan kriteria sederhana untuk memutuskan apakah suatu alat masih layak diperbaiki atau perlu diganti',
+        'Presentasikan salah satu laporan perawatan/perbaikan yang disusun di depan kelas'
+      ],
+      tugasLaporan: [
+        'Laporan perawatan/perbaikan yang terstruktur untuk minimal satu alat',
+        'Analisis pola kerusakan (jika data riwayat tersedia)',
+        'Kesimpulan kriteria repair vs replace yang didiskusikan'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'pp-07',
+      judul: 'Proyek Akhir: Diagnosa dan Perbaikan Perangkat Elektronik (Studi Kasus Nyata)',
+      pertemuanSaran: 14,
+      tujuan: [
+        'Mengintegrasikan seluruh teknik troubleshooting, perawatan, dan dokumentasi dalam satu studi kasus perbaikan nyata',
+        'Mendiagnosa dan memperbaiki sebuah perangkat elektronik yang mengalami kerusakan',
+        'Menyusun laporan akhir dan mendemonstrasikan hasil perbaikan'
+      ],
+      alatBahan: [
+        'Satu perangkat elektronik rusak (dipilih sendiri atau ditentukan dosen) sebagai studi kasus akhir',
+        'Seluruh alat ukur dan alat tangan yang telah digunakan pada modul-modul sebelumnya'
+      ],
+      dasarTeori: 'Proyek akhir menggabungkan seluruh kompetensi yang telah dipelajari - identifikasi gejala kerusakan, troubleshooting sistematis, perbaikan/penggantian komponen, pengujian ulang, hingga dokumentasi lengkap - dalam satu studi kasus perbaikan perangkat elektronik yang representatif terhadap pekerjaan teknisi perawatan di dunia kerja.',
+      langkahKerja: [
+        'Pilih/terima satu perangkat elektronik rusak sebagai studi kasus, catat gejala kerusakan yang dilaporkan/diamati',
+        'Lakukan diagnosa sistematis menggunakan teknik troubleshooting yang telah dipelajari',
+        'Lakukan perbaikan (penggantian komponen, perbaikan sambungan, dsb.) sesuai hasil diagnosa',
+        'Uji fungsi perangkat setelah perbaikan dan pastikan bekerja sesuai spesifikasi semula',
+        'Susun laporan akhir lengkap dan demonstrasikan hasil perbaikan di depan dosen/kelas'
+      ],
+      tugasLaporan: [
+        'Laporan lengkap studi kasus (gejala awal, proses diagnosa, tindakan perbaikan, hasil akhir)',
+        'Dokumentasi foto/video sebelum dan sesudah perbaikan',
+        'Refleksi kendala dan pembelajaran yang diperoleh selama proyek perbaikan'
       ],
       estimasiWaktu: '3 x 50 menit (dapat dikerjakan lintas pertemuan)'
     }

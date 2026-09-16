@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { getPublishedModulPraktikum } = require('../../helpers/modulPraktikumHelper');
 
 router.use(verifyToken);
 
@@ -71,16 +72,59 @@ function groupEventsByMonth(events) {
   return months;
 }
 
+// Mengambil jadwal praktikum (tanggal pelaksanaan yang diisi dosen per
+// modul) dari mata kuliah yang diambil mahasiswa & sudah dipublikasikan,
+// lalu dijadikan "event" kalender yang formatnya sama dengan jadwalPenting
+// (judul, tanggal, kategori) - supaya bisa langsung digabung tanpa
+// mengubah cara kalender ini merender event.
+async function getEventPraktikum(userId) {
+  try {
+    const enrollmentSnapshot = await db.collection('enrollment')
+      .where('userId', '==', userId)
+      .where('status', '==', 'active')
+      .get();
+    if (enrollmentSnapshot.empty) return [];
+
+    const mkIds = enrollmentSnapshot.docs.map(doc => doc.data().mkId);
+    const mkDocs = await db.getAll(...mkIds.map(id => db.collection('mataKuliah').doc(id)));
+
+    const eventPraktikum = [];
+    mkDocs.forEach((mkDoc, i) => {
+      if (!mkDoc.exists) return;
+      const mk = { id: mkIds[i], ...mkDoc.data() };
+      if (mk.praktikumPublished !== true) return;
+      const { modulList } = getPublishedModulPraktikum(mk);
+      modulList.forEach(m => {
+        if (!m.tanggal) return;
+        eventPraktikum.push({
+          judul: `Praktikum: ${m.judul}`,
+          tanggal: m.tanggal.split('T')[0],
+          kategori: `Praktikum ${mk.kode}`
+        });
+      });
+    });
+    return eventPraktikum;
+  } catch (error) {
+    console.error('Error getEventPraktikum:', error);
+    return [];
+  }
+}
+
 // Route utama kalender
 router.get('/', async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const snapshot = await db.collection('jadwalPenting')
-      .where('tanggal', '>=', today)
-      .orderBy('tanggal', 'asc')
-      .get();
-    const events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
+    const [snapshot, eventPraktikum] = await Promise.all([
+      db.collection('jadwalPenting')
+        .where('tanggal', '>=', today)
+        .orderBy('tanggal', 'asc')
+        .get(),
+      getEventPraktikum(req.user.id)
+    ]);
+    const events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      .concat(eventPraktikum.filter(e => e.tanggal >= today));
+    events.sort((a, b) => (a.tanggal || '').localeCompare(b.tanggal || ''));
+
     const months = groupEventsByMonth(events);
 
     res.render('mahasiswa/kalender', { 

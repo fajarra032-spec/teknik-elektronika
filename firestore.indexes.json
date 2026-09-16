@@ -15,6 +15,22 @@
         { "fieldPath": "aktif", "order": "ASCENDING" },
         { "fieldPath": "urutan", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "akreditasi_kriteria",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "periodeId", "order": "ASCENDING" },
+        { "fieldPath": "urutan", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "akreditasi_periode",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

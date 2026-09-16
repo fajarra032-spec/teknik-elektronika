@@ -119,6 +119,21 @@ router.get('/', async (req, res) => {
     const pengumpulanBelumDinilai = pengumpulanChunkCounts.reduce((a, b) => a + b, 0);
 
     // ========================================================================
+    // 4b. LKM Praktikum yang sudah dikumpulkan mahasiswa tapi belum diperiksa
+    // dosen (status 'dikumpulkan', bukan 'diperiksa') - lintas semua MK yang
+    // diampu dosen ini.
+    // ========================================================================
+    const mkIdsSemua = mkSnapshot.docs.map(doc => doc.id);
+    const lkmChunkCounts = await Promise.all(
+      chunkArray(mkIdsSemua, 10)
+        .filter(chunk => chunk.length > 0)
+        .map(chunk => hitungJumlah(
+          db.collection('lkmPengumpulan').where('mkId', 'in', chunk).where('status', '==', 'dikumpulkan')
+        ))
+    );
+    const lkmBelumDiperiksa = lkmChunkCounts.reduce((a, b) => a + b, 0);
+
+    // ========================================================================
     // 5. Event terdekat (sudah diambil paralel di atas)
     // ========================================================================
     const events = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -214,6 +229,7 @@ router.get('/', async (req, res) => {
       totalMahasiswaPa,
       tugasAktif,
       pengumpulanBelumDinilai,
+      lkmBelumDiperiksa,
       events,
       mkList: mkList.slice(0, 5),
       berita: [],

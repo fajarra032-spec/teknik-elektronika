@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { detectJenisPraktikum, getModulPraktikumList } = require('../../helpers/modulPraktikumHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -70,12 +71,37 @@ function groupEventsByMonth(events) {
 router.get('/', async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const snapshot = await db.collection('jadwalPenting')
-      .where('tanggal', '>=', today)
-      .orderBy('tanggal', 'asc')
-      .get();
+    const [snapshot, mkSnapshot] = await Promise.all([
+      db.collection('jadwalPenting')
+        .where('tanggal', '>=', today)
+        .orderBy('tanggal', 'asc')
+        .get(),
+      db.collection('mataKuliah').where('dosenIds', 'array-contains', req.dosen.id).get()
+    ]);
     const events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
+
+    // Jadwal praktikum (tanggal pelaksanaan yang sudah diisi dosen per
+    // modul) ikut muncul di kalender dosen sendiri - terlepas dari
+    // apakah sudah dipublikasikan ke mahasiswa atau belum, karena ini
+    // pengingat jadwal untuk dosennya sendiri.
+    mkSnapshot.docs.forEach(doc => {
+      const mk = { id: doc.id, ...doc.data() };
+      const jenis = detectJenisPraktikum(mk);
+      if (!jenis) return;
+      const { modulList } = getModulPraktikumList(mk);
+      modulList.forEach(m => {
+        if (!m.tanggal) return;
+        const tanggal = m.tanggal.split('T')[0];
+        if (tanggal < today) return;
+        events.push({
+          judul: `Praktikum: ${m.judul}`,
+          tanggal,
+          kategori: `Praktikum ${mk.kode}`
+        });
+      });
+    });
+    events.sort((a, b) => (a.tanggal || '').localeCompare(b.tanggal || ''));
+
     const months = groupEventsByMonth(events);
 
     res.render('dosen/kalender', { 

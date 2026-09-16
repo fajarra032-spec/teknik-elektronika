@@ -171,6 +171,8 @@
             <% if (m.fileUrl) { %>
               <a href="<%= m.fileUrl %>" target="_blank" class="file-chip"><i class="bi bi-file-earmark-pdf"></i> Job Sheet</a>
             <% } %>
+            <a href="/dosen/mk/<%= mk.id %>/modul-template/<%= m.id %>/cetak" target="_blank" class="file-chip"><i class="bi bi-printer"></i> Cetak LKM</a>
+            <a href="/dosen/mk/<%= mk.id %>/modul-template/<%= m.id %>/kumpulan" class="file-chip"><i class="bi bi-inbox"></i> Kumpulan (<%= m.jumlahKumpul || 0 %>)</a>
             <form method="POST" action="/dosen/mk/<%= mk.id %>/modul-template/<%= m.id %>/toggle" class="switch-form">
               <span class="switch-label"><%= m.aktif ? 'Aktif' : 'Nonaktif' %></span>
               <label class="switch">

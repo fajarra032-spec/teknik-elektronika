@@ -1,0 +1,111 @@
+<%- include('../partials/header') %>
+
+<style>
+  :root {
+    --primary-start: #1e3a8a;
+    --primary-end: #3b82f6;
+    --primary-light: rgba(30,58,138,0.1);
+    --primary-dark: #0f2b5c;
+  }
+  body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; }
+
+  .page-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-radius: 1.5rem; padding: 1.8rem 2rem; color: white; margin-bottom: 1.5rem;
+    box-shadow: 0 15px 30px rgba(30,58,138,0.25);
+  }
+  .page-header h2 { font-weight: 700; margin-bottom: 0.3rem; }
+  .page-header p { margin: 0; opacity: 0.9; }
+  .page-header .btn-back {
+    background: white; border: none; border-radius: 50px; padding: 0.5rem 1.4rem; font-weight: 600;
+    color: var(--primary-start); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+
+  .summary-banner {
+    background: white; border-radius: 1.2rem; padding: 1.1rem 1.4rem; margin-bottom: 1.2rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.03); border: 1px solid rgba(30,58,138,0.1);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem;
+  }
+  .summary-banner .num { font-size: 1.4rem; font-weight: 800; color: var(--primary-start); }
+
+  .mhs-card {
+    background: white; border-radius: 1.1rem; padding: 1.1rem 1.3rem; margin-bottom: 0.9rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.03); border: 1px solid rgba(30,58,138,0.08);
+    display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: flex-start;
+  }
+  .mhs-card.sudah { border-color: rgba(16,185,129,0.3); }
+  .mhs-card.diperiksa { border-color: rgba(59,130,246,0.35); background: #f8fafc; }
+  .mhs-name { font-weight: 700; color: #1e293b; }
+  .mhs-nim { font-size: 0.82rem; color: #64748b; }
+  .badge-status { padding: 0.25rem 0.7rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; }
+  .badge-belum { background: #f1f5f9; color: #64748b; }
+  .badge-kumpul { background: #d1fae5; color: #065f46; }
+  .badge-periksa { background: #dbeafe; color: #1e40af; }
+  .file-chip { display: inline-flex; align-items: center; gap: 0.35rem; background: var(--primary-light); color: var(--primary-start); padding: 0.3rem 0.7rem; border-radius: 50px; font-size: 0.78rem; text-decoration: none; font-weight: 500; }
+  .periksa-form { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  .periksa-form input[type=number] { width: 80px; }
+  .periksa-form input[type=text] { min-width: 220px; }
+</style>
+
+<div class="container mt-4">
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+      <h2><i class="bi bi-inbox-fill me-2"></i>Kumpulan LKM</h2>
+      <p><%= mk.kode %> - <%= mk.nama %> &middot; <%= modul.judul %></p>
+    </div>
+    <a href="/dosen/mk/<%= mk.id %>/modul" class="btn-back"><i class="bi bi-arrow-left"></i> Kembali ke Modul</a>
+  </div>
+
+  <div class="summary-banner">
+    <div><span class="num"><%= jumlahSudahKumpul %></span> / <%= mahasiswaList.length %> mahasiswa sudah mengumpulkan LKM untuk modul ini</div>
+    <a href="/dosen/mk/<%= mk.id %>/modul-template/<%= modul.id %>/cetak" target="_blank" class="btn btn-sm btn-outline-primary">
+      <i class="bi bi-printer"></i> Cetak Lembar Kosong
+    </a>
+  </div>
+
+  <% if (!mahasiswaList.length) { %>
+    <div class="mhs-card"><span class="text-muted">Belum ada mahasiswa terdaftar aktif di mata kuliah ini pada periode berjalan.</span></div>
+  <% } %>
+
+  <% mahasiswaList.forEach(m => { %>
+    <%
+      const p = m.pengumpulan;
+      const cardClass = !p ? '' : (p.status === 'diperiksa' ? 'diperiksa' : 'sudah');
+    %>
+    <div class="mhs-card <%= cardClass %>">
+      <div>
+        <div class="mhs-name"><%= m.nama %></div>
+        <div class="mhs-nim">NIM <%= m.nim %></div>
+        <div class="mt-2">
+          <% if (!p) { %>
+            <span class="badge-status badge-belum"><i class="bi bi-dash-circle"></i> Belum mengumpulkan</span>
+          <% } else if (p.status === 'diperiksa') { %>
+            <span class="badge-status badge-periksa"><i class="bi bi-check-circle"></i> Sudah diperiksa</span>
+          <% } else { %>
+            <span class="badge-status badge-kumpul"><i class="bi bi-upload"></i> Sudah dikumpulkan</span>
+          <% } %>
+          <% if (p) { %>
+            <span class="text-muted small ms-2">
+              <%= new Date(p.submittedAt).toLocaleString('id-ID', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) %>
+            </span>
+          <% } %>
+        </div>
+      </div>
+
+      <% if (p) { %>
+        <div class="text-end" style="min-width: 260px;">
+          <a href="<%= p.fileUrl %>" target="_blank" class="file-chip mb-2 d-inline-flex">
+            <i class="bi bi-file-earmark-image"></i> Lihat File (<%= p.fileNama || 'LKM' %>)
+          </a>
+          <form method="POST" action="/dosen/mk/<%= mk.id %>/modul-template/<%= modul.id %>/kumpulan/<%= p.id %>/periksa" class="periksa-form justify-content-end">
+            <input type="number" step="0.01" min="0" max="100" name="nilaiPraktikum" class="form-control form-control-sm" placeholder="Nilai" value="<%= p.nilaiPraktikum !== null && p.nilaiPraktikum !== undefined ? p.nilaiPraktikum : '' %>">
+            <input type="text" name="catatanDosen" class="form-control form-control-sm" placeholder="Catatan (opsional)" value="<%= p.catatanDosen || '' %>">
+            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-check-lg"></i> Simpan</button>
+          </form>
+        </div>
+      <% } %>
+    </div>
+  <% }) %>
+</div>
+
+<%- include('../partials/footer') %>

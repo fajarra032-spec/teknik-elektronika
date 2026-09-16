@@ -422,6 +422,11 @@
           <div class="stat-content"><div class="stat-label">Logbook Pending</div><div class="stat-number"><%= logbookPendingCount %></div></div>
           <a href="/dosen/magang" class="btn <%= logbookPendingCount > 0 ? 'btn-warning' : 'btn-outline-secondary' %> rounded-pill px-4"><%= logbookPendingCount > 0 ? 'Lihat Logbook' : 'Tidak Ada' %></a>
         </div>
+        <div class="stat-item">
+          <div class="stat-icon"><i class="bi bi-pencil-square"></i></div>
+          <div class="stat-content"><div class="stat-label">LKM Belum Diperiksa</div><div class="stat-number"><%= lkmBelumDiperiksa || 0 %></div></div>
+          <a href="/dosen/mk" class="btn <%= lkmBelumDiperiksa > 0 ? 'btn-warning' : 'btn-outline-secondary' %> rounded-pill px-4"><%= lkmBelumDiperiksa > 0 ? 'Lihat Modul' : 'Tidak Ada' %></a>
+        </div>
       </div>
 
       <!-- ACARA MENDATANG (JIKA ADA) -->

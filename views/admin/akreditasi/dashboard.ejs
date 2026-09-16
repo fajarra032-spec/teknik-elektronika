@@ -1,0 +1,125 @@
+<%- include('../../partials/header') %>
+<div class="container mt-4 mb-5">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h2 class="mb-0">Akreditasi Program Studi</h2>
+      <small class="text-muted">Persiapan akreditasi Program Studi Teknik Elektronika (LAM Teknik)</small>
+    </div>
+    <a href="/admin/akreditasi/periode/baru" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Periode Baru</a>
+  </div>
+
+  <% if (periodeList.length) { %>
+    <div class="mt-2">
+      <a href="/admin/akreditasi/rekap<%= periodeId ? `?periodeId=${periodeId}` : '' %>" class="btn btn-outline-success btn-sm">
+        <i class="bi bi-file-earmark-bar-graph me-1"></i>Rekap &amp; Laporan / Ekspor
+      </a>
+    </div>
+  <% } %>
+
+  <% if (!periodeList.length) { %>
+    <div class="alert alert-info mt-4">
+      Belum ada periode akreditasi. Klik <strong>"Periode Baru"</strong> untuk membuat periode
+      (mis. "Akreditasi LAM Teknik 2026") - sistem akan otomatis menyiapkan 9 kriteria standar
+      sebagai titik awal, yang bisa disesuaikan kembali.
+    </div>
+  <% } else { %>
+
+    <form method="GET" action="/admin/akreditasi" class="row row-cols-auto g-2 align-items-center mt-3">
+      <div class="col">
+        <label class="col-form-label">Periode:</label>
+      </div>
+      <div class="col">
+        <select name="periodeId" class="form-select" onchange="this.form.submit()">
+          <% periodeList.forEach(p => { %>
+            <option value="<%= p.id %>" <%= p.id === periodeId ? 'selected' : '' %>><%= p.nama %> (<%= p.status %>)</option>
+          <% }) %>
+        </select>
+      </div>
+    </form>
+
+    <% if (periodeAktif) { %>
+      <div class="card mt-3">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+              <h5 class="card-title mb-1"><%= periodeAktif.nama %></h5>
+              <div class="text-muted small">
+                <%= periodeAktif.jenjang %> &middot; <%= periodeAktif.lembaga %>
+                <% if (periodeAktif.tanggalTarget) { %> &middot; Target: <%= periodeAktif.tanggalTarget %><% } %>
+              </div>
+            </div>
+            <div>
+              <a href="/admin/akreditasi/periode/<%= periodeAktif.id %>/edit" class="btn btn-sm btn-warning">Edit Periode</a>
+              <form method="POST" action="/admin/akreditasi/periode/<%= periodeAktif.id %>/delete" style="display:inline"
+                    onsubmit="return confirm('Hapus periode ini beserta seluruh kriteria, dokumen, dan diskusinya?');">
+                <button class="btn btn-sm btn-danger">Hapus</button>
+              </form>
+            </div>
+          </div>
+          <div class="progress mt-3" style="height: 22px;">
+            <div class="progress-bar bg-success" role="progressbar" style="width: <%= progresKeseluruhan %>%;">
+              <%= progresKeseluruhan %>% Kriteria Selesai
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <h5 class="mb-0">Workspace Kriteria</h5>
+        <a href="/admin/akreditasi/periode/<%= periodeAktif.id %>/kriteria/baru" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-plus-lg me-1"></i>Tambah Kriteria
+        </a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width:60px;">Kode</th>
+              <th>Nama Kriteria</th>
+              <th style="width:140px;">Status</th>
+              <th style="width:110px;">Target</th>
+              <th style="width:110px;">Dokumen</th>
+              <th style="width:230px;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% kriteriaList.forEach(k => { %>
+              <tr class="<%= k.terlambat ? 'table-danger' : '' %>">
+                <td class="fw-bold"><%= k.kode %></td>
+                <td>
+                  <%= k.nama %>
+                  <div class="text-muted small"><%= k.deskripsi %></div>
+                </td>
+                <td>
+                  <% const badge = k.status === 'selesai' ? 'success' : (k.status === 'proses' ? 'warning' : 'secondary'); %>
+                  <span class="badge bg-<%= badge %>">
+                    <%= k.status === 'selesai' ? 'Selesai' : (k.status === 'proses' ? 'Sedang Diproses' : 'Belum Dimulai') %>
+                  </span>
+                </td>
+                <td>
+                  <% if (k.targetTanggal) { %>
+                    <span class="small <%= k.terlambat ? 'text-danger fw-bold' : 'text-muted' %>">
+                      <%= k.targetTanggal %><% if (k.terlambat) { %> <i class="bi bi-exclamation-triangle-fill"></i> Lewat<% } %>
+                    </span>
+                  <% } else { %>
+                    <span class="text-muted small">-</span>
+                  <% } %>
+                </td>
+                <td><span class="badge bg-light text-dark border"><%= k.jumlahDokumen %> file</span></td>
+                <td class="d-flex gap-1 flex-wrap">
+                  <a href="/admin/akreditasi/kriteria/<%= k.id %>" class="btn btn-sm btn-primary">Workspace</a>
+                  <a href="/admin/akreditasi/kriteria/<%= k.id %>/edit" class="btn btn-sm btn-warning">Edit</a>
+                  <form method="POST" action="/admin/akreditasi/kriteria/<%= k.id %>/delete"
+                        onsubmit="return confirm('Hapus kriteria ini beserta dokumen &amp; diskusinya?');">
+                    <button class="btn btn-sm btn-danger">Hapus</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  <% } %>
+</div>
+<%- include('../../partials/footer') %>
