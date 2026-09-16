@@ -444,6 +444,38 @@ router.post('/:id/pertemuan/:pertemuan/absensi', async (req, res) => {
     // Sinkronkan ke rubrik Kehadiran untuk semua mahasiswa yang absen hari ini
     await syncAbsensiKeRubrik(mkId, daftarId, getPeriodeAktif());
 
+    // Begitu absensi pertemuan ini disimpan, otomatis tandai pertemuan yang
+    // sama di array "materi" sebagai 'selesai' - supaya kotak pertemuan di
+    // /dosen/mk/:id langsung berubah hijau dan progres perkuliahan (dihitung
+    // dari jumlah pertemuan berstatus 'selesai') ikut naik tanpa dosen harus
+    // membuka form materi terpisah dan mengubah status manual.
+    const mkRef = db.collection('mataKuliah').doc(mkId);
+    const mkDoc = await mkRef.get();
+    if (mkDoc.exists) {
+      const mkData = mkDoc.data();
+      let materi = mkData.materi || [];
+      const idx = materi.findIndex(m => m.pertemuan == pertemuan);
+      if (idx !== -1) {
+        materi[idx] = {
+          ...materi[idx],
+          status: 'selesai',
+          tanggal: materi[idx].tanggal || tanggal || null,
+          updatedAt: new Date().toISOString()
+        };
+      } else {
+        materi.push({
+          pertemuan,
+          topik: `Pertemuan ${pertemuan}`,
+          tanggal: tanggal || null,
+          status: 'selesai',
+          catatan: '',
+          updatedAt: new Date().toISOString()
+        });
+      }
+      materi.sort((a, b) => a.pertemuan - b.pertemuan);
+      await mkRef.update({ materi, updatedAt: new Date().toISOString() });
+    }
+
     res.redirect(`/dosen/mk/${mkId}?absensiTersimpan=${pertemuan}`);
   } catch (error) {
     console.error('Error simpan absensi:', error);
