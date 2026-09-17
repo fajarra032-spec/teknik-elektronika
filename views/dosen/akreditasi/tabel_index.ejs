@@ -1,0 +1,47 @@
+<%- include('../../partials/header') %>
+<div class="container mt-4 mb-5">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h2 class="mb-0">Tabel Data Pendukung LKPS</h2>
+      <small class="text-muted">Tabel 1-7 sesuai Lembar Kinerja Program Studi (LKPS) resmi LAM Teknik</small>
+    </div>
+    <a href="/dosen/akreditasi" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Kembali</a>
+  </div>
+
+  <% if (!periodeList.length) { %>
+    <div class="alert alert-info mt-4">Belum ada periode akreditasi. Buat periode dulu di halaman Akreditasi.</div>
+  <% } else { %>
+    <form method="GET" action="/dosen/akreditasi/tabel" class="row row-cols-auto g-2 align-items-center mt-3">
+      <div class="col"><label class="col-form-label">Periode:</label></div>
+      <div class="col">
+        <select name="periodeId" class="form-select" onchange="this.form.submit()">
+          <% periodeList.forEach(p => { %>
+            <option value="<%= p.id %>" <%= p.id === periodeId ? 'selected' : '' %>><%= p.nama %></option>
+          <% }) %>
+        </select>
+      </div>
+    </form>
+
+    <% if (periodeId) { %>
+      <div class="row mt-3 g-3">
+        <% tabelList.forEach(t => { %>
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+              <div class="card-body">
+                <h6 class="card-title"><%= t.judul %></h6>
+                <p class="text-muted small"><%= t.deskripsi %></p>
+                <span class="badge bg-light text-dark border mb-2"><%= t.jumlahBaris %> baris terisi</span>
+                <div>
+                  <a href="/dosen/akreditasi/tabel/<%= t.key %>?periodeId=<%= periodeId %>" class="btn btn-sm btn-primary">
+                    Kelola Data
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  <% } %>
+</div>
+<%- include('../../partials/footer') %>
