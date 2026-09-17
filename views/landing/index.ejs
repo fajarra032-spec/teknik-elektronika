@@ -454,13 +454,20 @@
 
     /* Carousel dokumentasi magang - pakai aspect-ratio (bukan height fix
        450px) supaya proporsional di semua lebar layar, dari HP kecil sampai
-       monitor lebar. */
+       monitor lebar. object-fit: contain (bukan cover) supaya foto
+       dokumentasi (kadang portrait, kadang landscape, tergantung mahasiswa
+       motret dari HP) tidak terpotong atas/bawah - foto ditampilkan utuh
+       dengan letterbox di sisi yang tidak terisi. */
     .magang-slide-img {
         aspect-ratio: 16 / 9;
-        object-fit: cover;
+        object-fit: contain;
+        background: var(--gradient);
         width: 100%;
     }
     .magang-caption {
+        /* TIDAK pakai "d-none d-md-block" bawaan Bootstrap - caption tetap
+           harus kelihatan di HP juga, bukan cuma di layar >= 768px. */
+        position: absolute;
         background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
         border-radius: 20px;
         bottom: 0; left: 0; right: 0;
@@ -493,16 +500,28 @@
     }
     .mahasiswabaru-slide-img {
         aspect-ratio: 3 / 4;
-        object-fit: cover;
+        /* object-fit: contain (bukan cover) - foto mahasiswa yang diupload
+           bisa punya rasio apa saja (mis. 9:16 dari kamera HP), jadi kalau
+           dipaksa "cover" ke kotak 3:4, bagian atas & bawah foto (kepala/
+           badan) ikut terpotong. "contain" menampilkan foto UTUH, dengan
+           sedikit letterbox di sisi yang tidak terisi. */
+        object-fit: contain;
+        background: var(--gradient);
         width: 100%;
         max-height: 520px;
         margin: 0 auto;
         display: block;
     }
     .mahasiswabaru-caption {
-        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        /* TIDAK pakai "d-none d-md-block" bawaan Bootstrap (itu sengaja
+           menyembunyikan caption di layar < 768px) - caption nama & asal
+           sekolah tetap harus kelihatan di HP, jadi captionnya sendiri yang
+           diposisikan overlay di bawah foto untuk semua ukuran layar. */
+        position: absolute;
+        background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
         text-align: left;
         padding: 30px 20px 20px;
+        bottom: 0; left: 0; right: 0;
     }
     @media (max-width: 576px) {
         .mahasiswabaru-slide-img {
@@ -511,6 +530,9 @@
         }
         .mahasiswabaru-caption {
             padding: 16px 12px 12px;
+        }
+        .mahasiswabaru-caption h3 {
+            font-size: 1.1rem;
         }
     }
 
@@ -1211,7 +1233,7 @@
                 if (slidesMahasiswaBaru.length === 0) { %>
                     <div class="carousel-item active">
                         <img src="https://placehold.co/800x1000?text=Selamat+Datang+Mahasiswa+Baru+2026" class="d-block w-100 mahasiswabaru-slide-img">
-                        <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-3">
+                        <div class="carousel-caption mahasiswabaru-caption">
                             <h3>Selamat Datang Angkatan 2026</h3>
                             <p>Foto mahasiswa baru akan tampil di sini setelah biodata & foto diupload</p>
                         </div>
@@ -1221,7 +1243,7 @@
                         <div class="carousel-item <%= idx === 0 ? 'active' : '' %>">
                             <img src="<%= item.imageUrl %>" class="d-block w-100 mahasiswabaru-slide-img"
                                  onerror="this.onerror=null; this.src='https://placehold.co/800x1000?text=Mahasiswa+Baru+2026'">
-                            <div class="carousel-caption d-none d-md-block mahasiswabaru-caption">
+                            <div class="carousel-caption mahasiswabaru-caption">
                                 <h3 style="font-weight: 800; margin-bottom: 5px;"><%= item.nama %></h3>
                                 <p class="mb-0"><i class="bi bi-mortarboard"></i> <%= item.asalSekolah %></p>
                             </div>
@@ -1457,7 +1479,7 @@
                 if (slidesMagang.length === 0) { %>
                     <div class="carousel-item active">
                         <img src="https://placehold.co/1200x600?text=Belum+Ada+Dokumentasi+Magang" class="d-block w-100 magang-slide-img">
-                        <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-3">
+                        <div class="carousel-caption magang-caption">
                             <h5>Belum Ada Dokumentasi</h5>
                             <p>Segera upload aktivitas magang mahasiswa</p>
                         </div>
@@ -1467,7 +1489,7 @@
                         <div class="carousel-item <%= idx === 0 ? 'active' : '' %>">
                             <img src="<%= item.imageUrl %>" class="d-block w-100 magang-slide-img"
                                  onerror="this.onerror=null; this.src='https://placehold.co/1200x600?text=Foto+Magang'">
-                            <div class="carousel-caption d-none d-md-block magang-caption">
+                            <div class="carousel-caption magang-caption">
                                 <h3 style="font-weight: 800; margin-bottom: 5px;"><%= item.mahasiswa || 'Mahasiswa Magang' %></h3>
                                 <p class="mb-1"><i class="bi bi-building"></i> <%= item.perusahaan || 'Perusahaan Mitra' %></p>
                                 <p><i class="bi bi-card-text"></i> <%= item.caption || 'Aktivitas magang' %></p>
