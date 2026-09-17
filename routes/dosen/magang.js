@@ -8,8 +8,11 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
-const { db } = require('../../config/firebaseAdmin');
+const { db, admin } = require('../../config/firebaseAdmin');
 const { invalidateProgressMagangHarian } = require('../../helpers/magangHelper');
+const { paginate } = require('../../helpers/pagination');
+const { getSemesterListLogbook } = require('../../helpers/cache');
+const LOGBOOK_PAGE_SIZE = 10;
 const {
   ITEM_PEMBIMBING1,
   ITEM_PEMBIMBING2,
@@ -341,29 +344,77 @@ router.get('/:userId', async (req, res) => {
     if (periodId) selectedPeriod = allPeriods.find(p => p.id === periodId);
     else if (allPeriods.length > 0) selectedPeriod = allPeriods[0];
     
-    // Query logbook utama (pakai orderBy)
-    let logbookQuery = db.collection('logbookMagang')
+    // Query logbook utama (pakai orderBy) + tie-breaker documentId supaya
+    // urutan stabil antar-request (dipakai untuk cursor paginasi).
+    let logbookBaseQuery = db.collection('logbookMagang')
       .where('userId', '==', userId)
-      .orderBy('tanggal', 'desc');
-    if (selectedPeriod) logbookQuery = logbookQuery.where('pdkId', '==', selectedPeriod.pdkId);
-    if (semester) logbookQuery = logbookQuery.where('semester', '==', semester);
-    
-    // Ambil juga semua logbook untuk semester list
-    const allLogbookQuery = db.collection('logbookMagang').where('userId', '==', userId);
-    
+      .orderBy('tanggal', 'desc')
+      .orderBy(admin.firestore.FieldPath.documentId(), 'desc');
+    if (selectedPeriod) logbookBaseQuery = logbookBaseQuery.where('pdkId', '==', selectedPeriod.pdkId);
+    if (semester) logbookBaseQuery = logbookBaseQuery.where('semester', '==', semester);
+
+    // Semester list - dulu ini didapat dari baca SEMUA dokumen logbook
+    // mahasiswa (allLogbookQuery.get() di bawah, sudah dihapus). Sekarang
+    // pakai cache 2 menit (helpers/cache.js) supaya kunjungan berulang ke
+    // halaman yang sama (mis. saat dosen bolak-balik menilai logbook)
+    // tidak baca ulang seluruh koleksi tiap kali.
+    // (allLogbookQuery dihapus - lihat getSemesterListLogbook di import)
+
     // Laporan magang (Pembimbing 1) - hanya perlu di-query kalau dosen ini
     // berperan sebagai Pembimbing 1 untuk mahasiswa ini.
     const laporanQuery = isPembimbing1
       ? db.collection('laporanMagang').where('userId', '==', userId).orderBy('laporanKe', 'asc').get()
       : Promise.resolve(null);
-    
-    const [logbookSnapshot, allLogbookSnapshot, laporanSnapshot] = await Promise.all([
-      logbookQuery.get(),
-      allLogbookQuery.get(),
+
+    // ✅ OPTIMISASI KUOTA: paginasi berbasis cursor (startAfter), BUKAN
+    // ambil semua logbook mahasiswa sekaligus. Default 10 entri/halaman,
+    // dosen bisa klik "Tampilkan Semua" (?all=1) kalau memang perlu
+    // (misal sebelum menilai/mengunci logbook).
+    const showAll = req.query.all === '1';
+    let logbookDocs = [];
+    let pageInfo = null;
+    let totalLogbookFiltered = 0;
+
+    const [countSnap, semesterList, laporanSnapshot] = await Promise.all([
+      logbookBaseQuery.count().get().catch(() => null),
+      getSemesterListLogbook(db, userId),
       laporanQuery
     ]);
-    
-    const logbookList = logbookSnapshot.docs.map(doc => {
+    totalLogbookFiltered = countSnap ? countSnap.data().count : null;
+
+    if (showAll) {
+      const snap = await logbookBaseQuery.get();
+      logbookDocs = snap.docs;
+      if (totalLogbookFiltered === null) totalLogbookFiltered = snap.size;
+    } else {
+      const result = await paginate(logbookBaseQuery, {
+        pageSize: LOGBOOK_PAGE_SIZE,
+        afterParam: req.query.after || '',
+        trailParam: req.query.trail || '',
+        cursorFromDoc: (doc) => [doc.get('tanggal'), doc.id]
+      });
+      logbookDocs = result.docs;
+
+      const buildUrl = (params) => {
+        const usp = new URLSearchParams({
+          ...(selectedPeriod ? { periodId: selectedPeriod.id } : {}),
+          ...(semester ? { semester } : {}),
+          ...params
+        });
+        return `/dosen/magang/${userId}?${usp.toString()}`;
+      };
+      pageInfo = {
+        hasPrev: result.hasPrev,
+        hasNext: result.hasNext,
+        prevUrl: result.hasPrev ? buildUrl(result.prevAfter ? { after: result.prevAfter, trail: result.prevTrail } : { trail: result.prevTrail }) : null,
+        nextUrl: result.hasNext ? buildUrl({ after: result.nextAfter, trail: result.nextTrail }) : null,
+        allUrl: buildUrl({ all: '1' }),
+        count: logbookDocs.length,
+        total: totalLogbookFiltered
+      };
+    }
+
+    const logbookList = logbookDocs.map(doc => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -373,45 +424,10 @@ router.get('/:userId', async (req, res) => {
         canApprove: isPembimbing2 && data.status === 'pending'
       };
     });
-    
+
     const laporanList = laporanSnapshot ? laporanSnapshot.docs.map(d => ({ id: d.id, ...d.data() })) : [];
     const adaLaporanYangAcc = laporanList.some(l => l.status === 'approved');
-    
-    // Semester list
-    const semesterSet = new Set();
-    allLogbookSnapshot.docs.forEach(doc => {
-      const data = doc.data();
-      if (data.semester) semesterSet.add(data.semester);
-    });
-    const semesterList = Array.from(semesterSet).sort();
-
-    // Paginasi tampilan logbook (10 per halaman) - datanya sudah dibaca dari
-    // Firestore di atas (query sudah difilter periode/semester), jadi ini
-    // cuma memotong render di server, bukan baca ulang - tapi bikin halaman
-    // jauh lebih ringan untuk mahasiswa yang logbook-nya sudah puluhan/ratusan.
-    const LOGBOOK_PER_PAGE = 10;
-    const logbookTampilkanSemua = req.query.semuaLogbook === '1';
-    const logbookTotal = logbookList.length;
-    const logbookTotalHalaman = Math.max(1, Math.ceil(logbookTotal / LOGBOOK_PER_PAGE));
-    let logbookHalaman = parseInt(req.query.pageLogbook, 10) || 1;
-    if (logbookHalaman < 1) logbookHalaman = 1;
-    if (logbookHalaman > logbookTotalHalaman) logbookHalaman = logbookTotalHalaman;
-    const logbookListTampil = logbookTampilkanSemua
-      ? logbookList
-      : logbookList.slice((logbookHalaman - 1) * LOGBOOK_PER_PAGE, logbookHalaman * LOGBOOK_PER_PAGE);
-    const logbookPaging = {
-      halaman: logbookHalaman,
-      totalHalaman: logbookTotalHalaman,
-      totalData: logbookTotal,
-      perPage: LOGBOOK_PER_PAGE,
-      tampilkanSemua: logbookTampilkanSemua,
-      queryTanpaPaging: (() => {
-        const q = { ...req.query };
-        delete q.pageLogbook;
-        delete q.semuaLogbook;
-        return q;
-      })()
-    };
+    // semesterList sudah didapat dari getSemesterListLogbook() di atas (cached)
     
     // Statistik per PDK
     const pdkStats = [];
@@ -427,8 +443,7 @@ router.get('/:userId', async (req, res) => {
     res.render('dosen/magang_detail', {
       title: `ELK Magang - ${mahasiswa.nama}`,
       mahasiswa,
-      logbookList: logbookListTampil,
-      logbookPaging,
+      logbookList,
       semesterList,
       selectedSemester: semester || '',
       allPeriods,
@@ -445,7 +460,10 @@ router.get('/:userId', async (req, res) => {
       ITEM_PEMBIMBING1,
       laporanList,
       adaLaporanYangAcc,
-      user: req.user
+      user: req.user,
+      pageInfo,
+      showAll,
+      pageListUrl: `/dosen/magang/${userId}${selectedPeriod ? `?periodId=${selectedPeriod.id}` : ''}${semester ? `${selectedPeriod ? '&' : '?'}semester=${encodeURIComponent(semester)}` : ''}`
     });
   } catch (error) {
     console.error('Error ambil logbook mahasiswa:', error);

@@ -1,0 +1,39 @@
+<%#
+  views/partials/pagination.ejs
+  Partial kontrol paginasi. Include dari view lain dengan mengoper:
+    pageInfo, showAll, pageListUrl
+
+  pageInfo (diisi controller; null/undefined kalau sedang mode "Tampilkan Semua"):
+    { hasPrev, hasNext, prevUrl, nextUrl, allUrl, pageSize, count, total }
+  showAll: boolean - true kalau user sedang lihat mode "semua data"
+  pageListUrl: url untuk kembali ke mode 10-per-halaman (dipakai saat showAll true)
+%>
+<% if (typeof showAll !== 'undefined' && showAll) { %>
+  <div class="d-flex align-items-center justify-content-between gap-2 pagination-bar mt-3 mb-2">
+    <div class="text-muted small">Menampilkan semua entri.</div>
+    <a href="<%= typeof pageListUrl !== 'undefined' ? pageListUrl : '?' %>" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-list-ol"></i> Tampilkan 10 per halaman
+    </a>
+  </div>
+<% } else if (typeof pageInfo !== 'undefined' && pageInfo) { %>
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pagination-bar mt-3 mb-2">
+    <div class="text-muted small">
+      Menampilkan <%= pageInfo.count %> entri<% if (typeof pageInfo.total === 'number') { %> dari <%= pageInfo.total %> total<% } %>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="<%= pageInfo.hasPrev ? pageInfo.prevUrl : '#' %>"
+         class="btn btn-sm btn-outline-secondary <%= pageInfo.hasPrev ? '' : 'disabled' %>"
+         <%= pageInfo.hasPrev ? '' : 'tabindex="-1" aria-disabled="true"' %>>
+        <i class="bi bi-chevron-left"></i> Sebelumnya
+      </a>
+      <a href="<%= pageInfo.hasNext ? pageInfo.nextUrl : '#' %>"
+         class="btn btn-sm btn-outline-secondary <%= pageInfo.hasNext ? '' : 'disabled' %>"
+         <%= pageInfo.hasNext ? '' : 'tabindex="-1" aria-disabled="true"' %>>
+        Selanjutnya <i class="bi bi-chevron-right"></i>
+      </a>
+      <a href="<%= pageInfo.allUrl %>" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-list-ul"></i> Tampilkan Semua
+      </a>
+    </div>
+  </div>
+<% } %>

@@ -9,6 +9,7 @@ const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { saveGradeFinal, getTranskripMahasiswa, getPeriodeAktif, getHasilRubrikSemuaMahasiswa, getHasilRubrikSatuMahasiswa, getRincianTugasByMkId, saveKomponenRubrik, saveNilai, TIPE_RUBRIK_KOMPONEN } = require('../../helpers/nilaiHelper');
+const { getAllMataKuliah } = require('../../helpers/cache');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -47,8 +48,7 @@ async function getMahasiswaById(uid) {
  */
 router.get('/', async (req, res) => {
   try {
-    const mkSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
-    const mkList = mkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const mkList = await getAllMataKuliah(db);
     res.render('admin/nilai_list', {
       title: 'Rekap Nilai',
       mkList
@@ -73,8 +73,7 @@ router.get('/mahasiswa/:userId/tambah', async (req, res) => {
   try {
     const mahasiswa = await getMahasiswaById(req.params.userId);
 
-    const mkSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
-    const courses = mkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const courses = await getAllMataKuliah(db);
 
     const { items, perSemester } = await getTranskripMahasiswa(req.params.userId);
 
@@ -115,8 +114,7 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Error menyimpan nilai akhir:', error);
     const mahasiswa = await getMahasiswaById(userId);
-    const mkSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
-    const courses = mkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const courses = await getAllMataKuliah(db);
     const { items, perSemester } = await getTranskripMahasiswa(userId);
     const semesterSet = new Set(perSemester.map(s => s.semester));
     semesterSet.add(getPeriodeAktif());

@@ -93,6 +93,7 @@
           </table>
         </div>
       <% } %>
+      <%- include('../partials/pagination', { pageInfo: typeof pageInfo !== 'undefined' ? pageInfo : null, showAll: typeof showAll !== 'undefined' ? showAll : false, pageListUrl: typeof pageListUrl !== 'undefined' ? pageListUrl : '/admin/tracklulusan' }) %>
     </div>
   </div>
 </div>

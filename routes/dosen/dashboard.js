@@ -141,25 +141,41 @@ router.get('/', async (req, res) => {
     // ========================================================================
     // 6. Logbook: daftar pending + statistik approved/total
     // ========================================================================
-    // ⚡ Chunk 'logbookMagang' juga dijalankan PARALEL, bukan for-loop serial.
+    // ✅ OPTIMISASI KUOTA BESAR: sebelumnya baris ini membaca SEMUA dokumen
+    // logbook (isi lengkap, termasuk foto/teks kegiatan) untuk SETIAP
+    // mahasiswa bimbingan dosen ini, HANYA untuk menghitung total & approved
+    // serta mencari yang pending - kalau 1 dosen bimbing 20 mahasiswa dengan
+    // ~100 entri logbook masing-masing, itu bisa 2000 baca dokumen SETIAP
+    // KALI dashboard dibuka (halaman paling sering dikunjungi dosen).
+    //
+    // Sekarang:
+    // - total & approved dihitung lewat count() agregasi (biaya TETAP 1
+    //   read-unit per query, tidak peduli berapa banyak dokumennya)
+    // - yang benar-benar dibaca ISI-nya HANYA entri berstatus 'pending'
+    //   (biasanya jauh lebih sedikit daripada total, karena sebagian besar
+    //   logbook lama sudah di-approve)
     const mahasiswaIdsArr = Array.from(mahasiswaBimbinganIds);
-    const logbookChunkSnaps = await Promise.all(
-      chunkArray(mahasiswaIdsArr, 10)
-        .filter(chunk => chunk.length > 0)
-        .map(chunk => db.collection('logbookMagang').where('userId', 'in', chunk).get())
-    );
+    const logbookChunks = chunkArray(mahasiswaIdsArr, 10).filter(chunk => chunk.length > 0);
 
-    let totalLogbookAll = 0;
-    let totalLogbookApproved = 0;
+    const [totalCounts, approvedCounts, pendingChunkSnaps] = await Promise.all([
+      Promise.all(logbookChunks.map(chunk =>
+        hitungJumlah(db.collection('logbookMagang').where('userId', 'in', chunk))
+      )),
+      Promise.all(logbookChunks.map(chunk =>
+        hitungJumlah(db.collection('logbookMagang').where('userId', 'in', chunk).where('status', '==', 'approved'))
+      )),
+      Promise.all(logbookChunks.map(chunk =>
+        db.collection('logbookMagang').where('userId', 'in', chunk).where('status', '==', 'pending').get()
+      ))
+    ]);
+
+    const totalLogbookAll = totalCounts.reduce((sum, n) => sum + n, 0);
+    const totalLogbookApproved = approvedCounts.reduce((sum, n) => sum + n, 0);
     const pendingRaw = []; // { id, mahasiswaId, data }
-    logbookChunkSnaps.forEach(logbookSnap => {
-      logbookSnap.docs.forEach(logbookDoc => {
+    pendingChunkSnaps.forEach(snap => {
+      snap.docs.forEach(logbookDoc => {
         const data = logbookDoc.data();
-        totalLogbookAll++;
-        if (data.status === 'approved') totalLogbookApproved++;
-        if (data.status === 'pending') {
-          pendingRaw.push({ id: logbookDoc.id, mahasiswaId: data.userId, data });
-        }
+        pendingRaw.push({ id: logbookDoc.id, mahasiswaId: data.userId, data });
       });
     });
 

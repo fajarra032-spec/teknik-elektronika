@@ -109,19 +109,27 @@ async function getLogbookStats(mahasiswaId, pdkId = null) {
   const key = pdkId ? `${mahasiswaId}_${pdkId}` : mahasiswaId;
   if (cache.logbookStats.has(key)) return cache.logbookStats.get(key);
   try {
-    let query = db.collection('logbookMagang')
-      .where('userId', '==', mahasiswaId);
-    if (pdkId) query = query.where('pdkId', '==', pdkId);
-    const snapshot = await query.get();
-    let total = 0, pending = 0, approved = 0, rejected = 0;
-    snapshot.forEach(doc => {
-      total++;
-      const status = doc.data().status;
-      if (status === 'pending') pending++;
-      else if (status === 'approved') approved++;
-      else if (status === 'rejected') rejected++;
-    });
-    const result = { total, pending, approved, rejected };
+    // ✅ OPTIMISASI KUOTA: sebelumnya di sini membaca SEMUA dokumen logbook
+    // milik mahasiswa ini (.get()) hanya untuk menghitung status - kalau
+    // dipanggil untuk tiap mahasiswa di daftar (lihat router.get('/') di
+    // bawah), ini bisa jadi ratusan/ribuan pembacaan dokumen SETIAP kali
+    // halaman monitoring dibuka. Sekarang pakai count() agregasi: biayanya
+    // TETAP 1 read-unit per query, berapapun jumlah dokumen logbook yang
+    // dimiliki mahasiswa tsb (4 query paralel = 4 read-unit, bukan N-dokumen).
+    let base = db.collection('logbookMagang').where('userId', '==', mahasiswaId);
+    if (pdkId) base = base.where('pdkId', '==', pdkId);
+    const [totalSnap, pendingSnap, approvedSnap, rejectedSnap] = await Promise.all([
+      base.count().get(),
+      base.where('status', '==', 'pending').count().get(),
+      base.where('status', '==', 'approved').count().get(),
+      base.where('status', '==', 'rejected').count().get()
+    ]);
+    const result = {
+      total: totalSnap.data().count,
+      pending: pendingSnap.data().count,
+      approved: approvedSnap.data().count,
+      rejected: rejectedSnap.data().count
+    };
     cache.logbookStats.set(key, result);
     return result;
   } catch (error) {
@@ -156,8 +164,13 @@ router.get('/', async (req, res) => {
       return res.render('admin/emagang_list', {
         title: 'E‑Magang - Monitoring Magang',
         mahasiswaList: [],
+        totalMahasiswa: 0,
+        summaryStats: { totalLogbook: 0, totalPending: 0, totalApproved: 0, totalRejected: 0 },
         angkatanList: [],
         filters: { search: search || '', angkatan: angkatan || '' },
+        pageInfo: null,
+        showAll: false,
+        pageListUrl: '/admin/emagang',
         user: req.user
       });
     }
@@ -239,7 +252,13 @@ router.get('/', async (req, res) => {
       });
     }
 
-    // Ambil statistik logbook untuk semua mahasiswa sekaligus (paralel)
+    mahasiswaList.sort((a, b) => a.nama.localeCompare(b.nama));
+    const angkatanList = [...new Set(mahasiswaList.map(m => m.nim ? '20' + m.nim.substring(0,2) : '').filter(a => a))].sort().reverse();
+
+    // Ambil statistik logbook untuk semua mahasiswa TERFILTER (paralel, tapi
+    // sekarang pakai count() murah - lihat getLogbookStats di atas) supaya
+    // kartu ringkasan (Total Logbook/Pending/Approved/Rejected) tetap akurat
+    // terhadap filter pencarian/angkatan yang aktif.
     const statsPromises = mahasiswaList.map(m => getLogbookStats(m.id));
     const statsResults = await Promise.all(statsPromises);
     mahasiswaList.forEach((m, idx) => {
@@ -250,14 +269,63 @@ router.get('/', async (req, res) => {
       m.role = 'pembimbing2';
     });
 
-    mahasiswaList.sort((a, b) => a.nama.localeCompare(b.nama));
-    const angkatanList = [...new Set(mahasiswaList.map(m => m.nim ? '20' + m.nim.substring(0,2) : '').filter(a => a))].sort().reverse();
+    // ✅ PAGINASI: jangan render SEMUA mahasiswa sekaligus ke tabel - default
+    // 10 per halaman, tersedia tombol "Tampilkan Semua" kalau memang perlu
+    // (mis. sebelum export/cetak). Ini paginasi di memori (bukan query
+    // Firestore baru), jadi tidak menambah biaya baca sama sekali.
+    const EMAGANG_PAGE_SIZE = 10;
+    const showAll = req.query.all === '1';
+    const totalFiltered = mahasiswaList.length;
+    const fullMahasiswaList = mahasiswaList;
+
+    const buildListUrl = (params) => {
+      const usp = new URLSearchParams();
+      if (search) usp.set('search', search);
+      if (angkatan) usp.set('angkatan', angkatan);
+      Object.entries(params).forEach(([k, v]) => usp.set(k, v));
+      return `/admin/emagang?${usp.toString()}`;
+    };
+
+    let pageInfo = null;
+    if (!showAll) {
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const start = (page - 1) * EMAGANG_PAGE_SIZE;
+      const paged = fullMahasiswaList.slice(start, start + EMAGANG_PAGE_SIZE);
+      const hasPrev = page > 1;
+      const hasNext = start + EMAGANG_PAGE_SIZE < totalFiltered;
+      pageInfo = {
+        hasPrev,
+        hasNext,
+        prevUrl: hasPrev ? buildListUrl({ page: page - 1 }) : null,
+        nextUrl: hasNext ? buildListUrl({ page: page + 1 }) : null,
+        allUrl: buildListUrl({ all: '1' }),
+        count: paged.length,
+        total: totalFiltered
+      };
+      mahasiswaList = paged;
+    }
+
+    // Kartu ringkasan (Total Logbook/Pending/Approved/Rejected) dihitung dari
+    // SELURUH mahasiswa terfilter (fullMahasiswaList), bukan cuma halaman
+    // yang sedang tampil, supaya angkanya tetap benar walau tabelnya dipaginasi.
+    const summaryStats = fullMahasiswaList.reduce((acc, m) => {
+      acc.totalLogbook += m.totalLogbook || 0;
+      acc.totalPending += m.pendingCount || 0;
+      acc.totalApproved += m.approvedCount || 0;
+      acc.totalRejected += m.rejectedCount || 0;
+      return acc;
+    }, { totalLogbook: 0, totalPending: 0, totalApproved: 0, totalRejected: 0 });
 
     res.render('admin/emagang_list', {
       title: 'E‑Magang - Monitoring Magang',
       mahasiswaList,
+      totalMahasiswa: totalFiltered,
+      summaryStats,
       angkatanList,
       filters: { search: search || '', angkatan: angkatan || '' },
+      pageInfo,
+      showAll,
+      pageListUrl: buildListUrl({ page: 1 }),
       user: req.user
     });
   } catch (error) {
@@ -351,33 +419,6 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       nama: doc.data().nama
     }));
 
-    // Paginasi tampilan logbook (10 per halaman) - potong array di memori,
-    // datanya sudah dibaca sekali dari Firestore di atas jadi tidak ada
-    // biaya baca tambahan, tapi halaman jauh lebih ringan untuk dirender.
-    const LOGBOOK_PER_PAGE = 10;
-    const logbookTampilkanSemua = req.query.semuaLogbook === '1';
-    const logbookTotal = logbookList.length;
-    const logbookTotalHalaman = Math.max(1, Math.ceil(logbookTotal / LOGBOOK_PER_PAGE));
-    let logbookHalaman = parseInt(req.query.pageLogbook, 10) || 1;
-    if (logbookHalaman < 1) logbookHalaman = 1;
-    if (logbookHalaman > logbookTotalHalaman) logbookHalaman = logbookTotalHalaman;
-    const logbookListTampil = logbookTampilkanSemua
-      ? logbookList
-      : logbookList.slice((logbookHalaman - 1) * LOGBOOK_PER_PAGE, logbookHalaman * LOGBOOK_PER_PAGE);
-    const logbookPaging = {
-      halaman: logbookHalaman,
-      totalHalaman: logbookTotalHalaman,
-      totalData: logbookTotal,
-      perPage: LOGBOOK_PER_PAGE,
-      tampilkanSemua: logbookTampilkanSemua,
-      queryTanpaPaging: (() => {
-        const q = { ...req.query };
-        delete q.pageLogbook;
-        delete q.semuaLogbook;
-        return q;
-      })()
-    };
-
     // Nilai Magang 3-komponen (Laporan/Logbook/Lapangan) untuk periode yang
     // sedang dipilih - dipakai form input Nilai Lapangan + tombol Kunci.
     let nilaiMagangInfo = null;
@@ -389,8 +430,7 @@ router.get('/mahasiswa/:userId', async (req, res) => {
     res.render('admin/emagang_mahasiswa', {
       title: `Logbook - ${mahasiswa.nama}`,
       mahasiswa,
-      logbookList: logbookListTampil,
-      logbookPaging,
+      logbookList,
       semesterList,
       selectedSemester: semester || '',
       allPeriods,

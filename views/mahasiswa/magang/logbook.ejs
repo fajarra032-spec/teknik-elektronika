@@ -528,46 +528,7 @@
       </table>
     </div>
 
-    <!-- Paginasi 10/halaman - datanya sudah dibaca dari Firestore di atas,
-         jadi ini cuma memotong tampilan, tidak menambah biaya baca. -->
-    <% if (typeof logbookPaging !== 'undefined' && logbookPaging.totalData > 0) { %>
-      <%
-        const qsLogbook = (overrides) => {
-          const params = new URLSearchParams({ ...logbookPaging.queryTanpaPaging, ...overrides });
-          for (const [k, v] of [...params]) { if (v === undefined || v === null || v === '') params.delete(k); }
-          return '/mahasiswa/magang/logbook?' + params.toString();
-        };
-      %>
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
-        <div class="text-muted small">
-          <% if (logbookPaging.tampilkanSemua) { %>
-            Menampilkan semua <%= logbookPaging.totalData %> entri logbook
-          <% } else { %>
-            Menampilkan <%= (logbookPaging.halaman - 1) * logbookPaging.perPage + 1 %>–<%= Math.min(logbookPaging.halaman * logbookPaging.perPage, logbookPaging.totalData) %>
-            dari <%= logbookPaging.totalData %> entri (Halaman <%= logbookPaging.halaman %>/<%= logbookPaging.totalHalaman %>)
-          <% } %>
-        </div>
-        <div class="btn-group">
-          <% if (!logbookPaging.tampilkanSemua) { %>
-            <a href="<%= qsLogbook({ pageLogbook: logbookPaging.halaman - 1 }) %>"
-               class="btn btn-sm btn-outline-secondary <%= logbookPaging.halaman <= 1 ? 'disabled' : '' %>">
-              <i class="bi bi-chevron-left"></i> Sebelumnya
-            </a>
-            <a href="<%= qsLogbook({ pageLogbook: logbookPaging.halaman + 1 }) %>"
-               class="btn btn-sm btn-outline-secondary <%= logbookPaging.halaman >= logbookPaging.totalHalaman ? 'disabled' : '' %>">
-              Berikutnya <i class="bi bi-chevron-right"></i>
-            </a>
-            <a href="<%= qsLogbook({ semuaLogbook: '1' }) %>" class="btn btn-sm btn-outline-primary">
-              <i class="bi bi-list-ul"></i> Tampilkan Semua
-            </a>
-          <% } else { %>
-            <a href="<%= qsLogbook({ semuaLogbook: null, pageLogbook: 1 }) %>" class="btn btn-sm btn-outline-primary">
-              <i class="bi bi-collection"></i> Kembali ke 10 per Halaman
-            </a>
-          <% } %>
-        </div>
-      </div>
-    <% } %>
+    <%- include('../../partials/pagination', { pageInfo: typeof pageInfo !== 'undefined' ? pageInfo : null, showAll: typeof showAll !== 'undefined' ? showAll : false, pageListUrl: typeof pageListUrl !== 'undefined' ? pageListUrl : '?' }) %>
 
     <!-- Tombol Cetak (hanya jika ada selectedPeriod dan ada logbook) -->
     <% if (selectedPeriod && logbook.length > 0) { %>

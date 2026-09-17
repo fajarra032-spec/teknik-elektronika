@@ -83,10 +83,43 @@ router.get('/survey', async (req, res) => {
     if (status === 'public') survei = survei.filter(s => s.isPublic === true);
     if (status === 'pending') survei = survei.filter(s => s.isPublic !== true);
 
+    // ✅ PAGINASI: 10/halaman + "Tampilkan Semua" (in-memory, data sudah
+    // di tangan dari snapshot di atas - tidak nambah baca Firestore).
+    const SURVEI_PAGE_SIZE = 10;
+    const showAll = req.query.all === '1';
+    const totalSurvei = survei.length;
+    const buildUrl = (params) => {
+      const usp = new URLSearchParams();
+      if (status) usp.set('status', status);
+      Object.entries(params).forEach(([k, v]) => usp.set(k, v));
+      return `/admin/tracklulusan/survey?${usp.toString()}`;
+    };
+    let pageInfo = null;
+    if (!showAll) {
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const start = (page - 1) * SURVEI_PAGE_SIZE;
+      const paged = survei.slice(start, start + SURVEI_PAGE_SIZE);
+      const hasPrev = page > 1;
+      const hasNext = start + SURVEI_PAGE_SIZE < totalSurvei;
+      pageInfo = {
+        hasPrev,
+        hasNext,
+        prevUrl: hasPrev ? buildUrl({ page: page - 1 }) : null,
+        nextUrl: hasNext ? buildUrl({ page: page + 1 }) : null,
+        allUrl: buildUrl({ all: '1' }),
+        count: paged.length,
+        total: totalSurvei
+      };
+      survei = paged;
+    }
+
     res.render('admin/tracklulusan_survey_list', {
       title: 'Tinjau Survei Tracer Study',
       survei,
-      filterStatus: status || ''
+      filterStatus: status || '',
+      pageInfo,
+      showAll,
+      pageListUrl: buildUrl({ page: 1 })
     });
   } catch (error) {
     console.error('Error mengambil survei tracer study:', error);
@@ -129,8 +162,16 @@ router.get('/', async (req, res) => {
     // Gabungan dari kedua sumber (manual admin + survei mandiri mahasiswa),
     // termasuk yang masih menunggu tinjauan, supaya admin melihat SATU daftar
     // lengkap - bukan dua daftar terpisah yang terasa tidak nyambung.
-    let lulusan = await getGabunganLulusan({ hanyaPublik: false });
+    //
+    // ✅ OPTIMISASI KUOTA: sebelumnya getGabunganLulusan() dipanggil DUA KALI
+    // di sini - sekali untuk daftar lulusan (yang difilter), sekali lagi
+    // HANYA untuk mengambil daftar tahun unik (tahunList) - padahal
+    // sumbernya persis sama. Sekarang cukup panggil sekali; tahunList
+    // diturunkan dari gabungan LENGKAP (sebelum difilter tahun/status/
+    // sumber) yang sudah kita punya.
+    const semuaGabungan = await getGabunganLulusan({ hanyaPublik: false });
 
+    let lulusan = semuaGabungan;
     if (tahun) lulusan = lulusan.filter(l => String(l.tahunLulus) === String(tahun));
     if (status) lulusan = lulusan.filter(l => l.status === status);
     if (sumber) lulusan = lulusan.filter(l => l.sumber === sumber);
@@ -141,11 +182,42 @@ router.get('/', async (req, res) => {
       return String(a.nama).localeCompare(String(b.nama));
     });
 
-    // Ambil daftar tahun unik untuk filter (dari gabungan, bukan cuma 'lulusan')
-    const semuaGabungan = await getGabunganLulusan({ hanyaPublik: false });
     const tahunSet = new Set();
     semuaGabungan.forEach(l => { if (l.tahunLulus) tahunSet.add(l.tahunLulus); });
     const tahunList = Array.from(tahunSet).sort().reverse();
+
+    // ✅ PAGINASI: jangan render SEMUA lulusan terfilter sekaligus - default
+    // 10/halaman + "Tampilkan Semua". Ini paginasi di memori (data sudah
+    // di tangan dari getGabunganLulusan di atas), tidak nambah baca Firestore.
+    const TRACKLULUSAN_PAGE_SIZE = 10;
+    const showAll = req.query.all === '1';
+    const totalLulusan = lulusan.length;
+    const buildUrl = (params) => {
+      const usp = new URLSearchParams();
+      if (tahun) usp.set('tahun', tahun);
+      if (status) usp.set('status', status);
+      if (sumber) usp.set('sumber', sumber);
+      Object.entries(params).forEach(([k, v]) => usp.set(k, v));
+      return `/admin/tracklulusan?${usp.toString()}`;
+    };
+    let pageInfo = null;
+    if (!showAll) {
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const start = (page - 1) * TRACKLULUSAN_PAGE_SIZE;
+      const paged = lulusan.slice(start, start + TRACKLULUSAN_PAGE_SIZE);
+      const hasPrev = page > 1;
+      const hasNext = start + TRACKLULUSAN_PAGE_SIZE < totalLulusan;
+      pageInfo = {
+        hasPrev,
+        hasNext,
+        prevUrl: hasPrev ? buildUrl({ page: page - 1 }) : null,
+        nextUrl: hasNext ? buildUrl({ page: page + 1 }) : null,
+        allUrl: buildUrl({ all: '1' }),
+        count: paged.length,
+        total: totalLulusan
+      };
+      lulusan = paged;
+    }
 
     res.render('admin/tracklulusan_list', {
       title: 'Track Lulusan',
@@ -153,7 +225,10 @@ router.get('/', async (req, res) => {
       tahunList,
       filterTahun: tahun || '',
       filterStatus: status || '',
-      filterSumber: sumber || ''
+      filterSumber: sumber || '',
+      pageInfo,
+      showAll,
+      pageListUrl: buildUrl({ page: 1 })
     });
   } catch (error) {
     console.error('Error mengambil data lulusan:', error);

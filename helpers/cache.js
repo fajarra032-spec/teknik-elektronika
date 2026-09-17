@@ -85,4 +85,45 @@ async function getAllMahasiswa(db) {
   });
 }
 
-module.exports = { TTLCache, mataKuliahCache, dosenCache, tugasAktifCache, mahasiswaCache, getAllMahasiswa };
+// Daftar semester unik yang PERNAH punya entri logbook, per mahasiswa.
+// Dipakai untuk dropdown filter semester di halaman detail logbook dosen -
+// sebelumnya dihitung dengan membaca SEMUA dokumen logbook mahasiswa (bisa
+// 100+ dokumen per mahasiswa) hanya untuk mengumpulkan nilai field
+// `semester` yang unik. TTL pendek (2 menit) karena nilainya bisa
+// bertambah tiap mahasiswa mengisi logbook baru - lihat invalidatePrefix
+// di routes/mahasiswa/magang.js sesudah logbook baru dibuat.
+const logbookSemesterCache = new TTLCache(2 * 60 * 1000); // 2 menit
+
+/**
+ * @param {import('firebase-admin').firestore.Firestore} db
+ * @param {string} userId
+ * @returns {Promise<string[]>} daftar semester unik, terurut
+ */
+async function getSemesterListLogbook(db, userId) {
+  return logbookSemesterCache.getOrFetch(userId, async () => {
+    const snap = await db.collection('logbookMagang').where('userId', '==', userId).get();
+    const semesterSet = new Set();
+    snap.docs.forEach(doc => {
+      const s = doc.data().semester;
+      if (s) semesterSet.add(s);
+    });
+    return Array.from(semesterSet).sort();
+  });
+}
+
+/**
+ * Ambil semua dokumen mataKuliah (urut kode), dari cache kalau masih
+ * berlaku. Dipakai di banyak halaman admin (rekap nilai, KRS, dsb) yang
+ * masing-masing sebelumnya query 'mataKuliah' sendiri-sendiri padahal
+ * datanya sama dan jarang berubah.
+ * @param {import('firebase-admin').firestore.Firestore} db
+ * @returns {Promise<Array<Object>>}
+ */
+async function getAllMataKuliah(db) {
+  return mataKuliahCache.getOrFetch('all', async () => {
+    const snap = await db.collection('mataKuliah').orderBy('kode').get();
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  });
+}
+
+module.exports = { TTLCache, mataKuliahCache, dosenCache, tugasAktifCache, mahasiswaCache, getAllMahasiswa, getAllMataKuliah, logbookSemesterCache, getSemesterListLogbook };

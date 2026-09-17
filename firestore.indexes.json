@@ -4,32 +4,848 @@
       "collectionGroup": "testimoniAlumni",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "aktif", "order": "ASCENDING" },
-        { "fieldPath": "urutan", "order": "ASCENDING" }
+        {
+          "fieldPath": "aktif",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "urutan",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "videoKonten",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "aktif", "order": "ASCENDING" },
-        { "fieldPath": "urutan", "order": "ASCENDING" }
+        {
+          "fieldPath": "aktif",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "urutan",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "akreditasi_kriteria",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "periodeId", "order": "ASCENDING" },
-        { "fieldPath": "urutan", "order": "ASCENDING" }
+        {
+          "fieldPath": "periodeId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "urutan",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "akreditasi_periode",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "logbookMagang",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "logbookMagang",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggal",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "krs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "artikelDosen",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "mataKuliah",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "semester",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "kode",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pengabdian",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dosenId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "grades",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "semester",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "logbookMagang",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "pdkId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggal",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "laporanMagang",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "uploadedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "mataKuliah",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "semester",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "kode",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "edom_periode",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalMulai",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalSelesai",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "surat_tugas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dosenId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "khs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "semester",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "artikelDosen",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dosenId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "komunitasChat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "ruangId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "artikelDosen",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "approvedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "jadwalPenting",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "kategori",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggal",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "role",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nim",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "laporanMagang",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "buku",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dosenId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tracerStudy",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "isPublic",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "surat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "mataKuliah",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "isPDK",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "urutanPDK",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "penelitian",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "laporanMagang",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "approvedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "logbookMagang",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "pdkId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggal",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "jadwalPenting",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "kategori",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggal",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "kelasChat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "mkId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "periode",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "permohonanMagang",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tugas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dosenId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deadline",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "logbookMagang",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggal",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "edom_kuisioner",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "aktif",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "urutan",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "buku",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pengabdian",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "role",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nim",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "lulusan",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tahunLulus",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "nama",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "surat_dosen",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dosenId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "penelitian",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dosenId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "kelasChat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "mkId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "periode",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "logbookMagang",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggal",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tugas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "mkId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deadline",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "role",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nama",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "sk_dosen",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dosenId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalUpload",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "mataKuliah",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dosenIds",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "kode",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "inspeksi_listrik",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "magangPeriod",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "mahasiswaId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "pdkKode",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "komunitasChat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "ruangId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "laporanMagang",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "laporanKe",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "mataKuliah",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dosenIds",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "semester",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "kode",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tugas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "mkId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "periode",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deadline",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "servisan",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tugas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dosenId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "periode",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deadline",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "mataKuliah",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dosenIds",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "semester",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "kode",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tugas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dosenId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deadline",
+          "order": "ASCENDING"
+        }
       ]
     }
   ],

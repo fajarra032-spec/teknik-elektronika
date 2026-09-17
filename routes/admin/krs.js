@@ -16,6 +16,9 @@ const {
   getStudentCurrentSemester
 } = require('../../helpers/academicHelper');
 const { syncKrsDanEnrollment } = require('../../helpers/paketKurikulumHelper');
+const { paginate } = require('../../helpers/pagination');
+
+const KRS_PAGE_SIZE = 10;
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -64,20 +67,57 @@ router.get('/', async (req, res) => {
   try {
     const { status, semester } = req.query;
 
-    let query = db.collection('krs');
-    if (status) query = query.where('status', '==', status);
-    if (semester) query = query.where('semester', '==', semester);
-    query = query.orderBy('createdAt', 'desc');
+    let baseQuery = db.collection('krs');
+    if (status) baseQuery = baseQuery.where('status', '==', status);
+    if (semester) baseQuery = baseQuery.where('semester', '==', semester);
+    baseQuery = baseQuery.orderBy('createdAt', 'desc');
 
-    const krsSnapshot = await query.get();
-    const krsDocs = krsSnapshot.docs;
+    // ✅ OPTIMISASI KUOTA: paginasi berbasis cursor (startAfter), BUKAN baca
+    // SEMUA dokumen krs sekaligus - koleksi ini terus bertambah tiap
+    // semester (1 dokumen per mahasiswa per semester), jadi kalau dibaca
+    // penuh tiap kali halaman dibuka, biayanya makin lama makin mahal.
+    // Default 10/halaman, admin bisa klik "Tampilkan Semua" kalau perlu.
+    const showAll = req.query.all === '1';
+    const buildUrl = (params) => {
+      const usp = new URLSearchParams();
+      if (status) usp.set('status', status);
+      if (semester) usp.set('semester', semester);
+      Object.entries(params).forEach(([k, v]) => usp.set(k, v));
+      return `/admin/krs?${usp.toString()}`;
+    };
+
+    let krsDocs, pageInfo = null;
+    if (showAll) {
+      const snap = await baseQuery.get();
+      krsDocs = snap.docs;
+    } else {
+      const result = await paginate(baseQuery, {
+        pageSize: KRS_PAGE_SIZE,
+        afterParam: req.query.after || '',
+        trailParam: req.query.trail || '',
+        cursorFromDoc: (doc) => [doc.get('createdAt'), doc.id]
+      });
+      krsDocs = result.docs;
+      pageInfo = {
+        hasPrev: result.hasPrev,
+        hasNext: result.hasNext,
+        prevUrl: result.hasPrev ? buildUrl(result.prevAfter ? { after: result.prevAfter, trail: result.prevTrail } : { trail: result.prevTrail }) : null,
+        nextUrl: result.hasNext ? buildUrl({ after: result.nextAfter, trail: result.nextTrail }) : null,
+        allUrl: buildUrl({ all: '1' }),
+        count: krsDocs.length,
+        total: null // total keseluruhan tidak dihitung (butuh count() terpisah) - lihat catatan di partial pagination
+      };
+    }
 
     if (krsDocs.length === 0) {
       return res.render('admin/krs_list', {
         title: 'Daftar KRS',
         krsList: [],
         filters: { status, semester },
-        success: req.query.success
+        success: req.query.success,
+        pageInfo,
+        showAll,
+        pageListUrl: buildUrl({ page: 1 })
       });
     }
 
@@ -136,7 +176,10 @@ router.get('/', async (req, res) => {
       title: 'Daftar KRS',
       krsList,
       filters: { status, semester },
-      success: req.query.success
+      success: req.query.success,
+      pageInfo,
+      showAll,
+      pageListUrl: buildUrl({ page: 1 })
     });
   } catch (error) {
     console.error('Error mengambil KRS:', error);

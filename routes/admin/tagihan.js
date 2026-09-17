@@ -9,6 +9,7 @@ const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
+const { getAllMahasiswa } = require('../../helpers/cache');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -24,16 +25,17 @@ router.get('/', async (req, res) => {
   try {
     const { angkatan, search } = req.query;
 
-    const mahasiswaSnapshot = await db.collection('users')
-      .where('role', '==', 'mahasiswa')
-      .orderBy('nama')
-      .get();
+    // ✅ CACHE: sebelumnya query 'users' (role=mahasiswa) dibaca ULANG dari
+    // Firestore setiap kali halaman ini dibuka. getAllMahasiswa() pakai
+    // cache bersama 10 menit (helpers/cache.js).
+    const semuaMahasiswa = await getAllMahasiswa(db);
 
-    let mahasiswaList = [];
-    for (const doc of mahasiswaSnapshot.docs) {
-      const data = doc.data();
+    const angkatanSet = new Set();
+    let mahasiswaTerfilter = [];
+    for (const data of semuaMahasiswa) {
       const nim = data.nim || '';
       const angkatanMhs = getAngkatanFromNim(nim);
+      if (angkatanMhs) angkatanSet.add(angkatanMhs);
 
       if (angkatan && angkatanMhs !== angkatan) continue;
       if (search) {
@@ -42,38 +44,66 @@ router.get('/', async (req, res) => {
         const namaMatch = (data.nama || '').toLowerCase().includes(searchLower);
         if (!nimMatch && !namaMatch) continue;
       }
+      mahasiswaTerfilter.push({ id: data.id, nim, nama: data.nama || '-' });
+    }
+    mahasiswaTerfilter.sort((a, b) => a.nama.localeCompare(b.nama));
+    const angkatanList = Array.from(angkatanSet).sort().reverse();
 
-      const tagihanDoc = await db.collection('tagihan').doc(doc.id).get();
-      let totalBelumLunas = 0;
-      let tagihanCount = 0;
-      if (tagihanDoc.exists) {
-        const tagihan = tagihanDoc.data().semester || [];
-        tagihanCount = tagihan.length;
-        tagihan.forEach(t => {
-          if (t.status !== 'lunas') {
-            totalBelumLunas += t.jumlah || 0;
-          }
-        });
-      }
+    // ✅ PAGINASI: default 10/halaman + "Tampilkan Semua". Dokumen `tagihan`
+    // HANYA dibaca untuk mahasiswa yang benar-benar tampil di halaman ini -
+    // sebelumnya dibaca untuk SEMUA mahasiswa terfilter setiap kunjungan
+    // (dan satu-satu berurutan, bukan paralel).
+    const TAGIHAN_PAGE_SIZE = 10;
+    const showAll = req.query.all === '1';
+    const totalMahasiswa = mahasiswaTerfilter.length;
+    const buildUrl = (params) => {
+      const usp = new URLSearchParams();
+      if (angkatan) usp.set('angkatan', angkatan);
+      if (search) usp.set('search', search);
+      Object.entries(params).forEach(([k, v]) => usp.set(k, v));
+      return `/admin/tagihan?${usp.toString()}`;
+    };
 
-      mahasiswaList.push({
-        id: doc.id,
-        nim,
-        nama: data.nama || '-',
-        tagihanCount,
-        totalBelumLunas
-      });
+    let halamanMahasiswa = mahasiswaTerfilter;
+    let pageInfo = null;
+    if (!showAll) {
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const start = (page - 1) * TAGIHAN_PAGE_SIZE;
+      const paged = mahasiswaTerfilter.slice(start, start + TAGIHAN_PAGE_SIZE);
+      const hasPrev = page > 1;
+      const hasNext = start + TAGIHAN_PAGE_SIZE < totalMahasiswa;
+      pageInfo = {
+        hasPrev,
+        hasNext,
+        prevUrl: hasPrev ? buildUrl({ page: page - 1 }) : null,
+        nextUrl: hasNext ? buildUrl({ page: page + 1 }) : null,
+        allUrl: buildUrl({ all: '1' }),
+        count: paged.length,
+        total: totalMahasiswa
+      };
+      halamanMahasiswa = paged;
     }
 
-    const angkatanSet = new Set();
-    mahasiswaSnapshot.docs.forEach(doc => {
-      const nim = doc.data().nim;
-      if (nim) {
-        const ang = getAngkatanFromNim(nim);
-        if (ang) angkatanSet.add(ang);
-      }
-    });
-    const angkatanList = Array.from(angkatanSet).sort().reverse();
+    // Baca dokumen tagihan untuk mahasiswa di halaman ini SECARA PARALEL
+    // (db.getAll batch) - bukan satu-satu berurutan seperti sebelumnya.
+    let mahasiswaList = [];
+    if (halamanMahasiswa.length > 0) {
+      const tagihanRefs = halamanMahasiswa.map(m => db.collection('tagihan').doc(m.id));
+      const tagihanDocs = await db.getAll(...tagihanRefs);
+      mahasiswaList = halamanMahasiswa.map((m, idx) => {
+        const tagihanDoc = tagihanDocs[idx];
+        let totalBelumLunas = 0;
+        let tagihanCount = 0;
+        if (tagihanDoc.exists) {
+          const tagihan = tagihanDoc.data().semester || [];
+          tagihanCount = tagihan.length;
+          tagihan.forEach(t => {
+            if (t.status !== 'lunas') totalBelumLunas += t.jumlah || 0;
+          });
+        }
+        return { ...m, tagihanCount, totalBelumLunas };
+      });
+    }
 
     // Notifikasi import/export
     let importResult = null, importError = null;
@@ -89,10 +119,14 @@ router.get('/', async (req, res) => {
     res.render('admin/tagihan_list', {
       title: 'Kelola Tagihan Mahasiswa',
       mahasiswaList,
+      totalMahasiswa,
       angkatanList,
       filters: { angkatan: angkatan || '', search: search || '' },
       importResult,
-      importError
+      importError,
+      pageInfo,
+      showAll,
+      pageListUrl: buildUrl({ page: 1 })
     });
   } catch (error) {
     console.error('Error memuat daftar tagihan:', error);

@@ -31,6 +31,10 @@ const multer = require('multer');
 const sharp = require('sharp');
 const crypto = require('crypto'); // <-- Tambahkan ini
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
+const { paginate } = require('../../helpers/pagination');
+const { logbookSemesterCache } = require('../../helpers/cache');
+const { admin } = require('../../config/firebaseAdmin');
+const LOGBOOK_PAGE_SIZE = 10;
 const {
   getMagangPeriodsByMahasiswa: getMagangPeriodsByMahasiswaModel,
   getCompletedMagangPeriods: getCompletedMagangPeriodsModel,
@@ -652,21 +656,11 @@ router.get('/logbook', async (req, res) => {
       }
     }
 
-    let logbook = [];
+    // ✅ OPTIMISASI KUOTA: cuma butuh jumlahnya lewat count() aggregation -
+    // dipakai baik untuk progress maupun badge "X total" di paginasi,
+    // supaya tidak perlu baca ulang semua dokumen logbook.
+    let totalLogbook = 0;
     if (selectedPeriod) {
-      const logbookSnapshot = await db.collection('logbookMagang')
-        .where('userId', '==', userId)
-        .where('pdkId', '==', selectedPeriod.pdkId)
-        .orderBy('tanggal', 'desc')
-        .get();
-
-      logbook = logbookSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    }
-
-    let progress = null;
-    if (selectedPeriod) {
-      // ✅ OPTIMISASI KUOTA: sama seperti di atas - cuma butuh jumlahnya.
-      let totalLogbook;
       try {
         const countSnap = await db.collection('logbookMagang')
           .where('userId', '==', userId)
@@ -674,47 +668,63 @@ router.get('/logbook', async (req, res) => {
           .count().get();
         totalLogbook = countSnap.data().count;
       } catch (err) {
-        const logbookSnapshot = await db.collection('logbookMagang')
+        const logbookSnapshotAll = await db.collection('logbookMagang')
           .where('userId', '==', userId)
           .where('pdkId', '==', selectedPeriod.pdkId)
           .get();
-        totalLogbook = logbookSnapshot.size;
+        totalLogbook = logbookSnapshotAll.size;
       }
-      progress = calculateProgress(
-        totalLogbook,
-        selectedPeriod.tanggalMulai,
-        selectedPeriod.tanggalSelesai,
-        120
-      );
     }
 
-    // Paginasi tampilan logbook (10 per halaman) - data sudah dibaca dari
-    // Firestore di atas, jadi ini cuma memotong render (tidak nambah
-    // biaya baca), tapi bikin halaman jauh lebih ringan untuk mahasiswa
-    // yang logbook-nya sudah banyak.
-    const LOGBOOK_PER_PAGE = 10;
-    const logbookTampilkanSemua = req.query.semuaLogbook === '1';
-    const logbookTotal = logbook.length;
-    const logbookTotalHalaman = Math.max(1, Math.ceil(logbookTotal / LOGBOOK_PER_PAGE));
-    let logbookHalaman = parseInt(req.query.pageLogbook, 10) || 1;
-    if (logbookHalaman < 1) logbookHalaman = 1;
-    if (logbookHalaman > logbookTotalHalaman) logbookHalaman = logbookTotalHalaman;
-    const logbookTampil = logbookTampilkanSemua
-      ? logbook
-      : logbook.slice((logbookHalaman - 1) * LOGBOOK_PER_PAGE, logbookHalaman * LOGBOOK_PER_PAGE);
-    const logbookPaging = {
-      halaman: logbookHalaman,
-      totalHalaman: logbookTotalHalaman,
-      totalData: logbookTotal,
-      perPage: LOGBOOK_PER_PAGE,
-      tampilkanSemua: logbookTampilkanSemua,
-      queryTanpaPaging: (() => {
-        const q = { ...req.query };
-        delete q.pageLogbook;
-        delete q.semuaLogbook;
-        return q;
-      })()
-    };
+    // ✅ OPTIMISASI KUOTA: paginasi berbasis cursor (startAfter), BUKAN
+    // ambil semua dokumen sekaligus. Default 10 entri/halaman, mahasiswa
+    // bisa klik "Tampilkan Semua" (?all=1) kalau memang butuh semuanya
+    // (misal sebelum cetak logbook).
+    let logbook = [];
+    let pageInfo = null;
+    const showAll = req.query.all === '1';
+
+    if (selectedPeriod) {
+      const baseQuery = db.collection('logbookMagang')
+        .where('userId', '==', userId)
+        .where('pdkId', '==', selectedPeriod.pdkId)
+        .orderBy('tanggal', 'desc')
+        .orderBy(admin.firestore.FieldPath.documentId(), 'desc');
+
+      if (showAll) {
+        const snap = await baseQuery.get();
+        logbook = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      } else {
+        const result = await paginate(baseQuery, {
+          pageSize: LOGBOOK_PAGE_SIZE,
+          afterParam: req.query.after || '',
+          trailParam: req.query.trail || '',
+          cursorFromDoc: (doc) => [doc.get('tanggal'), doc.id]
+        });
+        logbook = result.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        const buildUrl = (params) => {
+          const usp = new URLSearchParams({ periodId: selectedPeriod.id, ...params });
+          return `/mahasiswa/magang/logbook?${usp.toString()}`;
+        };
+        pageInfo = {
+          hasPrev: result.hasPrev,
+          hasNext: result.hasNext,
+          prevUrl: result.hasPrev ? buildUrl(result.prevAfter ? { after: result.prevAfter, trail: result.prevTrail } : { trail: result.prevTrail }) : null,
+          nextUrl: result.hasNext ? buildUrl({ after: result.nextAfter, trail: result.nextTrail }) : null,
+          allUrl: buildUrl({ all: '1' }),
+          count: logbook.length,
+          total: totalLogbook
+        };
+      }
+    }
+
+    const progress = selectedPeriod ? calculateProgress(
+      totalLogbook,
+      selectedPeriod.tanggalMulai,
+      selectedPeriod.tanggalSelesai,
+      120
+    ) : null;
 
     res.render('mahasiswa/magang/logbook', {
       title: 'Logbook Magang',
@@ -723,11 +733,13 @@ router.get('/logbook', async (req, res) => {
       pdkList: allPeriods,
       selectedPeriod,
       selectedPeriodId: selectedPeriod ? selectedPeriod.id : null,
-      logbook: logbookTampil,
-      logbookPaging,
+      logbook,
       canSubmit,
       submitReason,
-      progress
+      progress,
+      pageInfo,
+      showAll,
+      pageListUrl: selectedPeriod ? `/mahasiswa/magang/logbook?periodId=${selectedPeriod.id}` : '/mahasiswa/magang/logbook'
     });
   } catch (error) {
     console.error('Error:', error);
@@ -815,6 +827,8 @@ router.post('/logbook', upload.array('images', 5), async (req, res) => {
       pembimbing2Id: pembimbing.pembimbing2 ? pembimbing.pembimbing2.id : null,
       pembimbing2Nama: pembimbing.pembimbing2 ? pembimbing.pembimbing2.nama : null
     });
+
+    logbookSemesterCache.delete(req.user.id); // logbook baru -> cache daftar semester (dosen) bisa basi
 
     res.redirect(`/mahasiswa/magang/logbook?periodId=${periodId}`);
   } catch (error) {

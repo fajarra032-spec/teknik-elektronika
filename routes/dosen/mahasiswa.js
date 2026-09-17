@@ -145,42 +145,14 @@ router.get('/', async (req, res) => {
     });
     const angkatanList = Array.from(angkatanSet).sort().reverse();
 
-    // Paginasi tampilan (10 per halaman) - potong array di memori saja,
-    // datanya sudah terlanjur diambil dari Firestore di atas jadi ini
-    // tidak menambah biaya baca, tapi bikin halaman jauh lebih ringan
-    // dirender terutama untuk dosen dengan banyak mahasiswa bimbingan.
-    const PER_PAGE = 10;
-    const tampilkanSemua = req.query.semua === '1';
-    const totalData = mahasiswaList.length;
-    const totalHalaman = Math.max(1, Math.ceil(totalData / PER_PAGE));
-    let halaman = parseInt(req.query.page, 10) || 1;
-    if (halaman < 1) halaman = 1;
-    if (halaman > totalHalaman) halaman = totalHalaman;
-    const mahasiswaTampil = tampilkanSemua
-      ? mahasiswaList
-      : mahasiswaList.slice((halaman - 1) * PER_PAGE, halaman * PER_PAGE);
-
     res.render('dosen/mahasiswa_list', {
       title: 'Mahasiswa Bimbingan',
-      mahasiswaList: mahasiswaTampil,
+      mahasiswaList,
       mkList,
       filterMk: mkId || '',
       filterAngkatan: angkatan || '',
       search: search || '',
-      angkatanList,
-      paging: {
-        halaman,
-        totalHalaman,
-        totalData,
-        perPage: PER_PAGE,
-        tampilkanSemua,
-        queryTanpaPaging: (() => {
-          const q = { ...req.query };
-          delete q.page;
-          delete q.semua;
-          return q;
-        })()
-      }
+      angkatanList
     });
 
   } catch (error) {

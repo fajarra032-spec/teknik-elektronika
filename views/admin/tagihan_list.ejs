@@ -380,7 +380,7 @@
 
   <!-- Info jumlah -->
   <div class="info-count">
-    <i class="bi bi-people-fill me-1" style="color: var(--primary-start);"></i> Menampilkan <strong><%= mahasiswaList.length %></strong> mahasiswa
+    <i class="bi bi-people-fill me-1" style="color: var(--primary-start);"></i> Menampilkan <strong><%= mahasiswaList.length %></strong> dari <strong><%= typeof totalMahasiswa !== 'undefined' ? totalMahasiswa : mahasiswaList.length %></strong> mahasiswa
   </div>
 
   <!-- Tabel -->
@@ -427,6 +427,8 @@
         </tbody>
       </table>
     </div>
+
+    <%- include('../partials/pagination', { pageInfo: typeof pageInfo !== 'undefined' ? pageInfo : null, showAll: typeof showAll !== 'undefined' ? showAll : false, pageListUrl: typeof pageListUrl !== 'undefined' ? pageListUrl : '/admin/tagihan' }) %>
   </div>
 </div>
 
