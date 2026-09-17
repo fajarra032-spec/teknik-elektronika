@@ -126,4 +126,22 @@ async function getAllMataKuliah(db) {
   });
 }
 
-module.exports = { TTLCache, mataKuliahCache, dosenCache, tugasAktifCache, mahasiswaCache, getAllMahasiswa, getAllMataKuliah, logbookSemesterCache, getSemesterListLogbook };
+/**
+ * Ambil semua dokumen dosen (urut nama), dari cache kalau masih berlaku.
+ * Dipakai di routes/admin/dosen.js (daftar dosen) dan routes/admin/matakuliah.js
+ * (dropdown pengampu + map nama dosen) - sebelumnya masing-masing route
+ * membaca ULANG seluruh koleksi `dosen` sendiri-sendiri di setiap kunjungan
+ * halaman, padahal datanya sama dan jarang berubah. Pakai key 'all' supaya
+ * konsisten dengan invalidasi (`dosenCache.delete('all')`) yang sudah ada
+ * di routes/admin/dosen.js setiap kali dosen ditambah/diedit/dihapus.
+ * @param {import('firebase-admin').firestore.Firestore} db
+ * @returns {Promise<Array<Object>>}
+ */
+async function getAllDosen(db) {
+  return dosenCache.getOrFetch('all', async () => {
+    const snap = await db.collection('dosen').orderBy('nama').get();
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  });
+}
+
+module.exports = { TTLCache, mataKuliahCache, dosenCache, tugasAktifCache, mahasiswaCache, getAllMahasiswa, getAllMataKuliah, getAllDosen, logbookSemesterCache, getSemesterListLogbook };

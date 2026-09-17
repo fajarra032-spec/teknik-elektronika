@@ -109,39 +109,54 @@ router.use('/video-konten', require('./videoKonten'));
  */
 router.get('/', async (req, res) => {
   try {
-    const dosenCount   = (await db.collection('dosen').count().get()).data().count;
-    const mahasiswaSnapshot = await db.collection('users')
-      .where('role', '==', 'mahasiswa')
-      .count()
-      .get();
-    const mahasiswaCount = mahasiswaSnapshot.data().count;
-    const mkCount       = (await db.collection('mataKuliah').count().get()).data().count;
-    const beritaBaru    = await db.collection('berita')
-      .orderBy('tanggal', 'desc')
-      .limit(5)
-      .get();
-
-    // KRS Pending
-    const krsPending = (await db.collection('krs').where('status', '==', 'pending').count().get()).data().count;
-    // Logbook Pending
-    const logbookPending = (await db.collection('logbookMagang').where('status', '==', 'pending').count().get()).data().count;
-    // Laporan Magang Pending
-    const laporanPending = (await db.collection('laporanMagang').where('status', '==', 'submitted').count().get()).data().count;
-    // Surat Pending (mahasiswa + dosen)
-    const suratMahasiswaPending = (await db.collection('surat').where('status', '==', 'pending').count().get()).data().count;
-    const suratDosenPending = (await db.collection('surat_dosen').where('status', '==', 'pending').count().get()).data().count;
-    const suratPending = suratMahasiswaPending + suratDosenPending;
-
-    // Acara mendatang - sumber tunggal: koleksi jadwalPenting yang dikelola
-    // di /admin/jadwalpenting (sebelumnya widget ini tidak pernah mengambil
-    // data apa pun sehingga selalu kosong/tidak sinkron dengan menu Kelola
-    // Jadwal Penting).
+    // ✅ OPTIMISASI KUOTA + KECEPATAN: sebelumnya 10 query di bawah ini
+    // di-`await` SATU-SATU secara berurutan - request kedua baru dikirim
+    // setelah request pertama selesai dibalas Firestore, dst. Akibatnya
+    // total waktu tunggu = jumlah SEMUA round-trip, bukan cuma yang paling
+    // lambat. Query-query ini saling independen (tidak ada yang butuh hasil
+    // query lain), jadi aman dan jauh lebih cepat dijalankan BARENG lewat
+    // Promise.all - total waktu tunggu jadi seukuran query paling lambat
+    // saja. (Query count() sendiri sudah hemat kuota karena tidak mengunduh
+    // isi dokumen, hanya jumlahnya - itu bagian yang sudah benar.)
     const today = new Date().toISOString().split('T')[0];
-    const eventsSnapshot = await db.collection('jadwalPenting')
-      .where('tanggal', '>=', today)
-      .orderBy('tanggal', 'asc')
-      .limit(5)
-      .get();
+
+    const [
+      dosenCountSnap,
+      mahasiswaCountSnap,
+      mkCountSnap,
+      beritaBaru,
+      krsPendingSnap,
+      logbookPendingSnap,
+      laporanPendingSnap,
+      suratMahasiswaPendingSnap,
+      suratDosenPendingSnap,
+      eventsSnapshot
+    ] = await Promise.all([
+      db.collection('dosen').count().get(),
+      db.collection('users').where('role', '==', 'mahasiswa').count().get(),
+      db.collection('mataKuliah').count().get(),
+      db.collection('berita').orderBy('tanggal', 'desc').limit(5).get(),
+      db.collection('krs').where('status', '==', 'pending').count().get(),
+      db.collection('logbookMagang').where('status', '==', 'pending').count().get(),
+      db.collection('laporanMagang').where('status', '==', 'submitted').count().get(),
+      db.collection('surat').where('status', '==', 'pending').count().get(),
+      db.collection('surat_dosen').where('status', '==', 'pending').count().get(),
+      // Acara mendatang - sumber tunggal: koleksi jadwalPenting yang dikelola
+      // di /admin/jadwalpenting (sebelumnya widget ini tidak pernah mengambil
+      // data apa pun sehingga selalu kosong/tidak sinkron dengan menu Kelola
+      // Jadwal Penting).
+      db.collection('jadwalPenting').where('tanggal', '>=', today).orderBy('tanggal', 'asc').limit(5).get()
+    ]);
+
+    const dosenCount = dosenCountSnap.data().count;
+    const mahasiswaCount = mahasiswaCountSnap.data().count;
+    const mkCount = mkCountSnap.data().count;
+    const krsPending = krsPendingSnap.data().count;
+    const logbookPending = logbookPendingSnap.data().count;
+    const laporanPending = laporanPendingSnap.data().count;
+    const suratMahasiswaPending = suratMahasiswaPendingSnap.data().count;
+    const suratDosenPending = suratDosenPendingSnap.data().count;
+    const suratPending = suratMahasiswaPending + suratDosenPending;
     const events = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     res.render('admin/dashboard', {

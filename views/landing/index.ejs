@@ -483,6 +483,37 @@
         }
     }
 
+    /* ===== CAROUSEL MAHASISWA BARU (SAMBUTAN ANGKATAN) =====
+       Beda dari .magang-carousel: cuma foto + nama + asal sekolah (tanpa
+       progress bar/tanggal/perusahaan), jadi pakai rasio potret (3:4)
+       supaya foto wajah/formal tidak terpotong aneh seperti rasio 16:9. */
+    .mahasiswabaru-carousel .carousel-inner {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+    }
+    .mahasiswabaru-slide-img {
+        aspect-ratio: 3 / 4;
+        object-fit: cover;
+        width: 100%;
+        max-height: 520px;
+        margin: 0 auto;
+        display: block;
+    }
+    .mahasiswabaru-caption {
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        text-align: left;
+        padding: 30px 20px 20px;
+    }
+    @media (max-width: 576px) {
+        .mahasiswabaru-slide-img {
+            aspect-ratio: 4 / 5;
+            max-height: 420px;
+        }
+        .mahasiswabaru-caption {
+            padding: 16px 12px 12px;
+        }
+    }
+
     .gallery-card:hover .gallery-img-wrapper img {
         transform: scale(1.08);
     }
@@ -1168,6 +1199,56 @@
                      "penutup container utama" di bawah, sementara div
                      .container aslinya (dibuka sebelum section Statistik)
                      malah tidak pernah tertutup dan menjepit footer. -->
+
+    <!-- ===== SELAMAT DATANG MAHASISWA BARU ANGKATAN 2026 ===== -->
+    <div class="row mt-5 pt-2">
+      <div class="col-12">
+        <h2 class="section-title">Selamat Datang <span>Mahasiswa Baru Teknik Elektronika 2026</span></h2>
+        <div id="mahasiswaBaruCarousel" class="carousel slide carousel-fade mahasiswabaru-carousel" data-bs-ride="carousel" data-bs-interval="5000">
+            <div class="carousel-inner">
+                <%
+                const slidesMahasiswaBaru = typeof mahasiswaBaruSlides !== 'undefined' && mahasiswaBaruSlides.length ? mahasiswaBaruSlides : [];
+                if (slidesMahasiswaBaru.length === 0) { %>
+                    <div class="carousel-item active">
+                        <img src="https://via.placeholder.com/800x1000?text=Selamat+Datang+Mahasiswa+Baru+2026" class="d-block w-100 mahasiswabaru-slide-img">
+                        <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-3">
+                            <h3>Selamat Datang Angkatan 2026</h3>
+                            <p>Foto mahasiswa baru akan tampil di sini setelah biodata & foto diupload</p>
+                        </div>
+                    </div>
+                <% } else {
+                    slidesMahasiswaBaru.forEach((item, idx) => { %>
+                        <div class="carousel-item <%= idx === 0 ? 'active' : '' %>">
+                            <img src="<%= item.imageUrl %>" class="d-block w-100 mahasiswabaru-slide-img"
+                                 onerror="this.src='https://via.placeholder.com/800x1000?text=Mahasiswa+Baru+2026'">
+                            <div class="carousel-caption d-none d-md-block mahasiswabaru-caption">
+                                <h3 style="font-weight: 800; margin-bottom: 5px;"><%= item.nama %></h3>
+                                <p class="mb-0"><i class="bi bi-mortarboard"></i> <%= item.asalSekolah %></p>
+                            </div>
+                        </div>
+                <%  });
+                } %>
+            </div>
+
+            <% if (slidesMahasiswaBaru.length > 1) { %>
+            <button class="carousel-control-prev" type="button" data-bs-target="#mahasiswaBaruCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Sebelumnya</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#mahasiswaBaruCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Berikutnya</span>
+            </button>
+            <div class="carousel-indicators" style="margin-bottom: 10px;">
+                <% slidesMahasiswaBaru.forEach((_, idx) => { %>
+                    <button type="button" data-bs-target="#mahasiswaBaruCarousel" data-bs-slide-to="<%= idx %>" class="<%= idx === 0 ? 'active' : '' %>" aria-current="<%= idx === 0 ? 'true' : 'false' %>" aria-label="Slide <%= idx+1 %>"></button>
+                <% }); %>
+            </div>
+            <% } %>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== PENCARIAN MAHASISWA (MODERN, TIDAK TERBAGI) ===== -->
     <div class="row mt-5 pt-2">
       <div class="col-12">

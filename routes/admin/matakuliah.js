@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const { mataKuliahCache } = require('../../helpers/cache');
+const { mataKuliahCache, getAllMataKuliah, getAllDosen, getAllMahasiswa } = require('../../helpers/cache');
 const academicHelper = require('../../helpers/academicHelper');
 
 router.use(verifyToken);
@@ -18,8 +18,10 @@ router.use(isAdmin);
 // HELPER: mendapatkan daftar dosen untuk dropdown
 // ============================================================================
 async function getDosenList() {
-  const dosenSnapshot = await db.collection('dosen').orderBy('nama').get();
-  return dosenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  // ✅ CACHE: dosen jarang berubah - pakai getAllDosen() (cache 10 menit,
+  // dipakai bersama dengan routes/admin/dosen.js) alih-alih baca ulang
+  // koleksi 'dosen' setiap kali form/daftar MK dibuka.
+  return getAllDosen(db);
 }
 
 /**
@@ -29,9 +31,11 @@ async function getDosenList() {
  * `users`, SAMA seperti yang dipakai di /admin/mahasiswa, supaya konsisten.
  */
 async function getDistinctKelasMahasiswa() {
-  const snapshot = await db.collection('users').where('role', '==', 'mahasiswa').get();
+  // ✅ CACHE: pakai getAllMahasiswa() (cache bersama, sama seperti dipakai
+  // /admin/mahasiswa & /admin/khs) alih-alih query 'users' sendiri di sini.
+  const semuaMahasiswa = await getAllMahasiswa(db);
   const kelasSet = new Set();
-  snapshot.docs.forEach(doc => { if (doc.data().kelas) kelasSet.add(doc.data().kelas); });
+  semuaMahasiswa.forEach(m => { if (m.kelas) kelasSet.add(m.kelas); });
   return Array.from(kelasSet).sort();
 }
 
@@ -154,16 +158,24 @@ router.get('/', async (req, res) => {
       ? semesterAktif
       : academicHelper.getCurrentAcademicSemester().semester; // default: periode aktif sekarang
 
-    // Bangun query dasar
-    let query = db.collection('mataKuliah').orderBy('kode');
+    // ✅ OPTIMISASI: sebelumnya tiap kombinasi filter `semester` memicu
+    // query Firestore BARU (where('semester', '==', ...)), dan dosen dibaca
+    // ulang penuh setiap kunjungan. Sekarang ambil SEKALI dari cache
+    // (getAllMataKuliah/getAllDosen - 10 menit, lihat helpers/cache.js) lalu
+    // filter semester & search di memori - koleksi ini kecil (puluhan MK),
+    // jadi filter di JS jauh lebih murah daripada bolak-balik ke Firestore.
+    const [semuaMataKuliah, dosenList] = await Promise.all([
+      getAllMataKuliah(db),
+      getAllDosen(db)
+    ]);
+
+    let matakuliah = [...semuaMataKuliah].sort((a, b) => (a.kode || '').localeCompare(b.kode || ''));
 
     // Filter berdasarkan semester jika ada
     if (semester) {
-      query = query.where('semester', '==', parseInt(semester));
+      const semesterNum = parseInt(semester);
+      matakuliah = matakuliah.filter(mk => mk.semester === semesterNum);
     }
-
-    const mkSnapshot = await query.get();
-    let matakuliah = mkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     // Filter berdasarkan search (manual karena Firestore tidak mendukung partial text search)
     if (search) {
@@ -176,10 +188,7 @@ router.get('/', async (req, res) => {
 
     // Ambil data dosen untuk ditampilkan
     const dosenMap = {};
-    const dosenSnapshot = await db.collection('dosen').get();
-    dosenSnapshot.docs.forEach(doc => {
-      dosenMap[doc.id] = doc.data().nama;
-    });
+    dosenList.forEach(d => { dosenMap[d.id] = d.nama; });
 
     // Untuk setiap matakuliah, tambahkan field dosenNames (array nama dosen)
     // dan label konsentrasi (derivasi read-only dari field `jenis`)

@@ -11,7 +11,7 @@ const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
-const { dosenCache } = require('../../helpers/cache');
+const { dosenCache, getAllDosen, getAllMataKuliah } = require('../../helpers/cache');
 
 // Middleware autentikasi (sudah diterapkan di index.js, namun untuk keamanan tambahan)
 router.use(verifyToken);
@@ -55,8 +55,12 @@ async function getDosenFotoFolderId() {
  */
 router.get('/', async (req, res) => {
   try {
-    const dosenSnapshot = await db.collection('dosen').orderBy('nama').get();
-    const dosen = dosenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // ✅ CACHE: dosen jarang berubah, jadi baca lewat getAllDosen() (cache
+    // 10 menit, lihat helpers/cache.js) alih-alih query 'dosen' langsung
+    // setiap kali menu ini dibuka. dosenCache.delete('all') di bawah
+    // (create/update/delete) memastikan cache langsung basi begitu ada
+    // perubahan, jadi tetap up-to-date.
+    const dosen = await getAllDosen(db);
     res.render('admin/dosen_list', { title: 'Kelola Dosen', dosen });
   } catch (error) {
     console.error('Error mengambil data dosen:', error);
@@ -70,8 +74,7 @@ router.get('/', async (req, res) => {
  */
 router.get('/create', async (req, res) => {
   try {
-    const mkSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
-    const mkList = mkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const mkList = await getAllMataKuliah(db);
     res.render('admin/dosen_form', { title: 'Tambah Dosen', dosen: null, mkList });
   } catch (error) {
     console.error('Error memuat form tambah dosen:', error);
@@ -143,8 +146,7 @@ router.get('/:id/edit', async (req, res) => {
       return res.status(404).send('Dosen tidak ditemukan');
     }
     const dosen = { id: dosenDoc.id, ...dosenDoc.data() };
-    const mkSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
-    const mkList = mkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const mkList = await getAllMataKuliah(db);
     res.render('admin/dosen_form', { title: 'Edit Dosen', dosen, mkList });
   } catch (error) {
     console.error('Error memuat form edit dosen:', error);

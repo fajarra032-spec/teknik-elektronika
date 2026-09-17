@@ -20,6 +20,7 @@ const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getTranskripMahasiswa } = require('../../helpers/nilaiHelper');
 const { bandingkanLabelPeriode } = require('../../helpers/academicHelper');
+const { getAllMahasiswa } = require('../../helpers/cache');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -36,6 +37,29 @@ function getAngkatanFromNim(nim) {
   return '20' + nim.substring(0, 2);
 }
 
+/**
+ * Jalankan `fn(item)` untuk setiap item di `items`, maksimal `limit` item
+ * berjalan BERSAMAAN (bukan satu-satu berurutan, dan bukan juga semuanya
+ * sekaligus tanpa batas). Dipakai supaya panggilan getTranskripMahasiswa()
+ * per mahasiswa di bawah tidak menembak Firestore satu-satu (lambat) atau
+ * ratusan sekaligus dalam sekali hentakan (berisiko kena rate limit) -
+ * lihat komentar di router.get('/list').
+ */
+async function mapWithConcurrency(items, limit, fn) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+  async function worker() {
+    while (true) {
+      const i = nextIndex++;
+      if (i >= items.length) return;
+      results[i] = await fn(items[i], i);
+    }
+  }
+  const workerCount = Math.min(limit, items.length) || 0;
+  await Promise.all(Array.from({ length: workerCount }, worker));
+  return results;
+}
+
 // ============================================================================
 // DAFTAR KHS (semua mahasiswa x semester yang punya nilai)
 // ============================================================================
@@ -49,20 +73,42 @@ router.get('/list', async (req, res) => {
   try {
     const { semester, angkatan } = req.query;
 
-    const mahasiswaSnapshot = await db.collection('users')
-      .where('role', '==', 'mahasiswa')
-      .orderBy('nim')
-      .get();
+    // ✅ CACHE: sebelumnya koleksi 'users' (role=mahasiswa) dibaca ulang
+    // penuh dari Firestore setiap kali halaman ini dibuka. Sekarang pakai
+    // getAllMahasiswa() (cache bersama 10 menit, lihat helpers/cache.js) -
+    // yang juga dipakai /admin/mahasiswa, jadi kunjungan ke dua halaman itu
+    // bergantian bisa saling numpang cache tanpa baca ulang Firestore.
+    const semuaMahasiswa = await getAllMahasiswa(db);
+    const mahasiswaList = [...semuaMahasiswa].sort((a, b) => String(a.nim || '').localeCompare(String(b.nim || '')));
+
+    // Filter angkatan DULU (sebelum panggilan mahal getTranskripMahasiswa
+    // di bawah), supaya kalau admin sudah memfilter per angkatan, jumlah
+    // mahasiswa yang benar-benar perlu dihitung transkripnya jauh lebih
+    // sedikit dari seluruh mahasiswa.
+    const mahasiswaTerfilter = mahasiswaList
+      .map(m => ({ mahasiswa: m, angkatanMhs: getAngkatanFromNim(m.nim) }))
+      .filter(({ angkatanMhs }) => !angkatan || angkatanMhs === angkatan);
+
+    // ✅ OPTIMISASI TERBESAR DI HALAMAN INI: sebelumnya getTranskripMahasiswa()
+    // dipanggil satu-satu di dalam `for` loop dengan `await` - kalau ada
+    // 300 mahasiswa, itu 300 "putaran" tunggu-jawab BERURUTAN ke Firestore
+    // (masing-masing ~2-3 query), padahal tidak ada satupun yang butuh hasil
+    // mahasiswa lain. Sekarang dijalankan PARALEL lewat mapWithConcurrency
+    // (maks 20 mahasiswa diproses bersamaan) - jauh lebih cepat, dan tetap
+    // tidak menembak Firestore semuanya sekaligus dalam satu hentakan.
+    const hasilPerMahasiswa = await mapWithConcurrency(
+      mahasiswaTerfilter,
+      20,
+      async ({ mahasiswa, angkatanMhs }) => {
+        const { perSemester } = await getTranskripMahasiswa(mahasiswa.id);
+        return { mahasiswa, angkatanMhs, perSemester };
+      }
+    );
 
     const khsList = [];
     const semesterSet = new Set();
 
-    for (const doc of mahasiswaSnapshot.docs) {
-      const mahasiswa = { id: doc.id, ...doc.data() };
-      const angkatanMhs = getAngkatanFromNim(mahasiswa.nim);
-      if (angkatan && angkatanMhs !== angkatan) continue;
-
-      const { perSemester } = await getTranskripMahasiswa(mahasiswa.id);
+    for (const { mahasiswa, angkatanMhs, perSemester } of hasilPerMahasiswa) {
       perSemester.forEach(s => {
         semesterSet.add(s.semester);
         if (semester && s.semester !== semester) return;
