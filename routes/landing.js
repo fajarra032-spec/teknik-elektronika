@@ -165,10 +165,12 @@ router.get('/', async (req, res) => {
       console.warn('Aktivitas tidak dapat diambil:', err.message);
     }
 
-    // 7. Dosen pengajar (4 dosen)
+    // 7. Dosen pengajar - diambil SEMUA (bukan cuma 4) supaya section
+    // "Dosen Program Studi" di landing page bisa menampilkan semua dosen,
+    // digeser lewat carousel kalau jumlahnya lebih dari 4 (lihat index.ejs).
     let dosenList = [];
     try {
-      const dosenSnapshot = await db.collection('dosen').limit(4).get();
+      const dosenSnapshot = await db.collection('dosen').orderBy('nama').get();
       dosenList = dosenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (err) {
       console.warn('Gagal mengambil data dosen:', err.message);

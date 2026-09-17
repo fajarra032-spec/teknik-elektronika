@@ -1548,72 +1548,70 @@
         </div>
     </section>
 
-    <!-- DOSEN PROGRAM STUDI - 4 card, satu baris, ukuran lebih kecil -->
+    <!-- DOSEN PROGRAM STUDI - dinamis dari koleksi `dosen` (dikelola admin
+         di /admin/dosen), bukan lagi 4 nama tetap hardcode. Ditampilkan
+         sebagai carousel, 4 kartu per slide, supaya SEMUA dosen tetap
+         muncul (digeser ke slide berikutnya) walau jumlahnya lebih dari 4. -->
     <section class="section-wrapper">
         <h2 class="section-title">Dosen <span>Program Studi</span></h2>
-        <div class="row g-3 g-md-4">
-            <div class="col-6 col-lg-3">
-                <div class="id-card">
-                    <div class="id-card-img-wrapper">
-                        <img src="https://i.ibb.co.com/pjGLDjZc/ID.png" class="id-card-img" alt="Fajar Ramadhan">
-                        <div class="id-card-social">
-                            <a href="#"><i class="bi bi-envelope"></i></a>
-                            <a href="#"><i class="bi bi-linkedin"></i></a>
-                            <a href="#"><i class="bi bi-twitter"></i></a>
+        <%
+            const dosenAll = typeof dosenList !== 'undefined' ? dosenList : [];
+            const dosenSlides = [];
+            for (let i = 0; i < dosenAll.length; i += 4) {
+                dosenSlides.push(dosenAll.slice(i, i + 4));
+            }
+        %>
+        <% if (dosenSlides.length === 0) { %>
+            <div class="alert alert-info text-center">Belum ada data dosen yang ditambahkan.</div>
+        <% } else { %>
+            <div id="dosenCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    <% dosenSlides.forEach((slideGroup, slideIdx) => { %>
+                        <div class="carousel-item <%= slideIdx === 0 ? 'active' : '' %>">
+                            <div class="row g-3 g-md-4">
+                                <% slideGroup.forEach(d => {
+                                    const fileId = getFileIdFromUrl(d.foto);
+                                    const fotoSrc = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : (d.foto || 'https://via.placeholder.com/300x300?text=Dosen');
+                                %>
+                                    <div class="col-6 col-lg-3">
+                                        <div class="id-card">
+                                            <div class="id-card-img-wrapper">
+                                                <img src="<%= fotoSrc %>" class="id-card-img" alt="<%= d.nama %>"
+                                                     onerror="this.src='https://via.placeholder.com/300x300?text=Dosen'">
+                                                <% if (d.email) { %>
+                                                <div class="id-card-social">
+                                                    <a href="mailto:<%= d.email %>"><i class="bi bi-envelope"></i></a>
+                                                </div>
+                                                <% } %>
+                                            </div>
+                                            <div class="id-card-body">
+                                                <h5><%= d.nama || 'Dosen' %></h5>
+                                                <p>Dosen Program Studi</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            </div>
                         </div>
-                    </div>
-                    <div class="id-card-body">
-                        <h5>Fajar Ramadhan, S.Pd., M.T</h5>
-                        <p>Kaprodi Elektronika</p>
-                    </div>
+                    <% }) %>
                 </div>
+                <% if (dosenSlides.length > 1) { %>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#dosenCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Sebelumnya</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#dosenCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Berikutnya</span>
+                    </button>
+                    <div class="carousel-indicators" style="position: static; margin-top: 15px;">
+                        <% dosenSlides.forEach((_, slideIdx) => { %>
+                            <button type="button" data-bs-target="#dosenCarousel" data-bs-slide-to="<%= slideIdx %>" class="<%= slideIdx === 0 ? 'active' : '' %>" aria-label="Slide <%= slideIdx + 1 %>"></button>
+                        <% }) %>
+                    </div>
+                <% } %>
             </div>
-            <div class="col-6 col-lg-3">
-                <div class="id-card">
-                    <div class="id-card-img-wrapper">
-                        <img src="https://i.ibb.co.com/B2yS6Ry4/SUARDI.png" class="id-card-img" alt="Suardi">
-                        <div class="id-card-social">
-                            <a href="#"><i class="bi bi-envelope"></i></a>
-                            <a href="#"><i class="bi bi-linkedin"></i></a>
-                        </div>
-                    </div>
-                    <div class="id-card-body">
-                        <h5>Suardi, S.Pd., M.Pd.</h5>
-                        <p>Dosen Umum</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="id-card">
-                    <div class="id-card-img-wrapper">
-                        <img src="https://i.ibb.co.com/m73P8nx/ARIANI.png" class="id-card-img" alt="Ariani Amri">
-                        <div class="id-card-social">
-                            <a href="#"><i class="bi bi-envelope"></i></a>
-                            <a href="#"><i class="bi bi-linkedin"></i></a>
-                        </div>
-                    </div>
-                    <div class="id-card-body">
-                        <h5>Ariani Amri, S.Pd., M.Pd.</h5>
-                        <p>Dosen Energi</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="id-card">
-                    <div class="id-card-img-wrapper">
-                        <img src="https://i.ibb.co.com/5XfTGCqb/GUNAWAN.png" class="id-card-img" alt="Gunawan Tari">
-                        <div class="id-card-social">
-                            <a href="#"><i class="bi bi-envelope"></i></a>
-                            <a href="#"><i class="bi bi-linkedin"></i></a>
-                        </div>
-                    </div>
-                    <div class="id-card-body">
-                        <h5>Gunawan Tari, S.T., M.T</h5>
-                        <p>Dosen Telekomunikasi</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <% } %>
     </section>
 
     <!-- VIDEO KONTEN - dinamis dari koleksi videoKonten (dikelola admin di
