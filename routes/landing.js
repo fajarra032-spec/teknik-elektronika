@@ -81,11 +81,22 @@ router.get('/', async (req, res) => {
     // tidak berisi slide kosong.
     const mahasiswaBaruSlides = mahasiswaList
       .filter(data => getAngkatanFromNim(data.nim) === '2026' && data.foto)
-      .map(data => ({
-        imageUrl: data.foto,
-        nama: data.nama || 'Mahasiswa Baru',
-        asalSekolah: data.asalSekolah || '-'
-      }))
+      .map(data => {
+        // Sama seperti magangSlides - link Google Drive format
+        // "uc?export=view&id=..." (hasil upload di menu Biodata) sering
+        // gagal/lambat kalau di-hotlink langsung di tag <img>. Dikonversi
+        // ke endpoint "thumbnail" yang jauh lebih reliable untuk ditampilkan.
+        let imageUrl = data.foto;
+        if (imageUrl.includes('drive.google.com')) {
+          const match = imageUrl.match(/id=([^&]+)/);
+          if (match) imageUrl = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+        }
+        return {
+          imageUrl,
+          nama: data.nama || 'Mahasiswa Baru',
+          asalSekolah: data.asalSekolah || '-'
+        };
+      })
       .slice(0, 20);
 
 

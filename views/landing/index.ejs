@@ -1135,13 +1135,13 @@
     <div id="heroCarousel" class="carousel slide hero-carousel carousel-fade" data-bs-ride="carousel" data-bs-interval="6000">
         <div class="carousel-inner">
             <div class="carousel-item active">
-                <img src="/images/slide1.jpg" alt="Elektronika Industri" onerror="this.src='https://via.placeholder.com/1920x1080?text=Elektronika'">
+                <img src="/images/slide1.jpg" alt="Elektronika Industri" onerror="this.onerror=null; this.src='https://placehold.co/1920x1080?text=Elektronika'">
             </div>
             <div class="carousel-item">
-                <img src="/images/slide2.jpg" alt="Praktikum" onerror="this.src='https://via.placeholder.com/1920x1080?text=Praktikum'">
+                <img src="/images/slide2.jpg" alt="Praktikum" onerror="this.onerror=null; this.src='https://placehold.co/1920x1080?text=Praktikum'">
             </div>
             <div class="carousel-item">
-                <img src="/images/slide3.jpg" alt="Robotika" onerror="this.src='https://via.placeholder.com/1920x1080?text=Robotik'">
+                <img src="/images/slide3.jpg" alt="Robotika" onerror="this.onerror=null; this.src='https://placehold.co/1920x1080?text=Robotik'">
             </div>
         </div>
     </div>
@@ -1210,7 +1210,7 @@
                 const slidesMahasiswaBaru = typeof mahasiswaBaruSlides !== 'undefined' && mahasiswaBaruSlides.length ? mahasiswaBaruSlides : [];
                 if (slidesMahasiswaBaru.length === 0) { %>
                     <div class="carousel-item active">
-                        <img src="https://via.placeholder.com/800x1000?text=Selamat+Datang+Mahasiswa+Baru+2026" class="d-block w-100 mahasiswabaru-slide-img">
+                        <img src="https://placehold.co/800x1000?text=Selamat+Datang+Mahasiswa+Baru+2026" class="d-block w-100 mahasiswabaru-slide-img">
                         <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-3">
                             <h3>Selamat Datang Angkatan 2026</h3>
                             <p>Foto mahasiswa baru akan tampil di sini setelah biodata & foto diupload</p>
@@ -1220,7 +1220,7 @@
                     slidesMahasiswaBaru.forEach((item, idx) => { %>
                         <div class="carousel-item <%= idx === 0 ? 'active' : '' %>">
                             <img src="<%= item.imageUrl %>" class="d-block w-100 mahasiswabaru-slide-img"
-                                 onerror="this.src='https://via.placeholder.com/800x1000?text=Mahasiswa+Baru+2026'">
+                                 onerror="this.onerror=null; this.src='https://placehold.co/800x1000?text=Mahasiswa+Baru+2026'">
                             <div class="carousel-caption d-none d-md-block mahasiswabaru-caption">
                                 <h3 style="font-weight: 800; margin-bottom: 5px;"><%= item.nama %></h3>
                                 <p class="mb-0"><i class="bi bi-mortarboard"></i> <%= item.asalSekolah %></p>
@@ -1419,9 +1419,9 @@
                         <div class="news-card">
                             <div class="card-img-wrapper">
                                 <% if (item.gambar) { %>
-                                    <img src="<%= item.gambar %>" alt="<%= item.judul %>" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x200?text=No+Image';">
+                                    <img src="<%= item.gambar %>" alt="<%= item.judul %>" onerror="this.onerror=null; this.src='https://placehold.co/400x200?text=No+Image';">
                                 <% } else { %>
-                                    <img src="https://via.placeholder.com/400x200?text=Elektronika" alt="Default">
+                                    <img src="https://placehold.co/400x200?text=Elektronika" alt="Default">
                                 <% } %>
                             </div>
                             <div class="card-body">
@@ -1456,7 +1456,7 @@
                 const slidesMagang = typeof magangSlides !== 'undefined' && magangSlides.length ? magangSlides : [];
                 if (slidesMagang.length === 0) { %>
                     <div class="carousel-item active">
-                        <img src="https://via.placeholder.com/1200x600?text=Belum+Ada+Dokumentasi+Magang" class="d-block w-100 magang-slide-img">
+                        <img src="https://placehold.co/1200x600?text=Belum+Ada+Dokumentasi+Magang" class="d-block w-100 magang-slide-img">
                         <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-3">
                             <h5>Belum Ada Dokumentasi</h5>
                             <p>Segera upload aktivitas magang mahasiswa</p>
@@ -1466,7 +1466,7 @@
                     slidesMagang.forEach((item, idx) => { %>
                         <div class="carousel-item <%= idx === 0 ? 'active' : '' %>">
                             <img src="<%= item.imageUrl %>" class="d-block w-100 magang-slide-img"
-                                 onerror="this.src='https://via.placeholder.com/1200x600?text=Foto+Magang'">
+                                 onerror="this.onerror=null; this.src='https://placehold.co/1200x600?text=Foto+Magang'">
                             <div class="carousel-caption d-none d-md-block magang-caption">
                                 <h3 style="font-weight: 800; margin-bottom: 5px;"><%= item.mahasiswa || 'Mahasiswa Magang' %></h3>
                                 <p class="mb-1"><i class="bi bi-building"></i> <%= item.perusahaan || 'Perusahaan Mitra' %></p>
@@ -1571,13 +1571,13 @@
                             <div class="row g-3 g-md-4">
                                 <% slideGroup.forEach(d => {
                                     const fileId = getFileIdFromUrl(d.foto);
-                                    const fotoSrc = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : (d.foto || 'https://via.placeholder.com/300x300?text=Dosen');
+                                    const fotoSrc = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : (d.foto || 'https://placehold.co/300x300?text=Dosen');
                                 %>
                                     <div class="col-6 col-lg-3">
                                         <div class="id-card">
                                             <div class="id-card-img-wrapper">
                                                 <img src="<%= fotoSrc %>" class="id-card-img" alt="<%= d.nama %>"
-                                                     onerror="this.src='https://via.placeholder.com/300x300?text=Dosen'">
+                                                     onerror="this.onerror=null; this.src='https://placehold.co/300x300?text=Dosen'">
                                                 <% if (d.email) { %>
                                                 <div class="id-card-social">
                                                     <a href="mailto:<%= d.email %>"><i class="bi bi-envelope"></i></a>
@@ -1673,9 +1673,9 @@
                             <div class="testimonial-card">
                                 <i class="bi bi-quote"></i>
                                 <% if (t.foto) { %>
-                                    <img src="<%= t.foto %>" class="testimonial-img" alt="<%= t.nama %>" onerror="this.src='https://via.placeholder.com/100?text=Alumni'">
+                                    <img src="<%= t.foto %>" class="testimonial-img" alt="<%= t.nama %>" onerror="this.onerror=null; this.src='https://placehold.co/100?text=Alumni'">
                                 <% } else { %>
-                                    <img src="https://via.placeholder.com/100?text=Alumni" class="testimonial-img" alt="<%= t.nama %>">
+                                    <img src="https://placehold.co/100?text=Alumni" class="testimonial-img" alt="<%= t.nama %>">
                                 <% } %>
                                 <h5 class="testimonial-name"><%= t.nama %></h5>
                                 <p class="testimonial-role">
