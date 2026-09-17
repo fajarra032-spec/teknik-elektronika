@@ -16,6 +16,7 @@ const { db } = require('../../config/firebaseAdmin');
 const {
   seedKriteriaUntukPeriode,
   seedChecklistUntukKriteria,
+  getIndikatorKriteria,
   getKriteriaDenganProgress,
   hitungProgresKeseluruhan,
   uploadDokumenKriteria,
@@ -272,6 +273,8 @@ router.get('/kriteria/:id', async (req, res) => {
       .map(d => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
 
+    const indikatorList = await getIndikatorKriteria(kriteria.id);
+
     res.render('admin/akreditasi/workspace', {
       title: `Kriteria ${kriteria.kode} - ${kriteria.nama}`,
       kriteria,
@@ -279,6 +282,7 @@ router.get('/kriteria/:id', async (req, res) => {
       dokumenList,
       diskusiList,
       checklistList,
+      indikatorList,
       backUrl: `/admin/akreditasi?periodeId=${kriteria.periodeId}`
     });
   } catch (error) {
@@ -441,6 +445,30 @@ router.post('/checklist/:id/delete', async (req, res) => {
   } catch (error) {
     console.error('Error menghapus item checklist:', error);
     res.status(500).send('Gagal menghapus item checklist');
+  }
+});
+
+// -------- Indikator LKPS (isian narasi sesuai instrumen resmi LAM Teknik) --------
+router.post('/indikator/:id/jawaban', async (req, res) => {
+  try {
+    const { uraianJawaban, buktiSahihUrl } = req.body;
+    const ref = db.collection('akreditasi_indikator').doc(req.params.id);
+    const doc = await ref.get();
+    if (!doc.exists) return res.status(404).send('Indikator tidak ditemukan');
+
+    const isiJawaban = (uraianJawaban || '').trim();
+    await ref.update({
+      uraianJawaban: isiJawaban,
+      buktiSahihUrl: (buktiSahihUrl || '').trim(),
+      status: isiJawaban ? 'terisi' : 'belum',
+      updatedAt: new Date().toISOString(),
+      updatedBy: req.user.nama || req.user.email
+    });
+
+    res.redirect(`/admin/akreditasi/kriteria/${doc.data().kriteriaId}#indikator-${req.params.id}`);
+  } catch (error) {
+    console.error('Error menyimpan jawaban indikator:', error);
+    res.status(500).send('Gagal menyimpan jawaban indikator');
   }
 });
 

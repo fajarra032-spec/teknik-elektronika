@@ -13,6 +13,11 @@
         <div class="progress" style="height: 20px;">
           <div class="progress-bar bg-success" style="width: <%= progresKeseluruhan %>%;"><%= progresKeseluruhan %>%</div>
         </div>
+        <div class="mt-2">
+          <a href="/dosen/akreditasi/tabel?periodeId=<%= periode.id %>" class="btn btn-outline-info btn-sm">
+            <i class="bi bi-table me-1"></i>Tabel Data Pendukung (Tabel 1-7)
+          </a>
+        </div>
       </div>
     </div>
 
@@ -24,6 +29,7 @@
             <th>Nama Kriteria</th>
             <th style="width:140px;">Status</th>
             <th style="width:110px;">Target</th>
+            <th style="width:130px;">Indikator LKPS</th>
             <th style="width:110px;">Dokumen</th>
             <th style="width:130px;">PIC Saya?</th>
             <th style="width:150px;">Aksi</th>
@@ -45,6 +51,15 @@
                   <span class="small <%= k.terlambat ? 'text-danger fw-bold' : 'text-muted' %>">
                     <%= k.targetTanggal %><% if (k.terlambat) { %> <i class="bi bi-exclamation-triangle-fill"></i><% } %>
                   </span>
+                <% } else { %>
+                  <span class="text-muted small">-</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (k.indikatorTotal) { %>
+                  <div class="progress" style="height: 16px;">
+                    <div class="progress-bar bg-info" style="width: <%= k.indikatorPersen %>%;"><%= k.indikatorTerisi %>/<%= k.indikatorTotal %></div>
+                  </div>
                 <% } else { %>
                   <span class="text-muted small">-</span>
                 <% } %>

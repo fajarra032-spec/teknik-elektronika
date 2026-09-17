@@ -5,7 +5,7 @@
   <div class="card mb-4">
     <div class="card-body">
       <h4 class="card-title">Kriteria <%= kriteria.kode %>: <%= kriteria.nama %></h4>
-      <p class="text-muted"><%= kriteria.deskripsi %></p>
+      <% if (kriteria.deskripsi) { %><p class="text-muted"><%= kriteria.deskripsi %></p><% } %>
       <div class="d-flex gap-3 flex-wrap">
         <% const badge = kriteria.status === 'selesai' ? 'success' : (kriteria.status === 'proses' ? 'warning' : 'secondary'); %>
         <span class="badge bg-<%= badge %>">
@@ -21,6 +21,74 @@
           </span>
         <% } %>
       </div>
+    </div>
+  </div>
+
+  <!-- ============== INDIKATOR LKPS (instrumen resmi LAM Teknik) ============== -->
+  <div class="card mb-4" id="indikator">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span><i class="bi bi-journal-check me-1"></i> Indikator LKPS</span>
+      <% if (indikatorList.length) {
+        const terisi = indikatorList.filter(it => it.status === 'terisi').length;
+      %>
+        <span class="badge bg-info text-dark"><%= terisi %> / <%= indikatorList.length %> terisi</span>
+      <% } %>
+    </div>
+    <div class="card-body">
+      <% if (!indikatorList.length) { %>
+        <p class="text-muted small mb-0">Belum ada indikator untuk kriteria ini.</p>
+      <% } else { %>
+        <div class="accordion" id="accordionIndikator">
+          <% indikatorList.forEach((it, idx) => { %>
+            <div class="accordion-item" id="indikator-<%= it.id %>">
+              <h2 class="accordion-header">
+                <button class="accordion-button <%= idx === 0 ? '' : 'collapsed' %>" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#collapse-<%= it.id %>">
+                  <span class="badge bg-<%= it.status === 'terisi' ? 'success' : 'secondary' %> me-2"><%= it.kode %></span>
+                  <%= it.nama %>
+                  <% if (it.status === 'terisi') { %><i class="bi bi-check-circle-fill text-success ms-2"></i><% } %>
+                </button>
+              </h2>
+              <div id="collapse-<%= it.id %>" class="accordion-collapse collapse <%= idx === 0 ? 'show' : '' %>"
+                   data-bs-parent="#accordionIndikator">
+                <div class="accordion-body">
+                  <% if (it.deskripsi) { %>
+                    <p class="small"><strong>Indikator:</strong> <%= it.deskripsi %></p>
+                  <% } %>
+                  <% if (it.instruksi) { %>
+                    <details class="small text-muted mb-2">
+                      <summary style="cursor:pointer;">Instruksi Pengisian Deskripsi (klik untuk lihat)</summary>
+                      <div style="white-space: pre-line;" class="mt-1"><%= it.instruksi %></div>
+                    </details>
+                  <% } %>
+                  <% if (it.keterangan) { %>
+                    <p class="small text-muted mb-3"><i class="bi bi-info-circle me-1"></i><%= it.keterangan %></p>
+                  <% } %>
+
+                  <form method="POST" action="/dosen/akreditasi/indikator/<%= it.id %>/jawaban">
+                    <div class="mb-2">
+                      <label class="form-label fw-bold small">Uraian Deskripsi (jawaban/narasi)</label>
+                      <textarea name="uraianJawaban" class="form-control" rows="6"
+                                placeholder="Tulis narasi/uraian untuk indikator ini..."><%= it.uraianJawaban %></textarea>
+                    </div>
+                    <div class="mb-2">
+                      <label class="form-label fw-bold small">Bukti Sahih (link Google Drive / dokumen pendukung)</label>
+                      <input type="url" name="buktiSahihUrl" class="form-control form-control-sm"
+                             placeholder="https://drive.google.com/..." value="<%= it.buktiSahihUrl %>">
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <% if (it.updatedBy) { %>
+                        <span class="text-muted" style="font-size:0.75rem;">Terakhir diisi oleh <%= it.updatedBy %></span>
+                      <% } else { %><span></span><% } %>
+                      <button type="submit" class="btn btn-sm btn-primary">Simpan Jawaban</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
     </div>
   </div>
 

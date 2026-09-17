@@ -358,6 +358,12 @@ async function startServer() {
     app.use('/admin/akreditasi', adminAkreditasiRouter);
     app.use('/dosen/akreditasi', dosenAkreditasiRouter);
 
+    // Tabel data pendukung LKPS (Tabel 1-7)
+    const adminAkreditasiTabelRouter = require('./routes/admin/akreditasiTabel');
+    const dosenAkreditasiTabelRouter = require('./routes/dosen/akreditasiTabelRoute');
+    app.use('/admin/akreditasi/tabel', adminAkreditasiTabelRouter);
+    app.use('/dosen/akreditasi/tabel', dosenAkreditasiTabelRouter);
+
     // Perusahaan magang
     const adminPerusahaanRouter = require('./routes/admin/perusahaan');
     const dosenPerusahaanRouter = require('./routes/dosen/perusahaan');

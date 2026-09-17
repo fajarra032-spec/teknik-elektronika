@@ -9,9 +9,12 @@
   </div>
 
   <% if (periodeList.length) { %>
-    <div class="mt-2">
+    <div class="mt-2 d-flex gap-2">
       <a href="/admin/akreditasi/rekap<%= periodeId ? `?periodeId=${periodeId}` : '' %>" class="btn btn-outline-success btn-sm">
         <i class="bi bi-file-earmark-bar-graph me-1"></i>Rekap &amp; Laporan / Ekspor
+      </a>
+      <a href="/admin/akreditasi/tabel<%= periodeId ? `?periodeId=${periodeId}` : '' %>" class="btn btn-outline-info btn-sm">
+        <i class="bi bi-table me-1"></i>Tabel Data Pendukung (Tabel 1-7)
       </a>
     </div>
   <% } %>
@@ -78,6 +81,7 @@
               <th>Nama Kriteria</th>
               <th style="width:140px;">Status</th>
               <th style="width:110px;">Target</th>
+              <th style="width:130px;">Indikator LKPS</th>
               <th style="width:110px;">Dokumen</th>
               <th style="width:230px;">Aksi</th>
             </tr>
@@ -88,7 +92,7 @@
                 <td class="fw-bold"><%= k.kode %></td>
                 <td>
                   <%= k.nama %>
-                  <div class="text-muted small"><%= k.deskripsi %></div>
+                  <% if (k.deskripsi) { %><div class="text-muted small"><%= k.deskripsi %></div><% } %>
                 </td>
                 <td>
                   <% const badge = k.status === 'selesai' ? 'success' : (k.status === 'proses' ? 'warning' : 'secondary'); %>
@@ -101,6 +105,15 @@
                     <span class="small <%= k.terlambat ? 'text-danger fw-bold' : 'text-muted' %>">
                       <%= k.targetTanggal %><% if (k.terlambat) { %> <i class="bi bi-exclamation-triangle-fill"></i> Lewat<% } %>
                     </span>
+                  <% } else { %>
+                    <span class="text-muted small">-</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (k.indikatorTotal) { %>
+                    <div class="progress" style="height: 16px;">
+                      <div class="progress-bar bg-info" style="width: <%= k.indikatorPersen %>%;"><%= k.indikatorTerisi %>/<%= k.indikatorTotal %></div>
+                    </div>
                   <% } else { %>
                     <span class="text-muted small">-</span>
                   <% } %>

@@ -82,27 +82,52 @@ function removeUndefined(obj) {
  */
 router.get('/', async (req, res) => {
   try {
+    const periodeAktif = getPeriodeAktif();
+
+    // Ambil SEMUA mk yang pernah diampu dosen ini (lintas semester), supaya
+    // kita bisa (a) membangun daftar semester untuk dropdown filter, dan
+    // (b) menyaring mk yang ditampilkan sesuai semester yang dipilih -
+    // sebelumnya semua semester langsung ditampilkan sekaligus.
     const snapshot = await db.collection('mataKuliah')
       .where('dosenIds', 'array-contains', req.dosen.id)
       .orderBy('semester', 'desc')
       .orderBy('kode')
       .get();
 
+    // Daftar semester unik (urutan sesuai kemunculan - sudah desc dari query)
+    const semesterSet = new Set();
+    snapshot.docs.forEach(doc => {
+      const s = doc.data().semester;
+      if (s) semesterSet.add(s);
+    });
+    const semesterList = Array.from(semesterSet);
+
+    // Semester yang sedang dipilih: dari query string kalau ada & valid,
+    // kalau tidak fallback ke semester aktif (atau semester terbaru yang
+    // tersedia kalau dosen ini kebetulan tidak punya mk di semester aktif).
+    let semesterDipilih = req.query.semester;
+    if (!semesterDipilih || !semesterSet.has(semesterDipilih)) {
+      semesterDipilih = semesterSet.has(periodeAktif) ? periodeAktif : (semesterList[0] || periodeAktif);
+    }
+
+    const mkDocsTerpilih = snapshot.docs.filter(doc => doc.data().semester === semesterDipilih);
+
     const mkList = [];
-    for (const doc of snapshot.docs) {
+    for (const doc of mkDocsTerpilih) {
       const data = doc.data();
 
       // Hitung jumlah mahasiswa terdaftar aktif di MK ini
       let jumlahMahasiswa = 0;
       try {
-        // PENTING: filter juga by `semester` (periode aktif) - kalau cuma
-        // mkId+status, mahasiswa yang PERNAH ikut MK ini di periode lalu
-        // (enrollment lama yang status-nya tidak pernah diubah dari
-        // 'active') ikut kehitung terus selamanya, walau sekarang sudah
-        // beda semester / sudah lanjut ke MK lain.
+        // PENTING: filter juga by `semester` - kalau cuma mkId+status,
+        // mahasiswa yang PERNAH ikut MK ini di periode lalu (enrollment
+        // lama yang status-nya tidak pernah diubah dari 'active') ikut
+        // kehitung terus selamanya. Pakai semester yang SEDANG DILIHAT
+        // (bukan selalu periode aktif) supaya angkanya benar juga saat
+        // dosen membuka semester sebelumnya lewat dropdown.
         const enrollmentSnapshot = await db.collection('enrollment')
           .where('mkId', '==', doc.id)
-          .where('semester', '==', getPeriodeAktif())
+          .where('semester', '==', semesterDipilih)
           .where('status', '==', 'active')
           .count()
           .get();
@@ -130,7 +155,10 @@ router.get('/', async (req, res) => {
 
     res.render('dosen/mk_list', {
       title: 'Mata Kuliah Saya',
-      mkList
+      mkList,
+      semesterList,
+      semesterDipilih,
+      periodeAktif
     });
   } catch (error) {
     console.error('Error ambil mk:', error);
