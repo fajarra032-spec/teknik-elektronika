@@ -16,6 +16,7 @@ const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif, saveKomponenRubrik } = require('../../helpers/nilaiHelper');
 const { detectJenisPraktikum, getModulPraktikumList } = require('../../helpers/modulPraktikumHelper');
+const academicHelper = require('../../helpers/academicHelper');
 
 console.log('mk.js loaded');
 
@@ -82,83 +83,123 @@ function removeUndefined(obj) {
  */
 router.get('/', async (req, res) => {
   try {
-    const periodeAktif = getPeriodeAktif();
+    const activePeriodeId = academicHelper.getActivePeriodeId();
+    const activePeriodeLabel = getPeriodeAktif();
 
-    // Ambil SEMUA mk yang pernah diampu dosen ini (lintas semester), supaya
-    // kita bisa (a) membangun daftar semester untuk dropdown filter, dan
-    // (b) menyaring mk yang ditampilkan sesuai semester yang dipilih -
-    // sebelumnya semua semester langsung ditampilkan sekaligus.
-    const snapshot = await db.collection('mataKuliah')
+    // ========================================================================
+    // Sumber kebenaran untuk "MK diampu dosen X di periode/tahun akademik Y"
+    // adalah subcollection mataKuliah/{id}/pengampuPeriode/{periodeId} - BUKAN
+    // field mk.semester (itu nomor semester KURIKULUM 1-8, bukan tahun
+    // ajaran) dan BUKAN field mk.dosenIds (itu cuma "cermin" pengampu
+    // periode AKTIF saja, lihat catatan di routes/admin/matakuliah.js -
+    // begitu pengampu suatu MK diganti di periode baru, dosenIds lama
+    // ketimpa dan riwayat periode sebelumnya HILANG dari situ, walau tetap
+    // tersimpan di subcollection ini).
+    // ========================================================================
+    const periodeSnapshot = await db.collectionGroup('pengampuPeriode')
       .where('dosenIds', 'array-contains', req.dosen.id)
-      .orderBy('semester', 'desc')
-      .orderBy('kode')
       .get();
 
-    // Daftar semester unik (urutan sesuai kemunculan - sudah desc dari query)
-    const semesterSet = new Set();
-    snapshot.docs.forEach(doc => {
-      const s = doc.data().semester;
-      if (s) semesterSet.add(s);
+    // periodeId -> { id, label, urutan, mkIds: Set<string> }
+    const periodeMap = new Map();
+    periodeSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      const mkId = doc.ref.parent.parent.id;
+      const pid = data.periodeId || doc.id;
+      if (!periodeMap.has(pid)) {
+        periodeMap.set(pid, { id: pid, label: data.label || pid, urutan: data.urutan ?? 0, mkIds: new Set() });
+      }
+      periodeMap.get(pid).mkIds.add(mkId);
     });
-    const semesterList = Array.from(semesterSet);
 
-    // Semester yang sedang dipilih: dari query string kalau ada & valid,
-    // kalau tidak fallback ke semester aktif (atau semester terbaru yang
-    // tersedia kalau dosen ini kebetulan tidak punya mk di semester aktif).
-    let semesterDipilih = req.query.semester;
-    if (!semesterDipilih || !semesterSet.has(semesterDipilih)) {
-      semesterDipilih = semesterSet.has(periodeAktif) ? periodeAktif : (semesterList[0] || periodeAktif);
+    // Fallback data lama (dari SEBELUM fitur pengampu-per-periode ada, jadi
+    // belum pernah punya dokumen pengampuPeriode sama sekali) - masukkan ke
+    // periode aktif supaya MK-nya tidak hilang begitu saja dari daftar.
+    const legacySnapshot = await db.collection('mataKuliah')
+      .where('dosenIds', 'array-contains', req.dosen.id)
+      .get();
+    legacySnapshot.docs.forEach(doc => {
+      const sudahTercatat = Array.from(periodeMap.values()).some(p => p.mkIds.has(doc.id));
+      if (!sudahTercatat) {
+        if (!periodeMap.has(activePeriodeId)) {
+          const cur = academicHelper.getCurrentAcademicSemester();
+          periodeMap.set(activePeriodeId, {
+            id: activePeriodeId,
+            label: activePeriodeLabel,
+            urutan: academicHelper.periodeKeUrutan(cur.tahunAwal, cur.semester),
+            mkIds: new Set()
+          });
+        }
+        periodeMap.get(activePeriodeId).mkIds.add(doc.id);
+      }
+    });
+
+    // Daftar tahun akademik untuk dropdown, terbaru lebih dulu
+    const periodeList = Array.from(periodeMap.values())
+      .sort((a, b) => b.urutan - a.urutan)
+      .map(p => ({ id: p.id, label: p.label, isActive: p.id === activePeriodeId }));
+
+    // Tahun akademik yang sedang dipilih: dari query string kalau valid,
+    // kalau tidak fallback ke periode aktif (atau yang terbaru tersedia
+    // kalau dosen ini kebetulan tidak punya mk di periode aktif).
+    let periodeDipilih = req.query.periode;
+    if (!periodeDipilih || !periodeMap.has(periodeDipilih)) {
+      periodeDipilih = periodeMap.has(activePeriodeId) ? activePeriodeId : (periodeList[0] ? periodeList[0].id : activePeriodeId);
     }
 
-    const mkDocsTerpilih = snapshot.docs.filter(doc => doc.data().semester === semesterDipilih);
+    const entriTerpilih = periodeMap.get(periodeDipilih);
+    const mkIdsTerpilih = entriTerpilih ? Array.from(entriTerpilih.mkIds) : [];
+    const labelTerpilih = entriTerpilih ? entriTerpilih.label : activePeriodeLabel;
 
     const mkList = [];
-    for (const doc of mkDocsTerpilih) {
-      const data = doc.data();
+    if (mkIdsTerpilih.length > 0) {
+      const mkDocs = await db.getAll(...mkIdsTerpilih.map(id => db.collection('mataKuliah').doc(id)));
+      for (const doc of mkDocs) {
+        if (!doc.exists) continue;
+        const data = doc.data();
 
-      // Hitung jumlah mahasiswa terdaftar aktif di MK ini
-      let jumlahMahasiswa = 0;
-      try {
-        // PENTING: filter juga by `semester` - kalau cuma mkId+status,
-        // mahasiswa yang PERNAH ikut MK ini di periode lalu (enrollment
-        // lama yang status-nya tidak pernah diubah dari 'active') ikut
-        // kehitung terus selamanya. Pakai semester yang SEDANG DILIHAT
-        // (bukan selalu periode aktif) supaya angkanya benar juga saat
-        // dosen membuka semester sebelumnya lewat dropdown.
-        const enrollmentSnapshot = await db.collection('enrollment')
-          .where('mkId', '==', doc.id)
-          .where('semester', '==', semesterDipilih)
-          .where('status', '==', 'active')
-          .count()
-          .get();
-        jumlahMahasiswa = enrollmentSnapshot.data().count;
-      } catch (err) {
-        console.error(`Gagal hitung enrollment untuk MK ${doc.id}:`, err);
+        // Hitung jumlah mahasiswa terdaftar aktif di MK ini, di tahun
+        // akademik yang SEDANG DILIHAT (bukan selalu periode aktif) -
+        // supaya angkanya tetap benar saat dosen membuka tahun ajaran lalu
+        // lewat dropdown.
+        let jumlahMahasiswa = 0;
+        try {
+          const enrollmentSnapshot = await db.collection('enrollment')
+            .where('mkId', '==', doc.id)
+            .where('semester', '==', labelTerpilih)
+            .where('status', '==', 'active')
+            .count()
+            .get();
+          jumlahMahasiswa = enrollmentSnapshot.data().count;
+        } catch (err) {
+          console.error(`Gagal hitung enrollment untuk MK ${doc.id}:`, err);
+        }
+
+        // Hitung progress perkuliahan (dari materi)
+        const materi = data.materi || [];
+        const terlaksana = materi.filter(m => m.status === 'selesai').length;
+        const progress = Math.round((terlaksana / 16) * 100) || 0;
+
+        mkList.push({
+          id: doc.id,
+          kode: data.kode,
+          nama: data.nama,
+          semester: data.semester,
+          sks: data.sks,
+          kelas: data.kelas || null,
+          jumlahMahasiswa,
+          progress
+        });
       }
-
-      // Hitung progress perkuliahan (dari materi)
-      const materi = data.materi || [];
-      const terlaksana = materi.filter(m => m.status === 'selesai').length;
-      const progress = Math.round((terlaksana / 16) * 100) || 0;
-
-      mkList.push({
-        id: doc.id,
-        kode: data.kode,
-        nama: data.nama,
-        semester: data.semester,
-        sks: data.sks,
-        kelas: data.kelas || null,
-        jumlahMahasiswa,
-        progress
-      });
+      mkList.sort((a, b) => (a.kode || '').localeCompare(b.kode || ''));
     }
 
     res.render('dosen/mk_list', {
       title: 'Mata Kuliah Saya',
       mkList,
-      semesterList,
-      semesterDipilih,
-      periodeAktif
+      periodeList,
+      periodeDipilih,
+      activePeriodeId
     });
   } catch (error) {
     console.error('Error ambil mk:', error);

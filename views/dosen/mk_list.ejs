@@ -215,23 +215,23 @@
   <div class="page-header d-flex flex-wrap justify-content-between align-items-center">
     <div>
       <h1 class="fw-bold"><i class="bi bi-book-fill me-2"></i>Mata Kuliah Saya</h1>
-      <p class="mb-0">Daftar mata kuliah yang Anda ampu pada semester terpilih</p>
+      <p class="mb-0">Daftar mata kuliah yang Anda ampu pada tahun akademik terpilih</p>
     </div>
     <a href="/dosen/dashboard" class="btn-light btn mt-2 mt-sm-0">
       <i class="bi bi-arrow-left me-2"></i>Kembali ke Dashboard
     </a>
   </div>
 
-  <!-- Filter Semester -->
-  <% if (typeof semesterList !== 'undefined' && semesterList.length > 0) { %>
+  <!-- Filter Tahun Akademik -->
+  <% if (typeof periodeList !== 'undefined' && periodeList.length > 0) { %>
     <form method="GET" action="/dosen/mk" class="d-flex align-items-center flex-wrap gap-2 mb-4">
-      <label for="semesterSelect" class="fw-semibold mb-0 me-1" style="color:#1e293b;">
-        <i class="bi bi-calendar-week me-1"></i>Semester:
+      <label for="periodeSelect" class="fw-semibold mb-0 me-1" style="color:#1e293b;">
+        <i class="bi bi-calendar-week me-1"></i>Tahun Akademik:
       </label>
-      <select id="semesterSelect" name="semester" class="form-select" style="max-width: 240px;" onchange="this.form.submit()">
-        <% semesterList.forEach(s => { %>
-          <option value="<%= s %>" <%= s === semesterDipilih ? 'selected' : '' %>>
-            <%= s %><%= s === periodeAktif ? ' (Aktif)' : '' %>
+      <select id="periodeSelect" name="periode" class="form-select" style="max-width: 240px;" onchange="this.form.submit()">
+        <% periodeList.forEach(p => { %>
+          <option value="<%= p.id %>" <%= p.id === periodeDipilih ? 'selected' : '' %>>
+            <%= p.label %><%= p.isActive ? ' (Aktif)' : '' %>
           </option>
         <% }) %>
       </select>
