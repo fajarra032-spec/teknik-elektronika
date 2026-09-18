@@ -1,15 +1,15 @@
-<%- include('../partials/header-landing') %>
+<%- include('../../partials/header-landing') %>
 
 <style>
   /* Hero Section */
   .hero-lulusan {
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
     padding: 4rem 0;
     color: white;
     margin-bottom: 3rem;
   }
   .hero-lulusan h1 {
-    font-size: 3rem;
+    font-size: clamp(2rem, 6vw, 3rem);
     font-weight: 700;
   }
 
@@ -24,7 +24,7 @@
   }
   .stat-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(33,147,176,0.1);
+    box-shadow: 0 15px 30px rgba(30,58,138,0.1);
   }
   .stat-icon {
     width: 60px;
@@ -70,7 +70,7 @@
   }
   .filter-btn:hover,
   .filter-btn.active {
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
     color: white;
     border-color: transparent;
   }
@@ -87,7 +87,7 @@
   }
   .lulusan-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 15px 30px rgba(33,147,176,0.15);
+    box-shadow: 0 15px 30px rgba(30,58,138,0.15);
   }
   .card-img-wrapper {
     height: 200px;
@@ -141,9 +141,31 @@
     color: #475569;
     margin-bottom: 1rem;
   }
+  .badge-ipk {
+    display: inline-block;
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: white;
+    padding: 0.2rem 1rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    margin-left: 0.4rem;
+  }
+  .link-yudisium {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    text-decoration: none;
+    margin-bottom: 0.75rem;
+  }
+  .link-yudisium:hover { color: #0f2b5c; text-decoration: underline; }
   .pekerjaan {
     font-weight: 600;
-    color: #2193b0;
+    color: #1e3a8a;
     margin-bottom: 0.25rem;
   }
   .tempat {
@@ -171,27 +193,37 @@
     border-radius: 1rem;
   }
   .empty-state i {
-    font-size: 5rem;
+    font-size: clamp(2.5rem, 9vw, 5rem);
     color: #ced4da;
     margin-bottom: 1rem;
   }
 
   /* Pagination (sederhana) */
   .pagination .page-link {
-    color: #2193b0;
+    color: #1e3a8a;
     border: 1px solid #dee2e6;
     margin: 0 2px;
     border-radius: 0.5rem;
   }
   .pagination .page-link:hover {
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
     color: white;
     border-color: transparent;
   }
   .pagination .active .page-link {
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
     border-color: transparent;
     color: white;
+  }
+
+  /* Responsif */
+  @media (max-width: 768px) {
+    .hero-lulusan { padding: 2.5rem 0; }
+    .filter-section .row > div { margin-bottom: 0.5rem; }
+  }
+  @media (max-width: 576px) {
+    .filter-section .d-flex { flex-direction: column; }
+    .filter-section select, .filter-section button { width: 100%; }
   }
 </style>
 
@@ -291,7 +323,17 @@
             <div class="card-body">
               <h5 class="nama"><%= l.nama %></h5>
               <div class="nim"><%= l.nim %></div>
-              <span class="tahun">Angkatan <%= l.tahunLulus %></span>
+              <div>
+                <span class="tahun">Angkatan <%= l.tahunLulus %></span>
+                <% if (l.ipk) { %><span class="badge-ipk">IPK <%= l.ipk %></span><% } %>
+              </div>
+              <% if (l.fotoYudisium) { %>
+                <div>
+                  <a href="/lulusan/<%= l.id %>#yudisium" class="link-yudisium">
+                    <i class="bi bi-images"></i> Lihat Foto Yudisium
+                  </a>
+                </div>
+              <% } %>
               <% if (l.pekerjaan) { %>
                 <div class="pekerjaan"><%= l.pekerjaan %></div>
                 <div class="tempat"><%= l.tempatKerja %></div>
@@ -338,4 +380,4 @@
   }
 </script>
 
-<%- include('../partials/footer-landing') %>
+<%- include('../../partials/footer-landing') %>

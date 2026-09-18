@@ -69,7 +69,11 @@ async function getGabunganLulusan({ hanyaPublik = true } = {}) {
       gaji: d.gaji || '',
       email: '',
       noHp: '',
-      foto: d.fotoUrl || null
+      foto: d.fotoUrl || null,
+      // Isian mandiri mahasiswa tidak memuat IPK/foto yudisium resmi -
+      // dua field ini hanya diisi lewat kurasi admin (lihat dariAdmin).
+      ipk: null,
+      fotoYudisium: null
     };
   });
 
@@ -90,7 +94,12 @@ async function getGabunganLulusan({ hanyaPublik = true } = {}) {
       gaji: d.gaji || '',
       email: d.email || '',
       noHp: d.noHp || '',
-      foto: d.foto || null
+      foto: d.foto || null,
+      // Dikurasi admin lewat panel Track Lulusan: IPK akhir (dari transkrip,
+      // bisa juga ditulis manual utk lulusan lama) & foto momen yudisium
+      // (beda dari `foto` yg adalah foto profil/portrait perorangan).
+      ipk: d.ipk || null,
+      fotoYudisium: d.fotoYudisium || null
     };
   });
 

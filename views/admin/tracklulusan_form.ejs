@@ -10,19 +10,45 @@
 
   <div class="info-card">
     <div class="card-body">
+      <% if (!lulusan && mahasiswaLulusList && mahasiswaLulusList.length > 0) { %>
+      <div class="mb-4 pb-4 border-bottom">
+        <label class="form-label fw-semibold">
+          <i class="bi bi-search me-1"></i> Pilih dari Mahasiswa Berstatus "Lulus" <span class="text-muted fw-normal">(opsional, biar tidak salah ketik nama/NIM/IPK)</span>
+        </label>
+        <select id="pilihMahasiswaLulus" class="form-select">
+          <option value="">-- Isi manual saja --</option>
+          <% mahasiswaLulusList.forEach(m => { %>
+            <option
+              value="<%= m.userId %>"
+              data-nama="<%= m.nama %>"
+              data-nim="<%= m.nim %>"
+              data-ipk="<%= m.ipk !== null ? m.ipk : '' %>">
+              <%= m.nama %> - <%= m.nim %><%= m.ipk !== null ? ' (IPK ' + m.ipk + ')' : ' (IPK belum bisa dihitung)' %>
+            </option>
+          <% }) %>
+        </select>
+        <div class="form-text">Memilih dari daftar ini otomatis mengisi Nama, NIM, dan IPK di bawah (IPK dihitung otomatis dari transkrip). Tetap bisa diubah manual kalau perlu.</div>
+      </div>
+      <% } %>
+
       <form method="POST" action="<%= lulusan ? '/admin/tracklulusan/' + lulusan.id + '/update' : '/admin/tracklulusan' %>" enctype="multipart/form-data">
+        <input type="hidden" name="userId" id="inputUserId" value="<%= lulusan && lulusan.userId ? lulusan.userId : '' %>">
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label">Nama</label>
-            <input type="text" name="nama" class="form-control" value="<%= lulusan ? lulusan.nama : '' %>" required>
+            <input type="text" name="nama" id="inputNama" class="form-control" value="<%= lulusan ? lulusan.nama : '' %>" required>
           </div>
           <div class="col-md-6">
             <label class="form-label">NIM</label>
-            <input type="text" name="nim" class="form-control" value="<%= lulusan ? lulusan.nim : '' %>" required>
+            <input type="text" name="nim" id="inputNim" class="form-control" value="<%= lulusan ? lulusan.nim : '' %>" required>
           </div>
           <div class="col-md-6">
             <label class="form-label">Tahun Lulus</label>
             <input type="number" name="tahunLulus" class="form-control" value="<%= lulusan ? lulusan.tahunLulus : '' %>" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">IPK <span class="text-muted fw-normal">(otomatis kalau pilih dari dropdown di atas)</span></label>
+            <input type="number" name="ipk" id="inputIpk" class="form-control" step="0.01" min="0" max="4" placeholder="mis. 3.75" value="<%= lulusan && lulusan.ipk !== null && lulusan.ipk !== undefined ? lulusan.ipk : '' %>">
           </div>
           <div class="col-md-6">
             <label class="form-label">Status</label>
@@ -58,13 +84,22 @@
             <input type="text" name="noHp" class="form-control" value="<%= lulusan ? lulusan.noHp : '' %>">
           </div>
           <div class="col-md-6">
-            <label class="form-label">Foto</label>
+            <label class="form-label">Foto Profil <span class="text-muted fw-normal">(portrait perorangan)</span></label>
             <% if (lulusan && lulusan.foto) { %>
               <div class="mb-2">
                 <img src="<%= lulusan.foto %>" width="70" height="70" class="rounded" style="object-fit:cover;">
               </div>
             <% } %>
             <input type="file" name="foto" class="form-control" accept="image/*">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Foto Yudisium <span class="text-muted fw-normal">(momen prosesi wisuda)</span></label>
+            <% if (lulusan && lulusan.fotoYudisium) { %>
+              <div class="mb-2">
+                <img src="<%= lulusan.fotoYudisium %>" width="70" height="70" class="rounded" style="object-fit:cover;">
+              </div>
+            <% } %>
+            <input type="file" name="fotoYudisium" class="form-control" accept="image/*">
           </div>
         </div>
 
@@ -76,5 +111,26 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Auto-isi Nama/NIM/IPK saat admin memilih mahasiswa dari dropdown,
+  // supaya tidak perlu ketik ulang manual & IPK selalu konsisten dgn
+  // transkrip resmi. Admin tetap bisa mengubah nilai-nilai ini manual
+  // sesudahnya kalau memang perlu (mis. IPK lulusan lama yg datanya
+  // belum lengkap di sistem).
+  (function () {
+    var pilihan = document.getElementById('pilihMahasiswaLulus');
+    if (!pilihan) return;
+    pilihan.addEventListener('change', function () {
+      var opt = this.options[this.selectedIndex];
+      document.getElementById('inputUserId').value = this.value || '';
+      if (!this.value) return; // "Isi manual saja" dipilih - jangan timpa apa pun
+      document.getElementById('inputNama').value = opt.getAttribute('data-nama') || '';
+      document.getElementById('inputNim').value = opt.getAttribute('data-nim') || '';
+      var ipk = opt.getAttribute('data-ipk');
+      if (ipk) document.getElementById('inputIpk').value = ipk;
+    });
+  })();
+</script>
 
 <%- include('../partials/footer') %>

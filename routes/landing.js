@@ -799,7 +799,8 @@ router.get('/lulusan/:id', async (req, res) => {
         id: rawId, nama: d.nama, nim: d.nim, tahunLulus: d.tahunLulus,
         status: normalisasiStatus(d.status), pekerjaan: d.pekerjaan,
         tempatKerja: d.tempatKerja, alamatKerja: d.alamatKerja,
-        gaji: d.gaji, email: d.email || '', noHp: d.noHp || '', foto: d.foto || null
+        gaji: d.gaji, email: d.email || '', noHp: d.noHp || '', foto: d.foto || null,
+        ipk: d.ipk || null, fotoYudisium: d.fotoYudisium || null
       };
     } else {
       // Kompatibilitas mundur: tautan lama tanpa prefix, coba tracerStudy dulu
