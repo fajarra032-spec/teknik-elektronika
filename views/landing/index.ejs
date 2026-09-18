@@ -456,13 +456,11 @@
        450px) supaya proporsional di semua lebar layar, dari HP kecil sampai
        monitor lebar. object-fit: contain (bukan cover) supaya foto
        dokumentasi (kadang portrait, kadang landscape, tergantung mahasiswa
-       motret dari HP) tidak terpotong atas/bawah - foto ditampilkan utuh
-       dengan letterbox di sisi yang tidak terisi. */
+       motret dari HP) tidak terpotong atas/bawah - foto ditampilkan utuh,
+       dengan backdrop foto yang sama (diblur) mengisi sisi yang kosong
+       (lihat .photo-frame di bawah), bukan gradasi warna polos. */
     .magang-slide-img {
-        aspect-ratio: 16 / 9;
         object-fit: contain;
-        background: var(--gradient);
-        width: 100%;
     }
     .magang-caption {
         /* TIDAK pakai "d-none d-md-block" bawaan Bootstrap - caption tetap
@@ -479,14 +477,50 @@
         max-width: 300px;
     }
     @media (max-width: 576px) {
-        .magang-slide-img {
-            aspect-ratio: 4 / 3;
-        }
         .magang-caption {
             padding: 16px 12px 12px;
         }
         .magang-caption h3 {
             font-size: 1.1rem;
+        }
+    }
+
+    /* ===== TEKNIK "BLURRED BACKDROP" UNTUK LETTERBOX FOTO =====
+       Dipakai bareng object-fit:contain di carousel magang & mahasiswa
+       baru. Daripada sisi kosong diisi warna gradasi polos (kurang
+       menarik), sisi kosong itu diisi foto YANG SAMA tapi diperbesar &
+       diblur jadi backdrop - foto utama tetap utuh (tidak terpotong) di
+       atasnya. Ini teknik umum di galeri foto (mirip Apple Photos/Spotify
+       now-playing) supaya letterbox tetap terasa "menyatu" dengan foto. */
+    .photo-frame {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        background: #111827; /* fallback kalau backdrop gagal dimuat */
+    }
+    .photo-frame-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: blur(30px) brightness(0.55) saturate(1.3);
+        transform: scale(1.2); /* sedikit di-zoom supaya tepi blur tidak transparan/terlihat */
+    }
+    .photo-frame > img:last-child {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    .magang-photo-frame {
+        aspect-ratio: 16 / 9;
+    }
+    @media (max-width: 576px) {
+        .magang-photo-frame {
+            aspect-ratio: 4 / 3;
         }
     }
 
@@ -498,19 +532,13 @@
         border-radius: var(--border-radius);
         overflow: hidden;
     }
-    .mahasiswabaru-slide-img {
+    .mahasiswabaru-photo-frame {
         aspect-ratio: 3 / 4;
-        /* object-fit: contain (bukan cover) - foto mahasiswa yang diupload
-           bisa punya rasio apa saja (mis. 9:16 dari kamera HP), jadi kalau
-           dipaksa "cover" ke kotak 3:4, bagian atas & bawah foto (kepala/
-           badan) ikut terpotong. "contain" menampilkan foto UTUH, dengan
-           sedikit letterbox di sisi yang tidak terisi. */
-        object-fit: contain;
-        background: var(--gradient);
-        width: 100%;
         max-height: 520px;
         margin: 0 auto;
-        display: block;
+    }
+    .mahasiswabaru-slide-img {
+        object-fit: contain;
     }
     .mahasiswabaru-caption {
         /* TIDAK pakai "d-none d-md-block" bawaan Bootstrap (itu sengaja
@@ -524,7 +552,7 @@
         bottom: 0; left: 0; right: 0;
     }
     @media (max-width: 576px) {
-        .mahasiswabaru-slide-img {
+        .mahasiswabaru-photo-frame {
             aspect-ratio: 4 / 5;
             max-height: 420px;
         }
@@ -1232,7 +1260,9 @@
                 const slidesMahasiswaBaru = typeof mahasiswaBaruSlides !== 'undefined' && mahasiswaBaruSlides.length ? mahasiswaBaruSlides : [];
                 if (slidesMahasiswaBaru.length === 0) { %>
                     <div class="carousel-item active">
-                        <img src="https://placehold.co/800x1000?text=Selamat+Datang+Mahasiswa+Baru+2026" class="d-block w-100 mahasiswabaru-slide-img">
+                        <div class="photo-frame mahasiswabaru-photo-frame">
+                            <img src="https://placehold.co/800x1000?text=Selamat+Datang+Mahasiswa+Baru+2026" class="d-block w-100 mahasiswabaru-slide-img">
+                        </div>
                         <div class="carousel-caption mahasiswabaru-caption">
                             <h3>Selamat Datang Angkatan 2026</h3>
                             <p>Foto mahasiswa baru akan tampil di sini setelah biodata & foto diupload</p>
@@ -1241,8 +1271,12 @@
                 <% } else {
                     slidesMahasiswaBaru.forEach((item, idx) => { %>
                         <div class="carousel-item <%= idx === 0 ? 'active' : '' %>">
-                            <img src="<%= item.imageUrl %>" class="d-block w-100 mahasiswabaru-slide-img"
-                                 onerror="this.onerror=null; this.src='https://placehold.co/800x1000?text=Mahasiswa+Baru+2026'">
+                            <div class="photo-frame mahasiswabaru-photo-frame">
+                                <img src="<%= item.imageUrl %>" class="photo-frame-bg" aria-hidden="true" alt=""
+                                     onerror="this.style.display='none'">
+                                <img src="<%= item.imageUrl %>" class="d-block w-100 mahasiswabaru-slide-img"
+                                     onerror="this.onerror=null; this.src='https://placehold.co/800x1000?text=Mahasiswa+Baru+2026'">
+                            </div>
                             <div class="carousel-caption mahasiswabaru-caption">
                                 <h3 style="font-weight: 800; margin-bottom: 5px;"><%= item.nama %></h3>
                                 <p class="mb-0"><i class="bi bi-mortarboard"></i> <%= item.asalSekolah %></p>
@@ -1478,7 +1512,9 @@
                 const slidesMagang = typeof magangSlides !== 'undefined' && magangSlides.length ? magangSlides : [];
                 if (slidesMagang.length === 0) { %>
                     <div class="carousel-item active">
-                        <img src="https://placehold.co/1200x600?text=Belum+Ada+Dokumentasi+Magang" class="d-block w-100 magang-slide-img">
+                        <div class="photo-frame magang-photo-frame">
+                            <img src="https://placehold.co/1200x600?text=Belum+Ada+Dokumentasi+Magang" class="d-block w-100 magang-slide-img">
+                        </div>
                         <div class="carousel-caption magang-caption">
                             <h5>Belum Ada Dokumentasi</h5>
                             <p>Segera upload aktivitas magang mahasiswa</p>
@@ -1487,8 +1523,12 @@
                 <% } else {
                     slidesMagang.forEach((item, idx) => { %>
                         <div class="carousel-item <%= idx === 0 ? 'active' : '' %>">
-                            <img src="<%= item.imageUrl %>" class="d-block w-100 magang-slide-img"
-                                 onerror="this.onerror=null; this.src='https://placehold.co/1200x600?text=Foto+Magang'">
+                            <div class="photo-frame magang-photo-frame">
+                                <img src="<%= item.imageUrl %>" class="photo-frame-bg" aria-hidden="true" alt=""
+                                     onerror="this.style.display='none'">
+                                <img src="<%= item.imageUrl %>" class="d-block w-100 magang-slide-img"
+                                     onerror="this.onerror=null; this.src='https://placehold.co/1200x600?text=Foto+Magang'">
+                            </div>
                             <div class="carousel-caption magang-caption">
                                 <h3 style="font-weight: 800; margin-bottom: 5px;"><%= item.mahasiswa || 'Mahasiswa Magang' %></h3>
                                 <p class="mb-1"><i class="bi bi-building"></i> <%= item.perusahaan || 'Perusahaan Mitra' %></p>
@@ -1727,7 +1767,7 @@
 
 <script>
     // Klik pada gambar carousel untuk membuka modal (gunakan Bootstrap Modal)
-    const carouselImages = document.querySelectorAll('#magangCarousel .carousel-item img');
+    const carouselImages = document.querySelectorAll('#magangCarousel .carousel-item .magang-slide-img');
     const modalHtml = `
         <div class="modal fade" id="magangModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
