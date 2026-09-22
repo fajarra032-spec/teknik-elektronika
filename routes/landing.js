@@ -6,7 +6,6 @@
 const express = require('express');
 const router = express.Router();
 const { db, admin } = require('../config/firebaseAdmin');
-const { getCurrentAcademicSemester } = require('../helpers/academicHelper');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -71,34 +70,6 @@ router.get('/', async (req, res) => {
     // (agregasi Firestore) alih-alih .get() yang membaca semua dokumen dosen.
     const dosenCountSnap = await db.collection('dosen').count().get();
     const jumlahDosen = dosenCountSnap.data().count;
-
-    // 1b. Mahasiswa baru angkatan 2026 - foto sambutan untuk carousel
-    // "Selamat Datang Mahasiswa Baru 2026" di landing page. Pakai ulang
-    // mahasiswaList yang sudah diambil di atas (tidak perlu query baru).
-    // Foto profil defaultnya null sampai mahasiswa upload sendiri lewat
-    // menu Biodata (lihat routes/mahasiswa/biodata.js, field `foto`),
-    // jadi di sini disaring hanya yang sudah punya foto supaya carousel
-    // tidak berisi slide kosong.
-    const mahasiswaBaruSlides = mahasiswaList
-      .filter(data => getAngkatanFromNim(data.nim) === '2026' && data.foto)
-      .map(data => {
-        // Sama seperti magangSlides - link Google Drive format
-        // "uc?export=view&id=..." (hasil upload di menu Biodata) sering
-        // gagal/lambat kalau di-hotlink langsung di tag <img>. Dikonversi
-        // ke endpoint "thumbnail" yang jauh lebih reliable untuk ditampilkan.
-        let imageUrl = data.foto;
-        if (imageUrl.includes('drive.google.com')) {
-          const match = imageUrl.match(/id=([^&]+)/);
-          if (match) imageUrl = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
-        }
-        return {
-          imageUrl,
-          nama: data.nama || 'Mahasiswa Baru',
-          asalSekolah: data.asalSekolah || '-'
-        };
-      })
-      .slice(0, 20);
-
 
     // 2. Berita terbaru (dibatasi 4 untuk landing page; semua berita bisa
     // dilihat di halaman khusus /berita)
@@ -176,12 +147,10 @@ router.get('/', async (req, res) => {
       console.warn('Aktivitas tidak dapat diambil:', err.message);
     }
 
-    // 7. Dosen pengajar - diambil SEMUA (bukan cuma 4) supaya section
-    // "Dosen Program Studi" di landing page bisa menampilkan semua dosen,
-    // digeser lewat carousel kalau jumlahnya lebih dari 4 (lihat index.ejs).
+    // 7. Dosen pengajar (4 dosen)
     let dosenList = [];
     try {
-      const dosenSnapshot = await db.collection('dosen').orderBy('nama').get();
+      const dosenSnapshot = await db.collection('dosen').limit(4).get();
       dosenList = dosenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (err) {
       console.warn('Gagal mengambil data dosen:', err.message);
@@ -240,13 +209,10 @@ router.get('/', async (req, res) => {
     // ============ 9. DOKUMENTASI MAGANG UNTUK CAROUSEL ============
     let magangSlides = [];
     try {
-      // Ambil pool logbook terbaru lebih besar (60) supaya cukup mahasiswa
-      // berbeda untuk dipilih, karena satu mahasiswa bisa punya banyak
-      // entri logbook berturut-turut yang dulu memenuhi limit 20.
       const logbookSnapshot = await db.collection('logbookMagang')
         .where('status', '==', 'approved')
         .orderBy('tanggal', 'desc')
-        .limit(60)
+        .limit(20)
         .get();
 
       const logs = logbookSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -254,14 +220,8 @@ router.get('/', async (req, res) => {
       const mahasiswaCache = new Map();
       const perusahaanCache = new Map();
       const progressCache = new Map();
-      // Satu mahasiswa hanya diwakili sekali (logbook terbarunya) supaya
-      // slideshow otomatis bervariasi, bukan didominasi 1 orang.
-      const seenMahasiswa = new Set();
 
       for (const log of logs) {
-        if (magangSlides.length >= 12) break;
-        if (seenMahasiswa.has(log.userId)) continue;
-
         const imageUrls = log.imageUrls || [];
         if (imageUrls.length === 0) continue;
 
@@ -295,25 +255,26 @@ router.get('/', async (req, res) => {
           progressCache.set(progressKey, progress);
         }
 
-        // Cukup 1 foto (terbaru) per mahasiswa, bukan semua foto di entri itu,
-        // supaya jatah slide tidak habis dipakai 1 orang saja.
-        let imageUrl = imageUrls[0];
-        if (imageUrl.includes('drive.google.com')) {
-          const match = imageUrl.match(/id=([^&]+)/);
-          if (match) imageUrl = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+        for (const rawUrl of imageUrls) {
+          let imageUrl = rawUrl;
+          if (imageUrl.includes('drive.google.com')) {
+            const match = imageUrl.match(/id=([^&]+)/);
+            if (match) imageUrl = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+          }
+          magangSlides.push({
+            imageUrl,
+            caption: log.kegiatan || 'Aktivitas magang',
+            mahasiswa: mahasiswaInfo.nama,
+            nim: mahasiswaInfo.nim,
+            tanggal: log.tanggal ? new Date(log.tanggal).toLocaleDateString('id-ID') : '-',
+            perusahaan: perusahaan,
+            progressUploaded: progress.uploadedDays,
+            progressTotal: progress.totalDays,
+            progressPercent: progress.percentage
+          });
+          if (magangSlides.length >= 12) break;
         }
-        magangSlides.push({
-          imageUrl,
-          caption: log.kegiatan || 'Aktivitas magang',
-          mahasiswa: mahasiswaInfo.nama,
-          nim: mahasiswaInfo.nim,
-          tanggal: log.tanggal ? new Date(log.tanggal).toLocaleDateString('id-ID') : '-',
-          perusahaan: perusahaan,
-          progressUploaded: progress.uploadedDays,
-          progressTotal: progress.totalDays,
-          progressPercent: progress.percentage
-        });
-        seenMahasiswa.add(log.userId);
+        if (magangSlides.length >= 12) break;
       }
 
       if (magangSlides.length === 0) {
@@ -359,7 +320,6 @@ router.get('/', async (req, res) => {
       dosenList,
       lulusanKerja,
       magangSlides,
-      mahasiswaBaruSlides,
       testimoniAlumni,
       videoKonten,
       formatDate
@@ -378,17 +338,7 @@ router.get('/', async (req, res) => {
 // ============================================================================
 router.get('/cekmahasiswa', async (req, res) => {
   try {
-    // Kotak pencarian tunggal di landing page ("Cari Mahasiswa & Dosen")
-    // mengirim param generik `search` (satu input untuk keduanya), sedangkan
-    // halaman ini sendiri punya 2 form terpisah per tab yang memakai nama
-    // `searchMahasiswa` dan `searchDosen`. Kalau `search` dikirim tapi salah
-    // satu (atau keduanya) dari param spesifik itu tidak ada, pakai `search`
-    // sebagai fallback-nya supaya keyword dari landing page benar-benar
-    // dipakai untuk memfilter, bukan diabaikan (yang sebelumnya membuat
-    // halaman ini selalu menampilkan SEMUA data tanpa filter).
-    const { searchMahasiswa: qSearchMahasiswa, searchDosen: qSearchDosen, search } = req.query;
-    const searchMahasiswa = qSearchMahasiswa || search || '';
-    const searchDosen = qSearchDosen || search || '';
+    const { searchMahasiswa, searchDosen } = req.query;
 
     // Data Mahasiswa (disalin dgn slice() supaya .sort() di bawah tidak
     // mengubah array asli yang tersimpan di cache bersama)
@@ -485,11 +435,10 @@ if (tagihanDoc.exists) {
       .get();
     const activePeriod = activePeriodSnap.empty ? null : { id: activePeriodSnap.docs[0].id, ...activePeriodSnap.docs[0].data() };
 
-    // Mata kuliah yang diprogram (semester akademik berjalan)
+    // Mata kuliah yang diprogram
     const enrollmentSnapshot = await db.collection('enrollment')
       .where('userId', '==', id)
       .where('status', '==', 'active')
-      .where('semester', '==', getCurrentAcademicSemester().label)
       .get();
     const mkList = [];
     for (const enrollDoc of enrollmentSnapshot.docs) {
@@ -799,8 +748,7 @@ router.get('/lulusan/:id', async (req, res) => {
         id: rawId, nama: d.nama, nim: d.nim, tahunLulus: d.tahunLulus,
         status: normalisasiStatus(d.status), pekerjaan: d.pekerjaan,
         tempatKerja: d.tempatKerja, alamatKerja: d.alamatKerja,
-        gaji: d.gaji, email: d.email || '', noHp: d.noHp || '', foto: d.foto || null,
-        ipk: d.ipk || null, fotoYudisium: d.fotoYudisium || null
+        gaji: d.gaji, email: d.email || '', noHp: d.noHp || '', foto: d.foto || null
       };
     } else {
       // Kompatibilitas mundur: tautan lama tanpa prefix, coba tracerStudy dulu

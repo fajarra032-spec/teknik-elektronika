@@ -85,12 +85,27 @@ async function getAllMahasiswa(db) {
   });
 }
 
+/**
+ * Ambil semua dokumen mataKuliah (urut kode), dari cache kalau masih
+ * berlaku. Dipakai di banyak halaman admin (rekap nilai, KRS, dsb) yang
+ * masing-masing sebelumnya query 'mataKuliah' sendiri-sendiri padahal
+ * datanya sama dan jarang berubah.
+ * @param {import('firebase-admin').firestore.Firestore} db
+ * @returns {Promise<Array<Object>>}
+ */
+async function getAllMataKuliah(db) {
+  return mataKuliahCache.getOrFetch('all', async () => {
+    const snap = await db.collection('mataKuliah').orderBy('kode').get();
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  });
+}
+
 // Daftar semester unik yang PERNAH punya entri logbook, per mahasiswa.
 // Dipakai untuk dropdown filter semester di halaman detail logbook dosen -
 // sebelumnya dihitung dengan membaca SEMUA dokumen logbook mahasiswa (bisa
 // 100+ dokumen per mahasiswa) hanya untuk mengumpulkan nilai field
 // `semester` yang unik. TTL pendek (2 menit) karena nilainya bisa
-// bertambah tiap mahasiswa mengisi logbook baru - lihat invalidatePrefix
+// bertambah tiap mahasiswa mengisi logbook baru - lihat cache.delete()
 // di routes/mahasiswa/magang.js sesudah logbook baru dibuat.
 const logbookSemesterCache = new TTLCache(2 * 60 * 1000); // 2 menit
 
@@ -111,37 +126,74 @@ async function getSemesterListLogbook(db, userId) {
   });
 }
 
+// ============================================================================
+// CACHE PROFIL USER UNTUK MIDDLEWARE AUTH (verifyToken / attachUserIfLoggedIn)
+// ============================================================================
+// Ini cache PALING BERDAMPAK di seluruh aplikasi: verifyToken() dipakai di
+// ~84 file route (praktis SEMUA halaman admin/dosen/mahasiswa) dan
+// attachUserIfLoggedIn() jalan di SEMUA request (termasuk halaman publik).
+// Sebelumnya, SETIAP kali user klik satu link/menu, middleware ini baca
+// dokumen 'users' (atau query 'dosen') dari Firestore ULANG - jadi 1
+// kunjungan admin yang klik 10 menu = minimal 10 baca dokumen HANYA untuk
+// tahu "siapa yang sedang login", di luar baca data halaman itu sendiri.
+//
+// TTL sengaja pendek (90 detik) karena ini menyangkut identitas/otorisasi -
+// kalau admin mengubah role/data seseorang, perubahan idealnya cepat
+// terlihat. 90 detik adalah kompromi: cukup untuk memangkas mayoritas baca
+// berulang saat seseorang berpindah-pindah halaman dengan cepat, tapi tidak
+// membuat perubahan penting (mis. reset biodata gate) basi terlalu lama.
+// Untuk kasus yang butuh langsung fresh (mis. submit biodata sendiri),
+// panggil invalidateUserProfile(uid) - lihat pemakaiannya di
+// routes/mahasiswa/biodata.js.
+const userProfileCache = new TTLCache(90 * 1000); // 90 detik
+
 /**
- * Ambil semua dokumen mataKuliah (urut kode), dari cache kalau masih
- * berlaku. Dipakai di banyak halaman admin (rekap nilai, KRS, dsb) yang
- * masing-masing sebelumnya query 'mataKuliah' sendiri-sendiri padahal
- * datanya sama dan jarang berubah.
+ * Cari identitas user berdasarkan uid: coba di collection 'users' dulu
+ * (admin/mahasiswa), kalau tidak ada baru cek 'dosen'. Hasilnya di-cache
+ * per uid selama 90 detik supaya middleware auth tidak baca Firestore
+ * ulang di setiap request dari user yang sama.
  * @param {import('firebase-admin').firestore.Firestore} db
- * @returns {Promise<Array<Object>>}
+ * @param {string} uid
+ * @returns {Promise<Object|null>} objek user siap pakai untuk req.user, atau null kalau tidak ditemukan
  */
-async function getAllMataKuliah(db) {
-  return mataKuliahCache.getOrFetch('all', async () => {
-    const snap = await db.collection('mataKuliah').orderBy('kode').get();
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+async function getUserProfileByUid(db, uid) {
+  return userProfileCache.getOrFetch(uid, async () => {
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (userDoc.exists) {
+      return { id: uid, ...userDoc.data() };
+    }
+    const dosenSnapshot = await db.collection('dosen').where('userId', '==', uid).limit(1).get();
+    if (!dosenSnapshot.empty) {
+      const dosenData = dosenSnapshot.docs[0].data();
+      return {
+        id: uid,
+        nama: dosenData.nama,
+        email: dosenData.email,
+        role: 'dosen',
+        dosenId: dosenSnapshot.docs[0].id,
+        ...dosenData
+      };
+    }
+    return null; // tidak terdaftar sama sekali
   });
 }
 
-/**
- * Ambil semua dokumen dosen (urut nama), dari cache kalau masih berlaku.
- * Dipakai di routes/admin/dosen.js (daftar dosen) dan routes/admin/matakuliah.js
- * (dropdown pengampu + map nama dosen) - sebelumnya masing-masing route
- * membaca ULANG seluruh koleksi `dosen` sendiri-sendiri di setiap kunjungan
- * halaman, padahal datanya sama dan jarang berubah. Pakai key 'all' supaya
- * konsisten dengan invalidasi (`dosenCache.delete('all')`) yang sudah ada
- * di routes/admin/dosen.js setiap kali dosen ditambah/diedit/dihapus.
- * @param {import('firebase-admin').firestore.Firestore} db
- * @returns {Promise<Array<Object>>}
- */
-async function getAllDosen(db) {
-  return dosenCache.getOrFetch('all', async () => {
-    const snap = await db.collection('dosen').orderBy('nama').get();
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  });
+/** Hapus cache profil satu user - panggil setiap kali data user/dosen itu berubah. */
+function invalidateUserProfile(uid) {
+  userProfileCache.delete(uid);
 }
 
-module.exports = { TTLCache, mataKuliahCache, dosenCache, tugasAktifCache, mahasiswaCache, getAllMahasiswa, getAllMataKuliah, getAllDosen, logbookSemesterCache, getSemesterListLogbook };
+module.exports = {
+  TTLCache,
+  mataKuliahCache,
+  dosenCache,
+  tugasAktifCache,
+  mahasiswaCache,
+  getAllMahasiswa,
+  getAllMataKuliah,
+  logbookSemesterCache,
+  getSemesterListLogbook,
+  userProfileCache,
+  getUserProfileByUid,
+  invalidateUserProfile
+};

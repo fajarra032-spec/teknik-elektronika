@@ -1,6 +1,7 @@
 // middleware/auth.js
 const { auth, db } = require('../config/firebaseAdmin');
 const { isBiodataLengkap } = require('../helpers/biodataHelper');
+const { getUserProfileByUid } = require('../helpers/cache');
 
 /**
  * Path yang tetap boleh diakses mahasiswa WALAUPUN biodatanya belum lengkap
@@ -27,11 +28,16 @@ const verifyToken = async (req, res, next) => {
     const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
     const uid = decodedClaims.uid;
 
-    // Coba ambil dari collection users (untuk admin & mahasiswa)
-    let userDoc = await db.collection('users').doc(uid).get();
+    // ✅ OPTIMISASI KUOTA PALING BERDAMPAK: sebelumnya baris ini baca
+    // dokumen 'users' (atau query 'dosen') dari Firestore di SETIAP
+    // request ke SETIAP halaman yang butuh login (~84 file route pakai
+    // middleware ini). getUserProfileByUid() cache hasilnya 90 detik per
+    // uid (helpers/cache.js) - jadi user yang klik banyak menu berturut-turut
+    // tidak memicu baca Firestore berulang hanya untuk tahu identitasnya.
+    const profile = await getUserProfileByUid(db, uid);
 
-    if (userDoc.exists) {
-      req.user = { id: uid, ...userDoc.data() };
+    if (profile && profile.role !== 'dosen') {
+      req.user = profile;
 
       // ======================================================================
       // GATE BIODATA MAHASISWA: kalau role-nya mahasiswa dan biodata wajibnya
@@ -47,22 +53,10 @@ const verifyToken = async (req, res, next) => {
       if (req.user.role === 'mahasiswa' && !bolehLewatiGateBiodata(req.originalUrl) && !isBiodataLengkap(req.user)) {
         return res.redirect('/mahasiswa/biodata/edit?wajib=1');
       }
+    } else if (profile && profile.role === 'dosen') {
+      req.user = profile;
     } else {
-      // Coba cek di collection dosen
-      const dosenSnapshot = await db.collection('dosen').where('userId', '==', uid).limit(1).get();
-      if (!dosenSnapshot.empty) {
-        const dosenData = dosenSnapshot.docs[0].data();
-        req.user = {
-          id: uid,
-          nama: dosenData.nama,
-          email: dosenData.email,
-          role: 'dosen',
-          dosenId: dosenSnapshot.docs[0].id, // simpan id dokumen dosen
-          ...dosenData
-        };
-      } else {
-        return res.redirect('/auth/login');
-      }
+      return res.redirect('/auth/login');
     }
     next();
   } catch (error) {
@@ -106,14 +100,14 @@ const isDosen = async (req, res, next) => {
         message: 'Anda bukan dosen'
       });
     }
-    const dosenDoc = await db.collection('dosen').doc(req.user.dosenId).get();
-    if (!dosenDoc.exists) {
-      return res.status(403).render('error', {
-        title: 'Akses Ditolak',
-        message: 'Data dosen tidak ditemukan'
-      });
-    }
-    req.dosen = { id: dosenDoc.id, ...dosenDoc.data() };
+    // ✅ OPTIMISASI KUOTA: sebelumnya baris ini baca ULANG dokumen dosen
+    // yang PERSIS SAMA yang sudah dibaca verifyToken() beberapa baris kode
+    // sebelumnya (req.user untuk role dosen sudah berisi seluruh data
+    // dokumen dosen, hasil spread `...dosenData`) - jadi setiap request ke
+    // 31 file route yang pakai middleware ini baca dokumen dosen 2x. Sekarang
+    // req.dosen tinggal disusun dari req.user yang sudah ada, TANPA baca
+    // Firestore sama sekali di sini (bukan cache - datanya memang identik).
+    req.dosen = { id: req.user.dosenId, ...req.user };
     next();
   } catch (error) {
     console.error('Error in isDosen middleware:', error);
@@ -160,25 +154,10 @@ const attachUserIfLoggedIn = async (req, res, next) => {
     const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
     const uid = decodedClaims.uid;
 
-    const userDoc = await db.collection('users').doc(uid).get();
-    if (userDoc.exists) {
-      req.user = { id: uid, ...userDoc.data() };
-    } else {
-      const dosenSnapshot = await db.collection('dosen').where('userId', '==', uid).limit(1).get();
-      if (!dosenSnapshot.empty) {
-        const dosenData = dosenSnapshot.docs[0].data();
-        req.user = {
-          id: uid,
-          nama: dosenData.nama,
-          email: dosenData.email,
-          role: 'dosen',
-          dosenId: dosenSnapshot.docs[0].id,
-          ...dosenData
-        };
-      } else {
-        req.user = null;
-      }
-    }
+    // Sama seperti verifyToken() - pakai cache 90 detik, bukan baca
+    // Firestore di setiap request (middleware ini jalan di SEMUA halaman,
+    // termasuk yang publik seperti landing page).
+    req.user = await getUserProfileByUid(db, uid);
   } catch (error) {
     // Cookie kadaluarsa/tidak valid - anggap saja belum login, jangan
     // clear cookie atau redirect di sini (biarkan verifyToken yang urus

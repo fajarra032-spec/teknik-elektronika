@@ -175,23 +175,11 @@ router.get('/:mkId', async (req, res) => {
       .get();
     const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
 
-    // ✅ OPTIMISASI: sebelumnya data tiap mahasiswa diambil satu-satu lewat
-    // getMahasiswaById() per id (Promise.all(...map(...)) - tetap paralel,
-    // tapi tiap mahasiswa = 1 round-trip terpisah). db.getAll() mengambil
-    // SEMUA dokumen itu dalam SATU panggilan batch (pola yang sama dipakai
-    // helpers/nilaiHelper.js -> getTranskripMahasiswa untuk data mataKuliah),
-    // jauh lebih hemat round-trip untuk MK dengan banyak mahasiswa terdaftar.
-    const [{ komponenMap, hasilMap }, { tugasList, perMahasiswa: tugasPerMahasiswa }, mahasiswaDocs] = await Promise.all([
+    const [{ komponenMap, hasilMap }, { tugasList, perMahasiswa: tugasPerMahasiswa }, mahasiswaArr] = await Promise.all([
       getHasilRubrikSemuaMahasiswa(mkId, periode),
       getRincianTugasByMkId(mkId, periode),
-      mahasiswaIds.length > 0
-        ? db.getAll(...mahasiswaIds.map(uid => db.collection('users').doc(uid)))
-        : Promise.resolve([])
+      Promise.all(mahasiswaIds.map(uid => getMahasiswaById(uid)))
     ]);
-    const mahasiswaArr = mahasiswaIds.map((uid, i) => {
-      const doc = mahasiswaDocs[i];
-      return doc && doc.exists ? { id: uid, ...doc.data() } : { id: uid, nama: 'Unknown', nim: '-' };
-    });
 
     const mahasiswaList = mahasiswaIds.map((uid, i) => ({
       mahasiswaId: uid,

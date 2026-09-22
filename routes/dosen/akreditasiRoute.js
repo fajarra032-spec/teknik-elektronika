@@ -21,8 +21,7 @@ const {
   getKriteriaDenganProgress,
   hitungProgresKeseluruhan,
   uploadDokumenKriteria,
-  isKriteriaTerlambat,
-  getIndikatorKriteria
+  isKriteriaTerlambat
 } = require('../../helpers/akreditasiHelper');
 
 router.use(verifyToken);
@@ -103,16 +102,13 @@ router.get('/kriteria/:id', async (req, res) => {
       .map(d => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
 
-    const indikatorList = await getIndikatorKriteria(kriteria.id);
-
     res.render('dosen/akreditasi/workspace', {
       title: `Kriteria ${kriteria.kode} - ${kriteria.nama}`,
       kriteria,
       picNamaList,
       dokumenList,
       diskusiList,
-      checklistList,
-      indikatorList
+      checklistList
     });
   } catch (error) {
     console.error('Error memuat workspace kriteria (dosen):', error);
@@ -176,30 +172,6 @@ router.post('/kriteria/:id/diskusi', async (req, res) => {
   } catch (error) {
     console.error('Error mengirim diskusi akreditasi (dosen):', error);
     res.status(500).send('Gagal mengirim pembahasan');
-  }
-});
-
-// -------- Indikator LKPS (dosen ikut menulis narasi jawaban) --------
-router.post('/indikator/:id/jawaban', async (req, res) => {
-  try {
-    const { uraianJawaban, buktiSahihUrl } = req.body;
-    const ref = db.collection('akreditasi_indikator').doc(req.params.id);
-    const doc = await ref.get();
-    if (!doc.exists) return res.status(404).send('Indikator tidak ditemukan');
-
-    const isiJawaban = (uraianJawaban || '').trim();
-    await ref.update({
-      uraianJawaban: isiJawaban,
-      buktiSahihUrl: (buktiSahihUrl || '').trim(),
-      status: isiJawaban ? 'terisi' : 'belum',
-      updatedAt: new Date().toISOString(),
-      updatedBy: req.dosen.nama
-    });
-
-    res.redirect(`/dosen/akreditasi/kriteria/${doc.data().kriteriaId}#indikator-${req.params.id}`);
-  } catch (error) {
-    console.error('Error menyimpan jawaban indikator (dosen):', error);
-    res.status(500).send('Gagal menyimpan jawaban indikator');
   }
 });
 

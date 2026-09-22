@@ -162,6 +162,14 @@
           </div>
         <% } %>
 
+        <% if (surat.jenis === 'Bukti Lulus Masuk Perguruan Tinggi') { %>
+          <div class="row g-3">
+            <div class="col-md-4"><div class="data-label">Jalur Masuk</div><div class="data-value"><%= surat.jalurMasuk %></div></div>
+            <div class="col-md-4"><div class="data-label">Tahun Masuk / Angkatan</div><div class="data-value"><%= surat.tahunMasuk %></div></div>
+            <div class="col-md-4"><div class="data-label">No. SK/Bukti Penerimaan</div><div class="data-value"><%= surat.nomorSkPenerimaan || '-' %></div></div>
+          </div>
+        <% } %>
+
         <% if (surat.jenis === 'Rekomendasi') { %>
           <div class="row g-3">
             <div class="col-md-6"><div class="data-label">Tujuan</div><div class="data-value"><%= surat.namaTujuan %></div></div>

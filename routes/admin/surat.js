@@ -165,7 +165,8 @@ const JENIS_SURAT_MAHASISWA_OTOMATIS = [
   'Rekomendasi',
   'Keterangan Cuti/Aktif Kembali',
   'Keterangan Dosen PA',
-  'Pengantar Magang/PKL'
+  'Pengantar Magang/PKL',
+  'Bukti Lulus Masuk Perguruan Tinggi'
 ];
 
 function getTemplateAndDataForSuratMahasiswa(surat, mahasiswa, nomorSurat) {
@@ -294,6 +295,23 @@ function getTemplateAndDataForSuratMahasiswa(surat, mahasiswa, nomorSurat) {
           alamatPerusahaan: surat.alamatPerusahaan,
           tanggalMulaiFormatted: formatTanggal(surat.tanggalMulai),
           tanggalSelesaiFormatted: formatTanggal(surat.tanggalSelesai),
+          keperluan: surat.keperluan,
+          tanggalSuratFormatted,
+          kodeValidasi: surat.kodeValidasi
+        },
+        fileNamePrefix: `${surat.kodeValidasi}_${kode}`
+      };
+
+    case 'Bukti Lulus Masuk Perguruan Tinggi':
+      return {
+        template: 'admin/surat/bukti_lulus_masuk',
+        templateData: {
+          nomorSurat: nomorSurat || '',
+          nama: mahasiswa.nama,
+          nim: mahasiswa.nim,
+          jalurMasuk: surat.jalurMasuk,
+          tahunMasuk: surat.tahunMasuk,
+          nomorSkPenerimaan: surat.nomorSkPenerimaan || '',
           keperluan: surat.keperluan,
           tanggalSuratFormatted,
           kodeValidasi: surat.kodeValidasi

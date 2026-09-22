@@ -43,14 +43,23 @@ router.get('/', async (req, res) => {
     const periodeId = req.query.periodeId || (periodeList[0] && periodeList[0].id) || null;
 
     const semuaTabel = getSemuaTabelConfig();
-    const tabelDenganJumlah = [];
+    let tabelDenganJumlah = [];
     if (periodeId) {
-      for (const t of semuaTabel) {
-        const snap = await db.collection(t.collection).where('periodeId', '==', periodeId).get();
-        tabelDenganJumlah.push({ ...t, jumlahBaris: snap.size });
-      }
-      const tabel7Doc = await db.collection(TABEL7_CONFIG.collection).where('periodeId', '==', periodeId).get();
-      tabelDenganJumlah.push({ ...TABEL7_CONFIG, jumlahBaris: tabel7Doc.size });
+      // ✅ OPTIMISASI KUOTA: sebelumnya baris di sini baca SELURUH ISI
+      // (semua field, semua baris) dari 7 collection tabel LKPS, HANYA untuk
+      // menghitung jumlah barisnya (snap.size) - dan dilakukan satu-satu
+      // berurutan (for...of + await). Sekarang pakai count() agregasi
+      // (biaya TETAP 1 read-unit per tabel, berapa pun jumlah barisnya) dan
+      // dijalankan PARALEL (Promise.all), bukan berurutan.
+      const hasilCount = await Promise.all(
+        semuaTabel.map(t =>
+          db.collection(t.collection).where('periodeId', '==', periodeId).count().get()
+        )
+      );
+      tabelDenganJumlah = semuaTabel.map((t, idx) => ({ ...t, jumlahBaris: hasilCount[idx].data().count }));
+
+      const tabel7Count = await db.collection(TABEL7_CONFIG.collection).where('periodeId', '==', periodeId).count().get();
+      tabelDenganJumlah.push({ ...TABEL7_CONFIG, jumlahBaris: tabel7Count.data().count });
     }
 
     res.render('admin/akreditasi/tabel_index', {
@@ -73,12 +82,14 @@ router.get('/tabel7', async (req, res) => {
     const periodeId = req.query.periodeId;
     if (!periodeId) return res.redirect('/admin/akreditasi/tabel');
 
+    // Dibaca paralel (db.getAll), bukan satu-satu berurutan - jumlahnya
+    // tetap kecil (2 dokumen), tapi tidak ada alasan menunggu berurutan.
+    const refs = TABEL7_CONFIG.baris.map(namaBaris => db.collection(TABEL7_CONFIG.collection).doc(`${periodeId}_${namaBaris}`));
+    const docs = await db.getAll(...refs);
     const dataPerBaris = {};
-    for (const namaBaris of TABEL7_CONFIG.baris) {
-      const docId = `${periodeId}_${namaBaris}`;
-      const doc = await db.collection(TABEL7_CONFIG.collection).doc(docId).get();
-      dataPerBaris[namaBaris] = doc.exists ? doc.data() : {};
-    }
+    TABEL7_CONFIG.baris.forEach((namaBaris, idx) => {
+      dataPerBaris[namaBaris] = docs[idx].exists ? docs[idx].data() : {};
+    });
 
     res.render('admin/akreditasi/tabel7', {
       title: TABEL7_CONFIG.judul,

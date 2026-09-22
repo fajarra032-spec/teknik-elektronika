@@ -12,6 +12,7 @@ const { Readable } = require('stream');
 const multer = require('multer');
 const sharp = require('sharp'); // <-- tambahkan sharp untuk kompresi
 const { BIODATA_FIELDS, GROUP_LABELS, isNikFormatValid, getBiodataKosong, isBiodataLengkap } = require('../../helpers/biodataHelper');
+const { invalidateUserProfile, mahasiswaCache } = require('../../helpers/cache');
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 } // Batas 10MB sebelum kompresi
@@ -262,6 +263,19 @@ router.post('/edit', upload.single('foto'), async (req, res) => {
     await userRef.update(updateData);
     console.log('Data Firestore berhasil diperbarui');
 
+    // ⚠️ PENTING (bukan cuma optimasi): gate biodata di middleware/auth.js
+    // (verifyToken) mengecek isBiodataLengkap(req.user) dari PROFIL YANG
+    // DI-CACHE. Request berikutnya (redirect di bawah) akan lewat gate itu
+    // lagi - kalau cache tidak dihapus di sini, mahasiswa bisa terjebak
+    // redirect-loop balik ke halaman edit biodata sampai 90 detik walau
+    // datanya sudah lengkap.
+    invalidateUserProfile(req.user.id);
+    // Badge "Biodata Lengkap" di LIST admin (views/admin/mahasiswa_list.ejs)
+    // dihitung dari mahasiswaCache (10 menit) - hapus juga supaya admin
+    // langsung lihat status terbaru, bukan nunggu cache itu kedaluwarsa.
+    // (Halaman DETAIL admin selalu baca langsung/fresh, jadi tidak terdampak.)
+    mahasiswaCache.delete('all');
+
     // Kalau request ini datang dari gate "wajib lengkapi" (?wajib=1) dan
     // biodatanya SEKARANG sudah lengkap, langsung arahkan ke dashboard -
     // supaya mahasiswa tidak perlu klik lagi setelah selesai onboarding.
@@ -313,6 +327,7 @@ router.post('/foto/hapus', async (req, res) => {
       fotoFileId: null,
       updatedAt: new Date().toISOString()
     });
+    invalidateUserProfile(userId);
 
     res.redirect('/mahasiswa/biodata?success=foto_hapus');
   } catch (error) {

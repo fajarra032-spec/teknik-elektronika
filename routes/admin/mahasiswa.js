@@ -14,7 +14,7 @@ const { KONSENTRASI_OPTIONS, AGAMA_OPTIONS, DEFAULT_AGAMA, parseSemesterNumber, 
 const { isBiodataLengkap, getBiodataKosong, BIODATA_FIELDS, GROUP_LABELS } = require('../../helpers/biodataHelper');
 const { getCurrentAcademicSemester, normalizeKelas } = require('../../helpers/academicHelper');
 const { buatDokumenSkPa } = require('../../helpers/skPaHelper');
-const { dosenCache, mahasiswaCache, getAllMahasiswa } = require('../../helpers/cache');
+const { dosenCache, mahasiswaCache, getAllMahasiswa, invalidateUserProfile } = require('../../helpers/cache');
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.use(verifyToken);
@@ -33,20 +33,26 @@ async function getAllDosenPa() {
   // (daftar, tambah, edit, sk-pa) - tanpa cache, satu kunjungan admin bisa
   // memicu query 'dosen' berkali-kali walau datanya sama. Daftar dosen
   // jarang berubah, aman di-cache 10 menit (lihat helpers/cache.js).
-  return dosenCache.getOrFetch('daftarDosenPa', async () => {
+  //
+  // PENTING: key 'all' di sini SENGAJA sama dengan yang dipakai
+  // routes/display.js - supaya benar-benar 1 cache yang dibagi bersama
+  // (bukan 2 cache terpisah dengan data sama), dan supaya ikut ter-invalidate
+  // oleh dosenCache.delete('all') yang sudah dipanggil di routes/admin/dosen.js
+  // & routes/admin/users.js setiap kali data dosen berubah. Kalau key di sini
+  // beda sendiri, perubahan dosen lewat admin TIDAK akan pernah membersihkan
+  // cache ini - dropdown Dosen PA bisa menampilkan nama lama sampai 10 menit.
+  const semuaDosen = await dosenCache.getOrFetch('all', async () => {
     const snapshot = await db.collection('dosen').orderBy('nama').get();
-    return snapshot.docs.map(doc => {
-      const d = doc.data();
-      return {
-        id: doc.id,
-        nama: d.nama,
-        // Dosen yang dibuat lewat form standar (/admin/dosen atau /admin/users)
-        // menyimpan identitasnya di field `nip`, sementara sebagian data lama
-        // (mis. hasil impor SK) memakai `nidn`/`nuptk` - tampilkan yang ada.
-        nidn: d.nidn || d.nip || d.nuptk || ''
-      };
-    });
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   });
+  return semuaDosen.map(d => ({
+    id: d.id,
+    nama: d.nama,
+    // Dosen yang dibuat lewat form standar (/admin/dosen atau /admin/users)
+    // menyimpan identitasnya di field `nip`, sementara sebagian data lama
+    // (mis. hasil impor SK) memakai `nidn`/`nuptk` - tampilkan yang ada.
+    nidn: d.nidn || d.nip || d.nuptk || ''
+  }));
 }
 
 async function getMahasiswaFotoFolderId() {
@@ -622,6 +628,7 @@ router.post('/:id/update', upload.single('foto'), async (req, res) => {
     }
 
     mahasiswaCache.delete('all'); // data mahasiswa berubah -> cache lama tidak valid lagi
+    invalidateUserProfile(req.params.id); // supaya perubahan langsung berlaku di sesi mahasiswa ini (bukan nunggu 90 detik)
 
     if (krsAutoMessage) {
       const param = krsAutoOk ? 'krsSuccess' : 'error';
@@ -865,6 +872,7 @@ router.post('/:id/delete', async (req, res) => {
     await mahasiswaRef.delete();
 
     mahasiswaCache.delete('all'); // data mahasiswa berubah -> cache lama tidak valid lagi
+    invalidateUserProfile(req.params.id); // penting: akun yang dihapus jangan bisa tetap akses selama sisa TTL cache
     res.redirect('/admin/mahasiswa');
   } catch (error) {
     console.error('Error hapus mahasiswa:', error);

@@ -133,6 +133,60 @@ router.post('/aktif-kuliah', async (req, res) => {
 });
 
 // ============================================================================
+// PENGAJUAN SURAT BUKTI LULUS MASUK PERGURUAN TINGGI
+// ============================================================================
+
+router.get('/bukti-lulus-masuk', (req, res) => {
+  const { getAngkatanFromNim } = require('../../helpers/academicHelper');
+  const angkatan = getAngkatanFromNim(req.user.nim) || '';
+  res.render('mahasiswa/persuratan/bukti_lulus_masuk_form', {
+    title: 'Ajukan Surat Bukti Lulus Masuk Perguruan Tinggi',
+    user: req.user,
+    tahunMasukDefault: angkatan
+  });
+});
+
+router.post('/bukti-lulus-masuk', async (req, res) => {
+  try {
+    const { keperluan, jalurMasuk, tahunMasuk, nomorSkPenerimaan } = req.body;
+    if (!keperluan || !jalurMasuk || !tahunMasuk) {
+      return res.status(400).send('Keperluan, jalur masuk, dan tahun masuk harus diisi');
+    }
+
+    const kodeValidasi = generateKodeValidasi();
+
+    const suratData = {
+      userId: req.user.id,
+      nim: req.user.nim,
+      nama: req.user.nama,
+      jenis: 'Bukti Lulus Masuk Perguruan Tinggi',
+      kodeValidasi,
+      keperluan,
+      jalurMasuk,
+      tahunMasuk,
+      nomorSkPenerimaan: nomorSkPenerimaan || '',
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [{
+        status: 'pending',
+        timestamp: new Date().toISOString(),
+        catatan: 'Pengajuan surat diterima'
+      }]
+    };
+
+    await db.collection('surat').add(suratData);
+    res.redirect('/mahasiswa/persuratan');
+  } catch (error) {
+    console.error('Error mengajukan surat bukti lulus masuk PT:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Gagal mengajukan surat'
+    });
+  }
+});
+
+// ============================================================================
 // PENGAJUAN SURAT PERMOHONAN KEBIJAKAN SPP
 // ============================================================================
 

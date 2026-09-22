@@ -1,14 +1,14 @@
-<%- include('../../partials/header-landing') %>
+<%- include('../partials/header-landing') %>
 
 <style>
   .hero-detail {
-    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    background: linear-gradient(135deg, #2193b0, #6dd5ed);
     padding: 3rem 0;
     color: white;
     margin-bottom: 2rem;
   }
   .hero-detail h1 {
-    font-size: clamp(1.6rem, 5vw, 2.5rem);
+    font-size: 2.5rem;
     font-weight: 700;
   }
   .profile-card {
@@ -39,27 +39,21 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #1e3a8a;
-    flex-shrink: 0;
+    color: #2193b0;
   }
   .btn-back {
     background: transparent;
-    border: 2px solid #1e3a8a;
-    color: #1e3a8a;
+    border: 2px solid #2193b0;
+    color: #2193b0;
     font-weight: 600;
     padding: 0.5rem 1.5rem;
     border-radius: 50px;
     transition: all 0.3s;
   }
   .btn-back:hover {
-    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    background: linear-gradient(135deg, #2193b0, #6dd5ed);
     color: white;
     border-color: transparent;
-  }
-  .yudisium-section img {
-    width: 100%;
-    border-radius: 1rem;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
   }
 </style>
 
@@ -79,9 +73,6 @@
           <h3><%= lulusan.nama %></h3>
           <p class="text-muted"><%= lulusan.nim %></p>
           <span class="badge bg-info fs-6">Angkatan <%= lulusan.tahunLulus %></span>
-          <% if (lulusan.ipk) { %>
-            <span class="badge fs-6 ms-1" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);">IPK <%= lulusan.ipk %></span>
-          <% } %>
         </div>
       </div>
     </div>
@@ -89,7 +80,7 @@
       <div class="profile-card">
         <div class="profile-info">
           <h4 class="mb-4">Informasi Pekerjaan</h4>
-
+          
           <div class="info-item">
             <div class="info-icon"><i class="bi bi-briefcase"></i></div>
             <div>
@@ -151,15 +142,6 @@
           <% } %>
         </div>
       </div>
-
-      <% if (lulusan.fotoYudisium) { %>
-      <div class="profile-card yudisium-section" id="yudisium">
-        <div class="profile-info">
-          <h4 class="mb-3"><i class="bi bi-mortarboard-fill me-2"></i>Momen Yudisium</h4>
-          <img src="<%= lulusan.fotoYudisium %>" alt="Foto yudisium <%= lulusan.nama %>">
-        </div>
-      </div>
-      <% } %>
     </div>
   </div>
 
@@ -170,4 +152,4 @@
   </div>
 </div>
 
-<%- include('../../partials/footer-landing') %>
+<%- include('../partials/footer-landing') %>

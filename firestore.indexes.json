@@ -847,20 +847,6 @@
           "order": "ASCENDING"
         }
       ]
-    },
-    {
-      "collectionGroup": "pengampuPeriode",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "dosenIds",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "urutan",
-          "order": "DESCENDING"
-        }
-      ]
     }
   ],
   "fieldOverrides": []

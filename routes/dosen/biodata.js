@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db, auth } = require('../../config/firebaseAdmin');
+const { invalidateUserProfile } = require('../../helpers/cache');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
@@ -178,6 +179,7 @@ router.post('/update', upload.single('foto'), async (req, res) => {
     // Simpan perubahan ke Firestore
     await dosenRef.update(updateData);
     console.log('💾 Data Firestore diperbarui');
+    invalidateUserProfile(req.user.id);
 
     res.redirect('/dosen/biodata?success=updated');
   } catch (error) {

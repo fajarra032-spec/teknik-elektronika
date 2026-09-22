@@ -60,7 +60,6 @@
             <th>Status</th>
             <th>Target</th>
             <th>Dokumen</th>
-            <th>Indikator LKPS</th>
             <th>Checklist</th>
           </tr>
         </thead>
@@ -80,7 +79,6 @@
                 <% if (k.terlambat) { %><span class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Lewat</span><% } %>
               </td>
               <td><%= k.jumlahDokumen %> file</td>
-              <td><%= k.indikatorTerisi %> / <%= k.indikatorTotal %> (<%= k.indikatorPersen %>%)</td>
               <td><%= k.checklistSelesai %> / <%= k.checklistTotal %> (<%= k.checklistPersen %>%)</td>
             </tr>
           <% }) %>

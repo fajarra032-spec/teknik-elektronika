@@ -40,14 +40,20 @@ router.get('/', async (req, res) => {
     const periodeId = req.query.periodeId || (periodeList[0] && periodeList[0].id) || null;
 
     const semuaTabel = getSemuaTabelConfig();
-    const tabelDenganJumlah = [];
+    let tabelDenganJumlah = [];
     if (periodeId) {
-      for (const t of semuaTabel) {
-        const snap = await db.collection(t.collection).where('periodeId', '==', periodeId).get();
-        tabelDenganJumlah.push({ ...t, jumlahBaris: snap.size });
-      }
-      const tabel7Doc = await db.collection(TABEL7_CONFIG.collection).where('periodeId', '==', periodeId).get();
-      tabelDenganJumlah.push({ ...TABEL7_CONFIG, jumlahBaris: tabel7Doc.size });
+      // ✅ OPTIMISASI KUOTA: sama seperti routes/admin/akreditasiTabel.js -
+      // count() agregasi paralel, bukan baca SELURUH isi tabel berurutan
+      // hanya untuk menghitung jumlah barisnya.
+      const hasilCount = await Promise.all(
+        semuaTabel.map(t =>
+          db.collection(t.collection).where('periodeId', '==', periodeId).count().get()
+        )
+      );
+      tabelDenganJumlah = semuaTabel.map((t, idx) => ({ ...t, jumlahBaris: hasilCount[idx].data().count }));
+
+      const tabel7Count = await db.collection(TABEL7_CONFIG.collection).where('periodeId', '==', periodeId).count().get();
+      tabelDenganJumlah.push({ ...TABEL7_CONFIG, jumlahBaris: tabel7Count.data().count });
     }
 
     res.render('dosen/akreditasi/tabel_index', {
@@ -67,12 +73,12 @@ router.get('/tabel7', async (req, res) => {
     const periodeId = req.query.periodeId;
     if (!periodeId) return res.redirect('/dosen/akreditasi/tabel');
 
+    const refs = TABEL7_CONFIG.baris.map(namaBaris => db.collection(TABEL7_CONFIG.collection).doc(`${periodeId}_${namaBaris}`));
+    const docs = await db.getAll(...refs);
     const dataPerBaris = {};
-    for (const namaBaris of TABEL7_CONFIG.baris) {
-      const docId = `${periodeId}_${namaBaris}`;
-      const doc = await db.collection(TABEL7_CONFIG.collection).doc(docId).get();
-      dataPerBaris[namaBaris] = doc.exists ? doc.data() : {};
-    }
+    TABEL7_CONFIG.baris.forEach((namaBaris, idx) => {
+      dataPerBaris[namaBaris] = docs[idx].exists ? docs[idx].data() : {};
+    });
 
     res.render('dosen/akreditasi/tabel7', {
       title: TABEL7_CONFIG.judul,
