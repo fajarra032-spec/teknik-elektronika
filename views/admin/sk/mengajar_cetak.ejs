@@ -6,71 +6,126 @@
   <style>
     @page {
       size: A4;
-      margin: 2cm;
+      margin: 1.8cm 2cm 1.6cm 2.2cm;
     }
+
     * { box-sizing: border-box; }
+
     body {
       font-family: 'Times New Roman', Times, serif;
-      font-size: 12pt;
-      line-height: 1.55;
+      font-size: 11.5pt;
+      line-height: 1.5;
       color: #111;
       background: #eef1f6;
       margin: 0;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Kertas terpisah per halaman saat dilihat di layar, menyatu saat print */
+    /* ================= KERTAS ================= */
     .lembar {
       background: #fff;
       max-width: 21cm;
       min-height: 29.7cm;
       margin: 24px auto;
-      padding: 2cm;
+      padding: 1.8cm 2cm 1.6cm 2.2cm;
       position: relative;
       box-shadow: 0 6px 24px rgba(15, 23, 42, 0.12);
+      border-radius: 2px;
     }
 
-    /* === KOP SURAT (sama dengan surat lain di web ini) === */
+    /* ================= KOP SURAT ================= */
     .kop-surat {
       display: flex;
       align-items: center;
-      margin-bottom: 14px;
-      border-bottom: 3px double #000;
+      gap: 18px;
       padding-bottom: 10px;
+      margin-bottom: 18px;
+      border-bottom: 3px double #000;
     }
-    .logo-kop { width: 90px; height: auto; margin-right: 20px; }
-    .teks-kop { flex: 1; font-family: Arial, Helvetica, sans-serif; }
+    .logo-kop {
+      width: 82px;
+      height: auto;
+      flex: 0 0 auto;
+    }
+    .teks-kop {
+      flex: 1;
+      font-family: Arial, Helvetica, sans-serif;
+      text-align: left;
+      line-height: 1.3;
+      padding-left: 4px;
+    }
     .teks-kop .nama-kampus {
-      font-size: 27pt; font-weight: bold; margin: 0;
-      color: #3b60a3; text-transform: uppercase;
+      font-size: 20pt;
+      font-weight: bold;
+      margin: 0 0 4px;
+      color: #2b4d8f;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      text-align: left;
     }
-    .teks-kop .alamat, .teks-kop .kontak { font-size: 13pt; margin: 0; color: #333; }
+    .teks-kop .alamat,
+    .teks-kop .kontak {
+      font-size: 10pt;
+      margin: 0;
+      color: #333;
+      text-align: left;
+    }
+    .teks-kop .kontak { margin-top: 2px; }
 
-    /* === JUDUL SK === */
-    .judul-sk { text-align: center; margin: 22px 0 18px; }
+    /* ================= JUDUL SK ================= */
+    .judul-sk {
+      text-align: center;
+      margin: 20px 0 18px;
+    }
     .judul-sk .label-keputusan {
-      font-size: 13pt; font-weight: bold; letter-spacing: 1px; margin: 0;
+      font-size: 13pt;
+      font-weight: bold;
+      letter-spacing: 2px;
+      margin: 0;
     }
     .judul-sk .nomor {
-      font-size: 12pt; font-weight: bold; margin: 2px 0 10px;
+      font-size: 11.5pt;
+      font-weight: bold;
+      margin: 3px 0 12px;
     }
-    .judul-sk .tentang { margin: 10px 0 2px; font-size: 12pt; }
+    .judul-sk .tentang {
+      margin: 10px 0 4px;
+      font-size: 11.5pt;
+      letter-spacing: 1px;
+    }
     .judul-sk .judul-utama {
-      font-size: 13.5pt; font-weight: bold; text-transform: uppercase;
-      text-decoration: underline; margin: 4px 0 2px; line-height: 1.35;
+      font-size: 12.5pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      text-decoration: underline;
+      margin: 4px 0;
+      line-height: 1.4;
+      letter-spacing: .3px;
     }
-    .judul-sk .periode { font-weight: bold; margin: 0; }
-    .judul-sk .kaprodi-line { margin-top: 14px; font-size: 12pt; }
+    .judul-sk .periode {
+      font-weight: bold;
+      margin: 0;
+    }
+    .judul-sk .kaprodi-line {
+      margin-top: 14px;
+      font-size: 11.5pt;
+    }
 
-    /* === MENIMBANG / MENGINGAT / DIKTUM ===
-       Pakai flexbox (bukan tabel) supaya kolom label & isi SELALU sejajar
-       rapi di semua baris, termasuk baris lanjutan (b., 2., 3., dst) yang
-       tidak punya label - lebar label+titik dikunci sama persis lewat
-       --lebar-label & --lebar-titik, jadi teks isi selalu mulai di titik
-       horizontal yang sama. */
-    :root { --lebar-label: 108px; --lebar-titik: 14px; }
+    /* ================= DIKTUM ================= */
+    :root {
+      --lebar-label: 96px;
+      --lebar-titik: 14px;
+      --lebar-marker: 24px;
+      --jarak-item: 6px;
+    }
+
+    .blok-diktum { margin-top: 2px; }
+
     .baris-item {
       display: flex;
-      margin-bottom: 6px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      break-inside: avoid;
     }
     .baris-item .label-item {
       width: var(--lebar-label);
@@ -81,102 +136,278 @@
       width: var(--lebar-titik);
       flex: 0 0 var(--lebar-titik);
       font-weight: bold;
+      text-align: left;
     }
     .baris-item .isi-item {
       flex: 1 1 auto;
       text-align: justify;
+      text-justify: inter-word;
+      min-width: 0;
     }
-    .baris-item.lanjutan .isi-item {
-      margin-left: calc(var(--lebar-label) + var(--lebar-titik));
+
+    .diktum-item {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: var(--jarak-item);
+      break-inside: avoid;
     }
-    .blok-diktum { margin-top: 4px; }
+    .diktum-item .marker {
+      flex: 0 0 var(--lebar-marker);
+      width: var(--lebar-marker);
+      font-weight: normal;
+      text-align: left;
+    }
+    .diktum-item .teks {
+      flex: 1 1 auto;
+      text-align: justify;
+      text-justify: inter-word;
+      min-width: 0;
+    }
+    .diktum-item:last-child { margin-bottom: 0; }
 
     .memutuskan {
-      text-align: center; font-weight: bold; letter-spacing: 1px;
-      margin: 16px 0 10px;
+      text-align: center;
+      font-weight: bold;
+      letter-spacing: 2px;
+      margin: 18px 0 12px;
     }
 
-    /* === TANDA TANGAN === */
+    /* ================= TANDA TANGAN ================= */
     .tanda-tangan-wrapper {
-      display: flex; justify-content: flex-end; margin-top: 34px;
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 32px;
+      break-inside: avoid;
     }
-    .tanda-tangan { width: 300px; text-align: left; }
-    .area-ttd { position: relative; height: 50px; }
+    .tanda-tangan {
+      width: 300px;
+      text-align: left;
+    }
+    .tanda-tangan .info-ttd {
+      margin: 0;
+      position: relative;
+      z-index: 1;
+      line-height: 1.45;
+    }
+    .area-ttd {
+      position: relative;
+      height: 55px;
+    }
     .img-ttd {
-      position: absolute; top: -55px; left: -20px; height: 180px;
-      width: auto; z-index: 10; mix-blend-mode: multiply;
+      position: absolute;
+      top: -60px;
+      left: -20px;
+      height: 185px;
+      width: auto;
+      z-index: 10;
+      mix-blend-mode: multiply;
     }
     .nama-ttd {
-      font-weight: bold; text-decoration: underline; margin-bottom: 0;
-      position: relative; z-index: 1;
+      font-weight: bold;
+      text-decoration: underline;
+      margin: 0;
+      position: relative;
+      z-index: 1;
+      letter-spacing: .3px;
     }
-    .nip-ttd { margin-top: 0; }
+    .nip-ttd {
+      margin: 2px 0 0;
+    }
 
-    .tembusan { margin-top: 30px; font-size: 11pt; }
-    .tembusan p { margin: 0 0 4px; font-weight: bold; }
-    .tembusan ol { margin: 0; padding-left: 20px; }
+    /* ================= TEMBUSAN ================= */
+    .tembusan {
+      margin-top: 28px;
+      font-size: 10.5pt;
+    }
+    .tembusan p {
+      margin: 0 0 4px;
+      font-weight: bold;
+    }
+    .tembusan ol {
+      margin: 0;
+      padding-left: 22px;
+    }
+    .tembusan ol li { margin-bottom: 2px; }
 
-    /* === LAMPIRAN (halaman 2) === */
-    .kop-lampiran { font-size: 11pt; margin-bottom: 4px; }
-    .kop-lampiran .garis { border-top: 1px solid #000; margin: 4px 0 14px; }
+    /* ================= LAMPIRAN (HALAMAN 2) ================= */
+    .kop-lampiran {
+      font-size: 11pt;
+      line-height: 1.55;
+      margin-bottom: 0;
+    }
+
+    /* label "Lampiran" & "Tanggal" sejajar */
+    .kop-lampiran .baris-lampiran {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 4px;
+    }
+    .kop-lampiran .label-lampiran {
+      flex: 0 0 76px;
+      width: 76px;
+      font-weight: normal;
+    }
+    .kop-lampiran .titik-lampiran {
+      flex: 0 0 14px;
+      width: 14px;
+    }
+    .kop-lampiran .isi-lampiran {
+      flex: 1 1 auto;
+      text-align: justify;
+      text-justify: inter-word;
+      min-width: 0;
+    }
+
+    .kop-lampiran .garis {
+      border: 0;
+      border-top: 1.5px solid #000;
+      margin: 12px 0 18px;
+    }
+
+    /* Judul lampiran */
     .judul-lampiran {
-      text-align: center; font-weight: bold; text-transform: uppercase;
-      margin: 4px 0; line-height: 1.4;
+      text-align: center;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin: 6px 0 4px;
+      line-height: 1.5;
+      letter-spacing: .5px;
+      font-size: 12pt;
     }
 
-    table.tabel-lampiran {
-      width: 100%; border-collapse: collapse; margin: 18px 0 10px;
-      font-size: 11.5pt;
+    /* Data dosen di lampiran */
+    .data-dosen {
+      text-align: center;
+      margin: 10px 0 18px;
+      line-height: 1.5;
     }
-    table.tabel-lampiran th, table.tabel-lampiran td {
-      border: 1px solid #000; padding: 7px 10px;
+    .data-dosen .nama-dosen {
+      font-weight: bold;
+      text-decoration: underline;
+      font-size: 12pt;
+      margin: 0 0 2px;
+      letter-spacing: .3px;
+    }
+    .data-dosen .nip-dosen {
+      margin: 0 0 6px;
+      font-size: 11pt;
+    }
+    .data-dosen .periode {
+      font-weight: bold;
+      text-transform: uppercase;
+      margin: 0;
+      font-size: 11.5pt;
+      letter-spacing: .4px;
+    }
+
+    /* ================= TABEL LAMPIRAN ================= */
+    table.tabel-lampiran {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 10px;
+      font-size: 11pt;
+    }
+    table.tabel-lampiran th,
+    table.tabel-lampiran td {
+      border: 1px solid #000;
+      padding: 8px 10px;
+      vertical-align: top;
     }
     table.tabel-lampiran th {
-      background: #dfe7f5; font-weight: bold; text-align: center;
+      background: #dfe7f5;
+      font-weight: bold;
+      text-align: center;
+      letter-spacing: .3px;
     }
-    table.tabel-lampiran td.no, table.tabel-lampiran td.sks { text-align: center; }
+    table.tabel-lampiran td.no,
+    table.tabel-lampiran td.sks { text-align: center; }
     table.tabel-lampiran tbody tr:nth-child(even) { background: #f7f9fc; }
     table.tabel-lampiran tfoot td {
-      font-weight: bold; background: #eef2fa;
+      font-weight: bold;
+      background: #eef2fa;
     }
     .catatan-tim {
-      margin-top: 6px; font-size: 9.5pt; font-family: Arial, sans-serif;
-      color: #444; font-style: italic;
+      margin-top: 8px;
+      font-size: 9.5pt;
+      font-family: Arial, sans-serif;
+      color: #444;
+      font-style: italic;
+      line-height: 1.45;
     }
 
-    /* === FOOTER VALIDASI === */
+    /* ================= FOOTER & VALIDASI ================= */
     .footer {
-      margin-top: 40px; font-size: 8pt; text-align: left;
-      font-family: Arial, sans-serif; color: #555;
-      border-top: 1px dashed #ccc; padding-top: 10px;
+      margin-top: 36px;
+      font-size: 8pt;
+      text-align: left;
+      font-family: Arial, sans-serif;
+      color: #666;
+      border-top: 1px dashed #ccc;
+      padding-top: 10px;
+      line-height: 1.5;
     }
     .kode-validasi-print {
-      position: absolute; bottom: 1.2cm; right: 1.2cm;
-      font-size: 8pt; color: #555; font-family: Arial, sans-serif;
+      position: absolute;
+      bottom: 1.2cm;
+      right: 1.6cm;
+      font-size: 8pt;
+      color: #555;
+      font-family: Arial, sans-serif;
+      letter-spacing: .3px;
     }
 
-    /* === TOMBOL CETAK (tidak ikut print) === */
+    /* ================= TOMBOL (tidak ikut cetak) ================= */
     .bar-aksi {
-      max-width: 21cm; margin: 16px auto 0; display: flex; justify-content: flex-end; gap: 8px;
+      max-width: 21cm;
+      margin: 16px auto 0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
     }
-    .bar-aksi button, .bar-aksi a {
-      font-family: Arial, sans-serif; font-size: 13px; padding: 8px 16px;
-      border-radius: 30px; border: none; cursor: pointer; text-decoration: none;
-      background: #1e3a8a; color: #fff; box-shadow: 0 4px 10px rgba(30,58,138,0.25);
+    .bar-aksi button,
+    .bar-aksi a {
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: 30px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      background: #1e3a8a;
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(30, 58, 138, 0.25);
     }
     .bar-aksi a.secondary { background: #64748b; }
 
+    /* ================= PRINT ================= */
     @media print {
       body { background: #fff; }
       .bar-aksi { display: none; }
+
       .lembar {
-        box-shadow: none; margin: 0; max-width: none; min-height: 0;
-        padding: 0; page-break-after: always;
+        box-shadow: none;
+        margin: 0;
+        max-width: none;
+        min-height: 0;
+        padding: 0;
+        page-break-after: always;
+        border-radius: 0;
       }
       .lembar:last-child { page-break-after: auto; }
-      .img-ttd { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      table.tabel-lampiran th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .kode-validasi-print { position: fixed; bottom: 0.6cm; right: 0.6cm; }
+
+      .img-ttd {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      table.tabel-lampiran th {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .kode-validasi-print {
+        position: fixed;
+        bottom: 0.6cm;
+        right: 1cm;
+      }
     }
   </style>
 </head>
@@ -194,8 +425,8 @@
     <img src="/images/logo.png" alt="Logo Politeknik Dewantara" class="logo-kop">
     <div class="teks-kop">
       <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
-      <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo. Sulawesi Selatan</p>
-      <p class="kontak">E-mail: elektronika@polidewa.ac.id | Website: elektronika.polidewa.ac.id</p>
+      <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo, Sulawesi Selatan</p>
+      <p class="kontak">E-mail: elektronika@polidewa.ac.id &nbsp;|&nbsp; Website: elektronika.polidewa.ac.id</p>
     </div>
   </div>
 
@@ -203,28 +434,67 @@
     <p class="label-keputusan">SURAT KEPUTUSAN</p>
     <p class="nomor">Nomor: <%= nomorSurat %></p>
     <p class="tentang">TENTANG</p>
-    <p class="judul-utama">PENETAPAN DOSEN PENGAMPU MATA KULIAH<br>SEMESTER <%= semester.toUpperCase() %> TAHUN AKADEMIK <%= tahunAkademik %></p>
+    <p class="judul-utama">
+      PENETAPAN DOSEN PENGAMPU MATA KULIAH<br>
+      SEMESTER <%= semester.toUpperCase() %> TAHUN AKADEMIK <%= tahunAkademik %>
+    </p>
     <p class="kaprodi-line"><%= kaprodi.jabatan %> Politeknik Dewantara</p>
   </div>
 
   <div class="blok-diktum">
+
+    <!-- ===== MENIMBANG ===== -->
     <div class="baris-item">
-      <span class="label-item">Menimbang</span><span class="titik-item">:</span>
-      <span class="isi-item">a. bahwa dalam rangka pelaksanaan tugas pendidikan dan pembelajaran semester <%= semester.toLowerCase() %> Tahun Akademik <%= tahunAkademik %> pada Program Studi Teknik Elektronika Politeknik Dewantara, dipandang perlu menetapkan dosen pengampu mata kuliah;</span>
+      <span class="label-item">Menimbang</span>
+      <span class="titik-item">:</span>
+      <div class="isi-item">
+        <div class="diktum-item">
+          <span class="marker">a.</span>
+          <span class="teks">bahwa dalam rangka pelaksanaan tugas pendidikan dan pembelajaran semester <%= semester.toLowerCase() %> Tahun Akademik <%= tahunAkademik %> pada Program Studi Teknik Elektronika Politeknik Dewantara, dipandang perlu menetapkan dosen pengampu mata kuliah;</span>
+        </div>
+        <div class="diktum-item">
+          <span class="marker">b.</span>
+          <span class="teks">bahwa sehubungan dengan poin a perlu adanya penetapan keputusannya.</span>
+        </div>
+      </div>
     </div>
-    <div class="baris-item lanjutan">
-      <span class="isi-item">b. bahwa sehubungan dengan poin a perlu adanya penetapan keputusannya.</span>
-    </div>
+
+    <!-- ===== MENGINGAT ===== -->
     <div class="baris-item">
-      <span class="label-item">Mengingat</span><span class="titik-item">:</span>
-      <span class="isi-item">1. Undang-Undang Nomor 20 Tahun 2023 tentang Sistem Pendidikan Nasional;</span>
+      <span class="label-item">Mengingat</span>
+      <span class="titik-item">:</span>
+      <div class="isi-item">
+        <div class="diktum-item">
+          <span class="marker">1.</span>
+          <span class="teks">Undang-Undang Nomor 20 Tahun 2023 tentang Sistem Pendidikan Nasional;</span>
+        </div>
+        <div class="diktum-item">
+          <span class="marker">2.</span>
+          <span class="teks">Undang-Undang Nomor 12 Tahun 2012 tentang Pendidikan Tinggi;</span>
+        </div>
+        <div class="diktum-item">
+          <span class="marker">3.</span>
+          <span class="teks">Peraturan Menteri Pendidikan dan Kebudayaan Nomor 3 Tahun 2020 tentang Standar Nasional Pendidikan Tinggi;</span>
+        </div>
+        <div class="diktum-item">
+          <span class="marker">4.</span>
+          <span class="teks">Peraturan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi Nomor 53 Tahun 2023 tentang Penjaminan Mutu Pendidikan Tinggi;</span>
+        </div>
+        <div class="diktum-item">
+          <span class="marker">5.</span>
+          <span class="teks">Statuta Politeknik Dewantara Nomor 1 Tahun 2021;</span>
+        </div>
+        <div class="diktum-item">
+          <span class="marker">6.</span>
+          <span class="teks">Keputusan Direktur Politeknik Dewantara Nomor 2 Tahun 2024 tentang Peraturan Akademik;</span>
+        </div>
+        <div class="diktum-item">
+          <span class="marker">7.</span>
+          <span class="teks">Hasil rapat prodi pada tanggal <%= tanggalRapatTampil %>.</span>
+        </div>
+      </div>
     </div>
-    <div class="baris-item lanjutan"><span class="isi-item">2. Undang-Undang Nomor 12 Tahun 2012 tentang Pendidikan Tinggi;</span></div>
-    <div class="baris-item lanjutan"><span class="isi-item">3. Peraturan Menteri Pendidikan dan Kebudayaan Nomor 3 Tahun 2020 tentang Standar Nasional Pendidikan Tinggi;</span></div>
-    <div class="baris-item lanjutan"><span class="isi-item">4. Peraturan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi Nomor 53 Tahun 2023 tentang Penjaminan Mutu Pendidikan Tinggi;</span></div>
-    <div class="baris-item lanjutan"><span class="isi-item">5. Statuta Politeknik Dewantara Nomor 1 Tahun 2021;</span></div>
-    <div class="baris-item lanjutan"><span class="isi-item">6. Keputusan Direktur Politeknik Dewantara Nomor 2 Tahun 2024 tentang Peraturan Akademik;</span></div>
-    <div class="baris-item lanjutan"><span class="isi-item">7. Hasil rapat prodi pada tanggal <%= tanggalRapatTampil %>.</span></div>
+
   </div>
 
   <p class="memutuskan">MEMUTUSKAN</p>
@@ -253,7 +523,11 @@
 
   <div class="tanda-tangan-wrapper">
     <div class="tanda-tangan">
-      <p style="position: relative; z-index: 1; margin: 0;">Ditetapkan&nbsp; : di <%= kota %><br>Pada tanggal : <%= tanggalTampil %><br><%= kaprodi.jabatan %>,</p>
+      <p class="info-ttd">
+        Ditetapkan&nbsp; : di <%= kota %><br>
+        Pada tanggal : <%= tanggalTampil %><br>
+        <%= kaprodi.jabatan %>,
+      </p>
       <div class="area-ttd">
         <img src="/images/ttd.png" alt="Tanda Tangan Kaprodi" class="img-ttd">
       </div>
@@ -280,21 +554,43 @@
 
 <!-- ================= HALAMAN 2 : LAMPIRAN ================= -->
 <div class="lembar">
+
+  <!-- ===== KOP LAMPIRAN (label sejajar) ===== -->
   <div class="kop-lampiran">
-    Lampiran : Surat Keputusan Nomor <%= nomorSurat %> tentang Penetapan Dosen Pengampu Mata Kuliah Semester <%= semester %> Tahun Akademik <%= tahunAkademik %>.<br>
-    Tanggal&nbsp;&nbsp; : <%= tanggalTampil %>
-    <div class="garis"></div>
+    <div class="baris-lampiran">
+      <span class="label-lampiran">Lampiran</span>
+      <span class="titik-lampiran">:</span>
+      <span class="isi-lampiran">Surat Keputusan Nomor <%= nomorSurat %> tentang Penetapan Dosen Pengampu Mata Kuliah Semester <%= semester %> Tahun Akademik <%= tahunAkademik %>.</span>
+    </div>
+    <div class="baris-lampiran">
+      <span class="label-lampiran">Tanggal</span>
+      <span class="titik-lampiran">:</span>
+      <span class="isi-lampiran"><%= tanggalTampil %></span>
+    </div>
+    <hr class="garis">
   </div>
 
-  <p class="judul-lampiran">
-    DAFTAR MATA KULIAH YANG DIAMPU<br>
-    <%= namaDosen %><% if (nipDosen && nipDosen !== '-') { %> &middot; NIP/NUPTK <%= nipDosen %><% } %><br>
-    SEMESTER <%= semester.toUpperCase() %> TAHUN AKADEMIK <%= tahunAkademik %>
-  </p>
+  <!-- ===== JUDUL LAMPIRAN ===== -->
+  <p class="judul-lampiran">DAFTAR MATA KULIAH YANG DIAMPU</p>
 
+  <!-- ===== DATA DOSEN ===== -->
+  <div class="data-dosen">
+    <p class="nama-dosen"><%= namaDosen %></p>
+    <% if (nipDosen && nipDosen !== '-') { %>
+      <p class="nip-dosen">NIDN/NUPTK <%= nipDosen %></p>
+    <% } %>
+    <p class="periode">Semester <%= semester %> Tahun Akademik <%= tahunAkademik %></p>
+  </div>
+
+  <!-- ===== TABEL MATA KULIAH ===== -->
   <table class="tabel-lampiran">
     <thead>
-      <tr><th style="width:40px;">No.</th><th>Mata Kuliah</th><th style="width:110px;">Jumlah SKS</th><th style="width:110px;">Kelas</th></tr>
+      <tr>
+        <th style="width:44px;">No.</th>
+        <th>Mata Kuliah</th>
+        <th style="width:110px;">Jumlah SKS</th>
+        <th style="width:110px;">Kelas</th>
+      </tr>
     </thead>
     <tbody>
       <% let totalSks = 0; let adaTimTeaching = false; %>
@@ -312,16 +608,26 @@
       <% }) %>
     </tbody>
     <tfoot>
-      <tr><td colspan="2" style="text-align:right;">Total SKS</td><td class="sks"><%= Math.round(totalSks * 100) / 100 %></td><td></td></tr>
+      <tr>
+        <td colspan="2" style="text-align:right;">Total SKS</td>
+        <td class="sks"><%= Math.round(totalSks * 100) / 100 %></td>
+        <td></td>
+      </tr>
     </tfoot>
   </table>
+
   <% if (adaTimTeaching) { %>
-    <p class="catatan-tim">* Mata kuliah diampu bersama dosen lain (tim teaching) - jumlah SKS pada tabel ini adalah bagian dosen yang bersangkutan setelah dibagi rata sesuai jumlah pengampu.</p>
+    <p class="catatan-tim">* Mata kuliah diampu bersama dosen lain (tim teaching) &mdash; jumlah SKS pada tabel ini adalah bagian dosen yang bersangkutan setelah dibagi rata sesuai jumlah pengampu.</p>
   <% } %>
 
+  <!-- ===== TANDA TANGAN ===== -->
   <div class="tanda-tangan-wrapper">
     <div class="tanda-tangan">
-      <p style="position: relative; z-index: 1; margin: 0;">Ditetapkan&nbsp; : di <%= kota %><br>Pada tanggal : <%= tanggalTampil %><br><%= kaprodi.jabatan %>,</p>
+      <p class="info-ttd">
+        Ditetapkan&nbsp; : di <%= kota %><br>
+        Pada tanggal : <%= tanggalTampil %><br>
+        <%= kaprodi.jabatan %>,
+      </p>
       <div class="area-ttd">
         <img src="/images/ttd.png" alt="Tanda Tangan Kaprodi" class="img-ttd">
       </div>
