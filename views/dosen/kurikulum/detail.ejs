@@ -307,20 +307,38 @@
   <!-- Upload / Unduh RPS (Kurikulum) -->
   <div class="info-card">
     <h5><i class="bi bi-file-earmark-pdf"></i> Rencana Pembelajaran Semester (RPS)</h5>
-    <% if (mk.rpsUrl) { %>
+
+    <div class="row g-2 align-items-end mb-3">
+      <div class="col-md-6">
+        <label for="periodeIdRps" class="form-label small mb-1">Periode / Tahun Ajaran</label>
+        <select class="form-select form-select-sm" id="periodeIdRps"
+          onchange="location.href='/dosen/kurikulum/<%= mk.id %>?periode='+this.value">
+          <% periodeOptions.forEach(p => { %>
+            <option value="<%= p.id %>" <%= p.id === selectedPeriodeId ? 'selected' : '' %>>
+              <%= p.label %><%= p.id === activePeriodeId ? ' (Periode Aktif)' : '' %>
+            </option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+
+    <% if (rpsSelected && rpsSelected.fileUrl) { %>
       <div class="d-flex flex-wrap align-items-center gap-3">
-        <a href="<%= mk.rpsUrl %>" target="_blank" class="btn-primary-custom">
+        <a href="<%= rpsSelected.fileUrl %>" target="_blank" class="btn-primary-custom">
           <i class="bi bi-eye"></i> Lihat RPS
         </a>
-        <a href="<%= mk.rpsUrl %>" download class="btn-outline-custom">
+        <a href="<%= rpsSelected.fileUrl %>" download class="btn-outline-custom">
           <i class="bi bi-download"></i> Unduh
         </a>
         <button class="btn-outline-custom" data-bs-toggle="modal" data-bs-target="#uploadRpsModal">
-          <i class="bi bi-arrow-up"></i> Ganti RPS
+          <i class="bi bi-arrow-up"></i> Ganti RPS Periode Ini
         </button>
       </div>
+      <% if (rpsSelected.fileNama) { %>
+        <div class="small text-muted mt-2"><%= rpsSelected.fileNama %></div>
+      <% } %>
     <% } else { %>
-      <p class="text-muted mb-3">Belum ada RPS yang diunggah. Silakan upload kurikulum mata kuliah ini.</p>
+      <p class="text-muted mb-3">Belum ada RPS untuk periode ini. Silakan upload.</p>
       <button class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#uploadRpsModal">
         <i class="bi bi-cloud-upload"></i> Upload RPS (PDF)
       </button>
@@ -328,6 +346,28 @@
     <div class="mt-3 small text-muted">
       <i class="bi bi-info-circle"></i> RPS harus sesuai dengan poin materi yang telah ditentukan oleh Koordinator Prodi.
     </div>
+
+    <% if (rpsHistori && rpsHistori.length) { %>
+      <div class="mt-3">
+        <label class="form-label small mb-1 text-muted">Riwayat RPS</label>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>Periode</th><th>File</th></tr></thead>
+            <tbody>
+              <% rpsHistori.forEach(r => { %>
+                <tr>
+                  <td>
+                    <%= r.label %>
+                    <% if (r.periodeId === activePeriodeId) { %><span class="badge bg-success">Aktif</span><% } %>
+                  </td>
+                  <td><a href="<%= r.fileUrl %>" target="_blank"><%= r.fileNama || 'Lihat file' %></a></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% } %>
   </div>
 
   <!-- Daftar Mahasiswa Terdaftar -->
@@ -433,6 +473,10 @@
       </div>
       <form action="/dosen/kurikulum/<%= mk.id %>/rps" method="POST" enctype="multipart/form-data">
         <div class="modal-body">
+          <input type="hidden" name="periodeId" value="<%= selectedPeriodeId %>">
+          <div class="mb-2 small text-muted">
+            Periode: <strong><%= periodeOptions.find(p => p.id === selectedPeriodeId) ? periodeOptions.find(p => p.id === selectedPeriodeId).label : selectedPeriodeId %></strong>
+          </div>
           <div class="mb-3">
             <label class="form-label">File RPS (PDF) <span class="text-danger">*</span></label>
             <input type="file" class="form-control" name="rpsFile" accept=".pdf" required>

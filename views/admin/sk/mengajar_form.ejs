@@ -1,0 +1,192 @@
+<%- include('../../partials/header') %>
+
+<style>
+  :root {
+    --primary-start: #1e3a8a;
+    --primary-end: #3b82f6;
+    --gradient: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+  }
+  .sk-header {
+    background: var(--gradient);
+    border-radius: 1.5rem;
+    padding: 1.8rem 2rem;
+    color: white;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 15px 30px rgba(30,58,138,0.25);
+    position: relative;
+    overflow: hidden;
+  }
+  .sk-header::after {
+    content: '';
+    position: absolute; top: -30%; right: -10%; width: 300px; height: 300px;
+    background: rgba(255,255,255,0.1); border-radius: 50%; filter: blur(40px);
+  }
+  .sk-header h2 { font-weight: 800; font-size: 1.7rem; position: relative; z-index: 1; }
+  .sk-header p { opacity: 0.9; position: relative; z-index: 1; margin: 0; }
+
+  .periode-bar {
+    background: white; border-radius: 1.25rem; padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.03); border: 1px solid #eef2ff;
+  }
+  .periode-bar select { border-radius: 60px; border: 1px solid #e2e8f0; }
+
+  .dosen-card {
+    background: white; border-radius: 1.25rem; border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04); transition: all .25s;
+    height: 100%;
+  }
+  .dosen-card:hover { transform: translateY(-4px); box-shadow: 0 18px 26px -12px rgba(30,58,138,0.18); }
+  .dosen-avatar {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: var(--gradient); color: #fff; display: flex; align-items: center;
+    justify-content: center; font-weight: 700; font-size: 1rem; flex-shrink: 0;
+  }
+  .dosen-nip { font-size: .75rem; color: #94a3b8; }
+  .mk-pill {
+    display: inline-flex; align-items: center; gap: .3rem; background: #eef2ff;
+    color: #1e3a8a; font-size: .72rem; font-weight: 600; padding: .25rem .7rem;
+    border-radius: 50px; margin: 0 .25rem .25rem 0;
+  }
+  .badge-tim {
+    background: #fde68a; color: #92400e; font-size: .62rem; font-weight: 700;
+    padding: .1rem .4rem; border-radius: 50px; text-transform: uppercase; letter-spacing: .3px;
+  }
+  .badge-sks {
+    background: #fef3c7; color: #92400e; font-size: .7rem; font-weight: 700;
+    padding: .2rem .6rem; border-radius: 50px;
+  }
+  .btn-rilis {
+    background: var(--gradient); color: #fff; border: none; border-radius: 60px;
+    padding: .45rem 1.1rem; font-size: .8rem; font-weight: 600;
+  }
+  .btn-rilis:hover { color: #fff; opacity: .92; }
+  .empty-state {
+    text-align: center; padding: 3rem; background: white; border-radius: 1.5rem;
+  }
+  .empty-state i { font-size: 3rem; color: #cbd5e1; }
+
+  .modal-header-custom { background: var(--gradient); color: white; border-bottom: none; }
+  .modal-header-custom .btn-close { filter: brightness(0) invert(1); }
+</style>
+
+<div class="container mt-4">
+  <div class="sk-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+      <h2><i class="bi bi-magic me-2"></i> Rilis SK Mengajar Otomatis</h2>
+      <p>Nomor &amp; lampiran dibuat otomatis dari data mata kuliah &amp; dosen pengampu pada periode terpilih. Kop dan tanda tangan Kaprodi otomatis memakai aset yang sama dengan Surat Keterangan Aktif Kuliah. Mata kuliah yang diampu &gt; 1 dosen (tim teaching) otomatis dibagi SKS-nya secara rata dan ditandai <strong>Tim</strong>.</p>
+    </div>
+    <a href="/admin/sk" class="btn btn-light rounded-pill px-4">
+      <i class="bi bi-arrow-left me-1"></i> Kembali ke SK Dosen
+    </a>
+  </div>
+
+  <!-- Pilih Periode -->
+  <form method="GET" action="/admin/sk/mengajar" class="periode-bar d-flex flex-wrap align-items-center gap-3">
+    <label class="fw-semibold mb-0"><i class="bi bi-calendar3 me-1"></i> Periode / Tahun Akademik</label>
+    <select name="periodeId" class="form-select" style="max-width: 260px;" onchange="this.form.submit()">
+      <% periodeList.forEach(p => { %>
+        <option value="<%= p.id %>" <%= p.id === selectedPeriode.id ? 'selected' : '' %>>
+          <%= p.label %><%= p.isActive ? ' (Aktif Sekarang)' : '' %>
+        </option>
+      <% }) %>
+    </select>
+    <span class="text-muted small"><%= dosenRilis.length %> dosen mengampu mata kuliah pada periode ini</span>
+  </form>
+
+  <!-- Daftar Dosen -->
+  <div class="row g-3" id="dosenGrid">
+    <% dosenRilis.forEach(d => { %>
+      <div class="col-md-6 col-lg-4">
+        <div class="dosen-card p-3 d-flex flex-column h-100">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <div class="dosen-avatar"><%= (d.nama || '?').trim().charAt(0).toUpperCase() %></div>
+            <div>
+              <div class="fw-bold"><%= d.nama %></div>
+              <div class="dosen-nip">NIP/NUPTK: <%= d.nip %></div>
+            </div>
+          </div>
+          <div class="mb-2">
+            <% d.matkul.forEach(mk => { %>
+              <span class="mk-pill">
+                <i class="bi bi-journal-bookmark"></i> <%= mk.nama %> (<%= mk.kelas %>)
+                &middot; <%= Number.isInteger(mk.sks) ? mk.sks : mk.sks.toFixed(1) %> SKS
+                <% if (mk.timTeaching) { %><span class="badge-tim">Tim</span><% } %>
+              </span>
+            <% }) %>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-auto pt-2">
+            <span class="badge-sks"><%= d.jumlahMk %> MK &middot; <%= d.totalSks %> SKS</span>
+            <button type="button" class="btn btn-rilis" data-bs-toggle="modal" data-bs-target="#modalRilis"
+              data-dosen-id="<%= d.id %>" data-dosen-nama="<%= d.nama %>">
+              <i class="bi bi-file-earmark-plus me-1"></i> Rilis SK
+            </button>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+
+    <% if (dosenRilis.length === 0) { %>
+      <div class="col-12">
+        <div class="empty-state">
+          <i class="bi bi-inbox"></i>
+          <p class="mt-2 text-muted">Belum ada dosen dengan mata kuliah pada periode ini. Silakan atur pengampu mata kuliah terlebih dahulu di menu <strong>Kelola Mata Kuliah</strong>.</p>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Modal isi Nomor SK sebelum cetak -->
+<div class="modal fade" id="modalRilis" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header modal-header-custom">
+        <h5 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i> Rilis SK Mengajar - <span id="namaDosenModal"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formRilis" action="/admin/sk/mengajar/cetak" method="GET" target="_blank">
+        <div class="modal-body">
+          <input type="hidden" name="dosenId" id="inputDosenId">
+          <input type="hidden" name="periodeId" value="<%= selectedPeriode.id %>">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nomor SK</label>
+            <input type="text" name="nomorSk" class="form-control" placeholder="Contoh: 598/ELK/Polidewa/III/2026" required>
+            <div class="form-text">Format umum: Urut/ELK/Polidewa/BulanRomawi/Tahun.</div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">Tanggal Ditetapkan</label>
+              <input type="date" name="tanggal" class="form-control" value="<%= today %>" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">Kota</label>
+              <input type="text" name="kota" class="form-control" value="Palopo" required>
+            </div>
+          </div>
+          <div class="mb-1">
+            <label class="form-label fw-semibold">Tanggal Rapat Prodi (opsional)</label>
+            <input type="date" name="tanggalRapat" class="form-control">
+            <div class="form-text">Kosongkan jika sama dengan tanggal ditetapkan.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary rounded-pill px-4">
+            <i class="bi bi-printer me-1"></i> Buat &amp; Cetak SK
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('modalRilis').addEventListener('show.bs.modal', function (event) {
+    const btn = event.relatedTarget;
+    document.getElementById('inputDosenId').value = btn.getAttribute('data-dosen-id');
+    document.getElementById('namaDosenModal').textContent = btn.getAttribute('data-dosen-nama');
+  });
+</script>
+
+<%- include('../../partials/footer') %>

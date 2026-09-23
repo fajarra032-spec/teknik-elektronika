@@ -16,6 +16,7 @@ const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif } = require('../../helpers/nilaiHelper');
+const academicHelper = require('../../helpers/academicHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -154,6 +155,28 @@ router.get('/my-rps', async (req, res) => {
 });
 
 // ============================================================================
+// RPS PER PERIODE - supaya RPS bisa berbeda tiap semester tanpa menimpa
+// riwayat RPS semester sebelumnya. Disimpan di subcollection
+// mataKuliah/{id}/rpsPeriode/{periodeId}. Field mk.rpsUrl tetap disinkronkan
+// mengikuti periode AKTIF, supaya halaman lain yang membaca mk.rpsUrl
+// (daftar admin, halaman publik dokumen, dll) tidak perlu diubah.
+// ============================================================================
+async function getRpsUntukPeriode(mkId, periodeId, fallbackUrl) {
+  const doc = await db.collection('mataKuliah').doc(mkId).collection('rpsPeriode').doc(periodeId).get();
+  if (doc.exists) return doc.data();
+  const activePeriodeId = academicHelper.getActivePeriodeId();
+  if (periodeId === activePeriodeId && fallbackUrl) {
+    return { fileUrl: fallbackUrl, fileNama: null, uploadedAt: null };
+  }
+  return null;
+}
+
+async function getRiwayatRps(mkId) {
+  const snap = await db.collection('mataKuliah').doc(mkId).collection('rpsPeriode').orderBy('urutan', 'desc').get();
+  return snap.docs.map(doc => doc.data());
+}
+
+// ============================================================================
 // HANDLER UPLOAD RPS (digunakan oleh dua route)
 // ============================================================================
 async function handleUploadRps(req, res, mkId) {
@@ -167,16 +190,34 @@ async function handleUploadRps(req, res, mkId) {
     }
     if (!req.file) return res.status(400).send('File RPS tidak ditemukan');
 
+    const periodeId = req.body.periodeId || academicHelper.getActivePeriodeId();
+    const periodeOptions = academicHelper.generatePeriodeOptions(50, 5);
+    const info = periodeOptions.find(p => p.id === periodeId);
+
     const folderId = await getRpsFolder(mkData.kode);
-    const fileName = `RPS_${mkData.kode}.pdf`;
+    const fileName = `RPS_${mkData.kode}_${periodeId}.pdf`;
     const fileMetadata = { name: fileName, parents: [folderId] };
     const media = { mimeType: req.file.mimetype, body: Readable.from(req.file.buffer) };
     const response = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
     await drive.permissions.create({ fileId: response.data.id, requestBody: { role: 'reader', type: 'anyone' } });
     const fileUrl = `https://drive.google.com/uc?export=view&id=${response.data.id}`;
 
-    await db.collection('mataKuliah').doc(mkId).update({ rpsUrl: fileUrl, updatedAt: new Date().toISOString() });
-    res.redirect(`/dosen/kurikulum/${mkId}`);
+    await db.collection('mataKuliah').doc(mkId).collection('rpsPeriode').doc(periodeId).set({
+      periodeId,
+      label: info ? info.label : periodeId,
+      urutan: info ? info.urutan : 0,
+      fileUrl,
+      fileNama: req.file.originalname,
+      uploadedAt: new Date().toISOString()
+    }, { merge: true });
+
+    // Sinkronkan ke field utama hanya kalau ini periode yang sedang berjalan
+    const activePeriodeId = academicHelper.getActivePeriodeId();
+    if (periodeId === activePeriodeId) {
+      await db.collection('mataKuliah').doc(mkId).update({ rpsUrl: fileUrl, updatedAt: new Date().toISOString() });
+    }
+
+    res.redirect(`/dosen/kurikulum/${mkId}?periode=${periodeId}`);
   } catch (error) {
     console.error('Error upload RPS:', error);
     res.status(500).send('Gagal mengupload RPS');
@@ -323,6 +364,13 @@ router.get('/:id', async (req, res) => {
         .map(doc => ({ id: doc.id, judul: doc.data().judul, deadline: doc.data().deadline, tipe: doc.data().tipe }));
     } catch (err) { console.error('Gagal ambil tugas:', err.message); }
 
+    // RPS per periode (dropdown)
+    const periodeOptions = academicHelper.generatePeriodeOptions();
+    const activePeriodeId = academicHelper.getActivePeriodeId();
+    const selectedPeriodeId = req.query.periode || activePeriodeId;
+    const rpsSelected = await getRpsUntukPeriode(mk.id, selectedPeriodeId, mk.rpsUrl);
+    const rpsHistori = await getRiwayatRps(mk.id);
+
     res.render('dosen/kurikulum/detail', {
       title: `Detail MK - ${mk.kode} ${mk.nama}`,
       mk,
@@ -331,7 +379,12 @@ router.get('/:id', async (req, res) => {
       terlaksana,
       persentase,
       mahasiswaList,
-      tugasList
+      tugasList,
+      periodeOptions,
+      activePeriodeId,
+      selectedPeriodeId,
+      rpsSelected,
+      rpsHistori
     });
   } catch (error) {
     console.error('Error memuat detail MK:', error);
