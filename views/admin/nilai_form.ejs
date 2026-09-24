@@ -199,7 +199,12 @@
                   <% if (g.belumAdaNilai) { %>
                     <td class="fw-bold"><em>Belum Ada Nilai</em></td>
                     <td><small class="text-muted">-</small></td>
-                    <td><small class="text-muted">Belum bisa diedit di sini - input lewat Rubrik dosen</small></td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-outline-success"
+                        onclick="mulaiEdit('<%= g.kodeMk %>', '<%= (g.namaMk || '').replace(/'/g, "\\'") %>', <%= g.sks %>, '', '<%= g.semester %>')">
+                        <i class="bi bi-plus-lg"></i> Input Nilai
+                      </button>
+                    </td>
                   <% } else { %>
                     <td class="fw-bold <%= g.nilai >= 80 ? 'text-success' : (g.nilai >= 60 ? 'text-warning' : 'text-danger') %>">
                       <%= g.nilai %>
