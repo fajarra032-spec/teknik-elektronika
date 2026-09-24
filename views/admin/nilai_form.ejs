@@ -73,6 +73,46 @@
     font-size: 1.8rem;
     font-weight: 600;
   }
+  .cetak-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.9rem;
+    padding: 1.1rem 1.25rem;
+    height: 100%;
+  }
+  .cetak-box h6 {
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.15rem;
+  }
+  .cetak-box .cetak-desc {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin-bottom: 0.75rem;
+  }
+  .btn-cetak {
+    background: linear-gradient(135deg, #2193b0, #6dd5ed);
+    border: none;
+    color: white;
+    font-weight: 500;
+    padding: 0.45rem 1.1rem;
+    border-radius: 50px;
+    white-space: nowrap;
+    transition: all 0.3s;
+  }
+  .btn-cetak:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(33,147,176,0.3);
+    color: white;
+  }
+  .btn-cetak:disabled { opacity: 0.5; cursor: not-allowed; }
+  .stat-chip {
+    background: rgba(255,255,255,0.2);
+    border-radius: 50px;
+    padding: 0.25rem 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
 </style>
 
 <div class="container-fluid mt-4">
@@ -103,6 +143,65 @@
       <i class="bi bi-exclamation-triangle-fill me-1"></i> <%= error %>
     </div>
   <% } %>
+  <!-- Cetak Transkrip & KHS -->
+  <% const _semCetak = (typeof semesterCetak !== 'undefined' && Array.isArray(semesterCetak)) ? semesterCetak : []; %>
+  <div class="form-card mb-4">
+    <div class="form-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <h3><i class="bi bi-printer me-2"></i>Cetak Transkrip &amp; KHS</h3>
+      <% if (typeof ipk !== 'undefined') { %>
+        <div class="d-flex gap-2">
+          <span class="stat-chip">IPK <%= ipk %></span>
+          <span class="stat-chip"><%= typeof totalSKS !== 'undefined' ? totalSKS : 0 %> SKS</span>
+        </div>
+      <% } %>
+    </div>
+    <div class="form-body">
+      <% if (_semCetak.length === 0) { %>
+        <p class="text-muted mb-0">
+          <i class="bi bi-info-circle me-1"></i>
+          Belum ada data nilai/semester untuk mahasiswa ini, jadi transkrip dan KHS belum bisa dicetak.
+        </p>
+      <% } else { %>
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="cetak-box">
+              <h6><i class="bi bi-file-earmark-text me-1"></i>Transkrip Nilai</h6>
+              <div class="cetak-desc">Kumulatif dari semester 1 sampai semester yang dipilih.</div>
+              <div class="d-flex flex-wrap gap-2 align-items-center">
+                <label for="cetakTranskripSem" class="form-label mb-0 fw-semibold small">s.d. Semester</label>
+                <select id="cetakTranskripSem" class="form-select form-select-sm w-auto flex-grow-1">
+                  <% _semCetak.forEach((s, i) => { %>
+                    <option value="<%= s %>"<%= i === _semCetak.length - 1 ? ' selected' : '' %>><%= s %></option>
+                  <% }) %>
+                </select>
+                <button type="button" class="btn-cetak" onclick="bukaCetak('transkrip', 'cetakTranskripSem')">
+                  <i class="bi bi-printer-fill me-1"></i>Cetak Transkrip
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="cetak-box">
+              <h6><i class="bi bi-card-checklist me-1"></i>Kartu Hasil Studi (KHS)</h6>
+              <div class="cetak-desc">Nilai satu semester beserta IPS dan IPK sampai semester tersebut.</div>
+              <div class="d-flex flex-wrap gap-2 align-items-center">
+                <label for="cetakKhsSem" class="form-label mb-0 fw-semibold small">Semester</label>
+                <select id="cetakKhsSem" class="form-select form-select-sm w-auto flex-grow-1">
+                  <% _semCetak.forEach((s, i) => { %>
+                    <option value="<%= s %>"<%= i === _semCetak.length - 1 ? ' selected' : '' %>><%= s %></option>
+                  <% }) %>
+                </select>
+                <button type="button" class="btn-cetak" onclick="bukaCetak('khs', 'cetakKhsSem')">
+                  <i class="bi bi-printer-fill me-1"></i>Cetak KHS
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
   <div class="form-card">
     <div class="form-header">
       <h3 id="formTitle"><i class="bi bi-pencil-square me-2"></i>Tambah Nilai Baru</h3>
@@ -228,13 +327,23 @@
 
   <!-- Tombol Kembali -->
   <div class="mt-4">
-    <a href="/admin/nilai/list" class="btn-outline-gradient">
+    <a href="/admin/mahasiswa" class="btn-outline-gradient">
       <i class="bi bi-arrow-left me-2"></i>Kembali ke Daftar Mahasiswa
     </a>
   </div>
 </div>
 
 <script>
+  // Buka dokumen cetak (transkrip / KHS) di tab baru. Halaman cetaknya
+  // langsung memunculkan dialog print begitu selesai dimuat. Label semester
+  // (mis. "Ganjil 2025/2026") dikirim lewat query string + encodeURIComponent.
+  function bukaCetak(jenis, selectId) {
+    var sem = document.getElementById(selectId).value;
+    var url = '/admin/nilai/mahasiswa/<%= encodeURIComponent(mahasiswa.id) %>/' + jenis + '/cetak' +
+      (sem ? '?semester=' + encodeURIComponent(sem) : '');
+    window.open(url, '_blank');
+  }
+
   // Mengisi otomatis nama MK dan SKS saat memilih kode MK
   document.getElementById('kodeMk').addEventListener('change', function() {
     const selected = this.options[this.selectedIndex];

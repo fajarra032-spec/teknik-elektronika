@@ -252,7 +252,7 @@
   <div class="container-fluid px-4 py-3">
 
     <div class="toolbar-cetak mb-4 border-bottom pb-3 print-btn">
-      <a href="/mahasiswa/akademik/transkrip<%= semesterDipilih ? '?semester=' + encodeURIComponent(semesterDipilih) : '' %>" class="btn-pill-outline back-btn">
+      <a href="<%= (typeof backUrl !== 'undefined' && backUrl) ? backUrl : ('/mahasiswa/akademik/transkrip' + (semesterDipilih ? '?semester=' + encodeURIComponent(semesterDipilih) : '')) %>" class="btn-pill-outline back-btn">
         <i class="bi bi-arrow-left"></i> Kembali
       </a>
       <button onclick="fitTranskripKeF4(); window.print();" class="btn-pill-gradient print-btn">

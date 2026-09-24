@@ -10,6 +10,7 @@ const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { saveGradeFinal, getTranskripMahasiswa, getPeriodeAktif, getHasilRubrikSemuaMahasiswa, getHasilRubrikSatuMahasiswa, getRincianTugasByMkId, saveKomponenRubrik, saveNilai, TIPE_RUBRIK_KOMPONEN } = require('../../helpers/nilaiHelper');
 const { getAllMataKuliah } = require('../../helpers/cache');
+const { getAngkatanFromNim } = require('../../helpers/academicHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -75,7 +76,7 @@ router.get('/mahasiswa/:userId/tambah', async (req, res) => {
 
     const courses = await getAllMataKuliah(db);
 
-    const { items, perSemester } = await getTranskripMahasiswa(req.params.userId);
+    const { items, perSemester, ipk, totalSKS } = await getTranskripMahasiswa(req.params.userId);
 
     // Daftar semester untuk dropdown - gabungan semester yang sudah pernah
     // dipakai mahasiswa ini (dari KRS/enrollment/nilai) + periode aktif saat
@@ -93,6 +94,9 @@ router.get('/mahasiswa/:userId/tambah', async (req, res) => {
       courses,
       grades: items,
       semesterOptions,
+      semesterCetak: perSemester.map(s => s.semester),
+      ipk,
+      totalSKS,
       success: req.query.success
     });
   } catch (error) {
@@ -115,7 +119,7 @@ router.post('/', async (req, res) => {
     console.error('Error menyimpan nilai akhir:', error);
     const mahasiswa = await getMahasiswaById(userId);
     const courses = await getAllMataKuliah(db);
-    const { items, perSemester } = await getTranskripMahasiswa(userId);
+    const { items, perSemester, ipk, totalSKS } = await getTranskripMahasiswa(userId);
     const semesterSet = new Set(perSemester.map(s => s.semester));
     semesterSet.add(getPeriodeAktif());
     res.status(400).render('admin/nilai_form', {
@@ -124,8 +128,132 @@ router.post('/', async (req, res) => {
       courses,
       grades: items,
       semesterOptions: Array.from(semesterSet).sort(),
+      semesterCetak: perSemester.map(s => s.semester),
+      ipk,
+      totalSKS,
       error: error.message
     });
+  }
+});
+
+// ============================================================================
+// CETAK TRANSKRIP & KHS PER MAHASISWA (dibuka dari halaman Input Nilai)
+// Memakai ulang view cetak mahasiswa (views/mahasiswa/transkrip_print.ejs &
+// views/mahasiswa/khs_detail.ejs) - bedanya cuma `user` diisi data mahasiswa
+// yang dipilih admin (bukan req.user) dan tombol "Kembali" diarahkan lagi
+// ke halaman Input Nilai lewat `backUrl`. Data tetap dari
+// getTranskripMahasiswa() yang sama dengan yang dipakai sisi mahasiswa,
+// jadi angka di dokumen cetak admin pasti identik dengan yang dilihat mahasiswa.
+// Rute ini didaftarkan SEBELUM '/:mkId' supaya tidak tertelan rute itu.
+// ============================================================================
+
+/**
+ * Ambil data mahasiswa untuk dokumen cetak. null kalau tidak ada.
+ */
+async function getMahasiswaUntukCetak(userId) {
+  const doc = await db.collection('users').doc(userId).get();
+  return doc.exists ? { id: userId, ...doc.data() } : null;
+}
+
+/**
+ * GET /admin/nilai/mahasiswa/:userId/transkrip/cetak?semester=...
+ * Transkrip kumulatif dari semester 1 s.d. semester yang dipilih
+ * (default: semester terbaru yang punya data).
+ */
+router.get('/mahasiswa/:userId/transkrip/cetak', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const mahasiswa = await getMahasiswaUntukCetak(userId);
+    if (!mahasiswa) {
+      return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Mahasiswa tidak ditemukan' });
+    }
+
+    const { perSemester, items, ipk: ipkTotal, totalSKS: totalSKSTotal } = await getTranskripMahasiswa(userId);
+    const semesterList = perSemester.map(s => s.semester);
+    const semesterDipilih = (req.query.semester && semesterList.includes(req.query.semester))
+      ? req.query.semester
+      : (semesterList.length > 0 ? semesterList[semesterList.length - 1] : null);
+
+    let grades = items;
+    let ipk = ipkTotal;
+    let totalSKS = totalSKSTotal;
+    let totalSksIndeks = perSemester.reduce((sum, s) => sum + (s.totalSksIndeks || 0), 0);
+
+    if (semesterDipilih) {
+      const idx = semesterList.indexOf(semesterDipilih);
+      const sampaiSemesterIni = perSemester.slice(0, idx + 1);
+      grades = sampaiSemesterIni.flatMap(s => s.matkul);
+      let sksKum = 0, bobotKum = 0;
+      sampaiSemesterIni.forEach(s => { sksKum += s.totalSKS; bobotKum += s.totalSksIndeks; });
+      totalSKS = sksKum;
+      totalSksIndeks = bobotKum;
+      ipk = sksKum > 0 ? (bobotKum / sksKum).toFixed(2) : '0.00';
+    }
+
+    res.render('mahasiswa/transkrip_print', {
+      title: `Transkrip - ${mahasiswa.nama || mahasiswa.id}`,
+      user: mahasiswa,
+      angkatan: getAngkatanFromNim(mahasiswa.nim),
+      grades, ipk, totalSKS, totalSksIndeks,
+      semesterList, semesterDipilih,
+      backUrl: `/admin/nilai/mahasiswa/${encodeURIComponent(userId)}/tambah`
+    });
+  } catch (error) {
+    console.error('Error cetak transkrip (admin):', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat transkrip: ' + error.message });
+  }
+});
+
+/**
+ * GET /admin/nilai/mahasiswa/:userId/khs/cetak?semester=...
+ * KHS satu semester (default: semester terbaru yang punya data).
+ * Label semester dikirim lewat query string (bukan segmen path) karena
+ * mengandung spasi & slash, mis. "Ganjil 2025/2026".
+ */
+router.get('/mahasiswa/:userId/khs/cetak', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const mahasiswa = await getMahasiswaUntukCetak(userId);
+    if (!mahasiswa) {
+      return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Mahasiswa tidak ditemukan' });
+    }
+
+    const { perSemester, ipk, totalSKS } = await getTranskripMahasiswa(userId);
+    if (perSemester.length === 0) {
+      return res.status(404).render('error', {
+        title: 'Tidak Ditemukan',
+        message: `Belum ada data nilai untuk ${mahasiswa.nama || 'mahasiswa ini'}, KHS belum bisa dicetak`
+      });
+    }
+
+    const semesterLabel = req.query.semester || perSemester[perSemester.length - 1].semester;
+    const idx = perSemester.findIndex(s => s.semester === semesterLabel);
+    if (idx === -1) {
+      return res.status(404).render('error', {
+        title: 'Tidak Ditemukan',
+        message: `Belum ada data nilai untuk ${mahasiswa.nama || 'mahasiswa ini'} pada semester "${semesterLabel}"`
+      });
+    }
+    const khs = perSemester[idx];
+
+    // SKS & IPK kumulatif "s.d. semester ini"
+    let sksKum = 0, bobotKum = 0;
+    perSemester.slice(0, idx + 1).forEach(s => { sksKum += s.totalSKS; bobotKum += s.totalSksIndeks; });
+    const ipkSampaiSemesterIni = sksKum > 0 ? (bobotKum / sksKum).toFixed(2) : '0.00';
+
+    res.render('mahasiswa/khs_detail', {
+      title: `KHS - ${mahasiswa.nama || mahasiswa.id} - ${semesterLabel}`,
+      user: mahasiswa,
+      khs,
+      ipkSampaiSemesterIni,
+      sksKumulatif: sksKum,
+      ipkAkhir: ipk,
+      totalSKSAkhir: totalSKS,
+      backUrl: `/admin/nilai/mahasiswa/${encodeURIComponent(userId)}/tambah`
+    });
+  } catch (error) {
+    console.error('Error cetak KHS (admin):', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat KHS: ' + error.message });
   }
 });
 
