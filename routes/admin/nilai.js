@@ -49,10 +49,63 @@ async function getMahasiswaById(uid) {
  */
 router.get('/', async (req, res) => {
   try {
-    const mkList = await getAllMataKuliah(db);
+    // Data MK diambil dari cache (helpers/cache.js, TTL 10 menit, otomatis
+    // di-invalidate saat CRUD di routes/admin/matakuliah.js), lalu difilter
+    // dan dipaginasi di memori => 0 read Firestore tambahan per halaman/search.
+    const PAGE_SIZE = 10; // sama dengan halaman Kelola Mahasiswa
+    const semuaMk = await getAllMataKuliah(db);
+
+    const search = String(req.query.search || '').trim();
+    const semester = String(req.query.semester || '').trim();
+    const showAll = req.query.all === '1';
+    const q = search.toLowerCase();
+
+    const filtered = semuaMk.filter(mk => {
+      if (semester && String(mk.semester || '') !== semester) return false;
+      if (q) {
+        const teks = `${mk.kode || ''} ${mk.nama || ''}`.toLowerCase();
+        if (!teks.includes(q)) return false;
+      }
+      return true;
+    });
+
+    const total = filtered.length;
+    const buildUrl = (params) => {
+      const usp = new URLSearchParams();
+      if (search) usp.set('search', search);
+      if (semester) usp.set('semester', semester);
+      Object.entries(params).forEach(([k, v]) => usp.set(k, v));
+      return `/admin/nilai?${usp.toString()}`;
+    };
+
+    let mkList = filtered;
+    let pageInfo = null;
+    if (!showAll) {
+      const maxPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      const page = Math.min(maxPage, Math.max(1, parseInt(req.query.page, 10) || 1));
+      const start = (page - 1) * PAGE_SIZE;
+      mkList = filtered.slice(start, start + PAGE_SIZE);
+      const hasPrev = page > 1;
+      const hasNext = start + PAGE_SIZE < total;
+      pageInfo = {
+        hasPrev,
+        hasNext,
+        prevUrl: hasPrev ? buildUrl({ page: page - 1 }) : null,
+        nextUrl: hasNext ? buildUrl({ page: page + 1 }) : null,
+        allUrl: buildUrl({ all: '1' }),
+        count: mkList.length,
+        total
+      };
+    }
+
     res.render('admin/nilai_list', {
       title: 'Rekap Nilai',
-      mkList
+      mkList,
+      totalMk: total,
+      pageInfo,
+      showAll,
+      pageListUrl: buildUrl({ page: 1 }),
+      filters: { search, semester }
     });
   } catch (error) {
     console.error('Error mengambil MK:', error);

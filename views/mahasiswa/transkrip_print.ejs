@@ -7,103 +7,103 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
   <style>
-    /* Kertas F4/Folio (ukuran umum di Indonesia) dengan margin proporsional.
-       Isi transkrip dipaksa muat 1 halaman lewat JS (lihat #cetak-scale +
-       script di bawah) - bukan cuma mengandalkan ukuran kertas saja, karena
-       jumlah mata kuliah/semester tiap mahasiswa beda-beda. */
+    /* =========================================================
+       KERTAS A4 — margin dipindah ke padding .preview-paper
+       supaya bisa dikunci 1 halaman (tidak spill ke page 2)
+       ========================================================= */
     @page {
-      size: 215mm 330mm;
-      margin: 1.2cm;
+      size: A4;
+      margin: 0;
     }
 
+    * { box-sizing: border-box; }
+
     body {
-      font-family: Arial, Helvetica, sans-serif;
-      color: #000;
+      font-family: 'Times New Roman', Times, serif;
+      color: #111;
       background-color: #fff;
-      font-size: 9.5pt;
+      font-size: 10pt;
+      line-height: 1.4;
       -webkit-tap-highlight-color: transparent;
       -webkit-font-smoothing: antialiased;
     }
 
-    .print-btn, .back-btn {
-      margin: 20px 5px;
-      font-family: Arial, sans-serif;
-    }
-
-    /* === KOP SURAT === */
+    /* ================= KOP SURAT ================= */
     .kop-surat {
       display: flex;
       align-items: center;
-      margin-bottom: 10px;
+      gap: 16px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
       border-bottom: 3px double #000;
-      padding-bottom: 6px;
     }
-    .logo-kop {
-      width: 85px;
-      height: auto;
-      margin-right: 18px;
-    }
+    .logo-kop { width: 74px; height: auto; flex: 0 0 auto; }
     .teks-kop {
       flex: 1;
+      font-family: Arial, Helvetica, sans-serif;
+      text-align: left;
+      line-height: 1.28;
+      padding-left: 4px;
     }
     .teks-kop .nama-kampus {
-      font-size: 24pt;
+      font-size: 17pt;
       font-weight: bold;
-      margin: 0;
-      color: #3b60a3;
-      letter-spacing: 0.5px;
+      margin: 0 0 3px;
+      color: #2b4d8f;
+      letter-spacing: .5px;
+      text-transform: uppercase;
     }
-    .teks-kop .alamat, .teks-kop .kontak {
-      font-size: 10pt;
-      margin: 2px 0;
-      color: #333;
-    }
+    .teks-kop .alamat,
+    .teks-kop .kontak { font-size: 9pt; margin: 0; color: #333; }
+    .teks-kop .kontak { margin-top: 2px; }
 
-    /* === JUDUL DOKUMEN === */
+    /* ================= JUDUL DOKUMEN ================= */
     .judul-dokumen {
       text-align: center;
-      margin: 12px 0 12px 0;
+      margin: 12px 0 14px;
     }
     .judul-dokumen h3 {
-      font-size: 15pt;
+      font-size: 13pt;
       font-weight: bold;
       text-decoration: underline;
+      letter-spacing: .8px;
       margin: 0;
     }
     .judul-dokumen .subjudul {
-      font-size: 10.5pt;
+      font-size: 9.5pt;
       font-style: italic;
+      letter-spacing: .5px;
       margin-top: 2px;
+      color: #444;
     }
 
-    /* === INFO MAHASISWA (1 kolom, seperti Surat Tugas/Undangan) === */
+    /* ================= INFO MAHASISWA ================= */
     .info-mahasiswa {
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      font-size: 9.5pt;
     }
-    .info-mahasiswa table {
-      border-collapse: collapse;
-    }
+    .info-mahasiswa table { border-collapse: collapse; }
     .info-mahasiswa td {
       padding: 2px 8px 2px 0;
       vertical-align: top;
     }
     .info-mahasiswa .label {
-      width: 195px;
+      width: 175px;
       font-weight: bold;
       white-space: nowrap;
     }
-    .info-mahasiswa .titik-dua {
-      width: 15px;
-    }
+    .info-mahasiswa .titik-dua { width: 14px; }
+    .info-mahasiswa .nilai { white-space: nowrap; }
 
-    /* === TABEL NILAI === */
+    /* ================= TABEL NILAI ================= */
     .table-transkrip {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 12px;
-      font-size: 9pt;
+      margin-bottom: 10px;
+      font-size: 8.5pt;
     }
-    .table-transkrip th, .table-transkrip td {
+    .table-transkrip th,
+    .table-transkrip td {
       border: 1px solid #000;
       padding: 4px 6px;
       vertical-align: middle;
@@ -112,47 +112,47 @@
       text-align: center;
       font-weight: bold;
       background-color: #f2f2f2;
+      letter-spacing: .2px;
     }
-    .table-transkrip td.center {
-      text-align: center;
-    }
+    .table-transkrip td.center { text-align: center; }
+    .table-transkrip tfoot td { background-color: #f8fafc; }
 
-    tr {
-      page-break-inside: avoid;
-    }
-    thead {
-      display: table-header-group;
-    }
-    tfoot {
-      display: table-row-group;
-    }
+    tr { page-break-inside: avoid; }
+    thead { display: table-header-group; }
+    tfoot { display: table-row-group; }
 
-    /* === BARIS IPK (di bawah tabel, gabung dgn baris Jumlah) === */
+    /* ================= BARIS IPK ================= */
     .baris-ipk td {
       border: 1px solid #000;
       padding: 5px 8px;
       font-weight: bold;
+      background-color: #f8fafc;
     }
 
-    /* === TANDA TANGAN === */
+    /* ================= TANDA TANGAN ================= */
     .tanda-tangan-wrapper {
       display: flex;
       justify-content: flex-end;
-      margin-top: 20px;
+      margin-top: 16px;
+      break-inside: avoid;
     }
     .tanda-tangan {
-      width: 300px;
+      width: 280px;
       text-align: left;
+      font-size: 9.5pt;
     }
-    .area-ttd {
+    .tanda-tangan .info-ttd {
+      margin: 0;
       position: relative;
-      height: 45px;
+      z-index: 1;
+      line-height: 1.45;
     }
+    .area-ttd { position: relative; height: 42px; }
     .img-ttd {
       position: absolute;
-      top: -50px;
+      top: -46px;
       left: -15px;
-      height: 150px;
+      height: 130px;
       width: auto;
       z-index: 10;
       mix-blend-mode: multiply;
@@ -160,33 +160,210 @@
     .nama-ttd {
       font-weight: bold;
       text-decoration: underline;
-      margin-bottom: 0;
+      margin: 0;
       position: relative;
       z-index: 1;
+      letter-spacing: .3px;
     }
-    .nip-ttd {
-      margin-top: 0;
+    .nip-ttd { margin: 2px 0 0; }
+
+    /* =========================================================
+       FOOTER DOKUMEN RESMI
+       ========================================================= */
+    .dokumen-footer {
+      margin-top: 22px;
+      padding-top: 8px;
+      border-top: 1px dashed #999;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 7.5pt;
+      color: #555;
+      line-height: 1.4;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      break-inside: avoid;
+    }
+    .dokumen-footer .footer-left { flex: 1; min-width: 0; }
+    .dokumen-footer .footer-left .baris-1 {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+      color: #1e3a8a;
+      margin-bottom: 2px;
+    }
+    .dokumen-footer .footer-left .baris-1 .check {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #1e3a8a;
+      color: #fff;
+      font-size: 7pt;
+      line-height: 1;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+    .dokumen-footer .footer-left .baris-2 { color: #444; margin-bottom: 1px; }
+    .dokumen-footer .footer-left .baris-2 em {
+      font-style: italic; color: #1e3a8a; font-weight: 600;
+    }
+    .dokumen-footer .footer-left .baris-3 { color: #666; font-style: italic; }
+    .dokumen-footer .footer-right {
+      text-align: right;
+      flex-shrink: 0;
+      font-size: 7pt;
+      color: #666;
+      line-height: 1.45;
+    }
+    .dokumen-footer .footer-right .kode {
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      color: #1e3a8a;
+      letter-spacing: .5px;
+      font-size: 7.5pt;
     }
 
-    /* === PENGATURAN CETAK (PRINT) === */
+    /* =========================================================
+       PREVIEW BAR + PAPER
+       ========================================================= */
+    .preview-section {
+      max-width: 21cm;
+      margin: 2rem auto 2rem;
+    }
+    .preview-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: .75rem;
+      margin-bottom: 1rem;
+      padding-bottom: .75rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .preview-header-bar h5 {
+      margin: 0;
+      font-weight: 600;
+      color: #1e3a8a;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-family: Arial, sans-serif;
+    }
+    .preview-header-bar .btn-ghost {
+      background: transparent;
+      border: 2px solid #1e3a8a;
+      color: #1e3a8a;
+      border-radius: 50px;
+      padding: .4rem 1.1rem;
+      font-weight: 600;
+      font-size: .85rem;
+      transition: all .3s;
+      font-family: Arial, sans-serif;
+      cursor: pointer;
+    }
+    .preview-header-bar .btn-ghost:hover {
+      background: #1e3a8a;
+      color: #fff;
+    }
+    .preview-header-bar .btn-ghost.primary {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      border: none;
+      color: #fff;
+      box-shadow: 0 5px 15px rgba(30,58,138,0.25);
+    }
+    .preview-header-bar .btn-ghost.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(30,58,138,0.35);
+    }
+
+    /* Kertas preview = 210mm x 297mm, padding dalam 1cm 2cm */
+    .preview-paper {
+      background: #fff;
+      width: 210mm;
+      height: 297mm;
+      padding: 1cm 2cm;
+      margin: 0 auto;
+      box-shadow: 0 6px 24px rgba(15, 23, 42, 0.12);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    /* ================= PRINT ================= */
     @media print {
-      body {
-        margin: 0;
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 210mm;
+        height: 297mm;
+        overflow: hidden !important;
+        background: #fff !important;
       }
-      .btn, .print-btn, .back-btn {
+
+      /* Semua wrapper luar: hilangkan padding/margin/overflow */
+      .container-fluid,
+      .container,
+      .preview-section,
+      #previewWrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: none !important;
+        width: auto !important;
+        overflow: visible !important;
+      }
+
+      .toolbar-cetak,
+      .preview-header-bar,
+      .btn, .print-btn, .back-btn,
+      header, footer, nav {
         display: none !important;
       }
-      .table-transkrip th, .baris-ipk td {
+
+      /* Kunci kertas = 1 halaman A4 */
+      .preview-paper {
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 1cm 2cm !important;   /* margin cetak */
+        border-radius: 0 !important;
+        width: 210mm !important;
+        height: 297mm !important;
+        overflow: hidden !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+
+      .table-transkrip th,
+      .table-transkrip tfoot td,
+      .baris-ipk td,
+      .img-ttd,
+      .dokumen-footer .footer-left .baris-1 .check {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
-      .img-ttd {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+
+      #cetak-scale {
+        /* Konten di-scale oleh JS */
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      /* Cegah halaman kosong kedua */
+      .preview-section::after,
+      #previewWrapper::after,
+      .preview-paper::after {
+        content: none !important;
+        display: none !important;
       }
     }
 
-    /* ===== Toolbar layar (tidak ikut tercetak) - konsisten dengan tombol pill di halaman lain ===== */
+    /* ================= TOOLBAR LAYAR ================= */
     .toolbar-cetak {
       display: flex;
       justify-content: space-between;
@@ -213,217 +390,275 @@
       border-color: transparent;
       color: white;
     }
-    .btn-pill-gradient {
-      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-      border: none;
-      color: white;
-      font-weight: 600;
-      padding: 0.5rem 1.5rem;
-      border-radius: 50px;
-      font-size: 0.9rem;
-      transition: all 0.3s;
-      box-shadow: 0 5px 15px rgba(30,58,138,0.25);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .btn-pill-gradient:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(30,58,138,0.35);
-      color: white;
-    }
 
-    /* Wrapper yang di-scale (zoom) otomatis lewat JS supaya seluruh isi
-       transkrip DIPAKSA muat dalam 1 halaman F4, tidak meluber ke halaman
-       ke-2, berapa pun jumlah mata kuliah/semesternya. `zoom` dipakai
-       (bukan transform:scale) karena `zoom` benar-benar mengubah ukuran
-       tata letak (layout box), sehingga ikut mempengaruhi perhitungan
-       page-break saat cetak - transform:scale tidak begitu (ruang
-       kosongnya tetap tercadang seukuran asli, bisa memicu halaman ke-2
-       kosong walau isinya kelihatan sudah mengecil).
-       transform-origin dipasang sebagai fallback untuk browser yang
-       tidak mendukung `zoom` (mis. Firefox). */
-    #cetak-scale {
-      transform-origin: top left;
+    #cetak-scale { transform-origin: top left; }
+
+    /* responsif */
+    @media (max-width: 768px) {
+      .preview-paper { width: 100%; height: auto; min-height: 29.7cm; padding: 1cm 1.2cm; }
+      .preview-header-bar h5 { font-size: 1rem; }
+      .dokumen-footer { flex-direction: column; align-items: flex-start; }
+      .dokumen-footer .footer-right { text-align: left; }
+    }
+    @media (max-width: 576px) {
+      .preview-paper { padding: .8cm .9cm; }
+      .preview-header-bar { flex-direction: column; align-items: stretch; }
+      .preview-header-bar .d-flex { flex-direction: column; }
+      .preview-header-bar .btn-ghost { width: 100%; justify-content: center; }
     }
   </style>
 </head>
 <body>
   <div class="container-fluid px-4 py-3">
 
+    <!-- ===== TOOLBAR ATAS ===== -->
     <div class="toolbar-cetak mb-4 border-bottom pb-3 print-btn">
       <a href="<%= (typeof backUrl !== 'undefined' && backUrl) ? backUrl : ('/mahasiswa/akademik/transkrip' + (semesterDipilih ? '?semester=' + encodeURIComponent(semesterDipilih) : '')) %>" class="btn-pill-outline back-btn">
         <i class="bi bi-arrow-left"></i> Kembali
       </a>
-      <button onclick="fitTranskripKeF4(); window.print();" class="btn-pill-gradient print-btn">
-        <i class="bi bi-printer-fill"></i> Cetak Ulang
-      </button>
     </div>
 
-    <div id="cetak-scale">
+    <!-- ===== PREVIEW SECTION ===== -->
+    <div class="preview-section">
 
-    <%- include('../partials/kop_surat') %>
-
-    <div class="judul-dokumen">
-      <h3>TRANSKRIP AKADEMIK</h3>
-      <div class="subjudul">ACADEMIC TRANSCRIPT</div>
-    </div>
-
-    <div class="info-mahasiswa">
-      <table>
-        <tr>
-          <td class="label">NAMA</td>
-          <td class="titik-dua">:</td>
-          <td><%= user.nama || '-' %></td>
-        </tr>
-        <tr>
-          <td class="label">Tempat, Tanggal Lahir</td>
-          <td class="titik-dua">:</td>
-          <td><%= user.tempatLahir ? (user.tempatLahir + (user.tanggalLahir ? ', ' + user.tanggalLahir : '')) : '-' %></td>
-        </tr>
-        <tr>
-          <td class="label">Nomor Induk Mahasiswa</td>
-          <td class="titik-dua">:</td>
-          <td><%= user.nim || '-' %></td>
-        </tr>
-        <tr>
-          <td class="label">Program Studi</td>
-          <td class="titik-dua">:</td>
-          <td>D3 Teknik Elektronika</td>
-        </tr>
-        <tr>
-          <td class="label">Angkatan</td>
-          <td class="titik-dua">:</td>
-          <td><%= angkatan || '-' %></td>
-        </tr>
-      </table>
-    </div>
-
-    <table class="table-transkrip">
-      <thead>
-        <tr>
-          <th rowspan="2" width="4%">No</th>
-          <th rowspan="2" width="10%">Kode MK</th>
-          <th rowspan="2" width="30%">Mata Kuliah</th>
-          <th rowspan="2" width="8%">Bobot<br>SKS</th>
-          <th colspan="3">Nilai</th>
-          <th rowspan="2" width="9%">SKS<br>Indeks</th>
-        </tr>
-        <tr>
-          <th width="9%">Angka</th>
-          <th width="8%">Huruf</th>
-          <th width="8%">Indeks</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if (grades && grades.length > 0) { %>
-          <% grades.forEach((g, index) => { %>
-          <tr>
-            <td class="center"><%= index + 1 %></td>
-            <td class="center"><%= g.kodeMk || '-' %></td>
-            <td><%= g.namaMk || '-' %></td>
-            <td class="center"><%= typeof g.sks === 'number' ? g.sks.toFixed(2) : '-' %></td>
-            <% if (g.belumAdaNilai) { %>
-              <td class="center" colspan="4" style="font-style: italic; color: #666;">Belum Ada Nilai</td>
-            <% } else { %>
-              <td class="center"><%= g.nilai ?? '-' %></td>
-              <td class="center"><%= g.huruf || '-' %></td>
-              <td class="center"><%= typeof g.indeks === 'number' ? g.indeks.toFixed(1) : '-' %></td>
-              <td class="center"><%= typeof g.sksIndeks === 'number' ? g.sksIndeks.toFixed(2) : '-' %></td>
-            <% } %>
-          </tr>
-          <% }) %>
-        <% } else { %>
-          <tr>
-            <td colspan="8" style="text-align: center; font-style: italic; padding: 15px;">Belum ada nilai yang tercatat.</td>
-          </tr>
-        <% } %>
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="3" style="text-align: right; font-weight: bold;">Jumlah</td>
-          <td class="center" style="font-weight: bold;"><%= totalSKS !== undefined ? totalSKS.toFixed(2) : '-' %></td>
-          <td colspan="3"></td>
-          <td class="center" style="font-weight: bold;"><%= totalSksIndeks !== undefined ? totalSksIndeks.toFixed(2) : '-' %></td>
-        </tr>
-        <tr class="baris-ipk">
-          <td colspan="7" style="text-align: right;">IPK ( Indeks Prestasi Komulatif )</td>
-          <td class="center"><%= ipk !== undefined ? ipk : '-' %></td>
-        </tr>
-      </tfoot>
-    </table>
-
-    <div class="tanda-tangan-wrapper">
-      <div class="tanda-tangan">
-        <p style="position: relative; z-index: 1; margin: 0;">Palopo, <%= new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %><br>Ketua Program Studi Teknik Elektronika</p>
-        <div class="area-ttd">
-          <img src="/images/ttd.png" alt="Tanda Tangan Kaprodi" class="img-ttd">
+      <div class="preview-header-bar">
+        <h5><i class="bi bi-file-earmark-text"></i> Pratinjau Transkrip Akademik</h5>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn-ghost" onclick="togglePreview()" id="btnToggle">
+            <i class="bi bi-eye-slash me-1"></i> Sembunyikan
+          </button>
+          <button type="button" class="btn-ghost primary" onclick="cetakTranskrip()">
+            <i class="bi bi-printer me-1"></i> Cetak Transkrip
+          </button>
         </div>
-        <p class="nama-ttd">Fajar Ramadhan, S.Pd., M.T.</p>
-        <p class="nip-ttd">NUPTK. 8559777678130153</p>
       </div>
-    </div>
 
-    </div><!-- /#cetak-scale -->
+      <div id="previewWrapper">
+        <div class="preview-paper">
+          <div id="cetak-scale">
+
+            <%- include('../partials/kop_surat') %>
+
+            <div class="judul-dokumen">
+              <h3>TRANSKRIP AKADEMIK</h3>
+              <div class="subjudul">ACADEMIC TRANSCRIPT</div>
+            </div>
+
+            <div class="info-mahasiswa">
+              <table>
+                <tr>
+                  <td class="label">NAMA</td>
+                  <td class="titik-dua">:</td>
+                  <td class="nilai"><%= user.nama || '-' %></td>
+                </tr>
+                <tr>
+                  <td class="label">Tempat, Tanggal Lahir</td>
+                  <td class="titik-dua">:</td>
+                  <td class="nilai"><%= user.tempatLahir ? (user.tempatLahir + (user.tanggalLahir ? ', ' + user.tanggalLahir : '')) : '-' %></td>
+                </tr>
+                <tr>
+                  <td class="label">Nomor Induk Mahasiswa</td>
+                  <td class="titik-dua">:</td>
+                  <td class="nilai"><%= user.nim || '-' %></td>
+                </tr>
+                <tr>
+                  <td class="label">Program Studi</td>
+                  <td class="titik-dua">:</td>
+                  <td class="nilai">D3 Teknik Elektronika</td>
+                </tr>
+                <tr>
+                  <td class="label">Angkatan</td>
+                  <td class="titik-dua">:</td>
+                  <td class="nilai"><%= angkatan || '-' %></td>
+                </tr>
+              </table>
+            </div>
+
+            <table class="table-transkrip">
+              <thead>
+                <tr>
+                  <th rowspan="2" width="4%">No</th>
+                  <th rowspan="2" width="10%">Kode MK</th>
+                  <th rowspan="2" width="30%">Mata Kuliah</th>
+                  <th rowspan="2" width="8%">Bobot<br>SKS</th>
+                  <th colspan="3">Nilai</th>
+                  <th rowspan="2" width="9%">SKS<br>Indeks</th>
+                </tr>
+                <tr>
+                  <th width="9%">Angka</th>
+                  <th width="8%">Huruf</th>
+                  <th width="8%">Indeks</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (grades && grades.length > 0) { %>
+                  <% grades.forEach((g, index) => { %>
+                  <tr>
+                    <td class="center"><%= index + 1 %></td>
+                    <td class="center"><%= g.kodeMk || '-' %></td>
+                    <td><%= g.namaMk || '-' %></td>
+                    <td class="center"><%= typeof g.sks === 'number' ? g.sks.toFixed(2) : '-' %></td>
+                    <% if (g.belumAdaNilai) { %>
+                      <td class="center" colspan="4" style="font-style: italic; color: #666;">Belum Ada Nilai</td>
+                    <% } else { %>
+                      <td class="center"><%= g.nilai ?? '-' %></td>
+                      <td class="center"><%= g.huruf || '-' %></td>
+                      <td class="center"><%= typeof g.indeks === 'number' ? g.indeks.toFixed(1) : '-' %></td>
+                      <td class="center"><%= typeof g.sksIndeks === 'number' ? g.sksIndeks.toFixed(2) : '-' %></td>
+                    <% } %>
+                  </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="8" style="text-align: center; font-style: italic; padding: 15px;">Belum ada nilai yang tercatat.</td>
+                  </tr>
+                <% } %>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="3" style="text-align: right; font-weight: bold;">Jumlah</td>
+                  <td class="center" style="font-weight: bold;"><%= totalSKS !== undefined ? totalSKS.toFixed(2) : '-' %></td>
+                  <td colspan="3"></td>
+                  <td class="center" style="font-weight: bold;"><%= totalSksIndeks !== undefined ? totalSksIndeks.toFixed(2) : '-' %></td>
+                </tr>
+                <tr class="baris-ipk">
+                  <td colspan="7" style="text-align: right;">IPK ( Indeks Prestasi Komulatif )</td>
+                  <td class="center"><%= ipk !== undefined ? ipk : '-' %></td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div class="tanda-tangan-wrapper">
+              <div class="tanda-tangan">
+                <p class="info-ttd">
+                  Palopo, <%= new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %><br>
+                  Ketua Program Studi Teknik Elektronika
+                </p>
+                <div class="area-ttd">
+                  <img src="/images/ttd.png" alt="Tanda Tangan Kaprodi" class="img-ttd">
+                </div>
+                <p class="nama-ttd">Fajar Ramadhan, S.Pd., M.T.</p>
+                <p class="nip-ttd">NUPTK. 8559777678130153</p>
+              </div>
+            </div>
+
+            <!-- ===== FOOTER DOKUMEN RESMI ===== -->
+            <div class="dokumen-footer">
+              <div class="footer-left">
+                <div class="baris-1">
+                  <span class="check">✓</span>
+                  <span>Dokumen ini dicetak &amp; disahkan secara digital oleh Sistem Informasi Elektronika Polidewa</span>
+                </div>
+                <div class="baris-2">
+                  Periksa keaslian dokumen di: <em>https://elektronika.polidewa.ac.id</em>
+                </div>
+                <div class="baris-3">
+                  Jika terdapat kekeliruan data, harap menghubungi Bagian Akademik Program Studi Teknik Elektronika.
+                </div>
+              </div>
+              <div class="footer-right">
+                <div>Dicetak pada: <span id="footer-tanggal">-</span></div>
+                <div class="kode">TRANSKRIP/<%= (user.nim || 'NIM') %></div>
+              </div>
+            </div>
+
+          </div><!-- /#cetak-scale -->
+        </div><!-- /.preview-paper -->
+      </div><!-- /#previewWrapper -->
+
+    </div><!-- /.preview-section -->
 
   </div>
 
   <script>
-    /**
-     * Paksa isi transkrip (#cetak-scale) muat dalam SATU halaman F4 dengan
-     * mengecilkan `zoom` secara proporsional kalau kontennya lebih tinggi
-     * dari area cetak - supaya tidak pernah meluber ke halaman ke-2,
-     * berapa pun jumlah mata kuliah/semester yang dimuat.
-     */
-    function fitTranskripKeF4() {
-      var wrapper = document.getElementById('cetak-scale');
-      if (!wrapper) return;
+    /* ========== Tanggal cetak ========== */
+    (function setFooterDate() {
+      var el = document.getElementById('footer-tanggal');
+      if (!el) return;
+      var now = new Date();
+      var tanggal = now.toLocaleDateString('id-ID', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      });
+      var jam = now.toLocaleTimeString('id-ID', {
+        hour: '2-digit', minute: '2-digit'
+      }).replace('.', ':');
+      el.textContent = tanggal + ', ' + jam + ' WITA';
+    })();
 
-      // Reset dulu supaya pengukuran scrollHeight selalu dari ukuran asli
-      // (100%), bukan dari hasil zoom sebelumnya (penting kalau fungsi ini
-      // dipanggil ulang, mis. tombol "Cetak Ulang" ditekan lagi).
-      wrapper.style.zoom = 1;
-      wrapper.style.transform = 'none';
+    /* ========== Toggle tampil/sembunyi preview ========== */
+    function togglePreview() {
+      var wrapper = document.getElementById('previewWrapper');
+      var btn = document.getElementById('btnToggle');
+      if (!wrapper || !btn) return;
 
-      // Ukur tinggi area cetak F4 yang sebenarnya (330mm dikurangi margin
-      // atas+bawah @page 1.2cm x2) dengan elemen referensi tersembunyi,
-      // supaya konversi mm->px SELALU akurat di device/browser mana pun
-      // (tidak menebak 96dpi secara manual yang bisa meleset).
-      var ref = document.createElement('div');
-      ref.style.position = 'absolute';
-      ref.style.visibility = 'hidden';
-      ref.style.height = '305.6mm'; // 330mm - (1.2cm margin atas + bawah)
-      ref.style.width = '0';
-      document.body.appendChild(ref);
-      var tinggiHalamanPx = ref.offsetHeight;
-      document.body.removeChild(ref);
-
-      var tinggiKontenPx = wrapper.scrollHeight;
-
-      if (tinggiKontenPx > tinggiHalamanPx) {
-        // Beri sedikit ruang aman (2%) supaya tidak pas-pasan/terpotong
-        // akibat pembulatan render browser.
-        var skala = (tinggiHalamanPx / tinggiKontenPx) * 0.98;
-        if (typeof wrapper.style.zoom !== 'undefined') {
-          wrapper.style.zoom = skala;
-        } else {
-          // Fallback untuk browser yang tidak kenal `zoom` (mis. Firefox):
-          // transform:scale tidak seideal `zoom` untuk print, tapi lebih
-          // baik daripada terpotong sama sekali.
-          wrapper.style.transform = 'scale(' + skala + ')';
-        }
+      if (wrapper.style.display === 'none') {
+        wrapper.style.display = '';
+        btn.innerHTML = '<i class="bi bi-eye-slash me-1"></i> Sembunyikan';
+      } else {
+        wrapper.style.display = 'none';
+        btn.innerHTML = '<i class="bi bi-eye me-1"></i> Tampilkan';
       }
     }
 
-    // Langsung buka dialog cetak begitu halaman & gambar (kop/ttd) selesai
-    // dimuat, setelah dipaksa fit ke 1 halaman F4 - tanpa perlu klik
-    // tombol "Cetak" terlebih dahulu.
+    /**
+     * Paksa isi transkrip muat dalam SATU halaman A4.
+     *
+     * Area konten di dalam .preview-paper:
+     *   width  = 210mm − (2cm + 2cm) = 170mm
+     *   height = 297mm − (1cm + 1cm) = 277mm
+     */
+    function fitTranskripKeA4() {
+      var wrapper = document.getElementById('cetak-scale');
+      if (!wrapper) return;
+
+      // reset
+      wrapper.style.zoom = '';
+      wrapper.style.transform = '';
+      wrapper.style.transformOrigin = '';
+      wrapper.style.marginBottom = '';
+      wrapper.style.width = '';
+      void wrapper.offsetHeight;
+
+      var mmToPx = 96 / 25.4;
+      var printW = 170 * mmToPx;   // 170mm
+      var printH = 277 * mmToPx;   // 277mm
+
+      wrapper.style.width = printW + 'px';
+      void wrapper.offsetHeight;
+
+      var contentH = wrapper.scrollHeight;
+
+      if (contentH > printH) {
+        var skala = (printH / contentH) * 0.97;
+        if (skala < 0.5) skala = 0.5;
+
+        var supportsZoom =
+          typeof wrapper.style.zoom !== 'undefined' &&
+          wrapper.style.zoom !== undefined;
+
+        if (supportsZoom) {
+          wrapper.style.zoom = skala;
+        } else {
+          wrapper.style.transformOrigin = 'top left';
+          wrapper.style.transform = 'scale(' + skala + ')';
+          wrapper.style.marginBottom = (contentH * skala - contentH) + 'px';
+        }
+      }
+      wrapper.style.width = '';
+    }
+
+    window.fitTranskripKeF4 = fitTranskripKeA4;
+
+    function cetakTranskrip() {
+      fitTranskripKeA4();
+      setTimeout(function () { window.print(); }, 150);
+    }
+
     window.addEventListener('load', function () {
-      setTimeout(function () {
-        fitTranskripKeF4();
-        window.print();
-      }, 250);
+      setTimeout(function () { fitTranskripKeA4(); }, 250);
     });
+
+    window.addEventListener('resize', function () { fitTranskripKeA4(); });
   </script>
 </body>
 </html>

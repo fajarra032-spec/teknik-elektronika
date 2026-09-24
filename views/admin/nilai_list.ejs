@@ -1,70 +1,220 @@
 <%- include('../partials/header') %>
 
 <style>
-  .mk-table th {
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
+  /* ===== VARIABEL WARNA (sama dengan halaman Mata Kuliah / Mahasiswa) ===== */
+  :root {
+    --primary-start: #2193b0;
+    --primary-end: #6dd5ed;
+    --primary-light: rgba(33,147,176,0.1);
+    --primary-dark: #1a7a8f;
+  }
+
+  /* ===== FILTER CARD ===== */
+  .filter-card {
+    border-radius: 1.2rem;
+    border: 1px solid rgba(33,147,176,0.1);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    background: white;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .filter-card .form-label { font-weight: 600; color: #1e293b; }
+  .filter-card .form-select,
+  .filter-card .form-control {
+    border-radius: 50px;
+    border: 1px solid #dee2e6;
+    padding: 0.6rem 1rem;
+    transition: all 0.2s;
+  }
+  .filter-card .form-select:focus,
+  .filter-card .form-control:focus {
+    border-color: var(--primary-start);
+    box-shadow: 0 0 0 0.25rem rgba(33,147,176,0.25);
+  }
+  .btn-filter {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border: none;
     color: white;
+    font-weight: 500;
+    padding: 0.6rem 1.5rem;
+    border-radius: 50px;
+    transition: all 0.3s;
+    box-shadow: 0 5px 15px rgba(33,147,176,0.2);
+    width: 100%;
+  }
+  .btn-filter:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(33,147,176,0.4);
+    color: white;
+  }
+  .btn-reset {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    background: transparent;
+    border: 2px solid var(--primary-start);
+    color: var(--primary-start);
+    font-weight: 500;
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    transition: all 0.3s;
+    width: 100%;
+  }
+  .btn-reset:hover {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-color: transparent;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(33,147,176,0.3);
+  }
+
+  /* ===== TOMBOL AKSI ===== */
+  .btn-icon-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    color: white;
+    margin: 0 2px;
+    text-decoration: none;
+  }
+  .btn-icon-sm i { font-size: 1rem; }
+  .btn-detail { background: var(--primary-start); }
+  .btn-detail:hover {
+    background: var(--primary-dark);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(33,147,176,0.3);
+  }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8f9fa;
+    border-radius: 1.5rem;
+    margin: 2rem 0;
+  }
+  .empty-state i { font-size: 4rem; color: #adb5bd; margin-bottom: 1.5rem; }
+  .empty-state h4 { font-weight: 600; color: #495057; margin-bottom: 0.5rem; }
+  .empty-state p { color: #6c757d; margin-bottom: 0; }
+
+  /* ===== TABEL ===== */
+  .table-container {
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .nilai-table { margin-bottom: 0; }
+  .nilai-table thead th {
+    background: linear-gradient(135deg, var(--primary-light), rgba(109,213,237,0.1));
+    color: var(--primary-dark);
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.85rem;
     letter-spacing: 0.5px;
-    border: none;
-  }
-  .mk-table td {
-    vertical-align: middle;
+    border-bottom: 2px solid var(--primary-start);
     padding: 1rem 0.75rem;
   }
-  .table-responsive {
-    border-radius: 1rem;
-    overflow: hidden;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+  .nilai-table tbody tr { transition: all 0.2s; }
+  .nilai-table tbody tr:hover {
+    background-color: var(--primary-light);
+    transform: scale(1.01);
+    box-shadow: 0 5px 15px rgba(33,147,176,0.1);
   }
-  .btn-action {
-    margin: 2px;
-    border-radius: 8px;
-    padding: 0.3rem 0.8rem;
-    font-size: 0.85rem;
+  .nilai-table td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
   }
 </style>
 
 <div class="container-fluid mt-4">
-  <h2 class="fw-bold mb-4">Rekap Nilai per Mata Kuliah</h2>
+  <!-- Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold"><i class="bi bi-bar-chart-line-fill me-2" style="color: var(--primary-start);"></i>Rekap Nilai per Mata Kuliah</h2>
+  </div>
 
-  <div class="table-responsive">
-    <table class="table mk-table">
-      <thead>
-        <tr>
-          <th>Kode</th>
-          <th>Nama Mata Kuliah</th>
-          <th>SKS</th>
-          <th>Semester</th>
-          <th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if (mkList.length === 0) { %>
+  <!-- Filter Card -->
+  <div class="filter-card">
+    <form method="GET" action="/admin/nilai" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label for="search" class="form-label fw-semibold"><i class="bi bi-search me-1"></i>Cari</label>
+        <input type="text" class="form-control" id="search" name="search" placeholder="Kode atau nama MK" value="<%= filters.search %>">
+      </div>
+      <div class="col-md-3">
+        <label for="semester" class="form-label fw-semibold"><i class="bi bi-funnel me-1"></i>Semester</label>
+        <select class="form-select" id="semester" name="semester">
+          <option value="">Semua Semester</option>
+          <% [1,2,3,4,5,6].forEach(s => { %>
+            <option value="<%= s %>" <%= String(filters.semester) === String(s) ? 'selected' : '' %>>Semester <%= s %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn-filter">Terapkan</button>
+      </div>
+      <div class="col-md-2">
+        <a href="/admin/nilai" class="btn-reset">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Info jumlah -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <p class="mb-0">Total <strong><%= totalMk %></strong> mata kuliah</p>
+  </div>
+
+  <!-- Tabel -->
+  <div class="table-container">
+    <div class="table-responsive">
+      <table class="table nilai-table" aria-label="Daftar mata kuliah">
+        <thead>
           <tr>
-            <td colspan="5" class="text-center py-5">
-              <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
-              <p class="text-muted">Belum ada mata kuliah.</p>
-            </td>
+            <th>Kode</th>
+            <th>Nama Mata Kuliah</th>
+            <th class="text-center">SKS</th>
+            <th class="text-center">Semester</th>
+            <th>Aksi</th>
           </tr>
-        <% } %>
-        <% mkList.forEach(mk => { %>
-          <tr>
-            <td><span class="badge bg-primary bg-opacity-10 text-primary"><%= mk.kode %></span></td>
-            <td><strong><%= mk.nama %></strong></td>
-            <td class="text-center"><%= mk.sks %></td>
-            <td class="text-center"><%= mk.semester || '-' %></td>
-            <td>
-              <a href="/admin/nilai/<%= mk.id %>" class="btn btn-sm btn-outline-primary btn-action">
-                <i class="bi bi-eye"></i> Lihat Nilai
-              </a>
-            </td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <% if (!mkList || mkList.length === 0) { %>
+            <tr>
+              <td colspan="5" class="text-center py-5">
+                <div class="empty-state">
+                  <i class="bi bi-inbox"></i>
+                  <h4>Tidak Ada Mata Kuliah</h4>
+                  <p>Tidak ada mata kuliah yang cocok dengan filter/pencarian.</p>
+                </div>
+              </td>
+            </tr>
+          <% } else { %>
+            <% mkList.forEach(mk => { %>
+              <tr>
+                <td><span class="badge bg-primary bg-opacity-10 text-primary"><%= mk.kode %></span></td>
+                <td><strong><%= mk.nama %></strong></td>
+                <td class="text-center"><%= mk.sks %></td>
+                <td class="text-center"><%= mk.semester || '-' %></td>
+                <td>
+                  <a href="/admin/nilai/<%= mk.id %>" class="btn-icon-sm btn-detail" title="Lihat Nilai">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <%- include('../partials/pagination', { pageInfo: typeof pageInfo !== 'undefined' ? pageInfo : null, showAll: typeof showAll !== 'undefined' ? showAll : false, pageListUrl: typeof pageListUrl !== 'undefined' ? pageListUrl : '/admin/nilai' }) %>
   </div>
 </div>
 

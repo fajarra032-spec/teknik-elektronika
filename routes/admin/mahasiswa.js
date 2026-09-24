@@ -15,6 +15,15 @@ const { isBiodataLengkap, getBiodataKosong, BIODATA_FIELDS, GROUP_LABELS } = req
 const { getCurrentAcademicSemester, normalizeKelas } = require('../../helpers/academicHelper');
 const { buatDokumenSkPa } = require('../../helpers/skPaHelper');
 const { dosenCache, mahasiswaCache, getAllMahasiswa, invalidateUserProfile } = require('../../helpers/cache');
+
+// URL daftar mahasiswa terakhir yang dibuka admin (lengkap dengan filter,
+// pencarian & nomor halaman), disimpan di session. Dipakai tombol "Kembali"
+// di halaman detail/edit dan redirect sesudah simpan/hapus, supaya admin
+// kembali ke tampilan daftar yang sama, bukan ke halaman 1 tanpa filter.
+function getListUrl(req) {
+  const u = req.session && req.session.mahasiswaListUrl;
+  return (typeof u === 'string' && /^\/admin\/mahasiswa(\?|$)/.test(u)) ? u : '/admin/mahasiswa';
+}
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.use(verifyToken);
@@ -156,6 +165,14 @@ router.get('/', async (req, res) => {
       delete req.session.importError;
     }
 
+    // Ingat tampilan daftar ini (tanpa parameter sekali-pakai 'import')
+    const listParams = new URLSearchParams();
+    Object.entries(req.query).forEach(([k, v]) => {
+      if (k !== 'import' && typeof v === 'string' && v) listParams.set(k, v);
+    });
+    const listQs = listParams.toString();
+    req.session.mahasiswaListUrl = '/admin/mahasiswa' + (listQs ? '?' + listQs : '');
+
     const { mahasiswaList: fullMahasiswaList, angkatanList, kelasList } = await getFilteredMahasiswaList(req.query);
     const dosenPaList = await getAllDosenPa();
 
@@ -183,7 +200,8 @@ router.get('/', async (req, res) => {
     let mahasiswaList = fullMahasiswaList;
     let pageInfo = null;
     if (!showAll) {
-      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const maxPage = Math.max(1, Math.ceil(totalMahasiswa / MAHASISWA_PAGE_SIZE));
+      const page = Math.min(maxPage, Math.max(1, parseInt(req.query.page, 10) || 1));
       const start = (page - 1) * MAHASISWA_PAGE_SIZE;
       const paged = fullMahasiswaList.slice(start, start + MAHASISWA_PAGE_SIZE);
       const hasPrev = page > 1;
@@ -463,6 +481,7 @@ router.get('/:id', async (req, res) => {
       biodataFields: BIODATA_FIELDS,
       groupLabels: GROUP_LABELS,
       biodataKosong: getBiodataKosong(mahasiswa),
+      backUrl: getListUrl(req),
       krsSuccess: req.query.krsSuccess || null,
       error: req.query.error || null
     });
@@ -492,6 +511,7 @@ router.get('/:id/edit', async (req, res) => {
     res.render('admin/mahasiswa_form', {
       title: 'Edit Mahasiswa',
       mahasiswa,
+      backUrl: getListUrl(req),
       semesterOptions: SEMESTER_OPTIONS,
       magangOptions: MAGANG_OPTIONS,
       statusMahasiswaOptions: STATUS_MAHASISWA_OPTIONS,
@@ -634,7 +654,7 @@ router.post('/:id/update', upload.single('foto'), async (req, res) => {
       const param = krsAutoOk ? 'krsSuccess' : 'error';
       return res.redirect(`/admin/mahasiswa/${req.params.id}?${param}=` + encodeURIComponent(krsAutoMessage));
     }
-    res.redirect('/admin/mahasiswa');
+    res.redirect(getListUrl(req));
   } catch (error) {
     console.error('Error update mahasiswa:', error);
     res.status(500).send('Gagal update mahasiswa: ' + error.message);
@@ -873,7 +893,7 @@ router.post('/:id/delete', async (req, res) => {
 
     mahasiswaCache.delete('all'); // data mahasiswa berubah -> cache lama tidak valid lagi
     invalidateUserProfile(req.params.id); // penting: akun yang dihapus jangan bisa tetap akses selama sisa TTL cache
-    res.redirect('/admin/mahasiswa');
+    res.redirect(getListUrl(req));
   } catch (error) {
     console.error('Error hapus mahasiswa:', error);
     res.status(500).send('Gagal hapus mahasiswa: ' + error.message);
