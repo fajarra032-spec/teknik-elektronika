@@ -309,6 +309,31 @@ async function saveGradeFinal({ userId, kodeMk, namaMk, sks, nilai, semester }) 
 }
 
 /**
+ * Menghapus satu nilai akhir (final) dari koleksi 'grades'.
+ * Dipanggil dari tombol "Hapus" di halaman Input Nilai (views/admin/nilai_form.ejs).
+ * userId dicek ulang di sini (bukan cuma percaya gradeId dari form) supaya
+ * admin tidak bisa menghapus nilai mahasiswa lain hanya dengan menebak/mengubah
+ * gradeId di request.
+ *
+ * @param {string} gradeId - id dokumen di koleksi 'grades'
+ * @param {string} userId - UID mahasiswa, untuk verifikasi kepemilikan
+ */
+async function deleteGradeFinal(gradeId, userId) {
+  if (!gradeId || !userId) {
+    throw new Error('gradeId dan userId wajib diisi');
+  }
+  const docRef = db.collection('grades').doc(gradeId);
+  const doc = await docRef.get();
+  if (!doc.exists) {
+    throw new Error('Data nilai tidak ditemukan (mungkin sudah dihapus)');
+  }
+  if (doc.data().userId !== userId) {
+    throw new Error('Nilai ini bukan milik mahasiswa tersebut');
+  }
+  await docRef.delete();
+}
+
+/**
  * ============================================================================
  * SKALA PENILAIAN RESMI (satu-satunya sumber kebenaran untuk konversi
  * nilai angka -> huruf -> indeks di SELURUH aplikasi: KHS, Transkrip, Rubrik).
@@ -1208,6 +1233,7 @@ module.exports = {
   getNilaiByTugasId,
   hitungNilaiAkhir,
   saveGradeFinal,
+  deleteGradeFinal,
   saveGradeFinalBulk,
   getStatusKunciByMkId,
   getTranskripMahasiswa,

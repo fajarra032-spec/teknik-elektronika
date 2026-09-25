@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const { saveGradeFinal, getTranskripMahasiswa, getPeriodeAktif, getHasilRubrikSemuaMahasiswa, getHasilRubrikSatuMahasiswa, getRincianTugasByMkId, saveKomponenRubrik, saveNilai, TIPE_RUBRIK_KOMPONEN } = require('../../helpers/nilaiHelper');
+const { saveGradeFinal, deleteGradeFinal, getTranskripMahasiswa, getPeriodeAktif, getHasilRubrikSemuaMahasiswa, getHasilRubrikSatuMahasiswa, getRincianTugasByMkId, saveKomponenRubrik, saveNilai, TIPE_RUBRIK_KOMPONEN } = require('../../helpers/nilaiHelper');
 const { getAllMataKuliah } = require('../../helpers/cache');
 const { getAngkatanFromNim } = require('../../helpers/academicHelper');
 
@@ -150,7 +150,8 @@ router.get('/mahasiswa/:userId/tambah', async (req, res) => {
       semesterCetak: perSemester.map(s => s.semester),
       ipk,
       totalSKS,
-      success: req.query.success
+      success: req.query.success,
+      error: req.query.error
     });
   } catch (error) {
     console.error('Error menampilkan form nilai:', error);
@@ -186,6 +187,24 @@ router.post('/', async (req, res) => {
       totalSKS,
       error: error.message
     });
+  }
+});
+
+/**
+ * POST /admin/nilai/:gradeId/delete
+ * Menghapus satu nilai akhir mahasiswa dari koleksi 'grades'.
+ * Body: { userId } - dipakai untuk verifikasi kepemilikan & redirect balik
+ * ke form input nilai mahasiswa yang sama.
+ */
+router.post('/:gradeId/delete', async (req, res) => {
+  const { gradeId } = req.params;
+  const { userId } = req.body;
+  try {
+    await deleteGradeFinal(gradeId, userId);
+    res.redirect(`/admin/nilai/mahasiswa/${userId}/tambah?success=dihapus`);
+  } catch (error) {
+    console.error('Error menghapus nilai akhir:', error);
+    res.redirect(`/admin/nilai/mahasiswa/${userId}/tambah?error=${encodeURIComponent(error.message)}`);
   }
 });
 

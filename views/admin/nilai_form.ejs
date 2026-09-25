@@ -135,7 +135,7 @@
   <% if (typeof success !== 'undefined' && success) { %>
     <div class="alert alert-success" style="border-radius: 0.8rem;">
       <i class="bi bi-check-circle-fill me-1"></i>
-      Nilai berhasil <%= success === 'diperbarui' ? 'diperbarui' : 'ditambahkan' %>.
+      Nilai berhasil <%= success === 'diperbarui' ? 'diperbarui' : (success === 'dihapus' ? 'dihapus' : 'ditambahkan') %>.
     </div>
   <% } %>
   <% if (typeof error !== 'undefined' && error) { %>
@@ -314,6 +314,12 @@
                         onclick="mulaiEdit('<%= g.kodeMk %>', '<%= (g.namaMk || '').replace(/'/g, "\\'") %>', <%= g.sks %>, <%= g.nilai %>, '<%= g.semester %>')">
                         <i class="bi bi-pencil"></i> Edit
                       </button>
+                      <% if (g.id) { %>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                          onclick="hapusNilai('<%= g.id %>', '<%= (g.namaMk || '').replace(/'/g, "\\'") %>')">
+                          <i class="bi bi-trash"></i> Hapus
+                        </button>
+                      <% } %>
                     </td>
                   <% } %>
                 </tr>
@@ -324,6 +330,11 @@
       <% } %>
     </div>
   </div>
+
+  <!-- Form tersembunyi untuk menghapus nilai (dipicu tombol Hapus di atas) -->
+  <form method="POST" id="formHapusNilai" style="display:none;">
+    <input type="hidden" name="userId" value="<%= mahasiswa.id %>">
+  </form>
 
   <!-- Tombol Kembali -->
   <div class="mt-4">
@@ -377,6 +388,18 @@
 
     document.getElementById('formNilai').scrollIntoView({ behavior: 'smooth', block: 'start' });
     document.getElementById('nilai').focus();
+  }
+
+  // Hapus satu nilai (tombol "Hapus" di tabel Riwayat Nilai). Minta
+  // konfirmasi dulu karena aksinya permanen, lalu submit form tersembunyi
+  // ke POST /admin/nilai/:gradeId/hapus.
+  function hapusNilai(gradeId, namaMk) {
+    if (!confirm('Yakin mau menghapus nilai "' + namaMk + '" ini? Aksi ini tidak bisa dibatalkan.')) {
+      return;
+    }
+    const form = document.getElementById('formHapusNilai');
+    form.action = '/admin/nilai/' + encodeURIComponent(gradeId) + '/delete';
+    form.submit();
   }
 
   function batalEdit() {
