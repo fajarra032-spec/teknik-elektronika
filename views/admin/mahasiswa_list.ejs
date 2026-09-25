@@ -434,6 +434,10 @@
                   <button class="btn-icon-sm btn-reset" title="Reset Password" onclick="resetPassword('<%= m.id %>', '<%= m.email %>')">
                     <i class="bi bi-key"></i>
                   </button>
+                  <button class="btn-icon-sm" style="background:#6f42c1" title="<%= m.statusMahasiswa === 'Lulus' ? 'Edit Data Yudisium' : 'Tandai Lulus (Yudisium)' %>"
+                    onclick="bukaModalYudisium('<%= m.id %>', '<%= (m.nama || '').replace(/'/g, "\\'") %>', '<%= m.tanggalYudisium || '' %>')">
+                    <i class="bi bi-mortarboard"></i>
+                  </button>
                   <form method="POST" action="/admin/mahasiswa/<%= m.id %>/delete" style="display:inline;" onsubmit="return confirm('Yakin hapus mahasiswa ini? Semua data terkait akan hilang.')">
                     <button type="submit" class="btn-icon-sm btn-delete" title="Hapus">
                       <i class="bi bi-trash"></i>
@@ -480,7 +484,48 @@
   </div>
 </div>
 
+<!-- Modal Tandai Lulus / Yudisium -->
+<div class="modal fade" id="modalYudisium" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-mortarboard"></i> Tandai Lulus (Yudisium)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="formYudisium" enctype="multipart/form-data">
+        <div class="modal-body">
+          <p class="mb-3">Mahasiswa: <strong id="yudisiumNamaMahasiswa">-</strong></p>
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> Menyimpan ini otomatis mengubah Status Mahasiswa jadi <strong>Lulus</strong>
+            dan menampilkan mahasiswa ini di halaman publik <strong>Yudisium</strong> (dikelompokkan per tahun).
+          </div>
+          <div class="mb-3">
+            <label for="yudisiumTanggal" class="form-label">Tanggal Yudisium</label>
+            <input type="date" class="form-control" id="yudisiumTanggal" name="tanggalYudisium" required>
+          </div>
+          <div class="mb-3">
+            <label for="yudisiumFoto" class="form-label">Foto Yudisium</label>
+            <input type="file" class="form-control" id="yudisiumFoto" name="fotoYudisium" accept="image/*">
+            <div class="form-text">Opsional kalau cuma mau mengoreksi tanggal - foto lama tetap dipakai kalau tidak diisi ulang.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script>
+  function bukaModalYudisium(id, nama, tanggalYudisiumLama) {
+    document.getElementById('yudisiumNamaMahasiswa').textContent = nama;
+    document.getElementById('yudisiumTanggal').value = tanggalYudisiumLama || '';
+    document.getElementById('formYudisium').action = '/admin/mahasiswa/' + id + '/yudisium';
+    new bootstrap.Modal(document.getElementById('modalYudisium')).show();
+  }
+
   function resetPassword(id, email) {
     if (confirm(`Kirim email reset password ke ${email}?`)) {
       fetch(`/admin/mahasiswa/${id}/reset-password`, {

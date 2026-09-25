@@ -12,6 +12,7 @@ const fs = require('fs');
 const { getProgressMagangHarian } = require('../helpers/magangHelper');
 const { getGabunganLulusan, normalisasiStatus } = require('../helpers/lulusanHelper');
 const { getAllMahasiswa } = require('../helpers/cache');
+const { getTranskripMahasiswa } = require('../helpers/nilaiHelper');
 
 // ============================================================================
 // FUNGSI BANTU
@@ -28,6 +29,26 @@ function formatDate(dateString) {
 function getAngkatanFromNim(nim) {
   if (!nim || String(nim).length < 2) return null;
   return '20' + String(nim).substring(0, 2);
+}
+
+// Lama studi (dipakai di halaman publik /yudisium/:tahun) - dihitung dari
+// angkatan (tahun masuk, dari NIM) sampai tanggalYudisium. Tidak ada tanggal
+// masuk yang presisi tersimpan, jadi dipakai asumsi standar: tahun ajaran
+// baru mulai September (umum di kampus Indonesia). Kalau NIM atau tanggal
+// yudisium tidak ada/tidak valid, return null - biar ditampilkan '-' di view.
+function hitungLamaStudi(angkatan, tanggalYudisium) {
+  if (!angkatan || !tanggalYudisium) return null;
+  const mulai = new Date(parseInt(angkatan, 10), 8, 1); // 1 September tahun angkatan
+  const selesai = new Date(tanggalYudisium);
+  if (isNaN(selesai.getTime())) return null;
+
+  let totalBulan = (selesai.getFullYear() - mulai.getFullYear()) * 12 + (selesai.getMonth() - mulai.getMonth());
+  if (totalBulan < 0) totalBulan = 0;
+  const tahun = Math.floor(totalBulan / 12);
+  const bulan = totalBulan % 12;
+
+  const label = bulan > 0 ? `${tahun} Tahun ${bulan} Bulan` : `${tahun} Tahun`;
+  return { tahun, bulan, label };
 }
 
 // ============================================================================
@@ -769,6 +790,97 @@ router.get('/lulusan/:id', async (req, res) => {
   } catch (error) {
     console.error('Error detail lulusan:', error);
     res.status(500).render('error', { title: 'Error', message: 'Gagal memuat detail lulusan' });
+  }
+});
+
+// ============================================================================
+// YUDISIUM (galeri foto wisuda per tahun) - BEDA dengan /lulusan di atas:
+// /lulusan itu tracer study (status kerja/wirausaha/studi lanjut, isian
+// mandiri + kurasi admin). Yudisium ini murni catatan akademik "kapan &
+// dengan foto apa" mahasiswa dinyatakan lulus, diinput admin dari tombol
+// "Tandai Lulus (Yudisium)" di Kelola Mahasiswa (routes/admin/mahasiswa.js
+// -> POST /:id/yudisium), field-nya nempel di dokumen mahasiswa sendiri
+// (statusMahasiswa='Lulus', tanggalYudisium, tahunYudisium, fotoYudisiumUrl).
+//
+// Pakai getAllMahasiswa(db) yang sama (sudah di-cache 10 menit) supaya tidak
+// ada query Firestore tambahan - list ini kan sudah dibaca lengkap di
+// beberapa halaman publik lain juga (lihat GET '/' di atas).
+// ============================================================================
+
+router.get('/yudisium', async (req, res) => {
+  try {
+    const semuaMahasiswa = await getAllMahasiswa(db);
+    const lulusYudisium = semuaMahasiswa.filter(m => m.statusMahasiswa === 'Lulus' && m.tahunYudisium);
+
+    // Kelompokkan per tahun: jumlah + 1 foto "sampul" (yang pertama ditemukan
+    // dan punya foto) supaya kartu tahun di halaman index tidak kosong kalau
+    // urutannya kebetulan mahasiswa tanpa foto duluan.
+    const perTahun = new Map();
+    lulusYudisium.forEach(m => {
+      const t = m.tahunYudisium;
+      if (!perTahun.has(t)) perTahun.set(t, { tahun: t, jumlah: 0, fotoSampul: null });
+      const grup = perTahun.get(t);
+      grup.jumlah += 1;
+      if (!grup.fotoSampul && m.fotoYudisiumUrl) grup.fotoSampul = m.fotoYudisiumUrl;
+    });
+
+    const daftarTahun = Array.from(perTahun.values()).sort((a, b) => b.tahun - a.tahun);
+
+    res.render('landing/yudisium/index', {
+      title: 'Yudisium',
+      daftarTahun,
+      user: req.user || null
+    });
+  } catch (error) {
+    console.error('Error memuat halaman yudisium:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat data yudisium' });
+  }
+});
+
+router.get('/yudisium/:tahun', async (req, res) => {
+  try {
+    const tahun = parseInt(req.params.tahun, 10);
+    if (!tahun) {
+      return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Tahun yudisium tidak valid' });
+    }
+
+    const semuaMahasiswa = await getAllMahasiswa(db);
+    const wisudawan = semuaMahasiswa
+      .filter(m => m.statusMahasiswa === 'Lulus' && m.tahunYudisium === tahun)
+      .sort((a, b) => String(a.nama).localeCompare(String(b.nama)));
+
+    if (wisudawan.length === 0) {
+      return res.status(404).render('error', { title: 'Tidak Ditemukan', message: `Belum ada data yudisium untuk tahun ${tahun}` });
+    }
+
+    // IPK dihitung dari transkrip nilai (koleksi 'grades'/'enrollment'), BUKAN
+    // field di dokumen mahasiswa - jadi harus dihitung per orang di sini
+    // (bukan lewat getAllMahasiswa yang cuma baca 'users'). Diparalelkan
+    // dengan Promise.all supaya tidak menunggu satu-satu secara berurutan.
+    const wisudawanDenganIpk = await Promise.all(
+      wisudawan.map(async m => {
+        try {
+          const { ipk } = await getTranskripMahasiswa(m.id);
+          const angkatan = getAngkatanFromNim(m.nim);
+          const lamaStudi = hitungLamaStudi(angkatan, m.tanggalYudisium);
+          return { ...m, ipk, angkatan, lamaStudi };
+        } catch (err) {
+          console.error(`Gagal menghitung IPK untuk ${m.id}:`, err);
+          const angkatan = getAngkatanFromNim(m.nim);
+          return { ...m, ipk: null, angkatan, lamaStudi: hitungLamaStudi(angkatan, m.tanggalYudisium) };
+        }
+      })
+    );
+
+    res.render('landing/yudisium/tahun', {
+      title: `Yudisium ${tahun}`,
+      tahun,
+      wisudawan: wisudawanDenganIpk,
+      user: req.user || null
+    });
+  } catch (error) {
+    console.error('Error memuat detail yudisium:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat data yudisium' });
   }
 });
 

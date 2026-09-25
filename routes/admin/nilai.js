@@ -35,6 +35,27 @@ async function getMahasiswaById(uid) {
   }
 }
 
+/**
+ * Daftar MK untuk dropdown "Pilih Mata Kuliah" di form Input Nilai.
+ *
+ * getAllMataKuliah() bisa mengembalikan BEBERAPA dokumen dengan `kode` yang
+ * sama - itu bukan bug, memang disengaja untuk kelas paralel (mis. WUD3208
+ * dipecah jadi dokumen terpisah untuk kelas ELK1A & ELK1B, lihat
+ * routes/admin/matakuliah.js). Untuk form ini kelasnya tidak relevan sama
+ * sekali: nilai akhir disimpan/di-upsert berdasarkan (userId, kodeMk,
+ * semester) saja lewat saveGradeFinal() - TANPA kelas - jadi kalau dropdown
+ * ikut menampilkan satu opsi per dokumen, satu MK yang punya 3 kelas
+ * paralel akan muncul 3x dengan teks identik ("kelihatan dobel" padahal
+ * datanya valid). Di sini kita ambil satu MK per `kode` saja.
+ */
+function dedupCoursesByKode(semuaMk) {
+  const map = new Map();
+  semuaMk.forEach(mk => {
+    if (mk.kode && !map.has(mk.kode)) map.set(mk.kode, mk);
+  });
+  return Array.from(map.values());
+}
+
 // ============================================================================
 // DAFTAR MATA KULIAH
 // ============================================================================
@@ -127,7 +148,7 @@ router.get('/mahasiswa/:userId/tambah', async (req, res) => {
   try {
     const mahasiswa = await getMahasiswaById(req.params.userId);
 
-    const courses = await getAllMataKuliah(db);
+    const courses = dedupCoursesByKode(await getAllMataKuliah(db));
 
     const { items, perSemester, ipk, totalSKS } = await getTranskripMahasiswa(req.params.userId);
 
@@ -172,7 +193,7 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Error menyimpan nilai akhir:', error);
     const mahasiswa = await getMahasiswaById(userId);
-    const courses = await getAllMataKuliah(db);
+    const courses = dedupCoursesByKode(await getAllMataKuliah(db));
     const { items, perSemester, ipk, totalSKS } = await getTranskripMahasiswa(userId);
     const semesterSet = new Set(perSemester.map(s => s.semester));
     semesterSet.add(getPeriodeAktif());

@@ -1,0 +1,130 @@
+<%- include('../../partials/header-landing') %>
+
+<style>
+  .hero-yudisium-tahun {
+    background: linear-gradient(135deg, #6a3093, #a044ff);
+    padding: 3.5rem 0;
+    color: white;
+    margin-bottom: 3rem;
+  }
+  .hero-yudisium-tahun h1 {
+    font-size: 2.6rem;
+    font-weight: 700;
+  }
+  .breadcrumb-link {
+    color: rgba(255,255,255,0.85);
+    text-decoration: none;
+  }
+  .breadcrumb-link:hover {
+    color: white;
+    text-decoration: underline;
+  }
+
+  .wisudawan-card {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+    height: 100%;
+  }
+  .wisudawan-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(106,48,147,0.15);
+  }
+  .wisudawan-card .card-img-wrapper {
+    height: 240px;
+    overflow: hidden;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .wisudawan-card .card-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .wisudawan-card .card-img-wrapper i {
+    font-size: 3.5rem;
+    color: #cbd5e1;
+  }
+  .wisudawan-card .card-body {
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .wisudawan-card .nama {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.2rem;
+  }
+  .wisudawan-card .nim {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+  }
+  .wisudawan-card .ipk {
+    display: block;
+    font-weight: 700;
+    color: #16a34a;
+    margin-bottom: 0.4rem;
+  }
+  .wisudawan-card .lama-studi {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin-bottom: 0.6rem;
+  }
+  .wisudawan-card .tanggal {
+    display: inline-block;
+    background: #f3e8ff;
+    color: #6a3093;
+    padding: 0.2rem 0.9rem;
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+</style>
+
+<section class="hero-yudisium-tahun">
+  <div class="container">
+    <a href="/yudisium" class="breadcrumb-link"><i class="bi bi-arrow-left me-1"></i>Semua Tahun Yudisium</a>
+    <h1 class="mt-2"><i class="bi bi-mortarboard-fill me-2"></i>Yudisium <%= tahun %></h1>
+    <p class="lead mb-0"><%= wisudawan.length %> lulusan</p>
+  </div>
+</section>
+
+<div class="container mb-5">
+  <div class="row g-4">
+    <% wisudawan.forEach(m => { %>
+      <div class="col-lg-3 col-md-4 col-sm-6">
+        <div class="wisudawan-card">
+          <div class="card-img-wrapper">
+            <% if (m.fotoYudisiumUrl) { %>
+              <img src="<%= m.fotoYudisiumUrl %>" alt="<%= m.nama %>">
+            <% } else { %>
+              <i class="bi bi-person-badge"></i>
+            <% } %>
+          </div>
+          <div class="card-body">
+            <div class="nama"><%= m.nama %></div>
+            <div class="nim"><%= m.nim || '-' %></div>
+            <% if (m.ipk) { %>
+              <span class="ipk">IPK <%= m.ipk %></span>
+            <% } %>
+            <% if (m.lamaStudi) { %>
+              <div class="lama-studi"><i class="bi bi-hourglass-split"></i> Lama studi: <%= m.lamaStudi.label %></div>
+            <% } %>
+            <% if (m.tanggalYudisium) { %>
+              <span class="tanggal"><i class="bi bi-calendar-check"></i>
+                <%= new Date(m.tanggalYudisium).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %>
+              </span>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</div>
+
+<%- include('../../partials/footer-landing') %>

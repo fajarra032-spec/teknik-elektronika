@@ -78,6 +78,25 @@ async function getMahasiswaFotoFolderId() {
   return folder.data.id;
 }
 
+/**
+ * Folder Drive terpisah untuk foto yudisium (beda dari foto profil biasa di
+ * getMahasiswaFotoFolderId), supaya gampang dicari/dikelola sendiri kalau
+ * suatu saat perlu diarsipkan per angkatan wisuda.
+ */
+async function getYudisiumFotoFolderId() {
+  const folderName = 'Foto_Yudisium';
+  const query = await drive.files.list({
+    q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    fields: 'files(id)',
+  });
+  if (query.data.files.length > 0) return query.data.files[0].id;
+  const folder = await drive.files.create({
+    resource: { name: folderName, mimeType: 'application/vnd.google-apps.folder' },
+    fields: 'id',
+  });
+  return folder.data.id;
+}
+
 function getAngkatanFromNim(nim) {
   if (nim && nim.length >= 2) return '20' + nim.substring(0, 2);
   return new Date().getFullYear().toString();
@@ -236,6 +255,7 @@ router.get('/', async (req, res) => {
       pageInfo,
       showAll,
       pageListUrl: buildListUrl({ page: 1 }),
+      success: req.query.success || null,
     });
   } catch (error) {
     console.error('Error mengambil data mahasiswa:', error);
@@ -683,6 +703,74 @@ router.post('/:id/reset-password', async (req, res) => {
       title: 'Error',
       message: 'Gagal reset password'
     });
+  }
+});
+
+// ============================================================================
+// YUDISIUM (tandai mahasiswa lulus + foto & tanggal yudisium)
+// ============================================================================
+// Dipicu dari tombol "Tandai Lulus (Yudisium)" di views/admin/mahasiswa_list.ejs.
+// Menyimpan statusMahasiswa='Lulus' + tanggalYudisium + foto yudisium (upload
+// ke Google Drive, folder terpisah dari foto profil - lihat
+// getYudisiumFotoFolderId). tahunYudisium disimpan sebagai angka terpisah
+// (diambil dari tanggalYudisium) supaya query/grouping "per tahun" di
+// halaman publik (routes/landing.js -> GET /yudisium/:tahun) tidak perlu
+// parsing tanggal berulang-ulang.
+//
+// Foto BERSIFAT OPSIONAL saat update: kalau admin cuma mau mengoreksi
+// tanggal tanpa upload ulang, foto lama (fotoYudisiumUrl/FileId) tetap
+// dipertahankan.
+router.post('/:id/yudisium', upload.single('fotoYudisium'), async (req, res) => {
+  try {
+    const { tanggalYudisium } = req.body;
+    const file = req.file;
+
+    if (!tanggalYudisium) {
+      return res.status(400).send('Tanggal yudisium wajib diisi');
+    }
+
+    const mahasiswaDoc = await db.collection('users').doc(req.params.id).get();
+    if (!mahasiswaDoc.exists) {
+      return res.status(404).render('error', {
+        title: 'Tidak Ditemukan',
+        message: 'Mahasiswa tidak ditemukan'
+      });
+    }
+    const oldData = mahasiswaDoc.data();
+
+    let fotoYudisiumUrl = oldData.fotoYudisiumUrl || null;
+    let fotoYudisiumFileId = oldData.fotoYudisiumFileId || null;
+    if (file) {
+      const folderId = await getYudisiumFotoFolderId();
+      const ext = file.originalname.split('.').pop();
+      const fileName = `yudisium_${oldData.nim || req.params.id}_${Date.now()}.${ext}`;
+      const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
+      const response = await drive.files.create({
+        resource: { name: fileName, parents: [folderId] },
+        media,
+        fields: 'id, webViewLink',
+      });
+      fotoYudisiumUrl = response.data.webViewLink;
+      fotoYudisiumFileId = response.data.id;
+    }
+
+    const tahunYudisium = parseInt(String(tanggalYudisium).slice(0, 4), 10) || null;
+
+    await db.collection('users').doc(req.params.id).update({
+      statusMahasiswa: 'Lulus',
+      tanggalYudisium,
+      tahunYudisium,
+      fotoYudisiumUrl,
+      fotoYudisiumFileId,
+    });
+
+    mahasiswaCache.delete('all'); // dipakai juga oleh halaman publik /yudisium
+    invalidateUserProfile(req.params.id);
+    const backUrl = getListUrl(req);
+    res.redirect(`${backUrl}${backUrl.includes('?') ? '&' : '?'}success=${encodeURIComponent('ditandai lulus (yudisium)')}`);
+  } catch (error) {
+    console.error('Error menyimpan yudisium:', error);
+    res.status(500).send('Gagal menyimpan data yudisium: ' + error.message);
   }
 });
 
