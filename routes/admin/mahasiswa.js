@@ -422,6 +422,15 @@ router.post('/', upload.single('foto'), async (req, res) => {
         media,
         fields: 'id, webViewLink',
       });
+      // Foto ini dipakai di halaman publik juga (kartu mahasiswa baru di
+      // landing page, KTM, dsb) - wajib di-set publik, kalau tidak fotonya
+      // gagal dimuat browser (403) sama sekali. Pola ini konsisten dengan
+      // upload foto/file lain yang sudah publik (lihat routes/admin/surat.js,
+      // sertifikat.js, tracklulusan.js).
+      await drive.permissions.create({
+        fileId: response.data.id,
+        requestBody: { role: 'reader', type: 'anyone' },
+      });
       fotoUrl = response.data.webViewLink;
       fotoFileId = response.data.id;
     }
@@ -615,6 +624,10 @@ router.post('/:id/update', upload.single('foto'), async (req, res) => {
         media,
         fields: 'id, webViewLink',
       });
+      await drive.permissions.create({
+        fileId: response.data.id,
+        requestBody: { role: 'reader', type: 'anyone' },
+      });
       updateData.foto = response.data.webViewLink;
       updateData.fotoFileId = response.data.id;
 
@@ -749,6 +762,11 @@ router.post('/:id/yudisium', upload.single('fotoYudisium'), async (req, res) => 
         resource: { name: fileName, parents: [folderId] },
         media,
         fields: 'id, webViewLink',
+      });
+      // Wajib publik - ini yang ditampilkan di halaman publik /yudisium/:tahun.
+      await drive.permissions.create({
+        fileId: response.data.id,
+        requestBody: { role: 'reader', type: 'anyone' },
       });
       fotoYudisiumUrl = response.data.webViewLink;
       fotoYudisiumFileId = response.data.id;

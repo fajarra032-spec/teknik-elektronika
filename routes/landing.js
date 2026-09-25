@@ -87,6 +87,26 @@ router.get('/', async (req, res) => {
       .sort()
       .map(tahun => ({ tahun, jumlah: angkatanCount[tahun] }));
     statistik.mahasiswaMagang = magangCount;
+
+    // Ucapan selamat datang mahasiswa baru: angkatan TERBARU (tahun terbesar
+    // di angkatanCount, dihitung otomatis - bukan di-hardcode "2026" supaya
+    // tahun depan otomatis lanjut ke angkatan berikutnya tanpa perlu ubah kode).
+    // Foto & Asal Sekolah itu data yang diisi belakangan (foto oleh admin,
+    // asal sekolah oleh mahasiswa sendiri lewat menu Biodata), jadi
+    // ditampilkan CUMA yang datanya sudah lengkap dua-duanya - kartu dengan
+    // foto/nama kosong akan terlihat rusak. Dibatasi 16 supaya section-nya
+    // tidak kepanjangan.
+    const daftarAngkatan = Object.keys(angkatanCount);
+    const angkatanTerbaru = daftarAngkatan.length > 0
+      ? daftarAngkatan.reduce((max, t) => (parseInt(t, 10) > parseInt(max, 10) ? t : max))
+      : null;
+    const mahasiswaBaru = angkatanTerbaru
+      ? mahasiswaList
+          .filter(m => getAngkatanFromNim(m.nim) === angkatanTerbaru && m.foto && m.asalSekolah)
+          .sort((a, b) => String(a.nama).localeCompare(String(b.nama)))
+          .slice(0, 16)
+          .map(m => ({ nama: m.nama, foto: m.foto, asalSekolah: m.asalSekolah }))
+      : [];
     // Sama seperti logbookMagang - cuma butuh jumlahnya, jadi pakai count()
     // (agregasi Firestore) alih-alih .get() yang membaca semua dokumen dosen.
     const dosenCountSnap = await db.collection('dosen').count().get();
@@ -343,6 +363,8 @@ router.get('/', async (req, res) => {
       magangSlides,
       testimoniAlumni,
       videoKonten,
+      angkatanTerbaru,
+      mahasiswaBaru,
       formatDate
     });
   } catch (error) {

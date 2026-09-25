@@ -243,6 +243,40 @@
         border-radius: 50px;
     }
 
+    /* ===== SELAMAT DATANG MAHASISWA BARU (strip foto scroll horizontal) ===== */
+    .mhs-baru-scroll {
+        display: flex;
+        gap: 1.25rem;
+        overflow-x: auto;
+        padding: 0.5rem 0.25rem 1.25rem;
+        scroll-snap-type: x mandatory;
+    }
+    .mhs-baru-card {
+        flex: 0 0 auto;
+        width: 150px;
+        text-align: center;
+        scroll-snap-align: start;
+    }
+    .mhs-baru-foto {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--primary);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        margin-bottom: 0.75rem;
+    }
+    .mhs-baru-nama {
+        font-weight: 700;
+        color: var(--text-main);
+        font-size: 0.95rem;
+        margin-bottom: 0.2rem;
+    }
+    .mhs-baru-sekolah {
+        font-size: 0.78rem;
+        color: #64748b;
+    }
+
     /* ===== SHARED CARD STYLES (Soft Glassmorphism) ===== */
     .stat-card,
     .visi-misi-card,
@@ -1127,6 +1161,27 @@
 </section>
 
 <div class="landing-container">
+    <!-- SELAMAT DATANG MAHASISWA BARU - hanya tampil kalau ada mahasiswa di
+         angkatan terbaru yang datanya sudah lengkap (foto + asal sekolah).
+         Datanya dihitung di routes/landing.js (angkatanTerbaru, mahasiswaBaru). -->
+    <% if (typeof mahasiswaBaru !== 'undefined' && mahasiswaBaru.length > 0) { %>
+    <section class="section-wrapper mhs-baru-section">
+        <h2 class="section-title">Selamat Datang <span>Mahasiswa Baru Angkatan <%= angkatanTerbaru %></span></h2>
+        <div class="mhs-baru-scroll">
+            <% mahasiswaBaru.forEach(m => { %>
+                <% const mhsFileId = getFileIdFromUrl(m.foto); %>
+                <div class="mhs-baru-card">
+                    <img src="<%= mhsFileId ? `https://drive.google.com/thumbnail?id=${mhsFileId}&sz=w300` : m.foto %>"
+                         alt="<%= m.nama %>" class="mhs-baru-foto"
+                         onerror="this.onerror=null; this.src='https://via.placeholder.com/200x200?text=Foto';">
+                    <div class="mhs-baru-nama"><%= m.nama %></div>
+                    <div class="mhs-baru-sekolah"><i class="bi bi-mortarboard"></i> <%= m.asalSekolah %></div>
+                </div>
+            <% }) %>
+        </div>
+    </section>
+    <% } %>
+
     <!-- STATISTIK PRODI -->
     <section id="statistik" class="section-wrapper">
 

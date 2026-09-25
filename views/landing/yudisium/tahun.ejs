@@ -1,5 +1,17 @@
 <%- include('../../partials/header-landing') %>
 
+<%
+  // Sama seperti di views/landing/yudisium/index.ejs - lihat komentar di sana.
+  const getFileIdFromUrl = (url) => {
+    if (!url) return null;
+    let match = url.match(/[?&]id=([^&]+)/);
+    if (match) return match[1];
+    match = url.match(/\/d\/([^\/]+)/);
+    if (match) return match[1];
+    return null;
+  };
+%>
+
 <style>
   .hero-yudisium-tahun {
     background: linear-gradient(135deg, #6a3093, #a044ff);
@@ -100,8 +112,11 @@
       <div class="col-lg-3 col-md-4 col-sm-6">
         <div class="wisudawan-card">
           <div class="card-img-wrapper">
-            <% if (m.fotoYudisiumUrl) { %>
-              <img src="<%= m.fotoYudisiumUrl %>" alt="<%= m.nama %>">
+            <% if (m.fotoYudisiumUrl) {
+                 const fotoFileId = getFileIdFromUrl(m.fotoYudisiumUrl); %>
+              <img src="<%= fotoFileId ? `https://drive.google.com/thumbnail?id=${fotoFileId}&sz=w500` : m.fotoYudisiumUrl %>"
+                   alt="<%= m.nama %>"
+                   onerror="this.onerror=null; this.src='<%= m.fotoYudisiumUrl %>';">
             <% } else { %>
               <i class="bi bi-person-badge"></i>
             <% } %>

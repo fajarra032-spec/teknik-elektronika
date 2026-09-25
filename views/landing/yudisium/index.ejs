@@ -1,5 +1,21 @@
 <%- include('../../partials/header-landing') %>
 
+<%
+  // Fungsi untuk mengekstrak file ID dari URL Google Drive & bikin URL
+  // thumbnail langsung (webViewLink dari Drive itu halaman HTML, BUKAN file
+  // gambar - kalau dipakai langsung di <img src> browser gagal muat &
+  // fallback ke placeholder berkali-kali, kelihatan seperti flicker).
+  // Konvensi yang sama dipakai di views/landing/index.ejs & views/admin/mahasiswa_list.ejs.
+  const getFileIdFromUrl = (url) => {
+    if (!url) return null;
+    let match = url.match(/[?&]id=([^&]+)/);
+    if (match) return match[1];
+    match = url.match(/\/d\/([^\/]+)/);
+    if (match) return match[1];
+    return null;
+  };
+%>
+
 <style>
   .hero-yudisium {
     background: linear-gradient(135deg, #6a3093, #a044ff);
@@ -98,8 +114,11 @@
         <div class="col-lg-4 col-md-6">
           <a href="/yudisium/<%= t.tahun %>" class="tahun-card">
             <div class="card-img-wrapper">
-              <% if (t.fotoSampul) { %>
-                <img src="<%= t.fotoSampul %>" alt="Yudisium <%= t.tahun %>">
+              <% if (t.fotoSampul) {
+                   const sampulFileId = getFileIdFromUrl(t.fotoSampul); %>
+                <img src="<%= sampulFileId ? `https://drive.google.com/thumbnail?id=${sampulFileId}&sz=w500` : t.fotoSampul %>"
+                     alt="Yudisium <%= t.tahun %>"
+                     onerror="this.onerror=null; this.src='<%= t.fotoSampul %>';">
               <% } else { %>
                 <i class="bi bi-mortarboard-fill"></i>
               <% } %>
