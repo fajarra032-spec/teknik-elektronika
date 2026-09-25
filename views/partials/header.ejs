@@ -215,6 +215,45 @@
             .brand-text { font-size: 0.8rem; }
         }
 
+        /* Badge notifikasi & pesan (lonceng / gelembung chat di navbar) */
+        .navbar-icon-link {
+            position: relative;
+            font-size: 1.15rem;
+        }
+        .navbar-icon-badge {
+            position: absolute;
+            top: 0.1rem;
+            right: 0.1rem;
+            font-size: 0.6rem;
+            padding: 0.2em 0.4em;
+            transform: translate(40%, -40%);
+        }
+        .navbar-dropdown-panel {
+            width: 320px;
+            max-width: 90vw;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 0;
+        }
+        .navbar-dropdown-panel .dropdown-item {
+            white-space: normal;
+        }
+        @media (max-width: 991px) {
+            /* Di layar kecil dropdown navbar Bootstrap sudah full width di
+               dalam .navbar-collapse yang transparan/gelap - panel notifikasi
+               dipaksa terang supaya tetap terbaca (beda konteks dgn menu biasa). */
+            .navbar-dropdown-panel {
+                width: 100%;
+                background: #fff;
+                border-radius: 0.75rem;
+            }
+            .navbar-dropdown-panel .dropdown-item,
+            .navbar-dropdown-panel .dropdown-item-text,
+            .navbar-dropdown-panel span {
+                color: #0f172a !important;
+            }
+        }
+
         /* Pembungkus konten */
         .content-wrapper {
             max-width: 1200px;
@@ -277,6 +316,77 @@
                             <li class="nav-item"><a class="nav-link" href="/admin/dosen"><i class="bi bi-person-badge me-1"></i>Dosen</a></li>
                             <li class="nav-item"><a class="nav-link" href="/admin/matakuliah"><i class="bi bi-book me-1"></i>MK</a></li>
                         <% } %>
+                        <%
+                            // Shortcut "Chat Kelas" tergantung role - kelas chat itu per mata
+                            // kuliah (perlu pilih MK dulu), jadi diarahkan ke halaman daftar MK
+                            // masing-masing, bukan langsung ke satu obrolan.
+                            let kelasChatLink = null;
+                            if (user.role === 'mahasiswa') kelasChatLink = '/mahasiswa/elearning';
+                            else if (user.role === 'dosen') kelasChatLink = '/dosen/mk';
+                        %>
+                        <!-- Notifikasi -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link navbar-icon-link" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifikasi">
+                                <i class="bi bi-bell"></i>
+                                <% if (typeof navNotifikasi !== 'undefined' && navNotifikasi.unreadCount > 0) { %>
+                                    <span class="badge bg-danger rounded-pill navbar-icon-badge"><%= navNotifikasi.unreadCount > 9 ? '9+' : navNotifikasi.unreadCount %></span>
+                                <% } %>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end navbar-dropdown-panel" aria-labelledby="notifDropdown">
+                                <li class="px-3 py-2 d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold small text-dark">Notifikasi</span>
+                                    <a href="/notifikasi" class="small">Lihat semua</a>
+                                </li>
+                                <li><hr class="dropdown-divider m-0"></li>
+                                <% if (typeof navNotifikasi === 'undefined' || !navNotifikasi.items || navNotifikasi.items.length === 0) { %>
+                                    <li><span class="dropdown-item-text text-muted small">Belum ada notifikasi.</span></li>
+                                <% } else { %>
+                                    <% navNotifikasi.items.forEach(function(n) { %>
+                                        <li>
+                                            <form method="POST" action="/notifikasi/<%= n.id %>/baca" class="m-0">
+                                                <input type="hidden" name="link" value="<%= n.link || '/notifikasi' %>">
+                                                <button type="submit" class="dropdown-item <%= !n.read ? 'fw-semibold' : '' %>">
+                                                    <span class="d-block small"><%= n.title %></span>
+                                                    <span class="d-block text-muted" style="font-size:0.75rem;"><%= new Date(n.createdAt).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) %></span>
+                                                </button>
+                                            </form>
+                                        </li>
+                                    <% }); %>
+                                <% } %>
+                            </ul>
+                        </li>
+                        <!-- Pesan (Messenger) -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link navbar-icon-link" href="#" id="pesanDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Pesan">
+                                <i class="bi bi-chat-dots"></i>
+                                <% if (typeof navPesan !== 'undefined' && navPesan.unreadCount > 0) { %>
+                                    <span class="badge bg-danger rounded-pill navbar-icon-badge"><%= navPesan.unreadCount > 9 ? '9+' : navPesan.unreadCount %></span>
+                                <% } %>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end navbar-dropdown-panel" aria-labelledby="pesanDropdown">
+                                <li class="px-3 py-2 d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold small text-dark">Pesan</span>
+                                    <a href="/pesan" class="small">Lihat semua</a>
+                                </li>
+                                <li><hr class="dropdown-divider m-0"></li>
+                                <% if (typeof navPesan === 'undefined' || !navPesan.items || navPesan.items.length === 0) { %>
+                                    <li><span class="dropdown-item-text text-muted small">Belum ada pesan.</span></li>
+                                <% } else { %>
+                                    <% navPesan.items.forEach(function(c) { %>
+                                        <li>
+                                            <a class="dropdown-item <%= c.unreadCount > 0 ? 'fw-semibold' : '' %>" href="/pesan/<%= c.partnerId %>">
+                                                <span class="d-block small"><%= c.partnerNama %></span>
+                                                <span class="d-block text-muted text-truncate" style="font-size:0.75rem; max-width: 260px;"><%= c.lastMessage.message %></span>
+                                            </a>
+                                        </li>
+                                    <% }); %>
+                                <% } %>
+                                <% if (kelasChatLink) { %>
+                                    <li><hr class="dropdown-divider m-0"></li>
+                                    <li><a class="dropdown-item small" href="<%= kelasChatLink %>"><i class="bi bi-people me-1"></i>Chat Kelas</a></li>
+                                <% } %>
+                            </ul>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-person-circle me-1"></i> <%= user.nama || user.email %>

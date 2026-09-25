@@ -1,0 +1,83 @@
+<%- include('../partials/header') %>
+
+<div class="content-wrapper mt-4" style="max-width: 720px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0"><i class="bi bi-chat-dots me-2"></i>Pesan</h5>
+    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalObrolanBaru">
+      <i class="bi bi-plus-lg me-1"></i>Obrolan Baru
+    </button>
+  </div>
+
+  <div class="info-card">
+    <div class="card-body p-0">
+      <% if (!conversations || conversations.length === 0) { %>
+        <p class="text-muted text-center py-5 mb-0">
+          <i class="bi bi-chat-square-text d-block mb-2" style="font-size:2rem;"></i>
+          Belum ada percakapan. Mulai obrolan baru lewat tombol di atas.
+        </p>
+      <% } else { %>
+        <ul class="list-group list-group-flush">
+          <% conversations.forEach(function(c) { %>
+            <li class="list-group-item">
+              <a href="/pesan/<%= c.partnerId %>" class="d-flex align-items-center gap-3 text-decoration-none text-dark">
+                <i class="bi bi-person-circle" style="font-size:2rem; color:#94a3b8;"></i>
+                <span class="flex-grow-1">
+                  <span class="d-flex justify-content-between">
+                    <span class="fw-semibold"><%= c.partnerNama %></span>
+                    <span class="text-muted small"><%= new Date(c.lastMessage.timestamp).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) %></span>
+                  </span>
+                  <span class="d-block text-muted small text-truncate" style="max-width: 420px;">
+                    <%= c.lastMessage.senderId !== c.partnerId ? 'Anda: ' : '' %><%= c.lastMessage.message %>
+                  </span>
+                </span>
+                <% if (c.unreadCount > 0) { %>
+                  <span class="badge bg-primary rounded-pill"><%= c.unreadCount %></span>
+                <% } %>
+              </a>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: mulai obrolan baru -->
+<div class="modal fade" id="modalObrolanBaru" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title fw-bold">Mulai Obrolan Baru</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="cariKontak" class="form-control mb-3" placeholder="Cari nama...">
+        <div id="daftarKontak" style="max-height: 320px; overflow-y: auto;">
+          <% contacts.forEach(function(c) { %>
+            <a href="/pesan/<%= c.id %>" class="d-flex align-items-center gap-2 py-2 text-decoration-none text-dark kontak-item" data-nama="<%= (c.nama || '').toLowerCase() %>">
+              <i class="bi bi-person-circle" style="font-size:1.6rem; color:#94a3b8;"></i>
+              <span>
+                <span class="d-block"><%= c.nama %></span>
+                <span class="text-muted small text-capitalize"><%= c.role %></span>
+              </span>
+            </a>
+          <% }); %>
+          <% if (contacts.length === 0) { %>
+            <p class="text-muted text-center small mb-0">Tidak ada kontak tersedia.</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('cariKontak').addEventListener('input', function (e) {
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('.kontak-item').forEach(function (el) {
+      el.style.display = el.dataset.nama.includes(q) ? '' : 'none';
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %>

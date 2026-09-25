@@ -328,6 +328,41 @@ async function startServer() {
     // seluruh route publik sekaligus tanpa perlu ditambahkan satu-satu.
     app.use(attachUserIfLoggedIn);
 
+    // ============================================================================
+    // BADGE NOTIFIKASI & PESAN DI NAVBAR
+    // ============================================================================
+    // Menyiapkan res.locals.navNotifikasi & res.locals.navPesan (jumlah belum
+    // dibaca + beberapa item terbaru) supaya partials/header.ejs bisa
+    // menampilkan lonceng notifikasi & ikon pesan TANPA request AJAX
+    // terpisah - datanya sudah ikut ter-render bersama halaman. Hanya jalan
+    // kalau user sedang login (req.user sudah diisi attachUserIfLoggedIn di
+    // atas); hasil query di-cache singkat (lihat helpers/notificationHelper.js
+    // & helpers/messengerHelper.js) supaya tidak membaca Firestore ulang di
+    // setiap halaman yang dibuka.
+    const { getNavbarSummary: getNavbarNotifSummary } = require('./helpers/notificationHelper');
+    const { getNavbarSummary: getNavbarPesanSummary } = require('./helpers/messengerHelper');
+    app.use(async (req, res, next) => {
+      if (req.user && req.user.id) {
+        try {
+          const [navNotifikasi, navPesan] = await Promise.all([
+            getNavbarNotifSummary(db, req.user.id),
+            getNavbarPesanSummary(db, req.user.id)
+          ]);
+          res.locals.navNotifikasi = navNotifikasi;
+          res.locals.navPesan = navPesan;
+        } catch (error) {
+          console.error('Gagal memuat badge navbar (notifikasi/pesan):', error);
+          res.locals.navNotifikasi = { unreadCount: 0, items: [] };
+          res.locals.navPesan = { unreadCount: 0, items: [] };
+        }
+      }
+      next();
+    });
+
+    // ROUTES NOTIFIKASI & PESAN (semua role - mahasiswa/dosen/admin)
+    app.use('/notifikasi', require('./routes/notifikasi'));
+    app.use('/pesan', require('./routes/pesan'));
+
     // ROUTES PUBLIK
     const landingRoutes = require('./routes/landing');
     app.use('/', landingRoutes);

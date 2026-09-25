@@ -1,0 +1,49 @@
+<%- include('partials/header') %>
+
+<div class="content-wrapper mt-4" style="max-width: 720px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0"><i class="bi bi-bell me-2"></i>Notifikasi</h5>
+    <% if (items.some(n => !n.read)) { %>
+      <form method="POST" action="/notifikasi/baca-semua">
+        <button type="submit" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-check2-all me-1"></i>Tandai semua dibaca
+        </button>
+      </form>
+    <% } %>
+  </div>
+
+  <div class="info-card">
+    <div class="card-body p-0">
+      <% if (!items || items.length === 0) { %>
+        <p class="text-muted text-center py-5 mb-0">
+          <i class="bi bi-bell-slash d-block mb-2" style="font-size:2rem;"></i>
+          Belum ada notifikasi.
+        </p>
+      <% } else { %>
+        <ul class="list-group list-group-flush">
+          <% items.forEach(function(n) { %>
+            <li class="list-group-item <%= !n.read ? 'bg-light' : '' %>">
+              <form method="POST" action="/notifikasi/<%= n.id %>/baca" class="d-flex align-items-start gap-2 m-0">
+                <input type="hidden" name="link" value="<%= n.link || '/notifikasi' %>">
+                <span class="mt-1">
+                  <% if (!n.read) { %><span class="badge bg-primary rounded-circle p-1">&nbsp;</span><% } else { %><i class="bi bi-check2 text-muted"></i><% } %>
+                </span>
+                <span class="flex-grow-1 text-start">
+                  <button type="submit" class="btn btn-link p-0 text-decoration-none fw-semibold text-dark d-block text-start">
+                    <%= n.title %>
+                  </button>
+                  <% if (n.message) { %><span class="text-muted small d-block"><%= n.message %></span><% } %>
+                  <span class="text-muted small">
+                    <%= new Date(n.createdAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) %>
+                  </span>
+                </span>
+              </form>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

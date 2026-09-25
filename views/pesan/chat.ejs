@@ -1,0 +1,89 @@
+<%- include('../partials/header') %>
+
+<div class="content-wrapper mt-4" style="max-width: 720px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">
+      <i class="bi bi-person-circle me-2"></i><%= partner.nama || partner.email %>
+      <span class="badge bg-light text-secondary text-capitalize ms-1"><%= partner.role %></span>
+    </h5>
+    <a href="/pesan" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Kembali
+    </a>
+  </div>
+
+  <div class="info-card">
+    <div class="card-body">
+      <div id="chat-box" class="mb-3" style="height: 420px; overflow-y: auto; display:flex; flex-direction:column; gap:8px;">
+        <% if (!messages || messages.length === 0) { %>
+          <p class="text-muted text-center small">Belum ada pesan. Mulai percakapan!</p>
+        <% } else { %>
+          <% messages.forEach(function(m) { %>
+            <% const isMe = m.senderId === user.id; %>
+            <div class="bubble <%= isMe ? 'bubble-me' : 'bubble-other' %>">
+              <%= m.message %>
+              <span class="bubble-time"><%= new Date(m.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) %></span>
+            </div>
+          <% }); %>
+        <% } %>
+      </div>
+      <form id="chat-form" class="d-flex gap-2">
+        <input type="text" id="chat-input" class="form-control" placeholder="Tulis pesan..." autocomplete="off" required maxlength="2000">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i></button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .bubble { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 0.9rem; }
+  .bubble-me { align-self: flex-end; background: #3b82f6; color: #fff; }
+  .bubble-other { align-self: flex-start; background: #f1f5f9; color: #0f172a; }
+  .bubble-time { font-size: 0.7rem; opacity: 0.7; display:block; margin-top:2px; }
+</style>
+
+<script>
+  // Catatan: TIDAK polling berkala secara sengaja (hemat baca Firestore).
+  // Pesan baru dari lawan bicara akan tampak saat halaman ini dimuat ulang
+  // (refresh); pesan yang saya kirim sendiri langsung ditambahkan ke layar
+  // tanpa reload supaya tetap terasa responsif.
+  const partnerId = <%- JSON.stringify(partner.id) %>;
+  const chatBox = document.getElementById('chat-box');
+  const chatForm = document.getElementById('chat-form');
+  const chatInput = document.getElementById('chat-input');
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  chatForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const message = chatInput.value.trim();
+    if (!message) return;
+    chatInput.value = '';
+    try {
+      const res = await fetch(`/pesan/${partnerId}/kirim`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (chatBox.querySelector('.text-muted.text-center')) chatBox.innerHTML = '';
+        const time = new Date(data.pesan.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        chatBox.insertAdjacentHTML('beforeend', `<div class="bubble bubble-me">${escapeHtml(message)}<span class="bubble-time">${time}</span></div>`);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      } else {
+        alert(data.message || 'Gagal mengirim pesan');
+      }
+    } catch (err) {
+      console.error('Gagal mengirim pesan:', err);
+      alert('Gagal mengirim pesan, coba lagi.');
+    }
+  });
+
+  chatBox.scrollTop = chatBox.scrollHeight;
+</script>
+
+<%- include('../partials/footer') %>

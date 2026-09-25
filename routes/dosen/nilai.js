@@ -156,7 +156,25 @@ router.post('/input', async (req, res) => {
     const judulTugas = tugasDoc.data().judul;
     
     await saveNilai(mahasiswaId, mkId, tugasId, judulTugas, nilai);
-    
+
+    // Notifikasi otomatis untuk mahasiswa - contoh pemicu notifikasi
+    // "otomatis dari sistem" selain pesan baru (lihat helpers/messengerHelper.js).
+    try {
+      const { createNotification } = require('../../helpers/notificationHelper');
+      const mkDoc = await db.collection('mataKuliah').doc(mkId).get();
+      const namaMk = mkDoc.exists ? (mkDoc.data().nama || mkDoc.data().kode || 'mata kuliah') : 'mata kuliah';
+      await createNotification(db, mahasiswaId, {
+        type: 'nilai',
+        title: `Nilai ${judulTugas} sudah diinput`,
+        message: `Nilai untuk ${namaMk} sudah diperbarui oleh dosen.`,
+        link: `/mahasiswa/akademik`
+      });
+    } catch (notifError) {
+      // Kegagalan kirim notifikasi TIDAK boleh membatalkan penyimpanan nilai
+      // yang sudah berhasil - cukup dicatat di log.
+      console.error('Gagal membuat notifikasi nilai:', notifError);
+    }
+
     res.redirect(`/dosen/nilai/${mkId}`);
   } catch (error) {
     console.error('Error input nilai:', error);
