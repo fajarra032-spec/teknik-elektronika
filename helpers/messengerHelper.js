@@ -94,7 +94,7 @@ async function sendMessage(db, sender, receiverId, message) {
     type: 'pesan',
     title: `Pesan baru dari ${sender.nama || 'seseorang'}`,
     message: text.length > 80 ? text.slice(0, 80) + '…' : text,
-    link: `/pesan/${sender.id}`
+    link: `/pesan/pribadi/${sender.id}`
   });
 
   return { id: ref.id, ...doc };

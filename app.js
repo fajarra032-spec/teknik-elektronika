@@ -341,9 +341,17 @@ async function startServer() {
     // setiap halaman yang dibuka.
     const { getNavbarSummary: getNavbarNotifSummary } = require('./helpers/notificationHelper');
     const { getNavbarSummary: getNavbarPesanSummary } = require('./helpers/messengerHelper');
+    const { cekPengingatDosen } = require('./helpers/dosenReminderHelper');
     app.use(async (req, res, next) => {
       if (req.user && req.user.id) {
         try {
+          // Pengingat otomatis khusus dosen (jadwal mengajar hari ini +
+          // tugas belum dinilai) - aman dipanggil tiap request, sudah
+          // di-cache 4 jam per dosen di dalam helper-nya sendiri.
+          if (req.user.role === 'dosen') {
+            await cekPengingatDosen(db, req.user);
+          }
+
           const [navNotifikasi, navPesan] = await Promise.all([
             getNavbarNotifSummary(db, req.user.id),
             getNavbarPesanSummary(db, req.user.id)

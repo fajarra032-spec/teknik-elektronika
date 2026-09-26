@@ -1,5 +1,17 @@
 <%- include('../../partials/header-landing') %>
 
+<%
+  // Sama seperti di views/landing/lulusan/index.ejs - lihat komentar di sana.
+  const getFileIdFromUrl = (url) => {
+    if (!url) return null;
+    let match = url.match(/[?&]id=([^&]+)/);
+    if (match) return match[1];
+    match = url.match(/\/d\/([^\/]+)/);
+    if (match) return match[1];
+    return null;
+  };
+%>
+
 <style>
   .hero-detail {
     background: linear-gradient(135deg, #2193b0, #6dd5ed);
@@ -68,7 +80,10 @@
   <div class="row">
     <div class="col-lg-4">
       <div class="profile-card">
-        <img src="<%= lulusan.foto || 'https://via.placeholder.com/400x400?text=Alumni' %>" alt="<%= lulusan.nama %>" class="profile-img">
+        <% const dFileId = getFileIdFromUrl(lulusan.foto); %>
+        <img src="<%= dFileId ? `https://drive.google.com/thumbnail?id=${dFileId}&sz=w500` : (lulusan.foto || 'https://via.placeholder.com/400x400?text=Alumni') %>"
+             alt="<%= lulusan.nama %>" class="profile-img"
+             onerror="this.onerror=null; this.src='<%= lulusan.foto || 'https://via.placeholder.com/400x400?text=Alumni' %>';">
         <div class="profile-info text-center">
           <h3><%= lulusan.nama %></h3>
           <p class="text-muted"><%= lulusan.nim %></p>

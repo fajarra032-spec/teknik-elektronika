@@ -51,6 +51,39 @@
             border-radius: 50px;
             transition: all 0.3s;
         }
+        /* Navbar icon-only yang expand jadi ikon+teks saat di-hover/fokus,
+           supaya tetap ringkas (menu Admin item-nya banyak) tapi tidak
+           terasa "kopong" waktu kursor diam di ikon. Teks labelnya ada di
+           <span class="nav-label"> di markup, disembunyikan via
+           max-width:0 lalu di-reveal saat hover - bukan lewat title/tooltip
+           lagi (sama seperti views/partials/header-landing.ejs). */
+        .navbar-custom .nav-link {
+            height: 42px;
+            padding: 0 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            font-size: 1.05rem;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .navbar-custom .nav-link .nav-label {
+            max-width: 0;
+            opacity: 0;
+            margin-left: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            font-size: 0.88rem;
+            transition: max-width 0.35s ease, opacity 0.25s ease, margin-left 0.35s ease;
+        }
+        .navbar-custom .nav-link:hover .nav-label,
+        .navbar-custom .nav-link:focus .nav-label {
+            max-width: 200px;
+            opacity: 1;
+            margin-left: 0.5rem;
+        }
+        .navbar-custom .nav-link.dropdown-toggle::after {
+            display: none;
+        }
         .navbar-custom .nav-link:hover {
             background-color: rgba(255, 255, 255, 0.1);
             transform: translateY(-2px);
@@ -149,6 +182,15 @@
                 margin: 0.2rem 0;
                 padding: 0.6rem 1rem;
                 text-align: left;
+                font-size: 1.1rem;
+            }
+            /* Di mobile (menu sudah vertikal/list), label langsung tampil
+               terus - tidak perlu nunggu hover yang memang tidak natural di
+               layar sentuh. */
+            .navbar-nav .nav-link .nav-label {
+                max-width: 200px;
+                opacity: 1;
+                margin-left: 0.5rem;
             }
             .dropdown-menu {
                 background: transparent;
@@ -222,11 +264,13 @@
         }
         .navbar-icon-badge {
             position: absolute;
-            top: 0.1rem;
-            right: 0.1rem;
+            top: -4px;
+            right: 2px;
             font-size: 0.6rem;
             padding: 0.2em 0.4em;
-            transform: translate(40%, -40%);
+            line-height: 1;
+            z-index: 5;
+            pointer-events: none;
         }
         .navbar-dropdown-panel {
             width: 320px;
@@ -297,41 +341,33 @@
                 <ul class="navbar-nav ms-auto">
                     <!-- Menu umum: Cek Data -->
                     <li class="nav-item">
-                        <a class="nav-link" href="/cekmahasiswa"><i class="bi bi-search me-1"></i>Cek Data</a>
+                        <a class="nav-link" href="/cekmahasiswa"><i class="bi bi-search"></i><span class="nav-label">Cek Data</span></a>
                     </li>
                     <% if (typeof user !== 'undefined' && user) { %>
                         <% if (user.role === 'mahasiswa') { %>
-                            <li class="nav-item"><a class="nav-link" href="/mahasiswa/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/mahasiswa/akademik"><i class="bi bi-journal-bookmark-fill me-1"></i>Akademik</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/mahasiswa/elearning"><i class="bi bi-laptop me-1"></i>ELearning</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/mahasiswa/magang"><i class="bi bi-briefcase me-1"></i>EMagang</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/mahasiswa/dashboard"><i class="bi bi-speedometer2"></i><span class="nav-label">Dashboard</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="/mahasiswa/akademik"><i class="bi bi-journal-bookmark-fill"></i><span class="nav-label">Akademik</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="/mahasiswa/elearning"><i class="bi bi-laptop"></i><span class="nav-label">ELearning</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="/mahasiswa/magang"><i class="bi bi-briefcase"></i><span class="nav-label">EMagang</span></a></li>
                         <% } else if (user.role === 'dosen') { %>
-                            <li class="nav-item"><a class="nav-link" href="/dosen/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/dosen/mk"><i class="bi bi-book me-1"></i>MK</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/dosen/mahasiswa"><i class="bi bi-people me-1"></i>Mahasiswa</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/dosen/dashboard"><i class="bi bi-speedometer2"></i><span class="nav-label">Dashboard</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="/dosen/mk"><i class="bi bi-book"></i><span class="nav-label">MK</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="/dosen/mahasiswa"><i class="bi bi-people"></i><span class="nav-label">Mahasiswa</span></a></li>
                         <% } else if (user.role === 'admin') { %>
-                            <li class="nav-item"><a class="nav-link" href="/admin/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/admin/users"><i class="bi bi-people me-1"></i>Pengguna</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/admin/mahasiswa"><i class="bi bi-mortarboard me-1"></i>Mahasiswa</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/admin/dosen"><i class="bi bi-person-badge me-1"></i>Dosen</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/admin/matakuliah"><i class="bi bi-book me-1"></i>MK</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/admin/dashboard"><i class="bi bi-speedometer2"></i><span class="nav-label">Dashboard</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="/admin/users"><i class="bi bi-people"></i><span class="nav-label">Pengguna</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="/admin/mahasiswa"><i class="bi bi-mortarboard"></i><span class="nav-label">Mahasiswa</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="/admin/dosen"><i class="bi bi-person-badge"></i><span class="nav-label">Dosen</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="/admin/matakuliah"><i class="bi bi-book"></i><span class="nav-label">MK</span></a></li>
                         <% } %>
-                        <%
-                            // Shortcut "Chat Kelas" tergantung role - kelas chat itu per mata
-                            // kuliah (perlu pilih MK dulu), jadi diarahkan ke halaman daftar MK
-                            // masing-masing, bukan langsung ke satu obrolan.
-                            let kelasChatLink = null;
-                            if (user.role === 'mahasiswa') kelasChatLink = '/mahasiswa/elearning';
-                            else if (user.role === 'dosen') kelasChatLink = '/dosen/mk';
-                        %>
                         <!-- Notifikasi -->
                         <li class="nav-item dropdown">
                             <a class="nav-link navbar-icon-link" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifikasi">
-                                <i class="bi bi-bell"></i>
-                                <% if (typeof navNotifikasi !== 'undefined' && navNotifikasi.unreadCount > 0) { %>
-                                    <span class="badge bg-danger rounded-pill navbar-icon-badge"><%= navNotifikasi.unreadCount > 9 ? '9+' : navNotifikasi.unreadCount %></span>
-                                <% } %>
+                                <i class="bi bi-bell"></i><span class="nav-label">Notifikasi</span>
                             </a>
+                            <% if (typeof navNotifikasi !== 'undefined' && navNotifikasi.unreadCount > 0) { %>
+                                <span class="badge bg-danger rounded-pill navbar-icon-badge"><%= navNotifikasi.unreadCount > 9 ? '9+' : navNotifikasi.unreadCount %></span>
+                            <% } %>
                             <ul class="dropdown-menu dropdown-menu-end navbar-dropdown-panel" aria-labelledby="notifDropdown">
                                 <li class="px-3 py-2 d-flex justify-content-between align-items-center">
                                     <span class="fw-bold small text-dark">Notifikasi</span>
@@ -358,11 +394,11 @@
                         <!-- Pesan (Messenger) -->
                         <li class="nav-item dropdown">
                             <a class="nav-link navbar-icon-link" href="#" id="pesanDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Pesan">
-                                <i class="bi bi-chat-dots"></i>
-                                <% if (typeof navPesan !== 'undefined' && navPesan.unreadCount > 0) { %>
-                                    <span class="badge bg-danger rounded-pill navbar-icon-badge"><%= navPesan.unreadCount > 9 ? '9+' : navPesan.unreadCount %></span>
-                                <% } %>
+                                <i class="bi bi-chat-dots"></i><span class="nav-label">Pesan</span>
                             </a>
+                            <% if (typeof navPesan !== 'undefined' && navPesan.unreadCount > 0) { %>
+                                <span class="badge bg-danger rounded-pill navbar-icon-badge"><%= navPesan.unreadCount > 9 ? '9+' : navPesan.unreadCount %></span>
+                            <% } %>
                             <ul class="dropdown-menu dropdown-menu-end navbar-dropdown-panel" aria-labelledby="pesanDropdown">
                                 <li class="px-3 py-2 d-flex justify-content-between align-items-center">
                                     <span class="fw-bold small text-dark">Pesan</span>
@@ -374,24 +410,23 @@
                                 <% } else { %>
                                     <% navPesan.items.forEach(function(c) { %>
                                         <li>
-                                            <a class="dropdown-item <%= c.unreadCount > 0 ? 'fw-semibold' : '' %>" href="/pesan/<%= c.partnerId %>">
+                                            <a class="dropdown-item <%= c.unreadCount > 0 ? 'fw-semibold' : '' %>" href="/pesan/pribadi/<%= c.partnerId %>">
                                                 <span class="d-block small"><%= c.partnerNama %></span>
                                                 <span class="d-block text-muted text-truncate" style="font-size:0.75rem; max-width: 260px;"><%= c.lastMessage.message %></span>
                                             </a>
                                         </li>
                                     <% }); %>
                                 <% } %>
-                                <% if (kelasChatLink) { %>
-                                    <li><hr class="dropdown-divider m-0"></li>
-                                    <li><a class="dropdown-item small" href="<%= kelasChatLink %>"><i class="bi bi-people me-1"></i>Chat Kelas</a></li>
-                                <% } %>
+                                <li><hr class="dropdown-divider m-0"></li>
+                                <li><a class="dropdown-item small" href="/pesan#kelas"><i class="bi bi-people me-1"></i>Chat Kelas & Komunitas</a></li>
                             </ul>
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-person-circle me-1"></i> <%= user.nama || user.email %>
+                                <i class="bi bi-person-circle"></i><span class="nav-label"><%= user.nama ? user.nama.split(' ')[0] : (user.email || 'Akun') %></span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                                <li><h6 class="dropdown-header text-truncate"><%= user.nama || user.email %></h6></li>
                                 <li><a class="dropdown-item" href="<%= user.role === 'mahasiswa' ? '/mahasiswa/biodata' : (user.role === 'dosen' ? '/dosen/biodata' : '/admin/biodata') %>"><i class="bi bi-person me-2"></i>Profil</a></li>
                                 <% if (user.role === 'dosen') { %>
                                     <li><a class="dropdown-item" href="/dosen/akreditasi"><i class="bi bi-patch-check me-2"></i>Akreditasi</a></li>
@@ -403,7 +438,7 @@
                             </ul>
                         </li>
                     <% } else { %>
-                        <li class="nav-item"><a class="nav-link" href="/auth/login"><i class="bi bi-box-arrow-in-right me-1"></i>Login</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/auth/login"><i class="bi bi-box-arrow-in-right"></i><span class="nav-label">Login</span></a></li>
                     <% } %>
                 </ul>
             </div>

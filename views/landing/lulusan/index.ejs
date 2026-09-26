@@ -1,5 +1,24 @@
 <%- include('../../partials/header-landing') %>
 
+<%
+  // Foto lulusan tersimpan sebagai URL Google Drive dalam beberapa bentuk
+  // (uc?export=view&id=... dari upload tracer study/admin, atau webViewLink
+  // untuk data lama) - format uc?export=view TIDAK selalu bisa dipakai
+  // langsung di <img src> (Google kadang menolak/redirect ke halaman
+  // konfirmasi alih-alih gambar), jadi foto sering gagal tampil.
+  // thumbnail?id=... jauh lebih konsisten - konvensi yang sama dipakai di
+  // views/landing/index.ejs, views/landing/yudisium/*.ejs, dan
+  // views/admin/mahasiswa_list.ejs.
+  const getFileIdFromUrl = (url) => {
+    if (!url) return null;
+    let match = url.match(/[?&]id=([^&]+)/);
+    if (match) return match[1];
+    match = url.match(/\/d\/([^\/]+)/);
+    if (match) return match[1];
+    return null;
+  };
+%>
+
 <style>
   /* Hero Section */
   .hero-lulusan {
@@ -281,7 +300,10 @@
         <div class="col-lg-4 col-md-6">
           <div class="lulusan-card">
             <div class="card-img-wrapper">
-              <img src="<%= l.foto || 'https://via.placeholder.com/400x300?text=Alumni' %>" alt="<%= l.nama %>">
+              <% const lFileId = getFileIdFromUrl(l.foto); %>
+              <img src="<%= lFileId ? `https://drive.google.com/thumbnail?id=${lFileId}&sz=w400` : (l.foto || 'https://via.placeholder.com/400x300?text=Alumni') %>"
+                   alt="<%= l.nama %>"
+                   onerror="this.onerror=null; this.src='<%= l.foto || 'https://via.placeholder.com/400x300?text=Alumni' %>';">
               <span class="status-badge <%= l.status %>">
                 <% if (l.status === 'bekerja') { %>💼 Bekerja<% } %>
                 <% if (l.status === 'wirausaha') { %>🏪 Wirausaha<% } %>

@@ -61,6 +61,50 @@
             transition: all 0.3s;
         }
 
+        /* Navbar icon-only yang expand jadi ikon+teks saat di-hover/fokus,
+           supaya tetap ringkas tapi tidak terasa "kopong" (kursor diam di
+           ikon tetap kelihatan kosong tanpa keterangan). Teks labelnya ada
+           di <span class="nav-label"> di markup, disembunyikan via
+           max-width:0 lalu di-reveal saat hover - bukan lewat title/tooltip
+           lagi. */
+        .navbar-custom .nav-link {
+            height: 42px;
+            padding: 0 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            font-size: 1.05rem;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .navbar-custom .nav-link .nav-label {
+            max-width: 0;
+            opacity: 0;
+            margin-left: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            font-size: 0.88rem;
+            transition: max-width 0.35s ease, opacity 0.25s ease, margin-left 0.35s ease;
+        }
+        .navbar-custom .nav-link:hover .nav-label,
+        .navbar-custom .nav-link:focus .nav-label {
+            max-width: 200px;
+            opacity: 1;
+            margin-left: 0.5rem;
+        }
+        .navbar-custom .nav-link.dropdown-toggle::after {
+            display: none; /* panah dropdown disembunyikan, ikonnya sudah cukup jadi penanda */
+        }
+        /* Di mobile (menu hamburger yang sudah vertikal/list), label langsung
+           tampil terus - tidak perlu nunggu hover yang memang tidak natural
+           di layar sentuh. */
+        @media (max-width: 991px) {
+            .navbar-custom .nav-link .nav-label {
+                max-width: 200px;
+                opacity: 1;
+                margin-left: 0.5rem;
+            }
+        }
+
         .navbar-custom .nav-link:hover {
             background-color: rgba(255, 255, 255, 0.1);
             transform: translateY(-2px);
@@ -247,19 +291,19 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="#berita"><i class="bi bi-newspaper me-1"></i>Berita</a>
+                    <a class="nav-link" href="#berita"><i class="bi bi-newspaper"></i><span class="nav-label">Berita</span></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/elk-library"><i class="bi bi-book me-1"></i>ELK-Library</a>
+                    <a class="nav-link" href="/elk-library"><i class="bi bi-book"></i><span class="nav-label">ELK-Library</span></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#seminar"><i class="bi bi-calendar-event me-1"></i>Seminar</a>
+                    <a class="nav-link" href="#seminar"><i class="bi bi-calendar-event"></i><span class="nav-label">Seminar</span></a>
                 </li>
 
                 <!-- Dropdown gabungan: Dokumen, Pengajuan, Kerjasama -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="layananDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-grid-fill me-1"></i>Layanan
+                        <i class="bi bi-grid-fill"></i><span class="nav-label">Layanan</span>
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="layananDropdown">
                         <li><h6 class="dropdown-header"><i class="bi bi-file-earmark-text me-1"></i>Dokumen</h6></li>
@@ -285,17 +329,21 @@
 
                 <!-- Tautan langsung Cek Data (tanpa dropdown) -->
                 <li class="nav-item">
-                    <a class="nav-link" href="/cekmahasiswa"><i class="bi bi-search me-1"></i>Cek Data</a>
+                    <a class="nav-link" href="/cekmahasiswa"><i class="bi bi-search"></i><span class="nav-label">Cek Data</span></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/yudisium"><i class="bi bi-mortarboard-fill me-1"></i>Yudisium</a>
+                    <a class="nav-link" href="/yudisium"><i class="bi bi-mortarboard-fill"></i><span class="nav-label">Yudisium</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/lulusan"><i class="bi bi-briefcase-fill"></i><span class="nav-label">Lulusan</span></a>
                 </li>
                 <% if (typeof user !== 'undefined' && user) { %>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle me-1"></i><%= user.nama ? user.nama.split(' ')[0] : 'Akun' %>
+                            <i class="bi bi-person-circle"></i><span class="nav-label"><%= user.nama ? user.nama.split(' ')[0] : 'Akun' %></span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><h6 class="dropdown-header text-truncate"><%= user.nama || 'Akun' %></h6></li>
                             <li>
                                 <a class="dropdown-item" href="<%= user.role === 'admin' ? '/admin/dashboard' : (user.role === 'dosen' ? '/dosen/dashboard' : '/mahasiswa/dashboard') %>">
                                     <i class="bi bi-speedometer2 me-2"></i>Dashboard
@@ -311,11 +359,11 @@
                     </li>
                 <% } else { %>
                     <li class="nav-item">
-                        <a class="nav-link" href="/auth/login"><i class="bi bi-box-arrow-in-right me-1"></i>Login</a>
+                        <a class="nav-link" href="/auth/login"><i class="bi bi-box-arrow-in-right"></i><span class="nav-label">Login</span></a>
                     </li>
                 <% } %>
                 <li class="nav-item">
-                    <a class="nav-link" href="/panduan"><i class="bi bi-question-circle me-1"></i>Panduan SI ELK</a>
+                    <a class="nav-link" href="/panduan"><i class="bi bi-question-circle"></i><span class="nav-label">Panduan SI ELK</span></a>
                 </li>
             </ul>
         </div>

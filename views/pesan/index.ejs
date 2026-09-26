@@ -1,61 +1,149 @@
 <%- include('../partials/header') %>
 
-<div class="content-wrapper mt-4" style="max-width: 720px;">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="fw-bold mb-0"><i class="bi bi-chat-dots me-2"></i>Pesan</h5>
-    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalObrolanBaru">
-      <i class="bi bi-plus-lg me-1"></i>Obrolan Baru
-    </button>
+<style>
+  .hub-wrap { display: flex; height: calc(100vh - 140px); min-height: 480px; max-width: 1100px; margin: 1rem auto 0; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #fff; }
+  .hub-sidebar { width: 300px; flex-shrink: 0; border-right: 1px solid #e5e7eb; overflow-y: auto; background: #f8fafc; }
+  .hub-sidebar-header { padding: 12px 14px; border-bottom: 1px solid #e5e7eb; display:flex; justify-content: space-between; align-items:center; }
+  .hub-section-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; padding: 10px 14px 4px; font-weight: 700; }
+  .hub-room-item { display:flex; align-items:center; gap:10px; padding: 8px 14px; text-decoration:none; color:#0f172a; }
+  .hub-room-item:hover { background:#eef2f7; }
+  .hub-room-item.active { background:#dbeafe; }
+  .hub-room-name { font-weight: 600; font-size: 0.88rem; }
+  .hub-room-sub { font-size: 0.75rem; color:#64748b; display:block; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width: 190px; }
+  .hub-avatar { width: 38px; height: 38px; border-radius: 50%; background:#94a3b8; color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
+  .hub-main { flex-grow: 1; display:flex; flex-direction:column; min-width:0; }
+  .hub-main-header { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .hub-messages { flex-grow:1; overflow-y:auto; padding: 16px; display:flex; flex-direction:column; gap:8px; background:#f8fafc; }
+  .hub-empty { flex-grow:1; display:flex; align-items:center; justify-content:center; color:#94a3b8; flex-direction:column; gap:8px; }
+  .hub-bubble { max-width: 70%; padding: 8px 12px; border-radius: 14px; font-size: 0.88rem; }
+  .hub-bubble-me { align-self:flex-end; background:#3b82f6; color:#fff; border-bottom-right-radius:4px; }
+  .hub-bubble-other { align-self:flex-start; background:#fff; border:1px solid #e5e7eb; border-bottom-left-radius:4px; }
+  .hub-bubble-sender { font-size:0.72rem; font-weight:700; opacity:0.85; display:block; margin-bottom:2px; }
+  .hub-bubble-time { font-size:0.68rem; opacity:0.7; display:block; margin-top:2px; }
+  .hub-form { padding: 10px 14px; border-top: 1px solid #e5e7eb; display:flex; gap:8px; }
+  @media (max-width: 767px) {
+    .hub-wrap { border-radius: 0; margin-top: 0; height: calc(100vh - 110px); }
+    .hub-sidebar { width: 100%; position:absolute; inset:0; z-index:2; }
+    .hub-main { position:relative; z-index:1; }
+    <% if (room) { %> .hub-sidebar { display:none; } <% } %>
+  }
+</style>
+
+<div class="hub-wrap">
+  <!-- Sidebar -->
+  <div class="hub-sidebar">
+    <div class="hub-sidebar-header">
+      <span class="fw-bold"><i class="bi bi-chat-dots me-1"></i>Pesan</span>
+      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalObrolanBaru">
+        <i class="bi bi-plus-lg"></i>
+      </button>
+    </div>
+
+    <div class="hub-section-title">Pesan Pribadi</div>
+    <% if (!dmConversations || dmConversations.length === 0) { %>
+      <p class="text-muted small px-3">Belum ada obrolan pribadi.</p>
+    <% } else { %>
+      <% dmConversations.forEach(function(c) { %>
+        <% const active = room && room.type === 'pribadi' && room.partner.id === c.partnerId; %>
+        <a href="/pesan/pribadi/<%= c.partnerId %>" class="hub-room-item <%= active ? 'active' : '' %>">
+          <span class="hub-avatar"><i class="bi bi-person-fill"></i></span>
+          <span class="flex-grow-1 min-w-0">
+            <span class="hub-room-name d-block"><%= c.partnerNama %></span>
+            <span class="hub-room-sub"><%= c.lastMessage.senderId !== c.partnerId ? 'Anda: ' : '' %><%= c.lastMessage.message %></span>
+          </span>
+          <% if (c.unreadCount > 0) { %><span class="badge bg-primary rounded-pill"><%= c.unreadCount %></span><% } %>
+        </a>
+      <% }); %>
+    <% } %>
+
+    <% if (kelasRooms && kelasRooms.length > 0) { %>
+      <div class="hub-section-title">Chat Kelas</div>
+      <% kelasRooms.forEach(function(k) { %>
+        <% const active = room && room.type === 'kelas' && room.mk.id === k.mkId; %>
+        <a href="/pesan/kelas/<%= k.mkId %>" class="hub-room-item <%= active ? 'active' : '' %>">
+          <span class="hub-avatar"><i class="bi bi-people-fill"></i></span>
+          <span class="flex-grow-1 min-w-0">
+            <span class="hub-room-name d-block"><%= k.kode %> <%= k.nama %></span>
+            <span class="hub-room-sub">Obrolan grup kelas</span>
+          </span>
+        </a>
+      <% }); %>
+    <% } %>
+
+    <div class="hub-section-title">Komunitas</div>
+    <% const activeKomunitas = room && room.type === 'komunitas'; %>
+    <a href="/pesan/komunitas" class="hub-room-item <%= activeKomunitas ? 'active' : '' %>">
+      <span class="hub-avatar" style="background:#6366f1;"><i class="bi bi-globe2"></i></span>
+      <span class="flex-grow-1 min-w-0">
+        <span class="hub-room-name d-block">Komunitas</span>
+        <span class="hub-room-sub">Obrolan terbuka lintas peran</span>
+      </span>
+    </a>
   </div>
 
-  <div class="info-card">
-    <div class="card-body p-0">
-      <% if (!conversations || conversations.length === 0) { %>
-        <p class="text-muted text-center py-5 mb-0">
-          <i class="bi bi-chat-square-text d-block mb-2" style="font-size:2rem;"></i>
-          Belum ada percakapan. Mulai obrolan baru lewat tombol di atas.
-        </p>
-      <% } else { %>
-        <ul class="list-group list-group-flush">
-          <% conversations.forEach(function(c) { %>
-            <li class="list-group-item">
-              <a href="/pesan/<%= c.partnerId %>" class="d-flex align-items-center gap-3 text-decoration-none text-dark">
-                <i class="bi bi-person-circle" style="font-size:2rem; color:#94a3b8;"></i>
-                <span class="flex-grow-1">
-                  <span class="d-flex justify-content-between">
-                    <span class="fw-semibold"><%= c.partnerNama %></span>
-                    <span class="text-muted small"><%= new Date(c.lastMessage.timestamp).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) %></span>
-                  </span>
-                  <span class="d-block text-muted small text-truncate" style="max-width: 420px;">
-                    <%= c.lastMessage.senderId !== c.partnerId ? 'Anda: ' : '' %><%= c.lastMessage.message %>
-                  </span>
-                </span>
-                <% if (c.unreadCount > 0) { %>
-                  <span class="badge bg-primary rounded-pill"><%= c.unreadCount %></span>
-                <% } %>
-              </a>
-            </li>
+  <!-- Panel utama -->
+  <div class="hub-main">
+    <% if (!room) { %>
+      <div class="hub-empty">
+        <i class="bi bi-chat-square-heart" style="font-size:2.5rem;"></i>
+        <span>Pilih percakapan di sebelah kiri untuk mulai.</span>
+      </div>
+    <% } else { %>
+      <div class="hub-main-header">
+        <a href="/pesan" class="d-md-none text-dark me-1"><i class="bi bi-arrow-left"></i></a>
+        <% if (room.type === 'pribadi') { %>
+          <i class="bi bi-person-circle"></i> <%= room.partner.nama || room.partner.email %>
+          <span class="badge bg-light text-secondary text-capitalize"><%= room.partner.role %></span>
+        <% } else if (room.type === 'kelas') { %>
+          <i class="bi bi-people-fill"></i> <%= room.mk.kode %> <%= room.mk.nama %>
+        <% } else if (room.type === 'komunitas') { %>
+          <i class="bi bi-globe2"></i> Komunitas
+        <% } %>
+      </div>
+
+      <div id="hub-messages" class="hub-messages">
+        <% if (!room.messages || room.messages.length === 0) { %>
+          <p class="text-muted text-center small">Belum ada pesan. Mulai percakapan!</p>
+        <% } else { %>
+          <% room.messages.forEach(function(m) { %>
+            <%
+              const isMe = (room.type === 'pribadi' ? m.senderId === user.id : m.senderId === user.id);
+              const waktu = new Date(m.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+              const teks = room.type === 'pribadi' ? m.message : m.pesan;
+            %>
+            <div class="hub-bubble <%= isMe ? 'hub-bubble-me' : 'hub-bubble-other' %>">
+              <% if (room.type !== 'pribadi' && !isMe) { %><span class="hub-bubble-sender"><%= m.senderNama %></span><% } %>
+              <%= teks %>
+              <span class="hub-bubble-time"><%= waktu %></span>
+            </div>
           <% }); %>
-        </ul>
-      <% } %>
-    </div>
+        <% } %>
+      </div>
+
+      <form id="hub-form" class="hub-form"
+            data-type="<%= room.type %>"
+            data-target="<%= room.type === 'pribadi' ? room.partner.id : (room.type === 'kelas' ? room.mk.id : '') %>">
+        <input type="text" id="hub-input" class="form-control" placeholder="Tulis pesan..." autocomplete="off" required maxlength="2000">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i></button>
+      </form>
+    <% } %>
   </div>
 </div>
 
-<!-- Modal: mulai obrolan baru -->
+<!-- Modal: mulai obrolan pribadi baru -->
 <div class="modal fade" id="modalObrolanBaru" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h6 class="modal-title fw-bold">Mulai Obrolan Baru</h6>
+        <h6 class="modal-title fw-bold">Mulai Obrolan Pribadi</h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <input type="text" id="cariKontak" class="form-control mb-3" placeholder="Cari nama...">
         <div id="daftarKontak" style="max-height: 320px; overflow-y: auto;">
           <% contacts.forEach(function(c) { %>
-            <a href="/pesan/<%= c.id %>" class="d-flex align-items-center gap-2 py-2 text-decoration-none text-dark kontak-item" data-nama="<%= (c.nama || '').toLowerCase() %>">
-              <i class="bi bi-person-circle" style="font-size:1.6rem; color:#94a3b8;"></i>
+            <a href="/pesan/pribadi/<%= c.id %>" class="d-flex align-items-center gap-2 py-2 text-decoration-none text-dark kontak-item" data-nama="<%= (c.nama || '').toLowerCase() %>">
+              <span class="hub-avatar" style="width:32px;height:32px;font-size:1rem;"><i class="bi bi-person-fill"></i></span>
               <span>
                 <span class="d-block"><%= c.nama %></span>
                 <span class="text-muted small text-capitalize"><%= c.role %></span>
@@ -78,6 +166,49 @@
       el.style.display = el.dataset.nama.includes(q) ? '' : 'none';
     });
   });
+
+  const hubMessages = document.getElementById('hub-messages');
+  if (hubMessages) hubMessages.scrollTop = hubMessages.scrollHeight;
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  const hubForm = document.getElementById('hub-form');
+  if (hubForm) {
+    hubForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const input = document.getElementById('hub-input');
+      const text = input.value.trim();
+      if (!text) return;
+      const type = hubForm.dataset.type;
+      const target = hubForm.dataset.target;
+
+      let url, body;
+      if (type === 'pribadi') { url = `/pesan/pribadi/${target}/kirim`; body = { message: text }; }
+      else if (type === 'kelas') { url = `/pesan/kelas/${target}/kirim`; body = { pesan: text }; }
+      else { url = `/pesan/komunitas/kirim`; body = { pesan: text }; }
+
+      input.value = '';
+      try {
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (data.success) {
+          if (hubMessages.querySelector('.text-muted.text-center')) hubMessages.innerHTML = '';
+          const time = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+          hubMessages.insertAdjacentHTML('beforeend', `<div class="hub-bubble hub-bubble-me">${escapeHtml(text)}<span class="hub-bubble-time">${time}</span></div>`);
+          hubMessages.scrollTop = hubMessages.scrollHeight;
+        } else {
+          alert(data.message || 'Gagal mengirim pesan');
+        }
+      } catch (err) {
+        console.error('Gagal mengirim pesan:', err);
+        alert('Gagal mengirim pesan, coba lagi.');
+      }
+    });
+  }
 </script>
 
 <%- include('../partials/footer') %>

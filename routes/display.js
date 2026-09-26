@@ -3,30 +3,12 @@ const router = express.Router();
 const { db } = require('../config/firebaseAdmin');
 const { getProgressMagangHarian } = require('../helpers/magangHelper');
 const { getAllMahasiswa, dosenCache, mataKuliahCache } = require('../helpers/cache');
-
-// Nama hari, index harus sama dengan Date.getDay() (0=Minggu ... 6=Sabtu)
-const HARI_LIST = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const { HARI_LIST, parseJadwalText } = require('../helpers/jadwalHelper');
 
 // Angkatan dari 2 digit awal NIM, konsisten dengan routes/admin/mahasiswa.js
 function getAngkatanFromNim(nim) {
   if (nim && nim.length >= 2) return '20' + nim.substring(0, 2);
   return null;
-}
-
-// Best-effort parse teks jadwal bebas isian admin, contoh: "Senin 08:00-10:30, Ruang A101"
-function parseJadwalText(text) {
-  if (!text) return null;
-  const lower = text.toLowerCase();
-  const hari = HARI_LIST.find(h => lower.includes(h.toLowerCase()));
-  const jamMatch = text.match(/(\d{1,2}[.:]\d{2})\s*-\s*(\d{1,2}[.:]\d{2})/);
-  if (!hari || !jamMatch) return null;
-  const ruangMatch = text.match(/ruang\s*\S+/i);
-  return {
-    hari,
-    jamMulai: jamMatch[1].replace('.', ':'),
-    jamSelesai: jamMatch[2].replace('.', ':'),
-    ruangan: ruangMatch ? ruangMatch[0] : ''
-  };
 }
 
 // Cache dengan TTL (50 menit)

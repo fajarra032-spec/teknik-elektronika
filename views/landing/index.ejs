@@ -277,6 +277,40 @@
         color: #64748b;
     }
 
+    /* ===== JEJAK KARIER ALUMNI ===== */
+    .alumni-kerja-card {
+        text-align: center;
+        padding: 1rem 0.5rem;
+    }
+    .alumni-kerja-foto {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--primary);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        margin-bottom: 0.75rem;
+    }
+    .alumni-kerja-nama {
+        font-weight: 700;
+        color: var(--text-main);
+        font-size: 0.95rem;
+    }
+    .alumni-kerja-posisi {
+        font-size: 0.82rem;
+        color: #475569;
+        margin: 0.15rem 0;
+    }
+    .alumni-kerja-angkatan {
+        display: inline-block;
+        background: #eef2ff;
+        color: var(--primary-dark);
+        padding: 0.15rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.72rem;
+        font-weight: 600;
+    }
+
     /* ===== SHARED CARD STYLES (Soft Glassmorphism) ===== */
     .stat-card,
     .visi-misi-card,
@@ -1178,6 +1212,41 @@
                     <div class="mhs-baru-sekolah"><i class="bi bi-mortarboard"></i> <%= m.asalSekolah %></div>
                 </div>
             <% }) %>
+        </div>
+    </section>
+    <% } %>
+
+    <!-- JEJAK KARIER ALUMNI - teaser dari data Tracer Study & Track Lulusan
+         (routes/landing.js -> getGabunganLulusan(), sumber sama dengan
+         halaman /lulusan). Cuma alumni dengan status bekerja/wirausaha DAN
+         foto yang ditampilkan di sini; daftar lengkap (semua status &
+         angkatan, termasuk yang belum kerja/masih kuliah) ada di /lulusan. -->
+    <% if (typeof lulusanKerja !== 'undefined' && lulusanKerja.length > 0) { %>
+    <section class="section-wrapper">
+        <h2 class="section-title">Jejak Karier <span>Alumni</span></h2>
+        <p class="text-center text-muted mb-4">Sebagian alumni Teknik Elektronika yang sudah berkarier</p>
+        <div class="row g-4 justify-content-center">
+            <% lulusanKerja.forEach(l => { %>
+                <% const alumniFileId = getFileIdFromUrl(l.foto); %>
+                <div class="col-6 col-md-3">
+                    <div class="alumni-kerja-card">
+                        <img src="<%= alumniFileId ? `https://drive.google.com/thumbnail?id=${alumniFileId}&sz=w300` : l.foto %>"
+                             alt="<%= l.nama %>" class="alumni-kerja-foto"
+                             onerror="this.onerror=null; this.src='https://via.placeholder.com/200x200?text=Alumni';">
+                        <div class="alumni-kerja-nama"><%= l.nama %></div>
+                        <div class="alumni-kerja-posisi">
+                            <%= l.pekerjaan || (l.status === 'wirausaha' ? 'Wirausaha' : 'Bekerja') %>
+                            <% if (l.tempatKerja) { %> di <%= l.tempatKerja %><% } %>
+                        </div>
+                        <% if (l.tahunLulus) { %><div class="alumni-kerja-angkatan">Lulusan <%= l.tahunLulus %></div><% } %>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+        <div class="text-center mt-4">
+            <a href="/lulusan" class="btn btn-outline-primary rounded-pill px-4">
+                <i class="bi bi-people-fill me-1"></i> Lihat Semua Lulusan &amp; Tracer Study
+            </a>
         </div>
     </section>
     <% } %>

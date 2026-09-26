@@ -197,25 +197,21 @@ router.get('/', async (req, res) => {
       console.warn('Gagal mengambil data dosen:', err.message);
     }
 
-    // 8. Lulusan yang bekerja
+    // 8. Lulusan yang bekerja/berwirausaha - teaser untuk section "Jejak Karier
+    // Alumni" di homepage, link ke /lulusan untuk lihat semua. Pakai
+    // getGabunganLulusan() yang sama dengan halaman /lulusan (bukan query
+    // tracerStudy manual terpisah) supaya datanya selalu konsisten dan tetap
+    // menghormati isPublic - kalau alumni belum menyetujui datanya publik,
+    // otomatis tidak ikut muncul di sini juga.
     let lulusanKerja = [];
     try {
-      const kerjaSnapshot = await db.collection('tracerStudy')
-        .where('statusPekerjaan', '==', 'bekerja')
-        .limit(4)
-        .get();
-      lulusanKerja = kerjaSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const gabunganLulusan = await getGabunganLulusan();
+      lulusanKerja = gabunganLulusan
+        .filter(l => (l.status === 'bekerja' || l.status === 'wirausaha') && l.foto)
+        .sort((a, b) => (b.tahunLulus || 0) - (a.tahunLulus || 0))
+        .slice(0, 8);
     } catch (err) {
       console.warn('Gagal mengambil data lulusan bekerja:', err.message);
-      try {
-        const kerjaSnapshot = await db.collection('tracerStudy')
-          .where('pekerjaan', '!=', null)
-          .limit(4)
-          .get();
-        lulusanKerja = kerjaSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      } catch (e) {
-        console.warn('Alternatif gagal:', e.message);
-      }
     }
 
     // 8b. Testimoni Alumni - dikelola admin di /admin/testimoni (sebelumnya
