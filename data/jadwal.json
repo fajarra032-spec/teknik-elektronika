@@ -1,0 +1,5312 @@
+[
+  {
+    "hari": "Senin",
+    "jam": "07:30 - 08:30",
+    "matkul": "K3 (GAB 1)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ika Triwati, SKM., M.Kes.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "08:30 - 09:30",
+    "matkul": "K3 (GAB 2)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ika Triwati, SKM., M.Kes.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "09:30 - 10:30",
+    "matkul": "BINDO (GAB 3)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Rismawati, S.Pd., M.Pd.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "10:30 - 11:30",
+    "matkul": "K3 (GAB 13)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "11:30 - 12:30",
+    "matkul": "MT GAB 4",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Hasrydha, S.T., M.Ars",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "13:30 - 14:30",
+    "matkul": "K3 (GAB 3)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ika Triwati, SKM., M.Kes.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "14:30 - 15:30",
+    "matkul": "K3 (GAB 4)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ika Triwati, SKM., M.Kes.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "15:30 - 16:30",
+    "matkul": "TP GAB 1",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Rahman Syam, S.Pd., M.Si",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "16:30 - 17:30",
+    "matkul": "TP GAB 4",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Gunawan Tari, S.T.,M.T.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "07:30 - 08:30",
+    "matkul": "K3 (GAB 11)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "08:30 - 09:30",
+    "matkul": "K3 (GAB 12)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "09:30 - 10:30",
+    "matkul": "MT GAB 5",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Hasrydha, S.T., M.Ars",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "10:30 - 11:30",
+    "matkul": "TP GAB 5",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Gunawan Tari, S.T.,M.T.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "11:30 - 12:30",
+    "matkul": "MT GAB 18",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "13:30 - 14:30",
+    "matkul": "TP GAB 2",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Rahman Syam, S.Pd., M.Si",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "14:30 - 15:30",
+    "matkul": "TP GAB 3",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Rahman Syam, S.Pd., M.Si",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "15:30 - 16:30",
+    "matkul": "TP GAB 6",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Gunawan Tari, S.T.,M.T.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "16:30 - 17:30",
+    "matkul": "TP GAB 7",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "08:30 - 09:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3A",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "09:30 - 10:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3P",
+    "dosen": "-",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "10:30 - 11:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3D",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "11:30 - 12:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3F",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "13:30 - 14:30",
+    "matkul": "K3 (GAB 19)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "14:30 - 15:30",
+    "matkul": "ELK STD 1.2",
+    "prodi": "Teknik Elektronika STD 1.2",
+    "dosen": "Fajar Ramadhan, S.Pd., M.T / Ariani Amri, S.Pd., M.Pd.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "15:30 - 16:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3J",
+    "dosen": "-",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "16:30 - 17:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3G",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "07:30 - 08:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1J",
+    "dosen": "Muh. Fitra Nur Asri, S.Kom., M.Kom",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "08:30 - 09:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1K",
+    "dosen": "Muh. Fitra Nur Asri, S.Kom., M.Kom",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "09:30 - 10:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AB",
+    "dosen": "Risda M, S,Pd., M.Pd.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "10:30 - 11:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AC",
+    "dosen": "Risda M, S,Pd., M.Pd.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "11:30 - 12:30",
+    "matkul": "TANUR",
+    "prodi": "Metalurgi Pertambangan 5D",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "13:30 - 14:30",
+    "matkul": "P. PABRIK",
+    "prodi": "Metalurgi Pertambangan 5A",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "14:30 - 15:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1L",
+    "dosen": "Muh. Fitra Nur Asri, S.Kom., M.Kom",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "15:30 - 16:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1M",
+    "dosen": "Muh. Fitra Nur Asri, S.Kom., M.Kom",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "07:30 - 08:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1Q",
+    "dosen": "Ariani Amri, S.Pd., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "08:30 - 09:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1R",
+    "dosen": "Ariani Amri, S.Pd., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "09:30 - 10:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1A",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "10:30 - 11:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1B",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "11:30 - 12:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1E",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "13:30 - 14:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AE",
+    "dosen": "Deril Alfiance Kaligis, S.Kom., M.T.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "14:30 - 15:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AF",
+    "dosen": "Deril Alfiance Kaligis, S.Kom., M.T.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "15:30 - 16:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1D",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "16:30 - 17:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1C",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "07:30 - 08:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1P",
+    "dosen": "Tenri Ampareng, S.Pd., M.Pd.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "08:30 - 09:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1Q",
+    "dosen": "Tenri Ampareng, S.Pd., M.Pd.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "09:30 - 10:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1R",
+    "dosen": "Tenri Ampareng, S.Pd., M.Pd.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "10:30 - 11:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1L",
+    "dosen": "Nurul Qisti, S.TP.,M.Si",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "11:30 - 12:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1I",
+    "dosen": "Ryan Alghazali Pakkaja, S.Kom.,M.Kom",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "13:30 - 14:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1H",
+    "dosen": "Ryan Alghazali Pakkaja, S.Kom.,M.Kom",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "14:30 - 15:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1A",
+    "dosen": "Thitin Binalopa, S.TP., M.Si",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "15:30 - 16:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AQ",
+    "dosen": "Dian Yustari, S.T., M.T.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "16:30 - 17:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AG",
+    "dosen": "Deril Alfiance Kaligis, S.Kom., M.T.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "08:30 - 09:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1B",
+    "dosen": "Thitin Binalopa, S.TP., M.Si",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "09:30 - 10:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1C",
+    "dosen": "Thitin Binalopa, S.TP., M.Si",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "10:30 - 11:30",
+    "matkul": "SPL RAB 3.A",
+    "prodi": "Sipil RAB 3.A",
+    "dosen": "Anggel Erpa Erong Pakiding, S.T., M.T",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "11:30 - 12:30",
+    "matkul": "SPL RAB 3.B",
+    "prodi": "Sipil RAB 3.B",
+    "dosen": "Anggel Erpa Erong Pakiding, S.T., M.T",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "13:30 - 14:30",
+    "matkul": "SPL RAB 3.C",
+    "prodi": "Sipil RAB 3.C",
+    "dosen": "Anggel Erpa Erong Pakiding, S.T., M.T",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "14:30 - 15:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AN",
+    "dosen": "Baso Amir, S.P., M.Sc.",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "15:30 - 16:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AO",
+    "dosen": "Baso Amir, S.P., M.Sc.",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "16:30 - 17:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AP",
+    "dosen": "Baso Amir, S.P., M.Sc.",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "07:30 - 08:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1W",
+    "dosen": "Citra Wahyu Annisa. R, S.Tr.T.,M.T",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "08:30 - 09:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1P",
+    "dosen": "Dr. MUHAMMAD AFFAN RAMADHANA, S.Pd.,M.Pd.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "09:30 - 10:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1F",
+    "dosen": "Nurul Qisti, S.TP.,M.Si",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "10:30 - 11:30",
+    "matkul": "TANUR",
+    "prodi": "Metalurgi Pertambangan 5C",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "11:30 - 12:30",
+    "matkul": "BING",
+    "prodi": "Teknik Rekayasa Multimedia 1D",
+    "dosen": "Tenri Ampareng, S.Pd., M.Pd.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "13:30 - 14:30",
+    "matkul": "BING",
+    "prodi": "Teknik Rekayasa Multimedia 1E",
+    "dosen": "Tenri Ampareng, S.Pd., M.Pd.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "14:30 - 15:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1U",
+    "dosen": "Citra Wahyu Annisa. R, S.Tr.T.,M.T",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "15:30 - 16:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AD",
+    "dosen": "Fajar Ramadhan, S.Pd., M.T",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "08:30 - 09:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AH",
+    "dosen": "Nurul Qisti, S.TP.,M.Si",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "09:30 - 10:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3B",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "10:30 - 11:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3A",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "11:30 - 12:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3Q",
+    "dosen": "-",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "13:30 - 14:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3C",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "14:30 - 15:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3B",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "15:30 - 16:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AI",
+    "dosen": "Citra Wahyu Annisa. R, S.Tr.T.,M.T",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "16:30 - 17:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AJ",
+    "dosen": "Citra Wahyu Annisa. R, S.Tr.T.,M.T",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "07:30 - 08:30",
+    "matkul": "TRM STD 1A",
+    "prodi": "Teknik Rekayasa Multimedia STD 1A",
+    "dosen": "Elma, S.Pd., M.Pd.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "08:30 - 09:30",
+    "matkul": "TRM STD 1B",
+    "prodi": "Teknik Rekayasa Multimedia STD 1B",
+    "dosen": "Elma, S.Pd., M.Pd.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "09:30 - 10:30",
+    "matkul": "MSN MTK 1A",
+    "prodi": "Mesin MTK 1A",
+    "dosen": "Islah Audziah Putri Beang, S.Mat., M.Mat",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "10:30 - 11:30",
+    "matkul": "MSN MTK 1B",
+    "prodi": "Mesin MTK 1B",
+    "dosen": "Islah Audziah Putri Beang, S.Mat., M.Mat",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "11:30 - 12:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AF",
+    "dosen": "Dr. MUHAMMAD AFFAN RAMADHANA, S.Pd.,M.Pd.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "13:30 - 14:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AG",
+    "dosen": "Dr. MUHAMMAD AFFAN RAMADHANA, S.Pd.,M.Pd.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "14:30 - 15:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1M",
+    "dosen": "Nurul Qisti, S.TP.,M.Si",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "15:30 - 16:30",
+    "matkul": "TANUR",
+    "prodi": "Metalurgi Pertambangan 5A",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "16:30 - 17:30",
+    "matkul": "TANUR",
+    "prodi": "Metalurgi Pertambangan 5B",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "09:30 - 10:30",
+    "matkul": "KELAS MANDARIN",
+    "prodi": "-",
+    "dosen": "David",
+    "ruangan": "K301",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "08:30 - 09:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3J",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "09:30 - 10:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3I",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "10:30 - 11:30",
+    "matkul": "ELK DSTL",
+    "prodi": "-",
+    "dosen": "Ariani Amri, S.Pd., M.Pd.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "11:30 - 12:30",
+    "matkul": "ELK PERAWATAN",
+    "prodi": "-",
+    "dosen": "Miftahul Hairia, S.Pd., M.Pd. / Gunawan Tari, S.T.,M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "13:30 - 14:30",
+    "matkul": "SPL ANSTRUK 3.B",
+    "prodi": "Sipil ANSTRUK 3.B",
+    "dosen": "Jozeiz Ilen Pata', S.T., M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "14:30 - 15:30",
+    "matkul": "SPL TBK 3.B",
+    "prodi": "Sipil TBK 3.B",
+    "dosen": "Fretty Sumbung Parerung, S.T., M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "15:30 - 16:30",
+    "matkul": "MSN OTO SPD",
+    "prodi": "-",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "07:30 - 08:30",
+    "matkul": "MSN MTK 1C",
+    "prodi": "Mesin MTK 1C",
+    "dosen": "Islah Audziah Putri Beang, S.Mat., M.Mat",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "08:30 - 09:30",
+    "matkul": "MSN MTK 1D",
+    "prodi": "Mesin MTK 1D",
+    "dosen": "Islah Audziah Putri Beang, S.Mat., M.Mat",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "09:30 - 10:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AQ",
+    "dosen": "Fajar Ramadhan, S.Pd., M.T",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "10:30 - 11:30",
+    "matkul": "BING",
+    "prodi": "Teknologi Rekayasa Pangan 1A",
+    "dosen": "Andi Husni A. Zainuddin",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "11:30 - 12:30",
+    "matkul": "BING",
+    "prodi": "Teknologi Rekayasa Pangan 1B",
+    "dosen": "Andi Husni A. Zainuddin",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "14:30 - 15:30",
+    "matkul": "P. PABRIK",
+    "prodi": "Metalurgi Pertambangan 5B",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "15:30 - 16:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3K",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "16:30 - 17:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3L",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "07:30 - 08:30",
+    "matkul": "PANCASILA GAB 1 (ELK 3A + SPL 3A +SPL 3B +SPL 3C )",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Chalik Mawardi S.P., M.Si.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "09:30 - 10:30",
+    "matkul": "PANCASILA GAB 6",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Chalik Mawardi S.P., M.Si.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "10:30 - 11:30",
+    "matkul": "PANCASILA GAB 2 TRP3A, TRM 3A, 3B dan 3C",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Chalik Mawardi S.P., M.Si.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "13:30 - 14:30",
+    "matkul": "PKN Gab 12 MG 1.AO, MG 1.AP, MG 1.AQ & MG 1.AR",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Haluddin",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "15:30 - 16:30",
+    "matkul": "PKN Gab 3: MG 1.E,MG 1.F, MG 1.G & TMG 1.H",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Karpria Tri Gunawan, S.H., M.H.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Senin",
+    "jam": "16:30 - 17:30",
+    "matkul": "PAI Gab 4: TRM 1B TRM 1C, TRM 1D & TRM 1E",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Esron , S.Pd.,M.Pd",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "07:30 - 08:30",
+    "matkul": "ETIKA GAB 7 (TRM 1D & 1E)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Risda M, S,Pd., M.Pd.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "08:30 - 09:30",
+    "matkul": "ETIKA TRP 1A DAN 1B (GAB 8)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Dharma Fidyansari, S.Pi., M.M.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "09:30 - 10:30",
+    "matkul": "MT GAB 19",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ir. Ar. Kastono, ST., M.SP., IAI",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "10:30 - 11:30",
+    "matkul": "BINDO GAB 6 (TRM 1B & 1C)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "-",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "11:30 - 12:30",
+    "matkul": "MT GAB 16",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ir. Ar. Kastono, ST., M.SP., IAI",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "14:30 - 15:30",
+    "matkul": "TP GAB 12",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Elma, S.Pd., M.Pd.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "07:30 - 08:30",
+    "matkul": "TP GAB 10",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Miftahul Hairia, S.Pd., M.Pd.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "09:30 - 10:30",
+    "matkul": "TP GAB 11",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Miftahul Hairia, S.Pd., M.Pd.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "10:30 - 11:30",
+    "matkul": "ETIKA (GAB 1)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Farhan Yustisio",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "13:30 - 14:30",
+    "matkul": "P. KOROSI",
+    "prodi": "Metalurgi Pertambangan 5D, TMG 5G",
+    "dosen": "Ir. Ahmad Rizal Kusumawardana, M. Pd., M.T.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "15:30 - 16:30",
+    "matkul": "ETIKA (GAB 2)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Farhan Yustisio",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "16:30 - 17:30",
+    "matkul": "ETIKA (GAB 9)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Sania, SE.,MM",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "07:30 - 08:30",
+    "matkul": "MSN PH",
+    "prodi": "-",
+    "dosen": "Mely Marliana, S.Tr.T.,M.T",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "08:30 - 09:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3E",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "09:30 - 10:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3N",
+    "dosen": "-",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "10:30 - 11:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3D",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "11:30 - 12:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3J",
+    "dosen": "Dian Yustari, S.T., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "13:30 - 14:30",
+    "matkul": "TP GAB 14",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Elma, S.Pd., M.Pd.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "14:30 - 15:30",
+    "matkul": "HIDRO",
+    "prodi": "Metalurgi Pertambangan 5C",
+    "dosen": "Nurul Kusuma Wardani",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "15:30 - 16:30",
+    "matkul": "OTO SKO",
+    "prodi": "-",
+    "dosen": "-",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "16:30 - 17:30",
+    "matkul": "OTO BO",
+    "prodi": "-",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "07:30 - 08:30",
+    "matkul": "TANUR",
+    "prodi": "Metalurgi Pertambangan 5I",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "08:30 - 09:30",
+    "matkul": "P. PABRIK",
+    "prodi": "Metalurgi Pertambangan 5C",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "09:30 - 10:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AR",
+    "dosen": "Dian Yustari, S.T., M.T.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "10:30 - 11:30",
+    "matkul": "TANUR",
+    "prodi": "Metalurgi Pertambangan 5F",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "11:30 - 12:30",
+    "matkul": "TANUR",
+    "prodi": "Metalurgi Pertambangan 5G",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "13:30 - 14:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3I",
+    "dosen": "Juharni",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "14:30 - 15:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AH",
+    "dosen": "Muh. Fitra Nur Asri, S.Kom., M.Kom",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "15:30 - 16:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AI",
+    "dosen": "Muh. Fitra Nur Asri, S.Kom., M.Kom",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "07:30 - 08:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AA",
+    "dosen": "Ryan Alghazali Pakkaja, S.Kom.,M.Kom",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "08:30 - 09:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1Z",
+    "dosen": "Sania, SE.,MM",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "09:30 - 10:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1Z",
+    "dosen": "Ryan Alghazali Pakkaja, S.Kom.,M.Kom",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "10:30 - 11:30",
+    "matkul": "ARS 3 NRM",
+    "prodi": "Arsitektur 3 NRM",
+    "dosen": "Hasrydha, S.T., M.Ars",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "11:30 - 12:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AB",
+    "dosen": "Ryan Alghazali Pakkaja, S.Kom.,M.Kom",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "13:30 - 15:30",
+    "matkul": "TRM PI WEB 5C",
+    "prodi": "-",
+    "dosen": "Ryan Alghazali Pakkaja, S.Kom.,M.Kom",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "15:30 - 16:30",
+    "matkul": "TRP PLA 1A",
+    "prodi": "Teknologi Rekayasa Pangan PLA 1A",
+    "dosen": "A. Wafdah, S.Pd., M.Kom",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "16:30 - 17:30",
+    "matkul": "TRP PLA 1B",
+    "prodi": "Teknologi Rekayasa Pangan PLA 1B",
+    "dosen": "A. Wafdah, S.Pd., M.Kom",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "07:30 - 08:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AC",
+    "dosen": "Deril Alfiance Kaligis, S.Kom., M.T.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "08:30 - 09:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AD",
+    "dosen": "Deril Alfiance Kaligis, S.Kom., M.T.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "09:30 - 10:30",
+    "matkul": "TRM BD 3A",
+    "prodi": "Teknik Rekayasa Multimedia BD 3A",
+    "dosen": "A. Wafdah, S.Pd., M.Kom",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "10:30 - 11:30",
+    "matkul": "TRM BD 3B",
+    "prodi": "Teknik Rekayasa Multimedia BD 3B",
+    "dosen": "A. Wafdah, S.Pd., M.Kom",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "11:30 - 12:30",
+    "matkul": "TRM BD 3C",
+    "prodi": "Teknik Rekayasa Multimedia BD 3C",
+    "dosen": "A. Wafdah, S.Pd., M.Kom",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "13:30 - 14:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3W",
+    "dosen": "Rahman Syam, S.Pd., M.Si",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "14:30 - 15:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1F",
+    "dosen": "Dian Yustari, S.T., M.T.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "15:30 - 16:30",
+    "matkul": "HIDRO",
+    "prodi": "Metalurgi Pertambangan 5E",
+    "dosen": "Nurul Kusuma Wardani",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "08:30 - 10:30",
+    "matkul": "ARS PRC 3.1",
+    "prodi": "Arsitektur PRC 3.1",
+    "dosen": "Hasrydha, S.T., M.Ars / Ir. Ar. Munzir F. Umar, S.T., M.Ars. IAI",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "10:30 - 11:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1D",
+    "dosen": "Thitin Binalopa, S.TP., M.Si",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "11:30 - 12:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1E",
+    "dosen": "Thitin Binalopa, S.TP., M.Si",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "13:30 - 14:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1S",
+    "dosen": "Tenri Ampareng, S.Pd., M.Pd.",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "14:30 - 15:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1T",
+    "dosen": "Tenri Ampareng, S.Pd., M.Pd.",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "15:30 - 16:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AA",
+    "dosen": "Sania, SE.,MM",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "07:30 - 08:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3U",
+    "dosen": "Rahman Syam, S.Pd., M.Si",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "08:30 - 09:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3B",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "09:30 - 10:30",
+    "matkul": "T. Pengemasan & Penyimpanan",
+    "prodi": "Teknologi Rekayasa Pangan 3",
+    "dosen": "Thitin Binalopa, S.TP., M.Si / Baso Amir, S.P., M.Sc.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "10:30 - 11:30",
+    "matkul": "MSN TPK",
+    "prodi": "-",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "11:30 - 12:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3E",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "13:30 - 14:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3H",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "14:30 - 15:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3R",
+    "dosen": "-",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "15:30 - 16:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3M",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "16:30 - 17:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3Q",
+    "dosen": "Muh. Ilham Akbar",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "07:30 - 08:30",
+    "matkul": "T. Pengolahan Pangan",
+    "prodi": "Teknologi Rekayasa Pangan 3",
+    "dosen": "Thitin Binalopa, S.TP., M.Si / Chalik Mawardi S.P., M.Si.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "08:30 - 09:30",
+    "matkul": "T.P. Serealia & Legum",
+    "prodi": "Teknologi Rekayasa Pangan 5",
+    "dosen": "-",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "09:30 - 10:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3K",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "10:30 - 11:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3L",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "11:30 - 12:30",
+    "matkul": "MSN STD 1A",
+    "prodi": "Mesin STD 1A",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "13:30 - 14:30",
+    "matkul": "MSN STD 1B",
+    "prodi": "Mesin STD 1B",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "14:30 - 15:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3F",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "15:30 - 16:30",
+    "matkul": "TRM STD 1C",
+    "prodi": "Teknik Rekayasa Multimedia STD 1C",
+    "dosen": "Elma, S.Pd., M.Pd.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "16:30 - 17:30",
+    "matkul": "TRM STD 1D",
+    "prodi": "Teknik Rekayasa Multimedia STD 1D",
+    "dosen": "Elma, S.Pd., M.Pd.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "07:30 - 08:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1G",
+    "dosen": "Nurul Qisti, S.TP.,M.Si",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "08:30 - 09:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3C",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "09:30 - 10:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1H",
+    "dosen": "Nurul Qisti, S.TP.,M.Si",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "10:30 - 11:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1O",
+    "dosen": "Dr. MUHAMMAD AFFAN RAMADHANA, S.Pd.,M.Pd.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "11:30 - 12:30",
+    "matkul": "TRM TIPO 3A",
+    "prodi": "Teknik Rekayasa Multimedia TIPO 3A",
+    "dosen": "M. Ishak, S.Kom.,M.Kom",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "13:30 - 14:30",
+    "matkul": "TRM TIPO 3B",
+    "prodi": "Teknik Rekayasa Multimedia TIPO 3B",
+    "dosen": "M. Ishak, S.Kom.,M.Kom",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "14:30 - 15:30",
+    "matkul": "TANUR",
+    "prodi": "Metalurgi Pertambangan 5H",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "15:30 - 16:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3G",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "16:30 - 17:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3A",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "10:30 - 11:30",
+    "matkul": "KELAS MANDARIN",
+    "prodi": "-",
+    "dosen": "-",
+    "ruangan": "K301",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "07:30 - 08:30",
+    "matkul": "HIDRO",
+    "prodi": "Metalurgi Pertambangan 5D",
+    "dosen": "Nurul Kusuma Wardani",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "08:30 - 09:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3S",
+    "dosen": "-",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "09:30 - 10:30",
+    "matkul": "P. PABRIK",
+    "prodi": "Metalurgi Pertambangan 5H",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "10:30 - 11:30",
+    "matkul": "T. Pengolahan Telur",
+    "prodi": "Teknologi Rekayasa Pangan 5",
+    "dosen": "Nurul Qisti, S.TP.,M.Si / Kurniati Tajuddin, S.TP., M.TP.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "13:30 - 14:30",
+    "matkul": "P. PABRIK",
+    "prodi": "Metalurgi Pertambangan 5E",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "14:30 - 15:30",
+    "matkul": "P. PABRIK",
+    "prodi": "Metalurgi Pertambangan 5F",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "15:30 - 16:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1R",
+    "dosen": "Dr. MUHAMMAD AFFAN RAMADHANA, S.Pd.,M.Pd.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "16:30 - 17:30",
+    "matkul": "KJR (",
+    "prodi": "Sipil 3.C)",
+    "dosen": "Ir. Aswar, S.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "07:30 - 08:30",
+    "matkul": "BINGMSN 1A",
+    "prodi": "-",
+    "dosen": "Dr. MUHAMMAD AFFAN RAMADHANA, S.Pd.,M.Pd.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "08:30 - 09:30",
+    "matkul": "BING",
+    "prodi": "Mesin 1B",
+    "dosen": "Dr. MUHAMMAD AFFAN RAMADHANA, S.Pd.,M.Pd.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "09:30 - 10:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3V",
+    "dosen": "Rahman Syam, S.Pd., M.Si",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "10:30 - 11:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3C",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "11:30 - 12:30",
+    "matkul": "BINGMSN 1C",
+    "prodi": "-",
+    "dosen": "Dr. MUHAMMAD AFFAN RAMADHANA, S.Pd.,M.Pd.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "13:30 - 14:30",
+    "matkul": "BING",
+    "prodi": "Mesin 1D",
+    "dosen": "Dr. MUHAMMAD AFFAN RAMADHANA, S.Pd.,M.Pd.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "14:30 - 15:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3P",
+    "dosen": "Muh. Ilham Akbar",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "15:30 - 16:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3O",
+    "dosen": "-",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "16:30 - 17:30",
+    "matkul": "OTO SPD",
+    "prodi": "-",
+    "dosen": "-",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "08:30 - 09:30",
+    "matkul": "PKN Gab 4 MG 1.I, MG 1.J, MG 1.K & MG 1.L",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Muslim Andi Yusuf, S.H., M.H.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "10:30 - 11:30",
+    "matkul": "PKN Gab 8 MG 1.Y, MG 1.Z, MG 1.AA, & MG 1.AB",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Muslim Andi Yusuf, S.H., M.H.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Selasa",
+    "jam": "11:30 - 12:30",
+    "matkul": "BINDO (GAB 4) (SPL 1A, 1B, 1C)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Rismawati, S.Pd., M.Pd.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "07:30 - 08:30",
+    "matkul": "MT GAB 21",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Mely Marliana, S.Tr.T.,M.T",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "08:30 - 09:30",
+    "matkul": "BINDO (GAB 1)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Muh. Murdiwan, S.Pd., M.Pd.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "09:30 - 10:30",
+    "matkul": "BINDO (GAB 2)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Muh. Murdiwan, S.Pd., M.Pd.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "10:30 - 11:30",
+    "matkul": "TP GAB 13",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Miftahul Hairia, S.Pd., M.Pd.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "11:30 - 12:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3E",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "13:30 - 14:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3A",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "14:30 - 15:30",
+    "matkul": "TP GAB 8",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "07:30 - 08:30",
+    "matkul": "K3 (GAB 15)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ika Triwati, SKM., M.Kes.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "08:30 - 09:30",
+    "matkul": "K3 (GAB 14)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ika Triwati, SKM., M.Kes.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "09:30 - 10:30",
+    "matkul": "TP GAB 9",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Miftahul Hairia, S.Pd., M.Pd.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "10:30 - 11:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3P",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "11:30 - 12:30",
+    "matkul": "MATERIAL BARU",
+    "prodi": "Metalurgi Pertambangan 5A",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "13:30 - 14:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3O",
+    "dosen": "Rahman Syam, S.Pd., M.Si",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "14:30 - 15:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3S",
+    "dosen": "Muh. Ilham Akbar",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "07:30 - 08:30",
+    "matkul": "MSN OTO SK",
+    "prodi": "-",
+    "dosen": "Fajar Ramadhan, S.Pd., M.T",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "08:30 - 09:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3N",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "09:30 - 10:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3O",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "10:30 - 11:30",
+    "matkul": "MSN OTO BO",
+    "prodi": "-",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "11:30 - 12:30",
+    "matkul": "MSN MEM",
+    "prodi": "-",
+    "dosen": "Mely Marliana, S.Tr.T.,M.T",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "13:30 - 14:30",
+    "matkul": "OTO EFI",
+    "prodi": "-",
+    "dosen": "Ikbal Saymsudiin",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "14:30 - 15:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3D",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "15:30 - 16:30",
+    "matkul": "MSN SP",
+    "prodi": "-",
+    "dosen": "Citra Wahyu Annisa. R, S.Tr.T.,M.T",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "16:30 - 17:30",
+    "matkul": "OTO AC",
+    "prodi": "-",
+    "dosen": "Fajar Ramadhan, S.Pd., M.T",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "07:30 - 09:30",
+    "matkul": "TRM PI DG 5A",
+    "prodi": "-",
+    "dosen": "M. Ishak, S.Kom.,M.Kom",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "09:30 - 10:30",
+    "matkul": "ELK PLA 1.2",
+    "prodi": "Teknik Elektronika PLA 1.2",
+    "dosen": "Ariani Amri, S.Pd., M.Pd. / Gunawan Tari, S.T.,M.T.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "10:30 - 11:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1X",
+    "dosen": "Ariani Amri, S.Pd., M.Pd.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "11:30 - 12:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1Y",
+    "dosen": "Ariani Amri, S.Pd., M.Pd.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "13:30 - 14:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1F",
+    "dosen": "Thitin Binalopa, S.TP., M.Si",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "14:30 - 15:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1I",
+    "dosen": "Thitin Binalopa, S.TP., M.Si",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "07:30 - 08:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1U",
+    "dosen": "Tenri Ampareng, S.Pd., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "08:30 - 09:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1V",
+    "dosen": "Tenri Ampareng, S.Pd., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "09:30 - 10:30",
+    "matkul": "HIDRO",
+    "prodi": "Metalurgi Pertambangan 5H",
+    "dosen": "Nurul Kusuma Wardani",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "10:30 - 11:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3U",
+    "dosen": "-",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "11:30 - 14:30",
+    "matkul": "TRM PI VG 5B",
+    "prodi": "-",
+    "dosen": "Muh. Fitra Nur Asri, S.Kom., M.Kom",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "14:30 - 15:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3J",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "15:30 - 16:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3K",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "08:30 - 09:30",
+    "matkul": "HIDRO",
+    "prodi": "Metalurgi Pertambangan 5G",
+    "dosen": "Nurul Kusuma Wardani",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "09:30 - 10:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1H",
+    "dosen": "Thitin Binalopa, S.TP., M.Si",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "10:30 - 11:30",
+    "matkul": "SPL PLA 1.B",
+    "prodi": "Sipil PLA 1.B",
+    "dosen": "Fretty Sumbung Parerung, S.T., M.T.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "11:30 - 12:30",
+    "matkul": "SPL PLA 1.A",
+    "prodi": "Sipil PLA 1.A",
+    "dosen": "Fretty Sumbung Parerung, S.T., M.T.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "13:30 - 14:30",
+    "matkul": "SPL PLA 1.C",
+    "prodi": "Sipil PLA 1.C",
+    "dosen": "Fretty Sumbung Parerung, S.T., M.T.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "14:30 - 16:30",
+    "matkul": "TRM PI WEB 5C",
+    "prodi": "-",
+    "dosen": "Ryan Alghazali Pakkaja, S.Kom.,M.Kom",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "09:30 - 10:30",
+    "matkul": "SPL PRC 3.C",
+    "prodi": "Sipil PRC 3.C",
+    "dosen": "Anggel Erpa Erong Pakiding, S.T., M.T",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "10:30 - 11:30",
+    "matkul": "SPL PRC 3.B",
+    "prodi": "Sipil PRC 3.B",
+    "dosen": "Anggel Erpa Erong Pakiding, S.T., M.T",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "11:30 - 12:30",
+    "matkul": "SPL PRC 3.A",
+    "prodi": "Sipil PRC 3.A",
+    "dosen": "Anggel Erpa Erong Pakiding, S.T., M.T",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "13:30 - 14:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3C",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "14:30 - 15:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1V",
+    "dosen": "Citra Wahyu Annisa. R, S.Tr.T.,M.T",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "07:30 - 08:30",
+    "matkul": "Manajemen Industri Pertanian TRP5",
+    "prodi": "-",
+    "dosen": "Chalik Mawardi S.P., M.Si.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "08:30 - 09:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1B",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "09:30 - 10:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1C",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "10:30 - 11:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1D",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "11:30 - 12:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1A",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "13:30 - 14:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AA",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "14:30 - 15:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3G",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "15:30 - 16:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1E",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "16:30 - 17:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3F",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "07:30 - 08:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1X",
+    "dosen": "Nurul Qisti, S.TP.,M.Si",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "08:30 - 09:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3H",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "09:30 - 10:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3I",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "10:30 - 11:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3E",
+    "dosen": "Juharni",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "11:30 - 12:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3L",
+    "dosen": "Dian Yustari, S.T., M.T.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "13:30 - 14:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3P",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "14:30 - 15:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3Q",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "15:30 - 16:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3T",
+    "dosen": "-",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "16:30 - 17:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3S",
+    "dosen": "Nurul Kusuma Wardani",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "08:30 - 09:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3M",
+    "dosen": "-",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "09:30 - 10:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3K",
+    "dosen": "Dian Yustari, S.T., M.T.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "10:30 - 11:30",
+    "matkul": "HIDRO",
+    "prodi": "Metalurgi Pertambangan 5I",
+    "dosen": "Nurul Kusuma Wardani",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "11:30 - 12:30",
+    "matkul": "P. PABRIK",
+    "prodi": "Metalurgi Pertambangan 5G",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "13:30 - 14:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3F",
+    "dosen": "Juharni",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "14:30 - 15:30",
+    "matkul": "P. PABRIK",
+    "prodi": "Metalurgi Pertambangan 5I",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "15:30 - 16:30",
+    "matkul": "MATERIAL BARU",
+    "prodi": "Metalurgi Pertambangan 5B",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "16:30 - 17:30",
+    "matkul": "MATERIAL BARU",
+    "prodi": "Metalurgi Pertambangan 5C",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "10:30 - 11:30",
+    "matkul": "KELAS MANDARIN",
+    "prodi": "-",
+    "dosen": "-",
+    "ruangan": "K301",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "07:30 - 08:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3R",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "08:30 - 09:30",
+    "matkul": "TANUR",
+    "prodi": "Metalurgi Pertambangan 5E",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "09:30 - 10:30",
+    "matkul": "P. PABRIK",
+    "prodi": "Metalurgi Pertambangan 5D",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "10:30 - 11:30",
+    "matkul": "SPL ANSTRUK 3.A",
+    "prodi": "Sipil ANSTRUK 3.A",
+    "dosen": "Jozeiz Ilen Pata', S.T., M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "11:30 - 12:30",
+    "matkul": "STR (",
+    "prodi": "Sipil 1.B)",
+    "dosen": "Dr. Ika Triwati, SKM., M.Kes.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "13:30 - 14:30",
+    "matkul": "MEKTAN",
+    "prodi": "Sipil 3.B",
+    "dosen": "Jozeiz Ilen Pata', S.T., M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "14:30 - 15:30",
+    "matkul": "STR (",
+    "prodi": "Sipil 1.C)",
+    "dosen": "Dr. Ika Triwati, SKM., M.Kes.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "15:30 - 16:30",
+    "matkul": "Bioteknologi & Fermentasi Hasil Pertanian",
+    "prodi": "Teknologi Rekayasa Pangan 5",
+    "dosen": "Baso Amir, S.P., M.Sc.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "16:30 - 17:30",
+    "matkul": "T. Pengolahan Limbah",
+    "prodi": "Teknologi Rekayasa Pangan 3",
+    "dosen": "Nurul Qisti, S.TP.,M.Si",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "08:30 - 09:30",
+    "matkul": "ELK STD 1.1",
+    "prodi": "Teknik Elektronika STD 1.1",
+    "dosen": "Fajar Ramadhan, S.Pd., M.T / Ariani Amri, S.Pd., M.Pd.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "09:30 - 10:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3T",
+    "dosen": "Rahman Syam, S.Pd., M.Si",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "10:30 - 11:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3V",
+    "dosen": "Muh. Ilham Akbar",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "11:30 - 12:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3B",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "13:30 - 14:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3W",
+    "dosen": "Muh. Ilham Akbar",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "14:30 - 15:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3R",
+    "dosen": "Rahman Syam, S.Pd., M.Si",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "15:30 - 16:30",
+    "matkul": "BINDO GAB 5 (TRM 1A)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "-",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "16:30 - 17:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3Q",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "07:30 - 08:30",
+    "matkul": "PKN Gab 2 MG 1.A, MG 1.B, MG 1.C, & MG 1D",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Karpria Tri Gunawan, S.H., M.H.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "10:30 - 11:30",
+    "matkul": "PKN GAB 1 (TRP 1A, 1B)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. A.Muh. Yushan P., S.Pi.,M.Si",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "11:30 - 12:30",
+    "matkul": "PKN Gab 11 MG 1.AK, MG 1.AL, MG 1.AM & MG 1.AN",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Shintawati, S.H., M.H.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "14:30 - 15:30",
+    "matkul": "PAI Gab 1 : MSN 1.1, MSN 1.2, MSN 1.3 & MSN 1.4",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dzul Fiqri, S.Pd., M. Pd. (PAI lk)",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Rabu",
+    "jam": "15:30 - 16:30",
+    "matkul": "PANCASILA GAB 3 ARS (3A + TMG 3A +TMG 3B +TMG 3C)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. A.Muh. Yushan P., S.Pi.,M.Si",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "07:30 - 08:30",
+    "matkul": "MT GAB 1",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Mely Marliana, S.Tr.T.,M.T",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "08:30 - 09:30",
+    "matkul": "K3 (GAB 5)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ika Triwati, SKM., M.Kes.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "09:30 - 10:30",
+    "matkul": "K3 (GAB 6)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ika Triwati, SKM., M.Kes.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "10:30 - 11:30",
+    "matkul": "ARS 1- BINDO GAB",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Drs. Sutalman, M.Pd",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "11:30 - 12:30",
+    "matkul": "MT GAB 7",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Mely Marliana, S.Tr.T.,M.T",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "13:30 - 14:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1J",
+    "dosen": "Nurul Qisti, S.TP.,M.Si",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "14:30 - 15:30",
+    "matkul": "MATERIAL BARU",
+    "prodi": "Metalurgi Pertambangan 5D",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "15:30 - 16:30",
+    "matkul": "K3 (GAB 10)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ika Triwati, SKM., M.Kes.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "16:30 - 17:30",
+    "matkul": "MT GAB 9",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "07:30 - 08:30",
+    "matkul": "TP GAB 20",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Elma, S.Pd., M.Pd.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "08:30 - 09:30",
+    "matkul": "TP GAB 21",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Jozeiz Ilen Pata', S.T., M.T.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "09:30 - 10:30",
+    "matkul": "MT GAB 2",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "10:30 - 11:30",
+    "matkul": "MT GAB 6",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Mely Marliana, S.Tr.T.,M.T",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "11:30 - 12:30",
+    "matkul": "ETIKA(GAB 3)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Izza Fadhlinah Dirham",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "13:30 - 14:30",
+    "matkul": "ETIKA (GAB 4) (SPL 1A & 1B)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Izza Fadhlinah Dirham",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "14:30 - 15:30",
+    "matkul": "TRP MTK 1A, 1B",
+    "prodi": "Teknologi Rekayasa Pangan MTK 1A, 1B",
+    "dosen": "Islah Audziah Putri Beang, S.Mat., M.Mat",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "15:30 - 16:30",
+    "matkul": "MT GAB 8",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "16:30 - 17:30",
+    "matkul": "ARS MTK 1.1, 1.2",
+    "prodi": "Arsitektur MTK 1.1, 1.2",
+    "dosen": "Islah Audziah Putri Beang, S.Mat., M.Mat",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "07:30 - 08:30",
+    "matkul": "K3 (GAB 7)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "08:30 - 09:30",
+    "matkul": "MT GAB 3",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Fretty Sumbung Parerung, S.T., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "09:30 - 10:30",
+    "matkul": "K3 (GAB 8)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "10:30 - 11:30",
+    "matkul": "MSN STD 1C",
+    "prodi": "Mesin STD 1C",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "11:30 - 12:30",
+    "matkul": "MSN STD 1D",
+    "prodi": "Mesin STD 1D",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "13:30 - 14:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3L",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "14:30 - 15:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3I",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "15:30 - 16:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3J",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "16:30 - 17:30",
+    "matkul": "TP GAB 22",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Jozeiz Ilen Pata', S.T., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "07:30 - 08:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1O",
+    "dosen": "Deril Alfiance Kaligis, S.Kom., M.T.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "08:30 - 09:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1P",
+    "dosen": "Deril Alfiance Kaligis, S.Kom., M.T.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "09:30 - 10:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1S",
+    "dosen": "Ariani Amri, S.Pd., M.Pd.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "10:30 - 11:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1T",
+    "dosen": "Ariani Amri, S.Pd., M.Pd.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "11:30 - 12:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1X",
+    "dosen": "A. Wafdah, S.Pd., M.Kom",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "13:30 - 14:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1Y",
+    "dosen": "A. Wafdah, S.Pd., M.Kom",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "14:30 - 15:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1U",
+    "dosen": "M. Ishak, S.Kom.,M.Kom",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "15:30 - 16:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1V",
+    "dosen": "M. Ishak, S.Kom.,M.Kom",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "16:30 - 17:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1W",
+    "dosen": "M. Ishak, S.Kom.,M.Kom",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "07:30 - 08:30",
+    "matkul": "TRM PLA 1C",
+    "prodi": "Teknik Rekayasa Multimedia PLA 1C",
+    "dosen": "Ryan Alghazali Pakkaja, S.Kom.,M.Kom",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "08:30 - 09:30",
+    "matkul": "TRM PLA 1D",
+    "prodi": "Teknik Rekayasa Multimedia PLA 1D",
+    "dosen": "Ryan Alghazali Pakkaja, S.Kom.,M.Kom",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "09:30 - 10:30",
+    "matkul": "TRM PLA 1E",
+    "prodi": "Teknik Rekayasa Multimedia PLA 1E",
+    "dosen": "Ryan Alghazali Pakkaja, S.Kom.,M.Kom",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "10:30 - 11:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3D",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "13:30 - 14:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AQ",
+    "dosen": "Dr. Dharma Fidyansari, S.Pi., M.M.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "14:30 - 15:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AR",
+    "dosen": "Dr. Dharma Fidyansari, S.Pi., M.M.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "15:30 - 16:30",
+    "matkul": "MSN OTO Motor Bakar",
+    "prodi": "-",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "16:30 - 17:30",
+    "matkul": "ELK PLA 1.1",
+    "prodi": "Teknik Elektronika PLA 1.1",
+    "dosen": "Ariani Amri, S.Pd., M.Pd. / Gunawan Tari, S.T.,M.T.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "07:30 - 09:30",
+    "matkul": "TRM PI VG 5B",
+    "prodi": "-",
+    "dosen": "Muh. Fitra Nur Asri, S.Kom., M.Kom",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "09:30 - 10:30",
+    "matkul": "ELK ELDIG",
+    "prodi": "-",
+    "dosen": "Rahman Syam, S.Pd., M.Si",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "10:30 - 11:30",
+    "matkul": "ELK MIKROKON",
+    "prodi": "-",
+    "dosen": "Fajar Ramadhan, S.Pd., M.T",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "11:30 - 12:30",
+    "matkul": "TRM Grafika 3A",
+    "prodi": "-",
+    "dosen": "Deril Alfiance Kaligis, S.Kom., M.T.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "13:30 - 14:30",
+    "matkul": "MSN CAD CAM",
+    "prodi": "-",
+    "dosen": "Mely Marliana, S.Tr.T.,M.T",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "14:30 - 15:30",
+    "matkul": "TRM Grafika 3B",
+    "prodi": "-",
+    "dosen": "Deril Alfiance Kaligis, S.Kom., M.T.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "15:30 - 16:30",
+    "matkul": "TRM Grafika 3C",
+    "prodi": "-",
+    "dosen": "Deril Alfiance Kaligis, S.Kom., M.T.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "16:30 - 17:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1G",
+    "dosen": "Dian Yustari, S.T., M.T.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "07:30 - 08:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AD",
+    "dosen": "Risda M, S,Pd., M.Pd.",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "08:30 - 09:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AE",
+    "dosen": "Risda M, S,Pd., M.Pd.",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "09:30 - 10:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AF",
+    "dosen": "Risda M, S,Pd., M.Pd.",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "10:30 - 11:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1G",
+    "dosen": "Thitin Binalopa, S.TP., M.Si",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "11:30 - 14:30",
+    "matkul": "TRM PI DG 5A",
+    "prodi": "-",
+    "dosen": "M. Ishak, S.Kom.,M.Kom",
+    "ruangan": "LAB TOEIC",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "07:30 - 08:30",
+    "matkul": "TRM MTK 1A",
+    "prodi": "Teknik Rekayasa Multimedia MTK 1A",
+    "dosen": "A. Wafdah, S.Pd., M.Kom",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "08:30 - 09:30",
+    "matkul": "TRM MTK 1B",
+    "prodi": "Teknik Rekayasa Multimedia MTK 1B",
+    "dosen": "A. Wafdah, S.Pd., M.Kom",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "09:30 - 10:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3H",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "10:30 - 11:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3F",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "11:30 - 12:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3G",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "13:30 - 14:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3M",
+    "dosen": "Dian Yustari, S.T., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "14:30 - 15:30",
+    "matkul": "TBK",
+    "prodi": "Sipil 3.A",
+    "dosen": "Fretty Sumbung Parerung, S.T., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "15:30 - 16:30",
+    "matkul": "T. P. Hasil Rumput Laut",
+    "prodi": "Teknologi Rekayasa Pangan 5",
+    "dosen": "Dr. A.Muh. Yushan P., S.Pi.,M.Si",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "16:30 - 17:30",
+    "matkul": "Sistem Pengendalian Mutu",
+    "prodi": "Teknologi Rekayasa Pangan 3",
+    "dosen": "Nurul Qisti, S.TP.,M.Si / Dr. A.Muh. Yushan P., S.Pi.,M.Si",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "07:30 - 08:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3E",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "08:30 - 09:30",
+    "matkul": "MATERIAL BARU",
+    "prodi": "Metalurgi Pertambangan 5F",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "09:30 - 10:30",
+    "matkul": "MSN TB",
+    "prodi": "-",
+    "dosen": "Citra Wahyu Annisa. R, S.Tr.T.,M.T",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "10:30 - 11:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3M",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "11:30 - 12:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3O",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "13:30 - 14:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3R",
+    "dosen": "Nurul Kusuma Wardani",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "14:30 - 15:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3W",
+    "dosen": "Nurul Kusuma Wardani",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "15:30 - 16:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3T",
+    "dosen": "Nurul Kusuma Wardani",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "07:30 - 08:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3P",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "08:30 - 09:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AN",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "09:30 - 10:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3N",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "10:30 - 11:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AP",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "11:30 - 12:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AM",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "13:30 - 14:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3F",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "14:30 - 15:30",
+    "matkul": "STR",
+    "prodi": "Sipil 1.A",
+    "dosen": "Dr. Ika Triwati, SKM., M.Kes.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "15:30 - 16:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3K",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "16:30 - 17:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3E",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "11:30 - 12:30",
+    "matkul": "KELAS MANDARIN",
+    "prodi": "-",
+    "dosen": "-",
+    "ruangan": "K301",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "07:30 - 08:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1K",
+    "dosen": "Nurul Qisti, S.TP.,M.Si",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "08:30 - 09:30",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3Q",
+    "dosen": "Rahman Syam, S.Pd., M.Si",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "09:30 - 10:30",
+    "matkul": "MATERIAL BARU",
+    "prodi": "Metalurgi Pertambangan 5E",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "10:30 - 11:30",
+    "matkul": "MSN OI",
+    "prodi": "-",
+    "dosen": "Citra Wahyu Annisa. R, S.Tr.T.,M.T",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "11:30 - 12:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1S",
+    "dosen": "Citra Wahyu Annisa. R, S.Tr.T.,M.T",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "13:30 - 14:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3C",
+    "dosen": "Juharni",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "14:30 - 15:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3D",
+    "dosen": "Juharni",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "15:30 - 16:30",
+    "matkul": "TRM STD 1E",
+    "prodi": "Teknik Rekayasa Multimedia STD 1E",
+    "dosen": "A. Wafdah, S.Pd., M.Kom",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "16:30 - 17:30",
+    "matkul": "BING",
+    "prodi": "Teknik Rekayasa Multimedia 1A",
+    "dosen": "Tenri Ampareng, S.Pd., M.Pd.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "07:30 - 08:30",
+    "matkul": "BING (",
+    "prodi": "Arsitektur 1.A)",
+    "dosen": "Andi Husni A. Zainuddin",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "08:30 - 09:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3R",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "09:30 - 10:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3S",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "10:30 - 11:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3T",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "11:30 - 12:30",
+    "matkul": "BING (",
+    "prodi": "Arsitektur 1.B)",
+    "dosen": "Andi Husni A. Zainuddin",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "13:30 - 14:30",
+    "matkul": "BING",
+    "prodi": "Teknik Rekayasa Multimedia 1B",
+    "dosen": "Tenri Ampareng, S.Pd., M.Pd.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "14:30 - 15:30",
+    "matkul": "BING",
+    "prodi": "Teknik Rekayasa Multimedia 1C",
+    "dosen": "Tenri Ampareng, S.Pd., M.Pd.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "08:30 - 09:30",
+    "matkul": "PANCASILA GAB 4",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. A.Muh. Yushan P., S.Pi.,M.Si",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "10:30 - 11:30",
+    "matkul": "PKN Gab 10 MG 1.AG, MG 1.AH, MG 1.AI & MG 1.AJ",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Shintawati, S.H., M.H.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "11:30 - 12:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3V, TMG 3W",
+    "dosen": "Ir. Ahmad Rizal Kusumawardana, M. Pd., M.T.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "13:30 - 14:30",
+    "matkul": "PKN Gab 7 MG 1.U, MG 1.V, MG 1.W & MG 1.X",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Muslim Andi Yusuf, S.H., M.H.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "14:30 - 15:30",
+    "matkul": "PANCASILA GAB 7",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. A.Muh. Yushan P., S.Pi.,M.Si",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Kamis",
+    "jam": "15:30 - 16:30",
+    "matkul": "PAI Gab 5: TRP 1.1, TRP 1.2 & ARS 1.2",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Esron , S.Pd.,M.Pd",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "09:30 - 10:30",
+    "matkul": "TP GAB 17",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. H. Herianto",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "10:30 - 11:30",
+    "matkul": "TP GAB 16",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. H. Herianto",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "11:30 - 12:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AR",
+    "dosen": "Alviani, S.Pd., M.Pd.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "13:30 - 14:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3U",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "14:30 - 15:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3H",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "15:30 - 16:30",
+    "matkul": "K3 (GAB 18)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "16:30 - 17:30",
+    "matkul": "K3 (GAB 20)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "09:30 - 10:30",
+    "matkul": "TP GAB 18",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ardhie Noer",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "10:30 - 11:30",
+    "matkul": "TP GAB 15",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ardhie Noer",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "11:30 - 12:30",
+    "matkul": "MT GAB 20",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Hasrydha, S.T., M.Ars",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "13:30 - 14:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AL",
+    "dosen": "Alviani, S.Pd., M.Pd.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "14:30 - 15:30",
+    "matkul": "K3 (GAB 16)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ika Triwati, SKM., M.Kes.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "15:30 - 16:30",
+    "matkul": "K3 (GAB 17)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Dr. Ika Triwati, SKM., M.Kes.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "16:30 - 17:30",
+    "matkul": "MT GAB 22",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Mely Marliana, S.Tr.T.,M.T",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "09:30 - 10:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3C",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "10:30 - 11:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3B",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "11:30 - 12:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3N",
+    "dosen": "Dian Yustari, S.T., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "13:30 - 14:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3L",
+    "dosen": "-",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "14:30 - 15:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3D",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "15:30 - 16:30",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3O",
+    "dosen": "Dian Yustari, S.T., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "16:30 - 17:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1S",
+    "dosen": "Citra Wahyu Annisa. R, S.Tr.T.,M.T",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "09:30 - 10:30",
+    "matkul": "ARS 1.1 PLA",
+    "prodi": "Arsitektur 1.1 PLA",
+    "dosen": "Sania, SE.,MM",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "10:30 - 11:30",
+    "matkul": "ARS 1.2 PLA",
+    "prodi": "Arsitektur 1.2 PLA",
+    "dosen": "Sania, SE.,MM",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "11:30 - 12:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1K",
+    "dosen": "Kurniati Tajuddin, S.TP., M.TP.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "13:30 - 14:30",
+    "matkul": "MSN PLA 1A",
+    "prodi": "Mesin PLA 1A",
+    "dosen": "Ehlisa, S.Ak., M.Pd.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "14:30 - 15:30",
+    "matkul": "MSN PLA 1B",
+    "prodi": "Mesin PLA 1B",
+    "dosen": "Ehlisa, S.Ak., M.Pd.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "15:30 - 16:30",
+    "matkul": "MSN PLA 1C",
+    "prodi": "Mesin PLA 1C",
+    "dosen": "Ehlisa, S.Ak., M.Pd.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "16:30 - 17:30",
+    "matkul": "MSN PLA 1D",
+    "prodi": "Mesin PLA 1D",
+    "dosen": "Ehlisa, S.Ak., M.Pd.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "09:30 - 10:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1J",
+    "dosen": "Kurniati Tajuddin, S.TP., M.TP.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "10:30 - 11:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AM",
+    "dosen": "Nabila Febriyanti, S.Pd., M.Pd",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "11:30 - 12:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AG",
+    "dosen": "Sania, SE.,MM",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "13:30 - 14:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AO",
+    "dosen": "Nabila Febriyanti, S.Pd., M.Pd",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "14:30 - 15:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AN",
+    "dosen": "Nabila Febriyanti, S.Pd., M.Pd",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "15:30 - 16:30",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1W",
+    "dosen": "Sania, SE.,MM",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "16:30 - 17:30",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AP",
+    "dosen": "Nabila Febriyanti, S.Pd., M.Pd",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "09:30 - 11:30",
+    "matkul": "ARS PRESNTASI 3.1",
+    "prodi": "Arsitektur PRESNTASI 3.1",
+    "dosen": "Hasrydha, S.T., M.Ars / Ir. Ar. Munzir F. Umar, S.T., M.Ars. IAI",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "11:30 - 14:30",
+    "matkul": "ARS Proyek 5",
+    "prodi": "-",
+    "dosen": "Ar. Suryadi, S.T.,M.Eng., IAI",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "14:30 - 15:30",
+    "matkul": "ARS RAB 5",
+    "prodi": "Arsitektur RAB 5",
+    "dosen": "Dr. Ir. Ar. Kastono, ST., M.SP., IAI / Ir. Ar. Munzir F. Umar, S.T., M.Ars. IAI",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "15:30 - 16:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3S",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "16:30 - 17:30",
+    "matkul": "ARS STRUKTUR 3.1",
+    "prodi": "Arsitektur STRUKTUR 3.1",
+    "dosen": "Dr. Ir. Ar. Kastono, ST., M.SP., IAI / Ir. Ar. Munzir F. Umar, S.T., M.Ars. IAI",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "09:30 - 10:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3T",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "10:30 - 11:30",
+    "matkul": "SPL MTK 1.C",
+    "prodi": "Sipil MTK 1.C",
+    "dosen": "Islah Audziah Putri Beang, S.Mat., M.Mat",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "11:30 - 12:30",
+    "matkul": "SPL MTK 1.A",
+    "prodi": "Sipil MTK 1.A",
+    "dosen": "Islah Audziah Putri Beang, S.Mat., M.Mat",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "13:30 - 14:30",
+    "matkul": "SPL TBK 3.C",
+    "prodi": "Sipil TBK 3.C",
+    "dosen": "Fretty Sumbung Parerung, S.T., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "14:30 - 15:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1N",
+    "dosen": "Alviani, S.Pd., M.Pd.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "15:30 - 16:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AK",
+    "dosen": "Alviani, S.Pd., M.Pd.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "16:30 - 17:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3U",
+    "dosen": "Nurul Kusuma Wardani",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "08:30 - 09:30",
+    "matkul": "OTO SKK",
+    "prodi": "-",
+    "dosen": "Nasrul Habibi Syhid",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "09:30 - 10:30",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3V",
+    "dosen": "Nurul Kusuma Wardani",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "10:30 - 11:30",
+    "matkul": "MEKTAN",
+    "prodi": "Sipil 3.A",
+    "dosen": "Jozeiz Ilen Pata', S.T., M.T.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "11:30 - 12:30",
+    "matkul": "KJR",
+    "prodi": "Sipil 3.B",
+    "dosen": "Fretty Sumbung Parerung, S.T., M.T.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "13:30 - 14:30",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3A",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "14:30 - 15:30",
+    "matkul": "ELK MTK 1.1",
+    "prodi": "Teknik Elektronika MTK 1.1",
+    "dosen": "Rahman Syam, S.Pd., M.Si",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "15:30 - 16:30",
+    "matkul": "ELK MTK 1.2",
+    "prodi": "Teknik Elektronika MTK 1.2",
+    "dosen": "Rahman Syam, S.Pd., M.Si",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "09:30 - 10:30",
+    "matkul": "T. P. Kelapa",
+    "prodi": "Teknologi Rekayasa Pangan 5",
+    "dosen": "Thitin Binalopa, S.TP., M.Si",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "10:30 - 11:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AO",
+    "dosen": "Alviani, S.Pd., M.Pd.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "11:30 - 12:30",
+    "matkul": "P. KOROSI",
+    "prodi": "Metalurgi Pertambangan 5F",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "13:30 - 14:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3R",
+    "dosen": "Muh. Ilham Akbar",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "14:30 - 15:30",
+    "matkul": "HIDRO",
+    "prodi": "Metalurgi Pertambangan 5A",
+    "dosen": "Ir. Irhamni Nuhardin, S.T., M.T",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "15:30 - 16:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3H",
+    "dosen": "Juharni",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "16:30 - 17:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3L",
+    "dosen": "Muh. Ilham Akbar",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "11:30 - 12:30",
+    "matkul": "KELAS MANDARIN",
+    "prodi": "-",
+    "dosen": "-",
+    "ruangan": "K301",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "09:30 - 10:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1Z",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "10:30 - 11:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3I",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "11:30 - 12:30",
+    "matkul": "TRM DSRP 3B",
+    "prodi": "Teknik Rekayasa Multimedia DSRP 3B",
+    "dosen": "Nabila Febriyanti, S.Pd., M.Pd",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "13:30 - 14:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1Y",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "14:30 - 15:30",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AC",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "15:30 - 16:30",
+    "matkul": "HIDRO",
+    "prodi": "Metalurgi Pertambangan 5B",
+    "dosen": "Ir. Irhamni Nuhardin, S.T., M.T",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "16:30 - 17:30",
+    "matkul": "P. KOROSI",
+    "prodi": "Metalurgi Pertambangan 5H",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "09:30 - 10:30",
+    "matkul": "TRM DSRP 3C",
+    "prodi": "Teknik Rekayasa Multimedia DSRP 3C",
+    "dosen": "Nabila Febriyanti, S.Pd., M.Pd",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "10:30 - 11:30",
+    "matkul": "TRM TIPO 3C",
+    "prodi": "Teknik Rekayasa Multimedia TIPO 3C",
+    "dosen": "M. Ishak, S.Kom.,M.Kom",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "11:30 - 12:30",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3G",
+    "dosen": "Juharni",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "13:30 - 14:30",
+    "matkul": "T. Minuman & Makanan Ringan",
+    "prodi": "Teknologi Rekayasa Pangan 3",
+    "dosen": "Chalik Mawardi S.P., M.Si.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "14:30 - 15:30",
+    "matkul": "Ingredient & Bahan Tambahan Pangan",
+    "prodi": "Teknologi Rekayasa Pangan 3",
+    "dosen": "Kurniati Tajuddin, S.TP., M.TP.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "15:30 - 16:30",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3J",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "16:30 - 17:30",
+    "matkul": "ARS UTILITAS 5",
+    "prodi": "Arsitektur UTILITAS 5",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T. / Ir. Ar. Munzir F. Umar, S.T., M.Ars. IAI",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "09:30 - 10:30",
+    "matkul": "PKN Gab 9 MG 1.AC, MG 1.AD, MG 1.AE & MG 1.AF",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Muslim Andi Yusuf, S.H., M.H.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "11:30 - 12:30",
+    "matkul": "PANCASILA MESIN 3A 3B 3C",
+    "prodi": "-",
+    "dosen": "-",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "13:30 - 15:30",
+    "matkul": "Praktikum HIDRO 5A, 5B",
+    "prodi": "-",
+    "dosen": "Ir. Irhamni Nuhardin, S.T., M.T",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "15:30 - 16:30",
+    "matkul": "TRM DSRP 3A",
+    "prodi": "Teknik Rekayasa Multimedia DSRP 3A",
+    "dosen": "Nabila Febriyanti, S.Pd., M.Pd",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Sabtu",
+    "jam": "16:30 - 17:30",
+    "matkul": "BING (",
+    "prodi": "Sipil 1.A, 1.B, 1.C)",
+    "dosen": "Alviani, S.Pd., M.Pd.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "07:45 - 08:45",
+    "matkul": "BINDO GAB 7 (TRM 1D & 1E)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "-",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "08:45 - 09:45",
+    "matkul": "BINDO TRP 1A dan 1B (GAB 8)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Rismawati, S.Pd., M.Pd.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "09:45 - 10:45",
+    "matkul": "ETIKA GAB 5 (SPL 1C & TRM 1A)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Izza Fadhlinah Dirham",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "10:45 - 11:45",
+    "matkul": "ETIKA GAB 6 (TRM 1B & 1C)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Risda M, S,Pd., M.Pd.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "13:00 - 14:00",
+    "matkul": "MT GAB 12",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Hasrydha, S.T., M.Ars",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "14:00 - 15:00",
+    "matkul": "MT GAB 13",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Fretty Sumbung Parerung, S.T., M.T.",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "15:00 - 16:00",
+    "matkul": "MT GAB 14",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Hasrydha, S.T., M.Ars",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "16:00 - 17:00",
+    "matkul": "MT GAB 15",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Hasrydha, S.T., M.Ars",
+    "ruangan": "K102/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "07:45 - 08:45",
+    "matkul": "MT GAB 10",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "08:45 - 09:45",
+    "matkul": "MT GAB 11",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "09:45 - 10:45",
+    "matkul": "TP GAB 19",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Elma, S.Pd., M.Pd.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "10:45 - 11:45",
+    "matkul": "BING GAB ELK 1.1, 1.2",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Suardi, S.Pd.,M.Pd.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "13:00 - 14:00",
+    "matkul": "K3 (GAB 22)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "14:00 - 15:00",
+    "matkul": "MT GAB 17",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Mely Marliana, S.Tr.T.,M.T",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "15:00 - 16:00",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1T",
+    "dosen": "Citra Wahyu Annisa. R, S.Tr.T.,M.T",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "16:00 - 17:00",
+    "matkul": "K3 (GAB 9)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K103/AULA",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "07:45 - 08:45",
+    "matkul": "K3 (GAB 21)",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Ahmad Ashari R., S.Tr.T., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "08:45 - 09:45",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3U",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "09:45 - 10:45",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3O",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "10:45 - 11:45",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3P",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "13:00 - 14:00",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3V",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "14:00 - 15:00",
+    "matkul": "MINERBA",
+    "prodi": "Metalurgi Pertambangan 3W",
+    "dosen": "Zhalsa Larasati Ivan, S.Pd., M.Pd.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "15:00 - 16:00",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3K",
+    "dosen": "-",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "16:00 - 17:00",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3I",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "K202",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "07:45 - 08:45",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AH",
+    "dosen": "Ehlisa, S.Ak., M.Pd.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "08:45 - 09:45",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AI",
+    "dosen": "Ehlisa, S.Ak., M.Pd.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "09:45 - 10:45",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AJ",
+    "dosen": "Nabila Febriyanti, S.Pd., M.Pd",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "10:45 - 11:45",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AL",
+    "dosen": "Nabila Febriyanti, S.Pd., M.Pd",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "13:00 - 14:00",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1L",
+    "dosen": "Kurniati Tajuddin, S.TP., M.TP.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "14:00 - 15:00",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1M",
+    "dosen": "Kurniati Tajuddin, S.TP., M.TP.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "15:00 - 16:00",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1N",
+    "dosen": "Kurniati Tajuddin, S.TP., M.TP.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "16:00 - 17:00",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1O",
+    "dosen": "Kurniati Tajuddin, S.TP., M.TP.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "17:00 - 18:00",
+    "matkul": "TRM DEKA 3A",
+    "prodi": "Teknik Rekayasa Multimedia DEKA 3A",
+    "dosen": "Risda M, S,Pd., M.Pd.",
+    "ruangan": "LAB 1",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "07:45 - 08:45",
+    "matkul": "TRM PLA 1A",
+    "prodi": "Teknik Rekayasa Multimedia PLA 1A",
+    "dosen": "Ryan Alghazali Pakkaja, S.Kom.,M.Kom",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "08:45 - 09:45",
+    "matkul": "TRM PLA 1B",
+    "prodi": "Teknik Rekayasa Multimedia PLA 1B",
+    "dosen": "Ryan Alghazali Pakkaja, S.Kom.,M.Kom",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "09:45 - 10:45",
+    "matkul": "ELK PLC",
+    "prodi": "-",
+    "dosen": "Fajar Ramadhan, S.Pd., M.T",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "10:45 - 11:45",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AK",
+    "dosen": "Ehlisa, S.Ak., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "13:00 - 14:00",
+    "matkul": "HIDRO",
+    "prodi": "Metalurgi Pertambangan 5F",
+    "dosen": "Ir. Irhamni Nuhardin, S.T., M.T",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "14:00 - 15:00",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AJ",
+    "dosen": "Ehlisa, S.Ak., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "15:00 - 16:00",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1AK",
+    "dosen": "Nabila Febriyanti, S.Pd., M.Pd",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "16:00 - 17:00",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AL",
+    "dosen": "Ehlisa, S.Ak., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "17:00 - 18:00",
+    "matkul": "DSI",
+    "prodi": "Metalurgi Pertambangan 1AM",
+    "dosen": "Ehlisa, S.Ak., M.Pd.",
+    "ruangan": "LAB 2",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "07:45 - 08:45",
+    "matkul": "TRM FOTOGRAFI 3A",
+    "prodi": "Teknik Rekayasa Multimedia FOTOGRAFI 3A",
+    "dosen": "Muh. Fitra Nur Asri, S.Kom., M.Kom",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "08:45 - 09:45",
+    "matkul": "TRM FOTOGRAFI 3B",
+    "prodi": "Teknik Rekayasa Multimedia FOTOGRAFI 3B",
+    "dosen": "Muh. Fitra Nur Asri, S.Kom., M.Kom",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "09:45 - 10:45",
+    "matkul": "TRM FOTOGRAFI 3C",
+    "prodi": "Teknik Rekayasa Multimedia FOTOGRAFI 3C",
+    "dosen": "Muh. Fitra Nur Asri, S.Kom., M.Kom",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "10:45 - 11:45",
+    "matkul": "APKOM",
+    "prodi": "Metalurgi Pertambangan 1N",
+    "dosen": "Muh. Fitra Nur Asri, S.Kom., M.Kom",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "13:00 - 14:00",
+    "matkul": "ARS MENPO 5",
+    "prodi": "Arsitektur MENPO 5",
+    "dosen": "Dr. Ir. Ar. Kastono, ST., M.SP., IAI",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "14:00 - 15:00",
+    "matkul": "APKOM 1.35",
+    "prodi": "-",
+    "dosen": "-",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "15:00 - 16:00",
+    "matkul": "TRM DEKA 3B",
+    "prodi": "Teknik Rekayasa Multimedia DEKA 3B",
+    "dosen": "Risda M, S,Pd., M.Pd.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "16:00 - 17:00",
+    "matkul": "TRM DEKA 3C",
+    "prodi": "Teknik Rekayasa Multimedia DEKA 3C",
+    "dosen": "Risda M, S,Pd., M.Pd.",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "17:00 - 18:00",
+    "matkul": "ARS Animasi 5",
+    "prodi": "-",
+    "dosen": "Dr. Ir. Ar. Kastono, ST., M.SP., IAI",
+    "ruangan": "LAB 3",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "07:45 - 08:45",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1Q",
+    "dosen": "Citra Wahyu Annisa. R, S.Tr.T.,M.T",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "08:45 - 09:45",
+    "matkul": "OTO MB",
+    "prodi": "-",
+    "dosen": "Drs. Sutalman, M.Pd",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "09:45 - 10:45",
+    "matkul": "KJR",
+    "prodi": "Sipil 3.A",
+    "dosen": "Jozeiz Ilen Pata', S.T., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "10:45 - 11:45",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1I",
+    "dosen": "Nurul Qisti, S.TP.,M.Si",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "14:00 - 15:00",
+    "matkul": "P. KOROSI",
+    "prodi": "Metalurgi Pertambangan 5E",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "15:00 - 16:00",
+    "matkul": "MTK",
+    "prodi": "Sipil 1.B",
+    "dosen": "Islah Audziah Putri Beang, S.Mat., M.Mat",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "16:00 - 17:00",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3S",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K104",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "07:45 - 08:45",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3L",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "08:45 - 09:45",
+    "matkul": "ELK RANGKAIAN",
+    "prodi": "-",
+    "dosen": "Miftahul Hairia, S.Pd., M.Pd.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "09:45 - 10:45",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3G",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "10:45 - 11:45",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3H",
+    "dosen": "Anugrah Awaliyah, S.T., M.T.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "13:00 - 14:00",
+    "matkul": "TRM MTK 1C",
+    "prodi": "Teknik Rekayasa Multimedia MTK 1C",
+    "dosen": "A. Wafdah, S.Pd., M.Kom",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "14:00 - 15:00",
+    "matkul": "TRM MTK 1D",
+    "prodi": "Teknik Rekayasa Multimedia MTK 1D",
+    "dosen": "A. Wafdah, S.Pd., M.Kom",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "15:00 - 16:00",
+    "matkul": "TRM MTK 1E",
+    "prodi": "Teknik Rekayasa Multimedia MTK 1E",
+    "dosen": "A. Wafdah, S.Pd., M.Kom",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "16:00 - 17:00",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3U",
+    "dosen": "Muh. Ilham Akbar",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "17:00 - 18:00",
+    "matkul": "SDE",
+    "prodi": "Metalurgi Pertambangan 3Q",
+    "dosen": "Dr. Nur Ilmi Shaqinah, S.Pd., M.Pd.",
+    "ruangan": "K201",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "07:45 - 08:45",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3M",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "08:45 - 09:45",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3T",
+    "dosen": "Muh. Ilham Akbar",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "09:45 - 10:45",
+    "matkul": "P. KOROSI",
+    "prodi": "Metalurgi Pertambangan 5I",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "10:45 - 11:45",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3A",
+    "dosen": "Juharni",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "13:00 - 14:00",
+    "matkul": "P. KOROSI",
+    "prodi": "Metalurgi Pertambangan 5A",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "14:00 - 15:00",
+    "matkul": "MATERIAL BARU",
+    "prodi": "Metalurgi Pertambangan 5H",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "15:00 - 16:00",
+    "matkul": "MATERIAL BARU",
+    "prodi": "Metalurgi Pertambangan 5I",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "16:00 - 17:00",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AE",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "17:00 - 18:00",
+    "matkul": "PT",
+    "prodi": "Metalurgi Pertambangan 1AB",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K101",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "09:45 - 10:45",
+    "matkul": "KELAS MANDARIN",
+    "prodi": "-",
+    "dosen": "-",
+    "ruangan": "K301",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "07:45 - 08:45",
+    "matkul": "ARS 3.1 TEKNOLOGI BAHAN",
+    "prodi": "Arsitektur 3.1 TEKNOLOGI BAHAN",
+    "dosen": "-",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "09:45 - 10:45",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3M",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "10:45 - 11:45",
+    "matkul": "MATERIAL BARU",
+    "prodi": "Metalurgi Pertambangan 5G",
+    "dosen": "Misdayanti, S.Si.,M.Si.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "13:00 - 14:00",
+    "matkul": "ANSTRUK",
+    "prodi": "Sipil 3.C",
+    "dosen": "Jozeiz Ilen Pata', S.T., M.T.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "14:00 - 15:00",
+    "matkul": "MEKTAN",
+    "prodi": "Sipil 3.C",
+    "dosen": "Jozeiz Ilen Pata', S.T., M.T.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "15:00 - 16:00",
+    "matkul": "MINERALOGI",
+    "prodi": "Metalurgi Pertambangan 3B",
+    "dosen": "Juharni",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "16:00 - 17:00",
+    "matkul": "P. KOROSI",
+    "prodi": "Metalurgi Pertambangan 5B",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "17:00 - 18:00",
+    "matkul": "TERMO",
+    "prodi": "Metalurgi Pertambangan 3N",
+    "dosen": "Muh. Nur Gazali Yunus, S.Si., M.Si.",
+    "ruangan": "K303",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "07:45 - 08:45",
+    "matkul": "P. KOROSI",
+    "prodi": "Metalurgi Pertambangan 5C",
+    "dosen": "Mispawati, S.Si., M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "08:45 - 09:45",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3V",
+    "dosen": "-",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "09:45 - 10:45",
+    "matkul": "ARS 3 - PRKMB ARSI",
+    "prodi": "Arsitektur 3 - PRKMB ARSI",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "10:45 - 11:45",
+    "matkul": "ARS P. BANGUNAN 5",
+    "prodi": "Arsitektur P. BANGUNAN 5",
+    "dosen": "Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "13:00 - 14:00",
+    "matkul": "KIMFIS",
+    "prodi": "Metalurgi Pertambangan 3N",
+    "dosen": "Nur Azizah Jaya, S.Si.,M.Si",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "14:00 - 15:00",
+    "matkul": "ARS STD 1.A",
+    "prodi": "Arsitektur STD 1.A",
+    "dosen": "Isty Cahyani Ismail, S.T., M.Ars / Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "15:00 - 16:00",
+    "matkul": "ARS STD 1.B",
+    "prodi": "Arsitektur STD 1.B",
+    "dosen": "Isty Cahyani Ismail, S.T., M.Ars / Andi Risnawati Ramli, S.T., M.T.",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "16:00 - 17:00",
+    "matkul": "OP. TEKNIK METAL.",
+    "prodi": "Metalurgi Pertambangan 3W",
+    "dosen": "-",
+    "ruangan": "K302",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "07:45 - 08:45",
+    "matkul": "PKN Gab 5 MG 1.M, MG 1.N, MG 1.O & MG 1.P",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Muslim Andi Yusuf, S.H., M.H.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "08:45 - 09:45",
+    "matkul": "PANCASILA GAB 5",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Chalik Mawardi S.P., M.Si.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "09:45 - 10:45",
+    "matkul": "PANCASILA GAB 8",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Chalik Mawardi S.P., M.Si.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "10:45 - 11:45",
+    "matkul": "PAI Gab 3: SPL 1.1, SPL 1.2, SPL 1.3 & TRM 1A",
+    "prodi": "Kelas Gabungan",
+    "dosen": "-",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "13:00 - 14:00",
+    "matkul": "PKN Gab 6 MG 1.Q, MG 1.R, MG 1.S & MG 1.T",
+    "prodi": "Kelas Gabungan",
+    "dosen": "Muslim Andi Yusuf, S.H., M.H.",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "14:00 - 16:00",
+    "matkul": "Praktikum HIDRO 5F",
+    "prodi": "-",
+    "dosen": "Ir. Irhamni Nuhardin, S.T., M.T",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "16:00 - 17:00",
+    "matkul": "PAI Gab 2 : ELK 1.1, ELK 1.2 & ARS 1.1",
+    "prodi": "Kelas Gabungan",
+    "dosen": "-",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  },
+  {
+    "hari": "Jumat",
+    "jam": "17:00 - 18:00",
+    "matkul": "KOSONG",
+    "prodi": "-",
+    "dosen": "-",
+    "ruangan": "LT 4",
+    "status": "Belum Mulai"
+  }
+]

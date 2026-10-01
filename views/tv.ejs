@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'SMART POLIDEWA' %></title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- TV CSS -->
+    <link rel="stylesheet" href="/css/tv.css?v=2.1.0">
+    <link rel="stylesheet" href="/css/jadwal-slot.css?v=7">
+    <link rel="stylesheet" href="/css/tv-layout.css?v=12">
+</head>
+
+<body class="tv2">
+
+    <!-- =========================================================
+    HEADER
+    ========================================================= -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo-wrapper">
+                <img src="/img/POLIDEWA.png" class="logo" alt="Logo Politeknik Dewantara">
+            </div>
+            <div class="kampus">
+                <h1>POLITEKNIK DEWANTARA</h1>
+                <div class="kampus-sub">
+                    <div class="brand-box"><b class="b-poli">POLI</b><b class="b-dewa">DEWA</b></div>
+                    <div class="sub-text">
+                        <b>SMART DIGITAL ACADEMIC DISPLAY</b>
+                        <small>Dev Marcel • Teknik Elektronika</small>
+                    </div>
+                </div>
+                <span class="legacy-hidden">TEKNIK ELEKTRONIKA</span>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <!-- jam & tanggal lama: disembunyikan, ID dipertahankan agar tv.js tidak error -->
+            <div class="clock-box legacy-hidden"><div id="jam">00:00:00</div></div>
+            <div id="tanggal" class="legacy-hidden">Selasa, 21 Juli 2026</div>
+
+            <div class="hd-clock">
+                <div class="hd-time"><span id="hdHM">00:00</span><span id="hdSS">00</span></div>
+                <small>WAKTU INDONESIA TENGAH</small>
+            </div>
+            <div class="divider"></div>
+            <div class="hd-date">
+                <b id="hdHari">--</b>
+                <span id="hdTanggal">--</span>
+            </div>
+            <div class="divider"></div>
+
+            <div class="date-box">
+                <div class="cuaca-card" id="cuacaCard">
+                    <i class="fa-solid fa-cloud-sun cw-icon" id="cwIcon"></i>
+                    <div class="cw-temp" id="cwTemp">--°</div>
+                    <div class="cw-info"><b id="cwDesc">Memuat cuaca…</b><small id="cwExtra">&nbsp;</small></div>
+                </div>
+                <!-- elemen cuaca lama: disembunyikan, ID dipertahankan agar tv.js tidak error -->
+                <div class="cuaca legacy-hidden" id="cuacaPanel">
+                    <i class="fa-solid fa-cloud-sun" id="weatherIcon"></i>
+                    <span id="suhu">--°C</span>
+                    <span class="lokasi" id="lokasiCuaca">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span id="namaLokasi">Palopo</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- LAYOUT UTAMA: kiri jadwal, kanan info + status ruangan -->
+    <main class="tv-main">
+        <div class="col-left">
+    
+    <!-- JADWAL PER JAM: jam ini + jam berikutnya -->
+    <section class="slot-wrap">
+        <div class="slot-head">
+            <h2>JADWAL PERKULIAHAN HARI INI</h2>
+            <small id="slotInfo"></small>
+        </div>
+        <div class="slot-scroll" id="slotScroll">
+        <table class="slot-table">
+            <thead>
+                <tr><th>JAM</th><th>MATA KULIAH</th><th>PROGRAM STUDI</th><th>DOSEN</th><th>RUANG</th></tr>
+            </thead>
+            <tbody id="slotTbody"></tbody>
+        </table>
+        </div>
+    </section>
+    <div class="slot-berlangsung" id="slotBerlangsung"></div>
+        </div>
+        <aside class="col-right">
+            <section id="infoContainer" class="info-container"></section>
+            <div class="slot-stats" id="slotStats"></div>
+            <div class="room-status" id="roomStatus">
+                <div class="room-title"><i class="fa-solid fa-building"></i>STATUS RUANGAN</div>
+                <div class="room-scroll" id="roomScroll"></div>
+            </div>
+        </aside>
+    </main>
+
+
+    <!-- =========================================================
+    KONTEN JADWAL
+    ========================================================= -->
+    <section class="judul legacy-hidden">JADWAL MATA KULIAH HARI INI</section>
+    
+    <section class="room-header legacy-hidden">
+        <span id="ruanganAktif">-</span>
+    </section>
+
+    <div class="table-area legacy-hidden">
+        <table class="table-jadwal">
+            <thead>
+                <tr>
+                    <th><i class="fa-regular fa-clock"></i><span>WAKTU</span></th>
+                    <th><i class="fa-solid fa-book-open"></i><span>MATA KULIAH</span></th>
+                    <th><i class="fa-solid fa-graduation-cap"></i><span>PROGRAM STUDI</span></th>
+                    <th><i class="fa-solid fa-user-tie"></i><span>DOSEN</span></th>
+                    <th><i class="fa-solid fa-circle-info"></i><span>STATUS</span></th>
+                </tr>
+            </thead>
+            <tbody id="tbodyJadwal"></tbody>
+        </table>
+    </div>
+
+    <!-- =========================================================
+    SLIDESHOW OVERLAY (FULLSCREEN)
+    ========================================================= -->
+    <div id="slideshowContainer" class="slideshow-container"></div>
+
+    <!-- =========================================================
+    KELAS SAAT INI
+    ========================================================= -->
+    <section class="kelas-panel legacy-hidden">
+        <div class="kelas-title">
+            <h2>KELAS SAAT INI</h2>
+        </div>
+        <div class="kelas-content" id="kelasSaatIni">
+            <div class="panel-box">
+                <i class="fa-solid fa-book-open"></i>
+                <div class="panel-text no-class-text">
+                    <div class="no-class-title">Belum ada kelas berlangsung</div>
+                    <div class="no-class-subtitle">Silakan menunggu jadwal berikutnya</div>
+                </div>
+            </div>
+            <div class="panel-box">
+                <i class="fa-regular fa-clock"></i>
+                <div>
+                    <h3>WAKTU</h3>
+                    <p>-</p>
+                </div>
+            </div>
+            <div class="panel-box">
+                <i class="fa-solid fa-user"></i>
+                <div>
+                    <h3>DOSEN</h3>
+                    <p>-</p>
+                </div>
+            </div>
+            <div class="panel-box">
+                <i class="fa-solid fa-building"></i>
+                <div>
+                    <h3>RUANGAN</h3>
+                    <p>-</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =========================================================
+    RUNNING TEXT
+    ========================================================= -->
+    <div class="running">
+        <div class="running-icon">
+            <i class="fa-solid fa-bullhorn"></i>
+        </div>
+        <div class="running-track"><span id="runningText" class="running-text">SELAMAT DATANG DI POLITEKNIK DEWANTARA • INFORMASI AKADEMIK DITAMPILKAN SECARA REALTIME • SEMOGA HARI ANDA MENYENANGKAN • SMART POLIDEWA</span></div>
+    </div>
+
+    <!-- =========================================================
+    TV JAVASCRIPT
+    ========================================================= -->
+    <script src="/js/tv.js?v=2.1.0" defer></script>
+    <script src="/js/ticker.js?v=1" defer></script>
+    <script src="/js/cuaca.js?v=1" defer></script>
+    <script src="/js/header.js?v=1" defer></script>
+    <script src="/js/slideshow-overlay.js?v=1" defer></script>
+    <script src="/js/jadwal-slot.js?v=8" defer></script>
+
+</body>
+
+</html>

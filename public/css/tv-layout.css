@@ -1,0 +1,185 @@
+/* ===== Relayout TV: header atas, 2 kolom, running text bawah ===== */
+/* Dimuat setelah tv.css; prefix body.tv2 + !important pada properti posisi/ukuran */
+html, body.tv2 { height: 100%; }
+body.tv2 { margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; color: #fff;
+    background: radial-gradient(1200px 700px at 15% -10%, #1b4b8f 0%, transparent 60%),
+                radial-gradient(900px 600px at 100% 110%, #0f6a5b 0%, transparent 55%), #061224; }
+
+/* --- header --- */
+body.tv2 .header { position: static !important; height: auto !important; width: auto !important; margin: 0 !important;
+    display: flex; justify-content: space-between; align-items: center; padding: 12px 28px;
+    background: linear-gradient(90deg, rgba(10,26,51,.95), rgba(18,48,92,.85)); border-bottom: 3px solid #ffcc33;
+    box-shadow: 0 6px 24px rgba(0,0,0,.4); }
+body.tv2 .header-left, body.tv2 .header-right { display: flex; align-items: center; gap: 18px; }
+body.tv2 .logo { height: clamp(48px, 5vw, 84px); width: auto; }
+body.tv2 .kampus h1 { margin: 0; font-size: clamp(20px, 2.2vw, 42px); letter-spacing: 3px; color: #fff; }
+body.tv2 .kampus span { font-size: clamp(11px, 1vw, 18px); letter-spacing: 4px; color: #ffcc33; }
+body.tv2 #jam { font-size: clamp(32px, 4.2vw, 78px); font-weight: 800; line-height: 1; letter-spacing: 2px;
+    font-variant-numeric: tabular-nums; color: #ffcc33; text-shadow: 0 0 18px rgba(255,204,51,.35); }
+body.tv2 .divider { width: 2px; align-self: stretch; margin: 4px 0; background: rgba(255,255,255,.25); }
+body.tv2 #tanggal { font-size: clamp(14px, 1.5vw, 28px); font-weight: 700; }
+body.tv2 .cuaca { display: flex; align-items: center; gap: 10px; margin-top: 4px; font-size: clamp(12px, 1.1vw, 20px); color: rgba(255,255,255,.85); }
+body.tv2 .cuaca i { color: #ffcc33; }
+
+/* --- area utama --- */
+.tv-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr); gap: 16px; padding: 14px 24px; }
+.col-left, .col-right { min-height: 0; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.col-left .slot-wrap { margin: 0; flex: 1; overflow: hidden; }
+.col-left .slot-berlangsung { margin: 0; }
+
+/* kolom kanan: video/info di atas, status ruangan di bawah */
+.col-right .info-container { position: relative !important; inset: auto !important; width: 100% !important; height: auto !important;
+    margin: 0 !important; flex: 1 1 55%; min-height: 0; overflow: hidden; border-radius: 18px;
+    background: rgba(10,26,51,.85); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1), 0 10px 30px rgba(0,0,0,.35); }
+.col-right .info-container:empty { display: none !important; }
+.col-right .info-container img, .col-right .info-container video { max-width: 100%; max-height: 100%; object-fit: cover; }
+
+.col-right .room-status { margin: 0; flex: 1 1 45%; min-height: 0; overflow: hidden; flex-direction: column; align-items: stretch;
+    flex-wrap: nowrap; gap: 6px; padding: 14px 16px; border-radius: 18px; }
+.col-right .room-title { margin: 0 0 4px; font-size: clamp(12px, 1vw, 18px); }
+.col-right .room { justify-content: flex-start; border-radius: 12px; padding: 7px 14px; }
+.col-right .room em { margin-left: auto; }
+
+/* --- running text --- */
+body.tv2 .running { position: static !important; width: auto !important; margin: 0 !important; display: flex; align-items: center;
+    background: linear-gradient(90deg, #ffcc33, #f0a500); color: #0a1a33; font-weight: 800;
+    font-size: clamp(14px, 1.4vw, 26px); box-shadow: 0 -6px 20px rgba(0,0,0,.35); }
+body.tv2 .running-icon { padding: 10px 20px; background: #0a1a33; color: #ffcc33; }
+body.tv2 .running marquee { padding: 10px 0; color: #0a1a33; }
+
+/* layar portrait / sempit: satu kolom */
+@media (max-aspect-ratio: 1/1) {
+    .tv-main { grid-template-columns: 1fr; overflow: auto; }
+}
+
+/* ===== v2: font sans-serif seragam & kolom kanan ===== */
+body.tv2 { font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+.col-right .room-status { align-content: flex-start; }
+.col-right .room { font-size: clamp(12px, 1vw, 19px); }
+/* kolom jadwal lebih lebar */
+.tv-main { grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr); }
+
+/* status ruangan: judul tetap, daftar bergulir otomatis */
+.col-right .room-status { display: flex; flex-direction: column; flex-wrap: nowrap; overflow: hidden; }
+.col-right .room-scroll { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
+.col-right .room-scroll .room { flex: 0 0 auto; }
+
+/* ===== Running text (pengganti <marquee>) ===== */
+body.tv2 .running { display: flex; align-items: stretch; height: clamp(44px, 5.2vh, 68px); overflow: hidden;
+    background: linear-gradient(90deg, #ffcc33, #f5a900); border-top: 3px solid #0a1a33; }
+body.tv2 .running-icon { flex: 0 0 auto; display: flex; align-items: center; padding: 0 clamp(16px, 1.6vw, 30px);
+    font-size: clamp(18px, 1.6vw, 30px); background: #0a1a33; color: #ffcc33; position: relative; z-index: 2;
+    box-shadow: 8px 0 16px rgba(0,0,0,.35); }
+.running-track { flex: 1; min-width: 0; overflow: hidden; display: flex; align-items: center;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%);
+            mask-image: linear-gradient(90deg, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%); }
+.running-text { display: inline-block; flex: 0 0 auto; white-space: nowrap; padding-left: 100%;
+    font-size: clamp(16px, 1.6vw, 30px); font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+    color: #0a1a33; line-height: 1; will-change: transform; animation: tickerMove 45s linear infinite; }
+@keyframes tickerMove { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+
+/* ===== Cuaca: kartu di bawah tanggal ===== */
+body.tv2 .date-box { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+body.tv2 #tanggal { white-space: nowrap; }
+.cuaca-card { display: flex; align-items: center; gap: clamp(10px, 1vw, 18px); padding: 6px clamp(12px, 1.2vw, 22px);
+    border-radius: 16px; background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+.cw-icon { font-size: clamp(26px, 2.6vw, 48px); color: #ffd23f; filter: drop-shadow(0 0 10px rgba(255,210,63,.35)); width: 1.2em; text-align: center; }
+.cw-temp { font-size: clamp(26px, 2.8vw, 52px); font-weight: 800; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; }
+.cw-info { display: flex; flex-direction: column; gap: 2px; padding-left: clamp(10px, 1vw, 18px); border-left: 2px solid rgba(255,255,255,.22); }
+.cw-info b { font-size: clamp(14px, 1.4vw, 26px); letter-spacing: 1px; text-transform: uppercase; color: #ffcc33; white-space: nowrap; }
+.cw-info small { font-size: clamp(10px, .85vw, 16px); color: rgba(255,255,255,.75); white-space: nowrap; }
+
+/* ===== HEADER v2: kop, logo, jam, tanggal, cuaca ===== */
+body.tv2 .header { position: relative !important; display: flex; justify-content: space-between; align-items: center; gap: 24px;
+    padding: clamp(8px, 1.1vh, 14px) clamp(18px, 2vw, 40px); overflow: hidden;
+    background: linear-gradient(100deg, #06112a 0%, #0c2550 50%, #123a73 100%);
+    border-bottom: 4px solid #ffcc33; box-shadow: 0 8px 28px rgba(0,0,0,.45), 0 4px 0 rgba(255,204,51,.25); }
+body.tv2 .header::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 2px, transparent 2px 22px),
+                radial-gradient(600px 160px at 12% 50%, rgba(255,204,51,.14), transparent 70%); }
+body.tv2 .header > * { position: relative; z-index: 1; }
+
+/* kiri: logo + nama kampus */
+body.tv2 .header-left { display: flex; align-items: center; gap: clamp(14px, 1.4vw, 26px); min-width: 0; }
+body.tv2 .logo-wrapper { flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
+    width: clamp(58px, 5.6vw, 104px); height: clamp(58px, 5.6vw, 104px); border-radius: 50%; background: #fff;
+    box-shadow: 0 0 0 4px #ffcc33, 0 0 0 7px rgba(255,204,51,.25), 0 8px 20px rgba(0,0,0,.45); }
+body.tv2 .logo { width: 78%; height: 78%; object-fit: contain; }
+body.tv2 .kampus { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tagline { font-size: clamp(9px, .8vw, 15px); font-weight: 700; letter-spacing: 3px; color: #ffcc33; opacity: .9; white-space: nowrap; }
+body.tv2 .kampus h1 { margin: 0; font-size: clamp(22px, 2.5vw, 48px); font-weight: 800; letter-spacing: 3px; line-height: 1.05;
+    color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,.4); white-space: nowrap; }
+body.tv2 .kampus span { align-self: flex-start; margin-top: 4px; padding: 3px 14px; border-radius: 20px;
+    font-size: clamp(10px, .95vw, 18px); font-weight: 800; letter-spacing: 3px; color: #0a1a33; background: #ffcc33; }
+
+/* kanan: jam | tanggal | cuaca */
+body.tv2 .header-right { display: flex; align-items: center; gap: clamp(12px, 1.3vw, 24px); flex: 0 0 auto; }
+body.tv2 .divider { width: 2px; height: clamp(44px, 6vh, 76px); align-self: center; margin: 0;
+    background: linear-gradient(180deg, transparent, rgba(255,255,255,.45), transparent); }
+
+.hd-clock { display: flex; flex-direction: column; align-items: center; }
+.hd-time { display: flex; align-items: flex-start; line-height: 1; font-variant-numeric: tabular-nums; }
+.hd-time #hdHM { font-size: clamp(40px, 4.8vw, 92px); font-weight: 800; letter-spacing: 2px; color: #ffcc33;
+    text-shadow: 0 0 22px rgba(255,204,51,.4); }
+.hd-time #hdSS { margin: .28em 0 0 .3em; font-size: clamp(16px, 1.8vw, 34px); font-weight: 700; color: rgba(255,255,255,.75); }
+.hd-clock small { margin-top: 2px; font-size: clamp(8px, .7vw, 13px); letter-spacing: 2.5px; color: rgba(255,255,255,.6); font-weight: 600; }
+
+.hd-date { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.hd-date b { font-size: clamp(22px, 2.4vw, 46px); font-weight: 800; letter-spacing: 3px; line-height: 1; color: #fff; }
+.hd-date span { font-size: clamp(13px, 1.2vw, 23px); font-weight: 600; color: #ffcc33; white-space: nowrap; }
+
+body.tv2 .date-box { display: flex; align-items: center; }
+
+/* --- perapihan lebar header (mencegah tabrakan nama kampus & jam) --- */
+body.tv2 .header-left { flex: 1 1 auto; min-width: 0; overflow: hidden; }
+body.tv2 .kampus { min-width: 0; }
+body.tv2 .kampus h1 { font-size: clamp(17px, 1.85vw, 36px); letter-spacing: 1.5px; overflow: hidden; text-overflow: ellipsis; }
+.tagline { font-size: clamp(8px, .7vw, 13px); letter-spacing: 2px; overflow: hidden; text-overflow: ellipsis; }
+body.tv2 .logo-wrapper { width: clamp(52px, 4.8vw, 92px); height: clamp(52px, 4.8vw, 92px); }
+body.tv2 .header-right { gap: clamp(10px, 1vw, 20px); }
+.hd-time #hdHM { font-size: clamp(34px, 3.9vw, 76px); }
+.hd-time #hdSS { font-size: clamp(14px, 1.5vw, 28px); }
+.hd-date b { font-size: clamp(18px, 2vw, 38px); letter-spacing: 2px; }
+.hd-date span { font-size: clamp(11px, 1vw, 19px); }
+.cuaca-card { padding: 5px clamp(10px, 1vw, 18px); gap: clamp(8px, .8vw, 14px); }
+.cw-icon { font-size: clamp(22px, 2.1vw, 40px); }
+.cw-temp { font-size: clamp(22px, 2.3vw, 44px); }
+.cw-info b { font-size: clamp(12px, 1.15vw, 22px); }
+.cw-info small { font-size: clamp(9px, .72vw, 14px); }
+body.tv2 .header-left { overflow: visible; padding: 8px 0 8px 8px; }
+
+/* ===== Label POLI | DEWA (kotak, sudut tajam) ===== */
+.brand-box { display: inline-flex; align-self: flex-start; margin-top: 5px; border-radius: 0; box-shadow: 0 4px 12px rgba(0,0,0,.35); }
+.brand-box b { display: block; border-radius: 0; padding: 3px clamp(10px, 1vw, 18px); line-height: 1.15;
+    font-size: clamp(11px, 1.1vw, 21px); font-weight: 800; letter-spacing: clamp(3px, .3vw, 6px); }
+.brand-box .b-poli { background: #1d5bd6; color: #fff; }
+.brand-box .b-dewa { background: #fff; color: #1d5bd6; }
+
+/* ===== Mode slideshow/video layar penuh: video penuh atas-bawah, header & running text transparan ===== */
+body.tv2.slideshow-on { --ov-alpha: .45; }
+
+body.tv2.slideshow-on #slideshowContainer { position: fixed !important; top: 0 !important; right: 0 !important; bottom: 0 !important; left: 0 !important;
+    width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 0 !important; z-index: 50 !important;
+    background: #000; display: flex; align-items: center; justify-content: center; }
+body.tv2.slideshow-on #slideshowContainer > * { width: 100% !important; height: 100% !important; margin: 0 !important; }
+body.tv2.slideshow-on #slideshowContainer img,
+body.tv2.slideshow-on #slideshowContainer video { width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important; object-fit: contain; }
+
+/* header: menempel di atas video, latar transparan */
+body.tv2.slideshow-on .header { position: fixed !important; top: 0; left: 0; right: 0; z-index: 100; width: auto !important;
+    background: linear-gradient(180deg, rgba(6,17,42,.62), rgba(6,17,42,.15)); border-bottom-color: rgba(255,204,51,.55); box-shadow: none; }
+body.tv2.slideshow-on .header::before { opacity: .35; }
+body.tv2.slideshow-on .logo-wrapper { background: rgba(255,255,255,.92); }
+
+/* running text: menempel di bawah video, latar transparan */
+body.tv2.slideshow-on .running { position: fixed !important; bottom: 0; left: 0; right: 0; z-index: 100; width: auto !important;
+    background: linear-gradient(0deg, rgba(10,26,51,.65), rgba(10,26,51,.2)); border-top-color: rgba(255,204,51,.55); box-shadow: none; }
+body.tv2.slideshow-on .running-icon { background: rgba(10,26,51,.55); box-shadow: none; }
+body.tv2.slideshow-on .running-text { color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.85); }
+
+/* ===== Baris di bawah nama kampus: kotak POLI|DEWA + keterangan ===== */
+.kampus-sub { display: flex; align-items: center; gap: clamp(10px, 1vw, 18px); margin-top: 5px; min-width: 0; }
+.kampus-sub .brand-box { margin-top: 0; align-self: center; flex: 0 0 auto; }
+.sub-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; line-height: 1.15; }
+.sub-text b { font-size: clamp(8px, .75vw, 14px); font-weight: 800; letter-spacing: 2px; color: #ffcc33; white-space: nowrap; }
+.sub-text small { font-size: clamp(10px, .9vw, 17px); font-weight: 600; color: rgba(255,255,255,.88); white-space: nowrap; }

@@ -1,0 +1,106 @@
+/* ===== Jadwal per jam: tampilan TV ===== */
+.legacy-hidden { display: none !important; }
+
+.slot-wrap, .slot-berlangsung, .room-status {
+    --navy: #0a1a33; --navy2: #12305c; --gold: #ffcc33; --ok: #2ecc71; --warn: #f5b301; --mute: #8fa3bf;
+    color: #fff; font-family: inherit;
+}
+
+/* --- kartu tabel --- */
+.slot-wrap { margin: 10px 24px; padding: 16px 20px; flex: 1; min-height: 0; display: flex; flex-direction: column;
+    border-radius: 18px; background: linear-gradient(160deg, var(--navy), var(--navy2));
+    box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.08); }
+.slot-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.slot-head h2 { margin: 0; font-size: clamp(16px, 1.5vw, 28px); letter-spacing: 3px; color: var(--gold); }
+.slot-head small { color: var(--mute); }
+
+.slot-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; font-size: clamp(15px, 1.35vw, 26px); }
+.slot-table th { text-align: left; padding: 4px 14px; font-size: .7em; letter-spacing: 2px; color: var(--mute); font-weight: 600; }
+.slot-table td { padding: 12px 14px; background: rgba(255,255,255,.06); }
+.slot-table td:first-child { border-radius: 12px 0 0 12px; }
+.slot-table td:last-child { border-radius: 0 12px 12px 0; }
+.slot-table .c-jam { white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; }
+.slot-table .c-matkul { font-weight: 700; }
+.slot-table .c-ruang { white-space: nowrap; color: var(--gold); font-weight: 700; }
+.slot-table tr.aktif td { background: linear-gradient(90deg, rgba(46,204,113,.28), rgba(46,204,113,.10)); }
+.slot-table tr.aktif td:first-child { box-shadow: inset 5px 0 0 var(--ok); }
+.slot-table tr.berikut td { color: rgba(255,255,255,.82); }
+.slot-table tr.kosong td { text-align: center; padding: 40px; background: none; color: var(--mute); }
+
+.badge { display: block; width: max-content; margin-top: 4px; padding: 2px 9px; border-radius: 20px;
+    font-size: .55em; font-weight: 800; letter-spacing: 1.5px; }
+.b-now { background: var(--ok); color: #04210f; }
+.b-next { background: rgba(255,204,51,.18); color: var(--gold); box-shadow: inset 0 0 0 1px rgba(255,204,51,.5); }
+
+/* --- panel sekarang + berikutnya --- */
+.slot-berlangsung { display: grid; grid-template-columns: 3fr 2fr; gap: 14px; margin: 0 24px 10px; }
+.slot-berlangsung:empty { display: none; }
+.card { padding: 16px 22px; border-radius: 18px; background: linear-gradient(160deg, var(--navy), var(--navy2));
+    box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.08); }
+.card.now { box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 0 2px var(--ok), 0 0 24px rgba(46,204,113,.25); }
+.card.idle { grid-column: 1; opacity: .85; }
+.card .lbl { display: flex; align-items: center; gap: 10px; font-size: clamp(12px, 1vw, 18px); font-weight: 800; letter-spacing: 2.5px; color: var(--ok); }
+.card.next .lbl { color: var(--gold); }
+.card .lbl em { font-style: normal; color: var(--mute); }
+.card .mk { margin: 6px 0; font-size: clamp(20px, 2.2vw, 42px); font-weight: 800; line-height: 1.15; }
+.card.next .mk { font-size: clamp(16px, 1.6vw, 30px); }
+.card .meta { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: clamp(13px, 1.1vw, 21px); color: rgba(255,255,255,.85); }
+.card .meta i { margin-right: 8px; color: var(--gold); }
+.cd-row { margin-top: 10px; color: var(--mute); font-size: clamp(12px, 1vw, 18px); }
+.cd { font-variant-numeric: tabular-nums; font-weight: 800; letter-spacing: 2px; color: #fff; }
+.cd.big { display: inline-block; margin-left: 10px; padding: 2px 14px; border-radius: 10px;
+    font-size: clamp(22px, 2.4vw, 46px); background: rgba(46,204,113,.18); color: var(--ok); }
+
+.dot { width: 14px; height: 14px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 rgba(46,204,113,.7); animation: slotPulse 1.6s infinite; }
+.dot.off { background: #778; animation: none; }
+@keyframes slotPulse { 70% { box-shadow: 0 0 0 12px rgba(46,204,113,0); } 100% { box-shadow: 0 0 0 0 rgba(46,204,113,0); } }
+
+/* --- status ruangan --- */
+.room-status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 24px 10px; padding: 10px 16px;
+    border-radius: 14px; background: rgba(10,26,51,.9); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.room-status:empty { display: none; }
+.room-title { margin-right: 6px; font-size: .8em; font-weight: 800; letter-spacing: 2px; color: var(--gold); }
+.room-title i { margin-right: 8px; }
+.room { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 30px;
+    background: rgba(255,255,255,.07); font-size: clamp(12px, 1vw, 18px); font-weight: 600; }
+.room i { width: 10px; height: 10px; border-radius: 50%; }
+.room em { font-style: normal; font-size: .82em; font-weight: 500; opacity: .75; }
+.room.pakai { box-shadow: inset 0 0 0 1px rgba(46,204,113,.6); } .room.pakai i { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.room.akan { box-shadow: inset 0 0 0 1px rgba(245,179,1,.6); } .room.akan i { background: var(--warn); }
+.room.kosong i { background: #8a94a6; }
+
+/* area tabel yang bergulir otomatis */
+.slot-scroll { flex: 1; min-height: 0; overflow: hidden; position: relative; }
+.slot-table thead th { position: sticky; top: 0; z-index: 2; background: #0f2447; }
+
+/* ===== Penyempurnaan v5: tabel lebih ringkas, kartu lebih kecil, tile statistik ===== */
+.slot-table { table-layout: fixed; font-size: clamp(13px, 1.05vw, 22px); border-spacing: 0 6px; }
+.slot-table th:nth-child(1) { width: 21%; } .slot-table th:nth-child(2) { width: 25%; }
+.slot-table th:nth-child(3) { width: 20%; } .slot-table th:nth-child(4) { width: 22%; } .slot-table th:nth-child(5) { width: 12%; }
+.slot-table td { padding: 8px 12px; line-height: 1.25; overflow-wrap: anywhere; }
+.slot-table .c-jam { white-space: nowrap; }
+.badge { display: inline-block; margin: 0 0 0 8px; padding: 1px 8px; font-size: .5em; vertical-align: middle; }
+.slot-table .c-ruang { white-space: normal; }
+.slot-head h2 { font-size: clamp(15px, 1.3vw, 26px); }
+
+.slot-berlangsung { gap: 12px; }
+.card { padding: 12px 20px; }
+.card .mk { font-size: clamp(18px, 1.8vw, 34px); margin: 4px 0; }
+.card.next .mk { font-size: clamp(15px, 1.4vw, 26px); }
+.card .meta { font-size: clamp(12px, 1vw, 19px); }
+.cd-row { margin-top: 6px; }
+.cd.big { font-size: clamp(20px, 2vw, 38px); }
+
+.slot-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.slot-stats .tile { padding: 14px 10px; text-align: center; border-radius: 16px; color: #fff;
+    background: linear-gradient(160deg, #0a1a33, #12305c); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+.tile b { display: block; font-size: clamp(26px, 3vw, 58px); line-height: 1; font-variant-numeric: tabular-nums; }
+.tile span { display: block; margin-top: 6px; font-size: clamp(9px, .8vw, 15px); letter-spacing: 1.5px; color: #8fa3bf; font-weight: 700; }
+.t-now b { color: #2ecc71; } .t-room b { color: #ffcc33; } .t-next b { color: #6ab0ff; }
+
+/* badge jam: rata tengah vertikal */
+.slot-table td { vertical-align: middle; }
+.jam-cell { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.jam-txt { line-height: 1; }
+.badge { display: inline-flex; align-items: center; justify-content: center; margin: 0; padding: 5px 10px 4px;
+    line-height: 1; vertical-align: baseline; font-size: .52em; }
