@@ -216,6 +216,27 @@ router.get('/mahasiswa', async (req, res) => {
       };
     }
 
+    // Nilai tiap mahasiswa di halaman ini langsung diambil di server (tanpa
+    // expand/AJAX). Dibatasi 5 mahasiswa diproses bersamaan supaya Firestore
+    // tidak kewalahan, terutama saat mode "Tampilkan Semua".
+    const hasilNilai = new Array(mahasiswaList.length);
+    let cursor = 0;
+    async function worker() {
+      while (cursor < mahasiswaList.length) {
+        const i = cursor++;
+        const m = mahasiswaList[i];
+        try {
+          const { perSemester, ipk, totalSKS } = await getTranskripMahasiswa(m.id);
+          hasilNilai[i] = { ...m, ipk, totalSKS, semesterList: perSemester };
+        } catch (err) {
+          console.error('Gagal memuat nilai', m.nim, err.message);
+          hasilNilai[i] = { ...m, ipk: '0.00', totalSKS: 0, semesterList: [], error: err.message };
+        }
+      }
+    }
+    await Promise.all([worker(), worker(), worker(), worker(), worker()]);
+    mahasiswaList = hasilNilai;
+
     res.render('admin/nilai_mahasiswa_list', {
       title: 'Nilai per Mahasiswa',
       mahasiswaList,
@@ -264,6 +285,91 @@ router.get('/mahasiswa/:userId/data', async (req, res) => {
   } catch (error) {
     console.error('Error data nilai mahasiswa:', error);
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ============================================================================
+// CETAK SEMUA TRANSKRIP (massal)
+// Satu mahasiswa = satu halaman A4, format sama persis dengan transkrip
+// mahasiswa (views/mahasiswa/transkrip_print.ejs) dan data dari
+// getTranskripMahasiswa() yang sama. Mengikuti filter di halaman "Nilai per
+// Mahasiswa" (search, angkatan, statusMahasiswa) - BUKAN hanya halaman yang
+// sedang tampil, tapi SEMUA mahasiswa yang cocok dengan filter.
+// Mahasiswa yang belum punya satu pun nilai dilewati (kecuali
+// ?lewatiKosong=0). Nilai diambil 5 mahasiswa bersamaan.
+// ============================================================================
+
+/**
+ * GET /admin/nilai/transkrip/cetak-semua?search=&angkatan=&statusMahasiswa=&lewatiKosong=
+ */
+router.get('/transkrip/cetak-semua', async (req, res) => {
+  try {
+    const search = String(req.query.search || '').trim();
+    const angkatan = String(req.query.angkatan || '').trim();
+    const statusMahasiswa = String(req.query.statusMahasiswa || '').trim();
+    const lewatiKosong = req.query.lewatiKosong !== '0';
+    const q = search.toLowerCase();
+
+    const daftar = (await getAllMahasiswa(db))
+      .slice()
+      .sort((a, b) => String(a.nim || '').localeCompare(String(b.nim || '')))
+      .filter(m => {
+        if (angkatan && String(getAngkatanFromNim(m.nim)) !== angkatan) return false;
+        if (statusMahasiswa && m.statusMahasiswa !== statusMahasiswa) return false;
+        if (q && !`${m.nama || ''} ${m.nim || ''}`.toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+    const hasil = new Array(daftar.length);
+    let cursor = 0;
+    async function worker() {
+      while (cursor < daftar.length) {
+        const i = cursor++;
+        const m = daftar[i];
+        try {
+          const t = await getTranskripMahasiswa(m.id);
+          hasil[i] = {
+            user: m,
+            angkatan: getAngkatanFromNim(m.nim),
+            grades: t.items,
+            ipk: t.ipk,
+            totalSKS: t.totalSKS,
+            totalSksIndeks: t.perSemester.reduce((sum, s) => sum + (s.totalSksIndeks || 0), 0),
+            adaNilai: t.items.some(it => !it.belumAdaNilai)
+          };
+        } catch (err) {
+          console.error('Gagal memuat transkrip', m.nim, err.message);
+          hasil[i] = { user: m, error: err.message };
+        }
+      }
+    }
+    await Promise.all([worker(), worker(), worker(), worker(), worker()]);
+
+    const gagal = hasil.filter(h => h.error).map(h => ({ nim: h.user.nim, nama: h.user.nama, error: h.error }));
+    const valid = hasil.filter(h => !h.error);
+    const transkripList = valid.filter(h => !lewatiKosong || h.adaNilai);
+    const dilewati = valid.filter(h => lewatiKosong && !h.adaNilai).map(h => ({ nim: h.user.nim, nama: h.user.nama }));
+
+    const backParams = new URLSearchParams();
+    if (search) backParams.set('search', search);
+    if (angkatan) backParams.set('angkatan', angkatan);
+    if (statusMahasiswa) backParams.set('statusMahasiswa', statusMahasiswa);
+    const toggleParams = new URLSearchParams(backParams);
+    toggleParams.set('lewatiKosong', lewatiKosong ? '0' : '1');
+
+    res.render('admin/nilai_transkrip_semua', {
+      title: 'Cetak Semua Transkrip',
+      transkripList,
+      dilewati,
+      gagal,
+      lewatiKosong,
+      filters: { search, angkatan, statusMahasiswa },
+      backUrl: '/admin/nilai/mahasiswa' + (backParams.toString() ? '?' + backParams.toString() : ''),
+      toggleUrl: '/admin/nilai/transkrip/cetak-semua?' + toggleParams.toString()
+    });
+  } catch (error) {
+    console.error('Error cetak semua transkrip:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat transkrip: ' + error.message });
   }
 });
 

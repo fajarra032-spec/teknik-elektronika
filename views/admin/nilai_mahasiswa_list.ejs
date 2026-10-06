@@ -96,11 +96,16 @@
     <h2 class="fw-bold mb-0">
       <i class="bi bi-people-fill me-2" style="color: var(--primary-start);"></i>Nilai per Mahasiswa
     </h2>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/admin/nilai/transkrip/cetak-semua?search=<%= encodeURIComponent(filters.search) %>&angkatan=<%= encodeURIComponent(filters.angkatan) %>&statusMahasiswa=<%= encodeURIComponent(filters.statusMahasiswa) %>" target="_blank" class="btn btn-primary rounded-pill" title="Cetak transkrip semua mahasiswa sesuai filter di bawah (bukan hanya halaman ini)">
+        <i class="bi bi-printer-fill me-1"></i>Cetak Semua Transkrip
+      </a>
     <a href="/admin/nilai" class="btn btn-outline-primary rounded-pill">
       <i class="bi bi-journal-text me-1"></i>Rekap per Mata Kuliah
     </a>
+    </div>
   </div>
-  <p class="text-muted">Klik nama mahasiswa untuk melihat daftar mata kuliah beserta nilainya.</p>
+  <p class="text-muted">Semua mata kuliah dan nilai tiap mahasiswa langsung ditampilkan. Klik nama mahasiswa bila ingin meringkas barisnya.</p>
 
   <!-- Filter -->
   <div class="filter-card">
@@ -137,15 +142,15 @@
     <p class="mb-0">Total <strong><%= totalMahasiswa %></strong> mahasiswa</p>
     <div class="d-flex gap-2">
       <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" id="btnBukaSemua">
-        <i class="bi bi-arrows-expand me-1"></i>Buka semua di halaman ini
+        <i class="bi bi-arrows-expand me-1"></i>Buka semua
       </button>
       <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" id="btnTutupSemua">
-        <i class="bi bi-arrows-collapse me-1"></i>Tutup semua
+        <i class="bi bi-arrows-collapse me-1"></i>Ciutkan semua
       </button>
     </div>
   </div>
 
-  <!-- Daftar mahasiswa -->
+  <!-- Daftar mahasiswa + nilai (langsung tampil) -->
   <% if (!mahasiswaList || mahasiswaList.length === 0) { %>
     <div class="empty-state">
       <i class="bi bi-inbox"></i>
@@ -153,9 +158,10 @@
       <p class="text-muted mb-0">Tidak ada mahasiswa yang cocok dengan filter/pencarian.</p>
     </div>
   <% } else { %>
+    <% const hurufCls = (h) => !h ? 'huruf-none' : 'huruf-' + String(h).charAt(0); %>
     <% mahasiswaList.forEach(m => { %>
-      <div class="mhs-card" data-user-id="<%= m.id %>">
-        <div class="mhs-head" role="button" tabindex="0" aria-expanded="false">
+      <div class="mhs-card open" data-user-id="<%= m.id %>">
+        <div class="mhs-head" role="button" tabindex="0" aria-expanded="true">
           <div class="mhs-avatar"><%= (m.nama || '?').trim().charAt(0).toUpperCase() %></div>
           <div class="mhs-info">
             <p class="mhs-nama"><%= m.nama %></p>
@@ -169,7 +175,8 @@
             <% if (m.statusMahasiswa) { %>
               <span class="badge bg-<%= m.statusMahasiswa === 'Aktif' ? 'success' : (m.statusMahasiswa === 'Lulus' ? 'primary' : 'secondary') %> bg-opacity-10 text-<%= m.statusMahasiswa === 'Aktif' ? 'success' : (m.statusMahasiswa === 'Lulus' ? 'primary' : 'secondary') %>"><%= m.statusMahasiswa %></span>
             <% } %>
-            <span class="ringkas-ipk badge bg-light text-dark border" style="display:none;"></span>
+            <span class="badge bg-light text-dark border">IPK <%= m.ipk %></span>
+            <span class="badge bg-light text-dark border"><%= m.totalSKS %> SKS</span>
           </div>
           <i class="bi bi-chevron-down chev"></i>
         </div>
@@ -182,7 +189,54 @@
               <i class="bi bi-printer me-1"></i>Transkrip
             </a>
           </div>
-          <div class="mhs-content"><div class="text-muted small">Memuat nilai...</div></div>
+
+          <% if (m.error) { %>
+            <div class="text-danger small"><i class="bi bi-exclamation-triangle me-1"></i>Gagal memuat nilai: <%= m.error %></div>
+          <% } else if (!m.semesterList || m.semesterList.length === 0) { %>
+            <div class="text-muted py-2"><i class="bi bi-info-circle me-1"></i>Belum ada mata kuliah / nilai untuk mahasiswa ini.</div>
+          <% } else { %>
+            <% m.semesterList.forEach(s => { %>
+              <div class="sem-block">
+                <div class="sem-title">
+                  <span><%= s.semester %></span>
+                  <small>
+                    IPS <b><%= s.ips %></b> &bull; <%= s.totalSKSDiprogram %> SKS diprogram
+                    <% if (s.jumlahBelumNilai) { %>&bull; <span class="text-danger"><%= s.jumlahBelumNilai %> belum bernilai</span><% } %>
+                    &bull; <a href="/admin/nilai/mahasiswa/<%= encodeURIComponent(m.id) %>/khs/cetak?semester=<%= encodeURIComponent(s.semester) %>" target="_blank">Cetak KHS</a>
+                  </small>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover mk-table">
+                    <thead>
+                      <tr>
+                        <th style="width:110px">Kode</th>
+                        <th>Mata Kuliah</th>
+                        <th class="text-center" style="width:70px">SKS</th>
+                        <th class="text-center" style="width:90px">Nilai</th>
+                        <th class="text-center" style="width:90px">Huruf</th>
+                        <th class="text-center" style="width:80px">Indeks</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% s.matkul.forEach(k => { %>
+                        <tr>
+                          <td><span class="badge bg-primary bg-opacity-10 text-primary"><%= k.kodeMk %></span></td>
+                          <td><%= k.namaMk %></td>
+                          <td class="text-center"><%= k.sks %></td>
+                          <td class="text-center"><%= k.belumAdaNilai ? '-' : k.nilai %></td>
+                          <td class="text-center">
+                            <% if (k.belumAdaNilai) { %><span class="huruf huruf-none">Belum</span>
+                            <% } else { %><span class="huruf <%= hurufCls(k.huruf) %>"><%= k.huruf %></span><% } %>
+                          </td>
+                          <td class="text-center"><%= k.belumAdaNilai ? '-' : Number(k.indeks).toFixed(1) %></td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            <% }) %>
+          <% } %>
         </div>
       </div>
     <% }) %>
@@ -193,90 +247,12 @@
 
 <script>
 (function () {
-  function esc(v) {
-    return String(v === null || v === undefined ? '' : v)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  }
-  function hurufClass(h) {
-    if (!h) return 'huruf-none';
-    return 'huruf-' + h.charAt(0);
-  }
-
-  function renderNilai(card, data) {
-    var userId = card.getAttribute('data-user-id');
-    var wrap = card.querySelector('.mhs-content');
-    if (!data.semester || data.semester.length === 0) {
-      wrap.innerHTML = '<div class="text-muted py-2"><i class="bi bi-info-circle me-1"></i>Belum ada mata kuliah / nilai untuk mahasiswa ini.</div>';
-      return;
-    }
-    var html = '<div class="ipk-box mb-3">' +
-      '<span class="ipk-pill">IPK <b>' + esc(data.ipk) + '</b></span>' +
-      '<span class="ipk-pill">Total SKS (bernilai) <b>' + esc(data.totalSKS) + '</b></span>' +
-      '</div>';
-
-    data.semester.forEach(function (s) {
-      var khsUrl = '/admin/nilai/mahasiswa/' + encodeURIComponent(userId) + '/khs/cetak?semester=' + encodeURIComponent(s.semester);
-      html += '<div class="sem-block">' +
-        '<div class="sem-title"><span>' + esc(s.semester) + '</span>' +
-        '<small>IPS <b>' + esc(s.ips) + '</b> &bull; ' + esc(s.totalSKSDiprogram) + ' SKS diprogram' +
-        (s.jumlahBelumNilai ? ' &bull; <span class="text-danger">' + esc(s.jumlahBelumNilai) + ' belum bernilai</span>' : '') +
-        ' &bull; <a href="' + khsUrl + '" target="_blank">Cetak KHS</a></small></div>' +
-        '<div class="table-responsive"><table class="table table-sm table-hover mk-table"><thead><tr>' +
-        '<th style="width:110px">Kode</th><th>Mata Kuliah</th><th class="text-center" style="width:70px">SKS</th>' +
-        '<th class="text-center" style="width:90px">Nilai</th><th class="text-center" style="width:90px">Huruf</th>' +
-        '<th class="text-center" style="width:80px">Indeks</th></tr></thead><tbody>';
-      s.matkul.forEach(function (m) {
-        var belum = m.belumAdaNilai;
-        html += '<tr>' +
-          '<td><span class="badge bg-primary bg-opacity-10 text-primary">' + esc(m.kode) + '</span></td>' +
-          '<td>' + esc(m.nama) + '</td>' +
-          '<td class="text-center">' + esc(m.sks) + '</td>' +
-          '<td class="text-center">' + (belum ? '<span class="text-muted">-</span>' : esc(m.nilai)) + '</td>' +
-          '<td class="text-center">' + (belum
-              ? '<span class="huruf huruf-none">Belum</span>'
-              : '<span class="huruf ' + hurufClass(m.huruf) + '">' + esc(m.huruf) + '</span>') + '</td>' +
-          '<td class="text-center">' + (belum ? '-' : esc(Number(m.indeks).toFixed(1))) + '</td>' +
-          '</tr>';
-      });
-      html += '</tbody></table></div></div>';
-    });
-    wrap.innerHTML = html;
-
-    var badge = card.querySelector('.ringkas-ipk');
-    if (badge) { badge.textContent = 'IPK ' + data.ipk; badge.style.display = ''; }
-  }
-
-  // Muat data satu kali per kartu, hasilnya di-cache di elemen
-  function muat(card) {
-    if (card.dataset.loaded === '1' || card.dataset.loading === '1') return Promise.resolve();
-    card.dataset.loading = '1';
-    var userId = card.getAttribute('data-user-id');
-    return fetch('/admin/nilai/mahasiswa/' + encodeURIComponent(userId) + '/data', { credentials: 'same-origin' })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (!data.success) throw new Error(data.message || 'Gagal memuat');
-        renderNilai(card, data);
-        card.dataset.loaded = '1';
-      })
-      .catch(function (err) {
-        card.querySelector('.mhs-content').innerHTML =
-          '<div class="text-danger small"><i class="bi bi-exclamation-triangle me-1"></i>Gagal memuat nilai: ' + esc(err.message) +
-          ' <a href="#" class="retry">Coba lagi</a></div>';
-        var retry = card.querySelector('.retry');
-        if (retry) retry.addEventListener('click', function (e) { e.preventDefault(); card.dataset.loading = ''; muat(card); });
-      })
-      .then(function () { card.dataset.loading = ''; });
-  }
-
-  function toggle(card, force) {
-    var buka = typeof force === 'boolean' ? force : !card.classList.contains('open');
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.mhs-card'));
+  function toggle(card, buka) {
+    if (typeof buka !== 'boolean') buka = !card.classList.contains('open');
     card.classList.toggle('open', buka);
     card.querySelector('.mhs-head').setAttribute('aria-expanded', buka ? 'true' : 'false');
-    if (buka) muat(card);
   }
-
-  var cards = Array.prototype.slice.call(document.querySelectorAll('.mhs-card'));
   cards.forEach(function (card) {
     var head = card.querySelector('.mhs-head');
     head.addEventListener('click', function () { toggle(card); });
@@ -284,21 +260,8 @@
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(card); }
     });
   });
-
-  // "Buka semua": dibatasi 3 request bersamaan supaya server/Firestore tidak kewalahan
-  document.getElementById('btnBukaSemua').addEventListener('click', function () {
-    var antrean = cards.slice();
-    cards.forEach(function (c) { c.classList.add('open'); });
-    function worker() {
-      var c = antrean.shift();
-      if (!c) return Promise.resolve();
-      return muat(c).then(worker);
-    }
-    Promise.all([worker(), worker(), worker()]);
-  });
-  document.getElementById('btnTutupSemua').addEventListener('click', function () {
-    cards.forEach(function (c) { toggle(c, false); });
-  });
+  document.getElementById('btnBukaSemua').addEventListener('click', function () { cards.forEach(function (c) { toggle(c, true); }); });
+  document.getElementById('btnTutupSemua').addEventListener('click', function () { cards.forEach(function (c) { toggle(c, false); }); });
 })();
 </script>
 

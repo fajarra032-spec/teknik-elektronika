@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Cetak Semua Transkrip</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <style>
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Times New Roman', Times, serif; color: #111; background: #eef1f5; font-size: 10pt; line-height: 1.4; -webkit-font-smoothing: antialiased; }
+
+    /* ===== KOP ===== */
+    .kop-surat { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 3px double #000; }
+    .logo-kop { width: 74px; height: auto; flex: 0 0 auto; }
+    .teks-kop { flex: 1; font-family: Arial, Helvetica, sans-serif; text-align: left; line-height: 1.28; padding-left: 4px; }
+    .teks-kop .nama-kampus { font-size: 17pt; font-weight: bold; margin: 0 0 3px; color: #2b4d8f; letter-spacing: .5px; text-transform: uppercase; }
+    .teks-kop .alamat, .teks-kop .kontak { font-size: 9pt; margin: 0; color: #333; }
+    .teks-kop .kontak { margin-top: 2px; }
+
+    .judul-dokumen { text-align: center; margin: 12px 0 14px; }
+    .judul-dokumen h3 { font-size: 13pt; font-weight: bold; text-decoration: underline; letter-spacing: .8px; margin: 0; }
+    .judul-dokumen .subjudul { font-size: 9.5pt; font-style: italic; letter-spacing: .5px; margin-top: 2px; color: #444; }
+
+    .info-mahasiswa { margin-bottom: 12px; font-size: 9.5pt; }
+    .info-mahasiswa table { border-collapse: collapse; }
+    .info-mahasiswa td { padding: 2px 8px 2px 0; vertical-align: top; }
+    .info-mahasiswa .label { width: 175px; font-weight: bold; white-space: nowrap; }
+    .info-mahasiswa .titik-dua { width: 14px; }
+    .info-mahasiswa .nilai { white-space: nowrap; }
+
+    .table-transkrip { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 8.5pt; }
+    .table-transkrip th, .table-transkrip td { border: 1px solid #000; padding: 4px 6px; vertical-align: middle; }
+    .table-transkrip th { text-align: center; font-weight: bold; background-color: #f2f2f2; }
+    .table-transkrip td.center { text-align: center; }
+    .table-transkrip tfoot td { background-color: #f8fafc; }
+    tr { page-break-inside: avoid; }
+    thead { display: table-header-group; }
+    tfoot { display: table-row-group; }
+    .baris-ipk td { border: 1px solid #000; padding: 5px 8px; font-weight: bold; background-color: #f8fafc; }
+
+    .tanda-tangan-wrapper { display: flex; justify-content: flex-end; margin-top: 16px; break-inside: avoid; }
+    .tanda-tangan { width: 280px; text-align: left; font-size: 9.5pt; }
+    .tanda-tangan .info-ttd { margin: 0; position: relative; z-index: 1; line-height: 1.45; }
+    .area-ttd { position: relative; height: 42px; }
+    .img-ttd { position: absolute; top: -46px; left: -15px; height: 130px; width: auto; z-index: 10; mix-blend-mode: multiply; }
+    .nama-ttd { font-weight: bold; text-decoration: underline; margin: 0; position: relative; z-index: 1; letter-spacing: .3px; }
+    .nip-ttd { margin: 2px 0 0; }
+
+    .dokumen-footer { margin-top: 22px; padding-top: 8px; border-top: 1px dashed #999; font-family: Arial, Helvetica, sans-serif; font-size: 7.5pt; color: #555; line-height: 1.4; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; break-inside: avoid; }
+    .dokumen-footer .footer-left { flex: 1; min-width: 0; }
+    .dokumen-footer .baris-1 { display: flex; align-items: center; gap: 5px; font-weight: 600; color: #1e3a8a; margin-bottom: 2px; }
+    .dokumen-footer .check { display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; border-radius: 50%; background: #1e3a8a; color: #fff; font-size: 7pt; line-height: 1; font-weight: bold; flex-shrink: 0; }
+    .dokumen-footer .baris-2 { color: #444; margin-bottom: 1px; }
+    .dokumen-footer .baris-2 em { font-style: italic; color: #1e3a8a; font-weight: 600; }
+    .dokumen-footer .baris-3 { color: #666; font-style: italic; }
+    .dokumen-footer .footer-right { text-align: right; flex-shrink: 0; font-size: 7pt; color: #666; line-height: 1.45; }
+    .dokumen-footer .kode { font-family: 'Courier New', monospace; font-weight: bold; color: #1e3a8a; letter-spacing: .5px; font-size: 7.5pt; }
+
+    /* ===== TOOLBAR LAYAR ===== */
+    .toolbar-sticky { position: sticky; top: 0; z-index: 50; background: #fff; border-bottom: 2px solid #e2e8f0; padding: .75rem 1.25rem; font-family: Arial, sans-serif; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+    .btn-pill-outline { border: 2px solid #1e3a8a; color: #1e3a8a; background: transparent; border-radius: 50px; padding: .45rem 1.3rem; font-weight: 600; font-size: .9rem; text-decoration: none; display: inline-flex; align-items: center; gap: .5rem; }
+    .btn-pill-outline:hover { background: #1e3a8a; color: #fff; }
+    .btn-cetak { background: linear-gradient(135deg, #1e3a8a, #3b82f6); border: none; color: #fff; border-radius: 50px; padding: .5rem 1.5rem; font-weight: 600; font-size: .9rem; cursor: pointer; box-shadow: 0 5px 15px rgba(30,58,138,.25); }
+    .info-box { font-family: Arial, sans-serif; max-width: 21cm; margin: 1rem auto; font-size: .9rem; }
+    .info-box details { background: #fff; border: 1px solid #e2e8f0; border-radius: .6rem; padding: .5rem .9rem; margin-top: .5rem; }
+
+    /* ===== KERTAS ===== */
+    .preview-paper { background: #fff; width: 210mm; height: 297mm; padding: 1cm 2cm; margin: 0 auto 1.25rem; box-shadow: 0 6px 24px rgba(15,23,42,.12); position: relative; overflow: hidden; }
+    .cetak-scale { transform-origin: top left; }
+
+    @media print {
+      html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+      .no-print { display: none !important; }
+      .preview-paper {
+        box-shadow: none !important; margin: 0 !important;
+        width: 210mm !important; height: 296mm !important; padding: 1cm 2cm !important;
+        overflow: hidden !important;
+        page-break-after: always; break-after: page;
+        page-break-inside: avoid; break-inside: avoid;
+      }
+      .preview-paper:last-of-type { page-break-after: auto; break-after: auto; }
+      .table-transkrip th, .table-transkrip tfoot td, .baris-ipk td, .img-ttd, .dokumen-footer .check {
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== TOOLBAR (tidak ikut tercetak) ===== -->
+  <div class="toolbar-sticky no-print d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <a href="<%= backUrl %>" class="btn-pill-outline"><i class="bi bi-arrow-left"></i> Kembali</a>
+    <div class="fw-semibold">
+      <i class="bi bi-files me-1"></i><%= transkripList.length %> transkrip siap dicetak (1 mahasiswa = 1 halaman A4)
+    </div>
+    <button type="button" class="btn-cetak" onclick="cetakSemua()" <%= transkripList.length === 0 ? 'disabled' : '' %>>
+      <i class="bi bi-printer me-1"></i> Cetak Semua
+    </button>
+  </div>
+
+  <div class="info-box no-print">
+    <div class="text-muted">
+      Filter:
+      <strong>Cari</strong> "<%= filters.search || '-' %>",
+      <strong>Angkatan</strong> <%= filters.angkatan || 'semua' %>,
+      <strong>Status</strong> <%= filters.statusMahasiswa || 'semua' %>.
+      Pada dialog cetak browser, atur <em>Margin = None/Tidak ada</em> dan aktifkan <em>Background graphics</em>.
+    </div>
+    <% if (dilewati.length > 0 || !lewatiKosong) { %>
+      <div class="mt-2">
+        <% if (lewatiKosong) { %>
+          <%= dilewati.length %> mahasiswa belum punya nilai sama sekali dan dilewati.
+          <a href="<%= toggleUrl %>">Sertakan juga</a>
+        <% } else { %>
+          Mahasiswa yang belum punya nilai ikut dicetak. <a href="<%= toggleUrl %>">Lewati yang belum punya nilai</a>
+        <% } %>
+      </div>
+      <% if (lewatiKosong && dilewati.length > 0) { %>
+        <details><summary>Lihat yang dilewati</summary>
+          <ul class="mb-0 mt-2"><% dilewati.forEach(d => { %><li><%= d.nim %> - <%= d.nama %></li><% }) %></ul>
+        </details>
+      <% } %>
+    <% } %>
+    <% if (gagal.length > 0) { %>
+      <div class="alert alert-danger mt-2 mb-0">
+        <strong><%= gagal.length %> transkrip gagal dimuat dan TIDAK ikut tercetak:</strong>
+        <ul class="mb-0"><% gagal.forEach(g => { %><li><%= g.nim %> - <%= g.nama %> (<%= g.error %>)</li><% }) %></ul>
+      </div>
+    <% } %>
+  </div>
+
+  <% if (transkripList.length === 0) { %>
+    <div class="info-box no-print text-center py-5">
+      <i class="bi bi-inbox" style="font-size:3rem;color:#adb5bd"></i>
+      <h5 class="mt-2">Tidak ada transkrip untuk dicetak</h5>
+      <p class="text-muted">Tidak ada mahasiswa dengan nilai yang cocok dengan filter.</p>
+    </div>
+  <% } %>
+
+  <% transkripList.forEach(t => { %>
+    <div class="preview-paper">
+      <div class="cetak-scale">
+
+        <%- include('../partials/kop_surat') %>
+
+        <div class="judul-dokumen">
+          <h3>TRANSKRIP AKADEMIK</h3>
+          <div class="subjudul">ACADEMIC TRANSCRIPT</div>
+        </div>
+
+        <div class="info-mahasiswa">
+          <table>
+            <tr><td class="label">NAMA</td><td class="titik-dua">:</td><td class="nilai"><%= t.user.nama || '-' %></td></tr>
+            <tr><td class="label">Tempat, Tanggal Lahir</td><td class="titik-dua">:</td><td class="nilai"><%= t.user.tempatLahir ? (t.user.tempatLahir + (t.user.tanggalLahir ? ', ' + t.user.tanggalLahir : '')) : '-' %></td></tr>
+            <tr><td class="label">Nomor Induk Mahasiswa</td><td class="titik-dua">:</td><td class="nilai"><%= t.user.nim || '-' %></td></tr>
+            <tr><td class="label">Program Studi</td><td class="titik-dua">:</td><td class="nilai">D3 Teknik Elektronika</td></tr>
+            <tr><td class="label">Angkatan</td><td class="titik-dua">:</td><td class="nilai"><%= t.angkatan || '-' %></td></tr>
+          </table>
+        </div>
+
+        <table class="table-transkrip">
+          <thead>
+            <tr>
+              <th rowspan="2" width="4%">No</th>
+              <th rowspan="2" width="10%">Kode MK</th>
+              <th rowspan="2" width="30%">Mata Kuliah</th>
+              <th rowspan="2" width="8%">Bobot<br>SKS</th>
+              <th colspan="3">Nilai</th>
+              <th rowspan="2" width="9%">SKS<br>Indeks</th>
+            </tr>
+            <tr><th width="9%">Angka</th><th width="8%">Huruf</th><th width="8%">Indeks</th></tr>
+          </thead>
+          <tbody>
+            <% if (t.grades && t.grades.length > 0) { %>
+              <% t.grades.forEach((g, index) => { %>
+                <tr>
+                  <td class="center"><%= index + 1 %></td>
+                  <td class="center"><%= g.kodeMk || '-' %></td>
+                  <td><%= g.namaMk || '-' %></td>
+                  <td class="center"><%= typeof g.sks === 'number' ? g.sks.toFixed(2) : '-' %></td>
+                  <% if (g.belumAdaNilai) { %>
+                    <td class="center" colspan="4" style="font-style: italic; color: #666;">Belum Ada Nilai</td>
+                  <% } else { %>
+                    <td class="center"><%= g.nilai ?? '-' %></td>
+                    <td class="center"><%= g.huruf || '-' %></td>
+                    <td class="center"><%= typeof g.indeks === 'number' ? g.indeks.toFixed(1) : '-' %></td>
+                    <td class="center"><%= typeof g.sksIndeks === 'number' ? g.sksIndeks.toFixed(2) : '-' %></td>
+                  <% } %>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr><td colspan="8" style="text-align:center; font-style:italic; padding:15px;">Belum ada nilai yang tercatat.</td></tr>
+            <% } %>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" style="text-align:right; font-weight:bold;">Jumlah</td>
+              <td class="center" style="font-weight:bold;"><%= t.totalSKS.toFixed(2) %></td>
+              <td colspan="3"></td>
+              <td class="center" style="font-weight:bold;"><%= t.totalSksIndeks.toFixed(2) %></td>
+            </tr>
+            <tr class="baris-ipk">
+              <td colspan="7" style="text-align:right;">IPK ( Indeks Prestasi Komulatif )</td>
+              <td class="center"><%= t.ipk %></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="tanda-tangan-wrapper">
+          <div class="tanda-tangan">
+            <p class="info-ttd">
+              Palopo, <%= new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %><br>
+              Ketua Program Studi Teknik Elektronika
+            </p>
+            <div class="area-ttd"><img src="/images/ttd.png" alt="Tanda Tangan Kaprodi" class="img-ttd"></div>
+            <p class="nama-ttd">Fajar Ramadhan, S.Pd., M.T.</p>
+            <p class="nip-ttd">NUPTK. 8559777678130153</p>
+          </div>
+        </div>
+
+        <div class="dokumen-footer">
+          <div class="footer-left">
+            <div class="baris-1"><span class="check">✓</span><span>Dokumen ini dicetak &amp; disahkan secara digital oleh Sistem Informasi Elektronika Polidewa</span></div>
+            <div class="baris-2">Periksa keaslian dokumen di: <em>https://elektronika.polidewa.ac.id</em></div>
+            <div class="baris-3">Jika terdapat kekeliruan data, harap menghubungi Bagian Akademik Program Studi Teknik Elektronika.</div>
+          </div>
+          <div class="footer-right">
+            <div>Dicetak pada: <span class="footer-tanggal">-</span></div>
+            <div class="kode">TRANSKRIP/<%= t.user.nim || 'NIM' %></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  <% }) %>
+
+  <script>
+    (function setFooterDate() {
+      var now = new Date();
+      var tanggal = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      var jam = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':');
+      Array.prototype.forEach.call(document.querySelectorAll('.footer-tanggal'), function (el) {
+        el.textContent = tanggal + ', ' + jam + ' WITA';
+      });
+    })();
+
+    /* Paksa tiap transkrip muat SATU halaman A4 (area isi 170mm x 275mm). */
+    function fitSatu(wrapper) {
+      wrapper.style.zoom = '';
+      wrapper.style.transform = '';
+      wrapper.style.marginBottom = '';
+      wrapper.style.width = '';
+      void wrapper.offsetHeight;
+
+      var mmToPx = 96 / 25.4;
+      var printW = 170 * mmToPx;
+      var printH = 275 * mmToPx;
+      wrapper.style.width = printW + 'px';
+      void wrapper.offsetHeight;
+
+      var contentH = wrapper.scrollHeight;
+      if (contentH > printH) {
+        var skala = Math.max(0.5, (printH / contentH) * 0.97);
+        if (typeof wrapper.style.zoom !== 'undefined') {
+          wrapper.style.zoom = skala;
+        } else {
+          wrapper.style.transform = 'scale(' + skala + ')';
+          wrapper.style.marginBottom = (contentH * skala - contentH) + 'px';
+        }
+      }
+      wrapper.style.width = '';
+    }
+    function fitSemua() {
+      Array.prototype.forEach.call(document.querySelectorAll('.cetak-scale'), fitSatu);
+    }
+    function cetakSemua() {
+      fitSemua();
+      setTimeout(function () { window.print(); }, 200);
+    }
+    window.addEventListener('load', function () { setTimeout(fitSemua, 300); });
+    window.addEventListener('beforeprint', fitSemua);
+  </script>
+</body>
+</html>
