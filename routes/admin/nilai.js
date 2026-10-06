@@ -9,7 +9,7 @@ const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { saveGradeFinal, deleteGradeFinal, getTranskripMahasiswa, getPeriodeAktif, getHasilRubrikSemuaMahasiswa, getHasilRubrikSatuMahasiswa, getRincianTugasByMkId, saveKomponenRubrik, saveNilai, TIPE_RUBRIK_KOMPONEN } = require('../../helpers/nilaiHelper');
-const { getAllMataKuliah } = require('../../helpers/cache');
+const { getAllMataKuliah, getAllMahasiswa } = require('../../helpers/cache');
 const { getAngkatanFromNim } = require('../../helpers/academicHelper');
 
 router.use(verifyToken);
@@ -131,6 +131,139 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error mengambil MK:', error);
     res.status(500).render('error', { title: 'Error', message: 'Gagal memuat data MK' });
+  }
+});
+
+// ============================================================================
+// NILAI PER MAHASISWA - daftar mahasiswa, lalu per mahasiswa tampil daftar
+// MK + nilainya (dikelompokkan per semester).
+//
+// Beda dengan '/' (rekap nilai per MK): di sini sudut pandangnya mahasiswa.
+// Daftar mahasiswa diambil dari cache getAllMahasiswa() (0 read tambahan),
+// sedangkan rincian MK & nilai tiap mahasiswa baru diambil ketika barisnya
+// dibuka (AJAX ke /mahasiswa/:userId/data) memakai getTranskripMahasiswa()
+// yang SAMA dengan KHS/Transkrip - jadi angkanya pasti identik dan kita tidak
+// membaca nilai ratusan mahasiswa sekaligus setiap halaman dibuka.
+// Didaftarkan SEBELUM '/:mkId' supaya '/mahasiswa' tidak tertelan rute itu.
+// ============================================================================
+
+/**
+ * GET /admin/nilai/mahasiswa
+ * Daftar mahasiswa (filter: cari nama/NIM, angkatan, status) + paginasi.
+ */
+router.get('/mahasiswa', async (req, res) => {
+  try {
+    const PAGE_SIZE = 10;
+    const search = String(req.query.search || '').trim();
+    const angkatan = String(req.query.angkatan || '').trim();
+    const statusMahasiswa = String(req.query.statusMahasiswa || '').trim();
+    const showAll = req.query.all === '1';
+    const q = search.toLowerCase();
+
+    const semua = (await getAllMahasiswa(db))
+      .slice()
+      .sort((a, b) => String(a.nim || '').localeCompare(String(b.nim || '')));
+
+    const angkatanSet = new Set();
+    const filtered = [];
+    semua.forEach(m => {
+      const ang = getAngkatanFromNim(m.nim);
+      if (ang) angkatanSet.add(String(ang));
+      if (angkatan && String(ang) !== angkatan) return;
+      if (statusMahasiswa && m.statusMahasiswa !== statusMahasiswa) return;
+      if (q) {
+        const teks = `${m.nama || ''} ${m.nim || ''}`.toLowerCase();
+        if (!teks.includes(q)) return;
+      }
+      filtered.push({
+        id: m.id,
+        nim: m.nim || '-',
+        nama: m.nama || '(tanpa nama)',
+        angkatan: ang || '-',
+        kelas: m.kelas || '',
+        semester: m.semester || '',
+        statusMahasiswa: m.statusMahasiswa || ''
+      });
+    });
+
+    const total = filtered.length;
+    const buildUrl = (params) => {
+      const usp = new URLSearchParams();
+      if (search) usp.set('search', search);
+      if (angkatan) usp.set('angkatan', angkatan);
+      if (statusMahasiswa) usp.set('statusMahasiswa', statusMahasiswa);
+      Object.entries(params).forEach(([k, v]) => usp.set(k, v));
+      return `/admin/nilai/mahasiswa?${usp.toString()}`;
+    };
+
+    let mahasiswaList = filtered;
+    let pageInfo = null;
+    if (!showAll) {
+      const maxPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      const page = Math.min(maxPage, Math.max(1, parseInt(req.query.page, 10) || 1));
+      const start = (page - 1) * PAGE_SIZE;
+      mahasiswaList = filtered.slice(start, start + PAGE_SIZE);
+      const hasPrev = page > 1;
+      const hasNext = start + PAGE_SIZE < total;
+      pageInfo = {
+        hasPrev,
+        hasNext,
+        prevUrl: hasPrev ? buildUrl({ page: page - 1 }) : null,
+        nextUrl: hasNext ? buildUrl({ page: page + 1 }) : null,
+        allUrl: buildUrl({ all: '1' }),
+        count: mahasiswaList.length,
+        total
+      };
+    }
+
+    res.render('admin/nilai_mahasiswa_list', {
+      title: 'Nilai per Mahasiswa',
+      mahasiswaList,
+      totalMahasiswa: total,
+      angkatanList: Array.from(angkatanSet).sort().reverse(),
+      pageInfo,
+      showAll,
+      pageListUrl: buildUrl({ page: 1 }),
+      filters: { search, angkatan, statusMahasiswa }
+    });
+  } catch (error) {
+    console.error('Error daftar nilai per mahasiswa:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat daftar mahasiswa: ' + error.message });
+  }
+});
+
+/**
+ * GET /admin/nilai/mahasiswa/:userId/data
+ * JSON rincian MK + nilai satu mahasiswa (dipakai saat baris dibuka).
+ */
+router.get('/mahasiswa/:userId/data', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { perSemester, ipk, totalSKS } = await getTranskripMahasiswa(userId);
+    res.json({
+      success: true,
+      ipk,
+      totalSKS,
+      semester: perSemester.map(s => ({
+        semester: s.semester,
+        ips: s.ips,
+        totalSKS: s.totalSKS,
+        totalSKSDiprogram: s.totalSKSDiprogram,
+        jumlahBelumNilai: s.jumlahBelumNilai,
+        matkul: s.matkul.map(m => ({
+          kode: m.kodeMk,
+          nama: m.namaMk,
+          sks: m.sks,
+          nilai: m.nilai,
+          huruf: m.huruf,
+          indeks: m.indeks,
+          belumAdaNilai: m.belumAdaNilai
+        }))
+      }))
+    });
+  } catch (error) {
+    console.error('Error data nilai mahasiswa:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

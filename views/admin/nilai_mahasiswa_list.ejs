@@ -1,0 +1,305 @@
+<%- include('../partials/header') %>
+
+<style>
+  :root {
+    --primary-start: #2193b0;
+    --primary-end: #6dd5ed;
+    --primary-light: rgba(33,147,176,0.1);
+    --primary-dark: #1a7a8f;
+  }
+  .filter-card {
+    border-radius: 1.2rem; border: 1px solid rgba(33,147,176,0.1);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05); background: #fff;
+    padding: 1.5rem; margin-bottom: 1.5rem;
+  }
+  .filter-card .form-label { font-weight: 600; color: #1e293b; }
+  .filter-card .form-select, .filter-card .form-control {
+    border-radius: 50px; border: 1px solid #dee2e6; padding: 0.6rem 1rem;
+  }
+  .filter-card .form-select:focus, .filter-card .form-control:focus {
+    border-color: var(--primary-start); box-shadow: 0 0 0 0.25rem rgba(33,147,176,0.25);
+  }
+  .btn-filter {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border: none; color: #fff; font-weight: 500; padding: 0.6rem 1.5rem;
+    border-radius: 50px; width: 100%; box-shadow: 0 5px 15px rgba(33,147,176,0.2);
+  }
+  .btn-filter:hover { color: #fff; transform: translateY(-2px); }
+  .btn-reset {
+    display: block; text-align: center; text-decoration: none; background: transparent;
+    border: 2px solid var(--primary-start); color: var(--primary-start);
+    font-weight: 500; padding: 0.5rem 1.5rem; border-radius: 50px; width: 100%;
+  }
+  .btn-reset:hover { background: var(--primary-start); color: #fff; }
+
+  /* ===== KARTU MAHASISWA ===== */
+  .mhs-card {
+    background: #fff; border-radius: 1.1rem; border: 1px solid #e9ecef;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.04); margin-bottom: 0.9rem; overflow: hidden;
+    transition: box-shadow .2s, border-color .2s;
+  }
+  .mhs-card.open { border-color: var(--primary-start); box-shadow: 0 10px 25px rgba(33,147,176,0.15); }
+  .mhs-head {
+    display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1.25rem;
+    cursor: pointer; user-select: none;
+  }
+  .mhs-head:hover { background: var(--primary-light); }
+  .mhs-avatar {
+    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  .mhs-info { flex: 1; min-width: 0; }
+  .mhs-nama { font-weight: 600; color: #1e293b; margin: 0; }
+  .mhs-meta { font-size: .82rem; color: #6c757d; }
+  .mhs-ringkas { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+  .chev { transition: transform .2s; color: var(--primary-dark); font-size: 1.1rem; }
+  .mhs-card.open .chev { transform: rotate(180deg); }
+
+  .mhs-body { display: none; padding: 0 1.25rem 1.25rem; border-top: 1px dashed #dee2e6; }
+  .mhs-card.open .mhs-body { display: block; }
+  .mhs-actions { display: flex; flex-wrap: wrap; gap: .5rem; padding: .9rem 0; }
+
+  .sem-block { margin-bottom: 1rem; }
+  .sem-title {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+    gap: .5rem; background: linear-gradient(135deg, var(--primary-light), rgba(109,213,237,0.1));
+    border-left: 4px solid var(--primary-start); border-radius: .6rem;
+    padding: .55rem .9rem; font-weight: 600; color: var(--primary-dark); margin-bottom: .4rem;
+  }
+  .sem-title small { font-weight: 500; color: #475569; }
+  .mk-table { margin-bottom: 0; font-size: .92rem; }
+  .mk-table thead th {
+    font-size: .75rem; text-transform: uppercase; letter-spacing: .4px; color: #64748b;
+    border-bottom: 1px solid #dee2e6; font-weight: 600;
+  }
+  .mk-table td { vertical-align: middle; }
+
+  .huruf { display: inline-block; min-width: 2.2rem; text-align: center; padding: .15rem .5rem;
+    border-radius: 50px; font-weight: 700; font-size: .85rem; }
+  .huruf-A  { background: #d1fae5; color: #065f46; }
+  .huruf-B  { background: #dbeafe; color: #1e40af; }
+  .huruf-C  { background: #fef3c7; color: #92400e; }
+  .huruf-D, .huruf-E { background: #fee2e2; color: #991b1b; }
+  .huruf-none { background: #f1f5f9; color: #64748b; font-weight: 500; }
+
+  .ipk-box { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .25rem; }
+  .ipk-pill { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: .7rem; padding: .35rem .8rem; font-size: .85rem; }
+  .ipk-pill b { color: var(--primary-dark); }
+
+  .empty-state { padding: 3rem 2rem; text-align: center; background: #f8f9fa; border-radius: 1.5rem; }
+  .empty-state i { font-size: 3.5rem; color: #adb5bd; }
+</style>
+
+<div class="container-fluid mt-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h2 class="fw-bold mb-0">
+      <i class="bi bi-people-fill me-2" style="color: var(--primary-start);"></i>Nilai per Mahasiswa
+    </h2>
+    <a href="/admin/nilai" class="btn btn-outline-primary rounded-pill">
+      <i class="bi bi-journal-text me-1"></i>Rekap per Mata Kuliah
+    </a>
+  </div>
+  <p class="text-muted">Klik nama mahasiswa untuk melihat daftar mata kuliah beserta nilainya.</p>
+
+  <!-- Filter -->
+  <div class="filter-card">
+    <form method="GET" action="/admin/nilai/mahasiswa" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label for="search" class="form-label"><i class="bi bi-search me-1"></i>Cari</label>
+        <input type="text" class="form-control" id="search" name="search" placeholder="Nama atau NIM" value="<%= filters.search %>">
+      </div>
+      <div class="col-md-2">
+        <label for="angkatan" class="form-label"><i class="bi bi-calendar3 me-1"></i>Angkatan</label>
+        <select class="form-select" id="angkatan" name="angkatan">
+          <option value="">Semua</option>
+          <% angkatanList.forEach(a => { %>
+            <option value="<%= a %>" <%= filters.angkatan === a ? 'selected' : '' %>><%= a %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="statusMahasiswa" class="form-label"><i class="bi bi-funnel me-1"></i>Status</label>
+        <select class="form-select" id="statusMahasiswa" name="statusMahasiswa">
+          <option value="">Semua</option>
+          <% ['Aktif','Lulus','Cuti','Keluar'].forEach(st => { %>
+            <option value="<%= st %>" <%= filters.statusMahasiswa === st ? 'selected' : '' %>><%= st %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-2"><button type="submit" class="btn-filter">Terapkan</button></div>
+      <div class="col-md-2"><a href="/admin/nilai/mahasiswa" class="btn-reset">Reset</a></div>
+    </form>
+  </div>
+
+  <!-- Info + kontrol -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <p class="mb-0">Total <strong><%= totalMahasiswa %></strong> mahasiswa</p>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" id="btnBukaSemua">
+        <i class="bi bi-arrows-expand me-1"></i>Buka semua di halaman ini
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" id="btnTutupSemua">
+        <i class="bi bi-arrows-collapse me-1"></i>Tutup semua
+      </button>
+    </div>
+  </div>
+
+  <!-- Daftar mahasiswa -->
+  <% if (!mahasiswaList || mahasiswaList.length === 0) { %>
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <h4 class="mt-3">Tidak Ada Mahasiswa</h4>
+      <p class="text-muted mb-0">Tidak ada mahasiswa yang cocok dengan filter/pencarian.</p>
+    </div>
+  <% } else { %>
+    <% mahasiswaList.forEach(m => { %>
+      <div class="mhs-card" data-user-id="<%= m.id %>">
+        <div class="mhs-head" role="button" tabindex="0" aria-expanded="false">
+          <div class="mhs-avatar"><%= (m.nama || '?').trim().charAt(0).toUpperCase() %></div>
+          <div class="mhs-info">
+            <p class="mhs-nama"><%= m.nama %></p>
+            <div class="mhs-meta">
+              NIM <%= m.nim %> &bull; Angkatan <%= m.angkatan %>
+              <% if (m.kelas) { %>&bull; Kelas <%= m.kelas %><% } %>
+              <% if (m.semester) { %>&bull; <%= m.semester %><% } %>
+            </div>
+          </div>
+          <div class="mhs-ringkas">
+            <% if (m.statusMahasiswa) { %>
+              <span class="badge bg-<%= m.statusMahasiswa === 'Aktif' ? 'success' : (m.statusMahasiswa === 'Lulus' ? 'primary' : 'secondary') %> bg-opacity-10 text-<%= m.statusMahasiswa === 'Aktif' ? 'success' : (m.statusMahasiswa === 'Lulus' ? 'primary' : 'secondary') %>"><%= m.statusMahasiswa %></span>
+            <% } %>
+            <span class="ringkas-ipk badge bg-light text-dark border" style="display:none;"></span>
+          </div>
+          <i class="bi bi-chevron-down chev"></i>
+        </div>
+        <div class="mhs-body">
+          <div class="mhs-actions">
+            <a class="btn btn-sm btn-primary rounded-pill" href="/admin/nilai/mahasiswa/<%= encodeURIComponent(m.id) %>/tambah">
+              <i class="bi bi-pencil-square me-1"></i>Input / Ubah Nilai
+            </a>
+            <a class="btn btn-sm btn-outline-primary rounded-pill" target="_blank" href="/admin/nilai/mahasiswa/<%= encodeURIComponent(m.id) %>/transkrip/cetak">
+              <i class="bi bi-printer me-1"></i>Transkrip
+            </a>
+          </div>
+          <div class="mhs-content"><div class="text-muted small">Memuat nilai...</div></div>
+        </div>
+      </div>
+    <% }) %>
+  <% } %>
+
+  <%- include('../partials/pagination', { pageInfo: typeof pageInfo !== 'undefined' ? pageInfo : null, showAll: typeof showAll !== 'undefined' ? showAll : false, pageListUrl: typeof pageListUrl !== 'undefined' ? pageListUrl : '/admin/nilai/mahasiswa' }) %>
+</div>
+
+<script>
+(function () {
+  function esc(v) {
+    return String(v === null || v === undefined ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function hurufClass(h) {
+    if (!h) return 'huruf-none';
+    return 'huruf-' + h.charAt(0);
+  }
+
+  function renderNilai(card, data) {
+    var userId = card.getAttribute('data-user-id');
+    var wrap = card.querySelector('.mhs-content');
+    if (!data.semester || data.semester.length === 0) {
+      wrap.innerHTML = '<div class="text-muted py-2"><i class="bi bi-info-circle me-1"></i>Belum ada mata kuliah / nilai untuk mahasiswa ini.</div>';
+      return;
+    }
+    var html = '<div class="ipk-box mb-3">' +
+      '<span class="ipk-pill">IPK <b>' + esc(data.ipk) + '</b></span>' +
+      '<span class="ipk-pill">Total SKS (bernilai) <b>' + esc(data.totalSKS) + '</b></span>' +
+      '</div>';
+
+    data.semester.forEach(function (s) {
+      var khsUrl = '/admin/nilai/mahasiswa/' + encodeURIComponent(userId) + '/khs/cetak?semester=' + encodeURIComponent(s.semester);
+      html += '<div class="sem-block">' +
+        '<div class="sem-title"><span>' + esc(s.semester) + '</span>' +
+        '<small>IPS <b>' + esc(s.ips) + '</b> &bull; ' + esc(s.totalSKSDiprogram) + ' SKS diprogram' +
+        (s.jumlahBelumNilai ? ' &bull; <span class="text-danger">' + esc(s.jumlahBelumNilai) + ' belum bernilai</span>' : '') +
+        ' &bull; <a href="' + khsUrl + '" target="_blank">Cetak KHS</a></small></div>' +
+        '<div class="table-responsive"><table class="table table-sm table-hover mk-table"><thead><tr>' +
+        '<th style="width:110px">Kode</th><th>Mata Kuliah</th><th class="text-center" style="width:70px">SKS</th>' +
+        '<th class="text-center" style="width:90px">Nilai</th><th class="text-center" style="width:90px">Huruf</th>' +
+        '<th class="text-center" style="width:80px">Indeks</th></tr></thead><tbody>';
+      s.matkul.forEach(function (m) {
+        var belum = m.belumAdaNilai;
+        html += '<tr>' +
+          '<td><span class="badge bg-primary bg-opacity-10 text-primary">' + esc(m.kode) + '</span></td>' +
+          '<td>' + esc(m.nama) + '</td>' +
+          '<td class="text-center">' + esc(m.sks) + '</td>' +
+          '<td class="text-center">' + (belum ? '<span class="text-muted">-</span>' : esc(m.nilai)) + '</td>' +
+          '<td class="text-center">' + (belum
+              ? '<span class="huruf huruf-none">Belum</span>'
+              : '<span class="huruf ' + hurufClass(m.huruf) + '">' + esc(m.huruf) + '</span>') + '</td>' +
+          '<td class="text-center">' + (belum ? '-' : esc(Number(m.indeks).toFixed(1))) + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div></div>';
+    });
+    wrap.innerHTML = html;
+
+    var badge = card.querySelector('.ringkas-ipk');
+    if (badge) { badge.textContent = 'IPK ' + data.ipk; badge.style.display = ''; }
+  }
+
+  // Muat data satu kali per kartu, hasilnya di-cache di elemen
+  function muat(card) {
+    if (card.dataset.loaded === '1' || card.dataset.loading === '1') return Promise.resolve();
+    card.dataset.loading = '1';
+    var userId = card.getAttribute('data-user-id');
+    return fetch('/admin/nilai/mahasiswa/' + encodeURIComponent(userId) + '/data', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.success) throw new Error(data.message || 'Gagal memuat');
+        renderNilai(card, data);
+        card.dataset.loaded = '1';
+      })
+      .catch(function (err) {
+        card.querySelector('.mhs-content').innerHTML =
+          '<div class="text-danger small"><i class="bi bi-exclamation-triangle me-1"></i>Gagal memuat nilai: ' + esc(err.message) +
+          ' <a href="#" class="retry">Coba lagi</a></div>';
+        var retry = card.querySelector('.retry');
+        if (retry) retry.addEventListener('click', function (e) { e.preventDefault(); card.dataset.loading = ''; muat(card); });
+      })
+      .then(function () { card.dataset.loading = ''; });
+  }
+
+  function toggle(card, force) {
+    var buka = typeof force === 'boolean' ? force : !card.classList.contains('open');
+    card.classList.toggle('open', buka);
+    card.querySelector('.mhs-head').setAttribute('aria-expanded', buka ? 'true' : 'false');
+    if (buka) muat(card);
+  }
+
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.mhs-card'));
+  cards.forEach(function (card) {
+    var head = card.querySelector('.mhs-head');
+    head.addEventListener('click', function () { toggle(card); });
+    head.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(card); }
+    });
+  });
+
+  // "Buka semua": dibatasi 3 request bersamaan supaya server/Firestore tidak kewalahan
+  document.getElementById('btnBukaSemua').addEventListener('click', function () {
+    var antrean = cards.slice();
+    cards.forEach(function (c) { c.classList.add('open'); });
+    function worker() {
+      var c = antrean.shift();
+      if (!c) return Promise.resolve();
+      return muat(c).then(worker);
+    }
+    Promise.all([worker(), worker(), worker()]);
+  });
+  document.getElementById('btnTutupSemua').addEventListener('click', function () {
+    cards.forEach(function (c) { toggle(c, false); });
+  });
+})();
+</script>
+
+<%- include('../partials/footer') %>
