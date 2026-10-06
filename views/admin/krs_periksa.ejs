@@ -1,0 +1,181 @@
+<%- include('../partials/header') %>
+
+<style>
+  :root { --primary-start:#2193b0; --primary-end:#6dd5ed; --primary-dark:#1a7a8f; }
+  .card-soft { background:#fff; border:1px solid rgba(33,147,176,.12); border-radius:1.1rem; box-shadow:0 8px 22px rgba(0,0,0,.05); padding:1.25rem 1.5rem; margin-bottom:1.25rem; }
+  .card-soft .form-label { font-weight:600; color:#1e293b; }
+  .card-soft .form-select, .card-soft .form-control { border-radius:50px; padding:.55rem 1rem; }
+  .btn-periksa { background:linear-gradient(135deg,var(--primary-start),var(--primary-end)); border:none; color:#fff; font-weight:600; border-radius:50px; padding:.6rem 1.5rem; width:100%; box-shadow:0 5px 15px rgba(33,147,176,.2); }
+  .btn-periksa:hover { color:#fff; transform:translateY(-2px); }
+  .stat { text-align:center; border-radius:1rem; padding:1rem .5rem; background:#f8fafc; border:1px solid #e2e8f0; height:100%; }
+  .stat .n { font-size:1.8rem; font-weight:800; line-height:1.1; }
+  .stat.bad { background:#fef2f2; border-color:#fecaca; } .stat.bad .n { color:#b91c1c; }
+  .stat.ok  { background:#f0fdf4; border-color:#bbf7d0; } .stat.ok .n { color:#15803d; }
+  .stat.warn{ background:#fffbeb; border-color:#fde68a; } .stat.warn .n { color:#b45309; }
+  .sec-title { font-weight:700; color:#1e293b; display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+  .sec-desc { color:#64748b; font-size:.88rem; margin:.25rem 0 .75rem; }
+  .tbl { font-size:.88rem; margin-bottom:0; }
+  .tbl thead th { font-size:.72rem; text-transform:uppercase; letter-spacing:.4px; color:#64748b; border-bottom:1px solid #dee2e6; }
+  .mhs-blok { border:1px solid #e2e8f0; border-radius:.8rem; margin-bottom:.75rem; overflow:hidden; }
+  .mhs-blok > .hd { background:#f8fafc; padding:.55rem .9rem; display:flex; flex-wrap:wrap; justify-content:space-between; gap:.5rem; align-items:center; }
+  .aman { background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; border-radius:.8rem; padding:.7rem 1rem; }
+</style>
+
+<div class="container-fluid mt-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h2 class="fw-bold mb-0"><i class="bi bi-shield-check me-2" style="color:var(--primary-start)"></i>Periksa KRS &amp; Kebocoran Tugas</h2>
+    <a href="/admin/krs" class="btn btn-outline-primary rounded-pill"><i class="bi bi-arrow-left me-1"></i>Daftar KRS</a>
+  </div>
+  <p class="text-muted">Mencari enrollment yang membuat mahasiswa menerima tugas mata kuliah yang bukan miliknya (mis. angkatan 2024 menerima tugas angkatan 2026). Halaman ini <strong>hanya membaca</strong> data, tidak mengubah apa pun.</p>
+
+  <div class="card-soft">
+    <form method="GET" action="/admin/krs/periksa" class="row g-3 align-items-end">
+      <div class="col-md-2">
+        <label class="form-label" for="angkatan">Angkatan mahasiswa</label>
+        <select class="form-select" id="angkatan" name="angkatan" required>
+          <option value="">Pilih...</option>
+          <% angkatanList.forEach(a => { %><option value="<%= a %>" <%= filters.angkatan === a ? 'selected' : '' %>><%= a %></option><% }) %>
+          <option value="semua" <%= filters.angkatan === 'semua' ? 'selected' : '' %>>Semua angkatan (berat)</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" for="kodeMk">Kode MK (opsional)</label>
+        <input class="form-control" id="kodeMk" name="kodeMk" placeholder="mis. WUD3208" value="<%= filters.kodeMk %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="periode">Periode (temuan B-E)</label>
+        <input class="form-control" id="periode" name="periode" placeholder="<%= periodeAktif %>" value="<%= filters.periode %>">
+      </div>
+      <div class="col-md-3">
+        <div class="form-check mt-4">
+          <input class="form-check-input" type="checkbox" id="termasukLewat" name="termasukLewat" value="1" <%= filters.termasukLewat ? 'checked' : '' %>>
+          <label class="form-check-label" for="termasukLewat">Sertakan tugas yang deadline-nya sudah lewat</label>
+        </div>
+      </div>
+      <div class="col-md-2"><button type="submit" class="btn-periksa"><i class="bi bi-search me-1"></i>Periksa</button></div>
+    </form>
+    <div class="small text-muted mt-2">Memeriksa membaca enrollment dan tugas mahasiswa terpilih dari Firestore, jadi dijalankan hanya saat tombol ditekan. Mulai dari satu angkatan (mis. 2024) dan kode MK yang dilaporkan bocor.</div>
+  </div>
+
+<% if (hasil) { %>
+  <% const nA = hasil.tugasBocor.length, nAktif = hasil.tugasBocor.reduce((s,x)=>s+x.jumlahAktif,0);
+     const nB = hasil.kelasTidakSesuai.length, nC = hasil.ganda.length, nD = hasil.mkHilang.length, nE = hasil.angkatanMinoritas.length; %>
+
+  <div class="card-soft">
+    <div class="mb-2 text-muted small">
+      Diperiksa: <strong><%= hasil.jumlahMahasiswa %></strong> mahasiswa (angkatan <%= hasil.angkatan %><%= hasil.kodeMk ? ', MK ' + hasil.kodeMk : '' %>),
+      <strong><%= hasil.jumlahEnrollment %></strong> enrollment aktif. Periode untuk temuan B-E: <strong><%= hasil.periode %></strong>.
+    </div>
+    <div class="row g-2">
+      <div class="col-6 col-md"><div class="stat <%= nA ? 'bad' : 'ok' %>"><div class="n"><%= nA %></div><div class="small">A. Mahasiswa dengan tugas bocor<br>(<%= nAktif %> tugas masih aktif)</div></div></div>
+      <div class="col-6 col-md"><div class="stat <%= nB ? 'bad' : 'ok' %>"><div class="n"><%= nB %></div><div class="small">B. Kelas MK tidak sesuai</div></div></div>
+      <div class="col-6 col-md"><div class="stat <%= nC ? 'bad' : 'ok' %>"><div class="n"><%= nC %></div><div class="small">C. Enrollment ganda</div></div></div>
+      <div class="col-6 col-md"><div class="stat <%= nD ? 'bad' : 'ok' %>"><div class="n"><%= nD %></div><div class="small">D. MK tidak ditemukan</div></div></div>
+      <div class="col-6 col-md"><div class="stat <%= nE ? 'warn' : 'ok' %>"><div class="n"><%= nE %></div><div class="small">E. Angkatan minoritas<br>(indikasi)</div></div></div>
+    </div>
+  </div>
+
+  <!-- A -->
+  <div class="card-soft">
+    <div class="sec-title"><i class="bi bi-envelope-exclamation-fill text-danger"></i>A. Tugas yang bocor ke mahasiswa <span class="badge bg-danger"><%= nA %></span></div>
+    <div class="sec-desc">Mahasiswa punya enrollment aktif ke MK ini, tetapi hanya untuk periode lain, sedangkan MK tersebut punya tugas untuk periode yang <em>bukan</em> periode pengambilannya. Biasanya ini enrollment lama (histori) yang statusnya masih <code>active</code>. <strong>Jangan dibatalkan:</strong> enrollment itu dipakai KHS dan transkrip. Penyebab di kode (dashboard dan Tugas Aktif tidak menyaring periode) ditutup oleh patch kode yang menyertai halaman ini.</div>
+    <% if (nA === 0) { %>
+      <div class="aman"><i class="bi bi-check-circle me-1"></i>Tidak ditemukan tugas bocor pada data yang diperiksa.</div>
+    <% } else { %>
+      <% hasil.tugasBocor.forEach(b => { %>
+        <div class="mhs-blok">
+          <div class="hd">
+            <div><strong><%= b.mhs.nama %></strong> <span class="text-muted">NIM <%= b.mhs.nim %> &bull; Angkatan <%= b.mhs.angkatan %><%= b.mhs.kelas ? ' &bull; Kelas ' + b.mhs.kelas : '' %></span></div>
+            <div><span class="badge bg-danger"><%= b.jumlahAktif %> aktif</span> <span class="badge bg-secondary"><%= b.items.length %> total</span>
+              <a class="btn btn-sm btn-outline-primary rounded-pill ms-1" href="/admin/krs/buat/<%= encodeURIComponent(b.mhs.id) %>">Lihat KRS</a></div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm tbl">
+              <thead><tr><th>MK</th><th>Tugas</th><th>Periode tugas</th><th>Enrollment mahasiswa</th><th>Deadline</th></tr></thead>
+              <tbody>
+                <% b.items.forEach(it => { %>
+                  <tr>
+                    <td><span class="badge bg-primary bg-opacity-10 text-primary"><%= it.mk.kode %></span> <%= it.mk.nama %><%= it.mk.kelas ? ' (' + it.mk.kelas + ')' : '' %></td>
+                    <td><%= it.judul %></td>
+                    <td class="text-danger fw-semibold"><%= it.periodeTugas %></td>
+                    <td><%= it.periodeEnrollment %></td>
+                    <td><%= it.deadline ? new Date(it.deadline).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '-' %> <%= it.aktif ? '' : '(lewat)' %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+
+  <!-- B -->
+  <div class="card-soft">
+    <div class="sec-title"><i class="bi bi-diagram-3-fill text-danger"></i>B. Enrollment ke MK dengan kelas yang berbeda <span class="badge bg-danger"><%= nB %></span></div>
+    <div class="sec-desc">Periode <%= hasil.periode %>: dokumen MK punya field <code>kelas</code> (mis. ELK1A) tetapi kelas mahasiswa berbeda atau kosong. Ini salah masuk yang sebenarnya. Perbaiki lewat <em>Buat KRS</em> (hilangkan centang MK yang salah supaya enrollment dibatalkan dengan benar).</div>
+    <% if (nB === 0) { %><div class="aman"><i class="bi bi-check-circle me-1"></i>Tidak ada.</div><% } else { %>
+      <div class="table-responsive"><table class="table table-sm tbl">
+        <thead><tr><th>Mahasiswa</th><th>MK</th><th>Kelas MK</th><th>Kelas mahasiswa</th><th></th></tr></thead>
+        <tbody><% hasil.kelasTidakSesuai.forEach(r => { %>
+          <tr>
+            <td><%= r.mhs.nama %> <span class="text-muted">(<%= r.mhs.nim %>)</span></td>
+            <td><span class="badge bg-primary bg-opacity-10 text-primary"><%= r.mk.kode %></span> <%= r.mk.nama %></td>
+            <td><%= r.kelasMk %></td><td class="text-danger fw-semibold"><%= r.kelasMhs %></td>
+            <td class="text-end"><a class="btn btn-sm btn-outline-primary rounded-pill" href="/admin/krs/buat/<%= encodeURIComponent(r.mhs.id) %>">Perbaiki KRS</a></td>
+          </tr><% }) %></tbody>
+      </table></div>
+    <% } %>
+  </div>
+
+  <!-- C -->
+  <div class="card-soft">
+    <div class="sec-title"><i class="bi bi-files text-danger"></i>C. Enrollment ganda pada periode yang sama <span class="badge bg-danger"><%= nC %></span></div>
+    <div class="sec-desc">Periode <%= hasil.periode %>: mahasiswa terdaftar dua kali pada kode MK yang sama, entah dokumen enrollment dobel, entah dua dokumen MK kelas paralel sekaligus (sehingga menerima tugas dari kedua kelas).</div>
+    <% if (nC === 0) { %><div class="aman"><i class="bi bi-check-circle me-1"></i>Tidak ada.</div><% } else { %>
+      <div class="table-responsive"><table class="table table-sm tbl">
+        <thead><tr><th>Mahasiswa</th><th>Kode</th><th>Jenis</th><th>Dokumen MK</th><th></th></tr></thead>
+        <tbody><% hasil.ganda.forEach(r => { %>
+          <tr>
+            <td><%= r.mhs.nama %> <span class="text-muted">(<%= r.mhs.nim %>)</span></td>
+            <td><%= r.kode %></td><td><%= r.jenis %></td>
+            <td><% r.detail.forEach(d => { %><div><%= d.mk.nama %><%= d.mk.kelas ? ' (' + d.mk.kelas + ')' : '' %></div><% }) %></td>
+            <td class="text-end"><a class="btn btn-sm btn-outline-primary rounded-pill" href="/admin/krs/buat/<%= encodeURIComponent(r.mhs.id) %>">Perbaiki KRS</a></td>
+          </tr><% }) %></tbody>
+      </table></div>
+    <% } %>
+  </div>
+
+  <!-- D -->
+  <div class="card-soft">
+    <div class="sec-title"><i class="bi bi-question-octagon-fill text-danger"></i>D. Enrollment ke MK yang tidak ada <span class="badge bg-danger"><%= nD %></span></div>
+    <div class="sec-desc">Enrollment aktif menunjuk dokumen mata kuliah yang sudah dihapus (data yatim).</div>
+    <% if (nD === 0) { %><div class="aman"><i class="bi bi-check-circle me-1"></i>Tidak ada.</div><% } else { %>
+      <div class="table-responsive"><table class="table table-sm tbl">
+        <thead><tr><th>Mahasiswa</th><th>mkId</th><th>Semester</th><th></th></tr></thead>
+        <tbody><% hasil.mkHilang.forEach(r => { %>
+          <tr><td><%= r.mhs.nama %> <span class="text-muted">(<%= r.mhs.nim %>)</span></td><td><code><%= r.mk.id %></code></td><td><%= r.semester %></td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-primary rounded-pill" href="/admin/krs/buat/<%= encodeURIComponent(r.mhs.id) %>">Lihat KRS</a></td></tr><% }) %></tbody>
+      </table></div>
+    <% } %>
+  </div>
+
+  <!-- E -->
+  <div class="card-soft">
+    <div class="sec-title"><i class="bi bi-people text-warning"></i>E. Angkatan berbeda dari mayoritas peserta (indikasi) <span class="badge bg-warning text-dark"><%= nE %></span></div>
+    <div class="sec-desc">Periode <%= hasil.periode %>: MK ini diikuti &ge;70% satu angkatan, tapi mahasiswa di bawah angkatannya berbeda. <strong>Belum tentu salah</strong> (bisa mengulang MK). Cek dulu sebelum mengubah KRS.</div>
+    <% if (nE === 0) { %><div class="aman"><i class="bi bi-check-circle me-1"></i>Tidak ada.</div><% } else { %>
+      <div class="table-responsive"><table class="table table-sm tbl">
+        <thead><tr><th>Mahasiswa</th><th>MK</th><th>Angkatan mhs</th><th>Mayoritas peserta</th><th></th></tr></thead>
+        <tbody><% hasil.angkatanMinoritas.forEach(r => { %>
+          <tr><td><%= r.mhs.nama %> <span class="text-muted">(<%= r.mhs.nim %>)</span></td>
+          <td><span class="badge bg-primary bg-opacity-10 text-primary"><%= r.mk.kode %></span> <%= r.mk.nama %><%= r.mk.kelas ? ' (' + r.mk.kelas + ')' : '' %></td>
+          <td><%= r.mhs.angkatan %></td><td>Angkatan <%= r.angkatanDominan %> (<%= r.persenDominan %>% dari <%= r.totalPeserta %>)</td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-primary rounded-pill" href="/admin/krs/buat/<%= encodeURIComponent(r.mhs.id) %>">Lihat KRS</a></td></tr><% }) %></tbody>
+      </table></div>
+    <% } %>
+  </div>
+<% } %>
+</div>
+
+<%- include('../partials/footer') %>

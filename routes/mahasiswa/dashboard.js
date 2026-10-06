@@ -100,8 +100,11 @@ async function getTugasAktif(mkIds) {
     snapshots.forEach(snapshot => {
       snapshot.docs.forEach(doc => {
         const data = doc.data();
-        // Hanya tugas yang deadline-nya masih di depan (belum lewat)
-        if (data.deadline && data.deadline > now) {
+        // Hanya tugas yang deadline-nya masih di depan (belum lewat) DAN
+        // milik periode aktif (tugas tanpa field periode dianggap periode aktif,
+        // sama seperti tab Tugas di e-learning).
+        const periodeSekarang = getCurrentAcademicSemester().label;
+        if (data.deadline && data.deadline > now && (data.periode || periodeSekarang) === periodeSekarang) {
           tugasList.push({ id: doc.id, ...data });
         }
       });
@@ -190,8 +193,15 @@ router.get('/', async (req, res) => {
     ]);
     const mkIds = mkList.map(mk => mk.id);
     const totalSks = mkList.reduce((acc, mk) => acc + (mk.sks || 0), 0);
-    const tugasAktif = await getTugasAktif(mkIds);
-    const lkmBelumDikumpulkan = await getLkmBelumDikumpulkan(mkList, userId);
+    // 🔒 ANTI-KEBOCORAN TUGAS: enrollment lama (semester sebelumnya) tetap
+    // 'active' demi KHS/transkrip, jadi "Tugas Aktif" dan LKM HANYA boleh
+    // dihitung dari MK yang diambil pada periode AKTIF. Sebelumnya mahasiswa
+    // angkatan lama yang pernah mengambil MK yang sama ikut menerima tugas
+    // periode berjalan milik angkatan baru.
+    const periodeAktifSekarang = getCurrentAcademicSemester().label;
+    const mkListPeriodeAktif = mkList.filter(mk => mk.semesterEnrollment === periodeAktifSekarang);
+    const tugasAktif = await getTugasAktif(mkListPeriodeAktif.map(mk => mk.id));
+    const lkmBelumDikumpulkan = await getLkmBelumDikumpulkan(mkListPeriodeAktif, userId);
 
     const currentSemester = getCurrentAcademicSemester();
     const semesterSekarang = currentSemester.label;

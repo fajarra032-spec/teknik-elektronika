@@ -13,7 +13,7 @@ const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif, getHasilRubrikSatuMahasiswa } = require('../../helpers/nilaiHelper');
-const { periodeKeUrutan } = require('../../helpers/academicHelper');
+const { periodeKeUrutan, bandingkanLabelPeriode } = require('../../helpers/academicHelper');
 const { mataKuliahCache, tugasAktifCache, dosenCache } = require('../../helpers/cache');
 const { getPublishedModulPraktikum } = require('../../helpers/modulPraktikumHelper');
 
@@ -455,7 +455,22 @@ router.get('/mk/:id/tugas', async (req, res) => {
     if (!akses.ok) return res.status(akses.status).send(akses.message);
     const mk = akses.mk;
 
-    const periodeAktif = getPeriodeAktif();
+    // 🔒 ANTI-KEBOCORAN TUGAS: tampilkan tugas untuk periode saat mahasiswa
+    // benar-benar mengambil MK ini - periode aktif kalau ia terdaftar di
+    // periode aktif, kalau tidak periode enrollment-nya yang TERBARU. (Dulu
+    // selalu periode aktif, sehingga mahasiswa yang pernah mengambil MK ini
+    // di semester lama ikut melihat tugas periode berjalan.) Variabel tetap
+    // bernama `periodeAktif` supaya sisa kode di route ini tidak berubah.
+    const periodeSekarang = getPeriodeAktif();
+    const enrolSaya = await db.collection('enrollment')
+      .where('userId', '==', req.user.id)
+      .where('mkId', '==', mkId)
+      .where('status', '==', 'active')
+      .get();
+    const semesterSaya = enrolSaya.docs.map(d => d.data().semester).filter(Boolean);
+    const periodeAktif = semesterSaya.includes(periodeSekarang)
+      ? periodeSekarang
+      : (semesterSaya.sort(bandingkanLabelPeriode).pop() || periodeSekarang);
     let tugasSnapshot;
     try {
       tugasSnapshot = await db.collection('tugas')
@@ -472,7 +487,7 @@ router.get('/mk/:id/tugas', async (req, res) => {
       const semuaSnapshot = await db.collection('tugas').where('mkId', '==', mkId).get();
       const perluDitandai = semuaSnapshot.docs.filter(doc => !doc.data().periode);
       if (perluDitandai.length > 0) {
-        await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode: periodeAktif }).catch(() => {})));
+        await Promise.all(perluDitandai.map(doc => doc.ref.update({ periode: periodeSekarang }).catch(() => {})));
       }
       tugasSnapshot = semuaSnapshot;
     }
@@ -780,12 +795,17 @@ router.post('/mk/:id/modul-template/:modulId/kumpul/revisi', upload.single('file
 router.get('/tugas-aktif', async (req, res) => {
   try {
     const userId = req.user.id;
+    // 🔒 ANTI-KEBOCORAN TUGAS: hanya enrollment periode AKTIF. Enrollment
+    // semester lama tetap 'active' (dipakai KHS/transkrip) dan tidak boleh
+    // membuka tugas periode berjalan milik angkatan lain.
+    const periodeAktif = getPeriodeAktif();
     const enrollmentSnapshot = await db.collection('enrollment')
       .where('userId', '==', userId)
+      .where('semester', '==', periodeAktif)
       .where('status', '==', 'active')
       .get();
 
-    const mkIds = enrollmentSnapshot.docs.map(doc => doc.data().mkId);
+    const mkIds = [...new Set(enrollmentSnapshot.docs.map(doc => doc.data().mkId))];
     const now = new Date().toISOString();
 
     // ✅ OPTIMISASI KUOTA: sebelumnya query 'tugas' dijalankan TERPISAH utk
@@ -805,7 +825,10 @@ router.get('/tugas-aktif', async (req, res) => {
         db.collection('tugas').where('mkId', 'in', chunk).where('deadline', '>', now).get()
       ));
       snapshots.forEach(snap => {
-        snap.docs.forEach(doc => tugasRaw.push({ id: doc.id, ...doc.data() }));
+        snap.docs.forEach(doc => {
+          const d = doc.data();
+          if ((d.periode || periodeAktif) === periodeAktif) tugasRaw.push({ id: doc.id, ...d });
+        });
       });
     }
 
@@ -882,6 +905,7 @@ router.get('/tugas/:id', async (req, res) => {
     const enrollmentSnapshot = await db.collection('enrollment')
       .where('userId', '==', req.user.id)
       .where('mkId', '==', tugas.mkId)
+      .where('semester', '==', tugas.periode || getPeriodeAktif())
       .where('status', '==', 'active')
       .get();
     if (enrollmentSnapshot.empty) {
@@ -940,6 +964,7 @@ router.post('/tugas/:id/kumpul', upload.single('file'), async (req, res) => {
     const enrollmentSnapshot = await db.collection('enrollment')
       .where('userId', '==', mahasiswaId)
       .where('mkId', '==', tugas.mkId)
+      .where('semester', '==', tugas.periode || getPeriodeAktif())
       .where('status', '==', 'active')
       .get();
     
@@ -1031,6 +1056,7 @@ router.post('/tugas/:id/revisi', upload.single('file'), async (req, res) => {
     const enrollmentSnapshot = await db.collection('enrollment')
       .where('userId', '==', mahasiswaId)
       .where('mkId', '==', tugas.mkId)
+      .where('semester', '==', tugas.periode || getPeriodeAktif())
       .where('status', '==', 'active')
       .get();
     

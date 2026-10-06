@@ -17,6 +17,8 @@ const {
 } = require('../../helpers/academicHelper');
 const { syncKrsDanEnrollment } = require('../../helpers/paketKurikulumHelper');
 const { paginate } = require('../../helpers/pagination');
+const { auditKrs } = require('../../helpers/krsAuditHelper');
+const { getAllMahasiswa } = require('../../helpers/cache');
 
 const KRS_PAGE_SIZE = 10;
 
@@ -266,6 +268,43 @@ router.post('/buat/:mahasiswaId', async (req, res) => {
   } catch (error) {
     console.error('Error membuat KRS:', error);
     res.redirect(`/admin/krs/buat/${req.params.mahasiswaId}?error=` + encodeURIComponent('Gagal membuat KRS: ' + error.message));
+  }
+});
+
+// ============================================================================
+// PERIKSA KRS / ENROLLMENT (read-only) - cari penyebab kebocoran tugas antar
+// angkatan. Logika ada di helpers/krsAuditHelper.js. Harus didaftarkan
+// SEBELUM '/:id' supaya '/periksa' tidak dianggap sebagai id KRS.
+// ============================================================================
+router.get('/periksa', async (req, res) => {
+  try {
+    const filters = {
+      angkatan: String(req.query.angkatan || '').trim(),
+      kodeMk: String(req.query.kodeMk || '').trim(),
+      periode: String(req.query.periode || '').trim(),
+      termasukLewat: req.query.termasukLewat === '1'
+    };
+
+    const semuaMhs = await getAllMahasiswa(db);
+    const angkatanSet = new Set();
+    semuaMhs.forEach(m => { const a = getAngkatanFromNim(m.nim); if (a) angkatanSet.add(String(a)); });
+    const angkatanList = Array.from(angkatanSet).sort().reverse();
+
+    // Pemeriksaan baru jalan setelah form dikirim (baca enrollment & tugas
+    // mahasiswa terpilih = ada biaya read Firestore, jadi tidak otomatis).
+    let hasil = null;
+    if (filters.angkatan) hasil = await auditKrs(db, filters);
+
+    res.render('admin/krs_periksa', {
+      title: 'Periksa KRS',
+      angkatanList,
+      filters,
+      hasil,
+      periodeAktif: getCurrentAcademicSemester().label
+    });
+  } catch (error) {
+    console.error('Error periksa KRS:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memeriksa KRS: ' + error.message });
   }
 });
 

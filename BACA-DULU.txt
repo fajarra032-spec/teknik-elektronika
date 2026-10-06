@@ -1,0 +1,19 @@
+PATCH PERIKSA KRS + ANTI-KEBOCORAN TUGAS
+=========================================
+File BARU
+  helpers/krsAuditHelper.js        logika pemeriksaan (read-only)
+  views/admin/krs_periksa.ejs      halaman /admin/krs/periksa
+
+File DIUBAH (timpa)
+  routes/admin/krs.js              + route GET /periksa (sebelum /:id)
+  views/admin/krs_list.ejs         + tombol "Periksa KRS"
+  routes/mahasiswa/dashboard.js    Tugas Aktif & LKM hanya dari MK periode aktif
+  routes/mahasiswa/elearning.js    /tugas-aktif, detail/kumpul/revisi tugas, dan
+                                   tab Tugas disaring per periode pengambilan MK
+
+Urutan yang disarankan
+  1. Pasang semua file, restart server.
+  2. Buka /admin/krs/periksa, pilih angkatan 2024 (dan kode MK, mis. WUD3208),
+     lihat temuan A-E.
+  3. Perbaiki temuan B/C/D lewat tombol "Perbaiki KRS" (Buat KRS).
+     JANGAN membatalkan enrollment temuan A: itu histori yang dipakai KHS/transkrip.
