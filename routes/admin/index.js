@@ -65,6 +65,8 @@ router.use('/khs', require('./khs'));
 
 // Rekap Nilai (per MK) – sebelumnya tidak pernah termuat karena nama file salah (nilai,js)
 router.use('/nilai', require('./nilai'));
+// Laporan Awal Semester (mahasiswa aktif/cuti/pindahan/magang + SKS dosen)
+router.use('/laporan-awal-semester', require('./laporanAwalSemester'));
 router.use('/rubrik', require('./rubrik'));
 
 // Sertifikat Dosen

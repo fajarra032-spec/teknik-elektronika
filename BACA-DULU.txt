@@ -1,19 +1,15 @@
-PATCH PERIKSA KRS + ANTI-KEBOCORAN TUGAS
-=========================================
-File BARU
-  helpers/krsAuditHelper.js        logika pemeriksaan (read-only)
-  views/admin/krs_periksa.ejs      halaman /admin/krs/periksa
+PATCH LAPORAN AWAL SEMESTER
+===========================
+BARU
+  helpers/laporanAwalSemesterHelper.js    logika & definisi angka (read-only)
+  routes/admin/laporanAwalSemester.js     halaman + unduh Excel
+  views/admin/laporan_awal_semester.ejs   tampilan laporan (siap cetak)
+  scripts/tandai-mahasiswa-pindahan.js    tandai 2 pindahan (Asila Aswin, Intan Rianita)
+                                          + asal kampus/prodi. Jalankan: dry-run dulu, lalu --confirm
 
-File DIUBAH (timpa)
-  routes/admin/krs.js              + route GET /periksa (sebelum /:id)
-  views/admin/krs_list.ejs         + tombol "Periksa KRS"
-  routes/mahasiswa/dashboard.js    Tugas Aktif & LKM hanya dari MK periode aktif
-  routes/mahasiswa/elearning.js    /tugas-aktif, detail/kumpul/revisi tugas, dan
-                                   tab Tugas disaring per periode pengambilan MK
+DIUBAH (timpa)
+  routes/admin/index.js      + router.use('/laporan-awal-semester', ...)
+  views/admin/dashboard.ejs  + kartu menu "Laporan Awal Semester"
 
-Urutan yang disarankan
-  1. Pasang semua file, restart server.
-  2. Buka /admin/krs/periksa, pilih angkatan 2024 (dan kode MK, mis. WUD3208),
-     lihat temuan A-E.
-  3. Perbaiki temuan B/C/D lewat tombol "Perbaiki KRS" (Buat KRS).
-     JANGAN membatalkan enrollment temuan A: itu histori yang dipakai KHS/transkrip.
+Alamat: /admin/laporan-awal-semester   (Excel: /admin/laporan-awal-semester/export)
+Butuh paket "xlsx" (sudah ada di package.json proyek).

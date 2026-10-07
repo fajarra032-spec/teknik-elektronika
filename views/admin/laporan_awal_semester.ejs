@@ -1,0 +1,187 @@
+<%- include('../partials/header') %>
+
+<style>
+  :root { --primary-start:#2193b0; --primary-end:#6dd5ed; --primary-dark:#1a7a8f; }
+  .card-soft { background:#fff; border:1px solid rgba(33,147,176,.12); border-radius:1.1rem; box-shadow:0 8px 22px rgba(0,0,0,.05); padding:1.25rem 1.5rem; margin-bottom:1.25rem; }
+  .card-soft .form-select { border-radius:50px; padding:.5rem 1rem; }
+  .btn-grad { background:linear-gradient(135deg,var(--primary-start),var(--primary-end)); border:none; color:#fff; font-weight:600; border-radius:50px; padding:.5rem 1.3rem; }
+  .btn-grad:hover { color:#fff; transform:translateY(-2px); }
+  .stat { text-align:center; border-radius:1rem; padding:1rem .5rem; height:100%; border:1px solid #e2e8f0; background:#f8fafc; }
+  .stat .n { font-size:2rem; font-weight:800; line-height:1.1; color:var(--primary-dark); }
+  .stat .l { font-weight:600; color:#1e293b; }
+  .stat .s { font-size:.78rem; color:#64748b; }
+  .sec-title { font-weight:700; color:#1e293b; font-size:1.1rem; display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+  .sec-desc { color:#64748b; font-size:.86rem; margin:.25rem 0 .8rem; }
+  .tbl { font-size:.88rem; margin-bottom:0; }
+  .tbl thead th { font-size:.74rem; text-transform:uppercase; letter-spacing:.4px; color:#475569; background:#f1f5f9; border-bottom:1px solid #cbd5e1; white-space:nowrap; }
+  .tbl tfoot td { background:#f8fafc; font-weight:700; }
+  .num { text-align:center; font-variant-numeric:tabular-nums; }
+  .dosen-row { cursor:pointer; }
+  .dosen-row:hover { background:rgba(33,147,176,.07); }
+  .rincian td { background:#fbfdff; font-size:.83rem; }
+  .nol { color:#94a3b8; }
+  details.daftar { border:1px solid #e2e8f0; border-radius:.8rem; padding:.55rem .9rem; margin-bottom:.6rem; background:#fff; }
+  details.daftar summary { font-weight:600; cursor:pointer; }
+  .catatan { background:#fffbeb; border:1px solid #fde68a; color:#78350f; border-radius:.8rem; padding:.7rem 1rem; font-size:.86rem; }
+  @media print {
+    .no-print, nav, .navbar, footer { display:none !important; }
+    body { background:#fff !important; }
+    .card-soft { box-shadow:none; border:1px solid #ccc; break-inside:avoid; }
+    details.daftar { display:block; }
+    details.daftar > *:not(summary) { display:block !important; }
+    .rincian { display:table-row !important; }
+    .tabel-lebar { page-break-before:always; }
+  }
+</style>
+
+<%
+  const m = laporan.mahasiswa, d = laporan.dosen, P = laporan.periode;
+  const tglBuat = new Date(laporan.dibuatPada).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' });
+  const q = (extra) => { const u = new URLSearchParams({ periode: P.id }); if (laporan.bagiTim) u.set('bagiTim','1'); Object.entries(extra||{}).forEach(([k,v]) => v === null ? u.delete(k) : u.set(k,v)); return u.toString(); };
+  const fmt = (n) => Number(n).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+%>
+
+<div class="container-fluid mt-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h2 class="fw-bold mb-0"><i class="bi bi-clipboard-data me-2" style="color:var(--primary-start)"></i>Laporan Awal Semester</h2>
+    <div class="no-print d-flex gap-2">
+      <a class="btn-grad text-decoration-none" href="/admin/laporan-awal-semester/export?<%= q() %>"><i class="bi bi-file-earmark-excel me-1"></i>Unduh Excel</a>
+      <button class="btn btn-outline-primary rounded-pill" onclick="window.print()"><i class="bi bi-printer me-1"></i>Cetak</button>
+    </div>
+  </div>
+
+  <div class="card-soft no-print">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label fw-semibold" for="periode">Semester / periode</label>
+        <select class="form-select" id="periode" name="periode" onchange="this.form.submit()">
+          <% laporan.opsiPeriode.forEach(o => { %>
+            <option value="<%= o.id %>" <%= o.id === P.id ? 'selected' : '' %>><%= o.label %><%= o.isActive ? ' (aktif)' : '' %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-5">
+        <div class="form-check mt-4">
+          <input class="form-check-input" type="checkbox" id="bagiTim" name="bagiTim" value="1" <%= laporan.bagiTim ? 'checked' : '' %> onchange="this.form.submit()">
+          <label class="form-check-label" for="bagiTim">Bagi rata SKS untuk MK yang diampu tim dosen</label>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="card-soft">
+    <div class="d-flex flex-wrap justify-content-between">
+      <div class="sec-title"><i class="bi bi-people-fill"></i>A. Rekap Mahasiswa - <%= P.label %></div>
+      <div class="text-muted small">Dibuat: <%= tglBuat %></div>
+    </div>
+    <div class="catatan my-2"><i class="bi bi-info-circle me-1"></i>Status mahasiswa diambil dari kondisi <strong>saat laporan dibuka</strong>, bukan riwayat per semester. Untuk angka "awal semester" yang tepat, unduh/cetak di awal semester dan simpan filenya. <em>Aktif sudah mencakup pindahan dan yang sedang magang</em> (mereka tetap berstatus Aktif).</div>
+
+    <div class="row g-2 mb-3">
+      <div class="col-6 col-md"><div class="stat"><div class="n"><%= m.total.aktif %></div><div class="l">Mahasiswa Aktif</div><div class="s">termasuk pindahan &amp; magang</div></div></div>
+      <div class="col-6 col-md"><div class="stat"><div class="n"><%= m.total.cuti %></div><div class="l">Cuti</div><div class="s">&nbsp;</div></div></div>
+      <div class="col-6 col-md"><div class="stat"><div class="n"><%= m.total.pindahan %></div><div class="l">Pindahan</div><div class="s">Antar kampus: <%= m.total.pindahanAntarKampus %> &bull; Antar prodi: <%= m.total.pindahanAntarProdi %></div></div></div>
+      <div class="col-6 col-md"><div class="stat"><div class="n"><%= m.total.magang %></div><div class="l">Magang</div><div class="s">M1: <%= m.total.magang1 %> &bull; M2: <%= m.total.magang2 %> &bull; M3: <%= m.total.magang3 %></div></div></div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered tbl">
+        <thead><tr><th>Angkatan</th><th class="num">Aktif</th><th class="num">Pindahan</th><th class="num">Magang</th><th class="num">Cuti</th><th class="num">Lulus</th><th class="num">Keluar</th><th class="num">Total</th></tr></thead>
+        <tbody>
+          <% m.perAngkatan.forEach(r => { %>
+            <tr><td><strong><%= r.angkatan %></strong></td>
+              <% ['aktif','pindahan','magang','cuti','lulus','keluar','total'].forEach(k => { %><td class="num <%= r[k] ? '' : 'nol' %>"><%= r[k] %></td><% }) %>
+            </tr>
+          <% }) %>
+        </tbody>
+        <tfoot><tr><td>TOTAL</td><% ['aktif','pindahan','magang','cuti','lulus','keluar','total'].forEach(k => { %><td class="num"><%= m.total[k] %></td><% }) %></tr></tfoot>
+      </table>
+    </div>
+
+    <div class="mt-3">
+      <% [['Cuti', m.daftar.cuti], ['Pindahan', m.daftar.pindahan], ['Magang', m.daftar.magang]].forEach(([judul, arr]) => { %>
+        <details class="daftar">
+          <summary>Daftar mahasiswa <%= judul %> (<%= arr.length %>)</summary>
+          <% if (arr.length === 0) { %>
+            <div class="text-muted small mt-2">Tidak ada.</div>
+            <% if (judul === 'Pindahan') { %><div class="text-muted small">Pindahan dideteksi dari nilai alih kredit atau field <code>jenisMasuk = 'Pindahan'</code> (lihat scripts/tandai-mahasiswa-pindahan.js).</div><% } %>
+          <% } else { %>
+            <div class="table-responsive mt-2"><table class="table table-sm tbl">
+              <thead><tr><th>No</th><th>NIM</th><th>Nama</th><th>Angkatan</th><th>Kelas</th><th>Semester</th>
+                <% if (judul === 'Magang') { %><th>Status Magang</th><% } %><% if (judul === 'Pindahan') { %><th>Asal Kampus</th><th>Asal Prodi</th><th>Jenis</th><th>Status</th><% } %></tr></thead>
+              <tbody><% arr.forEach((x, i) => { %>
+                <tr><td><%= i + 1 %></td><td><%= x.nim %></td><td><%= x.nama %></td><td><%= x.angkatan %></td><td><%= x.kelas || '-' %></td><td><%= x.semester || '-' %></td>
+                  <% if (judul === 'Magang') { %><td><%= x.statusMagang %></td><% } %><% if (judul === 'Pindahan') { %><td><%= x.asalKampus || '-' %></td><td><%= x.asalProdi || '-' %></td><td><%= x.jenisPindahan %></td><td><%= x.status %></td><% } %></tr>
+              <% }) %></tbody>
+            </table></div>
+          <% } %>
+        </details>
+      <% }) %>
+    </div>
+  </div>
+
+  <div class="card-soft">
+    <div class="sec-title"><i class="bi bi-person-workspace"></i>B. Beban SKS Dosen - <%= P.label %></div>
+    <div class="sec-desc">
+      <%= d.ringkasan.jumlahDosenMengajar %> dari <%= d.ringkasan.jumlahDosenTerdaftar %> dosen terdaftar mengampu MK pada periode ini, total <strong><%= fmt(d.ringkasan.totalSks) %> SKS</strong>.
+      <%= laporan.bagiTim ? 'SKS MK tim dibagi rata antar pengampu.' : 'MK tim dihitung SKS penuh untuk tiap pengampu.' %>
+      Kelas paralel (mis. ELK1A &amp; ELK1B) dihitung terpisah. Klik nama dosen untuk melihat rincian MK.
+    </div>
+    <% if (d.dosenTidakDikenal.length > 0) { %>
+      <div class="catatan mb-2"><i class="bi bi-exclamation-triangle me-1"></i><%= d.dosenTidakDikenal.length %> ID pengampu tidak ditemukan di data dosen (kemungkinan dosen terhapus). Mereka tetap ditampilkan sebagai "dosen tidak ditemukan".</div>
+    <% } %>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover tbl">
+        <thead><tr><th style="width:50px">No</th><th>Nama Dosen</th><th>NIP</th><th class="num">Jumlah MK/Kelas</th><th class="num">Total SKS</th></tr></thead>
+        <tbody>
+          <% d.perDosen.forEach((x, i) => { %>
+            <tr class="dosen-row" onclick="var r=document.getElementById('rinc-<%= i %>'); if(r) r.style.display = (r.style.display==='none'?'table-row':'none');">
+              <td><%= i + 1 %></td>
+              <td><strong><%= x.nama %></strong></td>
+              <td><%= x.nip || '-' %></td>
+              <td class="num <%= x.jumlahMk ? '' : 'nol' %>"><%= x.jumlahMk %></td>
+              <td class="num <%= x.totalSks ? 'fw-bold' : 'nol' %>"><%= fmt(x.totalSks) %></td>
+            </tr>
+            <% if (x.rincian.length > 0) { %>
+              <tr class="rincian" id="rinc-<%= i %>" style="display:none;">
+                <td></td>
+                <td colspan="4">
+                  <table class="table table-sm mb-0">
+                    <thead><tr><th>Kode</th><th>Mata Kuliah</th><th>Kelas</th><th class="num">Smt</th><th class="num">SKS MK</th><th class="num">SKS dihitung</th><th class="num">Tim</th></tr></thead>
+                    <tbody><% x.rincian.forEach(r => { %>
+                      <tr><td><%= r.kode %></td><td><%= r.nama %></td><td><%= r.kelas || '-' %></td><td class="num"><%= r.semesterKurikulum || '-' %></td><td class="num"><%= fmt(r.sksMk) %></td><td class="num"><%= fmt(r.sksDihitung) %></td><td class="num"><%= r.tim > 1 ? r.tim + ' dosen' : '-' %></td></tr>
+                    <% }) %></tbody>
+                  </table>
+                </td>
+              </tr>
+            <% } %>
+          <% }) %>
+        </tbody>
+        <tfoot><tr><td></td><td>TOTAL</td><td></td><td class="num"><%= d.perDosen.reduce((s, x) => s + x.jumlahMk, 0) %></td><td class="num"><%= fmt(d.ringkasan.totalSks) %></td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="card-soft tabel-lebar">
+    <div class="sec-title"><i class="bi bi-grid-3x3-gap"></i>C. SKS Setiap Dosen per Semester</div>
+    <div class="sec-desc">Semua periode yang pengampunya tercatat di data mata kuliah. Sel kosong (0) = tidak mengampu pada semester tersebut.</div>
+    <% if (d.semuaPeriode.length === 0) { %>
+      <div class="text-muted">Belum ada riwayat pengampu per periode.</div>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered tbl">
+          <thead><tr><th>Nama Dosen</th><% d.semuaPeriode.forEach(p => { %><th class="num"><%= p.label %></th><% }) %></tr></thead>
+          <tbody>
+            <% d.matriks.forEach(r => { %>
+              <tr><td><%= r.nama %></td>
+                <% d.semuaPeriode.forEach(p => { const v = r.nilai[p.id] || 0; %><td class="num <%= v ? 'fw-semibold' : 'nol' %>"><%= v ? fmt(v) : '-' %></td><% }) %>
+              </tr>
+            <% }) %>
+          </tbody>
+          <tfoot><tr><td>TOTAL</td><% d.semuaPeriode.forEach(p => { %><td class="num"><%= fmt(d.totalPerPeriode[p.id] || 0) %></td><% }) %></tr></tfoot>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
