@@ -83,6 +83,7 @@ router.get('/export', async (req, res) => {
     // 4) SKS dosen periode terpilih
     tambahSheet('SKS Dosen', [
       ['BEBAN SKS DOSEN - ' + L.periode.label + (L.bagiTim ? ' (SKS tim dibagi rata)' : ' (SKS tim dihitung penuh per dosen)')],
+      ['Sumber data: ' + (d.sumberTerpilih === 'jadwal' ? 'jadwal resmi (sesi gabungan dihitung sekali)' : 'data pengampu di mata kuliah (belum dicocokkan dengan jadwal)')],
       [],
       ['No', 'Nama Dosen', 'NIP', 'Jumlah MK/Kelas', 'Total SKS'],
       ...d.perDosen.map((x, i) => [i + 1, x.nama, x.nip, x.jumlahMk, x.totalSks]),
@@ -100,9 +101,19 @@ router.get('/export', async (req, res) => {
     // 6) Matriks dosen x semester
     tambahSheet('SKS per Semester', [
       ['Nama Dosen', 'NIP', ...d.semuaPeriode.map(p => p.label)],
+      ['Sumber data', '', ...d.semuaPeriode.map(p => p.sumber === 'jadwal' ? 'jadwal' : 'data MK')],
       ...d.matriks.map(r => [r.nama, r.nip, ...d.semuaPeriode.map(p => r.nilai[p.id] || 0)]),
       ['TOTAL', '', ...d.semuaPeriode.map(p => d.totalPerPeriode[p.id] || 0)]
     ], [34, 22, ...d.semuaPeriode.map(() => 17)]);
+
+    if (d.sumberTerpilih === 'jadwal') {
+      tambahSheet('Selisih vs Data MK', [
+        ['SELISIH BEBAN: JADWAL vs DATA PENGAMPU MK - ' + L.periode.label],
+        [],
+        ['Nama Dosen', 'SKS menurut jadwal', 'SKS menurut data MK', 'Selisih'],
+        ...d.selisih.map(x => [x.nama, x.sksJadwal, x.sksDataMk, x.beda])
+      ], [36, 20, 22, 10]);
+    }
 
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
     const namaFile = `laporan-awal-semester-${L.periode.id}.xlsx`;

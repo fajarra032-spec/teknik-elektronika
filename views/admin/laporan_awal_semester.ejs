@@ -120,12 +120,24 @@
   </div>
 
   <div class="card-soft">
-    <div class="sec-title"><i class="bi bi-person-workspace"></i>B. Beban SKS Dosen - <%= P.label %></div>
+    <div class="sec-title"><i class="bi bi-person-workspace"></i>B. Beban SKS Dosen - <%= P.label %>
+      <% if (d.sumberTerpilih === 'jadwal') { %><span class="badge bg-success">Sumber: jadwal resmi</span>
+      <% } else { %><span class="badge bg-warning text-dark" title="Belum ada data jadwal untuk semester ini; angka dihitung dari data pengampu di mata kuliah">Sumber: data pengampu MK (belum dicocokkan dengan jadwal)</span><% } %>
+    </div>
     <div class="sec-desc">
       <%= d.ringkasan.jumlahDosenMengajar %> dari <%= d.ringkasan.jumlahDosenTerdaftar %> dosen terdaftar mengampu MK pada periode ini, total <strong><%= fmt(d.ringkasan.totalSks) %> SKS</strong>.
       <%= laporan.bagiTim ? 'SKS MK tim dibagi rata antar pengampu.' : 'MK tim dihitung SKS penuh untuk tiap pengampu.' %>
-      Kelas paralel (mis. ELK1A &amp; ELK1B) dihitung terpisah. Klik nama dosen untuk melihat rincian MK.
+      <%= d.sumberTerpilih === 'jadwal' ? 'Sesi gabungan kelas dihitung sekali; kelas paralel yang jadwalnya terpisah dihitung terpisah.' : 'Tiap dokumen MK (termasuk kelas paralel/gabungan yang dipecah per kelas) dihitung sendiri-sendiri, jadi bisa lebih besar dari beban sebenarnya.' %> Klik nama dosen untuk melihat rincian.
     </div>
+    <% if (d.dosenGanda && d.dosenGanda.length > 0) { %>
+      <div class="catatan mb-2"><i class="bi bi-exclamation-triangle me-1"></i><strong>Nama dosen ganda di data dosen:</strong>
+        <%= d.dosenGanda.map(x => x.nama + ' (' + x.jumlah + 'x)').join('; ') %>.
+        Satu dokumen tampil 0 SKS. Gabungkan lewat <code>scripts/cek-dosen-duplikat.js</code> lalu <code>scripts/gabungkan-dosen-duplikat.js</code>.</div>
+    <% } %>
+    <% if (d.sesiTanpaDosen.length > 0) { %>
+      <div class="catatan mb-2"><i class="bi bi-exclamation-triangle me-1"></i><strong>Sesi belum ada dosen pengampu</strong> (tidak masuk hitungan siapa pun):
+        <ul class="mb-0"><% d.sesiTanpaDosen.forEach(x => { %><li><%= x.namaMk %> - <%= x.kelas %></li><% }) %></ul></div>
+    <% } %>
     <% if (d.dosenTidakDikenal.length > 0) { %>
       <div class="catatan mb-2"><i class="bi bi-exclamation-triangle me-1"></i><%= d.dosenTidakDikenal.length %> ID pengampu tidak ditemukan di data dosen (kemungkinan dosen terhapus). Mereka tetap ditampilkan sebagai "dosen tidak ditemukan".</div>
     <% } %>
@@ -161,15 +173,33 @@
     </div>
   </div>
 
+  <% if (d.sumberTerpilih === 'jadwal') { %>
+  <div class="card-soft">
+    <div class="sec-title"><i class="bi bi-arrow-left-right"></i>Selisih dengan data pengampu MK - <%= P.label %> <span class="badge <%= d.selisih.length ? 'bg-warning text-dark' : 'bg-success' %>"><%= d.selisih.length %></span></div>
+    <div class="sec-desc">Membandingkan beban menurut <strong>jadwal resmi</strong> dengan beban bila dihitung dari <strong>data pengampu di mata kuliah</strong> (yang dipakai e-learning). Selisih menandakan data pengampu MK belum sama dengan jadwal, atau sesi gabungan yang tercatat dua kali di data MK.</div>
+    <% if (d.selisih.length === 0) { %>
+      <div class="text-success"><i class="bi bi-check-circle me-1"></i>Tidak ada selisih: data pengampu MK sudah sama dengan jadwal.</div>
+    <% } else { %>
+      <div class="table-responsive"><table class="table table-sm tbl">
+        <thead><tr><th>Nama Dosen</th><th class="num">SKS menurut jadwal</th><th class="num">SKS menurut data MK</th><th class="num">Selisih</th></tr></thead>
+        <tbody><% d.selisih.forEach(x => { %>
+          <tr><td><%= x.nama %></td><td class="num fw-bold"><%= fmt(x.sksJadwal) %></td><td class="num"><%= fmt(x.sksDataMk) %></td>
+            <td class="num fw-bold <%= x.beda > 0 ? 'text-success' : 'text-danger' %>"><%= x.beda > 0 ? '+' : '' %><%= fmt(x.beda) %></td></tr>
+        <% }) %></tbody>
+      </table></div>
+    <% } %>
+  </div>
+  <% } %>
+
   <div class="card-soft tabel-lebar">
     <div class="sec-title"><i class="bi bi-grid-3x3-gap"></i>C. SKS Setiap Dosen per Semester</div>
-    <div class="sec-desc">Semua periode yang pengampunya tercatat di data mata kuliah. Sel kosong (0) = tidak mengampu pada semester tersebut.</div>
+    <div class="sec-desc">Badge <span class="badge bg-success">jadwal</span> = angka dari jadwal resmi (sesi gabungan dihitung sekali); <span class="badge bg-warning text-dark">data MK</span> = dihitung dari data pengampu di mata kuliah (belum dicocokkan dengan jadwal). Tanda "-" = tidak mengampu pada semester tersebut.</div>
     <% if (d.semuaPeriode.length === 0) { %>
       <div class="text-muted">Belum ada riwayat pengampu per periode.</div>
     <% } else { %>
       <div class="table-responsive">
         <table class="table table-sm table-bordered tbl">
-          <thead><tr><th>Nama Dosen</th><% d.semuaPeriode.forEach(p => { %><th class="num"><%= p.label %></th><% }) %></tr></thead>
+          <thead><tr><th>Nama Dosen</th><% d.semuaPeriode.forEach(p => { %><th class="num"><%= p.label %><br><span class="badge <%= p.sumber === 'jadwal' ? 'bg-success' : 'bg-warning text-dark' %>" style="font-size:.62rem"><%= p.sumber === 'jadwal' ? 'jadwal' : 'data MK' %></span></th><% }) %></tr></thead>
           <tbody>
             <% d.matriks.forEach(r => { %>
               <tr><td><%= r.nama %></td>

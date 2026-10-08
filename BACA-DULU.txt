@@ -1,15 +1,25 @@
-PATCH LAPORAN AWAL SEMESTER
-===========================
-BARU
-  helpers/laporanAwalSemesterHelper.js    logika & definisi angka (read-only)
-  routes/admin/laporanAwalSemester.js     halaman + unduh Excel
-  views/admin/laporan_awal_semester.ejs   tampilan laporan (siap cetak)
-  scripts/tandai-mahasiswa-pindahan.js    tandai 2 pindahan (Asila Aswin, Intan Rianita)
-                                          + asal kampus/prodi. Jalankan: dry-run dulu, lalu --confirm
+PATCH PERBAIKAN REKAP BEBAN DOSEN (versi 2)
+===========================================
+ENAM file, semuanya harus ada di proyek (letakkan di folder yang sama):
 
-DIUBAH (timpa)
-  routes/admin/index.js      + router.use('/laporan-awal-semester', ...)
-  views/admin/dashboard.ejs  + kartu menu "Laporan Awal Semester"
+  data/jadwalBebanDosen.js                    BARU
+  helpers/namaDosen.js                        BARU
+  scripts/sinkron-beban-dosen-dari-jadwal.js  BARU
+  helpers/laporanAwalSemesterHelper.js        TIMPA
+  routes/admin/laporanAwalSemester.js         TIMPA
+  views/admin/laporan_awal_semester.ejs       TIMPA
 
-Alamat: /admin/laporan-awal-semester   (Excel: /admin/laporan-awal-semester/export)
-Butuh paket "xlsx" (sudah ada di package.json proyek).
+LANGKAH (urut)
+  1. Salin keenam file, lalu RESTART server (wajib; template di-cache).
+  2. node scripts/sinkron-beban-dosen-dari-jadwal.js              <- dry-run
+  3. node scripts/sinkron-beban-dosen-dari-jadwal.js --confirm    <- menyimpan ke Firestore
+  4. Buka /admin/laporan-awal-semester dan tekan Ctrl+F5.
+
+CARA MEMASTIKAN BERHASIL (halaman bagian B & C)
+  - Ada badge hijau "Sumber: jadwal resmi" di judul bagian B.
+  - Ada kartu "Selisih dengan data pengampu MK".
+  - Matriks bagian C punya 3 kolom: Ganjil 2025/2026, Genap 2025/2026, Ganjil 2026/2027,
+    masing-masing berbadge "jadwal".
+  - Total SKS: 110 / 49 / 74 (bila --sks=jadwal).
+  Jika badge/kartu itu TIDAK muncul = file belum terpasang atau server belum di-restart.
+  Jika muncul badge kuning "data MK" = langkah 3 (--confirm) belum dijalankan.
