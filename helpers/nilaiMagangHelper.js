@@ -5,10 +5,13 @@
 // 407/D/Polidewa/II/2026). Sesuai keputusan Kaprodi, HANYA 3 pihak yang
 // memberi nilai (form Kepala Bagian Magang di panduan TIDAK dipakai di
 // sistem ini):
-//   1. PEMBIMBING 1 - menilai LAPORAN (13 indikator: 8 Laporan + 3
-//      Pengetahuan + 2 Presentasi Magang), setelah laporan di-ACC.
-//   2. PEMBIMBING 2 - menilai LOGBOOK/sikap (11 indikator: 7 Laporan/Sikap
-//      + 2 Pengetahuan + 2 Presentasi Magang), setelah logbook DIKUNCI.
+//   REVISI: Pembimbing 1 & 2 DITIADAKAN - sekarang hanya ada SATU dosen
+//   pembimbing, yaitu DOSEN PA mahasiswa (lihat helpers/pembimbingHelper.js).
+//   Dosen PA mengisi DUA komponen nilai:
+//   1. NILAI LAPORAN (13 indikator: 8 Laporan + 3 Pengetahuan + 2 Presentasi
+//      Magang), setelah laporan di-ACC.
+//   2. NILAI LOGBOOK/sikap (11 indikator: 7 Laporan/Sikap + 2 Pengetahuan +
+//      2 Presentasi Magang), setelah logbook DIKUNCI.
 //   3. PENDAMPING LAPANGAN (IDUKA) - diinput ADMIN mewakili pendamping
 //      lapangan yang tidak punya akses sistem (9 indikator: 2 Keterampilan
 //      + 2 Pengetahuan + 4 Sikap Kerja + 1 Logbook).
@@ -17,9 +20,11 @@
 // kertas cuma penanda rentang - lihat helpers/nilaiHelper.js->nilaiKeHuruf
 // untuk batasannya, sudah konsisten dipakai di seluruh aplikasi).
 // Nilai rata-rata per pihak = rata-rata semua indikatornya. Nilai Akhir
-// Magang = rata-rata dari 3 nilai rata-rata pihak tsb (P1, P2, Pendamping
-// Lapangan diberi bobot SAMA, masing-masing 1/3 - bukan dirata dari total
-// seluruh indikator, supaya adil walau jumlah indikator per pihak beda).
+// Magang = rata-rata dari 3 komponen (Nilai Laporan, Nilai Logbook, Nilai
+// Pendamping Lapangan diberi bobot SAMA, masing-masing 1/3 - bukan dirata
+// dari total seluruh indikator, supaya adil walau jumlah indikator beda).
+// Struktur data di koleksi `nilaiMagang` TIDAK berubah (nilaiLaporan,
+// nilaiLogbook, nilaiLapangan), jadi nilai lama tetap terbaca.
 // ============================================================================
 
 const { db } = require('../config/firebaseAdmin');
@@ -32,7 +37,7 @@ const { getMagangPeriodsByMahasiswa, setNilaiMagang } = require('../models/magan
 // Bagian Magang yang tidak dipakai di sistem ini)
 // ----------------------------------------------------------------------------
 
-const ITEM_PEMBIMBING1 = [
+const ITEM_NILAI_LAPORAN = [
   { kategori: 'Laporan', key: 'sistematika', label: 'Sistematika Laporan' },
   { kategori: 'Laporan', key: 'pendahuluan', label: 'Pendahuluan' },
   { kategori: 'Laporan', key: 'deskripsiIduka', label: 'Deskripsi Iduka' },
@@ -48,7 +53,7 @@ const ITEM_PEMBIMBING1 = [
   { kategori: 'Presentasi Magang', key: 'menjawabPertanyaan', label: 'Kemampuan Menjawab Pertanyaan' }
 ];
 
-const ITEM_PEMBIMBING2 = [
+const ITEM_NILAI_LOGBOOK = [
   { kategori: 'Laporan', key: 'kejujuran', label: 'Kejujuran' },
   { kategori: 'Laporan', key: 'kedisiplinan', label: 'Kedisiplinan' },
   { kategori: 'Laporan', key: 'komunikasi', label: 'Komunikasi' },
@@ -154,13 +159,13 @@ async function _upsertNilaiMagang(mahasiswaId, pdkId, patch) {
 }
 
 /**
- * Simpan Nilai Laporan (Pembimbing 1) - 13 indikator, lihat ITEM_PEMBIMBING1.
+ * Simpan Nilai Laporan (oleh Dosen Pembimbing/PA) - 13 indikator, lihat ITEM_NILAI_LAPORAN.
  * @param {Object} itemScores - { sistematika: 85, pendahuluan: 80, ... }
  * Sengaja TIDAK mengecek status ACC laporan di sini (biar helper tetap
  * murni) - pengecekan itu ada di route pemanggil.
  */
-async function savePenilaianPembimbing1(mahasiswaId, pdkId, itemScores, dosenId) {
-  const rataRata = hitungRataItem(itemScores, ITEM_PEMBIMBING1);
+async function savePenilaianLaporan(mahasiswaId, pdkId, itemScores, dosenId) {
+  const rataRata = hitungRataItem(itemScores, ITEM_NILAI_LAPORAN);
   return _upsertNilaiMagang(mahasiswaId, pdkId, {
     nilaiLaporanItems: itemScores,
     nilaiLaporan: rataRata,
@@ -170,7 +175,7 @@ async function savePenilaianPembimbing1(mahasiswaId, pdkId, itemScores, dosenId)
 }
 
 /**
- * Kunci logbook (Pembimbing 2) - setelah ini, form nilai baru bisa diisi.
+ * Kunci logbook (Dosen Pembimbing/PA) - setelah ini, form nilai baru bisa diisi.
  * Ini KUNCI KESELURUHAN periode magang (beda dari "Setujui 1 Minggu" yang
  * cuma menyetujui entri harian).
  */
@@ -182,7 +187,7 @@ async function kunciLogbookMagang(mahasiswaId, pdkId, dosenId) {
   });
 }
 
-/** Buka kunci logbook lagi (kalau pembimbing 2 perlu koreksi). */
+/** Buka kunci logbook lagi (kalau dosen pembimbing perlu koreksi). */
 async function bukaKunciLogbookMagang(mahasiswaId, pdkId) {
   return _upsertNilaiMagang(mahasiswaId, pdkId, {
     logbookDikunci: false,
@@ -192,12 +197,12 @@ async function bukaKunciLogbookMagang(mahasiswaId, pdkId) {
 }
 
 /**
- * Simpan Nilai Logbook/Sikap (Pembimbing 2) - 11 indikator, lihat
- * ITEM_PEMBIMBING2. Route pemanggil WAJIB memvalidasi `logbookDikunci ===
+ * Simpan Nilai Logbook/Sikap (Dosen Pembimbing/PA) - 11 indikator, lihat
+ * ITEM_NILAI_LOGBOOK. Route pemanggil WAJIB memvalidasi `logbookDikunci ===
  * true` dulu sebelum memanggil ini.
  */
-async function savePenilaianPembimbing2(mahasiswaId, pdkId, itemScores, dosenId) {
-  const rataRata = hitungRataItem(itemScores, ITEM_PEMBIMBING2);
+async function savePenilaianLogbook(mahasiswaId, pdkId, itemScores, dosenId) {
+  const rataRata = hitungRataItem(itemScores, ITEM_NILAI_LOGBOOK);
   return _upsertNilaiMagang(mahasiswaId, pdkId, {
     nilaiLogbookItems: itemScores,
     nilaiLogbook: rataRata,
@@ -222,15 +227,15 @@ async function savePenilaianPendampingLapangan(mahasiswaId, pdkId, itemScores, a
 }
 
 /**
- * Hitung nilai akhir magang: rata-rata dari 3 nilai pihak (Pembimbing 1,
- * Pembimbing 2, Pendamping Lapangan), HANYA kalau ketiganya sudah lengkap
+ * Hitung nilai akhir magang: rata-rata dari 3 komponen (Nilai Laporan &
+ * Nilai Logbook oleh Dosen PA, Nilai Pendamping Lapangan), HANYA kalau ketiganya sudah lengkap
  * (semua indikator masing-masing terisi).
  */
 function hitungNilaiAkhirMagang(nilaiMagang) {
   const { nilaiLaporan, nilaiLogbook, nilaiLapangan } = nilaiMagang;
   const belumLengkap = [];
-  if (nilaiLaporan === null || nilaiLaporan === undefined) belumLengkap.push('Nilai Laporan (Pembimbing 1)');
-  if (nilaiLogbook === null || nilaiLogbook === undefined) belumLengkap.push('Nilai Logbook (Pembimbing 2)');
+  if (nilaiLaporan === null || nilaiLaporan === undefined) belumLengkap.push('Nilai Laporan (Dosen PA)');
+  if (nilaiLogbook === null || nilaiLogbook === undefined) belumLengkap.push('Nilai Logbook (Dosen PA)');
   if (nilaiLapangan === null || nilaiLapangan === undefined) belumLengkap.push('Nilai Pendamping Lapangan (Admin)');
 
   if (belumLengkap.length > 0) {
@@ -289,7 +294,7 @@ async function kunciNilaiMagangKeGrades(mahasiswaId, pdkId, dikunciOleh) {
   await setNilaiMagang(
     period.id,
     hasil.nilaiAkhir,
-    'Nilai akhir gabungan: Laporan (Pembimbing 1) + Logbook (Pembimbing 2) + Pendamping Lapangan (Admin)',
+    'Nilai akhir gabungan: Laporan (Dosen PA) + Logbook (Dosen PA) + Pendamping Lapangan (Admin)',
     dikunciOleh,
     {
       nilaiLaporan: nilaiMagang.nilaiLaporan,
@@ -320,16 +325,16 @@ async function kunciNilaiMagangKeGrades(mahasiswaId, pdkId, dikunciOleh) {
 }
 
 module.exports = {
-  ITEM_PEMBIMBING1,
-  ITEM_PEMBIMBING2,
+  ITEM_NILAI_LAPORAN,
+  ITEM_NILAI_LOGBOOK,
   ITEM_PENDAMPING_LAPANGAN,
   hitungRataItem,
   getNilaiMagang,
   getNilaiMagangBanyak,
-  savePenilaianPembimbing1,
+  savePenilaianLaporan,
   kunciLogbookMagang,
   bukaKunciLogbookMagang,
-  savePenilaianPembimbing2,
+  savePenilaianLogbook,
   savePenilaianPendampingLapangan,
   hitungNilaiAkhirMagang,
   nilaiKeHurufMagang,

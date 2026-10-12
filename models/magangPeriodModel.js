@@ -30,11 +30,9 @@ async function createMagangPeriod(data) {
     tanggalSelesai: data.tanggalSelesai || null,
     status: MAGANG_STATUS.ACTIVE,
     
-    // Dosen Pembimbing
-    pembimbing1Id: data.pembimbing1Id,
-    pembimbing1Nama: data.pembimbing1Nama,
-    pembimbing2Id: data.pembimbing2Id || null,
-    pembimbing2Nama: data.pembimbing2Nama || null,
+    // Dosen Pembimbing = Dosen PA mahasiswa (hanya satu; Pembimbing 1 & 2 ditiadakan)
+    pembimbingId: data.pembimbingId,
+    pembimbingNama: data.pembimbingNama,
     
     // Perusahaan
     perusahaan: {
@@ -238,7 +236,7 @@ async function setNilaiMagang(periodId, nilaiAngka, komentar, dinilaiOleh, kompo
  * logbook harian baru selama status ini, lihat helpers/magangHelper.js
  * -> canSubmitLogbook). CATATAN: ini BEDA dari "kunci logbook untuk
  * penilaian" (nilaiMagang.logbookDikunci di helpers/nilaiMagangHelper.js)
- * - itu flag terpisah, di collection lain, khusus Pembimbing 2, dan
+ * - itu flag terpisah, di collection lain, khusus Dosen Pembimbing (PA), dan
  * gunanya membuka form Nilai Logbook. Keduanya sama-sama disebut "kunci"
  * tapi tidak saling mempengaruhi.
  * @param {string} periodId - ID periode

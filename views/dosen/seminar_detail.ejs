@@ -50,8 +50,8 @@
       <tr><th>Tanggal</th><td><%= seminar.tanggal ? new Date(seminar.tanggal).toLocaleDateString('id-ID') : '-' %></td></tr>
       <tr><th>Waktu</th><td><%= seminar.waktu || '-' %></td></tr>
       <tr><th>Tempat</th><td><%= seminar.tempat || '-' %></td></tr>
-      <tr><th>Pembimbing 1</th><td><%= seminar.pembimbing1 || '-' %></td></tr>
-      <tr><th>Pembimbing 2</th><td><%= seminar.pembimbing2 || '-' %></td></tr>
+      <tr><th>Dosen Pembimbing (PA)</th><td><%= seminar.pembimbing || seminar.pembimbing1 || '-' %></td></tr>
+      <% if (seminar.pembimbing2) { %><tr><th>Pembimbing 2 (data lama)</th><td><%= seminar.pembimbing2 %></td></tr><% } %>
       <tr><th>Penguji</th><td><%= seminar.penguji || '-' %></td></tr>
       <tr><th>Status</th><td>
         <% if (seminar.status === 'pending') { %>

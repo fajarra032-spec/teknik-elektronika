@@ -1,3 +1,17 @@
+// ============================================================================
+// ⚠️  DEPRECATED - JANGAN DIJALANKAN LAGI
+// Script ini mengisi koleksi `bimbingan` (Pembimbing 1 & 2). Sejak revisi
+// "pembimbing tunggal", pembimbing magang = Dosen PA mahasiswa (field
+// users.dosenPaId) dan koleksi `bimbingan` tidak dibaca lagi oleh aplikasi.
+// Untuk menetapkan pembimbing, gunakan /admin/mahasiswa (Edit / Tetapkan
+// Dosen PA massal) atau scripts/assign-dosen-pa-*.js.
+// Tambahkan argumen --force kalau memang sengaja ingin menulis data arsip.
+// ============================================================================
+if (!process.argv.includes('--force')) {
+  console.log('importBimbingan.js sudah tidak dipakai (pembimbing magang = Dosen PA). Dibatalkan.');
+  process.exit(0);
+}
+
 // scripts/setBimbinganAngkatan2023Lengkap.js
 // Jalankan dengan: node scripts/setBimbinganAngkatan2023Lengkap.js
 

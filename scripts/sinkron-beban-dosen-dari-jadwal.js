@@ -23,12 +23,17 @@
  *     sudah tidak ada di data jadwal (mis. setelah Anda mengoreksi data).
  *     Dokumen buatan orang/script lain tidak disentuh.
  *
- * Pilihan SKS (4 MK semester 1 Ganjil 2026/2027 di dokumen tertulis 2*,
- * sedangkan SKS kurikulum 3):
- *   --sks=jadwal      (default) pakai angka yang tercetak di dokumen jadwal
- *   --sks=kurikulum   pakai SKS kurikulum resmi (seed-matakuliah-2026.js)
- * Kedua angka selalu disimpan (sksDokumen & sksKurikulum); ganti pilihan
- * cukup dengan menjalankan ulang script.
+ * Pilihan SKS (beberapa MK di dokumen jadwal 2026/2027 tertulis 2*, sedangkan
+ * SKS kurikulum 3):
+ *   --sks=sistem      (DEFAULT) SKS yang tercatat di koleksi `mataKuliah`
+ *                     (dicari lewat kode MK; bila ada beberapa dokumen MK
+ *                     berkode sama dan SKS-nya berbeda, dipilih yang kelasnya
+ *                     cocok dengan sesi). Kode yang tidak ada di sistem
+ *                     memakai SKS kurikulum, dan dilaporkan.
+ *   --sks=jadwal      angka yang tercetak di dokumen jadwal
+ *   --sks=kurikulum   SKS kurikulum resmi (seed-matakuliah-2026.js)
+ * Ketiga angka selalu disimpan (sksSistem, sksDokumen, sksKurikulum); ganti
+ * pilihan cukup dengan menjalankan ulang script.
  *
  *   node scripts/sinkron-beban-dosen-dari-jadwal.js                 (cek dulu)
  *   node scripts/sinkron-beban-dosen-dari-jadwal.js --confirm       (simpan)
@@ -37,19 +42,19 @@
 const { db } = require('../config/firebaseAdmin');
 const { SESI, ALIAS_DI_DOKUMEN, PERIODE_IDS } = require('../data/jadwalBebanDosen');
 const { kunciNama } = require('../helpers/namaDosen');
-const { generatePeriodeOptions } = require('../helpers/academicHelper');
+const { generatePeriodeOptions, normalizeKelas } = require('../helpers/academicHelper');
 
 const KONFIRMASI = process.argv.includes('--confirm');
-const argSks = (process.argv.find(a => a.startsWith('--sks=')) || '--sks=jadwal').split('=')[1];
-if (!['jadwal', 'kurikulum'].includes(argSks)) {
-  console.error('Nilai --sks harus "jadwal" atau "kurikulum"'); process.exit(1);
+const argSks = (process.argv.find(a => a.startsWith('--sks=')) || '--sks=sistem').split('=')[1];
+if (!['sistem', 'jadwal', 'kurikulum'].includes(argSks)) {
+  console.error('Nilai --sks harus "sistem", "jadwal", atau "kurikulum"'); process.exit(1);
 }
 const TANDA = 'sinkron-beban-dosen-dari-jadwal';
 const round2 = (n) => Math.round(n * 100) / 100;
 
 (async () => {
   console.log(`Mode : ${KONFIRMASI ? '🔴 KONFIRMASI - menulis ke database' : '🟡 DRY-RUN - tidak menulis apa pun'}`);
-  console.log(`SKS  : ${argSks === 'jadwal' ? 'angka di dokumen jadwal' : 'SKS kurikulum resmi'}\n`);
+  console.log(`SKS  : ${{ sistem: 'SKS yang tercatat di sistem (mata kuliah)', jadwal: 'angka di dokumen jadwal', kurikulum: 'SKS kurikulum resmi' }[argSks]}\n`);
 
   // ---- info periode (label/urutan) ----
   const infoPeriode = {};
@@ -71,6 +76,39 @@ const round2 = (n) => Math.round(n * 100) / 100;
   const mkSnap = await db.collection('mataKuliah').get();
   const dosenDipakai = new Set();
   mkSnap.docs.forEach(d => (d.data().dosenIds || []).forEach(id => dosenDipakai.add(id)));
+
+  // SKS yang tercatat di sistem, per kode MK: kode -> [{ kelas, sks }]
+  const mkPerKode = new Map();
+  mkSnap.docs.forEach(d => {
+    const m = d.data();
+    const sks = parseFloat(m.sks);
+    if (!m.kode || isNaN(sks)) return;
+    if (!mkPerKode.has(m.kode)) mkPerKode.set(m.kode, []);
+    mkPerKode.get(m.kode).push({ kelas: normalizeKelas(m.kelas) || '', sks });
+  });
+  const KODE_ALTERNATIF = { 'WUD2202-5': ['WUD2202-5', 'WUD2202', 'WUD2203', 'WUD2204', 'WUD2205'] };
+  const konflikSks = [];   // kode dengan SKS berbeda-beda antar dokumen MK
+  const kodeTidakAda = new Set();
+  /** SKS sesi menurut sistem, atau null bila kodenya tidak ada. */
+  function sksDiSistem(sesi) {
+    const kandidat = (KODE_ALTERNATIF[sesi.kodeMk] || [sesi.kodeMk]).flatMap(k => mkPerKode.get(k) || []);
+    if (kandidat.length === 0) { kodeTidakAda.add(`${sesi.kodeMk} (${sesi.namaMk})`); return null; }
+    const unik = Array.from(new Set(kandidat.map(x => x.sks)));
+    if (unik.length === 1) return unik[0];
+    // beda-beda antar dokumen: utamakan dokumen yang kelasnya cocok dengan sesi
+    const kelasSesi = new Set(sesi.kelas.map(k => normalizeKelas(k) || k));
+    const cocokKelas = Array.from(new Set(kandidat.filter(x => kelasSesi.has(x.kelas)).map(x => x.sks)));
+    // bila tidak ada satu pun yang pasti: ambil nilai TERBANYAK di antara dokumen MK;
+    // seri -> yang sama dengan SKS kurikulum, kalau tidak ada -> yang terbesar
+    const hitung = new Map();
+    kandidat.forEach(x => hitung.set(x.sks, (hitung.get(x.sks) || 0) + 1));
+    const maks = Math.max(...hitung.values());
+    let teratas = Array.from(hitung.entries()).filter(([, n]) => n === maks).map(([v]) => v);
+    if (teratas.length > 1) teratas = teratas.includes(sesi.sksKurikulum) ? [sesi.sksKurikulum] : [Math.max(...teratas)];
+    const dipilih = cocokKelas.length === 1 ? cocokKelas[0] : teratas[0];
+    konflikSks.push(`${sesi.kodeMk} ${sesi.namaMk}: SKS di sistem berbeda-beda antar dokumen (${unik.join(' / ')}); dipakai ${dipilih} (${cocokKelas.length === 1 ? 'sesuai kelas' : 'nilai terbanyak'}) - sebaiknya diseragamkan dulu`);
+    return dipilih;
+  }
 
   const namaUnik = Array.from(new Set(SESI.flatMap(s => s.dosen)));
   const pemetaan = new Map(); // nama kanonik -> {id|null, status}
@@ -106,14 +144,17 @@ const round2 = (n) => Math.round(n * 100) / 100;
   // ---- bangun dokumen ----
   const dokumen = SESI.map(s => {
     const info = infoPeriode[s.periodeId];
-    const sks = argSks === 'kurikulum' && s.sksKurikulum !== null ? s.sksKurikulum : s.sksDokumen;
+    const sksSistem = sksDiSistem(s);
+    const fallbackKurikulum = s.sksKurikulum !== null ? s.sksKurikulum : s.sksDokumen;
+    const sks = argSks === 'sistem' ? (sksSistem !== null ? sksSistem : fallbackKurikulum)
+      : argSks === 'kurikulum' ? fallbackKurikulum : s.sksDokumen;
     return {
       id: s.id,
       data: {
         periodeId: s.periodeId, periodeLabel: info.label, urutan: info.urutan,
         kelas: s.kelas, gabungan: s.gabungan, semesterKurikulum: s.semesterKurikulum,
         kodeMk: s.kodeMk, namaMk: s.namaMk,
-        sks, sksDokumen: s.sksDokumen, sksKurikulum: s.sksKurikulum,
+        sks, sksSistem, sksDokumen: s.sksDokumen, sksKurikulum: s.sksKurikulum,
         dosen: s.dosen.map(n => ({ nama: n, key: kunciNama(n), id: (pemetaan.get(n) || {}).id || null })),
         keterangan: s.keterangan, sumber: s.sumber,
         dibuatOleh: TANDA, updatedAt: new Date().toISOString()
@@ -134,12 +175,26 @@ const round2 = (n) => Math.round(n * 100) / 100;
     doks.filter(d => d.data.dosen.length === 0).forEach(d =>
       console.log(`   ⚠️  Sesi TANPA dosen: ${d.data.namaMk} [${d.data.kelas.join('+')}] - ${d.data.keterangan}`));
   }
-  const beda = SESI.filter(s => s.sksKurikulum !== null && s.sksKurikulum !== s.sksDokumen);
-  if (beda.length > 0) {
-    console.log(`\nℹ️  ${beda.length} sesi punya SKS di dokumen berbeda dari kurikulum (dipakai: ${argSks}):`);
+  // ---- ringkasan asal SKS ----
+  console.log('\n--- SKS yang dipakai vs sumber lain ---');
+  const bandingkan = (judul, getter) => {
     const ringkas = {};
-    beda.forEach(s => { const k = `${s.namaMk}: dokumen ${s.sksDokumen} vs kurikulum ${s.sksKurikulum}`; ringkas[k] = (ringkas[k] || 0) + 1; });
-    Object.entries(ringkas).forEach(([k, n]) => console.log(`   - ${k}  (${n} sesi)`));
+    dokumen.forEach(d => {
+      const lain = getter(d.data);
+      if (lain === null || lain === undefined || lain === d.data.sks) return;
+      const k = `${d.data.namaMk}: dipakai ${d.data.sks} vs ${judul} ${lain}`;
+      ringkas[k] = (ringkas[k] || 0) + 1;
+    });
+    const daftar = Object.entries(ringkas);
+    console.log(daftar.length === 0 ? `   (tidak ada perbedaan dengan ${judul})` : `   Berbeda dengan ${judul}:`);
+    daftar.forEach(([k, n]) => console.log(`   - ${k}  (${n} sesi)`));
+  };
+  bandingkan('sistem', x => x.sksSistem);
+  bandingkan('dokumen jadwal', x => x.sksDokumen);
+  bandingkan('kurikulum', x => x.sksKurikulum);
+  konflikSks.forEach(k => console.log(`   ⚠️  ${k}`));
+  if (kodeTidakAda.size > 0) {
+    console.log(`   ⚠️  Kode MK tidak ditemukan di sistem (dipakai SKS kurikulum): ${Array.from(kodeTidakAda).join('; ')}`);
   }
 
   // ---- sesi lama buatan script ini yang sudah tidak ada ----

@@ -496,12 +496,8 @@
         <div class="magang-value"><%= activePeriod.perusahaan.nama || '-' %></div>
       </div>
       <div class="magang-item">
-        <div class="magang-label">Pembimbing 1</div>
-        <div class="magang-value"><%= activePeriod.pembimbing1Nama || '-' %></div>
-      </div>
-      <div class="magang-item">
-        <div class="magang-label">Pembimbing 2</div>
-        <div class="magang-value"><%= activePeriod.pembimbing2Nama || '-' %></div>
+        <div class="magang-label">Dosen Pembimbing (Dosen PA)</div>
+        <div class="magang-value"><%= activePeriod.pembimbingNama || activePeriod.pembimbing1Nama || '-' %></div>
       </div>
     <% } else { %>
       <div class="magang-item">
@@ -509,11 +505,7 @@
         <div class="magang-value">-</div>
       </div>
       <div class="magang-item">
-        <div class="magang-label">Pembimbing 1</div>
-        <div class="magang-value">-</div>
-      </div>
-      <div class="magang-item">
-        <div class="magang-label">Pembimbing 2</div>
+        <div class="magang-label">Dosen Pembimbing (Dosen PA)</div>
         <div class="magang-value">-</div>
       </div>
     <% } %>

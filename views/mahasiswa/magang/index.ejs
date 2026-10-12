@@ -20,7 +20,7 @@
   };
   
   // Cek kondisi
-  const hasPembimbing = pembimbing && pembimbing.pembimbing1;
+  const hasPembimbing = !!(pembimbing && pembimbing.pembimbing); // pembimbing = Dosen PA
   const hasKRS = availablePdks && availablePdks.length > 0;
   const needPeriodActivation = hasPembimbing && hasKRS && !activePeriod;
   const noKRS = !hasKRS && !activePeriod;
@@ -453,23 +453,17 @@
       </h2>
       <p class="mb-0">Kelola seluruh aktivitas magang Anda dalam satu tempat</p>
       
-      <!-- Tampilkan nama pembimbing dari data bimbingan -->
+      <!-- Tampilkan nama pembimbing (= Dosen PA) -->
       <% if (hasPembimbing) { %>
         <div class="mt-3 pt-1">
           <div class="small text-white-50">
-            <i class="bi bi-person-badge me-1"></i> Pembimbing 1: 
-            <span class="fw-semibold text-white"><%= pembimbing.pembimbing1.nama %></span>
+            <i class="bi bi-person-badge me-1"></i> Dosen Pembimbing (Dosen PA): 
+            <span class="fw-semibold text-white"><%= pembimbing.pembimbing.nama %></span>
           </div>
-          <% if (pembimbing.pembimbing2) { %>
-            <div class="small text-white-50 mt-1">
-              <i class="bi bi-person-badge me-1"></i> Pembimbing 2: 
-              <span class="fw-semibold text-white"><%= pembimbing.pembimbing2.nama %></span>
-            </div>
-          <% } %>
         </div>
       <% } else { %>
         <div class="mt-3 small text-warning">
-          <i class="bi bi-exclamation-triangle me-1"></i> Belum ditetapkan dosen pembimbing. Hubungi admin.
+          <i class="bi bi-exclamation-triangle me-1"></i> Belum ditetapkan Dosen PA (dosen pembimbing). Hubungi admin.
         </div>
       <% } %>
     </div>
@@ -508,18 +502,12 @@
       <div class="dosen-list">
         <div class="dosen-item">
           <i class="bi bi-person-check-fill"></i>
-          <strong>Pembimbing 1:</strong> <%= pembimbing.pembimbing1.nama %>
+          <strong>Dosen Pembimbing (Dosen PA):</strong> <%= pembimbing.pembimbing.nama %>
         </div>
-        <% if (pembimbing.pembimbing2) { %>
-          <div class="dosen-item">
-            <i class="bi bi-person-plus-fill"></i>
-            <strong>Pembimbing 2:</strong> <%= pembimbing.pembimbing2.nama %>
-          </div>
-        <% } %>
       </div>
       <div class="alert-warning-custom mt-3 small">
         <i class="bi bi-envelope-paper me-2"></i>
-        <strong>Silakan hubungi dosen pembimbing 2 atau Kaprodi</strong> untuk memulai periode magang Anda.
+        <strong>Silakan hubungi Dosen PA (dosen pembimbing) atau Kaprodi</strong> untuk memulai periode magang Anda.
       </div>
       <div class="mt-3">
         <a href="#" class="btn-hubungi" onclick="copyPesan()">
@@ -752,10 +740,10 @@
         <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
           <div class="d-flex align-items-center gap-3 mb-2">
             <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">2</div>
-            <span class="badge bg-info text-white">Dospim / Admin</span>
+            <span class="badge bg-info text-white">Dosen PA / Admin</span>
           </div>
           <h6 class="fw-bold">Aktivasi Periode</h6>
-          <p class="small text-muted mb-0">Dosen Pembimbing 1, Pembimbing 2, atau Admin mengaktifkan periode magang (contoh: 4 bulan) dengan tanggal mulai & selesai.</p>
+          <p class="small text-muted mb-0">Dosen Pembimbing (Dosen PA) atau Admin mengaktifkan periode magang (contoh: 4 bulan) dengan tanggal mulai & selesai.</p>
         </div>
       </div>
       <!-- Step 3 -->
@@ -774,10 +762,10 @@
         <div class="card h-100 border-0 shadow-sm rounded-4 p-3 step-card">
           <div class="d-flex align-items-center gap-3 mb-2">
             <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">4</div>
-            <span class="badge bg-secondary text-white">Pembimbing 2</span>
+            <span class="badge bg-secondary text-white">Dosen PA</span>
           </div>
           <h6 class="fw-bold">Logbook Dikunci untuk Dinilai</h6>
-          <p class="small text-muted mb-0">Submit logbook harian berhenti otomatis begitu lewat tanggal selesai (kecuali diperpanjang dosen). Selanjutnya Pembimbing 2 <strong>secara manual</strong> mengunci logbook periode ini supaya form Nilai Logbook bisa diisi.</p>
+          <p class="small text-muted mb-0">Submit logbook harian berhenti otomatis begitu lewat tanggal selesai (kecuali diperpanjang dosen). Selanjutnya Dosen PA <strong>secara manual</strong> mengunci logbook periode ini supaya form Nilai Logbook bisa diisi.</p>
         </div>
       </div>
       <!-- Step 5 -->
@@ -787,8 +775,8 @@
             <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">5</div>
             <span class="badge bg-warning text-dark">Nilai</span>
           </div>
-          <h6 class="fw-bold">Penilaian Dospim 2</h6>
-          <p class="small text-muted mb-0">Dospim 2 memberi Nilai Logbook & Sikap. Ini tidak menghalangi upload laporan - mahasiswa bisa upload laporan kapan saja, tidak perlu menunggu langkah ini.</p>
+          <h6 class="fw-bold">Nilai Logbook oleh Dosen PA</h6>
+          <p class="small text-muted mb-0">Dosen PA memberi Nilai Logbook & Sikap. Ini tidak menghalangi upload laporan - mahasiswa bisa upload laporan kapan saja, tidak perlu menunggu langkah ini.</p>
         </div>
       </div>
       <!-- Step 6 -->
@@ -799,7 +787,7 @@
             <span class="badge bg-danger text-white">Revisi</span>
           </div>
           <h6 class="fw-bold">Upload Laporan & Revisi</h6>
-          <p class="small text-muted mb-0">Unggah laporan PDF, Dospim 1 bisa ACC/Reject + komentar. Mahasiswa perbaiki hingga disetujui. Setelah minimal 1 laporan di-ACC, Dospim 1 mengisi Nilai Laporan.</p>
+          <p class="small text-muted mb-0">Unggah laporan PDF, Dosen PA bisa ACC/Reject + komentar. Mahasiswa perbaiki hingga disetujui. Setelah minimal 1 laporan di-ACC, Dosen PA mengisi Nilai Laporan.</p>
         </div>
       </div>
       <!-- Step 7 -->
@@ -830,7 +818,7 @@
     <div class="alert alert-primary bg-opacity-10 border-0 rounded-4 d-flex align-items-center gap-3">
       <i class="bi bi-info-circle-fill fs-4 text-primary"></i>
       <div class="small">
-        <strong>Catatan Penting:</strong> Dosen Pembimbing 2 dapat memperpanjang periode magang. Semua proses tercatat dan dapat dipantau oleh Kaprodi & admin.
+        <strong>Catatan Penting:</strong> Dosen Pembimbing (Dosen PA) dapat memperpanjang periode magang. Semua proses tercatat dan dapat dipantau oleh Kaprodi & admin.
       </div>
     </div>
   </div>

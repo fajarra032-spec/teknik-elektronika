@@ -1,0 +1,46 @@
+REVISI MAGANG: PEMBIMBING TUNGGAL = DOSEN PA
+=============================================
+Pembimbing 1 & 2 ditiadakan. Satu-satunya pembimbing magang adalah Dosen PA
+mahasiswa (users.dosenPaId). Dosen PA: menyetujui/menolak/mengunci logbook,
+mengisi Nilai Logbook, meninjau/ACC laporan, mengisi Nilai Laporan, mengelola
+periode magang. Koleksi `bimbingan` tidak dibaca/ditulis lagi (data dibiarkan).
+
+CARA PASANG
+-----------
+Timpa file-file di zip ini ke proyek (struktur folder sama). Satu file baru:
+helpers/pembimbingHelper.js.
+
+CETAK LOGBOOK SERAGAM (mahasiswa = dosen = admin)
+-------------------------------------------------
+Semua cetak logbook sekarang memakai SATU template: views/mahasiswa/magang/print.ejs,
+dengan data dari helpers/logbookPrintHelper.js (file baru, buildLogbookPrintData).
+ - Mahasiswa : /mahasiswa/magang/logbook-print?periodId=...   (hanya miliknya sendiri)
+ - Dosen PA  : /dosen/magang/print/:userId?periodId=...        (hanya mahasiswa PA-nya)
+ - Admin     : /admin/emagang/print?userId=...&periodId=...    (userId wajib)
+Perbedaan antar peran hanya pada pengecekan hak akses.
+HAPUS file lama yang sudah tidak dipakai (zip tidak bisa membawa penghapusan):
+   views/dosen/magang_print.ejs
+   views/admin/emagang_print.ejs
+Catatan: cetak admin dulu bisa mencetak SEMUA mahasiswa sekaligus (tanpa userId).
+Fitur itu dihapus karena tidak ada tombol yang memakainya dan template mahasiswa
+dibuat per mahasiswa; tanpa userId kini muncul pesan "Pilih mahasiswa dulu".
+Fungsi bantu cetak (progress, rekap mingguan, daftar hadir, kode validasi, dll.)
+dipindah dari routes/mahasiswa/magang.js ke helpers/logbookPrintHelper.js.
+
+PERLU DICEK SETELAH PASANG
+--------------------------
+1. Mahasiswa tanpa dosenPaId TIDAK bisa isi logbook / upload laporan.
+   Cek di /admin/bimbingan (sekarang halaman baca-saja) dan tetapkan Dosen PA.
+2. Data lama (logbook/laporan/periode yang menyimpan pembimbing1Id/2Id) tidak
+   dimigrasi. Periode lama masih terbaca di beberapa view lewat fallback
+   pembimbing1Nama, tapi hak akses SELALU berdasarkan Dosen PA saat ini.
+3. Surat undangan seminar sekarang 3 rangkap (Dosen PA, Wadir I, PPMA).
+4. Masukan logbook mingguan: view cetak membaca tipe 'pembimbing' (baru) dan
+   'pembimbing1'/'pembimbing2' (lama). Kode penulis masukan (routes/pembimbing/
+   logbookMasukan.js) TIDAK ada di zip - kalau ada, ubah tipe yang ditulis
+   menjadi 'pembimbing'.
+5. File di root (magang1.js, display.js, landing.js, index.ejs, print.ejs)
+   tidak dipakai app.js dan tidak disentuh.
+6. Sudah dicek: semua JS lolos node --check, semua EJS yang diubah lolos
+   kompilasi, dan alur cetak (build data + render print.ejs) lolos uji dengan
+   Firestore tiruan. BELUM diuji dengan Firestore asli / tampilan di browser.

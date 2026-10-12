@@ -1,8 +1,9 @@
 // routes/dosen/laporanReview.js
 // ============================================================================
-// REVIEW LAPORAN MAGANG - khusus Pembimbing 1 (dipindahkan dari menu admin
-// sesuai permintaan: "pembimbing 1 tugasnya menilai laporan yang dikirim").
-// Alurnya: mahasiswa submit laporan -> pembimbing 1 tinjau & ACC -> setelah
+// REVIEW LAPORAN MAGANG - oleh Dosen Pembimbing = DOSEN PA mahasiswa.
+// REVISI: Pembimbing 1 & 2 ditiadakan; Dosen PA yang meninjau laporan DAN
+// mengurus logbook (lihat helpers/pembimbingHelper.js).
+// Alurnya: mahasiswa submit laporan -> Dosen PA tinjau & ACC -> setelah
 // ACC, muncul form Nilai Laporan -> nilai ini jadi salah satu dari 3
 // komponen Nilai Akhir Magang (lihat helpers/nilaiMagangHelper.js).
 // ============================================================================
@@ -13,10 +14,14 @@ const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getActivePdkWithPeriod } = require('../../helpers/magangHelper');
 const {
-  ITEM_PEMBIMBING1,
+  ITEM_NILAI_LAPORAN,
   getNilaiMagang,
-  savePenilaianPembimbing1
+  savePenilaianLaporan
 } = require('../../helpers/nilaiMagangHelper');
+const {
+  isPembimbingMahasiswa,
+  getMahasiswaBimbinganPa
+} = require('../../helpers/pembimbingHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -32,20 +37,13 @@ async function getMahasiswa(userId) {
   }
 }
 
-/** Daftar mahasiswa yang dosen ini adalah Pembimbing 1-nya. */
+/** Daftar mahasiswa aktif yang Dosen PA-nya adalah dosen ini. */
 async function getMahasiswaBimbingan1(dosenId) {
-  const snapshot = await db.collection('bimbingan')
-    .where('pembimbing1Id', '==', dosenId)
-    .where('status', '==', 'active')
-    .get();
-  const mahasiswaIds = snapshot.docs.map(doc => doc.data().mahasiswaId);
-  if (mahasiswaIds.length === 0) return [];
-  const docs = await db.getAll(...mahasiswaIds.map(id => db.collection('users').doc(id)));
-  return docs.filter(d => d.exists).map(d => ({ id: d.id, ...d.data() }));
+  return getMahasiswaBimbinganPa(dosenId);
 }
 
 // ============================================================================
-// DAFTAR MAHASISWA BIMBINGAN (Pembimbing 1) + status laporan & nilai
+// DAFTAR MAHASISWA BIMBINGAN (Dosen PA) + status laporan & nilai
 // ============================================================================
 router.get('/', async (req, res) => {
   try {
@@ -78,7 +76,7 @@ router.get('/', async (req, res) => {
     hasil.sort((a, b) => String(a.mahasiswa.nim).localeCompare(String(b.mahasiswa.nim)));
 
     res.render('dosen/laporan_review_list', {
-      title: 'Review Laporan Magang (Pembimbing 1)',
+      title: 'Review Laporan Magang',
       daftar: hasil
     });
   } catch (error) {
@@ -94,15 +92,10 @@ router.get('/mahasiswa/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Pastikan dosen ini benar Pembimbing 1 mahasiswa tsb
-    const bimbinganSnap = await db.collection('bimbingan')
-      .where('mahasiswaId', '==', userId)
-      .where('pembimbing1Id', '==', req.dosen.id)
-      .where('status', '==', 'active')
-      .limit(1)
-      .get();
-    if (bimbinganSnap.empty) {
-      return res.status(403).render('error', { title: 'Akses Ditolak', message: 'Anda bukan Pembimbing 1 mahasiswa ini.' });
+    // Pastikan dosen ini Dosen PA (pembimbing) mahasiswa tsb
+    const { isBimbingan } = await isPembimbingMahasiswa(req.dosen.id, userId);
+    if (!isBimbingan) {
+      return res.status(403).render('error', { title: 'Akses Ditolak', message: 'Anda bukan Dosen Pembimbing (Dosen PA) mahasiswa ini.' });
     }
 
     const mahasiswa = await getMahasiswa(userId);
@@ -126,7 +119,7 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       pdkList,
       pdkIdDipilih,
       nilaiMagang,
-      ITEM_PEMBIMBING1,
+      ITEM_NILAI_LAPORAN,
       success: req.query.success
     });
   } catch (error) {
@@ -146,18 +139,13 @@ router.post('/:laporanId/status', async (req, res) => {
     if (!doc.exists) return res.status(404).send('Laporan tidak ditemukan');
     const userId = doc.data().userId;
 
-    // Pastikan dosen ini Pembimbing 1 mahasiswa tsb
-    const bimbinganSnap = await db.collection('bimbingan')
-      .where('mahasiswaId', '==', userId)
-      .where('pembimbing1Id', '==', req.dosen.id)
-      .where('status', '==', 'active')
-      .limit(1)
-      .get();
-    if (bimbinganSnap.empty) return res.status(403).send('Anda bukan Pembimbing 1 mahasiswa ini.');
+    // Pastikan dosen ini Dosen PA (pembimbing) mahasiswa tsb
+    const { isBimbingan } = await isPembimbingMahasiswa(req.dosen.id, userId);
+    if (!isBimbingan) return res.status(403).send('Anda bukan Dosen Pembimbing (Dosen PA) mahasiswa ini.');
 
     const updateData = {
       status,
-      catatanPembimbing1: catatan || '',
+      catatanPembimbing: catatan || '',
       updatedAt: new Date().toISOString()
     };
     if (status === 'approved') {
@@ -186,13 +174,8 @@ router.post('/mahasiswa/:userId/nilai', async (req, res) => {
 
     if (!pdkId) return res.status(400).send('Pilih periode magang (PDK) dulu');
 
-    const bimbinganSnap = await db.collection('bimbingan')
-      .where('mahasiswaId', '==', userId)
-      .where('pembimbing1Id', '==', req.dosen.id)
-      .where('status', '==', 'active')
-      .limit(1)
-      .get();
-    if (bimbinganSnap.empty) return res.status(403).send('Anda bukan Pembimbing 1 mahasiswa ini.');
+    const { isBimbingan } = await isPembimbingMahasiswa(req.dosen.id, userId);
+    if (!isBimbingan) return res.status(403).send('Anda bukan Dosen Pembimbing (Dosen PA) mahasiswa ini.');
 
     const laporanSnapshot = await db.collection('laporanMagang').where('userId', '==', userId).get();
     const adaYangAcc = laporanSnapshot.docs.some(d => d.data().status === 'approved');
@@ -200,19 +183,19 @@ router.post('/mahasiswa/:userId/nilai', async (req, res) => {
       return res.status(400).send('Laporan mahasiswa ini belum di-ACC - ACC dulu sebelum memberi nilai.');
     }
 
-    // Kumpulkan skor 13 indikator (lihat ITEM_PEMBIMBING1) dari body form,
+    // Kumpulkan skor 13 indikator (lihat ITEM_NILAI_LAPORAN) dari body form,
     // mis. body.item.sistematika, body.item.pendahuluan, dst.
     const itemScores = {};
-    for (const it of ITEM_PEMBIMBING1) {
+    for (const it of ITEM_NILAI_LAPORAN) {
       const v = req.body.item ? req.body.item[it.key] : undefined;
       const angka = parseFloat(v);
       if (v === undefined || v === '' || isNaN(angka) || angka < 0 || angka > 100) {
-        return res.status(400).send(`Isi semua ${ITEM_PEMBIMBING1.length} indikator dengan angka 0-100 (indikator "${it.label}" belum valid).`);
+        return res.status(400).send(`Isi semua ${ITEM_NILAI_LAPORAN.length} indikator dengan angka 0-100 (indikator "${it.label}" belum valid).`);
       }
       itemScores[it.key] = angka;
     }
 
-    await savePenilaianPembimbing1(userId, pdkId, itemScores, req.dosen.id);
+    await savePenilaianLaporan(userId, pdkId, itemScores, req.dosen.id);
     req.session.success = 'Nilai Laporan berhasil disimpan.';
     res.redirect(`/dosen/magang/${userId}`);
   } catch (error) {

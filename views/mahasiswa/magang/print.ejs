@@ -230,13 +230,13 @@
     }
     .tiga-kolom {
       display: flex;
-      justify-content: space-between;
+      justify-content: space-around;
       text-align: left;
       margin-bottom: 25px;
       gap: 15px;
     }
     .kolom-tanda {
-      width: 30%;
+      width: 40%;
     }
     .area-ttd {
       height: 75px;
@@ -598,18 +598,17 @@
               <div class="masukan-col">
                 <div class="masukan-label">Masukan/Saran Dosen Pembimbing:</div>
                 <%
-                  const m1 = masukanMap[grup.mingguKe + '_pembimbing1'];
-                  const m2 = masukanMap[grup.mingguKe + '_pembimbing2'];
+                  // Pembimbing tunggal = Dosen PA (tipe 'pembimbing'). Masukan lama
+                  // bertipe 'pembimbing1'/'pembimbing2' tetap ditampilkan.
+                  const masukanDosen = ['_pembimbing', '_pembimbing1', '_pembimbing2']
+                    .map(k => masukanMap[grup.mingguKe + k])
+                    .filter(x => x && x.isi);
                 %>
-                <% if (m1 && m1.isi) { %>
-                  <div class="masukan-isi"><%= m1.isi %></div>
-                  <div class="masukan-meta">— <%= m1.penulisNama || 'Pembimbing 1' %>, <%= m1.updatedAt ? new Date(m1.updatedAt).toLocaleDateString('id-ID') : '' %></div>
-                <% } %>
-                <% if (m2 && m2.isi) { %>
-                  <div class="masukan-isi"><%= m2.isi %></div>
-                  <div class="masukan-meta">— <%= m2.penulisNama || 'Pembimbing 2' %>, <%= m2.updatedAt ? new Date(m2.updatedAt).toLocaleDateString('id-ID') : '' %></div>
-                <% } %>
-                <% if ((!m1 || !m1.isi) && (!m2 || !m2.isi)) { %>
+                <% masukanDosen.forEach(function (mx) { %>
+                  <div class="masukan-isi"><%= mx.isi %></div>
+                  <div class="masukan-meta">— <%= mx.penulisNama || 'Dosen Pembimbing' %>, <%= mx.updatedAt ? new Date(mx.updatedAt).toLocaleDateString('id-ID') : '' %></div>
+                <% }) %>
+                <% if (masukanDosen.length === 0) { %>
                   <div class="masukan-isi masukan-kosong">Belum ada masukan untuk minggu ini.</div>
                 <% } %>
               </div>
@@ -631,28 +630,14 @@
 
 <div class="tanda-tangan-container">
   <div class="tiga-kolom">
-    <!-- Dosen Pembimbing 1 -->
+    <!-- Dosen Pembimbing (Dosen PA) -->
     <div class="kolom-tanda">
       <p class="mb-0">Mengetahui,</p>
-      <p>Dosen Pembimbing 1</p>
+      <p>Dosen Pembimbing (Dosen PA)</p>
       <div class="area-ttd"></div>
-      <% if (pembimbing && pembimbing.pembimbing1) { %>
-        <p class="nama-ttd"><%= pembimbing.pembimbing1.nama %></p>
-        <p class="nip-ttd">NUPTK. <%= pembimbing.pembimbing1.nuptk || '' %></p>
-      <% } else { %>
-        <p class="nama-ttd">( ____________________ )</p>
-        <p class="nip-ttd">NUPTK.</p>
-      <% } %>
-    </div>
-
-    <!-- Dosen Pembimbing 2 -->
-    <div class="kolom-tanda">
-      <p class="mb-0"><br></p>
-      <p>Dosen Pembimbing 2</p>
-      <div class="area-ttd"></div>
-      <% if (pembimbing && pembimbing.pembimbing2) { %>
-        <p class="nama-ttd"><%= pembimbing.pembimbing2.nama %></p>
-        <p class="nip-ttd">NUPTK. <%= pembimbing.pembimbing2.nuptk || '' %></p>
+      <% if (pembimbing && pembimbing.pembimbing) { %>
+        <p class="nama-ttd"><%= pembimbing.pembimbing.nama %></p>
+        <p class="nip-ttd">NUPTK. <%= pembimbing.pembimbing.nuptk || '' %></p>
       <% } else { %>
         <p class="nama-ttd">( ____________________ )</p>
         <p class="nip-ttd">NUPTK.</p>

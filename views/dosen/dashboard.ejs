@@ -391,7 +391,7 @@
         <!-- Statistik vertikal dengan background abu-abu solid & border-radius agak kotak -->
         <div class="profile-stats-vertical">
           <div><i class="bi bi-book me-2"></i> Mata Kuliah: <strong><%= mkCount || 0 %></strong></div>
-          <div><i class="bi bi-people me-2"></i> Mahasiswa Bimbingan: <strong><%= totalMahasiswa || 0 %></strong></div>
+          <div><i class="bi bi-people me-2"></i> Mahasiswa Bimbingan Magang: <strong><%= totalMahasiswa || 0 %></strong></div>
           <div><i class="bi bi-person-check me-2"></i> Mahasiswa PA: <strong><%= totalMahasiswaPa || 0 %></strong></div>
           <div><i class="bi bi-calendar-week me-2"></i> Semester: <strong><%= currentSemester.label %></strong></div>
         </div>
@@ -556,8 +556,8 @@
     </div>
     <div class="card-body">
       <!-- Disederhanakan: halaman /dosen/magang per mahasiswa SUDAH memuat
-           logbook (Pembimbing 2) + tinjau/ACC laporan + nilai laporan
-           (Pembimbing 1) + nilai magang dalam satu tampilan. Kartu "Laporan
+           logbook + tinjau/ACC laporan + nilai logbook & nilai laporan
+           (semua oleh Dosen PA sebagai pembimbing tunggal) dalam satu tampilan. Kartu "Laporan
            Magang" (monitoring semua mahasiswa tanpa aksi apa pun, tidak
            dibatasi bimbingan sendiri) dan "Nilai Magang" (link-nya keliru,
            mengarah ke rekap nilai tugas MK, bukan nilai magang) dihapus

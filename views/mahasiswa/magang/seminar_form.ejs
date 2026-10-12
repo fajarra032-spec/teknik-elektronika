@@ -108,15 +108,11 @@
           <input type="text" class="form-control" id="tempat" name="tempat" placeholder="Ruang Seminar A" required>
         </div>
 
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="pembimbing1" class="form-label fw-bold">Pembimbing 1</label>
-            <input type="text" class="form-control" id="pembimbing1" name="pembimbing1" placeholder="Nama pembimbing">
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="pembimbing2" class="form-label fw-bold">Pembimbing 2</label>
-            <input type="text" class="form-control" id="pembimbing2" name="pembimbing2" placeholder="Nama pembimbing">
-          </div>
+        <div class="mb-3">
+          <label for="pembimbingNama" class="form-label fw-bold">Dosen Pembimbing (Dosen PA)</label>
+          <input type="text" class="form-control" id="pembimbingNama"
+                 value="<%= (typeof pembimbing !== 'undefined' && pembimbing && pembimbing.pembimbing) ? pembimbing.pembimbing.nama : 'Belum ditetapkan - hubungi admin' %>" readonly>
+          <div class="form-text">Dosen pembimbing magang adalah Dosen PA Anda dan terisi otomatis.</div>
         </div>
 
         <div class="mb-3">

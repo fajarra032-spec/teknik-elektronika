@@ -122,28 +122,7 @@
     color: var(--primary-dark);
   }
 
-  /* Role Badge */
-  .role-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: clamp(0.3rem, 1.5vw, 0.5rem) clamp(0.6rem, 2vw, 1rem);
-    border-radius: 50px;
-    font-weight: 600;
-    font-size: clamp(0.7rem, 2vw, 0.85rem);
-    margin-bottom: 1rem;
-  }
-  .role-pembimbing2 {
-    background: linear-gradient(135deg, #10b981, #34d399);
-    color: white;
-    box-shadow: 0 5px 15px rgba(16,185,129,0.3);
-  }
-  .role-pembimbing1 {
-    background: linear-gradient(135deg, #6c757d, #adb5bd);
-    color: white;
-  }
-
-  /* Tab Peran (Sebagai Pembimbing 1 / Pembimbing 2) */
+  /* Tab filter status (Semua / Magang Aktif / Perlu Perhatian) */
   .peran-tabs {
     display: flex;
     gap: 0.6rem;
@@ -187,13 +166,13 @@
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
     box-shadow: 0 5px 15px rgba(30,58,138,0.25);
   }
-  .peran-tab[data-tab="pembimbing1"].active {
-    background: linear-gradient(135deg, #6c757d, #adb5bd);
-    box-shadow: 0 5px 15px rgba(108,117,125,0.3);
-  }
-  .peran-tab[data-tab="pembimbing2"].active {
+  .peran-tab[data-tab="aktif"].active {
     background: linear-gradient(135deg, #10b981, #34d399);
     box-shadow: 0 5px 15px rgba(16,185,129,0.3);
+  }
+  .peran-tab[data-tab="perhatian"].active {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    box-shadow: 0 5px 15px rgba(245,158,11,0.3);
   }
 
   /* Statistik Ringkasan */
@@ -359,29 +338,6 @@
   .status-danger {
     background: #fee2e2;
     color: #991b1b;
-  }
-
-  /* Role Badge di Tabel */
-  .role-badge-table {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: clamp(0.2rem, 1.5vw, 0.3rem) clamp(0.5rem, 2vw, 0.8rem);
-    border-radius: 50px;
-    font-size: clamp(0.65rem, 2vw, 0.7rem);
-    font-weight: 600;
-  }
-  .role-pembimbing1-table {
-    background: var(--info-bg);
-    color: var(--info-text);
-  }
-  .role-pembimbing2-table {
-    background: var(--success-bg);
-    color: var(--success-text);
-  }
-  .role-both-table {
-    background: linear-gradient(135deg, var(--info-bg), var(--success-bg));
-    color: var(--primary-start);
   }
 
   /* Avatar dan Foto */
@@ -663,20 +619,20 @@
     </div>
   <% } %>
 
-  <!-- Tab Peran: Sebagai Pembimbing 1 / Sebagai Pembimbing 2 -->
+  <!-- Tab filter: Semua / Magang Aktif / Perlu Perhatian (ada logbook pending) -->
   <% if (mahasiswaList.length > 0) {
-    const jmlPembimbing1 = mahasiswaList.filter(m => m.role === 'pembimbing1' || m.role === 'pembimbing1_dan_2').length;
-    const jmlPembimbing2 = mahasiswaList.filter(m => m.role === 'pembimbing2' || m.role === 'pembimbing1_dan_2').length;
+    const jmlAktif = mahasiswaList.filter(m => m.hasActivePeriod).length;
+    const jmlPerhatian = mahasiswaList.filter(m => (m.pendingCount || 0) > 0).length;
   %>
     <div class="peran-tabs" id="peranTabs">
       <button type="button" class="peran-tab active" data-tab="semua">
         <i class="bi bi-people-fill"></i> Semua <span class="peran-count"><%= mahasiswaList.length %></span>
       </button>
-      <button type="button" class="peran-tab" data-tab="pembimbing1">
-        <i class="bi bi-eye"></i> Sebagai Pembimbing 1 <span class="peran-count"><%= jmlPembimbing1 %></span>
+      <button type="button" class="peran-tab" data-tab="aktif">
+        <i class="bi bi-play-circle"></i> Magang Aktif <span class="peran-count"><%= jmlAktif %></span>
       </button>
-      <button type="button" class="peran-tab" data-tab="pembimbing2">
-        <i class="bi bi-check-circle"></i> Sebagai Pembimbing 2 <span class="peran-count"><%= jmlPembimbing2 %></span>
+      <button type="button" class="peran-tab" data-tab="perhatian">
+        <i class="bi bi-hourglass-split"></i> Logbook Pending <span class="peran-count"><%= jmlPerhatian %></span>
       </button>
     </div>
   <% } %>
@@ -703,7 +659,6 @@
           <tr>
             <th style="text-align: center;">No</th>
             <th>Mahasiswa</th>
-            <th>Role Anda</th>
             <th>PDK Diprogram</th>
             <th style="text-align: center;">Status</th>
             <th style="text-align: center;">Total</th>
@@ -714,11 +669,11 @@
         <tbody>
           <% if (mahasiswaList.length === 0) { %>
             <tr>
-              <td colspan="8" class="text-center py-5">
+              <td colspan="7" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <p>Anda belum memiliki mahasiswa bimbingan.</p>
-                  <p class="small text-muted mt-2">Silakan hubungi admin untuk menetapkan bimbingan.</p>
+                  <p class="small text-muted mt-2">Mahasiswa bimbingan magang adalah mahasiswa yang Dosen PA-nya Anda. Hubungi admin untuk penetapan Dosen PA.</p>
                 </div>
                </td>
              </tr>
@@ -726,28 +681,11 @@
             <% mahasiswaList.forEach((m, index) => { 
               const fotoUrl = m.foto ? getImageUrl(m.foto) : null;
               const angkatan = getAngkatan(m.nim);
-              
-              // Tentukan role badge
-              let roleBadgeClass = '';
-              let roleText = '';
-              if (m.role === 'pembimbing1') {
-                roleBadgeClass = 'role-pembimbing1-table';
-                roleText = 'Pembimbing 1';
-              } else if (m.role === 'pembimbing2') {
-                roleBadgeClass = 'role-pembimbing2-table';
-                roleText = 'Pembimbing 2';
-              } else if (m.role === 'pembimbing1_dan_2') {
-                roleBadgeClass = 'role-both-table';
-                roleText = 'Pembimbing 1 & 2';
-              } else {
-                roleBadgeClass = 'role-pembimbing1-table';
-                roleText = '-';
-              }
             %>
             <tr data-nama="<%= (m.nama || '').toLowerCase() %>" 
                 data-nim="<%= m.nim || '' %>" 
                 data-angkatan="<%= angkatan %>"
-                data-role="<%= m.role || '' %>"
+                data-aktif="<%= m.hasActivePeriod ? '1' : '0' %>"
                 data-total="<%= m.totalLogbook || 0 %>"
                 data-pending="<%= m.pendingCount || 0 %>">
               <td data-label="No" style="text-align: center; font-weight: 600;"><%= index + 1 %> </td>
@@ -767,12 +705,6 @@
                     <% } %>
                   </div>
                 </div>
-               </td>
-              <td data-label="Role Anda" style="text-align: center;">
-                <span class="role-badge-table <%= roleBadgeClass %>">
-                  <i class="bi <%= m.role === 'pembimbing2' ? 'bi-check-circle' : (m.role === 'pembimbing1' ? 'bi-eye' : 'bi-star') %>"></i>
-                  <%= roleText %>
-                </span>
                </td>
               <td data-label="PDK Diprogram">
                 <% if (m.enrolledPdks && m.enrolledPdks.length > 0) { %>
@@ -822,7 +754,7 @@
                 <div class="btn-actions">
                   <a href="/dosen/magang/<%= m.id %>" class="btn-action btn-view" title="Buka ELK Magang">
                     <i class="bi bi-eye"></i>
-                    <%= m.role === 'pembimbing1' ? 'Laporan' : (m.role === 'pembimbing2' ? 'Logbook' : 'Logbook & Laporan') %>
+                    Logbook &amp; Laporan
                   </a>
                   <a href="/dosen/magang-period/<%= m.id %>" class="btn-action btn-manage" title="Kelola Magang">
                     <i class="bi bi-gear-fill"></i> Kelola
@@ -867,10 +799,10 @@
     // Fungsi filter
     let activeTab = 'semua';
 
-    function cocokTab(role) {
+    function cocokTab(row) {
       if (activeTab === 'semua') return true;
-      if (activeTab === 'pembimbing1') return role === 'pembimbing1' || role === 'pembimbing1_dan_2';
-      if (activeTab === 'pembimbing2') return role === 'pembimbing2' || role === 'pembimbing1_dan_2';
+      if (activeTab === 'aktif') return row.getAttribute('data-aktif') === '1';
+      if (activeTab === 'perhatian') return parseInt(row.getAttribute('data-pending') || '0', 10) > 0;
       return true;
     }
 
@@ -884,7 +816,6 @@
         const nama = row.getAttribute('data-nama') || '';
         const nim = row.getAttribute('data-nim') || '';
         const angkatan = row.getAttribute('data-angkatan') || '';
-        const role = row.getAttribute('data-role') || '';
 
         let matchSearch = true;
         if (searchInput !== '') {
@@ -896,7 +827,7 @@
           matchAngkatan = angkatan === angkatanValue;
         }
 
-        const matchTab = cocokTab(role);
+        const matchTab = cocokTab(row);
 
         if (matchSearch && matchAngkatan && matchTab) {
           row.style.display = '';

@@ -265,12 +265,8 @@
         <td><%= seminar.tempat %></td>
       </tr>
       <tr>
-        <th>Pembimbing 1</th>
-        <td><%= seminar.pembimbing1 || '-' %></td>
-      </tr>
-      <tr>
-        <th>Pembimbing 2</th>
-        <td><%= seminar.pembimbing2 || '-' %></td>
+        <th>Dosen Pembimbing (PA)</th>
+        <td><%= seminar.pembimbing || seminar.pembimbing1 || '-' %></td>
       </tr>
       <tr>
         <th>Penguji</th>

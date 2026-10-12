@@ -26,10 +26,10 @@
   <!-- TAB 1: GENERATE OTOMATIS -->
   <!-- ============================================================ -->
   <div id="panel-otomatis">
-    <p class="text-muted small mb-3">Sistem akan membuat <strong>4 salinan PDF</strong> (1 halaman per penerima) dalam satu file. Nama Penerima 1 & 2 terisi otomatis dari data pembimbing magang mahasiswa. Penerima 3 & 4 sudah diisi default "Wadir 1" / "PPMA" - ganti dengan nama orangnya kalau perlu lebih spesifik.</p>
+    <p class="text-muted small mb-3">Sistem akan membuat <strong>3 salinan PDF</strong> (1 halaman per penerima) dalam satu file. Nama Penerima 1 terisi otomatis dari Dosen PA mahasiswa (dosen pembimbing magang). Penerima 2 & 3 sudah diisi default "Wadir 1" / "PPMA" - ganti dengan nama orangnya kalau perlu lebih spesifik.</p>
     <p class="text-muted small mb-3">
       <i class="bi bi-info-circle me-1"></i>
-      Semua 4 kolom nama wajib diisi (tidak boleh kosong), karena hanya penerima yang namanya terisi yang akan dibuatkan salinan suratnya.
+      Semua 3 kolom nama wajib diisi (tidak boleh kosong), karena hanya penerima yang namanya terisi yang akan dibuatkan salinan suratnya.
     </p>
 
     <% if (daftarMagangAktif.length === 0) { %>
@@ -99,49 +99,38 @@
 
           <hr>
           <h6 class="fw-semibold mb-1">4. Penerima Surat ("Kepada")</h6>
-          <p class="text-muted small mb-3">Semua 4 penerima wajib diisi namanya - lihat catatan di atas.</p>
+          <p class="text-muted small mb-3">Semua 3 penerima wajib diisi namanya - lihat catatan di atas.</p>
 
           <div class="row g-3 mb-3 align-items-end">
             <div class="col-md-6">
               <label class="form-label">Penerima 1 - Nama</label>
-              <input type="text" name="kepada1Nama" id="kepada1Nama" class="form-control" required placeholder="Nama Dosen Pembimbing Magang 1">
+              <input type="text" name="kepada1Nama" id="kepada1Nama" class="form-control" required placeholder="Nama Dosen Pembimbing Magang (Dosen PA)">
             </div>
             <div class="col-md-6">
               <label class="form-label">Penerima 1 - Jabatan</label>
-              <input type="text" name="kepada1Jabatan" class="form-control" value="Dosen Pembimbing Magang 1">
+              <input type="text" name="kepada1Jabatan" class="form-control" value="Dosen Pembimbing Magang">
             </div>
           </div>
 
           <div class="row g-3 mb-3 align-items-end">
             <div class="col-md-6">
               <label class="form-label">Penerima 2 - Nama</label>
-              <input type="text" name="kepada2Nama" id="kepada2Nama" class="form-control" required placeholder="Nama Dosen Pembimbing Magang 2">
+              <input type="text" name="kepada2Nama" class="form-control" required value="Wadir 1" placeholder="Nama Wakil Direktur I">
             </div>
             <div class="col-md-6">
               <label class="form-label">Penerima 2 - Jabatan</label>
-              <input type="text" name="kepada2Jabatan" class="form-control" value="Dosen Pembimbing Magang 2">
-            </div>
-          </div>
-
-          <div class="row g-3 mb-3 align-items-end">
-            <div class="col-md-6">
-              <label class="form-label">Penerima 3 - Nama</label>
-              <input type="text" name="kepada3Nama" class="form-control" required value="Wadir 1" placeholder="Nama Wakil Direktur I">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Penerima 3 - Jabatan</label>
-              <input type="text" name="kepada3Jabatan" class="form-control" value="Wakil Direktur I Bidang Akademik">
+              <input type="text" name="kepada2Jabatan" class="form-control" value="Wakil Direktur I Bidang Akademik">
             </div>
           </div>
 
           <div class="row g-3 mb-4 align-items-end">
             <div class="col-md-6">
-              <label class="form-label">Penerima 4 - Nama</label>
-              <input type="text" name="kepada4Nama" class="form-control" required value="PPMA" placeholder="Nama Pengelola Magang">
+              <label class="form-label">Penerima 3 - Nama</label>
+              <input type="text" name="kepada3Nama" class="form-control" required value="PPMA" placeholder="Nama Pengelola Magang">
             </div>
             <div class="col-md-6">
-              <label class="form-label">Penerima 4 - Jabatan</label>
-              <input type="text" name="kepada4Jabatan" class="form-control" value="PPMA (Pengelola Magang)">
+              <label class="form-label">Penerima 3 - Jabatan</label>
+              <input type="text" name="kepada3Jabatan" class="form-control" value="PPMA (Pengelola Magang)">
             </div>
           </div>
 
@@ -229,8 +218,7 @@
     PETA_MAGANG_AKTIF[<%- JSON.stringify(m.nama + ' (' + m.nim + ')' + (m.perusahaan ? ' - ' + m.perusahaan : '')) %>] = {
       id: <%- JSON.stringify(m.mahasiswaId) %>,
       perusahaan: <%- JSON.stringify(m.perusahaan || '') %>,
-      pembimbing1: <%- JSON.stringify(m.pembimbing1Nama || '') %>,
-      pembimbing2: <%- JSON.stringify(m.pembimbing2Nama || '') %>
+      pembimbing: <%- JSON.stringify(m.pembimbingNama || '') %>
     };
   <% }); %>
 
@@ -263,8 +251,7 @@
     PETA_MAGANG_AKTIF,
     function (data) {
       document.getElementById('perusahaanMagang').value = data.perusahaan;
-      document.getElementById('kepada1Nama').value = data.pembimbing1;
-      document.getElementById('kepada2Nama').value = data.pembimbing2;
+      document.getElementById('kepada1Nama').value = data.pembimbing;
     }
   );
 
@@ -275,7 +262,7 @@
   );
 
   // Cegah klik ganda saat generate PDF (proses Puppeteer butuh beberapa detik).
-  // Juga validasi ulang di sisi client bahwa ke-4 nama penerima terisi -
+  // Juga validasi ulang di sisi client bahwa ke-3 nama penerima terisi -
   // supaya tidak pernah lagi diam-diam cuma kirim sebagian salinan.
   document.getElementById('formOtomatis').addEventListener('submit', function (e) {
     if (!document.getElementById('mahasiswaId').value) {
@@ -284,14 +271,12 @@
       document.getElementById('mahasiswaSearch').classList.add('is-invalid');
       return;
     }
-    const namaFieldIds = ['kepada1Nama', 'kepada2Nama'];
-    const semuaNamaTerisi = namaFieldIds.every(id => document.getElementById(id).value.trim() !== '')
-      && this.querySelector('[name="kepada3Nama"]').value.trim() !== ''
-      && this.querySelector('[name="kepada4Nama"]').value.trim() !== '';
+    const semuaNamaTerisi = ['kepada1Nama', 'kepada2Nama', 'kepada3Nama']
+      .every(nm => this.querySelector('[name="' + nm + '"]').value.trim() !== '');
 
     if (!semuaNamaTerisi) {
       e.preventDefault();
-      alert('Semua 4 nama penerima (Penerima 1-4) wajib diisi supaya surat terkirim lengkap 4 rangkap. Cek lagi kolom yang masih kosong.');
+      alert('Semua 3 nama penerima (Penerima 1-3) wajib diisi supaya surat terkirim lengkap 3 rangkap. Cek lagi kolom yang masih kosong.');
       return;
     }
     const btn = document.getElementById('btnKirim');

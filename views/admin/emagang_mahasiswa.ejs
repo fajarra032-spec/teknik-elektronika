@@ -254,7 +254,7 @@
           <i class="bi bi-check2-all"></i> Setujui Semua Logbook
         </button>
       </form>
-      <a href="/admin/emagang/print?userId=<%= mahasiswa.id %>" class="btn-print" target="_blank">
+      <a href="/admin/emagang/print?userId=<%= mahasiswa.id %><%= (typeof selectedPeriod !== 'undefined' && selectedPeriod) ? '&periodId=' + selectedPeriod.id : '' %>" class="btn-print" target="_blank">
         <i class="bi bi-printer"></i> Print
       </a>
       <a href="/admin/emagang" class="btn-back">
@@ -337,28 +337,27 @@
         <strong><i class="bi bi-building"></i> Perusahaan:</strong> <%= (selectedPeriod.perusahaan && selectedPeriod.perusahaan.nama) ? selectedPeriod.perusahaan.nama : 'Belum diisi' %>
       </div>
       <div class="mt-2">
-        <strong><i class="bi bi-person-badge"></i> Pembimbing 1:</strong> <%= selectedPeriod.pembimbing1Nama || '-' %> &nbsp;|&nbsp;
-        <strong><i class="bi bi-person-badge"></i> Pembimbing 2:</strong> <%= selectedPeriod.pembimbing2Nama || '-' %>
+        <strong><i class="bi bi-person-badge"></i> Dosen Pembimbing (Dosen PA):</strong> <%= selectedPeriod.pembimbingNama || selectedPeriod.pembimbing1Nama || '-' %>
       </div>
     </div>
 
-    <!-- Nilai Magang 3-Komponen: Laporan (Pembimbing 1) + Logbook (Pembimbing 2) + Lapangan (Admin) -->
+    <!-- Nilai Magang 3-Komponen: Laporan (Dosen PA) + Logbook (Dosen PA) + Lapangan (Admin) -->
     <% if (typeof nilaiMagangInfo !== 'undefined' && nilaiMagangInfo) { %>
       <div class="info-period mt-3">
         <h6 class="mb-3"><i class="bi bi-clipboard-data"></i> Nilai Magang (3 Komponen)</h6>
         <div class="row g-2 mb-3">
           <div class="col-md-4">
             <div class="p-2 border rounded <%= nilaiMagangInfo.nilaiLaporan !== null ? 'bg-success-subtle' : 'bg-warning-subtle' %>">
-              <small class="text-muted d-block">Nilai Laporan (Pembimbing 1)</small>
+              <small class="text-muted d-block">Nilai Laporan (Dosen PA)</small>
               <strong><%= nilaiMagangInfo.nilaiLaporan !== null ? nilaiMagangInfo.nilaiLaporan : 'Belum diisi' %></strong>
             </div>
           </div>
           <div class="col-md-4">
             <div class="p-2 border rounded <%= nilaiMagangInfo.nilaiLogbook !== null ? 'bg-success-subtle' : 'bg-warning-subtle' %>">
-              <small class="text-muted d-block">Nilai Logbook (Pembimbing 2)</small>
+              <small class="text-muted d-block">Nilai Logbook (Dosen PA)</small>
               <strong><%= nilaiMagangInfo.nilaiLogbook !== null ? nilaiMagangInfo.nilaiLogbook : 'Belum diisi' %></strong>
               <% if (!nilaiMagangInfo.logbookDikunci) { %>
-                <div class="small text-muted">(logbook belum dikunci Pembimbing 2)</div>
+                <div class="small text-muted">(logbook belum dikunci Dosen PA)</div>
               <% } %>
             </div>
           </div>
@@ -432,10 +431,9 @@
         <% } %>
       </div>
     <% } %>
-  <% } else if (bimbingan && bimbingan.pembimbing1Nama) { %>
+  <% } else if (bimbingan && bimbingan.pembimbingNama) { %>
     <div class="info-period">
-      <strong><i class="bi bi-person-badge"></i> Pembimbing 1:</strong> <%= bimbingan.pembimbing1Nama %> &nbsp;|&nbsp;
-      <strong><i class="bi bi-person-badge"></i> Pembimbing 2:</strong> <%= bimbingan.pembimbing2Nama || '-' %>
+      <strong><i class="bi bi-person-badge"></i> Dosen Pembimbing (Dosen PA):</strong> <%= bimbingan.pembimbingNama %>
     </div>
   <% } %>
 
@@ -631,7 +629,7 @@
       <form method="POST" id="lockForm">
         <div class="modal-body">
           <p>Yakin ingin mengunci periode magang <strong id="lockPeriodName"></strong>?</p>
-          <p class="text-muted small">Mahasiswa tidak akan bisa mengisi logbook harian selama periode dikunci. <strong>Ini berbeda dari "Kunci Logbook untuk Penilaian"</strong> yang dilakukan Pembimbing 2 di halaman Kelola Logbook - lock di sini tidak membuka/menutup form Nilai Logbook.</p>
+          <p class="text-muted small">Mahasiswa tidak akan bisa mengisi logbook harian selama periode dikunci. <strong>Ini berbeda dari "Kunci Logbook untuk Penilaian"</strong> yang dilakukan Dosen PA di halaman Kelola Logbook - lock di sini tidak membuka/menutup form Nilai Logbook.</p>
           <div class="mb-3"><label>Alasan</label><textarea name="reason" class="form-control" rows="2"></textarea></div>
         </div>
         <div class="modal-footer">

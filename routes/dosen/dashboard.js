@@ -50,10 +50,11 @@ router.get('/', async (req, res) => {
     // (mis. cuma ~150-200ms) - dashboard terasa jauh lebih cepat dibuka,
     // terlepas dari optimasi jumlah baca dokumen yang sudah dilakukan
     // sebelumnya.
-    const [mkSnapshot, bimbingan1, bimbingan2, tugasSemua, eventsSnapshot] = await Promise.all([
+    // REVISI: pembimbing magang = Dosen PA (Pembimbing 1 & 2 ditiadakan),
+    // jadi mahasiswa bimbingan = mahasiswa aktif dengan dosenPaId = dosen ini.
+    const [mkSnapshot, mahasiswaPaSnap, tugasSemua, eventsSnapshot] = await Promise.all([
       db.collection('mataKuliah').where('dosenIds', 'array-contains', dosenId).get(),
-      db.collection('bimbingan').where('pembimbing1Id', '==', dosenId).where('status', '==', 'active').get(),
-      db.collection('bimbingan').where('pembimbing2Id', '==', dosenId).where('status', '==', 'active').get(),
+      db.collection('users').where('role', '==', 'mahasiswa').where('dosenPaId', '==', dosenId).get(),
       db.collection('tugas').where('dosenId', '==', dosenId).get(),
       db.collection('jadwalPenting').where('tanggal', '>=', today).orderBy('tanggal', 'asc').limit(5).get()
     ]);
@@ -85,13 +86,16 @@ router.get('/', async (req, res) => {
     // 2. Total mahasiswa bimbingan
     // ========================================================================
     const mahasiswaBimbinganIds = new Set();
-    bimbingan1.docs.forEach(doc => mahasiswaBimbinganIds.add(doc.data().mahasiswaId));
-    bimbingan2.docs.forEach(doc => mahasiswaBimbinganIds.add(doc.data().mahasiswaId));
+    mahasiswaPaSnap.docs.forEach(doc => {
+      const sm = doc.data().statusMahasiswa;
+      if (!sm || sm === 'Aktif') mahasiswaBimbinganIds.add(doc.id);
+    });
     const totalMahasiswa = mahasiswaBimbinganIds.size;
 
     // ========================================================================
-    // 2b. Total mahasiswa PA (Pembimbing Akademik) - beda dari bimbingan
-    // magang di atas, ini berdasarkan field dosenPaId di dokumen mahasiswa
+    // 2b. Total mahasiswa PA (semua status, termasuk non-aktif) - field
+    // dosenPaId di dokumen mahasiswa. Mahasiswa bimbingan magang di atas
+    // adalah subset-nya (yang statusnya Aktif).
     // ========================================================================
     const totalMahasiswaPa = await hitungJumlah(
       db.collection('users').where('role', '==', 'mahasiswa').where('dosenPaId', '==', dosen.id)

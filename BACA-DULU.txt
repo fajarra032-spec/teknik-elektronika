@@ -1,25 +1,24 @@
-PATCH PERBAIKAN REKAP BEBAN DOSEN (versi 2)
+PATCH PERBAIKAN REKAP BEBAN DOSEN (versi 5)
 ===========================================
-ENAM file, semuanya harus ada di proyek (letakkan di folder yang sama):
+File (letakkan di folder yang sama di proyek):
 
   data/jadwalBebanDosen.js                    BARU
   helpers/namaDosen.js                        BARU
-  scripts/sinkron-beban-dosen-dari-jadwal.js  BARU
   helpers/laporanAwalSemesterHelper.js        TIMPA
   routes/admin/laporanAwalSemester.js         TIMPA
   views/admin/laporan_awal_semester.ejs       TIMPA
+  scripts/cek-sks-mk.js                       BARU   diagnostik SKS (read-only)
+  scripts/perbaiki-sks-mk.js                  BARU   merapikan 3 dokumen MK yang tidak konsisten
+  scripts/gabungkan-dosen-aman.js             BARU   gabung Rismawati + Sarifuddin
+  scripts/sinkron-beban-dosen-dari-jadwal.js  BARU / TIMPA  (default --sks=sistem; konflik -> nilai terbanyak)
 
-LANGKAH (urut)
-  1. Salin keenam file, lalu RESTART server (wajib; template di-cache).
-  2. node scripts/sinkron-beban-dosen-dari-jadwal.js              <- dry-run
-  3. node scripts/sinkron-beban-dosen-dari-jadwal.js --confirm    <- menyimpan ke Firestore
-  4. Buka /admin/laporan-awal-semester dan tekan Ctrl+F5.
-
-CARA MEMASTIKAN BERHASIL (halaman bagian B & C)
-  - Ada badge hijau "Sumber: jadwal resmi" di judul bagian B.
-  - Ada kartu "Selisih dengan data pengampu MK".
-  - Matriks bagian C punya 3 kolom: Ganjil 2025/2026, Genap 2025/2026, Ganjil 2026/2027,
-    masing-masing berbadge "jadwal".
-  - Total SKS: 110 / 49 / 74 (bila --sks=jadwal).
-  Jika badge/kartu itu TIDAK muncul = file belum terpasang atau server belum di-restart.
-  Jika muncul badge kuning "data MK" = langkah 3 (--confirm) belum dijalankan.
+URUTAN
+  1. Salin semua file.
+  2. node scripts/perbaiki-sks-mk.js              <- dry-run
+     node scripts/perbaiki-sks-mk.js --confirm
+  3. node scripts/cek-sks-mk.js                   <- harus tidak ada lagi temuan no. 1-3
+  4. node scripts/gabungkan-dosen-aman.js         <- dry-run
+     node scripts/gabungkan-dosen-aman.js --confirm
+  5. node scripts/sinkron-beban-dosen-dari-jadwal.js              <- dry-run, baca "SKS yang dipakai vs sumber lain"
+     node scripts/sinkron-beban-dosen-dari-jadwal.js --confirm
+  6. RESTART server, buka /admin/laporan-awal-semester, Ctrl+F5.

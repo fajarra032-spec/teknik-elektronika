@@ -89,89 +89,80 @@
   <!-- Header -->
   <div class="page-header d-flex justify-content-between align-items-center">
     <div>
-      <h2><i class="bi bi-people-fill me-2"></i>Kelola Bimbingan Magang</h2>
-      <p class="mb-0 opacity-75">Tetapkan dosen pembimbing 1 dan 2 untuk setiap mahasiswa</p>
+      <h2><i class="bi bi-people-fill me-2"></i>Pembimbing Magang (Dosen PA)</h2>
+      <p class="mb-0 opacity-75">Pembimbing magang adalah Dosen Pembimbing Akademik (PA) masing-masing mahasiswa</p>
     </div>
     <a href="/admin/dashboard" class="btn btn-light">
       <i class="bi bi-arrow-left me-2"></i>Kembali
     </a>
   </div>
-  
-  <!-- Alert Success/Error -->
-  <% if (success) { %>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      <i class="bi bi-check-circle-fill me-2"></i> <%= success %>
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-  <% } %>
-  
-  <% if (error) { %>
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i> <%= error %>
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-  <% } %>
-  
-  <!-- Info Semester -->
+
   <div class="alert alert-info mb-4">
-    <i class="bi bi-calendar-week me-2"></i>
-    <strong>Semester Aktif:</strong> <%= semesterLabel %> | 
-    <strong>Tahun Ajaran:</strong> <%= tahunAjaran %>
+    <i class="bi bi-info-circle-fill me-2"></i>
+    Pembimbing 1 &amp; 2 sudah ditiadakan. Dosen PA mahasiswa otomatis menjadi satu-satunya
+    pembimbing magang: menyetujui logbook, meninjau laporan, dan mengisi Nilai Laporan &amp; Nilai Logbook.
+    Untuk mengganti pembimbing, ubah <strong>Dosen PA</strong> mahasiswa di
+    <a href="/admin/mahasiswa" class="alert-link">menu Mahasiswa</a>
+    (Edit Mahasiswa, atau pilih beberapa mahasiswa lalu "Tetapkan Dosen PA").
   </div>
-  
-  <!-- Tabel Daftar Bimbingan -->
+
+  <% if (totalBelumPa > 0) { %>
+    <div class="alert alert-warning mb-4">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <strong><%= totalBelumPa %> dari <%= totalMahasiswa %></strong> mahasiswa aktif belum memiliki Dosen PA.
+      Mahasiswa tersebut <strong>belum bisa</strong> mengisi logbook atau mengunggah laporan magang.
+    </div>
+  <% } %>
+
   <div class="card-bimbingan">
-    <div class="card-header-custom">
-      <i class="bi bi-table me-2"></i> Daftar Bimbingan Aktif
+    <div class="card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span><i class="bi bi-table me-2"></i> Mahasiswa Aktif &amp; Dosen Pembimbing (PA)</span>
+      <input type="text" id="cariMahasiswa" class="form-control form-control-sm" style="max-width: 260px;"
+             placeholder="Cari NIM / nama / dosen..." value="<%= search %>">
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover table-bimbingan mb-0">
+        <table class="table table-hover table-bimbingan mb-0" id="tabelPembimbing">
           <thead>
             <tr>
               <th>No</th>
               <th>NIM</th>
               <th>Nama Mahasiswa</th>
-              <th>Pembimbing 1</th>
-              <th>Pembimbing 2</th>
-              <th>Semester</th>
+              <th>Kelas</th>
+              <th>Dosen Pembimbing (Dosen PA)</th>
               <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
-            <% if (bimbinganList.length === 0) { %>
+            <% if (mahasiswaList.length === 0) { %>
               <tr>
-                <td colspan="7" class="text-center py-5">
+                <td colspan="6" class="text-center py-5">
                   <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
-                  <p class="text-muted">Belum ada bimbingan yang ditetapkan.</p>
-                  <p class="text-muted small">Klik tombol "Set Bimbingan" pada tabel mahasiswa di bawah.</p>
-                 </td>
+                  <p class="text-muted">Belum ada mahasiswa aktif.</p>
+                </td>
               </tr>
             <% } else { %>
-              <% bimbinganList.forEach((item, index) => { %>
-                <tr>
+              <% mahasiswaList.forEach((m, index) => { %>
+                <tr data-cari="<%= (m.nim + ' ' + m.nama + ' ' + (m.dosenPaNama || '')).toLowerCase() %>">
                   <td class="text-center"><%= index + 1 %></td>
-                  <td><%= item.mahasiswaNim %></td>
-                  <td><%= item.mahasiswaNama %></td>
+                  <td><%= m.nim %></td>
+                  <td><%= m.nama %></td>
+                  <td><%= m.kelas %></td>
                   <td>
-                    <span class="badge-pembimbing1">
-                      <i class="bi bi-person-check-fill me-1"></i> <%= item.pembimbing1Nama %>
-                    </span>
-                  </td>
-                  <td>
-                    <% if (item.pembimbing2Nama) { %>
-                      <span class="badge-pembimbing2">
-                        <i class="bi bi-person-plus-fill me-1"></i> <%= item.pembimbing2Nama %>
+                    <% if (m.dosenPaNama) { %>
+                      <span class="badge-pembimbing1">
+                        <i class="bi bi-person-check-fill me-1"></i> <%= m.dosenPaNama %>
                       </span>
                     <% } else { %>
-                      <span class="text-muted">-</span>
+                      <span class="text-warning fw-semibold">
+                        <i class="bi bi-hourglass-split me-1"></i> Belum ditetapkan
+                      </span>
                     <% } %>
                   </td>
-                  <td><%= item.semester %></td>
                   <td>
-                    <button class="btn-delete" onclick="hapusBimbingan('<%= item.id %>', '<%= item.mahasiswaNama %>')">
-                      <i class="bi bi-trash"></i> Hapus
-                    </button>
+                    <a href="/admin/mahasiswa/<%= m.id %>/edit" class="btn-set text-decoration-none">
+                      <i class="bi bi-pencil me-1"></i> <%= m.dosenPaNama ? 'Ganti Dosen PA' : 'Tetapkan Dosen PA' %>
+                    </a>
                   </td>
                 </tr>
               <% }) %>
@@ -181,163 +172,20 @@
       </div>
     </div>
   </div>
-  
-  <!-- Tabel Mahasiswa (untuk set bimbingan) -->
-  <div class="card-bimbingan mt-4">
-    <div class="card-header-custom">
-      <i class="bi bi-person-rolodex me-2"></i> Daftar Mahasiswa
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover table-bimbingan mb-0">
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>NIM</th>
-              <th>Nama Mahasiswa</th>
-              <th>Status Bimbingan</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% mahasiswaList.forEach((mhs, index) => { 
-              const bimbingan = bimbinganMap.get(mhs.id);
-              const status = bimbingan ? 'Sudah ditetapkan' : 'Belum ditetapkan';
-              const statusClass = bimbingan ? 'text-success' : 'text-warning';
-            %>
-              <tr>
-                <td class="text-center"><%= index + 1 %></td>
-                <td><%= mhs.nim %></td>
-                <td><%= mhs.nama %></td>
-                <td class="<%= statusClass %>">
-                  <i class="bi bi-<%= bimbingan ? 'check-circle-fill' : 'hourglass-split' %> me-1"></i>
-                  <%= status %>
-                 </td>
-                <td>
-                  <button class="btn-set" onclick="openModal('<%= mhs.id %>', '<%= mhs.nama %>', '<%= mhs.nim %>')">
-                    <i class="bi bi-<%= bimbingan ? 'pencil' : 'plus-circle' %> me-1"></i>
-                    <%= bimbingan ? 'Edit Bimbingan' : 'Set Bimbingan' %>
-                  </button>
-                 </td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL SET BIMBINGAN -->
-<div class="modal fade" id="bimbinganModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header modal-header-custom">
-        <h5 class="modal-title">
-          <i class="bi bi-person-badge me-2"></i>
-          <span id="modalTitle">Set Bimbingan</span>
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <form method="POST" action="/admin/bimbingan/set" id="bimbinganForm">
-        <input type="hidden" name="mahasiswaId" id="mahasiswaId">
-        <input type="hidden" name="semester" value="<%= semesterLabel %>">
-        <input type="hidden" name="tahunAjaran" value="<%= tahunAjaran %>">
-        
-        <div class="modal-body">
-          <div class="row">
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label class="form-label fw-bold">NIM</label>
-                <p class="form-control-static bg-light p-2 rounded" id="displayNim">-</p>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label class="form-label fw-bold">Nama Mahasiswa</label>
-                <p class="form-control-static bg-light p-2 rounded" id="displayNama">-</p>
-              </div>
-            </div>
-          </div>
-          
-          <div class="mb-3">
-            <label for="pembimbing1Id" class="form-label fw-bold">
-              Pembimbing 1 <span class="text-danger">*</span>
-            </label>
-            <select class="form-select" id="pembimbing1Id" name="pembimbing1Id" required>
-              <option value="">Pilih Dosen Pembimbing 1</option>
-              <% dosenList.forEach(dosen => { %>
-                <option value="<%= dosen.id %>"><%= dosen.nama %> (<%= dosen.nidn || '-' %>)</option>
-              <% }) %>
-            </select>
-            <small class="text-muted">Pembimbing utama yang akan menyetujui logbook</small>
-          </div>
-          
-          <div class="mb-3">
-            <label for="pembimbing2Id" class="form-label fw-bold">Pembimbing 2 <span class="text-muted">(Opsional)</span></label>
-            <select class="form-select" id="pembimbing2Id" name="pembimbing2Id">
-              <option value="">Pilih Dosen Pembimbing 2 (Opsional)</option>
-              <% dosenList.forEach(dosen => { %>
-                <option value="<%= dosen.id %>"><%= dosen.nama %> (<%= dosen.nidn || '-' %>)</option>
-              <% }) %>
-            </select>
-            <small class="text-muted">Pembimbing pendamping (hanya bisa melihat, tidak bisa approve)</small>
-          </div>
-        </div>
-        
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-primary">
-            <i class="bi bi-save me-2"></i>Simpan Bimbingan
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
 </div>
 
 <script>
-  let existingBimbingan = null;
-  
-  function openModal(mahasiswaId, nama, nim) {
-    document.getElementById('mahasiswaId').value = mahasiswaId;
-    document.getElementById('displayNim').textContent = nim;
-    document.getElementById('displayNama').textContent = nama;
-    document.getElementById('modalTitle').textContent = `Set Bimbingan - ${nama}`;
-    
-    // Reset form
-    document.getElementById('pembimbing1Id').value = '';
-    document.getElementById('pembimbing2Id').value = '';
-    
-    // Cek apakah sudah ada bimbingan
-    fetch(`/admin/bimbingan/api/mahasiswa/${mahasiswaId}`)
-      .then(res => res.json())
-      .then(result => {
-        if (result.success && result.data) {
-          existingBimbingan = result.data;
-          document.getElementById('modalTitle').textContent = `Edit Bimbingan - ${nama}`;
-          if (result.data.pembimbing1Id) {
-            document.getElementById('pembimbing1Id').value = result.data.pembimbing1Id;
-          }
-          if (result.data.pembimbing2Id) {
-            document.getElementById('pembimbing2Id').value = result.data.pembimbing2Id;
-          }
-        }
-      })
-      .catch(err => console.error('Error:', err));
-    
-    new bootstrap.Modal(document.getElementById('bimbinganModal')).show();
-  }
-  
-  function hapusBimbingan(id, nama) {
-    if (confirm(`Yakin ingin menghapus bimbingan untuk ${nama}?`)) {
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `/admin/bimbingan/${id}/delete`;
-      document.body.appendChild(form);
-      form.submit();
+  (function () {
+    const input = document.getElementById('cariMahasiswa');
+    const rows = document.querySelectorAll('#tabelPembimbing tbody tr[data-cari]');
+    function saring() {
+      const q = input.value.toLowerCase().trim();
+      rows.forEach(r => { r.style.display = r.getAttribute('data-cari').includes(q) ? '' : 'none'; });
     }
-  }
+    input.addEventListener('input', saring);
+    if (input.value) saring();
+  })();
 </script>
+
 
 <%- include('../../partials/footer') %>

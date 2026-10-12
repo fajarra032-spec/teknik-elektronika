@@ -10,11 +10,10 @@
   if (typeof pdkStats === 'undefined') pdkStats = [];
   if (typeof selectedSemester === 'undefined') selectedSemester = '';
   if (typeof role === 'undefined') role = null;
-  if (typeof isPembimbing1 === 'undefined') isPembimbing1 = false;
-  if (typeof isPembimbing2 === 'undefined') isPembimbing2 = false;
+  if (typeof isPembimbing === 'undefined') isPembimbing = false; // true = Dosen PA mahasiswa ini (satu-satunya pembimbing)
   if (typeof laporanList === 'undefined') laporanList = [];
   if (typeof adaLaporanYangAcc === 'undefined') adaLaporanYangAcc = false;
-  if (typeof ITEM_PEMBIMBING1 === 'undefined') ITEM_PEMBIMBING1 = [];
+  if (typeof ITEM_NILAI_LAPORAN === 'undefined') ITEM_NILAI_LAPORAN = [];
   
   // Fungsi untuk mendapatkan URL gambar dari Google Drive
   const getImageUrl = (url, size = 200) => {
@@ -157,14 +156,10 @@
     font-size: 0.85rem;
     margin-bottom: 1rem;
   }
-  .role-pembimbing2 {
+  .role-pembimbing {
     background: linear-gradient(135deg, #10b981, #34d399);
     color: white;
     box-shadow: 0 5px 15px rgba(16,185,129,0.3);
-  }
-  .role-pembimbing1 {
-    background: linear-gradient(135deg, #6c757d, #adb5bd);
-    color: white;
   }
 
   /* Filter Cards */
@@ -583,18 +578,10 @@
     </div>
   </div>
 
-  <!-- Role Badge -->
-  <% if (role === 'pembimbing1_dan_2') { %>
-    <div class="role-badge role-pembimbing2">
-      <i class="bi bi-star-fill"></i> Anda sebagai Pembimbing 1 & 2 - Anda dapat menyetujui/menolak logbook, mengisi Nilai Logbook, dan meninjau/menilai Laporan
-    </div>
-  <% } else if (isPembimbing2) { %>
-    <div class="role-badge role-pembimbing2">
-      <i class="bi bi-check-circle-fill"></i> Anda sebagai Pembimbing 2 - Anda dapat menyetujui/menolak logbook dan mengisi Nilai Logbook
-    </div>
-  <% } else if (isPembimbing1) { %>
-    <div class="role-badge role-pembimbing1">
-      <i class="bi bi-file-earmark-check-fill"></i> Anda sebagai Pembimbing 1 - Tinjau/ACC Laporan & isi Nilai Laporan di bawah. Logbook mahasiswa ditampilkan Read Only.
+  <!-- Role Badge: Dosen PA = satu-satunya pembimbing -->
+  <% if (isPembimbing) { %>
+    <div class="role-badge role-pembimbing">
+      <i class="bi bi-star-fill"></i> Anda adalah Dosen Pembimbing (Dosen PA) mahasiswa ini - Anda dapat menyetujui/menolak/mengunci logbook, meninjau &amp; meng-ACC laporan, serta mengisi Nilai Logbook dan Nilai Laporan
     </div>
   <% } %>
 
@@ -604,7 +591,7 @@
       <i class="bi bi-journal-bookmark-fill" style="color: var(--primary-start);"></i> ELK Magang
     </h4>
     <div class="btn-group">
-      <% if (isPembimbing2) { %>
+      <% if (isPembimbing) { %>
         <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/setujui-minggu" style="display:inline;"
               onsubmit="return confirm('Setujui SEMUA logbook pending mahasiswa ini dalam 7 hari terakhir<%= selectedPeriod ? ` untuk periode ${selectedPeriod.pdkKode}` : '' %> sekaligus? Catatan otomatis: \'Mahasiswa telah konsultasi dan logbook disetujui\'.');">
           <% if (selectedPeriod) { %>
@@ -689,8 +676,8 @@
     </div>
   <% } %>
 
-  <!-- Panel Kunci Logbook & Nilai Logbook (khusus Pembimbing 2) -->
-  <% if (isPembimbing2 && selectedPeriod) { %>
+  <!-- Panel Kunci Logbook & Nilai Logbook (Dosen Pembimbing/PA) -->
+  <% if (isPembimbing && selectedPeriod) { %>
     <div class="nilai-logbook-card">
       <% if (!nilaiMagang || !nilaiMagang.logbookDikunci) { %>
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -711,15 +698,15 @@
           <p class="mb-0 small text-muted">Terkunci oleh Anda pada <%= new Date(nilaiMagang.logbookDikunciAt).toLocaleDateString('id-ID') %>.</p>
         </div>
 
-        <h6 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> Nilai Logbook & Sikap (Pembimbing 2)</h6>
+        <h6 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> Nilai Logbook & Sikap</h6>
         <p class="text-muted small mb-2">Sesuai Pedoman Magang - 11 indikator (Laporan/Sikap, Pengetahuan, Presentasi Magang), tiap indikator diisi angka 0-100.</p>
         <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/nilai-logbook">
           <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
           <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
 
           <%
-            const itemsP2 = (nilaiMagang && nilaiMagang.nilaiLogbookItems) ? nilaiMagang.nilaiLogbookItems : {};
-            let kategoriP2 = null;
+            const itemsLogbook = (nilaiMagang && nilaiMagang.nilaiLogbookItems) ? nilaiMagang.nilaiLogbookItems : {};
+            let kategoriLogbook = null;
           %>
           <div class="table-responsive">
             <table class="table table-sm align-middle">
@@ -727,15 +714,15 @@
                 <tr><th style="width:60%;">Indikator</th><th style="width:40%;">Nilai (0-100)</th></tr>
               </thead>
               <tbody>
-                <% ITEM_PEMBIMBING2.forEach(it => { %>
-                  <% if (it.kategori !== kategoriP2) { kategoriP2 = it.kategori; %>
+                <% ITEM_NILAI_LOGBOOK.forEach(it => { %>
+                  <% if (it.kategori !== kategoriLogbook) { kategoriLogbook = it.kategori; %>
                     <tr class="table-light"><td colspan="2" class="fw-bold small text-uppercase text-muted"><%= it.kategori %></td></tr>
                   <% } %>
                   <tr>
                     <td><%= it.label %></td>
                     <td>
                       <input type="number" name="item[<%= it.key %>]" min="0" max="100" step="0.01" class="form-control form-control-sm"
-                             value="<%= itemsP2[it.key] !== undefined ? itemsP2[it.key] : '' %>" required style="max-width:140px;">
+                             value="<%= itemsLogbook[it.key] !== undefined ? itemsLogbook[it.key] : '' %>" required style="max-width:140px;">
                     </td>
                   </tr>
                 <% }) %>
@@ -764,10 +751,10 @@
     </div>
   <% } %>
 
-  <!-- Panel Laporan Magang & Nilai Laporan (khusus Pembimbing 1) -->
-  <% if (isPembimbing1) { %>
+  <!-- Panel Laporan Magang & Nilai Laporan (Dosen Pembimbing/PA) -->
+  <% if (isPembimbing) { %>
     <div class="nilai-logbook-card mb-3">
-      <h6 class="fw-bold mb-1"><i class="bi bi-file-earmark-check"></i> Laporan Magang (Pembimbing 1)</h6>
+      <h6 class="fw-bold mb-1"><i class="bi bi-file-earmark-check"></i> Laporan Magang</h6>
       <p class="text-muted small mb-3">Tinjau laporan yang diunggah mahasiswa, ACC atau minta revisi. Setelah minimal satu laporan di-ACC, isi Nilai Laporan di bawah.</p>
 
       <% if (!laporanList || laporanList.length === 0) { %>
@@ -778,8 +765,8 @@
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
               <div>
                 <strong>Laporan ke-<%= l.laporanKe %></strong><% if (l.judulPublik) { %>: <%= l.judulPublik %><% } %>
-                <% if (l.catatanPembimbing1) { %>
-                  <div class="small text-muted mt-1"><i class="bi bi-chat-left-text"></i> Catatan Anda: <%= l.catatanPembimbing1 %></div>
+                <% if (l.catatanPembimbing || l.catatanPembimbing1) { %>
+                  <div class="small text-muted mt-1"><i class="bi bi-chat-left-text"></i> Catatan Anda: <%= l.catatanPembimbing || l.catatanPembimbing1 %></div>
                 <% } %>
               </div>
               <span class="badge <%= l.status === 'approved' ? 'bg-success' : (l.status === 'revisi' ? 'bg-danger' : 'bg-warning text-dark') %>">
@@ -808,7 +795,7 @@
 
       <% if (adaLaporanYangAcc) { %>
         <hr>
-        <h6 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> Nilai Laporan (Pembimbing 1)</h6>
+        <h6 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> Nilai Laporan</h6>
         <p class="text-muted small mb-2">Sesuai Pedoman Magang - 13 indikator (Laporan, Pengetahuan, Presentasi Magang), tiap indikator diisi angka 0-100.</p>
         <form method="POST" action="/dosen/laporan-review/mahasiswa/<%= mahasiswa.id %>/nilai">
           <div class="mb-3">
@@ -830,7 +817,7 @@
                 <tr><th style="width:60%;">Indikator</th><th style="width:40%;">Nilai (0-100)</th></tr>
               </thead>
               <tbody>
-                <% ITEM_PEMBIMBING1.forEach(it => { %>
+                <% ITEM_NILAI_LAPORAN.forEach(it => { %>
                   <% if (it.kategori !== kategoriP1) { kategoriP1 = it.kategori; %>
                     <tr class="table-light"><td colspan="2" class="fw-bold small text-uppercase text-muted"><%= it.kategori %></td></tr>
                   <% } %>
@@ -857,7 +844,7 @@
           </div>
         </form>
         <p class="text-muted small mt-2 mb-0">
-          Rata-rata 13 indikator ini digabung dengan Nilai Logbook (Pembimbing 2) dan Nilai Pendamping Lapangan (Admin) menjadi Nilai Akhir Magang.
+          Rata-rata 13 indikator ini digabung dengan Nilai Logbook (di atas) dan Nilai Pendamping Lapangan (Admin) menjadi Nilai Akhir Magang.
         </p>
       <% } else { %>
         <div class="text-center text-muted small py-2 border-top mt-2">
@@ -901,7 +888,7 @@
             <th>Semester</th>
             <th style="text-align: center;">Gambar</th>
             <th style="text-align: center;">Status</th>
-            <% if (isPembimbing2) { %>
+            <% if (isPembimbing) { %>
               <th style="text-align: center;">Aksi</th>
             <% } %>
           </tr>
@@ -909,7 +896,7 @@
         <tbody>
           <% if (logbookList.length === 0) { %>
             <tr>
-              <td colspan="<%= isPembimbing2 ? 9 : 8 %>" class="text-center py-5">
+              <td colspan="<%= isPembimbing ? 9 : 8 %>" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <p>Belum ada logbook untuk periode ini.</p>
@@ -968,7 +955,7 @@
                     </span>
                   <% } %>
                 </td>
-                <% if (isPembimbing2) { %>
+                <% if (isPembimbing) { %>
                   <td style="text-align: center;">
                     <% if (item.status === 'pending') { %>
                       <div class="d-flex gap-2 justify-content-center">

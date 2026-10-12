@@ -414,21 +414,17 @@
       <ul>
         <li>Logbook magang wajib diisi setiap hari magang.</li>
         <li>Logbook harus mencantumkan kegiatan, lokasi, dan durasi magang.</li>
-        <li>Logbook akan diverifikasi oleh dosen pembimbing 2.</li>
+        <li>Logbook akan diverifikasi oleh Dosen PA (dosen pembimbing).</li>
       </ul>
     </div>
   </div>
 
   <!-- INFORMASI PEMBIMBING (tambahan) -->
-  <% if (pembimbing) { %>
+  <% if (pembimbing && pembimbing.pembimbing) { %>
     <div class="info-pembimbing">
       <div class="info-pembimbing-item">
         <i class="bi bi-person-badge"></i>
-        <strong>Pembimbing 1:</strong> <%= pembimbing.pembimbing1 ? pembimbing.pembimbing1.nama : '-' %>
-      </div>
-      <div class="info-pembimbing-item">
-        <i class="bi bi-person-badge"></i>
-        <strong>Pembimbing 2:</strong> <%= pembimbing.pembimbing2 ? pembimbing.pembimbing2.nama : '-' %>
+        <strong>Dosen Pembimbing (Dosen PA):</strong> <%= pembimbing.pembimbing.nama %>
       </div>
     </div>
   <% } %>

@@ -9,6 +9,7 @@ const {
   extendMagangPeriod,
   updatePerusahaanMagangPeriod
 } = require('../../models/magangPeriodModel');
+const { getPembimbingMahasiswa, isPembimbingMahasiswa } = require('../../helpers/pembimbingHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -58,32 +59,22 @@ async function getMahasiswa(userId) {
 }
 
 /**
- * Cek apakah dosen ini adalah pembimbing mahasiswa
+ * Cek apakah dosen ini adalah pembimbing mahasiswa.
+ * Pembimbing = Dosen PA mahasiswa (users.dosenPaId) - lihat helpers/pembimbingHelper.js
  */
 async function isPembimbing(dosenId, mahasiswaId) {
-  const snapshot = await db.collection('bimbingan')
-    .where('mahasiswaId', '==', mahasiswaId)
-    .where('status', '==', 'active')
-    .limit(1)
-    .get();
-  
-  if (snapshot.empty) return false;
-  const bimbingan = snapshot.docs[0].data();
-  return bimbingan.pembimbing1Id === dosenId || bimbingan.pembimbing2Id === dosenId;
+  const { isBimbingan } = await isPembimbingMahasiswa(dosenId, mahasiswaId);
+  return isBimbingan;
 }
 
 /**
- * Ambil data bimbingan mahasiswa
+ * Data pembimbing (Dosen PA) mahasiswa, bentuk { pembimbingId, pembimbingNama }
+ * atau null kalau mahasiswa belum punya Dosen PA.
  */
 async function getBimbingan(mahasiswaId) {
-  const snapshot = await db.collection('bimbingan')
-    .where('mahasiswaId', '==', mahasiswaId)
-    .where('status', '==', 'active')
-    .limit(1)
-    .get();
-  
-  if (snapshot.empty) return null;
-  return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+  const pembimbing = await getPembimbingMahasiswa(mahasiswaId);
+  if (!pembimbing) return null;
+  return { pembimbingId: pembimbing.id, pembimbingNama: pembimbing.nama };
 }
 
 /**
@@ -199,7 +190,7 @@ router.post('/start', async (req, res) => {
     // 4. Cek bimbingan mahasiswa
     const bimbingan = await getBimbingan(mahasiswaId);
     if (!bimbingan) {
-      return res.status(400).send('Mahasiswa belum memiliki dosen pembimbing');
+      return res.status(400).send('Mahasiswa belum memiliki Dosen PA (dosen pembimbing) - hubungi admin untuk menetapkannya');
     }
     
     // 5. Cek apakah sudah ada periode aktif/locked untuk PDK ini
@@ -223,10 +214,8 @@ router.post('/start', async (req, res) => {
       tanggalMulai,
       tanggalSelesai: tanggalSelesai || null,
       status: 'active',
-      pembimbing1Id: bimbingan.pembimbing1Id,
-      pembimbing1Nama: bimbingan.pembimbing1Nama,
-      pembimbing2Id: bimbingan.pembimbing2Id || null,
-      pembimbing2Nama: bimbingan.pembimbing2Nama || null,
+      pembimbingId: bimbingan.pembimbingId,
+      pembimbingNama: bimbingan.pembimbingNama,
       perusahaan: {
         nama: namaPerusahaan,
         alamat: alamatPerusahaan || '',
@@ -420,8 +409,8 @@ router.post('/:periodId/extend', async (req, res) => {
 // CATATAN: Route lama "BERI NILAI & SELESAIKAN MAGANG" (POST
 // /:periodId/complete, input satu nilaiAngka manual) SUDAH DIHAPUS.
 // Sistem ini digantikan sepenuhnya oleh alur 3-pihak di
-// helpers/nilaiMagangHelper.js (Nilai Laporan oleh Pembimbing 1, Nilai
-// Logbook oleh Pembimbing 2 setelah kunci logbook, Nilai Pendamping
+// helpers/nilaiMagangHelper.js (Nilai Laporan & Nilai
+// Logbook oleh Dosen PA setelah kunci logbook, Nilai Pendamping
 // Lapangan oleh Admin), yang dikunci ke grades/KHS lewat
 // kunciNilaiMagangKeGrades() di routes/admin/emagang.js. Route lama
 // tidak mengecek ACC laporan maupun kunci logbook, dan menimpa nilai

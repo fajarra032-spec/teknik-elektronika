@@ -40,25 +40,17 @@ async function getMahasiswaInfo(userId) {
   }
 }
 
+// Pembimbing magang = Dosen PA mahasiswa (users.dosenPaNama) - Pembimbing 1 & 2 ditiadakan.
 async function getPembimbingMahasiswa(mahasiswaId) {
   if (cache.pembimbing.has(mahasiswaId)) return cache.pembimbing.get(mahasiswaId);
   try {
-    const snapshot = await db.collection('bimbingan')
-      .where('mahasiswaId', '==', mahasiswaId)
-      .where('status', '==', 'active')
-      .limit(1)
-      .get();
-    let pembimbing1 = '-', pembimbing2 = '-';
-    if (!snapshot.empty) {
-      const data = snapshot.docs[0].data();
-      pembimbing1 = data.pembimbing1Nama || '-';
-      pembimbing2 = data.pembimbing2Nama || '-';
-    }
-    const result = { pembimbing1, pembimbing2 };
+    const doc = await db.collection('users').doc(mahasiswaId).get();
+    const pembimbing = (doc.exists && doc.data().dosenPaNama) || '-';
+    const result = { pembimbing };
     setCache(cache.pembimbing, mahasiswaId, result);
     return result;
   } catch {
-    return { pembimbing1: '-', pembimbing2: '-' };
+    return { pembimbing: '-' };
   }
 }
 
@@ -115,7 +107,7 @@ router.get('/', async (req, res) => {
       const imageUrls = data.imageUrls || [];
       if (imageUrls.length === 0) continue;
       const { nama, nim } = await getMahasiswaInfo(data.userId);
-      const { pembimbing1, pembimbing2 } = await getPembimbingMahasiswa(data.userId);
+      const { pembimbing } = await getPembimbingMahasiswa(data.userId);
       const progress = await getProgressMagangHarian(data.userId, data.pdkId);
       for (const rawUrl of imageUrls) {
         let imageUrl = rawUrl;
@@ -131,8 +123,7 @@ router.get('/', async (req, res) => {
           tanggal: data.tanggal ? new Date(data.tanggal).toLocaleDateString('id-ID') : '-',
           lokasi: data.lokasi || '',
           perusahaan: data.perusahaan?.nama || '-',
-          pembimbing1,
-          pembimbing2,
+          pembimbing,
           progressUploaded: progress.uploadedDays,
           progressTotal: progress.totalDays,
           progressPercent: progress.percentage
@@ -149,8 +140,7 @@ router.get('/', async (req, res) => {
         tanggal: '-',
         lokasi: '-',
         perusahaan: '-',
-        pembimbing1: '-',
-        pembimbing2: '-',
+        pembimbing: '-',
         progressUploaded: 0,
         progressTotal: 0,
         progressPercent: 0

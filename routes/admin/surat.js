@@ -747,7 +747,7 @@ router.post('/create-tugas', upload.none(), async (req, res) => {
 // ============================================================================
 // FITUR ADMIN: Kirim Undangan Seminar/Presentasi Hasil Magang ke Mahasiswa
 // Admin pilih 1 mahasiswa yang sedang magang aktif, isi jadwal presentasi,
-// dan sistem otomatis generate PDF (4 salinan: 2 pembimbing magang + Wadir I
+// dan sistem otomatis generate PDF (3 salinan: dosen pembimbing magang/Dosen PA + Wadir I
 // + PPMA) lalu langsung tersimpan sebagai surat 'completed' milik mahasiswa
 // tsb - otomatis muncul di halaman "Daftar Surat" mahasiswa (collection
 // 'surat' yang sama dipakai fitur persuratan lain), tanpa perlu ubah apapun
@@ -777,8 +777,8 @@ router.get('/undangan-magang/create', async (req, res) => {
           nama: mhs.nama || '-',
           nim: mhs.nim || '-',
           perusahaan: (period.perusahaan && period.perusahaan.nama) || '',
-          pembimbing1Nama: period.pembimbing1Nama || '',
-          pembimbing2Nama: period.pembimbing2Nama || ''
+          // data lama masih punya pembimbing1Nama; periode baru pakai pembimbingNama (Dosen PA)
+          pembimbingNama: period.pembimbingNama || period.pembimbing1Nama || ''
         };
       })
       .filter(Boolean)
@@ -804,22 +804,20 @@ router.post('/undangan-magang/create', upload.none(), async (req, res) => {
       tanggalAcara, waktu, tempatAcara,
       kepada1Nama, kepada1Jabatan,
       kepada2Nama, kepada2Jabatan,
-      kepada3Nama, kepada3Jabatan,
-      kepada4Nama, kepada4Jabatan
+      kepada3Nama, kepada3Jabatan
     } = req.body;
 
     if (!mahasiswaId || !nomorSurat || !tanggalAcara || !waktu || !tempatAcara || !perusahaanMagang) {
       return res.status(400).send('Mahasiswa, nomor surat, tanggal, waktu, tempat, dan perusahaan magang wajib diisi');
     }
-    // Surat undangan ini harus terbit 4 rangkap (2 dosen pembimbing magang +
-    // Wadir I + PPMA) - jadi ke-4 nama penerima WAJIB terisi. Sebelumnya
-    // hanya Penerima 1 yang divalidasi wajib, akibatnya kalau admin lupa
-    // isi nama Penerima 3/4 (cuma placeholder abu-abu, bukan nilai asli),
-    // suratnya diam-diam cuma terbit 2-3 rangkap tanpa pemberitahuan.
-    const namaPenerimaWajib = { 1: kepada1Nama, 2: kepada2Nama, 3: kepada3Nama, 4: kepada4Nama };
+    // Surat undangan ini terbit 3 rangkap (Dosen Pembimbing magang = Dosen PA
+    // + Wadir I + PPMA) - jadi ke-3 nama penerima WAJIB terisi, supaya surat
+    // tidak diam-diam terbit kurang rangkap kalau admin lupa mengisi.
+    // (REVISI: dulu 4 rangkap karena ada Pembimbing 1 & 2; sekarang hanya 1 pembimbing.)
+    const namaPenerimaWajib = { 1: kepada1Nama, 2: kepada2Nama, 3: kepada3Nama };
     const penerimaKosong = Object.entries(namaPenerimaWajib).filter(([, v]) => !v || v.trim() === '').map(([k]) => k);
     if (penerimaKosong.length > 0) {
-      return res.status(400).send(`Nama Penerima ${penerimaKosong.join(', ')} masih kosong. Surat undangan wajib 4 rangkap (2 dosen pembimbing, Wadir I, PPMA) - lengkapi semua nama penerima terlebih dahulu.`);
+      return res.status(400).send(`Nama Penerima ${penerimaKosong.join(', ')} masih kosong. Surat undangan wajib 3 rangkap (Dosen Pembimbing/Dosen PA, Wadir I, PPMA) - lengkapi semua nama penerima terlebih dahulu.`);
     }
 
     const mahasiswa = await getMahasiswa(mahasiswaId);
@@ -827,13 +825,11 @@ router.post('/undangan-magang/create', upload.none(), async (req, res) => {
       return res.status(404).send('Data mahasiswa tidak lengkap/tidak ditemukan');
     }
 
-    // Hanya masukkan penerima yang namanya diisi - admin boleh kirim ke
-    // kurang dari 4 penerima kalau memang tidak semua relevan
+    // Hanya masukkan penerima yang namanya diisi
     const calonTembusan = [
       { nama: kepada1Nama, jabatan: kepada1Jabatan },
       { nama: kepada2Nama, jabatan: kepada2Jabatan },
-      { nama: kepada3Nama, jabatan: kepada3Jabatan },
-      { nama: kepada4Nama, jabatan: kepada4Jabatan }
+      { nama: kepada3Nama, jabatan: kepada3Jabatan }
     ];
     const tembusanList = calonTembusan.filter(t => t.nama && t.nama.trim() !== '');
 

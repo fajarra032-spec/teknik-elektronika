@@ -5,9 +5,9 @@
  * Dilengkapi kompresi gambar (sharp) dan penyimpanan fileId.
  *
  * REVISI:
- * - Pembimbing ditetapkan oleh admin (2 pembimbing: Pembimbing 1 dan Pembimbing 2)
- * - Mahasiswa tidak bisa memilih pembimbing sendiri
- * - Logbook & laporan menyimpan kedua pembimbing
+ * - Pembimbing magang = Dosen PA mahasiswa (hanya satu; Pembimbing 1 & 2 ditiadakan)
+ * - Mahasiswa tidak bisa memilih pembimbing sendiri (mengikuti Dosen PA)
+ * - Logbook & laporan menyimpan Dosen PA sebagai pembimbing
  * - FITUR: PDK 1,2,3 dengan periode magang fleksibel
  * - FITUR: Arsip logbook untuk PDK yang sudah selesai
  * - FITUR: Ulasan perusahaan setelah magang selesai
@@ -25,6 +25,17 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { getPembimbingMahasiswa: getPembimbingDosenPa } = require('../../helpers/pembimbingHelper');
+const {
+  calculateProgress,
+  groupLogbookByMinggu,
+  groupKehadiranByBulan,
+  getMasukanByPeriod,
+  extractTahunAjaran,
+  generateKodeValidasi,
+  JAM_MASUK_DEFAULT,
+  buildLogbookPrintData
+} = require('../../helpers/logbookPrintHelper');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
@@ -49,196 +60,6 @@ const upload = multer({ storage: multer.memoryStorage() });
 const DATA_WEB_FOLDER_ID = '17Z02_5zOImG1GYfi_5gvWL97-p6dW5t0';
 
 router.use(verifyToken);
-
-// ============================================================================
-// FUNGSI BANTU PROGRES
-// ============================================================================
-
-function calculateProgress(totalLogbook, startDate, endDate, defaultDays = 120) {
-  let totalDays = defaultDays;
-
-  if (startDate && endDate) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end - start);
-    totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-  } else if (startDate) {
-    totalDays = defaultDays;
-  }
-
-  const percentage = Math.min(100, Math.round((totalLogbook / totalDays) * 100));
-
-  return {
-    totalLogbook,
-    totalDays,
-    percentage
-  };
-}
-
-// ============================================================================
-// FUNGSI BANTU PENGELOMPOKAN LOGBOOK PER MINGGU / BULAN (Lampiran 2 Panduan)
-// ============================================================================
-
-/**
- * Menghitung "Minggu Ke" dan "Bulan Ke" suatu tanggal entri berdasarkan
- * tanggal mulai periode magang (mengikuti format resmi Lampiran 2).
- */
-function getMingguBulanKe(tanggalMulai, tanggalEntry) {
-  if (!tanggalMulai || !tanggalEntry) return { mingguKe: 1, bulanKe: 1 };
-
-  const start = new Date(tanggalMulai);
-  const entry = new Date(tanggalEntry);
-  const diffDays = Math.floor((entry - start) / (1000 * 60 * 60 * 24));
-
-  if (diffDays < 0) return { mingguKe: 1, bulanKe: 1 };
-
-  const mingguKe = Math.floor(diffDays / 7) + 1;
-  const bulanKe = Math.floor(diffDays / 30) + 1;
-
-  return { mingguKe, bulanKe };
-}
-
-/**
- * Mengelompokkan daftar logbook menjadi array grup per minggu,
- * masing-masing berisi entries, rentang tanggal, total durasi, dan mingguKe/bulanKe.
- * @param {Array} logbook - daftar logbook (sudah terurut ascending berdasarkan tanggal disarankan)
- * @param {string} tanggalMulai - tanggal mulai periode magang
- * @returns {Array} groups terurut berdasarkan mingguKe
- */
-function groupLogbookByMinggu(logbook, tanggalMulai) {
-  const groups = {};
-
-  logbook.forEach((item) => {
-    const { mingguKe, bulanKe } = getMingguBulanKe(tanggalMulai, item.tanggal);
-    const key = mingguKe;
-
-    if (!groups[key]) {
-      groups[key] = {
-        mingguKe,
-        bulanKe,
-        entries: [],
-        tanggalAwal: item.tanggal,
-        tanggalAkhir: item.tanggal,
-        totalDurasi: 0
-      };
-    }
-
-    groups[key].entries.push(item);
-    groups[key].totalDurasi += parseFloat(item.durasi) || 0;
-
-    if (new Date(item.tanggal) < new Date(groups[key].tanggalAwal)) {
-      groups[key].tanggalAwal = item.tanggal;
-    }
-    if (new Date(item.tanggal) > new Date(groups[key].tanggalAkhir)) {
-      groups[key].tanggalAkhir = item.tanggal;
-    }
-  });
-
-  return Object.values(groups).sort((a, b) => a.mingguKe - b.mingguKe);
-}
-
-// ============================================================================
-// FUNGSI BANTU DAFTAR HADIR MAGANG (Lampiran Formulir Daftar Hadir Magang)
-// ============================================================================
-
-const JAM_MASUK_DEFAULT = '09.00';
-
-/**
- * Menambahkan durasi jam (bisa desimal, misal 5 atau 4.5) ke jam mulai
- * berformat "HH.MM", mengembalikan jam selesai dengan format yang sama.
- * Contoh: addDurationToTime('09.00', 5) => '14.00'
- */
-function addDurationToTime(jamMulai, durasiJam) {
-  const jam = (jamMulai || JAM_MASUK_DEFAULT).replace(',', '.');
-  const [hStr, mStr] = jam.split('.');
-  const h = parseInt(hStr, 10) || 0;
-  const m = parseInt(mStr, 10) || 0;
-
-  const totalMenit = (h * 60 + m) + Math.round((parseFloat(durasiJam) || 0) * 60);
-  const newH = Math.floor(totalMenit / 60) % 24;
-  const newM = totalMenit % 60;
-
-  return `${String(newH).padStart(2, '0')}.${String(newM).padStart(2, '0')}`;
-}
-
-function getNamaHariId(dateStr) {
-  const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'];
-  return hari[new Date(dateStr).getDay()];
-}
-
-/**
- * Mengelompokkan logbook menjadi rekap Daftar Hadir per bulan kalender,
- * masing-masing berisi seluruh tanggal 1..akhir bulan (mengikuti format
- * resmi formulir Daftar Hadir Magang Mahasiswa). Tanggal yang punya entri
- * logbook otomatis diisi Jam Datang (default 09.00), Jam Pulang (dihitung
- * dari durasi logbook hari itu), dan Keterangan "Hadir". Tanggal tanpa
- * entri logbook dibiarkan kosong untuk diisi/ditandatangani manual.
- * @param {Array} logbook
- * @param {string} jamMasuk - jam datang standar, format 'HH.MM', default '09.00'
- * @returns {Array} groups terurut berdasarkan tahun & bulan
- */
-function groupKehadiranByBulan(logbook, jamMasuk = JAM_MASUK_DEFAULT) {
-  const map = {};
-
-  logbook.forEach((item) => {
-    const d = new Date(item.tanggal);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-
-    if (!map[key]) {
-      const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-      map[key] = {
-        year: d.getFullYear(),
-        month: d.getMonth() + 1,
-        monthLabel: d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
-        daysInMonth,
-        entriesByTanggal: {}
-      };
-    }
-
-    const tanggalNum = d.getDate();
-    const jamPulang = addDurationToTime(jamMasuk, item.durasi);
-
-    const existing = map[key].entriesByTanggal[tanggalNum];
-    if (!existing) {
-      map[key].entriesByTanggal[tanggalNum] = {
-        tanggal: item.tanggal,
-        jamDatang: jamMasuk,
-        jamPulang,
-        totalDurasi: parseFloat(item.durasi) || 0,
-        keterangan: 'Hadir'
-      };
-    } else {
-      existing.totalDurasi += parseFloat(item.durasi) || 0;
-      existing.jamPulang = addDurationToTime(jamMasuk, existing.totalDurasi);
-    }
-  });
-
-  return Object.values(map).sort((a, b) => (a.year - b.year) || (a.month - b.month));
-}
-
-/**
- * Mengambil seluruh data masukan/saran (dosen pembimbing & pendamping lapangan)
- * untuk satu periode magang, dari koleksi `masukanLogbook`.
- * Struktur dokumen: { periodId, mingguKe, tipe: 'pendamping'|'pembimbing1'|'pembimbing2', isi, penulis, updatedAt }
- * Key pada map yang dikembalikan: `${mingguKe}_${tipe}`
- */
-async function getMasukanByPeriod(periodId) {
-  try {
-    const snapshot = await db.collection('masukanLogbook')
-      .where('periodId', '==', periodId)
-      .get();
-
-    const map = {};
-    snapshot.docs.forEach((doc) => {
-      const d = doc.data();
-      map[`${d.mingguKe}_${d.tipe}`] = d;
-    });
-    return map;
-  } catch (error) {
-    console.error('Error getMasukanByPeriod:', error);
-    return {};
-  }
-}
 
 // ============================================================================
 // FUNGSI BANTU UMUM
@@ -268,75 +89,20 @@ function getAngkatanFromNim(nim) {
   return '20' + nim.substring(0,2);
 }
 
-function extractTahunAjaran(semesterLabel) {
-  const match = semesterLabel.match(/\d{4}\/\d{4}/);
-  return match ? match[0] : new Date().getFullYear() + '/' + (new Date().getFullYear() + 1);
-}
-
-// ============================================================================
-// FUNGSI BANTU KODE VALIDASI
-// ============================================================================
-
-/**
- * Generate kode validasi unik untuk setiap cetakan logbook.
- * Menggunakan hash SHA-256 dari userId + timestamp + secret key.
- * @param {string} userId - ID mahasiswa
- * @returns {string} Kode validasi 12 karakter (huruf besar & angka)
- */
-function generateKodeValidasi(userId) {
-  const raw = `${userId}_${Date.now()}_${process.env.SECRET_KEY || 'polidewa'}`;
-  return crypto.createHash('sha256').update(raw).digest('hex').substring(0, 12).toUpperCase();
-}
 
 // ============================================================================
 // FUNGSI BANTU PEMBIMBING
 // ============================================================================
 
+/**
+ * Pembimbing magang = Dosen PA mahasiswa (users.dosenPaId).
+ * Mengembalikan { pembimbing: {id, nama, nuptk} } atau null kalau belum punya Dosen PA.
+ * (Pembimbing 1 & 2 ditiadakan.)
+ */
 async function getPembimbingMahasiswa(mahasiswaId) {
-  try {
-    const snapshot = await db.collection('bimbingan')
-      .where('mahasiswaId', '==', mahasiswaId)
-      .where('status', '==', 'active')
-      .limit(1)
-      .get();
-
-    if (snapshot.empty) return null;
-
-    const bimbingan = snapshot.docs[0].data();
-
-    let pembimbing1 = null;
-    if (bimbingan.pembimbing1Id) {
-      const dosenDoc = await db.collection('dosen').doc(bimbingan.pembimbing1Id).get();
-      const dosenData = dosenDoc.exists ? dosenDoc.data() : {}; // <-- DEFINISIKAN DI SINI
-      pembimbing1 = {
-        id: bimbingan.pembimbing1Id,
-        nama: dosenData.nama || bimbingan.pembimbing1Nama || '-',
-        nuptk: dosenData.nuptk || dosenData.nip || dosenData.nidn || '-'
-      };
-    }
-
-    let pembimbing2 = null;
-    if (bimbingan.pembimbing2Id) {
-      const dosenDoc = await db.collection('dosen').doc(bimbingan.pembimbing2Id).get();
-      const dosenData = dosenDoc.exists ? dosenDoc.data() : {}; // <-- DEFINISIKAN DI SINI
-      pembimbing2 = {
-        id: bimbingan.pembimbing2Id,
-        nama: dosenData.nama || bimbingan.pembimbing2Nama || '-',
-        nuptk: dosenData.nuptk || dosenData.nip || dosenData.nidn || '-'
-      };
-    }
-
-    return {
-      pembimbing1,
-      pembimbing2,
-      bimbinganId: snapshot.docs[0].id,
-      semester: bimbingan.semester,
-      tahunAjaran: bimbingan.tahunAjaran
-    };
-  } catch (error) {
-    console.error('Error getPembimbingMahasiswa:', error);
-    return null;
-  }
+  const pembimbing = await getPembimbingDosenPa(mahasiswaId);
+  if (!pembimbing) return null;
+  return { pembimbing };
 }
 
 // ============================================================================
@@ -777,8 +543,8 @@ router.post('/logbook', upload.array('images', 5), async (req, res) => {
     }
 
     const pembimbing = await getPembimbingMahasiswa(req.user.id);
-    if (!pembimbing || !pembimbing.pembimbing1) {
-      return res.status(400).send('Anda belum memiliki dosen pembimbing');
+    if (!pembimbing) {
+      return res.status(400).send('Anda belum memiliki Dosen PA (dosen pembimbing). Hubungi admin untuk penetapan Dosen PA.');
     }
 
     const nim = req.user.nim;
@@ -822,10 +588,8 @@ router.post('/logbook', upload.array('images', 5), async (req, res) => {
       imageFileIds,
       status: 'pending',
       createdAt: new Date().toISOString(),
-      pembimbing1Id: pembimbing.pembimbing1.id,
-      pembimbing1Nama: pembimbing.pembimbing1.nama,
-      pembimbing2Id: pembimbing.pembimbing2 ? pembimbing.pembimbing2.id : null,
-      pembimbing2Nama: pembimbing.pembimbing2 ? pembimbing.pembimbing2.nama : null
+      pembimbingId: pembimbing.pembimbing.id,
+      pembimbingNama: pembimbing.pembimbing.nama
     });
 
     logbookSemesterCache.delete(req.user.id); // logbook baru -> cache daftar semester (dosen) bisa basi
@@ -988,79 +752,10 @@ router.get('/arsip/:periodId', async (req, res) => {
 router.get('/logbook-print', async (req, res) => {
   try {
     const { periodId } = req.query;
-
-    let period = null;
-    let logbook = [];
-
-    if (periodId) {
-      period = await getMagangPeriodById(periodId);
-      if (period && period.mahasiswaId === req.user.id) {
-        const snapshot = await db.collection('logbookMagang')
-          .where('userId', '==', req.user.id)
-          .where('pdkId', '==', period.pdkId)
-          .orderBy('tanggal', 'asc')
-          .get();
-        logbook = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      }
-    }
-
-    // Generate kode validasi untuk cetakan ini
-    const kodeValidasi = generateKodeValidasi(req.user.id);
-
-    const mahasiswaDoc = await db.collection('users').doc(req.user.id).get();
-    const mahasiswa = mahasiswaDoc.exists ? mahasiswaDoc.data() : { nama: req.user.nama, nim: req.user.nim };
-    const pembimbing = await getPembimbingMahasiswa(req.user.id);
-    const totalDurasi = logbook.reduce((sum, item) => sum + (parseFloat(item.durasi) || 0), 0);
-
-    // === Prodi & Semester (Panduan Lampiran 2) ===
-    const prodi = 'Teknik Elektronika';
-    const semester = (period && period.semester) || (pembimbing && pembimbing.semester) || '-';
-
-    // === Pengelompokan per Minggu Ke / Bulan Ke (Panduan Lampiran 2) ===
-    const mingguGroups = period ? groupLogbookByMinggu(logbook, period.tanggalMulai) : [];
-
-    // === Masukan/Saran Pendamping Lapangan & Dosen Pembimbing per minggu ===
-    const masukanMap = period ? await getMasukanByPeriod(period.id) : {};
-
-    // === Daftar Hadir Magang (otomatis dari logbook: jam datang default,
-    //     jam pulang = jam datang + durasi logbook hari itu) ===
-    const jamMasuk = (period && period.jamMasuk) || JAM_MASUK_DEFAULT;
-    const kehadiranGroups = groupKehadiranByBulan(logbook, jamMasuk);
-    const tahunAjaran = period ? extractTahunAjaran(period.semester || semester || '') : '-';
-
-    // Hitung progress
-    let progress = null;
-    if (period) {
-      const totalLogbook = logbook.length;
-      progress = calculateProgress(
-        totalLogbook,
-        period.tanggalMulai,
-        period.tanggalSelesai,
-        120 // default durasi magang dalam hari
-      );
-    }
-
-
-    res.render('mahasiswa/magang/print', {
-      title: 'Cetak Logbook',
-      mahasiswa,
-      prodi,
-      semester,
-      logbook,
-      mingguGroups,
-      masukanMap,
-      kehadiranGroups,
-      jamMasuk,
-      tahunAjaran,
-      totalDurasi,
-      totalEntries: logbook.length,
-      generatedAt: new Date().toLocaleString('id-ID'),
-      pembimbing,
-      kodeValidasi, 
-      pdkInfo: period,
-      progress, // <--
-      user: req.user
-    });
+    // Mahasiswa hanya boleh mencetak logbook miliknya sendiri
+    const data = await buildLogbookPrintData(req.user.id, periodId);
+    if (!data) return res.status(404).send('Data mahasiswa tidak ditemukan');
+    res.render('mahasiswa/magang/print', { ...data, user: req.user });
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('Gagal mencetak logbook');
@@ -1240,8 +935,8 @@ router.post('/laporan/upload', upload.single('file'), async (req, res) => {
     if (file.mimetype !== 'application/pdf') return res.status(400).send('Laporan magang harus dalam format PDF');
 
     const pembimbing = await getPembimbingMahasiswa(req.user.id);
-    if (!pembimbing || !pembimbing.pembimbing1) {
-      return res.status(400).send('Anda belum memiliki dosen pembimbing');
+    if (!pembimbing) {
+      return res.status(400).send('Anda belum memiliki Dosen PA (dosen pembimbing). Hubungi admin untuk penetapan Dosen PA.');
     }
 
     const userId = req.user.id;
@@ -1275,10 +970,8 @@ router.post('/laporan/upload', upload.single('file'), async (req, res) => {
       uploadedAt: new Date().toISOString(),
       status: 'submitted',
       komentar: [],
-      pembimbing1Id: pembimbing.pembimbing1.id,
-      pembimbing1Nama: pembimbing.pembimbing1.nama,
-      pembimbing2Id: pembimbing.pembimbing2 ? pembimbing.pembimbing2.id : null,
-      pembimbing2Nama: pembimbing.pembimbing2 ? pembimbing.pembimbing2.nama : null
+      pembimbingId: pembimbing.pembimbing.id,
+      pembimbingNama: pembimbing.pembimbing.nama
     });
 
     res.redirect('/mahasiswa/magang/laporan');
@@ -1359,14 +1052,14 @@ router.get('/seminar/baru', async (req, res) => {
 
 router.post('/seminar', async (req, res) => {
   try {
-    const { judul, tanggal, waktu, tempat, pembimbing1, pembimbing2, penguji } = req.body;
+    const { judul, tanggal, waktu, tempat, penguji } = req.body;
     if (!judul || !tanggal || !waktu || !tempat) {
       return res.status(400).send('Judul, tanggal, waktu, dan tempat wajib diisi');
     }
 
     const pembimbing = await getPembimbingMahasiswa(req.user.id);
-    const defaultPembimbing1 = pembimbing?.pembimbing1?.nama || '';
-    const defaultPembimbing2 = pembimbing?.pembimbing2?.nama || pembimbing2 || '';
+    // Pembimbing seminar SELALU Dosen PA mahasiswa (tidak diisi manual dari form)
+    const namaPembimbing = pembimbing?.pembimbing?.nama || '';
 
     await db.collection('permohonanMagang').add({
       userId: req.user.id,
@@ -1376,8 +1069,7 @@ router.post('/seminar', async (req, res) => {
       tanggal: new Date(tanggal).toISOString(),
       waktu,
       tempat,
-      pembimbing1: pembimbing1 || defaultPembimbing1,
-      pembimbing2: defaultPembimbing2,
+      pembimbing: namaPembimbing,
       penguji: penguji || '',
       status: 'pending',
       createdAt: new Date().toISOString(),

@@ -383,8 +383,7 @@
             </div>
             <div class="info-row">
                 <span class="info-label"><i class="fas fa-chalkboard-teacher"></i> Dosen Pembimbing</span>
-                <span class="info-value" id="slidePembimbing1">-</span>
-                <span class="info-value" id="slidePembimbing2">-</span>
+                <span class="info-value" id="slidePembimbing">-</span>
             </div>
 
             <div class="progress-wrapper">
@@ -644,8 +643,7 @@
       document.getElementById('slideNama').innerText = data.mahasiswa || '-';
       document.getElementById('slideNim').innerText = data.nim || '-';
       document.getElementById('slidePerusahaan').innerText = data.perusahaan || '-';
-      document.getElementById('slidePembimbing1').innerText = `1. ${data.pembimbing1 || '-'}`;
-      document.getElementById('slidePembimbing2').innerText = `2. ${data.pembimbing2 || '-'}`;
+      document.getElementById('slidePembimbing').innerText = data.pembimbing || '-';
       document.getElementById('slideKegiatan').innerText = data.caption || '-';
 
       const percent = data.progressPercent || 0;
