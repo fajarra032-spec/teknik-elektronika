@@ -9,7 +9,9 @@
  *   - ringkasan: jumlah mahasiswa per status, yang sedang magang, dan yang
  *     MENUNGGU tindakan Anda (logbook pending, laporan belum ditinjau),
  *   - filter status (Aktif/Cuti/Keluar/Lulus), pencarian, dan "perlu ditindak",
- *   - tombol langsung ke Logbook, Laporan, dan Cetak Logbook tiap mahasiswa.
+ *   - tombol langsung ke Logbook, Laporan, dan Cetak Logbook tiap mahasiswa,
+ *   - LEMBAR KONSULTASI bimbingan akademik tiap mahasiswa (catat, ubah, hapus,
+ *     cetak) - lihat bagian bawah file ini.
  *
  * Mahasiswa Cuti/Keluar tetap TAMPIL di sini (mereka tetap bimbingan PA
  * Anda) tetapi tidak ikut info magang & tombol aksi.
@@ -23,6 +25,16 @@ const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { isTidakIkutKegiatan } = require('../../helpers/statusMahasiswaHelper');
+const { isPembimbingMahasiswa } = require('../../helpers/pembimbingHelper');
+const {
+  COLLECTION: KONSULTASI,
+  KATEGORI,
+  BATAS,
+  getKonsultasiMahasiswa,
+  bersihkanInput,
+  labelSemesterBerjalan,
+  buildPrintData
+} = require('../../helpers/konsultasiPaHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -98,6 +110,27 @@ async function getInfoMagang(ids) {
   return info;
 }
 
+/** Jumlah & tanggal konsultasi terakhir per mahasiswa (batch 'in', 1 filter -> tanpa index baru). */
+async function getRingkasanKonsultasi(ids) {
+  const out = new Map();
+  ids.forEach(id => out.set(id, { jumlah: 0, terakhir: '' }));
+  try {
+    for (const c of chunk(ids, 10)) {
+      const snap = await db.collection(KONSULTASI).where('mahasiswaId', 'in', c).get();
+      snap.docs.forEach(d => {
+        const k = d.data();
+        const row = out.get(k.mahasiswaId);
+        if (!row) return;
+        row.jumlah += 1;
+        if (String(k.tanggal || '') > row.terakhir) row.terakhir = String(k.tanggal || '');
+      });
+    }
+  } catch (err) {
+    console.error('Mahasiswa PA - gagal baca ringkasan konsultasi:', err.message);
+  }
+  return out;
+}
+
 router.get('/', async (req, res) => {
   try {
     const dosenId = req.dosen.id;
@@ -119,6 +152,7 @@ router.get('/', async (req, res) => {
       .filter(m => !isTidakIkutKegiatan(m) && m.statusMahasiswa !== 'Lulus')
       .map(m => m.id);
     const infoMagang = await getInfoMagang(idBolehMagang);
+    const ringkasanKonsultasi = await getRingkasanKonsultasi(semua.map(m => m.id));
 
     const daftar = semua.map(m => {
       const info = infoMagang.get(m.id) || null;
@@ -127,6 +161,7 @@ router.get('/', async (req, res) => {
         statusTampil: m.statusMahasiswa || 'Aktif',
         bolehAksi: !isTidakIkutKegiatan(m),
         magang: info,
+        konsultasi: ringkasanKonsultasi.get(m.id) || { jumlah: 0, terakhir: '' },
         perluDitindak: !!info && (info.logbookPending > 0 || info.laporanMenunggu > 0)
       };
     });
@@ -169,6 +204,133 @@ router.get('/', async (req, res) => {
       title: 'Error',
       message: 'Gagal memuat daftar mahasiswa bimbingan akademik'
     });
+  }
+});
+
+// ============================================================================
+// LEMBAR KONSULTASI BIMBINGAN AKADEMIK
+// Hanya Dosen PA dari mahasiswa tsb yang boleh melihat/mencatat/mengubah/
+// menghapus. Mahasiswa melihat sendiri lewat /mahasiswa/konsultasi-pa.
+// ============================================================================
+
+/** Pastikan dosen ini Dosen PA mahasiswa; kembalikan dokumen mahasiswa atau null (respon sudah dikirim). */
+async function pastikanDosenPa(req, res) {
+  const mahasiswaId = req.params.id;
+  const { isBimbingan } = await isPembimbingMahasiswa(req.dosen.id, mahasiswaId);
+  if (!isBimbingan) {
+    res.status(403).render('error', { title: 'Akses Ditolak', message: 'Anda bukan Dosen PA mahasiswa ini.' });
+    return null;
+  }
+  const doc = await db.collection('users').doc(mahasiswaId).get();
+  if (!doc.exists) {
+    res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Data mahasiswa tidak ditemukan.' });
+    return null;
+  }
+  return { id: doc.id, ...doc.data() };
+}
+
+const PESAN_OK = {
+  tambah: 'Konsultasi berhasil dicatat.',
+  ubah: 'Konsultasi berhasil diperbarui.',
+  hapus: 'Konsultasi berhasil dihapus.'
+};
+
+router.get('/:id/konsultasi', async (req, res) => {
+  try {
+    const mahasiswa = await pastikanDosenPa(req, res);
+    if (!mahasiswa) return;
+    const daftar = (await getKonsultasiMahasiswa(mahasiswa.id)).reverse(); // terbaru di atas
+    res.render('dosen/konsultasi_pa', {
+      title: `Lembar Konsultasi - ${mahasiswa.nama}`,
+      mahasiswa,
+      daftar,
+      KATEGORI,
+      BATAS,
+      hariIni: new Date().toISOString().slice(0, 10),
+      sukses: PESAN_OK[req.query.ok] || '',
+      galat: req.query.err ? String(req.query.err).slice(0, 200) : ''
+    });
+  } catch (error) {
+    console.error('Error memuat lembar konsultasi:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat lembar konsultasi' });
+  }
+});
+
+router.post('/:id/konsultasi', async (req, res) => {
+  try {
+    const mahasiswa = await pastikanDosenPa(req, res);
+    if (!mahasiswa) return;
+    const hasil = bersihkanInput(req.body);
+    const base = `/dosen/mahasiswa-pa/${mahasiswa.id}/konsultasi`;
+    if (hasil.error) return res.redirect(`${base}?err=${encodeURIComponent(hasil.error)}`);
+
+    const now = new Date().toISOString();
+    await db.collection(KONSULTASI).add({
+      ...hasil.data,
+      mahasiswaId: mahasiswa.id,
+      dosenId: req.dosen.id,
+      dosenNama: req.dosen.nama || '',
+      semester: labelSemesterBerjalan(),
+      createdAt: now,
+      updatedAt: now
+    });
+    res.redirect(`${base}?ok=tambah`);
+  } catch (error) {
+    console.error('Error menambah konsultasi:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal menyimpan konsultasi' });
+  }
+});
+
+/** Ambil dokumen konsultasi & pastikan memang milik mahasiswa di URL. */
+async function ambilKonsultasi(mahasiswaId, kid) {
+  const ref = db.collection(KONSULTASI).doc(kid);
+  const doc = await ref.get();
+  if (!doc.exists || doc.data().mahasiswaId !== mahasiswaId) return null;
+  return ref;
+}
+
+router.post('/:id/konsultasi/:kid/update', async (req, res) => {
+  try {
+    const mahasiswa = await pastikanDosenPa(req, res);
+    if (!mahasiswa) return;
+    const base = `/dosen/mahasiswa-pa/${mahasiswa.id}/konsultasi`;
+    const ref = await ambilKonsultasi(mahasiswa.id, req.params.kid);
+    if (!ref) return res.redirect(`${base}?err=${encodeURIComponent('Data konsultasi tidak ditemukan.')}`);
+    const hasil = bersihkanInput(req.body);
+    if (hasil.error) return res.redirect(`${base}?err=${encodeURIComponent(hasil.error)}`);
+    await ref.update({ ...hasil.data, updatedAt: new Date().toISOString(), diubahOleh: req.dosen.id });
+    res.redirect(`${base}?ok=ubah`);
+  } catch (error) {
+    console.error('Error mengubah konsultasi:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal mengubah konsultasi' });
+  }
+});
+
+router.post('/:id/konsultasi/:kid/delete', async (req, res) => {
+  try {
+    const mahasiswa = await pastikanDosenPa(req, res);
+    if (!mahasiswa) return;
+    const base = `/dosen/mahasiswa-pa/${mahasiswa.id}/konsultasi`;
+    const ref = await ambilKonsultasi(mahasiswa.id, req.params.kid);
+    if (!ref) return res.redirect(`${base}?err=${encodeURIComponent('Data konsultasi tidak ditemukan.')}`);
+    await ref.delete();
+    res.redirect(`${base}?ok=hapus`);
+  } catch (error) {
+    console.error('Error menghapus konsultasi:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal menghapus konsultasi' });
+  }
+});
+
+router.get('/:id/konsultasi/print', async (req, res) => {
+  try {
+    const mahasiswa = await pastikanDosenPa(req, res);
+    if (!mahasiswa) return;
+    const data = await buildPrintData(mahasiswa.id);
+    if (!data) return res.status(404).send('Data mahasiswa tidak ditemukan');
+    res.render('konsultasi_pa_print', data);
+  } catch (error) {
+    console.error('Error mencetak lembar konsultasi:', error);
+    res.status(500).send('Gagal mencetak lembar konsultasi');
   }
 });
 

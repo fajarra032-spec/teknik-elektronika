@@ -118,6 +118,8 @@
   .btn-aksi.cetak { background: #f1f3f5; color: #495057; }
   .btn-aksi.cetak:hover { background: #495057; color: white; }
   .aksi-wrap { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .btn-aksi.konsul { background: rgba(16,185,129,0.12); color: #047857; }
+  .btn-aksi.konsul:hover { background: #10b981; color: white; }
 </style>
 <div class="container mt-4">
   <div class="page-header">
@@ -179,13 +181,14 @@
             <th>Status</th>
             <th>Magang</th>
             <th>Menunggu Anda</th>
+            <th>Konsultasi</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
           <% if (filteredList.length === 0) { %>
             <tr>
-              <td colspan="9" class="text-center py-5">
+              <td colspan="10" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <p><%= totalPa === 0 ? 'Belum ada mahasiswa yang ditugaskan ke Anda sebagai Dosen PA.' : 'Tidak ada yang cocok dengan filter/pencarian.' %></p>
@@ -227,15 +230,22 @@
                 <% } %>
               </td>
               <td>
-                <% if (m.bolehAksi) { %>
-                  <div class="aksi-wrap">
+                <% if (m.konsultasi && m.konsultasi.jumlah > 0) { %>
+                  <span class="badge bg-info text-dark"><%= m.konsultasi.jumlah %>x</span>
+                  <div class="small text-muted mt-1">Terakhir: <%= new Date(m.konsultasi.terakhir + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) %></div>
+                <% } else { %>
+                  <span class="text-muted">Belum ada</span>
+                <% } %>
+              </td>
+              <td>
+                <div class="aksi-wrap">
+                  <a class="btn-aksi konsul" href="/dosen/mahasiswa-pa/<%= m.id %>/konsultasi"><i class="bi bi-chat-square-text"></i> Konsultasi</a>
+                  <% if (m.bolehAksi) { %>
                     <a class="btn-aksi" href="/dosen/magang/<%= m.id %>"><i class="bi bi-journal-text"></i> Logbook</a>
                     <a class="btn-aksi laporan" href="/dosen/laporan-review/mahasiswa/<%= m.id %>"><i class="bi bi-file-earmark-check"></i> Laporan</a>
                     <a class="btn-aksi cetak" href="/dosen/magang/print/<%= m.id %>" target="_blank"><i class="bi bi-printer"></i> Cetak</a>
-                  </div>
-                <% } else { %>
-                  <span class="text-muted small">-</span>
-                <% } %>
+                  <% } %>
+                </div>
               </td>
             </tr>
             <% }) %>

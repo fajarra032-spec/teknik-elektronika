@@ -1,0 +1,170 @@
+<%- include('../partials/header') %>
+
+<%
+  const fmtTgl = (t) => { if (!t) return '-'; const d = new Date(t + 'T00:00:00'); return isNaN(d) ? t : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }); };
+%>
+<style>
+  :root {
+    --primary-start: #2193b0;
+    --primary-end: #6dd5ed;
+    --primary-light: rgba(33,147,176,0.1);
+  }
+  .page-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-radius: 1.5rem;
+    padding: 1.5rem 2rem;
+    color: white;
+    margin-bottom: 2rem;
+    box-shadow: 0 15px 30px rgba(33,147,176,0.25);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .page-header h2 { margin: 0; font-weight: 700; }
+  .page-header .btn-back {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    padding: 0.5rem 1.2rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .page-header .btn-back:hover { background: rgba(255,255,255,0.35); color: white; }
+  .filter-card {
+    background: white;
+    border-radius: 1.5rem;
+    padding: 1.2rem 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+  }
+  .btn-filter {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    color: white; border: none; border-radius: 50px; padding: 0.5rem 1.5rem; font-weight: 600;
+  }
+  .btn-reset {
+    background: #f1f3f5; color: #495057; border-radius: 50px; padding: 0.5rem 1.5rem;
+    font-weight: 600; text-decoration: none; display: inline-block; text-align: center;
+  }
+  .table-container {
+    background: white; border-radius: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    overflow: hidden; border: 1px solid rgba(33,147,176,0.1);
+  }
+  .mahasiswa-table { margin-bottom: 0; }
+  .mahasiswa-table thead th {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    color: white; font-weight: 600; text-transform: uppercase; font-size: 0.85rem;
+    letter-spacing: 0.5px; border: none; padding: 1.2rem 1rem; white-space: nowrap;
+  }
+  .mahasiswa-table tbody td { vertical-align: middle; padding: 1.2rem 1rem; border-bottom: 1px solid #e9ecef; }
+  .mahasiswa-table tbody tr:hover td { background-color: #f8f9fa; }
+  .avatar-circle {
+    width: 45px; height: 45px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    color: white; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1.2rem; text-transform: uppercase;
+  }
+  .foto-mahasiswa {
+    width: 45px; height: 45px; object-fit: cover; border-radius: 50%;
+    border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+  .empty-state { text-align: center; padding: 2rem; color: #868e96; }
+  .empty-state i { font-size: 3rem; margin-bottom: 1rem; display: block; }
+
+  .stat-card {
+    background: white; border-radius: 1.2rem; padding: 1rem 1.2rem;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.05); height: 100%;
+    border-left: 5px solid var(--primary-start);
+  }
+  .stat-card .stat-num { font-size: 1.8rem; font-weight: 800; line-height: 1.1; }
+  .stat-card .stat-lbl { color: #6c757d; font-size: 0.8rem; font-weight: 600; }
+  .stat-card.warn { border-left-color: #f59e0b; }
+  .stat-card.ok { border-left-color: #10b981; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+  .chip {
+    padding: 0.4rem 1rem; border-radius: 50px; background: #f1f3f5; color: #495057;
+    text-decoration: none; font-weight: 600; font-size: 0.85rem; border: 2px solid transparent;
+  }
+  .chip:hover { background: #e3f2f8; color: #1a7a94; }
+  .chip.active { background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); color: white; }
+  .chip.perlu.active { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+  .chip .n { opacity: 0.85; margin-left: 0.25rem; }
+  .btn-aksi {
+    display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.8rem;
+    border-radius: 50px; font-size: 0.78rem; font-weight: 600; text-decoration: none;
+    background: var(--primary-light); color: #1a7a94; white-space: nowrap;
+  }
+  .btn-aksi:hover { background: #2193b0; color: white; }
+  .btn-aksi.laporan { background: rgba(124,58,237,0.1); color: #6d28d9; }
+  .btn-aksi.laporan:hover { background: #7c3aed; color: white; }
+  .btn-aksi.cetak { background: #f1f3f5; color: #495057; }
+  .btn-aksi.cetak:hover { background: #495057; color: white; }
+  .aksi-wrap { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+  .card-box { background: white; border-radius: 1.2rem; padding: 1.2rem 1.4rem; box-shadow: 0 8px 22px rgba(0,0,0,0.05); margin-bottom: 1.2rem; }
+  .id-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.6rem 1.5rem; }
+  .id-grid .lbl { font-size: 0.75rem; color: #6c757d; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  .id-grid .val { font-weight: 600; }
+  .k-item { border-left: 4px solid var(--primary-start); background: #fafcfd; border-radius: 0.8rem; padding: 0.9rem 1.1rem; margin-bottom: 0.9rem; }
+  .k-item .k-tgl { font-weight: 700; }
+  .k-item .k-meta { font-size: 0.78rem; color: #6c757d; }
+  .k-item .k-label { font-size: 0.72rem; font-weight: 700; color: #1a7a94; text-transform: uppercase; margin-top: .5rem; }
+  .k-item .k-teks { white-space: pre-wrap; }
+  .badge-kat { background: var(--primary-light); color: #1a7a94; font-weight: 600; border-radius: 50px; padding: .2rem .7rem; font-size: .75rem; }
+  details.edit-box { margin-top: .6rem; }
+  details.edit-box summary { cursor: pointer; font-size: .8rem; font-weight: 600; color: #1a7a94; }
+  .btn-simpan { background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); color: white; border: none; padding: .55rem 1.4rem; border-radius: 50px; font-weight: 600; }
+  .btn-hapus { background: #fee2e2; color: #b91c1c; border: none; padding: .3rem .9rem; border-radius: 50px; font-size: .78rem; font-weight: 600; }
+  .btn-cetak { background: #f1f3f5; color: #495057; padding: .5rem 1.2rem; border-radius: 50px; font-weight: 600; text-decoration: none; }
+  .btn-cetak:hover { background: #495057; color: white; }
+</style>
+
+<div class="container mt-4 mb-5">
+  <div class="page-header">
+    <div>
+      <h2><i class="bi bi-chat-square-text-fill"></i> Lembar Konsultasi</h2>
+      <div class="small opacity-75">Catatan bimbingan akademik dengan Dosen PA Anda</div>
+    </div>
+    <a href="/mahasiswa/dashboard" class="btn-back"><i class="bi bi-arrow-left"></i> Kembali</a>
+  </div>
+
+  <div class="card-box">
+    <div class="id-grid">
+      <div><div class="lbl">Nama</div><div class="val"><%= mahasiswa.nama || '-' %></div></div>
+      <div><div class="lbl">NIM</div><div class="val"><%= mahasiswa.nim || '-' %></div></div>
+      <div><div class="lbl">Dosen PA</div><div class="val"><%= dosenPa ? dosenPa.nama : 'Belum ditetapkan' %></div></div>
+      <div><div class="lbl">Jumlah Konsultasi</div><div class="val"><%= daftar.length %></div></div>
+    </div>
+    <div class="mt-3">
+      <a class="btn-cetak" href="/mahasiswa/konsultasi-pa/print" target="_blank"><i class="bi bi-printer"></i> Cetak Lembar Konsultasi</a>
+    </div>
+    <% if (!dosenPa) { %>
+      <div class="alert alert-warning mt-3 mb-0">Anda belum memiliki Dosen PA. Hubungi admin prodi untuk penetapan Dosen PA.</div>
+    <% } else { %>
+      <div class="small text-muted mt-3">Catatan konsultasi diisi oleh Dosen PA setelah pertemuan bimbingan. Bawa lembar cetak saat konsultasi bila diminta paraf.</div>
+    <% } %>
+  </div>
+
+  <% if (daftar.length === 0) { %>
+    <div class="card-box text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Belum ada konsultasi yang dicatat oleh Dosen PA.</div>
+  <% } else { %>
+    <% daftar.forEach(function (k) { %>
+      <div class="k-item">
+        <div class="d-flex justify-content-between flex-wrap gap-2">
+          <div><span class="k-tgl"><%= fmtTgl(k.tanggal) %></span> <span class="badge-kat ms-2"><%= k.kategori %></span></div>
+          <div class="k-meta"><%= k.semester ? k.semester + ' - ' : '' %><%= k.dosenNama || 'Dosen PA' %></div>
+        </div>
+        <div class="fw-semibold mt-1"><%= k.topik %></div>
+        <div class="k-label">Uraian pembahasan</div>
+        <div class="k-teks"><%= k.uraian %></div>
+        <% if (k.saran) { %>
+          <div class="k-label">Saran / tindak lanjut</div>
+          <div class="k-teks"><%= k.saran %></div>
+        <% } %>
+      </div>
+    <% }) %>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

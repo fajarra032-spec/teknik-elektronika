@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title><%= title %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <style>
+    * { box-sizing: border-box; }
+    @page { size: A4; margin: 1.2cm; }
+    body { font-family: 'Times New Roman', serif; font-size: 9.5pt; line-height: 1.3; margin: 0; color: #000; }
+    .container-fluid { max-width: 21cm; margin: 0 auto; padding: 0 0.2in; }
+    .print-btn { font-family: Arial, sans-serif; margin: 10px 0; }
+
+    /* Kop surat */
+    .kop-surat { display: flex; align-items: center; border-bottom: 3px double #000; padding-bottom: 5px; margin-bottom: 10px; }
+    .logo-kop { width: 55px; height: auto; margin-right: 12px; flex-shrink: 0; }
+    .teks-kop { flex: 1; font-family: Arial, Helvetica, sans-serif; line-height: 1.3; }
+    .teks-kop .nama-kampus { font-size: 16pt; font-weight: bold; margin: 0; color: #1a3a6b; text-transform: uppercase; letter-spacing: .5px; }
+    .teks-kop .alamat, .teks-kop .kontak { font-size: 8.5pt; margin: 0; }
+
+    .judul { text-align: center; margin: 6px 0 8px; }
+    .judul h4 { font-size: 12pt; font-weight: bold; margin: 0; text-transform: uppercase; text-decoration: underline; }
+    .judul .sub { font-size: 9pt; }
+
+    .identitas { width: 100%; font-size: 9.5pt; margin-bottom: 8px; border-collapse: collapse; }
+    .identitas td { padding: 1px 6px 1px 0; vertical-align: top; }
+    .identitas td.lbl { width: 130px; }
+    .identitas td.sep { width: 12px; }
+
+    table.konsultasi { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+    table.konsultasi th, table.konsultasi td { border: 1px solid #000; padding: 3px 5px; vertical-align: top; }
+    table.konsultasi thead th { background: #e9ecef; text-align: center; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    table.konsultasi tr { page-break-inside: avoid; }
+    .c { text-align: center; }
+    .kecil { font-size: 7.5pt; color: #444; }
+    .pra { white-space: pre-wrap; }
+    .kosong td { height: 26px; }
+
+    .ttd-wrap { display: flex; justify-content: space-between; margin-top: 18px; font-size: 9.5pt; page-break-inside: avoid; }
+    .ttd { width: 42%; text-align: center; }
+    .area-ttd { height: 50px; }
+    .nama-ttd { font-weight: bold; text-decoration: underline; margin: 0; }
+    .nip-ttd { margin: 0; font-size: 8.5pt; }
+    .footer-cetak { font-family: Arial, sans-serif; font-size: 7pt; color: #666; margin-top: 10px; }
+
+    @media print { .no-print, .print-btn { display: none !important; } body { background: #fff; } .container-fluid { max-width: 100%; padding: 0; } }
+  </style>
+</head>
+<body>
+<%
+  const fmtTgl = (t) => { if (!t) return '-'; const d = new Date(t + 'T00:00:00'); return isNaN(d) ? t : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }); };
+  const MIN_BARIS = 10; // sisakan baris kosong supaya lembar bisa diisi/diparaf manual
+  const barisKosong = Math.max(0, MIN_BARIS - daftar.length);
+%>
+<div class="container-fluid">
+  <div class="text-end no-print">
+    <button onclick="window.print()" class="btn btn-primary btn-sm print-btn shadow-sm"><i class="bi bi-printer"></i> Cetak</button>
+  </div>
+
+  <div class="kop-surat">
+    <img src="https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png" alt="Logo Politeknik Dewantara" class="logo-kop">
+    <div class="teks-kop">
+      <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
+      <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo. Sulawesi Selatan</p>
+      <p class="kontak">E-mail: elektronika@polidewa.ac.id, Website: elektronika.polidewa.ac.id</p>
+    </div>
+  </div>
+
+  <div class="judul">
+    <h4>Lembar Konsultasi Bimbingan Akademik</h4>
+    <div class="sub">Program Studi <%= prodi %></div>
+  </div>
+
+  <table class="identitas">
+    <tr><td class="lbl">Nama Mahasiswa</td><td class="sep">:</td><td><%= mahasiswa.nama || '-' %></td></tr>
+    <tr><td class="lbl">NIM</td><td class="sep">:</td><td><%= mahasiswa.nim || '-' %></td></tr>
+    <tr><td class="lbl">Kelas / Semester</td><td class="sep">:</td><td><%= mahasiswa.kelas || '-' %> / <%= mahasiswa.semester || '-' %></td></tr>
+    <tr><td class="lbl">Dosen PA</td><td class="sep">:</td><td><%= dosenPa ? dosenPa.nama : '-' %></td></tr>
+  </table>
+
+  <table class="konsultasi">
+    <thead>
+      <tr>
+        <th style="width:4%;">No</th>
+        <th style="width:12%;">Tanggal</th>
+        <th style="width:18%;">Topik / Kategori</th>
+        <th style="width:30%;">Uraian Pembahasan</th>
+        <th style="width:24%;">Saran / Tindak Lanjut</th>
+        <th style="width:12%;">Paraf Dosen PA</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% daftar.forEach(function (k, i) { %>
+        <tr>
+          <td class="c"><%= i + 1 %></td>
+          <td class="c"><%= fmtTgl(k.tanggal) %></td>
+          <td><strong><%= k.topik %></strong><div class="kecil"><%= k.kategori %></div></td>
+          <td class="pra"><%= k.uraian %></td>
+          <td class="pra"><%= k.saran || '-' %></td>
+          <td></td>
+        </tr>
+      <% }) %>
+      <% for (let j = 0; j < barisKosong; j++) { %>
+        <tr class="kosong"><td class="c"><%= daftar.length + j + 1 %></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <% } %>
+    </tbody>
+  </table>
+
+  <div class="ttd-wrap">
+    <div class="ttd">
+      <p class="mb-0">Mahasiswa,</p>
+      <div class="area-ttd"></div>
+      <p class="nama-ttd"><%= mahasiswa.nama || '' %></p>
+      <p class="nip-ttd">NIM. <%= mahasiswa.nim || '' %></p>
+    </div>
+    <div class="ttd">
+      <p class="mb-0">Dosen Pembimbing Akademik,</p>
+      <div class="area-ttd"></div>
+      <% if (dosenPa) { %>
+        <p class="nama-ttd"><%= dosenPa.nama %></p>
+        <p class="nip-ttd">NUPTK. <%= dosenPa.nuptk || dosenPa.nidn || '' %></p>
+      <% } else { %>
+        <p class="nama-ttd">( ____________________ )</p>
+        <p class="nip-ttd">NUPTK.</p>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="footer-cetak">Dicetak: <%= generatedAt %> melalui sistem informasi akademik</div>
+</div>
+</body>
+</html>

@@ -34,6 +34,8 @@ router.use('/biodata', biodataRouter);
 const kartuMahasiswaRouter = require('./kartuMahasiswa');
 router.use('/kartu-mahasiswa', kartuMahasiswaRouter);
 
+router.use('/konsultasi-pa', require('./konsultasiPa'));
+
 const tagihanRouter = require('./tagihan');
 router.use('/tagihan', tagihanRouter);
 

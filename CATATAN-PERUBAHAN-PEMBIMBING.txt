@@ -56,6 +56,24 @@ kolom Magang & Menunggu Anda, tombol Logbook / Laporan / Cetak tiap mahasiswa.
 Mahasiswa Cuti/Keluar tetap tampil tapi tanpa info magang dan tombol aksi.
 File: routes/dosen/mahasiswaPa.js, views/dosen/mahasiswa_pa.ejs.
 
+LEMBAR KONSULTASI BIMBINGAN AKADEMIK
+------------------------------------
+Dosen PA mencatat tiap pertemuan konsultasi per mahasiswa; mahasiswa melihat &
+mencetak (read-only). Koleksi Firestore BARU: `konsultasiPa` (satu dokumen per
+pertemuan: mahasiswaId, dosenId, dosenNama, tanggal, kategori, topik, uraian,
+saran, semester, createdAt, updatedAt). Query hanya 1 filter (mahasiswaId) ->
+TIDAK butuh composite index baru.
+ - Dosen     : /dosen/mahasiswa-pa  (tombol Konsultasi)
+               /dosen/mahasiswa-pa/:id/konsultasi (catat/ubah/hapus) dan /print
+ - Mahasiswa : /mahasiswa/konsultasi-pa dan /mahasiswa/konsultasi-pa/print
+               (kartu "Konsultasi PA" di dashboard mahasiswa)
+ - Cetak dosen & mahasiswa memakai SATU template: views/konsultasi_pa_print.ejs
+   (kop, identitas, tabel + kolom paraf, minimal 10 baris, TTD mahasiswa & Dosen PA)
+File baru: helpers/konsultasiPaHelper.js, routes/mahasiswa/konsultasiPa.js,
+views/dosen/konsultasi_pa.ejs, views/mahasiswa/konsultasi_pa.ejs,
+views/konsultasi_pa_print.ejs. Yang diubah: routes/dosen/mahasiswaPa.js,
+views/dosen/mahasiswa_pa.ejs, routes/mahasiswa/index.js, views/mahasiswa/dashboard.ejs.
+
 PERLU DICEK SETELAH PASANG
 --------------------------
 1. Mahasiswa tanpa dosenPaId TIDAK bisa isi logbook / upload laporan.
