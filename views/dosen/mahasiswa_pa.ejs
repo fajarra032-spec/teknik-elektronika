@@ -9,13 +9,15 @@
     if (match) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w100-h100`;
     return url;
   };
-
-  const searchLower = (search || '').trim().toLowerCase();
-  const filteredList = searchLower
-    ? mahasiswaList.filter(m =>
-        (m.nama || '').toLowerCase().includes(searchLower) ||
-        (m.nim || '').toLowerCase().includes(searchLower))
-    : mahasiswaList;
+  const badgeStatus = { Aktif: 'bg-success', Cuti: 'bg-warning text-dark', Keluar: 'bg-danger', Lulus: 'bg-primary' };
+  // Bangun URL filter (pertahankan pencarian)
+  const urlFilter = (status, fokus) => {
+    const p = [];
+    if (status) p.push('status=' + encodeURIComponent(status));
+    if (fokus) p.push('fokus=perlu');
+    if (search) p.push('search=' + encodeURIComponent(search));
+    return '/dosen/mahasiswa-pa' + (p.length ? '?' + p.join('&') : '');
+  };
 %>
 
 <style>
@@ -86,35 +88,82 @@
   }
   .empty-state { text-align: center; padding: 2rem; color: #868e96; }
   .empty-state i { font-size: 3rem; margin-bottom: 1rem; display: block; }
-</style>
 
+  .stat-card {
+    background: white; border-radius: 1.2rem; padding: 1rem 1.2rem;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.05); height: 100%;
+    border-left: 5px solid var(--primary-start);
+  }
+  .stat-card .stat-num { font-size: 1.8rem; font-weight: 800; line-height: 1.1; }
+  .stat-card .stat-lbl { color: #6c757d; font-size: 0.8rem; font-weight: 600; }
+  .stat-card.warn { border-left-color: #f59e0b; }
+  .stat-card.ok { border-left-color: #10b981; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+  .chip {
+    padding: 0.4rem 1rem; border-radius: 50px; background: #f1f3f5; color: #495057;
+    text-decoration: none; font-weight: 600; font-size: 0.85rem; border: 2px solid transparent;
+  }
+  .chip:hover { background: #e3f2f8; color: #1a7a94; }
+  .chip.active { background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); color: white; }
+  .chip.perlu.active { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+  .chip .n { opacity: 0.85; margin-left: 0.25rem; }
+  .btn-aksi {
+    display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.8rem;
+    border-radius: 50px; font-size: 0.78rem; font-weight: 600; text-decoration: none;
+    background: var(--primary-light); color: #1a7a94; white-space: nowrap;
+  }
+  .btn-aksi:hover { background: #2193b0; color: white; }
+  .btn-aksi.laporan { background: rgba(124,58,237,0.1); color: #6d28d9; }
+  .btn-aksi.laporan:hover { background: #7c3aed; color: white; }
+  .btn-aksi.cetak { background: #f1f3f5; color: #495057; }
+  .btn-aksi.cetak:hover { background: #495057; color: white; }
+  .aksi-wrap { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+</style>
 <div class="container mt-4">
   <div class="page-header">
-    <h2><i class="bi bi-person-check-fill"></i> Mahasiswa Bimbingan Akademik (PA)</h2>
+    <div>
+      <h2><i class="bi bi-person-check-fill"></i> Mahasiswa Bimbingan Akademik (PA)</h2>
+      <div class="small opacity-75">Anda juga dosen pembimbing magang mahasiswa-mahasiswa ini</div>
+    </div>
     <a href="/dosen/dashboard" class="btn-back"><i class="bi bi-arrow-left"></i> Kembali</a>
+  </div>
+
+  <!-- Ringkasan -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-num"><%= ringkasan.total %></div><div class="stat-lbl">Total Mahasiswa PA</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card ok"><div class="stat-num"><%= ringkasan.sedangMagang %></div><div class="stat-lbl">Sedang Magang</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card <%= ringkasan.logbookMenunggu > 0 ? 'warn' : '' %>"><div class="stat-num"><%= ringkasan.logbookMenunggu %></div><div class="stat-lbl">Logbook Menunggu Persetujuan</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card <%= ringkasan.laporanMenunggu > 0 ? 'warn' : '' %>"><div class="stat-num"><%= ringkasan.laporanMenunggu %></div><div class="stat-lbl">Laporan Belum Ditinjau</div></div></div>
+  </div>
+
+  <!-- Filter status -->
+  <div class="chip-row">
+    <a class="chip <%= !statusFilter && !fokusPerlu ? 'active' : '' %>" href="<%= urlFilter('', false) %>">Semua <span class="n"><%= totalPa %></span></a>
+    <% ['Aktif', 'Cuti', 'Keluar', 'Lulus'].forEach(function (s) { %>
+      <a class="chip <%= statusFilter === s ? 'active' : '' %>" href="<%= urlFilter(s, false) %>"><%= s %> <span class="n"><%= statusCounts[s] %></span></a>
+    <% }) %>
+    <a class="chip perlu <%= fokusPerlu ? 'active' : '' %>" href="<%= urlFilter('', true) %>"><i class="bi bi-bell-fill"></i> Perlu Ditindak <span class="n"><%= ringkasan.perluDitindak %></span></a>
   </div>
 
   <div class="filter-card">
     <form method="GET" class="row g-3 align-items-end">
+      <% if (statusFilter) { %><input type="hidden" name="status" value="<%= statusFilter %>"><% } %>
+      <% if (fokusPerlu) { %><input type="hidden" name="fokus" value="perlu"><% } %>
       <div class="col-md-8">
         <label for="search" class="form-label fw-semibold">Cari Nama/NIM</label>
         <input type="text" class="form-control" id="search" name="search" placeholder="Ketik nama atau NIM" value="<%= search || '' %>">
       </div>
       <div class="col-md-2">
-        <button type="submit" class="btn-filter w-100">
-          <i class="bi bi-funnel"></i> Filter
-        </button>
+        <button type="submit" class="btn-filter w-100"><i class="bi bi-search"></i> Cari</button>
       </div>
       <div class="col-md-2">
-        <a href="/dosen/mahasiswa-pa" class="btn-reset w-100">
-          <i class="bi bi-arrow-counterclockwise"></i> Reset
-        </a>
+        <a href="/dosen/mahasiswa-pa" class="btn-reset w-100"><i class="bi bi-arrow-counterclockwise"></i> Reset</a>
       </div>
     </form>
   </div>
 
   <p class="text-muted mb-3">
-    Total mahasiswa bimbingan akademik: <strong><%= filteredList.length %></strong> dari <strong><%= mahasiswaList.length %></strong>
+    Menampilkan <strong><%= filteredList.length %></strong> dari <strong><%= totalPa %></strong> mahasiswa bimbingan akademik
   </p>
 
   <div class="table-container">
@@ -126,18 +175,20 @@
             <th>Foto</th>
             <th>NIM</th>
             <th>Nama</th>
-            <th>Semester</th>
-            <th>Kelas</th>
+            <th>Smt / Kelas</th>
             <th>Status</th>
+            <th>Magang</th>
+            <th>Menunggu Anda</th>
+            <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
           <% if (filteredList.length === 0) { %>
             <tr>
-              <td colspan="7" class="text-center py-5">
+              <td colspan="9" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
-                  <p><%= mahasiswaList.length === 0 ? 'Belum ada mahasiswa yang ditugaskan ke Anda sebagai Dosen PA.' : 'Tidak ada yang cocok dengan pencarian.' %></p>
+                  <p><%= totalPa === 0 ? 'Belum ada mahasiswa yang ditugaskan ke Anda sebagai Dosen PA.' : 'Tidak ada yang cocok dengan filter/pencarian.' %></p>
                 </div>
               </td>
             </tr>
@@ -157,12 +208,34 @@
               </td>
               <td><strong><%= m.nim || '-' %></strong></td>
               <td><%= m.nama || '-' %></td>
-              <td><%= m.semester || '-' %></td>
-              <td><%= m.kelas || '-' %></td>
+              <td><%= m.semester || '-' %> / <%= m.kelas || '-' %></td>
+              <td><span class="badge <%= badgeStatus[m.statusTampil] || 'bg-secondary' %>"><%= m.statusTampil %></span></td>
               <td>
-                <span class="badge <%= m.statusMahasiswa === 'Aktif' ? 'bg-success' : 'bg-secondary' %>">
-                  <%= m.statusMahasiswa || '-' %>
-                </span>
+                <% if (m.magang && m.magang.periode) { %>
+                  <span class="badge bg-success"><i class="bi bi-briefcase-fill"></i> Sedang magang</span>
+                  <% if (m.magang.periode.perusahaan) { %><div class="small text-muted mt-1"><%= m.magang.periode.perusahaan %></div><% } %>
+                <% } else { %>
+                  <span class="text-muted">-</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (m.magang && (m.magang.logbookPending > 0 || m.magang.laporanMenunggu > 0)) { %>
+                  <% if (m.magang.logbookPending > 0) { %><span class="badge bg-warning text-dark"><%= m.magang.logbookPending %> logbook</span><% } %>
+                  <% if (m.magang.laporanMenunggu > 0) { %><span class="badge" style="background:#7c3aed;"><%= m.magang.laporanMenunggu %> laporan</span><% } %>
+                <% } else { %>
+                  <span class="text-muted">-</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (m.bolehAksi) { %>
+                  <div class="aksi-wrap">
+                    <a class="btn-aksi" href="/dosen/magang/<%= m.id %>"><i class="bi bi-journal-text"></i> Logbook</a>
+                    <a class="btn-aksi laporan" href="/dosen/laporan-review/mahasiswa/<%= m.id %>"><i class="bi bi-file-earmark-check"></i> Laporan</a>
+                    <a class="btn-aksi cetak" href="/dosen/magang/print/<%= m.id %>" target="_blank"><i class="bi bi-printer"></i> Cetak</a>
+                  </div>
+                <% } else { %>
+                  <span class="text-muted small">-</span>
+                <% } %>
               </td>
             </tr>
             <% }) %>

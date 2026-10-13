@@ -48,6 +48,14 @@ Belum disentuh (sengaja): halaman e-learning sisi MAHASISWA itu sendiri (kalau
 mahasiswa Cuti/Keluar login, ia masih bisa membuka kelas yang sudah ia ambil),
 dan halaman admin yang memang menampilkan SEMUA mahasiswa (daftar, tagihan, dll).
 
+HALAMAN "MAHASISWA PA" (/dosen/mahasiswa-pa) = PUSAT KERJA DOSEN PA
+------------------------------------------------------------------
+Ringkasan (total, sedang magang, logbook menunggu, laporan belum ditinjau),
+filter status (Aktif/Cuti/Keluar/Lulus) + "Perlu Ditindak" + cari nama/NIM,
+kolom Magang & Menunggu Anda, tombol Logbook / Laporan / Cetak tiap mahasiswa.
+Mahasiswa Cuti/Keluar tetap tampil tapi tanpa info magang dan tombol aksi.
+File: routes/dosen/mahasiswaPa.js, views/dosen/mahasiswa_pa.ejs.
+
 PERLU DICEK SETELAH PASANG
 --------------------------
 1. Mahasiswa tanpa dosenPaId TIDAK bisa isi logbook / upload laporan.
