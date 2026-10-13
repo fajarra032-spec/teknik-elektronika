@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { filterEnrollmentDocsAktif } = require('../../helpers/statusMahasiswaHelper');
 const { invalidateProgressMagangHarian } = require('../../helpers/magangHelper');
 const { ITEM_PENDAMPING_LAPANGAN, getNilaiMagang, savePenilaianPendampingLapangan, hitungNilaiAkhirMagang, kunciNilaiMagangKeGrades } = require('../../helpers/nilaiMagangHelper');
 const {
@@ -189,9 +190,10 @@ router.get('/', async (req, res) => {
       enrollmentDocsAll.push(...snap.docs);
     }
 
-    // Kelompokkan per mahasiswa
+    // Kelompokkan per mahasiswa (mahasiswa Cuti/Keluar tidak ikut magang -> dibuang)
     const userPdkMap = new Map();
-    for (const doc of enrollmentDocsAll) {
+    const enrollmentDocsAktif = await filterEnrollmentDocsAktif(db, enrollmentDocsAll);
+    for (const doc of enrollmentDocsAktif) {
       const enrollment = doc.data();
       const userId = enrollment.userId;
       const mk = mkMap.get(enrollment.mkId);

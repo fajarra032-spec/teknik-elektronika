@@ -6,6 +6,7 @@
  */
 
 const { db } = require('../config/firebaseAdmin');
+const { isTidakIkutKegiatan } = require('./statusMahasiswaHelper');
 const { getPeriodeAktif } = require('./nilaiHelper');
 
 /**
@@ -67,7 +68,7 @@ async function getPesertaKelas(mkId) {
   for (const doc of enrollmentSnapshot.docs) {
     const userId = doc.data().userId;
     const userDoc = await db.collection('users').doc(userId).get();
-    if (userDoc.exists) {
+    if (userDoc.exists && !isTidakIkutKegiatan(userDoc.data())) { // Cuti/Keluar tidak masuk daftar peserta chat kelas
       const u = userDoc.data();
       peserta.push({
         id: userId,

@@ -4,6 +4,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { filterIdMahasiswaAktif, filterEnrollmentDocsAktif } = require('../../helpers/statusMahasiswaHelper');
 const { getNilaiByMkId, getTugasByMkId, getPeriodeAktif } = require('../../helpers/nilaiHelper');
 
 router.use(verifyToken);
@@ -49,7 +50,7 @@ router.get('/', async (req, res) => {
         .where('semester', '==', getPeriodeAktif())
         .where('status', '==', 'active')
         .get();
-      mk.jumlahMahasiswa = enrollmentSnapshot.size;
+      mk.jumlahMahasiswa = (await filterEnrollmentDocsAktif(db, enrollmentSnapshot.docs)).length;
       
       mkList.push(mk);
     }
@@ -88,7 +89,7 @@ router.get('/:mkId', async (req, res) => {
       .where('semester', '==', getPeriodeAktif())
       .where('status', '==', 'active')
       .get();
-    const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
+    const mahasiswaIds = await filterIdMahasiswaAktif(db, enrollmentSnapshot.docs.map(d => d.data().userId));
 
     // 3. ✅ Ambil data nilai menggunakan helper
     const nilaiMap = await getNilaiByMkId(mkId);
@@ -204,7 +205,7 @@ router.get('/:mkId/export', async (req, res) => {
       .where('semester', '==', getPeriodeAktif())
       .where('status', '==', 'active')
       .get();
-    const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
+    const mahasiswaIds = await filterIdMahasiswaAktif(db, enrollmentSnapshot.docs.map(d => d.data().userId));
 
     const nilaiMap = await getNilaiByMkId(mkId);
     const tugasList = await getTugasByMkId(mkId);

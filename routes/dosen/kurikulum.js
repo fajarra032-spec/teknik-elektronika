@@ -11,6 +11,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { filterIdMahasiswaAktif } = require('../../helpers/statusMahasiswaHelper');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
@@ -332,7 +333,7 @@ router.get('/:id', async (req, res) => {
     const persentase = Math.round((terlaksana / 16) * 100);
 
     const enrollmentSnapshot = await db.collection('enrollment').where('mkId', '==', mkId).where('status', '==', 'active').get();
-    const mahasiswaIds = enrollmentSnapshot.docs.map(doc => doc.data().userId).filter(uid => uid);
+    const mahasiswaIds = await filterIdMahasiswaAktif(db, enrollmentSnapshot.docs.map(doc => doc.data().userId).filter(uid => uid));
     const mahasiswaList = [];
     for (const uid of mahasiswaIds) {
       const userDoc = await db.collection('users').doc(uid).get();

@@ -10,6 +10,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { filterIdMahasiswaAktif, filterEnrollmentDocsAktif } = require('../../helpers/statusMahasiswaHelper');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
@@ -104,9 +105,8 @@ router.get('/', async (req, res) => {
           .where('mkId', '==', doc.id)
           .where('semester', '==', getPeriodeAktif())
           .where('status', '==', 'active')
-          .count()
           .get();
-        jumlahMahasiswa = enrollmentSnapshot.data().count;
+        jumlahMahasiswa = (await filterEnrollmentDocsAktif(db, enrollmentSnapshot.docs)).length; // tanpa Cuti/Keluar
       } catch (err) {
         console.error(`Gagal hitung enrollment untuk MK ${doc.id}:`, err);
       }
@@ -178,9 +178,9 @@ router.get('/:id/mahasiswa', async (req, res) => {
       .where('status', '==', 'active')
       .get();
 
-    const mahasiswaIds = enrollmentSnapshot.docs
+    const mahasiswaIds = await filterIdMahasiswaAktif(db, enrollmentSnapshot.docs
       .map(doc => doc.data().userId)
-      .filter(uid => uid && typeof uid === 'string' && uid.trim() !== '');
+      .filter(uid => uid && typeof uid === 'string' && uid.trim() !== '')); // Cuti/Keluar tidak ikut kelas
 
     // ✅ OPTIMISASI KUOTA: ambil semua dokumen users SEKALIGUS lewat
     // db.getAll(), bukan satu per satu di dalam loop serial.
@@ -378,9 +378,9 @@ router.get('/:id/pertemuan/:pertemuan/absensi', async (req, res) => {
       .where('semester', '==', periodeAktif)
       .where('status', '==', 'active')
       .get();
-    const mahasiswaIds = enrollmentSnapshot.docs
+    const mahasiswaIds = await filterIdMahasiswaAktif(db, enrollmentSnapshot.docs
       .map(doc => doc.data().userId)
-      .filter(uid => uid && typeof uid === 'string' && uid.trim() !== '');
+      .filter(uid => uid && typeof uid === 'string' && uid.trim() !== '')); // Cuti/Keluar tidak ikut kelas
 
     const mahasiswaList = [];
     if (mahasiswaIds.length > 0) {
@@ -521,9 +521,9 @@ router.get('/:id', async (req, res) => {
       .where('status', '==', 'active')
       .get();
 
-    const mahasiswaIds = enrollmentSnapshot.docs
+    const mahasiswaIds = await filterIdMahasiswaAktif(db, enrollmentSnapshot.docs
       .map(doc => doc.data().userId)
-      .filter(uid => uid && typeof uid === 'string' && uid.trim() !== '');
+      .filter(uid => uid && typeof uid === 'string' && uid.trim() !== '')); // Cuti/Keluar tidak ikut kelas
 
     // ✅ OPTIMISASI KUOTA: ambil semua dokumen users SEKALIGUS, bukan satu
     // per satu di dalam loop serial.
@@ -1045,9 +1045,9 @@ router.get('/:id/modul-template/:modulId/kumpulan', async (req, res) => {
       .where('semester', '==', periodeAktif)
       .where('status', '==', 'active')
       .get();
-    const mahasiswaIds = enrollmentSnapshot.docs
+    const mahasiswaIds = await filterIdMahasiswaAktif(db, enrollmentSnapshot.docs
       .map(doc => doc.data().userId)
-      .filter(uid => uid && typeof uid === 'string' && uid.trim() !== '');
+      .filter(uid => uid && typeof uid === 'string' && uid.trim() !== '')); // Cuti/Keluar tidak ikut kelas
 
     const lkmSnapshot = await db.collection('lkmPengumpulan')
       .where('mkId', '==', akses.mk.id)

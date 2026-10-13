@@ -14,6 +14,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { isTidakIkutKegiatan } = require('../../helpers/statusMahasiswaHelper');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
@@ -771,7 +772,7 @@ router.get('/undangan-magang/create', async (req, res) => {
       .map(doc => {
         const period = doc.data();
         const mhs = mahasiswaMap[period.mahasiswaId];
-        if (!mhs) return null;
+        if (!mhs || isTidakIkutKegiatan(mhs)) return null; // Cuti/Keluar tidak ikut magang
         return {
           mahasiswaId: period.mahasiswaId,
           nama: mhs.nama || '-',

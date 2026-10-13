@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { filterIdMahasiswaAktif, filterEnrollmentDocsAktif } = require('../../helpers/statusMahasiswaHelper');
 const {
   getPeriodeAktif,
   getHasilRubrikSemuaMahasiswa,
@@ -65,7 +66,7 @@ async function ambilDataRubrik(mkId, periode) {
     .where('mkId', '==', mkId)
     .where('status', '==', 'active')
     .get();
-  const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
+  const mahasiswaIds = await filterIdMahasiswaAktif(db, enrollmentSnapshot.docs.map(d => d.data().userId));
 
   const { bobot, komponenMap, hasilMap } = await getHasilRubrikSemuaMahasiswa(mkId, periode);
   const [mahasiswaMap, statusKunciMap] = await Promise.all([
@@ -174,12 +175,8 @@ router.get('/', async (req, res) => {
         db.collection('enrollment')
           .where('mkId', '==', doc.id)
           .where('status', '==', 'active')
-          .count().get()
-          .then(s => s.data().count)
-          .catch(async () => {
-            const s = await db.collection('enrollment').where('mkId', '==', doc.id).where('status', '==', 'active').get();
-            return s.size;
-          }),
+          .get()
+          .then(async s => (await filterEnrollmentDocsAktif(db, s.docs)).length), // tanpa Cuti/Keluar
         getDosenNamaByIds(mk.dosenIds || [])
       ]);
       mk.jumlahMahasiswa = jumlahMahasiswa;

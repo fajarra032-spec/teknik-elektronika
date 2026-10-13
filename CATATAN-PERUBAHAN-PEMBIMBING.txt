@@ -27,6 +27,27 @@ dibuat per mahasiswa; tanpa userId kini muncul pesan "Pilih mahasiswa dulu".
 Fungsi bantu cetak (progress, rekap mingguan, daftar hadir, kode validasi, dll.)
 dipindah dari routes/mahasiswa/magang.js ke helpers/logbookPrintHelper.js.
 
+MAHASISWA CUTI / KELUAR TIDAK DIIKUTKAN (e-learning, magang, cetak)
+--------------------------------------------------------------------
+Helper baru: helpers/statusMahasiswaHelper.js (status 'Cuti' dan 'Keluar').
+Prinsip: FILTER SAAT MEMBACA - data enrollment/nilai/logbook TIDAK diubah atau
+dihapus, jadi kalau status dikembalikan ke 'Aktif' mahasiswa muncul lagi.
+Status 'Lulus' TIDAK dikecualikan. Status dibaca dari cache mahasiswa (10 menit,
+otomatis dibersihkan saat admin mengubah data mahasiswa) -> tanpa read tambahan.
+Dipasang di:
+ - Peserta kelas E-Learning: dosen/mk.js (peserta, absensi/nilai, detail, LKM +
+   jumlah mahasiswa), dosen/mahasiswa.js, dosen/nilai.js, dosen/index.js (tugas),
+   dosen/kurikulum.js, dosen/rubrik.js, admin/rubrik.js, admin/nilai.js,
+   helpers/kelasChatHelper.js (peserta chat kelas)
+ - Magang: admin/emagang.js (daftar magang), admin/surat.js (daftar undangan
+   seminar), helpers/magangHelper.js (PDK mahasiswa Cuti/Keluar = kosong, jadi
+   tidak bisa membuat periode/logbook)
+ - Cetak: admin/mahasiswa.js /print (Cuti/Keluar tidak dicetak kecuali admin
+   memilih filter Status Mahasiswa). SK PA sudah dibatasi 'Aktif' sejak awal.
+Belum disentuh (sengaja): halaman e-learning sisi MAHASISWA itu sendiri (kalau
+mahasiswa Cuti/Keluar login, ia masih bisa membuka kelas yang sudah ia ambil),
+dan halaman admin yang memang menampilkan SEMUA mahasiswa (daftar, tagihan, dll).
+
 PERLU DICEK SETELAH PASANG
 --------------------------
 1. Mahasiswa tanpa dosenPaId TIDAK bisa isi logbook / upload laporan.

@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { filterIdMahasiswaAktif } = require('../../helpers/statusMahasiswaHelper');
 const { saveGradeFinal, deleteGradeFinal, getTranskripMahasiswa, getPeriodeAktif, getHasilRubrikSemuaMahasiswa, getHasilRubrikSatuMahasiswa, getRincianTugasByMkId, saveKomponenRubrik, saveNilai, TIPE_RUBRIK_KOMPONEN } = require('../../helpers/nilaiHelper');
 const { getAllMataKuliah, getAllMahasiswa } = require('../../helpers/cache');
 const { getAngkatanFromNim } = require('../../helpers/academicHelper');
@@ -633,7 +634,7 @@ router.get('/:mkId', async (req, res) => {
       .where('semester', '==', periode)
       .where('status', '==', 'active')
       .get();
-    const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
+    const mahasiswaIds = await filterIdMahasiswaAktif(db, enrollmentSnapshot.docs.map(d => d.data().userId));
 
     const [{ komponenMap, hasilMap }, { tugasList, perMahasiswa: tugasPerMahasiswa }, mahasiswaArr] = await Promise.all([
       getHasilRubrikSemuaMahasiswa(mkId, periode),

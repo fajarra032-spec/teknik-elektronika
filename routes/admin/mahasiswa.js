@@ -15,6 +15,7 @@ const { isBiodataLengkap, getBiodataKosong, BIODATA_FIELDS, GROUP_LABELS } = req
 const { getCurrentAcademicSemester, normalizeKelas } = require('../../helpers/academicHelper');
 const { buatDokumenSkPa } = require('../../helpers/skPaHelper');
 const { dosenCache, mahasiswaCache, getAllMahasiswa, invalidateUserProfile } = require('../../helpers/cache');
+const { isTidakIkutKegiatan } = require('../../helpers/statusMahasiswaHelper');
 
 // URL daftar mahasiswa terakhir yang dibuka admin (lengkap dengan filter,
 // pencarian & nomor halaman), disimpan di session. Dipakai tombol "Kembali"
@@ -274,7 +275,12 @@ router.get('/', async (req, res) => {
 
 router.get('/print', async (req, res) => {
   try {
-    const { mahasiswaList } = await getFilteredMahasiswaList(req.query);
+    const hasil = await getFilteredMahasiswaList(req.query);
+    // Mahasiswa Cuti/Keluar TIDAK dicetak, kecuali admin sengaja memilih
+    // filter Status Mahasiswa tertentu (mis. memang ingin mencetak daftar Cuti).
+    const mahasiswaList = req.query.statusMahasiswa
+      ? hasil.mahasiswaList
+      : hasil.mahasiswaList.filter(m => !isTidakIkutKegiatan(m));
     mahasiswaList.sort((a, b) => (a.nim || '').localeCompare(b.nim || ''));
 
     res.render('admin/mahasiswa_cetak', {

@@ -10,6 +10,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { filterIdMahasiswaAktif } = require('../../helpers/statusMahasiswaHelper');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
@@ -323,7 +324,7 @@ router.get('/tugas/:id', async (req, res) => {
       .where('status', '==', 'active')
       .get();
     
-    const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
+    const mahasiswaIds = await filterIdMahasiswaAktif(db, enrollmentSnapshot.docs.map(d => d.data().userId));
 
     // ✅ AMBIL SEMUA NILAI DARI COLLECTION 'nilai' SEKALIGUS
     const nilaiSnapshot = await db.collection('nilai')

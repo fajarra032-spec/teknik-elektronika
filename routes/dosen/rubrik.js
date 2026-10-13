@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { filterIdMahasiswaAktif, filterEnrollmentDocsAktif } = require('../../helpers/statusMahasiswaHelper');
 const {
   getPeriodeAktif,
   saveBobotRubrik,
@@ -61,7 +62,7 @@ async function ambilDataRubrik(mkId, periode) {
     .where('semester', '==', periode)
     .where('status', '==', 'active')
     .get();
-  const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
+  const mahasiswaIds = await filterIdMahasiswaAktif(db, enrollmentSnapshot.docs.map(d => d.data().userId));
 
   const { bobot, komponenMap, hasilMap } = await getHasilRubrikSemuaMahasiswa(mkId, periode);
   const [mahasiswaMap, statusKunciMap] = await Promise.all([
@@ -154,8 +155,8 @@ router.get('/', async (req, res) => {
           .where('mkId', '==', doc.id)
           .where('semester', '==', periode)
           .where('status', '==', 'active')
-          .count().get();
-        mk.jumlahMahasiswa = countSnap.data().count;
+          .get();
+        mk.jumlahMahasiswa = (await filterEnrollmentDocsAktif(db, countSnap.docs)).length; // tanpa Cuti/Keluar
       } catch (err) {
         // Fallback kalau versi firebase-admin belum dukung count()
         const enrollmentSnapshot = await db.collection('enrollment')
@@ -163,7 +164,7 @@ router.get('/', async (req, res) => {
           .where('semester', '==', periode)
           .where('status', '==', 'active')
           .get();
-        mk.jumlahMahasiswa = enrollmentSnapshot.size;
+        mk.jumlahMahasiswa = (await filterEnrollmentDocsAktif(db, enrollmentSnapshot.docs)).length;
       }
       return mk;
     }));
@@ -253,7 +254,7 @@ router.get('/:mkId/rincian-tugas', async (req, res) => {
       .where('semester', '==', periode)
       .where('status', '==', 'active')
       .get();
-    const mahasiswaIds = enrollmentSnapshot.docs.map(d => d.data().userId);
+    const mahasiswaIds = await filterIdMahasiswaAktif(db, enrollmentSnapshot.docs.map(d => d.data().userId));
 
     const { tugasList, perMahasiswa } = await getRincianTugasByMkId(mkId, periode);
 

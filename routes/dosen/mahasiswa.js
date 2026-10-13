@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { filterIdMahasiswaAktif } = require('../../helpers/statusMahasiswaHelper');
 const { getPeriodeAktif } = require('../../helpers/nilaiHelper');
 
 router.use(verifyToken);
@@ -89,7 +90,7 @@ router.get('/', async (req, res) => {
     // Kumpulkan userId unik
     const mahasiswaIdsSet = new Set();
     allEnrollments.forEach(doc => mahasiswaIdsSet.add(doc.data().userId));
-    const mahasiswaIds = Array.from(mahasiswaIdsSet);
+    const mahasiswaIds = await filterIdMahasiswaAktif(db, Array.from(mahasiswaIdsSet)); // Cuti/Keluar tidak ikut
 
     // Ambil data mahasiswa
     // ✅ OPTIMISASI KUOTA: ambil semua dokumen users SEKALIGUS lewat

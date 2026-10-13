@@ -1,5 +1,6 @@
 // helpers/magangHelper.js
 const { db } = require('../config/firebaseAdmin');
+const { isIdTidakIkut } = require('./statusMahasiswaHelper');
 const { getActiveMagangPeriods } = require('../models/magangPeriodModel');
 const { TTLCache } = require('./cache');
 const { saveGradeFinal } = require('./nilaiHelper');
@@ -134,6 +135,9 @@ async function canSubmitLogbook(mahasiswaId, pdkId) {
  */
 async function getActivePdkList(userId) {
   try {
+    // Mahasiswa Cuti/Keluar tidak punya PDK magang aktif (tidak ikut magang)
+    if (await isIdTidakIkut(db, userId)) return [];
+
     // Ambil dari enrollment aktif
     const enrollmentSnapshot = await db.collection('enrollment')
       .where('userId', '==', userId)
