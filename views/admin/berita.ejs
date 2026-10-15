@@ -1,320 +1,292 @@
 <%- include('../partials/header') %>
 
+<%
+  // webViewLink Drive bukan file gambar; ubah ke URL thumbnail supaya bisa tampil di <img>
+  const thumbUrl = u => {
+    if (!u) return '';
+    if (/drive\.google\.com/.test(u)) {
+      const m = u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/);
+      if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w160';
+    }
+    return u;
+  };
+  const excerpt = (html, n) => {
+    const t = String(html || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+    return t.length > n ? t.slice(0, n).trim() + '…' : t;
+  };
+  const toTime = v => { const t = new Date(v).getTime(); return isNaN(t) ? 0 : t; };
+  const fmtTgl = v => {
+    const t = toTime(v);
+    return t ? new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
+  };
+  const list = Array.isArray(berita) ? berita : [];
+  const nGambar = list.filter(b => b.gambar).length;
+  const pesan = { ditambahkan: 'ditambahkan', diupdate: 'diperbarui', dihapus: 'dihapus' };
+%>
+
 <style>
-  :root {
-    --primary-start: #1e3a8a;
-    --primary-end: #3b82f6;
-    --gradient: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    --card-radius: 1.25rem;
-    --shadow-sm: 0 5px 20px rgba(0,0,0,0.05);
-    --shadow-hover: 0 15px 30px rgba(0,0,0,0.1);
+  .ea {
+    --ea-ink: #1b2a4a;
+    --ea-muted: #5d6b85;
+    --ea-line: #e2e7ef;
+    --ea-surface: #ffffff;
+    --ea-accent: #1e3a8a;
+    --ea-accent-soft: #e8eefc;
+    --ea-hover: #f6f8fd;
+    color: var(--ea-ink);
+    font-feature-settings: "tnum" 1;
   }
+  .ea a { text-decoration: none; }
+  .ea :focus-visible { outline: 2px solid var(--ea-accent); outline-offset: 2px; border-radius: 6px; }
 
-  /* Header & Cards */
-  .stat-card {
-    background: white;
-    border-radius: var(--card-radius);
-    padding: 1.2rem;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.25s;
-    border: 1px solid rgba(0,0,0,0.03);
-    cursor: default;
-  }
-  .stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-hover);
-  }
-  .stat-number {
-    font-size: 2rem;
-    font-weight: 800;
-    background: var(--gradient);
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    line-height: 1.2;
-  }
-  .stat-label {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #64748b;
-  }
+  /* Judul halaman */
+  .ea-head { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: space-between; margin-bottom: 1.25rem; }
+  .ea-head h1 { font-size: 1.65rem; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 0.25rem; }
+  .ea-head p { margin: 0; color: var(--ea-muted); font-size: 0.95rem; }
 
-  /* Filter bar */
-  .filter-bar {
-    background: white;
-    border-radius: 60px;
-    padding: 0.3rem 0.3rem 0.3rem 1.5rem;
-    box-shadow: var(--shadow-sm);
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 2rem;
-  }
-  .search-box {
-    flex: 2;
-    min-width: 200px;
-    position: relative;
-  }
-  .search-box i {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #94a3b8;
-  }
-  .search-box input {
-    width: 100%;
-    padding: 0.6rem 1rem 0.6rem 2.4rem;
-    border: none;
-    border-radius: 60px;
-    background: #f1f5f9;
-    transition: all 0.2s;
-  }
-  .search-box input:focus {
-    outline: none;
-    background: white;
-    box-shadow: 0 0 0 2px var(--primary-end);
-  }
-  .btn-reset {
-    background: transparent;
-    border: none;
-    color: #64748b;
-    padding: 0.5rem 1.2rem;
-    border-radius: 60px;
-    transition: all 0.2s;
-  }
-  .btn-reset:hover {
-    background: #eef2ff;
-    color: var(--primary-start);
-  }
+  .ea-btn { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid transparent; border-radius: 8px; padding: 0.45rem 0.9rem; font-size: 0.875rem; font-weight: 600; line-height: 1.3; cursor: pointer; background: none; transition: background-color .15s, border-color .15s, color .15s; }
+  .ea-btn-primary { background: var(--ea-accent); color: #fff; }
+  .ea-btn-primary:hover { background: #172f73; color: #fff; }
+  .ea-btn-edit { border-color: var(--ea-line); color: var(--ea-ink); padding: 0.3rem 0.7rem; font-size: 0.8rem; background: #fff; }
+  .ea-btn-edit:hover { background: var(--ea-hover); color: var(--ea-accent); }
+  .ea-btn-icon { border-color: var(--ea-line); color: var(--ea-muted); padding: 0.3rem 0.55rem; background: #fff; }
+  .ea-btn-icon:hover { background: var(--ea-hover); color: var(--ea-ink); }
 
-  /* Tabel Modern */
-  .table-wrapper {
-    background: white;
-    border-radius: var(--card-radius);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-  }
-  .berita-table {
-    width: 100%;
-    margin-bottom: 0;
-  }
-  .berita-table thead th {
-    background: #f8fafc;
-    color: #1e293b;
-    font-weight: 700;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 1rem 1rem;
-    border-bottom: 2px solid #e2e8f0;
-  }
-  .berita-table tbody tr {
-    transition: background 0.2s;
-    border-bottom: 1px solid #f0f2f5;
-  }
-  .berita-table tbody tr:hover {
-    background: #fefce8;
-  }
-  .berita-table td {
-    padding: 1rem;
-    vertical-align: middle;
-  }
-  .thumbnail {
-    width: 70px;
-    height: 70px;
-    object-fit: cover;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  }
-  .btn-action {
-    margin: 0 3px;
-    border-radius: 50px;
-    padding: 0.3rem 0.9rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    transition: all 0.2s;
-  }
-  .btn-action:hover {
-    transform: translateY(-2px);
-  }
-  .empty-state {
-    text-align: center;
-    padding: 3rem;
-  }
-  .empty-state i {
-    font-size: 3.5rem;
-    color: #cbd5e1;
-  }
-  .judul-cell {
-    font-weight: 600;
-    color: #0f172a;
-  }
-  .badge-tanggal {
-    background: #f1f5f9;
-    display: inline-block;
-    padding: 0.2rem 0.7rem;
-    border-radius: 50px;
-    font-size: 0.75rem;
-    color: #334155;
-  }
+  /* Notifikasi */
+  .ea-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; background: #eaf7ef; border: 1px solid #bfe3cd; border-left: 4px solid #1d7a46; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; }
+  .ea-notice span { color: #1d6b3f; font-size: 0.95rem; }
+  .ea-notice button { border: 0; background: none; color: #1d6b3f; font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid currentColor; padding: 0; }
 
-  @media (max-width: 768px) {
-    .filter-bar { border-radius: 1rem; flex-direction: column; align-items: stretch; padding: 0.8rem; gap: 0.5rem; }
-    .search-box input { padding: 0.5rem 1rem 0.5rem 2rem; }
-    .berita-table thead { display: none; }
-    .berita-table tbody tr { display: block; margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 0.5rem; }
-    .berita-table td { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem; border-bottom: 1px dashed #e2e8f0; }
-    .berita-table td:last-child { border-bottom: none; }
-    .berita-table td::before { content: attr(data-label); font-weight: 700; width: 35%; color: #475569; }
-    .thumbnail { width: 50px; height: 50px; }
+  /* Toolbar */
+  .ea-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; margin-bottom: 0.9rem; }
+  .ea-search { position: relative; flex: 1 1 260px; max-width: 420px; }
+  .ea-search i { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--ea-muted); pointer-events: none; }
+  .ea-search input { width: 100%; border: 1px solid var(--ea-line); border-radius: 8px; padding: 0.5rem 0.8rem 0.5rem 2.2rem; font-size: 0.9rem; background: #fff; color: var(--ea-ink); }
+  .ea-search input:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-seg { display: inline-flex; background: #eef1f6; border-radius: 9px; padding: 3px; gap: 2px; overflow-x: auto; max-width: 100%; }
+  .ea-seg button { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.75rem; border: 0; background: none; border-radius: 7px; color: var(--ea-muted); font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+  .ea-seg button:hover { color: var(--ea-ink); }
+  .ea-seg button.is-active { background: #fff; color: var(--ea-ink); box-shadow: 0 1px 2px rgba(27, 42, 74, 0.12); }
+  .ea-seg small { font-weight: 600; opacity: 0.75; }
+
+  /* Daftar */
+  .ea-list { background: var(--ea-surface); border: 1px solid var(--ea-line); border-radius: 12px; overflow: hidden; }
+  .ea-cols, .ea-row { display: grid; grid-template-columns: minmax(0, 1fr) 90px 120px 130px; column-gap: 1rem; align-items: center; }
+  .ea-cols { padding: 0.6rem 1rem 0.6rem 1.15rem; background: #fafbfd; border-bottom: 1px solid var(--ea-line); color: var(--ea-muted); font-size: 0.8rem; font-weight: 600; }
+  .ea-cols > :last-child { text-align: right; }
+  .ea-row { position: relative; padding: 0.85rem 1rem 0.85rem 1.15rem; border-bottom: 1px solid var(--ea-line); --c: #2f6fed; }
+  .ea-row:last-of-type { border-bottom: 0; }
+  .ea-row:hover { background: var(--ea-hover); }
+  .ea-row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c); }
+  .ea-row.no-img { --c: #9aa5b8; }
+
+  .ea-main { display: flex; gap: 0.85rem; align-items: center; min-width: 0; }
+  .ea-thumb { flex: 0 0 64px; width: 64px; height: 48px; border-radius: 6px; object-fit: cover; background: #eef1f6; border: 1px solid var(--ea-line); display: block; }
+  .ea-thumb-empty { flex: 0 0 64px; width: 64px; height: 48px; border-radius: 6px; background: #f3f5f9; border: 1px dashed var(--ea-line); color: #b6bfce; display: grid; place-items: center; }
+  .ea-body { min-width: 0; }
+  .ea-title { display: block; color: var(--ea-ink); font-weight: 600; font-size: 0.95rem; line-height: 1.4; overflow-wrap: anywhere; }
+  .ea-title:hover { color: var(--ea-accent); text-decoration: underline; text-underline-offset: 3px; }
+  .ea-excerpt { margin-top: 0.1rem; font-size: 0.83rem; color: var(--ea-muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+  .ea-meta { display: flex; flex-wrap: wrap; gap: 0.15rem 1rem; margin-top: 0.2rem; font-size: 0.8rem; color: var(--ea-muted); }
+  .ea-meta span { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+  .ea-pill { display: inline-flex; align-items: center; gap: 0.3rem; border-radius: 999px; padding: 0.15rem 0.65rem; font-size: 0.78rem; font-weight: 600; background: #eef1f6; color: var(--ea-muted); }
+  .ea-date { color: var(--ea-muted); font-size: 0.85rem; }
+  .ea-actions { display: flex; gap: 0.4rem; align-items: center; justify-content: flex-end; }
+  .ea-actions form { margin: 0; }
+  .ea-actions .dropdown-menu { font-size: 0.875rem; border-color: var(--ea-line); border-radius: 10px; box-shadow: 0 8px 24px rgba(27, 42, 74, 0.12); }
+
+  .ea-empty { padding: 3rem 1.5rem; text-align: center; color: var(--ea-muted); }
+  .ea-empty i { font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #b6bfce; }
+  .ea-empty strong { display: block; color: var(--ea-ink); margin-bottom: 0.25rem; }
+  .ea-more { text-align: center; padding: 0.9rem; border-top: 1px solid var(--ea-line); }
+  .ea-foot { color: var(--ea-muted); font-size: 0.8rem; margin: 0.6rem 0.25rem 0; }
+  [hidden] { display: none !important; }
+
+  /* Ponsel: satu kolom, dilihat dan tanggal di bawah judul */
+  @media (max-width: 767.98px) {
+    .ea-cols { display: none; }
+    .ea-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.55rem; }
+    .ea-main { grid-column: 1 / -1; }
+    .ea-actions { grid-column: 1 / -1; justify-content: flex-start; }
+    .ea-row > .ea-state { grid-column: 1; }
+    .ea-row > .ea-date { grid-column: 2; text-align: right; }
+    .ea-head h1 { font-size: 1.4rem; }
   }
 </style>
 
-<div class="container-fluid mt-4">
-  <!-- Header + Tombol -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+<div class="container-xl ea py-4">
+
+  <header class="ea-head">
     <div>
-      <h2 class="fw-bold"><i class="bi bi-newspaper me-2" style="background: var(--gradient); background-clip: text; -webkit-background-clip: text; color: transparent;"></i>Kelola Berita</h2>
-      <p class="text-muted mb-0">Kelola seluruh informasi dan pengumuman</p>
+      <h1>Kelola Berita</h1>
+      <p>Tulis, rapikan, dan hapus informasi serta pengumuman program studi.</p>
     </div>
-    <a href="/admin/berita/create" class="btn btn-primary rounded-pill px-4 shadow-sm">
-      <i class="bi bi-plus-circle me-2"></i>Tambah Berita
-    </a>
-  </div>
+    <a href="/admin/berita/create" class="ea-btn ea-btn-primary"><i class="bi bi-plus-lg"></i> Tambah berita</a>
+  </header>
 
-  <!-- Statistik Ringkasan -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3 col-6">
-      <div class="stat-card">
-        <div class="stat-number"><%= berita ? berita.length : 0 %></div>
-        <div class="stat-label">Total Berita</div>
-      </div>
-    </div>
-    <div class="col-md-3 col-6">
-      <div class="stat-card">
-        <div class="stat-number"><%= berita ? berita.filter(b => b.gambar).length : 0 %></div>
-        <div class="stat-label">Dengan Gambar</div>
-      </div>
-    </div>
-    <div class="col-md-3 col-6">
-      <div class="stat-card">
-        <div class="stat-number"><%= berita ? new Set(berita.map(b => b.penulis)).size : 0 %></div>
-        <div class="stat-label">Penulis Aktif</div>
-      </div>
-    </div>
-    <div class="col-md-3 col-6">
-      <div class="stat-card">
-        <div class="stat-number"><%= berita && berita[0] ? new Date(berita[0].tanggal).toLocaleDateString('id-ID') : '-' %></div>
-        <div class="stat-label">Terbaru</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filter dan Pencarian (client side) -->
-  <div class="filter-bar">
-    <div class="search-box">
-      <i class="bi bi-search"></i>
-      <input type="text" id="searchBerita" placeholder="Cari judul atau penulis..." autocomplete="off">
-    </div>
-    <button id="resetFilter" class="btn-reset"><i class="bi bi-arrow-repeat me-1"></i> Reset</button>
-  </div>
-
-  <!-- Notifikasi Sukses -->
   <% if (typeof success !== 'undefined' && success) { %>
-    <div class="alert alert-success alert-dismissible fade show mb-4 rounded-4" role="alert">
-      <i class="bi bi-check-circle-fill me-2"></i>Berita berhasil <strong><%= success %></strong>.
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="ea-notice" role="status" id="eaNotice">
+      <span><strong>Berhasil.</strong> Berita telah <%= pesan[success] || success %>.</span>
+      <button type="button" id="eaNoticeTutup">Tutup</button>
     </div>
   <% } %>
 
-  <!-- Tabel Berita -->
-  <div class="table-wrapper">
-    <div class="table-responsive">
-      <table class="table berita-table" id="beritaTable">
-        <thead>
-          <tr>
-            <th>Gambar</th>
-            <th>Judul</th>
-            <th>Penulis</th>
-            <th>Tanggal</th>
-            <th>Dilihat</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (!berita || berita.length === 0) { %>
-            <tr>
-              <td colspan="6" class="empty-state">
-                <i class="bi bi-inbox"></i>
-                <p class="mt-2 text-muted">Belum ada berita. Klik "Tambah Berita" untuk membuat.</p>
-              </td>
-            </tr>
-          <% } else { %>
-            <% berita.forEach(b => { %>
-              <tr class="berita-row" data-judul="<%= (b.judul || '').toLowerCase() %>" data-penulis="<%= (b.penulis || '').toLowerCase() %>">
-                <td data-label="Gambar">
-                  <% if (b.gambar) { %>
-                    <img src="<%= b.gambar %>" alt="thumbnail" class="thumbnail">
-                  <% } else { %>
-                    <span class="text-muted">-</span>
-                  <% } %>
-                </td>
-                <td data-label="Judul" class="judul-cell"><%= b.judul || '-' %></td>
-                <td data-label="Penulis"><%= b.penulis || '-' %></td>
-                <td data-label="Tanggal">
-                  <span class="badge-tanggal">
-                    <i class="bi bi-calendar3 me-1"></i>
-                    <%= b.tanggal ? new Date(b.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-' %>
-                  </span>
-                </td>
-                <td data-label="Dilihat">
-                  <span class="badge-tanggal"><i class="bi bi-eye me-1"></i><%= b.dilihat || 0 %></span>
-                </td>
-                <td data-label="Aksi">
-                  <div class="d-flex flex-wrap gap-1">
-                    <a href="/admin/berita/<%= b.id %>/edit" class="btn btn-sm btn-warning btn-action">
-                      <i class="bi bi-pencil"></i> Edit
-                    </a>
-                    <form method="POST" action="/admin/berita/<%= b.id %>/delete" style="display:inline;" onsubmit="return confirm('Yakin hapus berita ini?')">
-                      <button type="submit" class="btn btn-sm btn-danger btn-action">
-                        <i class="bi bi-trash"></i> Hapus
-                      </button>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-            <% }) %>
-          <% } %>
-        </tbody>
-      </table>
+  <div class="ea-toolbar">
+    <div class="ea-search">
+      <i class="bi bi-search"></i>
+      <label for="eaCari" class="visually-hidden">Cari judul, penulis, atau isi</label>
+      <input type="search" id="eaCari" placeholder="Cari judul atau penulis" autocomplete="off">
+    </div>
+    <div class="ea-seg" role="group" aria-label="Filter gambar">
+      <button type="button" class="is-active" data-g="">Semua <small><%= list.length %></small></button>
+      <button type="button" data-g="ada">Dengan gambar <small><%= nGambar %></small></button>
+      <button type="button" data-g="tidak">Tanpa gambar <small><%= list.length - nGambar %></small></button>
     </div>
   </div>
+
+  <section class="ea-list" aria-label="Daftar berita">
+    <% if (list.length === 0) { %>
+      <div class="ea-empty">
+        <i class="bi bi-inbox"></i>
+        <strong>Belum ada berita</strong>
+        Mulai dengan <a href="/admin/berita/create">menulis berita pertama</a>.
+      </div>
+    <% } else { %>
+      <div class="ea-cols" aria-hidden="true">
+        <div>Berita</div><div>Dilihat</div><div>Tanggal</div><div>Aksi</div>
+      </div>
+
+      <div id="eaRows">
+      <% list.forEach(b => {
+           const judul = b.judul || '(Tanpa judul)';
+           const ringkas = excerpt(b.isi, 140);
+           const q = [judul, b.penulis, b.sumber, excerpt(b.isi, 400)].join(' ').toLowerCase();
+      %>
+        <article class="ea-row <%= b.gambar ? '' : 'no-img' %>" data-q="<%= q %>" data-g="<%= b.gambar ? 'ada' : 'tidak' %>">
+          <div class="ea-main">
+            <% if (b.gambar) { %>
+              <img class="ea-thumb" src="<%= thumbUrl(b.gambar) %>" alt="" loading="lazy" referrerpolicy="no-referrer"
+                   onerror="this.outerHTML='<div class=&quot;ea-thumb-empty&quot;><i class=&quot;bi bi-image&quot;></i></div>'">
+            <% } else { %>
+              <div class="ea-thumb-empty"><i class="bi bi-image"></i></div>
+            <% } %>
+            <div class="ea-body">
+              <a class="ea-title" href="/admin/berita/<%= b.id %>/edit"><%= judul %></a>
+              <% if (ringkas) { %><div class="ea-excerpt"><%= ringkas %></div><% } %>
+              <div class="ea-meta">
+                <span><i class="bi bi-person"></i> <%= b.penulis || '-' %></span>
+                <% if (b.sumber) { %><span><i class="bi bi-link-45deg"></i> <%= b.sumber %></span><% } %>
+              </div>
+            </div>
+          </div>
+          <div class="ea-state"><span class="ea-pill"><i class="bi bi-eye"></i> <%= b.dilihat || 0 %></span></div>
+          <div class="ea-date"><%= fmtTgl(b.tanggal) %></div>
+          <div class="ea-actions">
+            <a href="/admin/berita/<%= b.id %>/edit" class="ea-btn ea-btn-edit"><i class="bi bi-pencil-square"></i> Edit</a>
+            <div class="dropdown">
+              <button class="ea-btn ea-btn-icon" type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false" aria-label="Menu lainnya untuk <%= judul %>">
+                <i class="bi bi-three-dots"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="/berita/<%= b.id %>" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-2"></i>Lihat di halaman publik</a></li>
+                <li><a class="dropdown-item" href="/admin/berita/<%= b.id %>/edit"><i class="bi bi-pencil-square me-2"></i>Edit</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="POST" action="/admin/berita/<%= b.id %>/delete" data-konfirmasi="Hapus &quot;<%= judul %>&quot; secara permanen? Gambar di Drive juga ikut terhapus.">
+                    <button class="dropdown-item text-danger" type="submit"><i class="bi bi-trash me-2"></i>Hapus</button>
+                  </form>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </article>
+      <% }) %>
+      </div>
+
+      <div class="ea-empty" id="eaKosong" hidden>
+        <i class="bi bi-search"></i>
+        <strong>Tidak ada hasil</strong>
+        Coba kata kunci lain, atau ganti filter gambar.
+      </div>
+      <div class="ea-more" id="eaMore" hidden>
+        <button type="button" class="ea-btn ea-btn-icon" id="eaMoreBtn"></button>
+      </div>
+    <% } %>
+  </section>
+
+  <% if (list.length > 0) { %><p class="ea-foot" id="eaFoot" aria-live="polite"></p><% } %>
 </div>
 
 <script>
-  // Fitur pencarian real-time
-  document.getElementById('searchBerita')?.addEventListener('keyup', function() {
-    const keyword = this.value.toLowerCase();
-    const rows = document.querySelectorAll('.berita-row');
-    rows.forEach(row => {
-      const judul = row.getAttribute('data-judul') || '';
-      const penulis = row.getAttribute('data-penulis') || '';
-      if (judul.includes(keyword) || penulis.includes(keyword)) {
-        row.style.display = '';
-      } else {
-        row.style.display = 'none';
-      }
-    });
-  });
+  (function () {
+    var STEP = 40;
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#eaRows .ea-row'));
+    var cari = document.getElementById('eaCari');
+    var kosong = document.getElementById('eaKosong');
+    var more = document.getElementById('eaMore');
+    var moreBtn = document.getElementById('eaMoreBtn');
+    var foot = document.getElementById('eaFoot');
+    var segs = Array.prototype.slice.call(document.querySelectorAll('.ea-seg button'));
+    var gambar = '';
+    var limit = STEP;
 
-  document.getElementById('resetFilter')?.addEventListener('click', function() {
-    document.getElementById('searchBerita').value = '';
-    const rows = document.querySelectorAll('.berita-row');
-    rows.forEach(row => row.style.display = '');
-  });
+    // Notifikasi: tutup manual / hilang sendiri, dan bersihkan ?success= dari alamat
+    var notice = document.getElementById('eaNotice');
+    if (notice) {
+      var tutup = function () { notice.remove(); };
+      document.getElementById('eaNoticeTutup').addEventListener('click', tutup);
+      setTimeout(tutup, 5000);
+    }
+
+    // Kata pencarian dibawa lewat ?q= supaya tetap ada setelah kembali dari edit
+    var url = new URL(location.href);
+    url.searchParams.delete('success');
+    if (cari && url.searchParams.get('q')) cari.value = url.searchParams.get('q');
+
+    function terapkan() {
+      if (!rows.length) return;
+      var kata = (cari.value || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
+      var cocok = rows.filter(function (r) {
+        if (gambar && r.getAttribute('data-g') !== gambar) return false;
+        var q = r.getAttribute('data-q');
+        return kata.every(function (k) { return q.indexOf(k) !== -1; });
+      });
+      rows.forEach(function (r) { r.hidden = true; });
+      cocok.slice(0, limit).forEach(function (r) { r.hidden = false; });
+
+      kosong.hidden = cocok.length > 0;
+      var sisa = cocok.length - limit;
+      more.hidden = sisa <= 0;
+      if (sisa > 0) moreBtn.textContent = 'Tampilkan ' + Math.min(STEP, sisa) + ' lagi (sisa ' + sisa + ')';
+      foot.textContent = (kata.length || gambar)
+        ? cocok.length + ' dari ' + rows.length + ' berita cocok'
+        : rows.length + ' berita';
+
+      var u = new URL(location.href);
+      u.searchParams.delete('success');
+      if (cari.value.trim()) u.searchParams.set('q', cari.value.trim()); else u.searchParams.delete('q');
+      history.replaceState(null, '', u.pathname + u.search);
+    }
+
+    if (cari) cari.addEventListener('input', function () { limit = STEP; terapkan(); });
+    if (moreBtn) moreBtn.addEventListener('click', function () { limit += STEP; terapkan(); });
+    segs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        gambar = b.getAttribute('data-g');
+        segs.forEach(function (x) { x.classList.toggle('is-active', x === b); });
+        limit = STEP; terapkan();
+      });
+    });
+    terapkan();
+
+    // Konfirmasi hapus
+    document.querySelectorAll('form[data-konfirmasi]').forEach(function (f) {
+      f.addEventListener('submit', function (e) {
+        if (!confirm(f.getAttribute('data-konfirmasi'))) e.preventDefault();
+      });
+    });
+  })();
 </script>
 
 <%- include('../partials/footer') %>

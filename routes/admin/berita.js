@@ -37,6 +37,22 @@ async function getBeritaGambarFolderId() {
   }
 }
 
+
+// Upload gambar ke Drive, bagikan publik, dan kembalikan URL yang bisa dipakai di <img>.
+// (webViewLink hanya halaman penampil Drive, jadi tidak dipakai.)
+async function uploadGambarBerita(file) {
+  const folderId = await getBeritaGambarFolderId();
+  const fileName = `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`;
+  const response = await drive.files.create({
+    resource: { name: fileName, parents: [folderId] },
+    media: { mimeType: file.mimetype, body: Readable.from(file.buffer) },
+    fields: 'id',
+  });
+  const fileId = response.data.id;
+  await drive.permissions.create({ fileId, requestBody: { role: 'reader', type: 'anyone' } });
+  return { fileId, url: `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600` };
+}
+
 // ============================================================================
 // DAFTAR BERITA
 // ============================================================================
@@ -87,13 +103,9 @@ router.post('/', upload.single('gambar'), async (req, res) => {
 
     // Prioritas: jika ada file upload, simpan ke Drive
     if (file) {
-      const folderId = await getBeritaGambarFolderId();
-      const fileName = `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`;
-      const fileMetadata = { name: fileName, parents: [folderId] };
-      const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
-      const response = await drive.files.create({ resource: fileMetadata, media, fields: 'id, webViewLink' });
-      gambar = response.data.webViewLink;
-      gambarFileId = response.data.id;
+      const up = await uploadGambarBerita(file);
+      gambar = up.url;
+      gambarFileId = up.fileId;
     } 
     // Jika tidak ada file tapi ada gambarUrl dari input manual (misal ImgBB)
     else if (gambarUrl && gambarUrl.trim() !== '') {
@@ -169,13 +181,9 @@ router.post('/:id/update', upload.single('gambar'), async (req, res) => {
       if (oldData.gambarFileId) {
         try { await drive.files.delete({ fileId: oldData.gambarFileId }); } catch (err) { console.error('Gagal hapus gambar lama:', err); }
       }
-      const folderId = await getBeritaGambarFolderId();
-      const fileName = `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`;
-      const fileMetadata = { name: fileName, parents: [folderId] };
-      const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
-      const response = await drive.files.create({ resource: fileMetadata, media, fields: 'id, webViewLink' });
-      updateData.gambar = response.data.webViewLink;
-      updateData.gambarFileId = response.data.id;
+      const up = await uploadGambarBerita(file);
+      updateData.gambar = up.url;
+      updateData.gambarFileId = up.fileId;
     } 
     else if (gambarUrl && gambarUrl.trim() !== '') {
       // Jika tidak ada file upload, gunakan URL manual
