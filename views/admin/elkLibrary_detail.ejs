@@ -1,0 +1,158 @@
+<%- include('../partials/header') %>
+
+<style>
+  .detail-card { border: 1px solid #e2e7ef; border-radius: 12px; max-width: 960px; margin: 0 auto; overflow: hidden; background: #fff; color: #1b2a4a; }
+  .detail-header { background: #1e3a8a; padding: 1.5rem 1.75rem; color: #fff; }
+  .detail-header h3 { font-weight: 700; font-size: 1.5rem; letter-spacing: -0.01em; margin: 0.6rem 0 0; line-height: 1.3; overflow-wrap: anywhere; }
+  .detail-header .tipe { display: inline-block; background: rgba(255,255,255,0.16); border-radius: 999px; padding: 0.15rem 0.8rem; font-size: 0.82rem; font-weight: 600; }
+  .detail-body { padding: 1.75rem; }
+  .meta-row { display: flex; gap: 1rem; padding: 0.6rem 0; border-bottom: 1px solid #eef1f6; }
+  .meta-row:last-child { border-bottom: none; }
+  .meta-label { flex: 0 0 170px; color: #5d6b85; font-size: 0.9rem; }
+  .meta-value { flex: 1; font-weight: 500; word-break: break-word; }
+  .abstrak-box { background: #f6f8fd; border-radius: 10px; padding: 1rem 1.25rem; line-height: 1.7; white-space: pre-line; max-width: 75ch; }
+  .badge-status { display: inline-block; padding: 0.15rem 0.7rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+  .badge-pending { background: #fdf0d5; color: #8a5a00; }
+  .badge-approved { background: #dff3e7; color: #1d6b3f; }
+  .badge-rejected { background: #fbe3e4; color: #a12a35; }
+  .keyword-pill { display: inline-block; background: #e8eefc; color: #1e3a8a; border-radius: 999px; padding: 0.15rem 0.75rem; font-size: 0.82rem; font-weight: 600; margin: 0.15rem; }
+  .btn-kembali { display: inline-flex; align-items: center; gap: 0.5rem; background: #fff; color: #1e3a8a; border: 1px solid #c9d5f2; border-radius: 8px; padding: 0.4rem 1rem; font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: background-color .15s, color .15s; }
+  .btn-kembali:hover { background: #1e3a8a; color: #fff; }
+  .btn-kembali:focus-visible { outline: 2px solid #1e3a8a; outline-offset: 2px; }
+  @media (max-width: 576px) {
+    .meta-row { flex-direction: column; gap: 0.1rem; }
+    .meta-label { flex-basis: auto; }
+    .detail-header h3 { font-size: 1.25rem; }
+  }
+</style>
+
+<%
+  const judul = item.judulPublik || item.title || item.judul || item.namaKegiatan || '(Judul tidak tersedia)';
+  const penulis = item.nama || item.penulis || item.dosenNama || item.authors || '-';
+  const abstrak = item.abstrak || item.abstract || item.deskripsi || '';
+  const tahun = item.tahun || item.publicationYear || '-';
+  const status = item.status || 'pending';
+  const statusLabel = status === 'approved' ? 'Disetujui' : (status === 'rejected' ? 'Ditolak' : 'Pending');
+  const fmtTgl = function (v) {
+    if (!v) return '-';
+    const d = new Date(v);
+    return isNaN(d) ? '-' : d.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+  };
+  const base = '/admin/elk-library/' + type + '/' + item.id;
+%>
+
+<div class="container mt-4 mb-5">
+  <div class="mb-3">
+    <a href="/admin/elk-library?type=<%= type %>" class="btn-kembali js-kembali-daftar">
+      <i class="bi bi-arrow-left"></i> Kembali ke Daftar
+    </a>
+  </div>
+
+  <div class="detail-card">
+    <div class="detail-header">
+      <span class="tipe"><%= typeLabel %></span>
+      <h3><%= judul %></h3>
+    </div>
+
+    <div class="detail-body">
+      <div class="mb-4">
+        <div class="meta-row">
+          <div class="meta-label">Status</div>
+          <div class="meta-value"><span class="badge-status badge-<%= status %>"><%= statusLabel %></span></div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-label"><%= type === 'laporan' ? 'Mahasiswa' : 'Penulis' %></div>
+          <div class="meta-value">
+            <%= penulis %><% if (type === 'laporan' && item.nim) { %> (NIM: <%= item.nim %>)<% } %>
+          </div>
+        </div>
+        <% if (type === 'laporan') { %>
+          <div class="meta-row"><div class="meta-label">Dosen Pembimbing</div><div class="meta-value"><%= item.pembimbing || '-' %></div></div>
+          <% if (item.laporanKe) { %><div class="meta-row"><div class="meta-label">Laporan ke-</div><div class="meta-value"><%= item.laporanKe %></div></div><% } %>
+          <% if (item.semester) { %><div class="meta-row"><div class="meta-label">Semester</div><div class="meta-value"><%= item.semester %></div></div><% } %>
+        <% } %>
+        <% if (type === 'penelitian' && item.namaJurnal) { %>
+          <div class="meta-row"><div class="meta-label">Jurnal</div><div class="meta-value"><%= item.namaJurnal %></div></div>
+        <% } %>
+        <% if (type === 'pengabdian' && item.mitra) { %>
+          <div class="meta-row"><div class="meta-label">Mitra</div><div class="meta-value"><%= item.mitra %></div></div>
+        <% } %>
+        <% if (type === 'buku') { %>
+          <% if (item.penerbit) { %><div class="meta-row"><div class="meta-label">Penerbit</div><div class="meta-value"><%= item.penerbit %></div></div><% } %>
+          <% if (item.isbn) { %><div class="meta-row"><div class="meta-label">ISBN</div><div class="meta-value"><%= item.isbn %></div></div><% } %>
+          <div class="meta-row"><div class="meta-label">Sumber</div><div class="meta-value"><%= item.sumber === 'admin' ? 'Admin' : 'Dosen' %></div></div>
+        <% } %>
+        <div class="meta-row"><div class="meta-label">Tahun</div><div class="meta-value"><%= tahun %></div></div>
+        <div class="meta-row"><div class="meta-label">Dibuat</div><div class="meta-value"><%= fmtTgl(item.createdAt) %></div></div>
+        <% if (item.approvedAt) { %><div class="meta-row"><div class="meta-label">Disetujui</div><div class="meta-value"><%= fmtTgl(item.approvedAt) %></div></div><% } %>
+        <% if (item.rejectedAt) { %><div class="meta-row"><div class="meta-label">Ditolak</div><div class="meta-value"><%= fmtTgl(item.rejectedAt) %></div></div><% } %>
+        <div class="meta-row"><div class="meta-label">Dilihat</div><div class="meta-value"><%= item.views || 0 %> kali</div></div>
+        <div class="meta-row"><div class="meta-label">ID Dokumen</div><div class="meta-value"><small class="text-muted"><%= item.id %></small></div></div>
+      </div>
+
+      <h6 class="fw-bold">Abstrak / Deskripsi</h6>
+      <div class="abstrak-box mb-4"><%= abstrak || 'Belum ada abstrak / deskripsi.' %></div>
+
+      <% if (kataKunci.length > 0) { %>
+        <h6 class="fw-bold">Kata Kunci</h6>
+        <div class="mb-4">
+          <% kataKunci.forEach(function (k) { %><span class="keyword-pill"><%= k %></span><% }) %>
+        </div>
+      <% } %>
+
+      <h6 class="fw-bold">Dokumen</h6>
+      <div class="mb-4">
+        <% if (item.fileUrl) { %>
+          <a href="<%= item.fileUrl %>" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Buka File
+          </a>
+        <% } else { %>
+          <span class="text-muted">Tidak ada file terlampir.</span>
+        <% } %>
+        <% if (status === 'approved') { %>
+          <a href="/elk-library/<%= item.id %>" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm ms-1">
+            <i class="bi bi-box-arrow-up-right me-1"></i> Lihat di Halaman Publik
+          </a>
+        <% } %>
+      </div>
+
+      <hr>
+      <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+        <a href="/admin/elk-library?type=<%= type %>" class="btn-kembali js-kembali-daftar">
+          <i class="bi bi-arrow-left"></i> Kembali ke Daftar
+        </a>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="<%= base %>/edit" class="btn btn-sm btn-warning text-dark"><i class="bi bi-pencil-square"></i> Edit</a>
+          <% if (status === 'pending') { %>
+            <form method="POST" action="<%= base %>/approve" onsubmit="return confirm('Setujui data ini?')">
+              <button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Setujui</button>
+            </form>
+            <form method="POST" action="<%= base %>/reject" onsubmit="return confirm('Tolak data ini?')">
+              <button class="btn btn-sm btn-danger"><i class="bi bi-x-lg"></i> Tolak</button>
+            </form>
+          <% } %>
+          <form method="POST" action="<%= base %>/delete" onsubmit="return confirm('Hapus data ini secara permanen?')">
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Hapus</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Kembali ke daftar dengan filter yang sama & posisi scroll terakhir
+  (function () {
+    var tujuan = null;
+    try { tujuan = sessionStorage.getItem('elkAdminListUrl'); } catch (e) {}
+    if (!tujuan || tujuan.indexOf('/admin/elk-library') !== 0) return; // pakai href bawaan
+    document.querySelectorAll('.js-kembali-daftar').forEach(function (a) {
+      a.setAttribute('href', tujuan);
+      a.addEventListener('click', function () {
+        try { sessionStorage.setItem('elkAdminRestore', '1'); } catch (e) {}
+      });
+    });
+  })();
+</script>
+
+<%- include('../partials/footer') %>
