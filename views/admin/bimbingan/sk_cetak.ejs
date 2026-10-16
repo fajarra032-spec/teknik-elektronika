@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <style>
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #e9edf3; font-family: Arial, Helvetica, sans-serif; color: #000; font-size: 10pt; line-height: 1.32; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* ===== Toolbar (tidak ikut tercetak) ===== */
+    .toolbar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between; padding: .65rem 1rem; background: #1b2a4a; color: #fff; font-size: 13px; }
+    .toolbar a, .toolbar button { font: inherit; font-weight: 600; border: 0; border-radius: 8px; padding: .45rem .9rem; cursor: pointer; text-decoration: none; }
+    .toolbar .kembali { background: rgba(255,255,255,.14); color: #fff; }
+    .toolbar .cetak { background: #fff; color: #1e3a8a; }
+    .toolbar small { opacity: .8; }
+
+    /* ===== Kertas A4 ===== */
+    .halaman { width: 210mm; height: 297mm; margin: 14px auto; padding: 12mm 20mm 10mm; font-size: 10pt; background: #fff; box-shadow: 0 6px 24px rgba(27,42,74,.18); position: relative; overflow: hidden; page-break-after: always; break-after: page; }
+    .halaman:last-of-type { page-break-after: auto; break-after: auto; }
+
+    /* ===== Kop surat (sama dengan transkrip/KHS) ===== */
+    .kop-surat { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 3px double #000; }
+    .logo-kop { width: 74px; height: auto; flex: 0 0 auto; }
+    .teks-kop { flex: 1; font-family: Arial, Helvetica, sans-serif; text-align: left; line-height: 1.28; padding-left: 4px; }
+    .teks-kop .nama-kampus { font-size: 17pt; font-weight: bold; margin: 0 0 3px; color: #2b4d8f; letter-spacing: .5px; text-transform: uppercase; }
+    .teks-kop .alamat, .teks-kop .kontak { font-size: 9pt; margin: 0; color: #333; }
+    .teks-kop .kontak { margin-top: 2px; }
+    .garis-kop { display: none; }
+
+    /* ===== Judul SK ===== */
+    .judul { text-align: center; font-weight: bold; margin: 0; }
+    .judul.besar { font-size: 1.1em; }
+    .judul.gap { margin-top: 10px; font-weight: normal; }
+    .judul-blok { margin: 4px 0 12px; }
+
+    /* ===== Isi SK: label | : | teks ===== */
+    .rw { display: grid; grid-template-columns: 27mm 4mm 1fr; margin: 0; }
+    .rw .tx { text-align: justify; }
+    .item { padding-left: 1.6em; text-indent: -1.6em; margin: 0; text-align: justify; }
+    .memutuskan { text-align: center; font-weight: bold; margin: 8px 0 4px; }
+
+    /* ===== Tanda tangan (sama dengan transkrip) ===== */
+    .ttd-wrap { display: flex; justify-content: flex-end; margin-top: 10px; break-inside: avoid; }
+    .tanda-tangan { width: 82mm; text-align: left; }
+    .tanda-tangan .info-ttd { margin: 0; position: relative; z-index: 1; line-height: 1.45; }
+    .area-ttd { position: relative; height: 42px; }
+    .img-ttd { position: absolute; top: -46px; left: -15px; height: 130px; width: auto; z-index: 10; mix-blend-mode: multiply; }
+    .nama-ttd { font-weight: bold; text-decoration: underline; margin: 0; position: relative; z-index: 1; letter-spacing: .3px; }
+    .nip-ttd { margin: 2px 0 0; }
+
+    .tembusan { margin-top: 10px; font-size: .95em; }
+    .tembusan p { margin: 0; }
+    .tembusan ol { margin: 2px 0 0; padding-left: 1.6em; }
+
+    /* ===== Lampiran ===== */
+    .lampiran-ket { font-size: 1em; margin: 6px 0 10px; text-align: justify; }
+    table.daftar { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 1em; line-height: 1.25; }
+    table.daftar th, table.daftar td { border: 1px solid #000; padding: 1.5px 6px; vertical-align: middle; overflow-wrap: anywhere; }
+    table.daftar th { text-align: center; background: #f2f2f2; padding: 4px 6px; }
+    table.daftar td.c { text-align: center; }
+    table.daftar td.pa { text-align: center; }
+    .pembatas-ttd { margin-top: 18px; }
+    .nomor-hal { position: absolute; bottom: 7mm; left: 0; right: 0; text-align: center; font-size: 8.5pt; color: #666; }
+
+    @media print {
+      body { background: #fff; }
+      .toolbar { display: none !important; }
+      .halaman { margin: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a class="kembali" href="<%= urlKembali %>">&larr; Kembali</a>
+  <small><%= totalMahasiswa %> mahasiswa &middot; Di dialog cetak, pilih &ldquo;Simpan sebagai PDF&rdquo; bila ingin berkas digital</small>
+  <button class="cetak" type="button" onclick="window.print()">Cetak SK</button>
+</div>
+
+<% const semLower = semester.toLowerCase(); const semUpper = semester.toUpperCase(); %>
+
+<!-- ============ HALAMAN 1: BADAN SK ============ -->
+<section class="halaman">
+  <%- include('../../partials/kop_surat') %>
+
+  <p class="judul besar">KEPUTUSAN</p>
+  <p class="judul besar">KETUA PROGRAM STUDI TEKNIK ELEKTRONIKA</p>
+  <p class="judul besar">Nomor: <%= nomorSk %></p>
+  <p class="judul gap">Tentang</p>
+  <div class="judul-blok">
+    <p class="judul besar">PENETAPAN DOSEN PEMBIMBING AKADEMIK</p>
+    <p class="judul besar">Semester <%= semester %> Tahun Akademik <%= tahunAjaran %></p>
+  </div>
+
+  <div class="rw"><div>Menimbang</div><div>:</div><div class="tx">
+    <p class="item">a. Bahwa dalam rangka pelaksanaan tugas pendidikan dan pembelajaran semester <%= semLower %> tahun akademik <%= tahunAjaran %> pada Program Studi Teknik Elektronika Politeknik Dewantara, dipandang perlu menetapkan dosen pembimbing akademik.</p>
+    <p class="item">b. Bahwa sehubungan dengan hal tersebut pada poin 1, perlu menetapkan keputusannya.</p>
+  </div></div>
+
+  <div class="rw" style="margin-top:6px"><div>Mengingat</div><div>:</div><div class="tx">
+    <p class="item">1. Undang-Undang Nomor: 20 Tahun 2003 tentang Sistem Pendidikan Nasional</p>
+    <p class="item">2. Undang-Undang Nomor: 12 Tahun 2012 tentang Pendidikan Tinggi;</p>
+    <p class="item">3. Peraturan Menteri Pendidikan dan Kebudayaan Nomor 3 Tahun 2020 tentang Standar Nasional Pendidikan Tinggi;</p>
+    <p class="item">4. Kebijakan Menteri Pendidikan dan Kebudayaan tentang Merdeka Belajar &ndash; Kampus Merdeka dalam Panduan Kurikulum Merdeka Belajar&ndash;Kampus Merdeka;</p>
+    <p class="item">5. Keputusan Yayasan Pendidikan Dewantara Utama Nomor 1 Tahun 2019 tentang Statuta Politeknik Dewantara;</p>
+    <p class="item">6. Keputusan Direktur Politeknik Dewantara Nomor 29/D/ATIDP/V/2019 tentang Panduan Akademik Politeknik Dewantara.</p>
+  </div></div>
+
+  <p class="memutuskan">MEMUTUSKAN</p>
+
+  <div class="rw"><div>Menetapkan</div><div>:</div><div></div></div>
+  <div class="rw"><div>Pertama</div><div>:</div><div class="tx">Mengangkat saudara sebagai dosen pembimbing akademik mahasiswa program studi Teknik Elektronika TA <%= tahunAjaran %> sebagaimana tercantum pada lampiran keputusan ini.</div></div>
+  <div class="rw" style="margin-top:4px"><div>Kedua</div><div>:</div><div class="tx">Kepada saudara diberi tugas dan tanggung jawab: (1) melaksanakan tugas membimbing; (2) melakukan evaluasi proses dan hasil belajar mahasiswa;</div></div>
+  <div class="rw" style="margin-top:4px"><div>Ketiga</div><div>:</div><div class="tx">melaksanakan pembimbingan dengan ketentuan: (1) membimbing mahasiswa untuk membuat KRS dengan pertimbangan jumlah SKS yang bisa diprogram maksimal 20 SKS;</div></div>
+  <div class="rw" style="margin-top:4px"><div>Keempat</div><div>:</div><div class="tx">Keputusan ini berlaku sejak tanggal ditetapkan dan apabila terdapat kekeliruan di dalam keputusan ini, akan diadakan perbaikan sebagaimana mestinya.</div></div>
+
+  <div class="ttd-wrap">
+    <div class="tanda-tangan">
+      <p class="info-ttd">
+        Ditetapkan di : <%= kota %><br>
+        Pada Tanggal : <%= tanggal %><br>
+        Ketua Program Studi,
+      </p>
+      <div class="area-ttd"><img src="/images/ttd.png" alt="Tanda Tangan Kaprodi" class="img-ttd"></div>
+      <p class="nama-ttd"><%= kaprodi.nama %></p>
+      <p class="nip-ttd">NUPTK. <%= kaprodi.nuptk %></p>
+    </div>
+  </div>
+
+  <div class="tembusan">
+    <p>Tembusan disampaikan dengan hormat kepada:</p>
+    <ol>
+      <li>Direktur Politeknik Dewantara Palopo sebagai laporan</li>
+      <li>Yang bersangkutan untuk diketahui dan dilaksanakan sebagaimana mestinya</li>
+      <li>Arsip</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ LAMPIRAN ============ -->
+<% halaman.forEach(function (hal, hi) { const terakhir = hi === halaman.length - 1; %>
+<section class="halaman">
+  <%- include('../../partials/kop_surat') %>
+
+  <% if (hi === 0) { %>
+    <p class="lampiran-ket">Lampiran Surat Keputusan Ketua Program Studi Teknik Elektronika Nomor <%= nomorSk %> tentang Penetapan Dosen Pembimbing Akademik Semester <%= semester %> Tahun Akademik <%= tahunAjaran %></p>
+    <div class="judul-blok" style="margin-top:12px">
+      <p class="judul besar">DAFTAR DOSEN PEMBIMBING AKADEMIK</p>
+      <p class="judul besar">PROGRAM STUDI TEKNIK ELEKTRONIKA</p>
+      <p class="judul besar">SEMESTER <%= semUpper %></p>
+      <p class="judul besar">TAHUN AKADEMIK <%= tahunAjaran %></p>
+    </div>
+  <% } %>
+
+  <table class="daftar">
+    <colgroup><col style="width:9%"><col style="width:17%"><col style="width:34%"><col style="width:40%"></colgroup>
+    <thead><tr><th>No</th><th>NIM</th><th>Nama Mahasiswa</th><th>Dosen Pembimbing</th></tr></thead>
+    <tbody>
+      <% hal.forEach(function (g) { g.baris.forEach(function (m, i) { %>
+        <tr>
+          <td class="c"><%= m.no %></td>
+          <td class="c"><%= m.nim %></td>
+          <td><%= m.nama %></td>
+          <% if (i === 0) { %>
+            <td class="pa" rowspan="<%= g.baris.length %>"><%= g.nama %><% if (g.identitas) { %><br><%= g.identitas %><% } %></td>
+          <% } %>
+        </tr>
+      <% }) }) %>
+    </tbody>
+  </table>
+
+  <% if (terakhir && !ttdHalamanBaru) { %>
+    <div class="ttd-wrap pembatas-ttd">
+      <div class="tanda-tangan">
+        <p class="info-ttd"><%= kota %>, <%= tanggal %><br>Ketua Program Studi,</p>
+        <div class="area-ttd"><img src="/images/ttd.png" alt="Tanda Tangan Kaprodi" class="img-ttd"></div>
+        <p class="nama-ttd"><%= kaprodi.nama %></p>
+        <p class="nip-ttd">NUPTK. <%= kaprodi.nuptk %></p>
+      </div>
+    </div>
+  <% } %>
+</section>
+<% }) %>
+
+<% if (ttdHalamanBaru) { %>
+<section class="halaman">
+  <%- include('../../partials/kop_surat') %>
+  <div class="ttd-wrap" style="margin-top:20px">
+    <div class="tanda-tangan">
+      <p class="info-ttd"><%= kota %>, <%= tanggal %><br>Ketua Program Studi,</p>
+      <div class="area-ttd"><img src="/images/ttd.png" alt="Tanda Tangan Kaprodi" class="img-ttd"></div>
+      <p class="nama-ttd"><%= kaprodi.nama %></p>
+      <p class="nip-ttd">NUPTK. <%= kaprodi.nuptk %></p>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<script>
+  // Pengaman: jika isi satu halaman melebihi A4 (mis. font berbeda di komputer lain), kecilkan font sedikit.
+  function muatkanHalaman() {
+    document.querySelectorAll('section.halaman').forEach(function (s) {
+      var size = 10; s.style.fontSize = size + 'pt';
+      while (s.scrollHeight > s.clientHeight + 1 && size > 8) { size -= 0.25; s.style.fontSize = size + 'pt'; }
+    });
+  }
+  window.addEventListener('load', muatkanHalaman);
+  window.addEventListener('beforeprint', muatkanHalaman);
+</script>
+</body>
+</html>

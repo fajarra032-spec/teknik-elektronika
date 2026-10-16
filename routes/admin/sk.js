@@ -141,12 +141,19 @@ router.get('/', async (req, res) => {
     // Ambil daftar dosen untuk dropdown
     const dosenSnapshot = await db.collection('dosen').get();
     const dosenList = dosenSnapshot.docs.map(doc => ({ id: doc.id, nama: doc.data().nama }));
-    res.render('admin/sk/index', { title: 'Kelola SK Dosen', skList, dosenList });
+    res.render('admin/sk/index', {
+      title: 'Kelola SK Dosen', skList, dosenList,
+      terkirim: req.query.terkirim ? parseInt(req.query.terkirim, 10) || 0 : 0,
+      terkirimNomor: req.query.nomor || ''
+    });
   } catch (error) {
     console.error(error);
     res.status(500).render('error', { message: 'Gagal memuat data SK' });
   }
 });
+
+// Jalur dari menu SK ke Rilis SK Pembimbing Akademik (Dosen PA)
+router.get('/pembimbing', (req, res) => res.redirect('/admin/bimbingan/sk'));
 
 // Proses upload SK
 router.post('/', upload.single('fileSk'), async (req, res) => {
@@ -192,12 +199,16 @@ router.post('/:id/delete', async (req, res) => {
     const skDoc = await db.collection('sk_dosen').doc(skId).get();
     if (!skDoc.exists) return res.status(404).send('SK tidak ditemukan');
     const { fileId } = skDoc.data();
-    // Hapus dari Drive (opsional)
-    try {
-      await drive.files.delete({ fileId });
-    } catch (err) { console.error('Gagal hapus file dari Drive:', err.message); }
-    // Hapus dari Firestore
+    // Hapus dari Firestore dulu
     await db.collection('sk_dosen').doc(skId).delete();
+    // Hapus dari Drive HANYA bila tidak dipakai SK dosen lain
+    // (SK PA yang dirilis ke banyak dosen memakai satu file PDF yang sama)
+    if (fileId) {
+      try {
+        const masihDipakai = await db.collection('sk_dosen').where('fileId', '==', fileId).limit(1).get();
+        if (masihDipakai.empty) await drive.files.delete({ fileId });
+      } catch (err) { console.error('Gagal hapus file dari Drive:', err.message); }
+    }
     res.redirect('/admin/sk');
   } catch (error) {
     console.error(error);
@@ -361,4 +372,5 @@ router.get('/mengajar/cetak', async (req, res) => {
   }
 });
 
+router.getSkFolder = getSkFolder; // dipakai routes/admin/bimbingan.js (rilis & kirim SK PA)
 module.exports = router;

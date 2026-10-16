@@ -1,0 +1,241 @@
+<%- include('../../partials/header') %>
+
+<style>
+  .ea {
+    --ea-ink: #1b2a4a; --ea-muted: #5d6b85; --ea-line: #e2e7ef; --ea-surface: #ffffff;
+    --ea-accent: #1e3a8a; --ea-accent-soft: #e8eefc; --ea-hover: #f6f8fd;
+    color: var(--ea-ink); font-feature-settings: "tnum" 1;
+  }
+  .ea a { text-decoration: none; }
+  .ea :focus-visible { outline: 2px solid var(--ea-accent); outline-offset: 2px; border-radius: 6px; }
+  .ea-head { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: space-between; margin-bottom: 1.25rem; }
+  .ea-head h1 { font-size: 1.65rem; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 0.25rem; }
+  .ea-head p { margin: 0; color: var(--ea-muted); font-size: 0.95rem; }
+  .ea-btn { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid transparent; border-radius: 8px; padding: 0.45rem 0.9rem; font-size: 0.875rem; font-weight: 600; line-height: 1.3; cursor: pointer; background: none; transition: background-color .15s, border-color .15s, color .15s; }
+  .ea-btn-primary { background: var(--ea-accent); color: #fff; }
+  .ea-btn-primary:hover { background: #172f73; color: #fff; }
+  .ea-btn-primary:disabled { background: #9aa8cf; cursor: not-allowed; }
+  .ea-btn-icon { border-color: var(--ea-line); color: var(--ea-muted); padding: 0.3rem 0.7rem; background: #fff; }
+  .ea-btn-icon:hover { background: var(--ea-hover); color: var(--ea-ink); }
+
+  .ea-panel { background: var(--ea-surface); border: 1px solid var(--ea-line); border-radius: 12px; padding: 1rem 1.15rem; margin-bottom: 1rem; }
+  .ea-panel label.lb { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; }
+  .ea-panel .hint { font-size: 0.8rem; color: var(--ea-muted); margin-top: 0.3rem; }
+  .ea-input, .ea-select { width: 100%; border: 1px solid var(--ea-line); border-radius: 8px; padding: 0.5rem 0.8rem; font-size: 0.92rem; background: #fff; color: var(--ea-ink); }
+  .ea-input:focus, .ea-select:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-adv summary { cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--ea-accent); margin-top: 0.8rem; }
+  .ea-adv .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem; margin-top: 0.8rem; }
+
+  .ea-queue { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; background: #fff8e8; border: 1px solid #f0dcaa; border-left: 4px solid #d99a14; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1rem; }
+  .ea-queue span { color: #6f5200; font-size: 0.95rem; }
+  .ea-queue a { color: #6f5200; font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid currentColor; }
+
+  .ea-toolbar { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 0.9rem; }
+  .ea-search { position: relative; flex: 1 1 240px; max-width: 380px; }
+  .ea-search i { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--ea-muted); pointer-events: none; }
+  .ea-search input { width: 100%; border: 1px solid var(--ea-line); border-radius: 8px; padding: 0.5rem 0.8rem 0.5rem 2.2rem; font-size: 0.9rem; background: #fff; }
+  .ea-search input:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-toolbar select { width: auto; max-width: 240px; border: 1px solid var(--ea-line); border-radius: 8px; padding: 0.5rem 0.8rem; font-size: 0.9rem; background: #fff; }
+
+  .ea-list { background: var(--ea-surface); border: 1px solid var(--ea-line); border-radius: 12px; overflow: hidden; }
+  .ea-cols, .ea-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) 90px minmax(0, 1fr); column-gap: 1rem; align-items: center; }
+  .ea-cols { padding: 0.6rem 1rem 0.6rem 1.15rem; background: #fafbfd; border-bottom: 1px solid var(--ea-line); color: var(--ea-muted); font-size: 0.8rem; font-weight: 600; }
+  .ea-row { position: relative; padding: 0.7rem 1rem 0.7rem 1.15rem; border-bottom: 1px solid var(--ea-line); cursor: pointer; }
+  .ea-row:last-of-type { border-bottom: 0; }
+  .ea-row:hover { background: var(--ea-hover); }
+  .ea-row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: transparent; }
+  .ea-row.on::before { background: var(--ea-accent); }
+  .ea-row input[type=checkbox], .ea-cols input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--ea-accent); cursor: pointer; }
+  .ea-title { font-weight: 600; font-size: 0.93rem; line-height: 1.35; overflow-wrap: anywhere; }
+  .ea-meta { font-size: 0.8rem; color: var(--ea-muted); margin-top: 0.1rem; }
+  .ea-pa { font-size: 0.88rem; overflow-wrap: anywhere; }
+  .ea-ang { font-size: 0.85rem; color: var(--ea-muted); }
+  .ea-empty { padding: 3rem 1.5rem; text-align: center; color: var(--ea-muted); }
+  .ea-empty i { font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #b6bfce; }
+  .ea-empty strong { display: block; color: var(--ea-ink); margin-bottom: 0.25rem; }
+  .ea-more { text-align: center; padding: 0.9rem; border-top: 1px solid var(--ea-line); }
+  [hidden] { display: none !important; }
+
+  .ea-bar { position: sticky; bottom: 0; z-index: 20; margin-top: 1rem; background: #fff; border: 1px solid var(--ea-line); border-radius: 12px; box-shadow: 0 -6px 20px rgba(27,42,74,.08); padding: 0.75rem 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; }
+  .ea-bar .jml { font-size: 0.92rem; color: var(--ea-muted); }
+  .ea-bar .jml strong { color: var(--ea-ink); }
+
+  @media (max-width: 767.98px) {
+    .ea-cols { display: none; }
+    .ea-row { grid-template-columns: 30px minmax(0, 1fr); row-gap: 0.15rem; }
+    .ea-row .ea-ang { display: none; }
+    .ea-row .ea-pa { grid-column: 2; color: var(--ea-muted); font-size: 0.82rem; }
+    .ea-head h1 { font-size: 1.4rem; }
+  }
+</style>
+
+<div class="container-xl ea py-4">
+
+  <header class="ea-head">
+    <div>
+      <h1>Cetak SK Pembimbing</h1>
+      <p>Isi nomor SK, centang mahasiswa yang ikut, lalu cetak. Kop dan TTD Kaprodi sama dengan transkrip.</p>
+    </div>
+    <a href="/admin/bimbingan" class="ea-btn ea-btn-icon"><i class="bi bi-arrow-left"></i> Kembali</a>
+  </header>
+
+  <% if (jumlahBelumPa > 0) { %>
+    <div class="ea-queue" role="status">
+      <span><strong><%= jumlahBelumPa %> mahasiswa aktif</strong> belum punya Dosen PA, jadi tidak muncul di daftar ini.</span>
+      <a href="/admin/bimbingan">Tetapkan Dosen PA</a>
+    </div>
+  <% } %>
+
+  <form method="POST" action="/admin/bimbingan/sk/cetak" target="_blank" id="skForm">
+    <div class="ea-panel">
+      <label class="lb" for="nomorSk">Nomor SK <span class="text-danger">*</span></label>
+      <input type="text" class="ea-input" id="nomorSk" name="nomorSk" required autocomplete="off" placeholder="mis. 045/EK/Polidewa/IX/2026">
+      <div class="hint">Satu-satunya isian wajib. Semester, tahun akademik, dan tanggal terisi otomatis.</div>
+
+      <details class="ea-adv">
+        <summary>Ubah detail lain (opsional)</summary>
+        <div class="grid">
+          <div>
+            <label class="lb" for="semester">Semester</label>
+            <select class="ea-select" id="semester" name="semester">
+              <option value="Ganjil" <%= semesterDefault === 'Ganjil' ? 'selected' : '' %>>Ganjil</option>
+              <option value="Genap" <%= semesterDefault === 'Genap' ? 'selected' : '' %>>Genap</option>
+            </select>
+          </div>
+          <div>
+            <label class="lb" for="tahunAjaran">Tahun akademik</label>
+            <input type="text" class="ea-input" id="tahunAjaran" name="tahunAjaran" value="<%= tahunAjaranDefault %>" placeholder="2026/2027">
+          </div>
+          <div>
+            <label class="lb" for="tanggal">Tanggal ditetapkan</label>
+            <input type="date" class="ea-input" id="tanggal" name="tanggal">
+            <div class="hint">Kosong = hari ini</div>
+          </div>
+          <div>
+            <label class="lb" for="kota">Kota</label>
+            <input type="text" class="ea-input" id="kota" name="kota" value="<%= kotaDefault %>">
+          </div>
+          <div>
+            <label class="lb" for="urutan">Urutan lampiran</label>
+            <select class="ea-select" id="urutan" name="urutan">
+              <option value="blok">Per angkatan, lalu blok Dosen PA (seperti SK sebelumnya)</option>
+              <option value="nim">Murni urut NIM</option>
+              <option value="dosen">Per Dosen PA (A-Z)</option>
+            </select>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <div class="ea-toolbar">
+      <div class="ea-search">
+        <i class="bi bi-search"></i>
+        <label for="eaCari" class="visually-hidden">Cari NIM, nama, atau dosen</label>
+        <input type="search" id="eaCari" placeholder="Cari NIM, nama, atau dosen" autocomplete="off">
+      </div>
+      <select id="eaDosen" aria-label="Filter Dosen PA">
+        <option value="">Semua Dosen PA</option>
+        <% dosenList.forEach(d => { %><option value="<%= d.id %>"><%= d.nama %></option><% }) %>
+      </select>
+      <select id="eaAngkatan" aria-label="Filter angkatan">
+        <option value="">Semua angkatan</option>
+        <% angkatanList.forEach(a => { %><option value="<%= a %>"><%= a %></option><% }) %>
+      </select>
+      <button type="button" class="ea-btn ea-btn-icon" id="eaCentangTampil"><i class="bi bi-check2-square"></i> Centang yang tampil</button>
+      <button type="button" class="ea-btn ea-btn-icon" id="eaKosongkanTampil"><i class="bi bi-square"></i> Kosongkan yang tampil</button>
+    </div>
+
+    <section class="ea-list" aria-label="Mahasiswa yang ikut SK">
+      <% if (mahasiswaList.length === 0) { %>
+        <div class="ea-empty">
+          <i class="bi bi-inbox"></i>
+          <strong>Belum ada mahasiswa aktif yang punya Dosen PA</strong>
+          Tetapkan dulu di <a href="/admin/bimbingan">menu Pembimbing Magang (Dosen PA)</a>.
+        </div>
+      <% } else { %>
+        <div class="ea-cols" aria-hidden="true">
+          <div><input type="checkbox" id="eaSemua" tabindex="-1" title="Centang / kosongkan yang tampil"></div>
+          <div>Mahasiswa</div><div>Angkatan</div><div>Dosen PA</div>
+        </div>
+        <div id="eaRows">
+          <% mahasiswaList.forEach(m => { %>
+            <label class="ea-row on" data-q="<%= (m.nim + ' ' + m.nama + ' ' + m.dosenPaNama).toLowerCase() %>" data-dosen="<%= m.dosenPaId %>" data-angkatan="<%= m.angkatan %>">
+              <input type="checkbox" name="mahasiswaId" value="<%= m.id %>" checked>
+              <div><div class="ea-title"><%= m.nama %></div><div class="ea-meta"><%= m.nim %></div></div>
+              <div class="ea-ang"><%= m.angkatan || '-' %></div>
+              <div class="ea-pa"><%= m.dosenPaNama %></div>
+            </label>
+          <% }) %>
+        </div>
+        <div class="ea-empty" id="eaKosong" hidden>
+          <i class="bi bi-search"></i><strong>Tidak ada hasil</strong>Coba kata kunci atau filter lain.
+        </div>
+        <div class="ea-more" id="eaMore" hidden><button type="button" class="ea-btn ea-btn-icon" id="eaMoreBtn"></button></div>
+      <% } %>
+    </section>
+
+    <div class="ea-bar">
+      <div class="jml"><strong id="eaJml">0</strong> dari <%= mahasiswaList.length %> mahasiswa dipilih</div>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="submit" class="ea-btn ea-btn-icon" id="eaCetak"><i class="bi bi-printer"></i> Cetak SK</button>
+        <button type="submit" class="ea-btn ea-btn-primary" id="eaKirim" formaction="/admin/bimbingan/sk/kirim" formtarget="_self"><i class="bi bi-send"></i> Rilis &amp; Kirim ke Dosen</button>
+      </div>
+    </div>
+    <p class="ea-foot-note" style="font-size:.8rem;color:var(--ea-muted);margin:.5rem .25rem 0">
+      <strong>Rilis &amp; Kirim</strong> membuat PDF SK, menyimpannya di menu <a href="/admin/sk">SK</a>, memunculkannya di &ldquo;SK Saya&rdquo; milik tiap Dosen PA di lampiran, dan mengirim notifikasi ke mereka.
+    </p>
+  </form>
+</div>
+
+<script>
+  (function () {
+    var STEP = 60;
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#eaRows .ea-row'));
+    var cari = document.getElementById('eaCari'), fd = document.getElementById('eaDosen'), fa = document.getElementById('eaAngkatan');
+    var kosong = document.getElementById('eaKosong'), more = document.getElementById('eaMore'), moreBtn = document.getElementById('eaMoreBtn');
+    var jml = document.getElementById('eaJml'), cetak = document.getElementById('eaCetak'), kirim = document.getElementById('eaKirim'), semua = document.getElementById('eaSemua');
+    var limit = STEP, tampil = [];
+
+    function hitung() {
+      var n = rows.filter(function (r) { return r.querySelector('input').checked; }).length;
+      jml.textContent = n; cetak.disabled = n === 0; kirim.disabled = n === 0;
+      rows.forEach(function (r) { r.classList.toggle('on', r.querySelector('input').checked); });
+      if (semua) semua.checked = tampil.length > 0 && tampil.every(function (r) { return r.querySelector('input').checked; });
+    }
+    function terapkan() {
+      var kata = (cari.value || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
+      tampil = rows.filter(function (r) {
+        if (fd.value && r.getAttribute('data-dosen') !== fd.value) return false;
+        if (fa.value && r.getAttribute('data-angkatan') !== fa.value) return false;
+        var q = r.getAttribute('data-q');
+        return kata.every(function (k) { return q.indexOf(k) !== -1; });
+      });
+      rows.forEach(function (r) { r.hidden = true; });
+      tampil.slice(0, limit).forEach(function (r) { r.hidden = false; });
+      if (kosong) kosong.hidden = tampil.length > 0;
+      var sisa = tampil.length - limit;
+      if (more) { more.hidden = sisa <= 0; if (sisa > 0) moreBtn.textContent = 'Tampilkan ' + Math.min(STEP, sisa) + ' lagi (sisa ' + sisa + ')'; }
+      hitung();
+    }
+    function setTampil(v) { tampil.forEach(function (r) { r.querySelector('input').checked = v; }); hitung(); }
+
+    [cari, fd, fa].forEach(function (x) { x.addEventListener('input', function () { limit = STEP; terapkan(); }); });
+    if (moreBtn) moreBtn.addEventListener('click', function () { limit += STEP; terapkan(); });
+    document.getElementById('eaCentangTampil').addEventListener('click', function () { setTampil(true); });
+    document.getElementById('eaKosongkanTampil').addEventListener('click', function () { setTampil(false); });
+    if (semua) semua.addEventListener('click', function () { setTampil(semua.checked); });
+    rows.forEach(function (r) { r.querySelector('input').addEventListener('change', hitung); });
+    // Konfirmasi sebelum merilis & mengirim ke dosen (tindakan ini membuat notifikasi dan file di Drive)
+    kirim.addEventListener('click', function (e) {
+      var nomor = document.getElementById('nomorSk').value.trim();
+      if (!nomor) return; // biarkan validasi 'required' browser yang bekerja
+      var dosen = {};
+      rows.forEach(function (r) { if (r.querySelector('input').checked) dosen[r.getAttribute('data-dosen')] = 1; });
+      var nDosen = Object.keys(dosen).length;
+      if (!confirm('Rilis SK No. ' + nomor + ' dan kirim ke ' + nDosen + ' dosen?\nSK akan muncul di menu SK Saya mereka dan mereka mendapat notifikasi.')) e.preventDefault();
+    });
+    terapkan();
+  })();
+</script>
+
+<%- include('../../partials/footer') %>
