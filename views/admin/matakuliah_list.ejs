@@ -1,349 +1,334 @@
 <%- include('../partials/header') %>
 
+<%
+  var matakuliah = typeof matakuliah !== 'undefined' ? matakuliah : [];
+  var filterSemester = typeof filterSemester !== 'undefined' ? filterSemester : '';
+  var filterSemesterAktif = typeof filterSemesterAktif !== 'undefined' ? filterSemesterAktif : '';
+  var tahunAjaranAktif = typeof tahunAjaranAktif !== 'undefined' ? tahunAjaranAktif : '';
+  var search = typeof search !== 'undefined' ? search : '';
+  var success = typeof success !== 'undefined' ? success : null;
+
+  const punyaPengampu = (mk) => (mk.dosenNames && mk.dosenNames.length > 0) || (mk.dosenIds && mk.dosenIds.length > 0);
+  const nBelum = matakuliah.filter(mk => !punyaPengampu(mk)).length;
+  const adaFilter = !!(filterSemester || filterSemesterAktif || search);
+  const konsentrasiList = Array.from(new Set(matakuliah.map(mk => mk.konsentrasiLabel).filter(Boolean))).sort();
+%>
+
 <style>
-  /* ===== VARIABEL WARNA ===== */
-  :root {
-    --primary-start: #2193b0;
-    --primary-end: #6dd5ed;
-    --primary-light: rgba(33,147,176,0.1);
-    --primary-dark: #1a7a8f;
+  .ea {
+    --ea-ink: #1b2a4a;
+    --ea-muted: #5d6b85;
+    --ea-line: #e2e7ef;
+    --ea-surface: #ffffff;
+    --ea-accent: #1e3a8a;
+    --ea-accent-soft: #e8eefc;
+    --ea-hover: #f6f8fd;
+    color: var(--ea-ink);
+    font-feature-settings: "tnum" 1;
+  }
+  .ea a { text-decoration: none; }
+  .ea :focus-visible { outline: 2px solid var(--ea-accent); outline-offset: 2px; border-radius: 6px; }
+
+  /* Judul halaman */
+  .ea-head { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: space-between; margin-bottom: 1.25rem; }
+  .ea-head h1 { font-size: 1.65rem; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 0.25rem; }
+  .ea-head p { margin: 0; color: var(--ea-muted); font-size: 0.95rem; }
+
+  .ea-btn { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid transparent; border-radius: 8px; padding: 0.45rem 0.9rem; font-size: 0.875rem; font-weight: 600; line-height: 1.3; cursor: pointer; background: none; transition: background-color .15s, border-color .15s, color .15s; }
+  .ea-btn-primary { background: var(--ea-accent); color: #fff; }
+  .ea-btn-primary:hover { background: #172f73; color: #fff; }
+  .ea-btn-edit { border-color: var(--ea-line); color: var(--ea-ink); padding: 0.3rem 0.7rem; font-size: 0.8rem; background: #fff; }
+  .ea-btn-edit:hover { background: var(--ea-hover); color: var(--ea-accent); }
+  .ea-btn-set { background: var(--ea-accent); color: #fff; padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+  .ea-btn-set:hover { background: #172f73; color: #fff; }
+  .ea-btn-icon { border-color: var(--ea-line); color: var(--ea-muted); padding: 0.3rem 0.55rem; background: #fff; }
+  .ea-btn-icon:hover { background: var(--ea-hover); color: var(--ea-ink); }
+
+  /* Info & peringatan */
+  .ea-info { background: var(--ea-accent-soft); border: 1px solid #cfdaf7; border-left: 4px solid var(--ea-accent); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1rem; color: var(--ea-ink); font-size: 0.92rem; line-height: 1.5; }
+  .ea-info a { color: var(--ea-accent); font-weight: 600; border-bottom: 1px solid currentColor; }
+  .ea-queue { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; background: #fff8e8; border: 1px solid #f0dcaa; border-left: 4px solid #d99a14; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; }
+  .ea-queue strong { font-weight: 700; }
+  .ea-queue span { color: #6f5200; font-size: 0.95rem; }
+  .ea-queue button { border: 0; background: none; padding: 0; color: #6f5200; font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid currentColor; }
+
+  /* Toolbar */
+  .ea-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; margin-bottom: 0.9rem; }
+  .ea-search { position: relative; flex: 1 1 260px; max-width: 420px; }
+  .ea-search i { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--ea-muted); pointer-events: none; }
+  .ea-search input { width: 100%; border: 1px solid var(--ea-line); border-radius: 8px; padding: 0.5rem 0.8rem 0.5rem 2.2rem; font-size: 0.9rem; background: #fff; color: var(--ea-ink); }
+  .ea-search input:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-seg { display: inline-flex; background: #eef1f6; border-radius: 9px; padding: 3px; gap: 2px; overflow-x: auto; max-width: 100%; }
+  .ea-seg button { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.75rem; border: 0; background: none; border-radius: 7px; color: var(--ea-muted); font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+  .ea-seg button:hover { color: var(--ea-ink); }
+  .ea-seg button.is-active { background: #fff; color: var(--ea-ink); box-shadow: 0 1px 2px rgba(27, 42, 74, 0.12); }
+  .ea-seg small { font-weight: 600; opacity: 0.75; }
+
+  /* Daftar */
+  .ea-list { background: var(--ea-surface); border: 1px solid var(--ea-line); border-radius: 12px; overflow: hidden; }
+  .ea-cols, .ea-row { display: grid; grid-template-columns: minmax(0, 1fr) 130px minmax(0, 1fr) 170px; column-gap: 1rem; align-items: center; }
+  .ea-cols { padding: 0.6rem 1rem 0.6rem 1.15rem; background: #fafbfd; border-bottom: 1px solid var(--ea-line); color: var(--ea-muted); font-size: 0.8rem; font-weight: 600; }
+  .ea-cols > :last-child { text-align: right; }
+  .ea-row { position: relative; padding: 0.85rem 1rem 0.85rem 1.15rem; border-bottom: 1px solid var(--ea-line); --c: #1d7a46; }
+  .ea-row:last-of-type { border-bottom: 0; }
+  .ea-row:hover { background: var(--ea-hover); }
+  .ea-row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c); }
+  .ea-row.belum { --c: #d99a14; }
+
+  .ea-title { display: block; color: var(--ea-ink); font-weight: 600; font-size: 0.95rem; line-height: 1.4; overflow-wrap: anywhere; }
+  .ea-meta { display: flex; flex-wrap: wrap; gap: 0.15rem 1rem; margin-top: 0.2rem; font-size: 0.8rem; color: var(--ea-muted); }
+  .ea-meta span { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+  .ea-pill { display: inline-block; border-radius: 999px; padding: 0.15rem 0.65rem; font-size: 0.78rem; font-weight: 600; }
+  .s-ok { background: #dff3e7; color: #1d6b3f; }
+  .s-belum { background: #fdf0d5; color: #8a5a00; }
+  .ea-pa { font-size: 0.9rem; color: var(--ea-ink); overflow-wrap: anywhere; }
+  .ea-pa.kosong { color: var(--ea-muted); font-style: italic; }
+  .ea-actions { display: flex; gap: 0.4rem; align-items: center; justify-content: flex-end; }
+
+  .ea-empty { padding: 3rem 1.5rem; text-align: center; color: var(--ea-muted); }
+  .ea-empty i { font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #b6bfce; }
+  .ea-empty strong { display: block; color: var(--ea-ink); margin-bottom: 0.25rem; }
+  .ea-more { text-align: center; padding: 0.9rem; border-top: 1px solid var(--ea-line); }
+  .ea-foot { color: var(--ea-muted); font-size: 0.8rem; margin: 0.6rem 0.25rem 0; }
+  [hidden] { display: none !important; }
+
+  /* Ponsel: satu kolom, status di bawah nama */
+  @media (max-width: 767.98px) {
+    .ea-cols { display: none; }
+    .ea-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.55rem; }
+    .ea-main { grid-column: 1 / -1; }
+    .ea-row > .ea-pa { grid-column: 1; }
+    .ea-row > .ea-state { grid-column: 2; grid-row: 2; text-align: right; }
+    .ea-actions { grid-column: 1 / -1; justify-content: flex-start; }
+    .ea-head h1 { font-size: 1.4rem; }
   }
 
-  /* ===== FILTER CARD ===== */
-  .filter-card {
-    border-radius: 1.2rem;
-    border: 1px solid rgba(33,147,176,0.1);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    background: white;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-  }
-  .filter-card .form-label {
-    font-weight: 600;
-    color: #1e293b;
-  }
-  .filter-card .form-select,
-  .filter-card .form-control {
-    border-radius: 50px;
-    border: 1px solid #dee2e6;
-    padding: 0.6rem 1rem;
-    transition: all 0.2s;
-  }
-  .filter-card .form-select:focus,
-  .filter-card .form-control:focus {
-    border-color: var(--primary-start);
-    box-shadow: 0 0 0 0.25rem rgba(33,147,176,0.25);
-  }
-  .btn-filter {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border: none;
-    color: white;
-    font-weight: 500;
-    padding: 0.6rem 1.5rem;
-    border-radius: 50px;
-    transition: all 0.3s;
-    box-shadow: 0 5px 15px rgba(33,147,176,0.2);
-    width: 100%;
-  }
-  .btn-filter:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(33,147,176,0.4);
-    color: white;
-  }
-  .btn-reset {
-    background: transparent;
-    border: 2px solid var(--primary-start);
-    color: var(--primary-start);
-    font-weight: 500;
-    padding: 0.5rem 1.5rem;
-    border-radius: 50px;
-    transition: all 0.3s;
-    width: 100%;
-  }
-  .btn-reset:hover {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border-color: transparent;
-    color: white;
-    transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(33,147,176,0.3);
-  }
+  /* ===== Tambahan khusus Kelola Mata Kuliah ===== */
+  .ea-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; background: #eaf7ef; border: 1px solid #bfe3cd; border-left: 4px solid #1d7a46; border-radius: 10px; padding: .75rem 1rem; margin-bottom: 1rem; }
+  .ea-notice span { color: #1d6b3f; font-size: .95rem; }
+  .ea-x { border: 0; background: none; padding: 0; font-weight: 600; font-size: .9rem; border-bottom: 1px solid currentColor; color: inherit; }
+  .ea-queue a { color: #6f5200; font-weight: 600; font-size: .9rem; border-bottom: 1px solid currentColor; }
 
-  /* ===== TOMBOL GRADIEN ===== */
-  .btn-gradient {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border: none;
-    color: white;
-    font-weight: 500;
-    padding: 0.6rem 1.5rem;
-    border-radius: 50px;
-    transition: all 0.3s;
-    box-shadow: 0 5px 15px rgba(33,147,176,0.2);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .btn-gradient:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(33,147,176,0.4);
-    color: white;
-  }
+  .ea-filters { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-bottom: .9rem; }
+  .ea-filters .ea-search { flex: 1 1 240px; max-width: 360px; }
+  .ea-filters select { border: 1px solid var(--ea-line); border-radius: 8px; padding: .5rem .8rem; font-size: .88rem; background: #fff; color: var(--ea-ink); max-width: 230px; }
+  .ea-filters select:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-reset { color: var(--ea-muted); font-size: .88rem; font-weight: 600; padding: .45rem .6rem; border-radius: 8px; }
+  .ea-reset:hover { background: var(--ea-hover); color: var(--ea-ink); }
+  .ea-quick { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between; margin-bottom: .9rem; }
+  .ea-quick select { border: 1px solid var(--ea-line); border-radius: 8px; padding: .4rem .8rem; font-size: .86rem; background: #fff; }
+  .ea-count { color: var(--ea-muted); font-size: .85rem; margin: 0 .25rem .6rem; }
 
-  /* ===== TOMBOL AKSI ===== */
-  .btn-icon-sm {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: 1px solid transparent;
-    transition: all 0.2s;
-    color: white;
-    margin: 0 2px;
-  }
-  .btn-icon-sm i {
-    font-size: 1rem;
-  }
-  .btn-edit {
-    background: #ffc107;
-  }
-  .btn-edit:hover {
-    background: #e0a800;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 10px rgba(255,193,7,0.3);
-  }
-  .btn-delete {
-    background: #dc3545;
-  }
-  .btn-delete:hover {
-    background: #c82333;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 10px rgba(220,53,69,0.3);
-  }
+  .ea-cols, .ea-row { grid-template-columns: minmax(0, 1.5fr) 125px 150px minmax(0, 1.2fr) 150px; }
+  .ea-cols > :last-child { text-align: right; }
+  .ea-row { cursor: default; --c: #1d7a46; }
+  .ea-row.belum { --c: #d99a14; }
+  .ea-kode { display: inline-block; background: var(--ea-accent-soft); color: var(--ea-accent); border-radius: 6px; padding: .05rem .5rem; font-size: .76rem; font-weight: 700; letter-spacing: .02em; margin-right: .4rem; vertical-align: 1px; }
+  .ea-title { display: inline; font-weight: 600; font-size: .94rem; line-height: 1.4; color: var(--ea-ink); overflow-wrap: anywhere; }
+  .ea-title:hover { color: var(--ea-accent); text-decoration: underline; text-underline-offset: 3px; }
+  .ea-meta { font-size: .8rem; color: var(--ea-muted); margin-top: .2rem; display: flex; flex-wrap: wrap; gap: .1rem 1rem; }
+  .ea-meta span { display: inline-flex; align-items: center; gap: .3rem; }
+  .ea-num { font-size: .88rem; line-height: 1.5; }
+  .ea-num small { color: var(--ea-muted); display: block; font-size: .78rem; }
+  .ea-pill { display: inline-block; border-radius: 999px; padding: .12rem .6rem; font-size: .75rem; font-weight: 600; background: #eef1f6; color: var(--ea-muted); white-space: nowrap; }
+  .k-umum { background: #eef1f6; color: #475569; } .k-instrumentasi { background: #e0f2fe; color: #0b5d8a; } .k-telekomunikasi { background: #ede9fe; color: #5b3aa3; }
+  .p-pdk { background: #fdf0d5; color: #8a5a00; }
+  .ea-stack { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .ea-dosen { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .ea-dosen span { background: var(--ea-accent-soft); color: var(--ea-accent); border-radius: 999px; padding: .12rem .6rem; font-size: .78rem; font-weight: 600; }
+  .ea-kosong { color: #8a5a00; font-style: italic; font-size: .86rem; }
+  .ea-actions { display: flex; gap: .4rem; align-items: center; justify-content: flex-end; }
+  .ea-actions form { margin: 0; }
+  .ea-actions .dropdown-menu { font-size: .875rem; border-color: var(--ea-line); border-radius: 10px; box-shadow: 0 8px 24px rgba(27, 42, 74, .12); }
 
-  /* ===== BADGE DOSEN ===== */
-  .badge-dosen {
-    background: var(--primary-light);
-    color: var(--primary-dark);
-    padding: 0.2rem 0.6rem;
-    border-radius: 50px;
-    font-size: 0.8rem;
-    display: inline-block;
-    margin-right: 0.3rem;
-    margin-bottom: 0.3rem;
-  }
-
-  /* ===== EMPTY STATE ===== */
-  .empty-state {
-    padding: 4rem 2rem;
-    text-align: center;
-    background: #f8f9fa;
-    border-radius: 1.5rem;
-    margin: 2rem 0;
-  }
-  .empty-state i {
-    font-size: 4rem;
-    color: #adb5bd;
-    margin-bottom: 1.5rem;
-  }
-  .empty-state h4 {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.5rem;
-  }
-  .empty-state p {
-    color: #6c757d;
-    margin-bottom: 1.5rem;
-  }
-
-  /* ===== TABEL ===== */
-  .table-container {
-    background: white;
-    border-radius: 1.5rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-  }
-  .matkul-table {
-    margin-bottom: 0;
-  }
-  .matkul-table thead th {
-    background: linear-gradient(135deg, var(--primary-light), rgba(109,213,237,0.1));
-    color: var(--primary-dark);
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid var(--primary-start);
-    padding: 1rem 0.75rem;
-  }
-  .matkul-table tbody tr {
-    transition: all 0.2s;
-  }
-  .matkul-table tbody tr:hover {
-    background-color: var(--primary-light);
-    transform: scale(1.01);
-    box-shadow: 0 5px 15px rgba(33,147,176,0.1);
-  }
-  .matkul-table td {
-    padding: 1rem 0.75rem;
-    vertical-align: middle;
-    border-bottom: 1px solid #e9ecef;
-  }
-
-  /* ===== ALERT ===== */
-  .alert-custom {
-    border-radius: 1rem;
-    border-left: 4px solid;
+  @media (max-width: 991.98px) {
+    .ea-cols { display: none; }
+    .ea-row { grid-template-columns: minmax(0, 1fr); row-gap: .45rem; }
+    .ea-actions { justify-content: flex-start; }
   }
 </style>
 
-<div class="container-fluid mt-4">
-  <!-- Header dengan tombol tambah -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold"><i class="bi bi-book-fill me-2" style="color: var(--primary-start);"></i>Kelola Mata Kuliah</h2>
-    <a href="/admin/matakuliah/create" class="btn-gradient">
-      <i class="bi bi-plus-circle"></i> Tambah Mata Kuliah
-    </a>
-  </div>
+<div class="container-fluid container-xl ea py-4">
+
+  <header class="ea-head">
+    <div>
+      <h1>Kelola Mata Kuliah</h1>
+      <p>Daftar mata kuliah, dosen pengampu, dan jadwal Teknik Elektronika.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/admin/sk/mengajar" class="ea-btn ea-btn-edit"><i class="bi bi-send"></i> Rilis SK Mengajar</a>
+      <a href="/admin/matakuliah/create" class="ea-btn ea-btn-primary"><i class="bi bi-plus-lg"></i> Tambah mata kuliah</a>
+    </div>
+  </header>
+
+  <% if (success) { %>
+    <div class="ea-notice" role="status">
+      <span><strong>Berhasil.</strong> Data mata kuliah berhasil <%= success %>.</span>
+      <button type="button" class="ea-x" style="color:#1d6b3f" onclick="this.closest('.ea-notice').remove()">Tutup</button>
+    </div>
+  <% } %>
 
   <% if (filterSemesterAktif) { %>
-    <div class="alert alert-info d-flex align-items-center mb-3" style="border-radius: 1rem;">
-      <i class="bi bi-info-circle me-2"></i>
-      Menampilkan mata kuliah Semester <strong><%= filterSemesterAktif %> <%= tahunAjaranAktif %></strong>
-      (+ semua MK Praktik Dunia Kerja). Pilih "Semua (Ganjil & Genap)" di filter kalau mau lihat semuanya.
+    <div class="ea-info" role="note">
+      Menampilkan mata kuliah Semester <strong><%= filterSemesterAktif %> <%= tahunAjaranAktif %></strong> (ditambah semua MK Praktik Dunia Kerja).
+      Pilih <a href="/admin/matakuliah?semesterAktif=">Semua (Ganjil &amp; Genap)</a> untuk melihat seluruhnya.
     </div>
   <% } %>
 
-  <!-- Filter Card -->
-  <div class="filter-card">
-    <form method="GET" class="row g-3 align-items-end">
-      <div class="col-md-3">
-        <label for="semesterAktif" class="form-label fw-semibold"><i class="bi bi-calendar2-week me-1"></i>Semester Aktif</label>
-        <select class="form-select" id="semesterAktif" name="semesterAktif">
-          <option value="" <%= filterSemesterAktif === '' ? 'selected' : '' %>>Semua (Ganjil & Genap)</option>
-          <option value="Ganjil" <%= filterSemesterAktif === 'Ganjil' ? 'selected' : '' %>>Ganjil <%= tahunAjaranAktif %></option>
-          <option value="Genap" <%= filterSemesterAktif === 'Genap' ? 'selected' : '' %>>Genap <%= tahunAjaranAktif %></option>
-        </select>
-        <small class="text-muted">MK Praktik Dunia Kerja selalu tampil, tidak terikat Ganjil/Genap</small>
-      </div>
-      <div class="col-md-3">
-        <label for="semester" class="form-label fw-semibold"><i class="bi bi-funnel me-1"></i>Semester</label>
-        <select class="form-select" id="semester" name="semester">
-          <option value="">Semua Semester</option>
-          <option value="1" <%= filterSemester === '1' ? 'selected' : '' %>>Semester 1</option>
-          <option value="2" <%= filterSemester === '2' ? 'selected' : '' %>>Semester 2</option>
-          <option value="3" <%= filterSemester === '3' ? 'selected' : '' %>>Semester 3</option>
-          <option value="4" <%= filterSemester === '4' ? 'selected' : '' %>>Semester 4</option>
-          <option value="5" <%= filterSemester === '5' ? 'selected' : '' %>>Semester 5</option>
-          <option value="6" <%= filterSemester === '6' ? 'selected' : '' %>>Semester 6</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <label for="search" class="form-label fw-semibold"><i class="bi bi-search me-1"></i>Cari</label>
-        <input type="text" class="form-control" id="search" name="search" placeholder="Kode atau nama MK" value="<%= search || '' %>">
-      </div>
-      <div class="col-md-2">
-        <button type="submit" class="btn-filter">Terapkan</button>
-      </div>
-      <div class="col-md-2">
-        <a href="/admin/matakuliah" class="btn-reset">Reset</a>
-      </div>
-    </form>
-  </div>
-
-  <!-- Notifikasi Sukses -->
-  <% if (typeof success !== 'undefined' && success) { %>
-    <div class="alert alert-success alert-dismissible fade show mb-4 alert-custom" role="alert" style="border-left-color: #28a745;">
-      <i class="bi bi-check-circle-fill me-2"></i>Data mata kuliah berhasil <%= success %>.
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  <% if (nBelum > 0) { %>
+    <div class="ea-queue" role="status">
+      <span><strong><%= nBelum %> dari <%= matakuliah.length %> mata kuliah</strong> belum punya dosen pengampu, jadi belum masuk ke SK Mengajar.</span>
+      <button type="button" id="eaLihatBelum" class="ea-x" style="color:#6f5200">Tampilkan yang belum</button>
     </div>
   <% } %>
 
-  <!-- Info jumlah ditampilkan -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <p class="mb-0">Menampilkan <strong><%= matakuliah.length %></strong> mata kuliah</p>
+  <!-- Filter server-side (semester aktif, semester, kata kunci) -->
+  <form method="GET" action="/admin/matakuliah" class="ea-filters">
+    <div class="ea-search">
+      <i class="bi bi-search"></i>
+      <label for="search" class="visually-hidden">Cari kode atau nama mata kuliah</label>
+      <input type="search" id="search" name="search" placeholder="Cari kode atau nama MK" value="<%= search %>" autocomplete="off">
+    </div>
+    <select name="semesterAktif" aria-label="Semester aktif" onchange="this.form.submit()" title="MK Praktik Dunia Kerja selalu tampil, tidak terikat Ganjil/Genap">
+      <option value="" <%= filterSemesterAktif === '' ? 'selected' : '' %>>Ganjil &amp; Genap</option>
+      <option value="Ganjil" <%= filterSemesterAktif === 'Ganjil' ? 'selected' : '' %>>Ganjil <%= tahunAjaranAktif %></option>
+      <option value="Genap" <%= filterSemesterAktif === 'Genap' ? 'selected' : '' %>>Genap <%= tahunAjaranAktif %></option>
+    </select>
+    <select name="semester" aria-label="Semester" onchange="this.form.submit()">
+      <option value="">Semua semester</option>
+      <% for (let i = 1; i <= 6; i++) { %><option value="<%= i %>" <%= filterSemester === String(i) ? 'selected' : '' %>>Semester <%= i %></option><% } %>
+    </select>
+    <button type="submit" class="ea-btn ea-btn-edit">Terapkan</button>
+    <% if (adaFilter) { %><a href="/admin/matakuliah" class="ea-reset"><i class="bi bi-x-lg"></i> Reset</a><% } %>
+  </form>
+
+  <!-- Filter cepat (di data yang sudah tampil) -->
+  <div class="ea-quick">
+    <div class="ea-seg" role="group" aria-label="Status pengampu">
+      <button type="button" class="is-active" data-s="">Semua <small><%= matakuliah.length %></small></button>
+      <button type="button" data-s="ada">Ada pengampu <small><%= matakuliah.length - nBelum %></small></button>
+      <button type="button" data-s="belum">Belum ada pengampu <small><%= nBelum %></small></button>
+    </div>
+    <% if (konsentrasiList.length > 1) { %>
+      <select id="eaKonsentrasi" aria-label="Konsentrasi">
+        <option value="">Semua konsentrasi</option>
+        <% konsentrasiList.forEach(k => { %><option value="<%= k %>"><%= k %></option><% }) %>
+      </select>
+    <% } %>
   </div>
 
-  <!-- Tabel Mata Kuliah -->
-  <div class="table-container">
-    <div class="table-responsive">
-      <table class="table matkul-table">
-        <thead>
-          <tr>
-            <th>Kode</th>
-            <th>Kelas</th>
-            <th>Nama MK</th>
-            <th>SKS</th>
-            <th>Semester</th>
-            <th>Konsentrasi</th>
-            <th>Dosen Pengampu</th>
-            <th>Jadwal</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (matakuliah.length === 0) { %>
-            <tr>
-              <td colspan="9" class="text-center py-5">
-                <div class="empty-state">
-                  <i class="bi bi-inbox"></i>
-                  <h4>Belum Ada Data Mata Kuliah</h4>
-                  <p class="text-muted">Silakan tambahkan mata kuliah pertama dengan klik tombol "Tambah Mata Kuliah".</p>
-                </div>
-              </td>
-            </tr>
-          <% } else { %>
-            <% matakuliah.forEach(mk => { %>
-            <tr>
-              <td><span class="badge bg-primary bg-opacity-10 text-primary"><%= mk.kode %></span></td>
-              <td>
-                <% if (mk.kelas) { %>
-                  <span class="badge bg-info text-dark"><%= mk.kelas %></span>
-                <% } else { %>
-                  <span class="text-muted">semua kelas</span>
-                <% } %>
-              </td>
-              <td><strong><%= mk.nama %></strong></td>
-              <td class="text-center"><span class="fw-semibold"><%= mk.sks %></span></td>
-              <td class="text-center"><%= mk.semester || '-' %></td>
-              <td class="text-center">
-                <span class="badge-konsentrasi <%= mk.konsentrasiLabel.toLowerCase() %>"><%= mk.konsentrasiLabel %></span>
-              </td>
-              <td>
-                <% if (mk.dosenNames && mk.dosenNames.length > 0) { %>
-                  <div>
-                    <% mk.dosenNames.forEach(nama => { %>
-                      <span class="badge-dosen"><%= nama %></span>
-                    <% }) %>
-                  </div>
-                <% } else if (mk.dosenIds && mk.dosenIds.length > 0) { %>
-                  <span class="badge-dosen"><%= mk.dosenIds.length %> dosen</span>
-                <% } else { %>
-                  <span class="text-muted">-</span>
-                <% } %>
-              </td>
-              <td><small><%= mk.jadwal || '-' %></small></td>
-              <td>
-                <div class="d-flex gap-1">
-                  <a href="/admin/matakuliah/<%= mk.id %>/edit" class="btn-icon-sm btn-edit" title="Edit">
-                    <i class="bi bi-pencil"></i>
-                  </a>
-                  <form method="POST" action="/admin/matakuliah/<%= mk.id %>/delete" style="display:inline;" onsubmit="return confirm('Yakin hapus mata kuliah ini?')">
-                    <button type="submit" class="btn-icon-sm btn-delete" title="Hapus">
-                      <i class="bi bi-trash"></i>
-                    </button>
+  <div class="ea-count" id="eaInfo" aria-live="polite">Menampilkan <strong><%= matakuliah.length %></strong> mata kuliah</div>
+
+  <section class="ea-list" aria-label="Daftar mata kuliah">
+    <% if (matakuliah.length === 0) { %>
+      <div class="ea-empty">
+        <i class="bi bi-inbox"></i>
+        <strong><%= adaFilter ? 'Tidak ada mata kuliah yang cocok' : 'Belum ada data mata kuliah' %></strong>
+        <%= adaFilter ? 'Coba ubah atau reset filter.' : 'Mulai dengan menambahkan mata kuliah pertama.' %>
+      </div>
+    <% } else { %>
+      <div class="ea-cols" aria-hidden="true">
+        <div>Mata kuliah</div><div>SKS &amp; semester</div><div>Konsentrasi</div><div>Dosen pengampu</div><div>Aksi</div>
+      </div>
+
+      <div id="eaRows">
+      <% matakuliah.forEach(mk => {
+           const ada = punyaPengampu(mk);
+           const kLabel = mk.konsentrasiLabel || 'Umum';
+      %>
+        <article class="ea-row <%= ada ? '' : 'belum' %>" data-s="<%= ada ? 'ada' : 'belum' %>" data-k="<%= kLabel %>">
+          <div>
+            <span class="ea-kode"><%= mk.kode %></span><a class="ea-title" href="/admin/matakuliah/<%= mk.id %>"><%= mk.nama %></a>
+            <div class="ea-meta">
+              <span><i class="bi bi-people"></i> <%= mk.kelas ? 'Kelas ' + mk.kelas : 'Semua kelas' %></span>
+              <% if (mk.jadwal) { %><span><i class="bi bi-clock"></i> <%= mk.jadwal %></span><% } %>
+            </div>
+          </div>
+          <div class="ea-num"><%= mk.sks %> SKS<small>Semester <%= mk.semester || '-' %></small></div>
+          <div class="ea-stack">
+            <span class="ea-pill k-<%= kLabel.toLowerCase() %>"><%= kLabel %></span>
+            <% if (mk.isPDK) { %><span class="ea-pill p-pdk">Praktik Dunia Kerja</span><% } %>
+          </div>
+          <div>
+            <% if (mk.dosenNames && mk.dosenNames.length > 0) { %>
+              <div class="ea-dosen"><% mk.dosenNames.forEach(nama => { %><span><%= nama %></span><% }) %></div>
+            <% } else if (mk.dosenIds && mk.dosenIds.length > 0) { %>
+              <div class="ea-dosen"><span><%= mk.dosenIds.length %> dosen</span></div>
+            <% } else { %>
+              <span class="ea-kosong">Belum ada pengampu</span>
+            <% } %>
+          </div>
+          <div class="ea-actions">
+            <a href="/admin/matakuliah/<%= mk.id %>/edit" class="ea-btn ea-btn-edit"><i class="bi bi-pencil-square"></i> Edit</a>
+            <div class="dropdown">
+              <button class="ea-btn ea-btn-icon" type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false" aria-label="Menu lainnya untuk <%= mk.nama %>"><i class="bi bi-three-dots"></i></button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="/admin/matakuliah/<%= mk.id %>"><i class="bi bi-eye me-2"></i>Detail</a></li>
+                <li><a class="dropdown-item" href="/admin/matakuliah/<%= mk.id %>/edit"><i class="bi bi-pencil-square me-2"></i>Edit &amp; atur pengampu</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="POST" action="/admin/matakuliah/<%= mk.id %>/delete" data-konfirmasi="Yakin hapus mata kuliah ini?">
+                    <button class="dropdown-item text-danger" type="submit"><i class="bi bi-trash me-2"></i>Hapus</button>
                   </form>
-                </div>
-              </td>
-            </tr>
-            <% }) %>
-          <% } %>
-        </tbody>
-      </table>
-    </div>
-  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </article>
+      <% }) %>
+      </div>
+
+      <div class="ea-empty" id="eaKosong" hidden>
+        <i class="bi bi-search"></i><strong>Tidak ada hasil</strong>Coba ganti filter cepat di atas.
+      </div>
+      <div class="ea-more" id="eaMore" hidden><button type="button" class="ea-btn ea-btn-icon" id="eaMoreBtn"></button></div>
+    <% } %>
+  </section>
 </div>
+
+<script>
+  (function () {
+    var STEP = 50;
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#eaRows .ea-row'));
+    if (!rows.length) return;
+    var kosong = document.getElementById('eaKosong'), more = document.getElementById('eaMore'), moreBtn = document.getElementById('eaMoreBtn');
+    var info = document.getElementById('eaInfo'), kons = document.getElementById('eaKonsentrasi');
+    var segs = Array.prototype.slice.call(document.querySelectorAll('.ea-seg button'));
+    var status = '', limit = STEP;
+
+    function terapkan() {
+      var cocok = rows.filter(function (r) {
+        if (status && r.getAttribute('data-s') !== status) return false;
+        if (kons && kons.value && r.getAttribute('data-k') !== kons.value) return false;
+        return true;
+      });
+      rows.forEach(function (r) { r.hidden = true; });
+      cocok.slice(0, limit).forEach(function (r) { r.hidden = false; });
+      kosong.hidden = cocok.length > 0;
+      var sisa = cocok.length - limit;
+      more.hidden = sisa <= 0;
+      if (sisa > 0) moreBtn.textContent = 'Tampilkan ' + Math.min(STEP, sisa) + ' lagi (sisa ' + sisa + ')';
+      info.innerHTML = (status || (kons && kons.value))
+        ? 'Menampilkan <strong>' + cocok.length + '</strong> dari ' + rows.length + ' mata kuliah'
+        : 'Menampilkan <strong>' + rows.length + '</strong> mata kuliah';
+    }
+    function setStatus(s) {
+      status = s; limit = STEP;
+      segs.forEach(function (x) { x.classList.toggle('is-active', x.getAttribute('data-s') === s); });
+      terapkan();
+    }
+    segs.forEach(function (b) { b.addEventListener('click', function () { setStatus(b.getAttribute('data-s')); }); });
+    if (kons) kons.addEventListener('change', function () { limit = STEP; terapkan(); });
+    if (moreBtn) moreBtn.addEventListener('click', function () { limit += STEP; terapkan(); });
+    var lihat = document.getElementById('eaLihatBelum');
+    if (lihat) lihat.addEventListener('click', function () { setStatus('belum'); });
+
+    document.querySelectorAll('form[data-konfirmasi]').forEach(function (f) {
+      f.addEventListener('submit', function (e) { if (!confirm(f.getAttribute('data-konfirmasi'))) e.preventDefault(); });
+    });
+    terapkan();
+  })();
+</script>
 
 <%- include('../partials/footer') %>
