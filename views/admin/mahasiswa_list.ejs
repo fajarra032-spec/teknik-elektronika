@@ -1,7 +1,7 @@
 <%- include('../partials/header') %>
 
 <%
-  // Fungsi untuk mengekstrak ID file dari URL Google Drive
+  // Ambil ID file dari URL Google Drive (untuk thumbnail foto)
   const getFileIdFromUrl = (url) => {
     if (!url) return null;
     let match = url.match(/[?&]id=([^&]+)/);
@@ -11,448 +11,379 @@
     return null;
   };
 
-  // Pastikan semua variabel filter ada (mencegah error "is not defined")
+  // Pastikan semua variabel ada (mencegah error "is not defined")
   var filterAngkatan = typeof filterAngkatan !== 'undefined' ? filterAngkatan : '';
   var filterSemester = typeof filterSemester !== 'undefined' ? filterSemester : '';
   var filterStatusMagang = typeof filterStatusMagang !== 'undefined' ? filterStatusMagang : '';
   var filterStatusMahasiswa = typeof filterStatusMahasiswa !== 'undefined' ? filterStatusMahasiswa : '';
   var filterKelas = typeof filterKelas !== 'undefined' ? filterKelas : '';
   var kelasList = typeof kelasList !== 'undefined' ? kelasList : [];
+  var dosenPaList = typeof dosenPaList !== 'undefined' ? dosenPaList : [];
   var search = typeof search !== 'undefined' ? search : '';
   var angkatanList = typeof angkatanList !== 'undefined' ? angkatanList : [];
   var mahasiswa = typeof mahasiswa !== 'undefined' ? mahasiswa : [];
   var importResult = typeof importResult !== 'undefined' ? importResult : null;
   var importError = typeof importError !== 'undefined' ? importError : null;
   var success = typeof success !== 'undefined' ? success : null;
+  var pageInfo = typeof pageInfo !== 'undefined' ? pageInfo : null;
+  var showAll = typeof showAll !== 'undefined' ? showAll : false;
+  var totalMahasiswa = typeof totalMahasiswa !== 'undefined' ? totalMahasiswa : mahasiswa.length;
+
+  const adaFilter = !!(filterAngkatan || filterSemester || filterStatusMagang || filterStatusMahasiswa || filterKelas || search);
+  const qsFilter = adaFilter
+    ? '?' + new URLSearchParams({ angkatan: filterAngkatan, semester: filterSemester, statusMagang: filterStatusMagang, statusMahasiswa: filterStatusMahasiswa, kelas: filterKelas, search: search }).toString()
+    : '';
+  const kelasStatus = { 'Aktif': 'p-aktif', 'Lulus': 'p-lulus', 'Cuti': 'p-cuti', 'Keluar': 'p-keluar' };
 %>
 
 <style>
-  :root {
-    --primary-start: #2193b0;
-    --primary-end: #6dd5ed;
-    --primary-light: rgba(33,147,176,0.1);
-    --primary-dark: #1a7a8f;
+  .ea {
+    --ea-ink: #1b2a4a;
+    --ea-muted: #5d6b85;
+    --ea-line: #e2e7ef;
+    --ea-surface: #ffffff;
+    --ea-accent: #1e3a8a;
+    --ea-accent-soft: #e8eefc;
+    --ea-hover: #f6f8fd;
+    color: var(--ea-ink);
+    font-feature-settings: "tnum" 1;
   }
-  .filter-card {
-    border-radius: 1.2rem;
-    border: 1px solid rgba(33,147,176,0.1);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    background: white;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
+  .ea a { text-decoration: none; }
+  .ea :focus-visible { outline: 2px solid var(--ea-accent); outline-offset: 2px; border-radius: 6px; }
+
+  /* Judul halaman */
+  .ea-head { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: space-between; margin-bottom: 1.25rem; }
+  .ea-head h1 { font-size: 1.65rem; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 0.25rem; }
+  .ea-head p { margin: 0; color: var(--ea-muted); font-size: 0.95rem; }
+
+  .ea-btn { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid transparent; border-radius: 8px; padding: 0.45rem 0.9rem; font-size: 0.875rem; font-weight: 600; line-height: 1.3; cursor: pointer; background: none; transition: background-color .15s, border-color .15s, color .15s; }
+  .ea-btn-primary { background: var(--ea-accent); color: #fff; }
+  .ea-btn-primary:hover { background: #172f73; color: #fff; }
+  .ea-btn-edit { border-color: var(--ea-line); color: var(--ea-ink); padding: 0.3rem 0.7rem; font-size: 0.8rem; background: #fff; }
+  .ea-btn-edit:hover { background: var(--ea-hover); color: var(--ea-accent); }
+  .ea-btn-set { background: var(--ea-accent); color: #fff; padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+  .ea-btn-set:hover { background: #172f73; color: #fff; }
+  .ea-btn-icon { border-color: var(--ea-line); color: var(--ea-muted); padding: 0.3rem 0.55rem; background: #fff; }
+  .ea-btn-icon:hover { background: var(--ea-hover); color: var(--ea-ink); }
+
+  /* Info & peringatan */
+  .ea-info { background: var(--ea-accent-soft); border: 1px solid #cfdaf7; border-left: 4px solid var(--ea-accent); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1rem; color: var(--ea-ink); font-size: 0.92rem; line-height: 1.5; }
+  .ea-info a { color: var(--ea-accent); font-weight: 600; border-bottom: 1px solid currentColor; }
+  .ea-queue { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; background: #fff8e8; border: 1px solid #f0dcaa; border-left: 4px solid #d99a14; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; }
+  .ea-queue strong { font-weight: 700; }
+  .ea-queue span { color: #6f5200; font-size: 0.95rem; }
+  .ea-queue button { border: 0; background: none; padding: 0; color: #6f5200; font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid currentColor; }
+
+  /* Toolbar */
+  .ea-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; margin-bottom: 0.9rem; }
+  .ea-search { position: relative; flex: 1 1 260px; max-width: 420px; }
+  .ea-search i { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--ea-muted); pointer-events: none; }
+  .ea-search input { width: 100%; border: 1px solid var(--ea-line); border-radius: 8px; padding: 0.5rem 0.8rem 0.5rem 2.2rem; font-size: 0.9rem; background: #fff; color: var(--ea-ink); }
+  .ea-search input:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-seg { display: inline-flex; background: #eef1f6; border-radius: 9px; padding: 3px; gap: 2px; overflow-x: auto; max-width: 100%; }
+  .ea-seg button { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.75rem; border: 0; background: none; border-radius: 7px; color: var(--ea-muted); font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+  .ea-seg button:hover { color: var(--ea-ink); }
+  .ea-seg button.is-active { background: #fff; color: var(--ea-ink); box-shadow: 0 1px 2px rgba(27, 42, 74, 0.12); }
+  .ea-seg small { font-weight: 600; opacity: 0.75; }
+
+  /* Daftar */
+  .ea-list { background: var(--ea-surface); border: 1px solid var(--ea-line); border-radius: 12px; overflow: hidden; }
+  .ea-cols, .ea-row { display: grid; grid-template-columns: minmax(0, 1fr) 130px minmax(0, 1fr) 170px; column-gap: 1rem; align-items: center; }
+  .ea-cols { padding: 0.6rem 1rem 0.6rem 1.15rem; background: #fafbfd; border-bottom: 1px solid var(--ea-line); color: var(--ea-muted); font-size: 0.8rem; font-weight: 600; }
+  .ea-cols > :last-child { text-align: right; }
+  .ea-row { position: relative; padding: 0.85rem 1rem 0.85rem 1.15rem; border-bottom: 1px solid var(--ea-line); --c: #1d7a46; }
+  .ea-row:last-of-type { border-bottom: 0; }
+  .ea-row:hover { background: var(--ea-hover); }
+  .ea-row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c); }
+  .ea-row.belum { --c: #d99a14; }
+
+  .ea-title { display: block; color: var(--ea-ink); font-weight: 600; font-size: 0.95rem; line-height: 1.4; overflow-wrap: anywhere; }
+  .ea-meta { display: flex; flex-wrap: wrap; gap: 0.15rem 1rem; margin-top: 0.2rem; font-size: 0.8rem; color: var(--ea-muted); }
+  .ea-meta span { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+  .ea-pill { display: inline-block; border-radius: 999px; padding: 0.15rem 0.65rem; font-size: 0.78rem; font-weight: 600; }
+  .s-ok { background: #dff3e7; color: #1d6b3f; }
+  .s-belum { background: #fdf0d5; color: #8a5a00; }
+  .ea-pa { font-size: 0.9rem; color: var(--ea-ink); overflow-wrap: anywhere; }
+  .ea-pa.kosong { color: var(--ea-muted); font-style: italic; }
+  .ea-actions { display: flex; gap: 0.4rem; align-items: center; justify-content: flex-end; }
+
+  .ea-empty { padding: 3rem 1.5rem; text-align: center; color: var(--ea-muted); }
+  .ea-empty i { font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #b6bfce; }
+  .ea-empty strong { display: block; color: var(--ea-ink); margin-bottom: 0.25rem; }
+  .ea-more { text-align: center; padding: 0.9rem; border-top: 1px solid var(--ea-line); }
+  .ea-foot { color: var(--ea-muted); font-size: 0.8rem; margin: 0.6rem 0.25rem 0; }
+  [hidden] { display: none !important; }
+
+  /* Ponsel: satu kolom, status di bawah nama */
+  @media (max-width: 767.98px) {
+    .ea-cols { display: none; }
+    .ea-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.55rem; }
+    .ea-main { grid-column: 1 / -1; }
+    .ea-row > .ea-pa { grid-column: 1; }
+    .ea-row > .ea-state { grid-column: 2; grid-row: 2; text-align: right; }
+    .ea-actions { grid-column: 1 / -1; justify-content: flex-start; }
+    .ea-head h1 { font-size: 1.4rem; }
   }
-  .filter-card .form-label { font-weight: 600; color: #1e293b; }
-  .filter-card .form-select, .filter-card .form-control {
-    border-radius: 50px;
-    border: 1px solid #dee2e6;
-    padding: 0.6rem 1rem;
+
+  /* ===== Tambahan khusus Kelola Mahasiswa ===== */
+  .ea-btn-primary:focus-visible, .ea-btn:focus-visible { outline: 2px solid var(--ea-accent); outline-offset: 2px; }
+  .ea-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; background: #eaf7ef; border: 1px solid #bfe3cd; border-left: 4px solid #1d7a46; border-radius: 10px; padding: .75rem 1rem; margin-bottom: 1rem; }
+  .ea-notice span { color: #1d6b3f; font-size: .95rem; }
+  .ea-danger { background: #fdecec; border: 1px solid #f3c2c2; border-left: 4px solid #c0392b; border-radius: 10px; padding: .75rem 1rem; margin-bottom: 1rem; color: #8a1f1f; font-size: .95rem; }
+  .ea-x { border: 0; background: none; padding: 0; font-weight: 600; font-size: .9rem; border-bottom: 1px solid currentColor; color: inherit; }
+  .ea-info details { margin-top: .4rem; } .ea-info ul { margin: .3rem 0 0; padding-left: 1.1rem; }
+
+  .ea-filters { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-bottom: .9rem; }
+  .ea-filters .ea-search { flex: 1 1 240px; max-width: 360px; }
+  .ea-filters select { border: 1px solid var(--ea-line); border-radius: 8px; padding: .5rem .8rem; font-size: .88rem; background: #fff; color: var(--ea-ink); max-width: 210px; }
+  .ea-filters select:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-reset { color: var(--ea-muted); font-size: .88rem; font-weight: 600; padding: .45rem .6rem; border-radius: 8px; }
+  .ea-reset:hover { background: var(--ea-hover); color: var(--ea-ink); }
+  .ea-count { display: flex; flex-wrap: wrap; gap: .25rem 1rem; justify-content: space-between; color: var(--ea-muted); font-size: .85rem; margin: 0 .25rem .6rem; }
+
+  .ea-cols, .ea-row { grid-template-columns: 30px minmax(0, 1.5fr) 150px 175px minmax(0, 1fr) 150px; }
+  .ea-cols > :last-child { text-align: right; }
+  .ea-row { cursor: default; --c: #1d7a46; }
+  .ea-row.belum { --c: #d99a14; }
+  .ea-row.nonaktif { --c: #9aa5b8; }
+  .ea-row input[type=checkbox], .ea-cols input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--ea-accent); cursor: pointer; }
+  .ea-who { display: flex; gap: .75rem; align-items: center; min-width: 0; }
+  .ea-av { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: var(--ea-accent-soft); color: var(--ea-accent); display: grid; place-items: center; font-weight: 700; border: 1px solid var(--ea-line); }
+  .ea-title { display: block; font-weight: 600; font-size: .94rem; line-height: 1.35; color: var(--ea-ink); overflow-wrap: anywhere; }
+  .ea-title:hover { color: var(--ea-accent); text-decoration: underline; text-underline-offset: 3px; }
+  .ea-meta { font-size: .8rem; color: var(--ea-muted); margin-top: .1rem; overflow-wrap: anywhere; }
+  .ea-kls { font-size: .88rem; line-height: 1.5; }
+  .ea-kls small { color: var(--ea-muted); display: block; font-size: .78rem; }
+  .ea-stack { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .ea-pill { display: inline-block; border-radius: 999px; padding: .12rem .6rem; font-size: .75rem; font-weight: 600; background: #eef1f6; color: var(--ea-muted); white-space: nowrap; }
+  .p-aktif { background: #dff3e7; color: #1d6b3f; } .p-lulus { background: #ece3fa; color: #5b3aa3; }
+  .p-cuti { background: #fdf0d5; color: #8a5a00; } .p-keluar { background: #fde3e3; color: #9b2c2c; }
+  .p-magang { background: var(--ea-accent-soft); color: var(--ea-accent); } .p-warn { background: #fdf0d5; color: #8a5a00; }
+  .ea-pa { font-size: .88rem; overflow-wrap: anywhere; } .ea-pa.kosong { color: #8a5a00; font-style: italic; }
+  .ea-actions { display: flex; gap: .4rem; align-items: center; justify-content: flex-end; }
+  .ea-actions .dropdown-menu { font-size: .875rem; border-color: var(--ea-line); border-radius: 10px; box-shadow: 0 8px 24px rgba(27, 42, 74, .12); }
+  .ea-actions form { margin: 0; }
+  .ea-head .dropdown-menu { font-size: .875rem; border-color: var(--ea-line); border-radius: 10px; box-shadow: 0 8px 24px rgba(27, 42, 74, .12); }
+
+  .ea-pagebar { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between; padding: .75rem 1rem; border-top: 1px solid var(--ea-line); color: var(--ea-muted); font-size: .85rem; }
+  .ea-pagebar .btns { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .ea-btn.is-disabled { opacity: .45; pointer-events: none; }
+
+  .ea-bulk { position: sticky; bottom: 0; z-index: 20; margin-top: 1rem; background: #fff; border: 1px solid var(--ea-line); border-radius: 12px; box-shadow: 0 -6px 20px rgba(27, 42, 74, .1); padding: .8rem 1rem; display: flex; flex-wrap: wrap; gap: .8rem 1.4rem; align-items: flex-end; }
+  .ea-bulk .jml { font-size: .92rem; color: var(--ea-muted); align-self: center; } .ea-bulk .jml strong { color: var(--ea-ink); }
+  .ea-bulk form { display: flex; flex-wrap: wrap; gap: .5rem; align-items: flex-end; margin: 0; }
+  .ea-bulk label { display: block; font-size: .78rem; font-weight: 600; margin-bottom: .2rem; }
+  .ea-bulk input[type=text], .ea-bulk select { border: 1px solid var(--ea-line); border-radius: 8px; padding: .4rem .7rem; font-size: .88rem; min-width: 190px; background: #fff; }
+  .ea-bulk .ea-btn { padding: .4rem .85rem; }
+
+  @media (max-width: 991.98px) {
+    .ea-cols { display: none; }
+    .ea-row { grid-template-columns: 30px minmax(0, 1fr); row-gap: .45rem; }
+    .ea-row > :nth-child(n+3) { grid-column: 2; }
+    .ea-actions { justify-content: flex-start; }
   }
-  .btn-filter {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border: none;
-    color: white;
-    font-weight: 500;
-    padding: 0.6rem 1.5rem;
-    border-radius: 50px;
-    transition: all 0.3s;
-    width: 100%;
-  }
-  .btn-filter:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(33,147,176,0.4);
-    color: white;
-  }
-  .btn-gradient {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border: none;
-    color: white;
-    font-weight: 500;
-    padding: 0.6rem 1.5rem;
-    border-radius: 50px;
-    transition: all 0.3s;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .btn-gradient:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(33,147,176,0.4);
-    color: white;
-  }
-  .btn-outline {
-    background: transparent;
-    border: 2px solid var(--primary-start);
-    color: var(--primary-start);
-    border-radius: 50px;
-    padding: 0.5rem 1.2rem;
-    transition: all 0.3s;
-  }
-  .btn-outline:hover {
-    background: var(--primary-start);
-    color: white;
-  }
-  .table-container {
-    background: white;
-    border-radius: 1.5rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-  }
-  .mahasiswa-table thead th {
-    background: linear-gradient(135deg, var(--primary-light), rgba(109,213,237,0.1));
-    color: var(--primary-dark);
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    border-bottom: 2px solid var(--primary-start);
-    padding: 1rem 0.75rem;
-  }
-  .mahasiswa-table tbody tr:hover {
-    background-color: var(--primary-light);
-    transform: scale(1.01);
-  }
-  .mahasiswa-table td {
-    padding: 1rem 0.75rem;
-    vertical-align: middle;
-  }
-  .btn-icon-sm {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    transition: all 0.2s;
-    color: white;
-    margin: 0 2px;
-  }
-  .btn-detail { background: var(--primary-start); }
-  .btn-edit { background: #ffc107; }
-  .btn-krs { background: #198754; }
-  .btn-reset { background: #6c757d; }
-  .btn-delete { background: #dc3545; }
-  .avatar-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 1.2rem;
-  }
-  .foto-mahasiswa {
-    width: 40px;
-    height: 40px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 2px solid var(--primary-start);
-  }
-  .badge-semester { background: #cfe2ff; color: #084298; }
-  .badge-magang { background: #cff4fc; color: #055160; }
-  .badge-aktif { background: #d4edda; color: #155724; }
-  .badge-lulus { background: #d1ecf1; color: #0c5460; }
-  .badge-cuti { background: #fff3cd; color: #856404; }
-  .badge-keluar { background: #f8d7da; color: #842029; }
-  .empty-state {
-    padding: 4rem 2rem;
-    text-align: center;
-    background: #f8f9fa;
-    border-radius: 1.5rem;
-  }
-  .empty-state i { font-size: 4rem; color: #adb5bd; margin-bottom: 1.5rem; }
 </style>
 
-<div class="container-fluid mt-4">
-  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold"><i class="bi bi-mortarboard-fill me-2" style="color: var(--primary-start);"></i>Kelola Mahasiswa</h2>
-    <div>
-      <a href="/admin/mahasiswa/template" class="btn-outline me-2" style="text-decoration: none;">
-        <i class="bi bi-download"></i> Template CSV
-      </a>
-      <button class="btn-outline me-2" data-bs-toggle="modal" data-bs-target="#importModal">
-        <i class="bi bi-upload"></i> Import CSV
-      </button>
-      <a href="/admin/mahasiswa/export/csv<%= (filterAngkatan || filterSemester || filterStatusMagang || filterStatusMahasiswa || filterKelas || search) ? '?' + new URLSearchParams({angkatan: filterAngkatan, semester: filterSemester, statusMagang: filterStatusMagang, statusMahasiswa: filterStatusMahasiswa, kelas: filterKelas, search: search}).toString() : '' %>" 
-         class="btn-outline me-2" style="text-decoration: none;">
-        <i class="bi bi-download"></i> Download CSV
-      </a>
-      <a href="/admin/mahasiswa/print<%= (filterAngkatan || filterSemester || filterStatusMagang || filterStatusMahasiswa || filterKelas || search) ? '?' + new URLSearchParams({angkatan: filterAngkatan, semester: filterSemester, statusMagang: filterStatusMagang, statusMahasiswa: filterStatusMahasiswa, kelas: filterKelas, search: search}).toString() : '' %>"
-         class="btn-outline me-2" style="text-decoration: none;" target="_blank">
-        <i class="bi bi-printer"></i> Cetak Daftar
-      </a>
-      <a href="/admin/mahasiswa/sk-pa" class="btn-outline me-2" style="text-decoration: none;">
-        <i class="bi bi-file-earmark-word"></i> Rilis SK PA
-      </a>
-      <a href="/admin/mahasiswa/create" class="btn-gradient">
-        <i class="bi bi-plus-circle"></i> Tambah Mahasiswa
-      </a>
-    </div>
-  </div>
+<div class="container-fluid container-xl ea py-4">
 
-  <!-- Filter Card -->
-  <div class="filter-card">
-    <form method="GET" class="row g-3 align-items-end">
-      <div class="col-md-2">
-        <label for="angkatan" class="form-label fw-semibold">Angkatan</label>
-        <select class="form-select" id="angkatan" name="angkatan">
-          <option value="">Semua Angkatan</option>
-          <% if (angkatanList && angkatanList.length) { %>
-            <% angkatanList.forEach(a => { %>
-              <option value="<%= a %>" <%= a === filterAngkatan ? 'selected' : '' %>><%= a %></option>
-            <% }) %>
-          <% } %>
-        </select>
+  <header class="ea-head">
+    <div>
+      <h1>Kelola Mahasiswa</h1>
+      <p>Data mahasiswa, kelas, Dosen PA, dan status magang Teknik Elektronika.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <div class="dropdown">
+        <button class="ea-btn ea-btn-edit" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-three-dots"></i> Data &amp; dokumen</button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="/admin/mahasiswa/template"><i class="bi bi-download me-2"></i>Template CSV</a></li>
+          <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#importModal"><i class="bi bi-upload me-2"></i>Import CSV</button></li>
+          <li><a class="dropdown-item" href="/admin/mahasiswa/export/csv<%= qsFilter %>"><i class="bi bi-filetype-csv me-2"></i>Download CSV<%= adaFilter ? ' (sesuai filter)' : '' %></a></li>
+          <li><a class="dropdown-item" href="/admin/mahasiswa/print<%= qsFilter %>" target="_blank"><i class="bi bi-printer me-2"></i>Cetak daftar</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="/admin/bimbingan"><i class="bi bi-person-check me-2"></i>Pembimbing Magang (Dosen PA)</a></li>
+          <li><a class="dropdown-item" href="/admin/bimbingan/sk"><i class="bi bi-send me-2"></i>Cetak &amp; kirim SK Pembimbing</a></li>
+          <li><a class="dropdown-item" href="/admin/mahasiswa/sk-pa"><i class="bi bi-file-earmark-word me-2"></i>Rilis SK PA (.docx)</a></li>
+        </ul>
       </div>
-      <div class="col-md-2">
-        <label for="semester" class="form-label fw-semibold">Semester (1-12)</label>
-        <select class="form-select" id="semester" name="semester">
-          <option value="">Semua Semester</option>
-          <% for(let i=1; i<=12; i++) { %>
-            <option value="Semester <%= i %>" <%= filterSemester === ('Semester '+i) ? 'selected' : '' %>>Semester <%= i %></option>
-          <% } %>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label for="statusMagang" class="form-label fw-semibold">Status Magang</label>
-        <select class="form-select" id="statusMagang" name="statusMagang">
-          <option value="">Semua</option>
-          <option value="Magang 1" <%= filterStatusMagang === 'Magang 1' ? 'selected' : '' %>>Magang 1</option>
-          <option value="Magang 2" <%= filterStatusMagang === 'Magang 2' ? 'selected' : '' %>>Magang 2</option>
-          <option value="Magang 3" <%= filterStatusMagang === 'Magang 3' ? 'selected' : '' %>>Magang 3</option>
-          <option value="Selesai Magang" <%= filterStatusMagang === 'Selesai Magang' ? 'selected' : '' %>>Selesai Magang</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label for="statusMahasiswa" class="form-label fw-semibold">Status Mahasiswa</label>
-        <select class="form-select" id="statusMahasiswa" name="statusMahasiswa">
-          <option value="">Semua</option>
-          <option value="Aktif" <%= filterStatusMahasiswa === 'Aktif' ? 'selected' : '' %>>Aktif</option>
-          <option value="Lulus" <%= filterStatusMahasiswa === 'Lulus' ? 'selected' : '' %>>Lulus</option>
-          <option value="Cuti" <%= filterStatusMahasiswa === 'Cuti' ? 'selected' : '' %>>Cuti</option>
-          <option value="Keluar" <%= filterStatusMahasiswa === 'Keluar' ? 'selected' : '' %>>Keluar</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label for="kelas" class="form-label fw-semibold">Kelas</label>
-        <select class="form-select" id="kelas" name="kelas">
-          <option value="">Semua Kelas</option>
-          <% if (kelasList && kelasList.length) { %>
-            <% kelasList.forEach(k => { %>
-              <option value="<%= k %>" <%= k === filterKelas ? 'selected' : '' %>><%= k %></option>
-            <% }) %>
-          <% } %>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <label for="search" class="form-label fw-semibold">Cari (Nama/NIM)</label>
-        <input type="text" class="form-control" id="search" name="search" placeholder="Nama atau NIM" value="<%= search %>">
-      </div>
-      <div class="col-md-1">
-        <button type="submit" class="btn-filter">Filter</button>
-      </div>
-    </form>
-  </div>
+      <a href="/admin/mahasiswa/create" class="ea-btn ea-btn-primary"><i class="bi bi-plus-lg"></i> Tambah mahasiswa</a>
+    </div>
+  </header>
 
   <% if (success) { %>
-    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-      <i class="bi bi-check-circle-fill me-2"></i>Data mahasiswa berhasil <%= success %>.
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="ea-notice" role="status">
+      <span><strong>Berhasil.</strong> Data mahasiswa berhasil <%= success %>.</span>
+      <button type="button" class="ea-x" style="color:#1d6b3f" onclick="this.closest('.ea-notice').remove()">Tutup</button>
     </div>
   <% } %>
 
-  <!-- Notifikasi hasil import / bulk assign kelas -->
   <% if (importResult) { %>
-    <div class="alert alert-info alert-dismissible fade show mb-4">
+    <div class="ea-info" role="status">
       <% if (importResult.pesan) { %>
-        <i class="bi bi-check-circle"></i> <%= importResult.pesan %>.
+        <%= importResult.pesan %>.
       <% } else { %>
-        <i class="bi bi-info-circle"></i> Import selesai: <strong><%= importResult.success %></strong> berhasil, <strong><%= importResult.failed %></strong> gagal.
+        Import selesai: <strong><%= importResult.success %></strong> berhasil, <strong><%= importResult.failed %></strong> gagal.
       <% } %>
       <% if (importResult.errors && importResult.errors.length) { %>
         <details>
           <summary>Detail error (<%= importResult.errors.length %>)</summary>
-          <ul>
-            <% importResult.errors.forEach(e => { %>
-              <li><%= e %></li>
-            <% }) %>
-          </ul>
+          <ul><% importResult.errors.forEach(e => { %><li><%= e %></li><% }) %></ul>
         </details>
       <% } %>
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   <% } %>
-  <% if (importError) { %>
-    <div class="alert alert-danger alert-dismissible fade show mb-4">
-      <i class="bi bi-exclamation-triangle"></i> <%= importError %>
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-  <% } %>
+  <% if (importError) { %><div class="ea-danger" role="alert"><i class="bi bi-exclamation-triangle me-1"></i> <%= importError %></div><% } %>
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <p class="mb-0">Menampilkan <strong><%= mahasiswa.length %></strong> dari <strong><%= typeof totalMahasiswa !== 'undefined' ? totalMahasiswa : mahasiswa.length %></strong> mahasiswa</p>
-    <% if (typeof showAll !== 'undefined' && !showAll && typeof pageInfo !== 'undefined' && pageInfo && pageInfo.total > pageInfo.count) { %>
-      <p class="mb-0 text-muted small">Untuk assign kelas/Dosen PA massal ke lebih dari <%= pageInfo.count %> mahasiswa sekaligus, klik "Tampilkan Semua" di bawah tabel dulu.</p>
+  <!-- Filter (server-side, agar cocok dengan paginasi) -->
+  <form method="GET" action="/admin/mahasiswa" class="ea-filters" id="filterForm">
+    <div class="ea-search">
+      <i class="bi bi-search"></i>
+      <label for="search" class="visually-hidden">Cari nama atau NIM</label>
+      <input type="search" id="search" name="search" placeholder="Cari nama atau NIM" value="<%= search %>" autocomplete="off">
+    </div>
+    <select name="angkatan" aria-label="Angkatan" onchange="this.form.submit()">
+      <option value="">Semua angkatan</option>
+      <% angkatanList.forEach(a => { %><option value="<%= a %>" <%= a === filterAngkatan ? 'selected' : '' %>><%= a %></option><% }) %>
+    </select>
+    <select name="kelas" aria-label="Kelas" onchange="this.form.submit()">
+      <option value="">Semua kelas</option>
+      <% kelasList.forEach(k => { %><option value="<%= k %>" <%= k === filterKelas ? 'selected' : '' %>><%= k %></option><% }) %>
+    </select>
+    <select name="semester" aria-label="Semester" onchange="this.form.submit()">
+      <option value="">Semua semester</option>
+      <% for (let i = 1; i <= 12; i++) { %><option value="Semester <%= i %>" <%= filterSemester === ('Semester ' + i) ? 'selected' : '' %>>Semester <%= i %></option><% } %>
+    </select>
+    <select name="statusMagang" aria-label="Status magang" onchange="this.form.submit()">
+      <option value="">Status magang</option>
+      <% ['Magang 1', 'Magang 2', 'Magang 3', 'Selesai Magang'].forEach(v => { %><option value="<%= v %>" <%= filterStatusMagang === v ? 'selected' : '' %>><%= v %></option><% }) %>
+    </select>
+    <select name="statusMahasiswa" aria-label="Status mahasiswa" onchange="this.form.submit()">
+      <option value="">Status mahasiswa</option>
+      <% ['Aktif', 'Lulus', 'Cuti', 'Keluar'].forEach(v => { %><option value="<%= v %>" <%= filterStatusMahasiswa === v ? 'selected' : '' %>><%= v %></option><% }) %>
+    </select>
+    <button type="submit" class="ea-btn ea-btn-edit">Terapkan</button>
+    <% if (adaFilter) { %><a href="/admin/mahasiswa" class="ea-reset"><i class="bi bi-x-lg"></i> Reset</a><% } %>
+  </form>
+
+  <div class="ea-count">
+    <span>Menampilkan <strong><%= mahasiswa.length %></strong> dari <strong><%= totalMahasiswa %></strong> mahasiswa</span>
+    <% if (!showAll && pageInfo && pageInfo.total > pageInfo.count) { %>
+      <span>Untuk menetapkan kelas/Dosen PA ke lebih dari <%= pageInfo.count %> mahasiswa sekaligus, pilih &ldquo;Tampilkan semua&rdquo; di bawah daftar.</span>
     <% } %>
   </div>
 
-  <!-- Toolbar assign kelas massal - muncul setelah pilih minimal 1 checkbox -->
-  <div id="bulkKelasBar" class="filter-card mb-3" style="display:none;">
-    <form method="POST" action="/admin/mahasiswa/bulk-kelas" id="bulkKelasForm" class="d-flex flex-wrap gap-2 align-items-end">
+  <section class="ea-list" aria-label="Daftar mahasiswa">
+    <% if (mahasiswa.length === 0) { %>
+      <div class="ea-empty">
+        <i class="bi bi-inbox"></i>
+        <strong><%= adaFilter ? 'Tidak ada mahasiswa yang cocok' : 'Belum ada data mahasiswa' %></strong>
+        <%= adaFilter ? 'Coba ubah atau reset filter.' : 'Silakan tambahkan mahasiswa pertama.' %>
+      </div>
+    <% } else { %>
+      <div class="ea-cols" aria-hidden="true">
+        <div><input type="checkbox" id="selectAllMahasiswa" tabindex="-1" title="Pilih semua yang tampil"></div>
+        <div>Mahasiswa</div><div>Kelas &amp; semester</div><div>Status</div><div>Dosen PA</div><div>Aksi</div>
+      </div>
+
+      <% mahasiswa.forEach(m => {
+           const angkatan = (m.nim && m.nim.length >= 2) ? '20' + m.nim.substring(0, 2) : '-';
+           const stMhs = m.statusMahasiswa || '-';
+           const fileId = m.foto ? getFileIdFromUrl(m.foto) : null;
+           const awal = (m.nama || '?').charAt(0).toUpperCase();
+           const kelasCss = stMhs !== 'Aktif' ? 'nonaktif' : (m.dosenPaNama ? '' : 'belum');
+      %>
+        <article class="ea-row <%= kelasCss %>">
+          <input type="checkbox" class="mahasiswaCheckbox" value="<%= m.id %>" aria-label="Pilih <%= m.nama %>">
+          <div class="ea-who">
+            <% if (m.foto) { %>
+              <img class="ea-av" loading="lazy" referrerpolicy="no-referrer" alt=""
+                   src="<%= fileId ? 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w100' : m.foto %>"
+                   onerror="this.onerror=null;this.outerHTML='<div class=&quot;ea-av&quot;><%= awal %></div>'">
+            <% } else { %>
+              <div class="ea-av"><%= awal %></div>
+            <% } %>
+            <div style="min-width:0">
+              <a class="ea-title" href="/admin/mahasiswa/<%= m.id %>"><%= m.nama %></a>
+              <div class="ea-meta"><%= m.nim || '-' %><% if (m.email) { %> &middot; <%= m.email %><% } %></div>
+            </div>
+          </div>
+          <div class="ea-kls">
+            <%= m.kelas ? 'Kelas ' + m.kelas : 'Belum ada kelas' %>
+            <small><%= m.semester || '-' %> &middot; Angkatan <%= angkatan %></small>
+          </div>
+          <div class="ea-stack">
+            <span class="ea-pill <%= kelasStatus[stMhs] || '' %>"><%= stMhs %></span>
+            <% if (m.statusMagang) { %><span class="ea-pill p-magang"><%= m.statusMagang %></span><% } %>
+            <% if (!m.biodataLengkap) { %><span class="ea-pill p-warn" title="Biodata belum lengkap">Biodata belum</span><% } %>
+          </div>
+          <div class="ea-pa <%= m.dosenPaNama ? '' : 'kosong' %>"><%= m.dosenPaNama || 'Belum ditetapkan' %></div>
+          <div class="ea-actions">
+            <a href="/admin/mahasiswa/<%= m.id %>/edit" class="ea-btn ea-btn-edit"><i class="bi bi-pencil-square"></i> Edit</a>
+            <div class="dropdown">
+              <button class="ea-btn ea-btn-icon" type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false" aria-label="Menu lainnya untuk <%= m.nama %>"><i class="bi bi-three-dots"></i></button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="/admin/mahasiswa/<%= m.id %>"><i class="bi bi-eye me-2"></i>Detail</a></li>
+                <li><a class="dropdown-item" href="/admin/krs/buat/<%= m.id %>"><i class="bi bi-journal-plus me-2"></i>Buat KRS</a></li>
+                <li><a class="dropdown-item" href="/admin/nilai/mahasiswa/<%= m.id %>/tambah"><i class="bi bi-bar-chart-line me-2"></i>Kelola nilai</a></li>
+                <li><button type="button" class="dropdown-item js-yudisium" data-id="<%= m.id %>" data-nama="<%= m.nama || '' %>" data-tgl="<%= m.tanggalYudisium || '' %>"><i class="bi bi-mortarboard me-2"></i><%= m.statusMahasiswa === 'Lulus' ? 'Edit data yudisium' : 'Tandai lulus (yudisium)' %></button></li>
+                <li><button type="button" class="dropdown-item js-reset" data-id="<%= m.id %>" data-email="<%= m.email || '' %>"><i class="bi bi-key me-2"></i>Reset password</button></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="POST" action="/admin/mahasiswa/<%= m.id %>/delete" data-konfirmasi="Yakin hapus mahasiswa ini? Semua data terkait akan hilang.">
+                    <button class="dropdown-item text-danger" type="submit"><i class="bi bi-trash me-2"></i>Hapus</button>
+                  </form>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </article>
+      <% }) %>
+
+      <% if (showAll) { %>
+        <div class="ea-pagebar">
+          <span>Menampilkan semua entri.</span>
+          <div class="btns"><a href="<%= typeof pageListUrl !== 'undefined' ? pageListUrl : '/admin/mahasiswa' %>" class="ea-btn ea-btn-icon"><i class="bi bi-list-ol"></i> Tampilkan 10 per halaman</a></div>
+        </div>
+      <% } else if (pageInfo) { %>
+        <div class="ea-pagebar">
+          <span>Menampilkan <%= pageInfo.count %> entri<% if (typeof pageInfo.total === 'number') { %> dari <%= pageInfo.total %> total<% } %></span>
+          <div class="btns">
+            <a href="<%= pageInfo.hasPrev ? pageInfo.prevUrl : '#' %>" class="ea-btn ea-btn-icon <%= pageInfo.hasPrev ? '' : 'is-disabled' %>" <%= pageInfo.hasPrev ? '' : 'aria-disabled="true" tabindex="-1"' %>><i class="bi bi-chevron-left"></i> Sebelumnya</a>
+            <a href="<%= pageInfo.hasNext ? pageInfo.nextUrl : '#' %>" class="ea-btn ea-btn-icon <%= pageInfo.hasNext ? '' : 'is-disabled' %>" <%= pageInfo.hasNext ? '' : 'aria-disabled="true" tabindex="-1"' %>>Selanjutnya <i class="bi bi-chevron-right"></i></a>
+            <a href="<%= pageInfo.allUrl %>" class="ea-btn ea-btn-edit"><i class="bi bi-list-ul"></i> Tampilkan semua</a>
+          </div>
+        </div>
+      <% } %>
+    <% } %>
+  </section>
+
+  <!-- Aksi massal: muncul setelah memilih minimal 1 mahasiswa -->
+  <div class="ea-bulk" id="bulkBar" hidden>
+    <div class="jml"><strong id="bulkCount">0</strong> mahasiswa dipilih</div>
+
+    <form method="POST" action="/admin/mahasiswa/bulk-kelas" id="bulkKelasForm">
       <div id="bulkKelasIdsContainer"></div>
       <div>
-        <label class="form-label fw-semibold mb-1"><span id="bulkKelasCount">0</span> mahasiswa dipilih - masukkan ke kelas:</label>
-        <input type="text" name="kelas" class="form-control form-control-sm" list="kelasDatalist" placeholder="mis. ELK1A" required style="min-width:180px;">
-        <datalist id="kelasDatalist">
-          <% kelasList.forEach(k => { %><option value="<%= k %>"><% }) %>
-        </datalist>
+        <label for="bulkKelasInput">Masukkan ke kelas</label>
+        <input type="text" id="bulkKelasInput" name="kelas" list="kelasDatalist" placeholder="mis. ELK1A" required autocomplete="off">
+        <datalist id="kelasDatalist"><% kelasList.forEach(k => { %><option value="<%= k %>"><% }) %></datalist>
       </div>
-      <button type="submit" class="btn-filter btn-sm">Terapkan</button>
-      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearBulkKelasSelection()">Batal Pilih</button>
+      <button type="submit" class="ea-btn ea-btn-edit">Terapkan</button>
     </form>
-  </div>
 
-  <!-- Toolbar assign Dosen PA massal - toolbar terpisah, pakai checkbox yang sama -->
-  <div id="bulkDosenPaBar" class="filter-card mb-3" style="display:none;">
-    <form method="POST" action="/admin/mahasiswa/bulk-dosen-pa" id="bulkDosenPaForm" class="d-flex flex-wrap gap-2 align-items-end">
+    <form method="POST" action="/admin/mahasiswa/bulk-dosen-pa" id="bulkDosenPaForm">
       <div id="bulkDosenPaIdsContainer"></div>
       <div>
-        <label class="form-label fw-semibold mb-1"><span id="bulkDosenPaCount">0</span> mahasiswa dipilih - tetapkan Dosen PA:</label>
-        <select name="dosenPaId" class="form-select form-select-sm" required style="min-width:220px;">
+        <label for="bulkDosenPaSelect">Tetapkan Dosen PA</label>
+        <select name="dosenPaId" id="bulkDosenPaSelect" required>
           <option value="">- Pilih Dosen PA -</option>
-          <% dosenPaList.forEach(d => { %>
-            <option value="<%= d.id %>"><%= d.nama %><%= d.nidn ? ' (NIDN ' + d.nidn + ')' : '' %></option>
-          <% }) %>
+          <% dosenPaList.forEach(d => { %><option value="<%= d.id %>"><%= d.nama %><%= d.nidn ? ' (NIDN ' + d.nidn + ')' : '' %></option><% }) %>
         </select>
       </div>
-      <button type="submit" class="btn-filter btn-sm">Terapkan</button>
-      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearBulkKelasSelection()">Batal Pilih</button>
+      <button type="submit" class="ea-btn ea-btn-primary">Terapkan</button>
     </form>
-  </div>
 
-
-  <div class="table-container">
-    <div class="table-responsive">
-      <table class="table mahasiswa-table">
-        <thead>
-          <tr>
-            <th><input type="checkbox" id="selectAllMahasiswa" onchange="toggleAllMahasiswaCheckbox(this)"></th>
-            <th>Foto</th>
-            <th>NIM</th>
-            <th>Nama</th>
-            <th>Email</th>
-            <th>Angkatan</th>
-            <th>Kelas</th>
-            <th>Semester</th>
-            <th>Status Magang</th>
-            <th>Status Mahasiswa</th>
-            <th>Biodata</th>
-            <th>Dosen PA</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (mahasiswa.length === 0) { %>
-            <tr>
-              <td colspan="12" class="text-center py-5">
-                <div class="empty-state">
-                  <i class="bi bi-inbox"></i>
-                  <h4>Belum Ada Data Mahasiswa</h4>
-                  <p class="text-muted">Silakan tambahkan mahasiswa pertama.</p>
-                </div>
-              </td>
-            </tr>
-          <% } else { %>
-            <% mahasiswa.forEach(m => { 
-              let angkatan = (m.nim && m.nim.length >= 2) ? '20' + m.nim.substring(0,2) : '-';
-              let semesterText = m.semester || '-';
-              let magangText = m.statusMagang || '-';
-              let mahasiswaStatus = m.statusMahasiswa || '-';
-              let badgeMahasiswa = '';
-              if (mahasiswaStatus === 'Aktif') badgeMahasiswa = 'badge-aktif';
-              else if (mahasiswaStatus === 'Lulus') badgeMahasiswa = 'badge-lulus';
-              else if (mahasiswaStatus === 'Cuti') badgeMahasiswa = 'badge-cuti';
-              else if (mahasiswaStatus === 'Keluar') badgeMahasiswa = 'badge-keluar';
-              else badgeMahasiswa = 'badge-default';
-            %>
-            <tr>
-              <td><input type="checkbox" class="mahasiswaCheckbox" value="<%= m.id %>" onchange="updateBulkKelasBar()"></td>
-              <td>
-                <% if (m.foto) { 
-                  const fileId = getFileIdFromUrl(m.foto);
-                  if (fileId) { %>
-                    <img src="https://drive.google.com/thumbnail?id=<%= fileId %>&sz=w100" 
-                         class="foto-mahasiswa"
-                         onerror="this.onerror=null; this.src='<%= m.foto %>';">
-                  <% } else { %>
-                    <img src="<%= m.foto %>" class="foto-mahasiswa"
-                         onerror="this.onerror=null; this.src='https://via.placeholder.com/40?text=<%= (m.nama || '?').charAt(0).toUpperCase() %>';">
-                  <% } %>
-                <% } else { %>
-                  <div class="avatar-circle"><%= (m.nama || '?').charAt(0).toUpperCase() %></div>
-                <% } %>
-              </td>
-              <td><%= m.nim || '-' %></td>
-              <td><strong><%= m.nama %></strong></td>
-              <td><%= m.email %></td>
-              <td><%= angkatan %></td>
-              <td><% if (m.kelas) { %><span class="badge bg-secondary"><%= m.kelas %></span><% } else { %><span class="text-muted">-</span><% } %></td>
-              <td><span class="badge badge-semester"><%= semesterText %></span></td>
-              <td><span class="badge badge-magang"><%= magangText %></span></td>
-              <td><span class="badge <%= badgeMahasiswa %>"><%= mahasiswaStatus %></span></td>
-              <td>
-                <% if (m.biodataLengkap) { %>
-                  <span class="badge bg-success"><i class="bi bi-check-circle"></i> Lengkap</span>
-                <% } else { %>
-                  <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle"></i> Belum</span>
-                <% } %>
-              </td>
-              <td>
-                <% if (m.dosenPaNama) { %>
-                  <span class="badge bg-info text-dark"><%= m.dosenPaNama %></span>
-                <% } else { %>
-                  <span class="text-muted">-</span>
-                <% } %>
-              </td>
-              <td>
-                <div class="d-flex gap-1">
-                  <a href="/admin/mahasiswa/<%= m.id %>" class="btn-icon-sm btn-detail" title="Detail">
-                    <i class="bi bi-eye"></i>
-                  </a>
-                  <a href="/admin/krs/buat/<%= m.id %>" class="btn-icon-sm btn-krs" title="Buat KRS">
-                    <i class="bi bi-journal-plus"></i>
-                  </a>
-                  <a href="/admin/nilai/mahasiswa/<%= m.id %>/tambah" class="btn-icon-sm btn-detail" title="Kelola Nilai">
-                    <i class="bi bi-bar-chart-line"></i>
-                  </a>
-                  <a href="/admin/mahasiswa/<%= m.id %>/edit" class="btn-icon-sm btn-edit" title="Edit">
-                    <i class="bi bi-pencil"></i>
-                  </a>
-                  <button class="btn-icon-sm btn-reset" title="Reset Password" onclick="resetPassword('<%= m.id %>', '<%= m.email %>')">
-                    <i class="bi bi-key"></i>
-                  </button>
-                  <button class="btn-icon-sm" style="background:#6f42c1" title="<%= m.statusMahasiswa === 'Lulus' ? 'Edit Data Yudisium' : 'Tandai Lulus (Yudisium)' %>"
-                    onclick="bukaModalYudisium('<%= m.id %>', '<%= (m.nama || '').replace(/'/g, "\\'") %>', '<%= m.tanggalYudisium || '' %>')">
-                    <i class="bi bi-mortarboard"></i>
-                  </button>
-                  <form method="POST" action="/admin/mahasiswa/<%= m.id %>/delete" style="display:inline;" onsubmit="return confirm('Yakin hapus mahasiswa ini? Semua data terkait akan hilang.')">
-                    <button type="submit" class="btn-icon-sm btn-delete" title="Hapus">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-            <% }) %>
-          <% } %>
-        </tbody>
-      </table>
-    </div>
-
-    <%- include('../partials/pagination', { pageInfo: typeof pageInfo !== 'undefined' ? pageInfo : null, showAll: typeof showAll !== 'undefined' ? showAll : false, pageListUrl: typeof pageListUrl !== 'undefined' ? pageListUrl : '/admin/mahasiswa' }) %>
+    <button type="button" class="ea-btn ea-btn-icon" id="bulkBatal">Batal pilih</button>
   </div>
 </div>
 
@@ -468,7 +399,7 @@
         <div class="modal-body">
           <div class="alert alert-info">
             <i class="bi bi-info-circle"></i> Format CSV: <strong>nim,nama,email,password,semester,statusMagang,statusMahasiswa,noHp</strong><br>
-            Gunakan tombol <strong>Template CSV</strong> untuk contoh.
+            Gunakan menu <strong>Template CSV</strong> untuk contoh.
           </div>
           <div class="mb-3">
             <label for="csvFile" class="form-label">Pilih file CSV</label>
@@ -519,87 +450,65 @@
 </div>
 
 <script>
-  function bukaModalYudisium(id, nama, tanggalYudisiumLama) {
-    document.getElementById('yudisiumNamaMahasiswa').textContent = nama;
-    document.getElementById('yudisiumTanggal').value = tanggalYudisiumLama || '';
-    document.getElementById('formYudisium').action = '/admin/mahasiswa/' + id + '/yudisium';
-    new bootstrap.Modal(document.getElementById('modalYudisium')).show();
-  }
-
-  function resetPassword(id, email) {
-    if (confirm(`Kirim email reset password ke ${email}?`)) {
-      fetch(`/admin/mahasiswa/${id}/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      }).then(res => {
-        if (res.ok) alert('Email reset telah dikirim.');
-        else alert('Gagal mengirim email.');
-      }).catch(() => alert('Terjadi kesalahan.'));
+  (function () {
+    function bukaModalYudisium(id, nama, tanggalLama) {
+      document.getElementById('yudisiumNamaMahasiswa').textContent = nama;
+      document.getElementById('yudisiumTanggal').value = tanggalLama || '';
+      document.getElementById('formYudisium').action = '/admin/mahasiswa/' + id + '/yudisium';
+      new bootstrap.Modal(document.getElementById('modalYudisium')).show();
     }
-  }
 
-  // ===== Assign kelas / Dosen PA massal (checkbox pilih + toolbar) =====
-  function toggleAllMahasiswaCheckbox(source) {
-    document.querySelectorAll('.mahasiswaCheckbox').forEach(cb => { cb.checked = source.checked; });
-    updateBulkKelasBar();
-  }
+    function resetPassword(id, email) {
+      if (!confirm('Kirim email reset password ke ' + email + '?')) return;
+      fetch('/admin/mahasiswa/' + id + '/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+        .then(function (res) { alert(res.ok ? 'Email reset telah dikirim.' : 'Gagal mengirim email.'); })
+        .catch(function () { alert('Terjadi kesalahan.'); });
+    }
 
-  function updateBulkKelasBar() {
-    const checked = document.querySelectorAll('.mahasiswaCheckbox:checked');
-
-    const bar = document.getElementById('bulkKelasBar');
-    const countEl = document.getElementById('bulkKelasCount');
-    const container = document.getElementById('bulkKelasIdsContainer');
-    container.innerHTML = '';
-
-    const paBar = document.getElementById('bulkDosenPaBar');
-    const paCountEl = document.getElementById('bulkDosenPaCount');
-    const paContainer = document.getElementById('bulkDosenPaIdsContainer');
-    paContainer.innerHTML = '';
-
-    checked.forEach(cb => {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'mahasiswaIds';
-      input.value = cb.value;
-      container.appendChild(input);
-
-      const input2 = document.createElement('input');
-      input2.type = 'hidden';
-      input2.name = 'mahasiswaIds';
-      input2.value = cb.value;
-      paContainer.appendChild(input2);
+    // Aksi per baris (delegasi: tombol di dalam dropdown)
+    document.addEventListener('click', function (e) {
+      var y = e.target.closest('.js-yudisium');
+      if (y) return bukaModalYudisium(y.dataset.id, y.dataset.nama, y.dataset.tgl);
+      var r = e.target.closest('.js-reset');
+      if (r) return resetPassword(r.dataset.id, r.dataset.email);
+    });
+    document.querySelectorAll('form[data-konfirmasi]').forEach(function (f) {
+      f.addEventListener('submit', function (e) { if (!confirm(f.getAttribute('data-konfirmasi'))) e.preventDefault(); });
     });
 
-    countEl.textContent = checked.length;
-    bar.style.display = checked.length > 0 ? 'block' : 'none';
-    paCountEl.textContent = checked.length;
-    paBar.style.display = checked.length > 0 ? 'block' : 'none';
-  }
+    // ===== Pilih mahasiswa -> aksi massal (kelas / Dosen PA) =====
+    var bar = document.getElementById('bulkBar');
+    var semua = document.getElementById('selectAllMahasiswa');
+    function cbs() { return Array.prototype.slice.call(document.querySelectorAll('.mahasiswaCheckbox')); }
 
-  function clearBulkKelasSelection() {
-    document.querySelectorAll('.mahasiswaCheckbox').forEach(cb => { cb.checked = false; });
-    const selectAll = document.getElementById('selectAllMahasiswa');
-    if (selectAll) selectAll.checked = false;
-    updateBulkKelasBar();
-  }
-
-  document.getElementById('bulkKelasForm').addEventListener('submit', function(e) {
-    const count = document.querySelectorAll('.mahasiswaCheckbox:checked').length;
-    const kelasVal = this.querySelector('input[name="kelas"]').value.trim();
-    if (!confirm(`Masukkan ${count} mahasiswa ke kelas "${kelasVal}"?`)) {
-      e.preventDefault();
+    function perbarui() {
+      var dipilih = cbs().filter(function (c) { return c.checked; });
+      ['bulkKelasIdsContainer', 'bulkDosenPaIdsContainer'].forEach(function (id) {
+        var box = document.getElementById(id); box.innerHTML = '';
+        dipilih.forEach(function (c) {
+          var i = document.createElement('input'); i.type = 'hidden'; i.name = 'mahasiswaIds'; i.value = c.value; box.appendChild(i);
+        });
+      });
+      document.getElementById('bulkCount').textContent = dipilih.length;
+      bar.hidden = dipilih.length === 0;
+      cbs().forEach(function (c) { c.closest('.ea-row').style.background = c.checked ? 'var(--ea-accent-soft)' : ''; });
+      if (semua) semua.checked = dipilih.length > 0 && dipilih.length === cbs().length;
     }
-  });
+    cbs().forEach(function (c) { c.addEventListener('change', perbarui); });
+    if (semua) semua.addEventListener('change', function () { cbs().forEach(function (c) { c.checked = semua.checked; }); perbarui(); });
+    document.getElementById('bulkBatal').addEventListener('click', function () { cbs().forEach(function (c) { c.checked = false; }); perbarui(); });
 
-  document.getElementById('bulkDosenPaForm').addEventListener('submit', function(e) {
-    const count = document.querySelectorAll('.mahasiswaCheckbox:checked').length;
-    const select = this.querySelector('select[name="dosenPaId"]');
-    const dosenNama = select.options[select.selectedIndex].text;
-    if (!confirm(`Tetapkan Dosen PA "${dosenNama}" untuk ${count} mahasiswa terpilih?`)) {
-      e.preventDefault();
-    }
-  });
+    document.getElementById('bulkKelasForm').addEventListener('submit', function (e) {
+      var n = cbs().filter(function (c) { return c.checked; }).length;
+      var kelas = this.querySelector('input[name="kelas"]').value.trim();
+      if (!confirm('Masukkan ' + n + ' mahasiswa ke kelas "' + kelas + '"?')) e.preventDefault();
+    });
+    document.getElementById('bulkDosenPaForm').addEventListener('submit', function (e) {
+      var n = cbs().filter(function (c) { return c.checked; }).length;
+      var sel = this.querySelector('select[name="dosenPaId"]');
+      if (!confirm('Tetapkan Dosen PA "' + sel.options[sel.selectedIndex].text + '" untuk ' + n + ' mahasiswa terpilih?')) e.preventDefault();
+    });
+  })();
 </script>
 
 <%- include('../partials/footer') %>
