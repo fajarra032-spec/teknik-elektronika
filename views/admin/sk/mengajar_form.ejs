@@ -1,192 +1,272 @@
 <%- include('../../partials/header') %>
 
 <style>
-  :root {
-    --primary-start: #1e3a8a;
-    --primary-end: #3b82f6;
-    --gradient: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+  .ea {
+    --ea-ink: #1b2a4a; --ea-muted: #5d6b85; --ea-line: #e2e7ef; --ea-surface: #ffffff;
+    --ea-accent: #1e3a8a; --ea-accent-soft: #e8eefc; --ea-hover: #f6f8fd;
+    color: var(--ea-ink); font-feature-settings: "tnum" 1;
   }
-  .sk-header {
-    background: var(--gradient);
-    border-radius: 1.5rem;
-    padding: 1.8rem 2rem;
-    color: white;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 15px 30px rgba(30,58,138,0.25);
-    position: relative;
-    overflow: hidden;
-  }
-  .sk-header::after {
-    content: '';
-    position: absolute; top: -30%; right: -10%; width: 300px; height: 300px;
-    background: rgba(255,255,255,0.1); border-radius: 50%; filter: blur(40px);
-  }
-  .sk-header h2 { font-weight: 800; font-size: 1.7rem; position: relative; z-index: 1; }
-  .sk-header p { opacity: 0.9; position: relative; z-index: 1; margin: 0; }
+  .ea a { text-decoration: none; }
+  .ea :focus-visible { outline: 2px solid var(--ea-accent); outline-offset: 2px; border-radius: 6px; }
+  .ea-head { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: space-between; margin-bottom: 1.25rem; }
+  .ea-head h1 { font-size: 1.65rem; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 0.25rem; }
+  .ea-head p { margin: 0; color: var(--ea-muted); font-size: 0.95rem; }
+  .ea-btn { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid transparent; border-radius: 8px; padding: 0.45rem 0.9rem; font-size: 0.875rem; font-weight: 600; line-height: 1.3; cursor: pointer; background: none; transition: background-color .15s, border-color .15s, color .15s; }
+  .ea-btn-primary { background: var(--ea-accent); color: #fff; }
+  .ea-btn-primary:hover { background: #172f73; color: #fff; }
+  .ea-btn-primary:disabled { background: #9aa8cf; cursor: not-allowed; }
+  .ea-btn-icon { border-color: var(--ea-line); color: var(--ea-muted); padding: 0.3rem 0.7rem; background: #fff; }
+  .ea-btn-icon:hover { background: var(--ea-hover); color: var(--ea-ink); }
 
-  .periode-bar {
-    background: white; border-radius: 1.25rem; padding: 1rem 1.5rem;
-    margin-bottom: 1.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.03); border: 1px solid #eef2ff;
-  }
-  .periode-bar select { border-radius: 60px; border: 1px solid #e2e8f0; }
+  .ea-panel { background: var(--ea-surface); border: 1px solid var(--ea-line); border-radius: 12px; padding: 1rem 1.15rem; margin-bottom: 1rem; }
+  .ea-panel label.lb { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; }
+  .ea-panel .hint { font-size: 0.8rem; color: var(--ea-muted); margin-top: 0.3rem; }
+  .ea-input, .ea-select { width: 100%; border: 1px solid var(--ea-line); border-radius: 8px; padding: 0.5rem 0.8rem; font-size: 0.92rem; background: #fff; color: var(--ea-ink); }
+  .ea-input:focus, .ea-select:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-adv summary { cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--ea-accent); margin-top: 0.8rem; }
+  .ea-adv .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem; margin-top: 0.8rem; }
 
-  .dosen-card {
-    background: white; border-radius: 1.25rem; border: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.04); transition: all .25s;
-    height: 100%;
-  }
-  .dosen-card:hover { transform: translateY(-4px); box-shadow: 0 18px 26px -12px rgba(30,58,138,0.18); }
-  .dosen-avatar {
-    width: 46px; height: 46px; border-radius: 50%;
-    background: var(--gradient); color: #fff; display: flex; align-items: center;
-    justify-content: center; font-weight: 700; font-size: 1rem; flex-shrink: 0;
-  }
-  .dosen-nip { font-size: .75rem; color: #94a3b8; }
-  .mk-pill {
-    display: inline-flex; align-items: center; gap: .3rem; background: #eef2ff;
-    color: #1e3a8a; font-size: .72rem; font-weight: 600; padding: .25rem .7rem;
-    border-radius: 50px; margin: 0 .25rem .25rem 0;
-  }
-  .badge-tim {
-    background: #fde68a; color: #92400e; font-size: .62rem; font-weight: 700;
-    padding: .1rem .4rem; border-radius: 50px; text-transform: uppercase; letter-spacing: .3px;
-  }
-  .badge-sks {
-    background: #fef3c7; color: #92400e; font-size: .7rem; font-weight: 700;
-    padding: .2rem .6rem; border-radius: 50px;
-  }
-  .btn-rilis {
-    background: var(--gradient); color: #fff; border: none; border-radius: 60px;
-    padding: .45rem 1.1rem; font-size: .8rem; font-weight: 600;
-  }
-  .btn-rilis:hover { color: #fff; opacity: .92; }
-  .empty-state {
-    text-align: center; padding: 3rem; background: white; border-radius: 1.5rem;
-  }
-  .empty-state i { font-size: 3rem; color: #cbd5e1; }
+  .ea-queue { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; background: #fff8e8; border: 1px solid #f0dcaa; border-left: 4px solid #d99a14; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1rem; }
+  .ea-queue span { color: #6f5200; font-size: 0.95rem; }
+  .ea-queue a { color: #6f5200; font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid currentColor; }
 
-  .modal-header-custom { background: var(--gradient); color: white; border-bottom: none; }
-  .modal-header-custom .btn-close { filter: brightness(0) invert(1); }
+  .ea-toolbar { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 0.9rem; }
+  .ea-search { position: relative; flex: 1 1 240px; max-width: 380px; }
+  .ea-search i { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--ea-muted); pointer-events: none; }
+  .ea-search input { width: 100%; border: 1px solid var(--ea-line); border-radius: 8px; padding: 0.5rem 0.8rem 0.5rem 2.2rem; font-size: 0.9rem; background: #fff; }
+  .ea-search input:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-toolbar select { width: auto; max-width: 240px; border: 1px solid var(--ea-line); border-radius: 8px; padding: 0.5rem 0.8rem; font-size: 0.9rem; background: #fff; }
+
+  .ea-list { background: var(--ea-surface); border: 1px solid var(--ea-line); border-radius: 12px; overflow: hidden; }
+  .ea-cols, .ea-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) 130px 150px; column-gap: 1rem; align-items: center; }
+  .ea-cols { padding: 0.6rem 1rem 0.6rem 1.15rem; background: #fafbfd; border-bottom: 1px solid var(--ea-line); color: var(--ea-muted); font-size: 0.8rem; font-weight: 600; }
+  .ea-row { position: relative; padding: 0.7rem 1rem 0.7rem 1.15rem; border-bottom: 1px solid var(--ea-line); cursor: pointer; }
+  .ea-row:last-of-type { border-bottom: 0; }
+  .ea-row:hover { background: var(--ea-hover); }
+  .ea-row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: transparent; }
+  .ea-row.on::before { background: var(--ea-accent); }
+  .ea-row input[type=checkbox], .ea-cols input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--ea-accent); cursor: pointer; }
+  .ea-title { font-weight: 600; font-size: 0.93rem; line-height: 1.35; overflow-wrap: anywhere; }
+  .ea-meta { font-size: 0.8rem; color: var(--ea-muted); margin-top: 0.1rem; }
+  .ea-pa { font-size: 0.88rem; overflow-wrap: anywhere; }
+  .ea-ang { font-size: 0.85rem; color: var(--ea-muted); }
+  .ea-empty { padding: 3rem 1.5rem; text-align: center; color: var(--ea-muted); }
+  .ea-empty i { font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #b6bfce; }
+  .ea-empty strong { display: block; color: var(--ea-ink); margin-bottom: 0.25rem; }
+  .ea-more { text-align: center; padding: 0.9rem; border-top: 1px solid var(--ea-line); }
+  [hidden] { display: none !important; }
+
+  .ea-bar { position: sticky; bottom: 0; z-index: 20; margin-top: 1rem; background: #fff; border: 1px solid var(--ea-line); border-radius: 12px; box-shadow: 0 -6px 20px rgba(27,42,74,.08); padding: 0.75rem 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; }
+  .ea-bar .jml { font-size: 0.92rem; color: var(--ea-muted); }
+  .ea-bar .jml strong { color: var(--ea-ink); }
+
+  @media (max-width: 767.98px) {
+    .ea-cols { display: none; }
+    .ea-row { grid-template-columns: 30px minmax(0, 1fr); row-gap: 0.15rem; }
+    .ea-row .ea-ang { display: none; }
+    .ea-row .ea-pa { grid-column: 2; color: var(--ea-muted); font-size: 0.82rem; }
+    .ea-head h1 { font-size: 1.4rem; }
+  }
+
+  .ea-periode { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-bottom: 1rem; }
+  .ea-periode label { font-weight: 600; font-size: .9rem; margin: 0; }
+  .ea-periode select { border: 1px solid var(--ea-line); border-radius: 8px; padding: .45rem .8rem; background: #fff; font-size: .9rem; }
+  .ea-pill { display: inline-block; border-radius: 999px; padding: .15rem .65rem; font-size: .78rem; font-weight: 600; }
+  .s-ok { background: #dff3e7; color: #1d6b3f; } .s-belum { background: #eef1f6; color: var(--ea-muted); }
+  .ea-sks { font-size: .85rem; color: var(--ea-ink); }
+  .ea-mk { margin-top: .35rem; font-size: .8rem; color: var(--ea-muted); }
+  .ea-mk summary { cursor: pointer; color: var(--ea-accent); font-weight: 600; width: fit-content; }
+  .ea-mk ul { margin: .3rem 0 0; padding-left: 1.1rem; }
+  .ea-tim { background: #fde68a; color: #92400e; font-size: .62rem; font-weight: 700; padding: .05rem .35rem; border-radius: 999px; margin-left: .25rem; }
+  @media (max-width: 767.98px) {
+    .ea-row { grid-template-columns: 30px minmax(0, 1fr); }
+    .ea-row .ea-sks, .ea-row .ea-state { grid-column: 2; }
+  }
 </style>
 
-<div class="container mt-4">
-  <div class="sk-header d-flex flex-wrap justify-content-between align-items-center gap-3">
-    <div>
-      <h2><i class="bi bi-magic me-2"></i> Rilis SK Mengajar Otomatis</h2>
-      <p>Nomor &amp; lampiran dibuat otomatis dari data mata kuliah &amp; dosen pengampu pada periode terpilih. Kop dan tanda tangan Kaprodi otomatis memakai aset yang sama dengan Surat Keterangan Aktif Kuliah. Mata kuliah yang diampu &gt; 1 dosen (tim teaching) otomatis dibagi SKS-nya secara rata dan ditandai <strong>Tim</strong>.</p>
-    </div>
-    <a href="/admin/sk" class="btn btn-light rounded-pill px-4">
-      <i class="bi bi-arrow-left me-1"></i> Kembali ke SK Dosen
-    </a>
-  </div>
+<div class="container-xl ea py-4">
 
-  <!-- Pilih Periode -->
-  <form method="GET" action="/admin/sk/mengajar" class="periode-bar d-flex flex-wrap align-items-center gap-3">
-    <label class="fw-semibold mb-0"><i class="bi bi-calendar3 me-1"></i> Periode / Tahun Akademik</label>
-    <select name="periodeId" class="form-select" style="max-width: 260px;" onchange="this.form.submit()">
+  <header class="ea-head">
+    <div>
+      <h1>Rilis SK Mengajar</h1>
+      <p>Isi nomor SK, centang dosen, lalu cetak atau kirim langsung ke dosen. Lampiran dibuat otomatis dari mata kuliah yang diampu pada periode terpilih.</p>
+    </div>
+    <a href="/admin/sk" class="ea-btn ea-btn-icon"><i class="bi bi-arrow-left"></i> Kembali ke SK Dosen</a>
+  </header>
+
+  <form method="GET" action="/admin/sk/mengajar" class="ea-periode">
+    <label for="periodeId"><i class="bi bi-calendar3"></i> Periode / Tahun akademik</label>
+    <select name="periodeId" id="periodeId" onchange="this.form.submit()">
       <% periodeList.forEach(p => { %>
-        <option value="<%= p.id %>" <%= p.id === selectedPeriode.id ? 'selected' : '' %>>
-          <%= p.label %><%= p.isActive ? ' (Aktif Sekarang)' : '' %>
-        </option>
+        <option value="<%= p.id %>" <%= p.id === selectedPeriode.id ? 'selected' : '' %>><%= p.label %><%= p.isActive ? ' (Aktif Sekarang)' : '' %></option>
       <% }) %>
     </select>
-    <span class="text-muted small"><%= dosenRilis.length %> dosen mengampu mata kuliah pada periode ini</span>
+    <span style="font-size:.85rem;color:var(--ea-muted)"><%= dosenRilis.length %> dosen mengampu mata kuliah pada periode ini</span>
   </form>
 
-  <!-- Daftar Dosen -->
-  <div class="row g-3" id="dosenGrid">
-    <% dosenRilis.forEach(d => { %>
-      <div class="col-md-6 col-lg-4">
-        <div class="dosen-card p-3 d-flex flex-column h-100">
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <div class="dosen-avatar"><%= (d.nama || '?').trim().charAt(0).toUpperCase() %></div>
-            <div>
-              <div class="fw-bold"><%= d.nama %></div>
-              <div class="dosen-nip">NIP/NUPTK: <%= d.nip %></div>
-            </div>
-          </div>
-          <div class="mb-2">
-            <% d.matkul.forEach(mk => { %>
-              <span class="mk-pill">
-                <i class="bi bi-journal-bookmark"></i> <%= mk.nama %> (<%= mk.kelas %>)
-                &middot; <%= Number.isInteger(mk.sks) ? mk.sks : mk.sks.toFixed(1) %> SKS
-                <% if (mk.timTeaching) { %><span class="badge-tim">Tim</span><% } %>
-              </span>
-            <% }) %>
-          </div>
-          <div class="d-flex justify-content-between align-items-center mt-auto pt-2">
-            <span class="badge-sks"><%= d.jumlahMk %> MK &middot; <%= d.totalSks %> SKS</span>
-            <button type="button" class="btn btn-rilis" data-bs-toggle="modal" data-bs-target="#modalRilis"
-              data-dosen-id="<%= d.id %>" data-dosen-nama="<%= d.nama %>">
-              <i class="bi bi-file-earmark-plus me-1"></i> Rilis SK
-            </button>
-          </div>
-        </div>
-      </div>
-    <% }) %>
+  <form method="POST" action="/admin/sk/mengajar/cetak-banyak" target="_blank" id="skForm">
+    <input type="hidden" name="periodeId" value="<%= selectedPeriode.id %>">
 
-    <% if (dosenRilis.length === 0) { %>
-      <div class="col-12">
-        <div class="empty-state">
-          <i class="bi bi-inbox"></i>
-          <p class="mt-2 text-muted">Belum ada dosen dengan mata kuliah pada periode ini. Silakan atur pengampu mata kuliah terlebih dahulu di menu <strong>Kelola Mata Kuliah</strong>.</p>
-        </div>
-      </div>
-    <% } %>
-  </div>
-</div>
+    <div class="ea-panel">
+      <label class="lb" for="nomorSk">Nomor SK <span class="text-danger">*</span></label>
+      <input type="text" class="ea-input" id="nomorSk" name="nomorSk" required autocomplete="off" placeholder="mis. 598/ELK/Polidewa/III/2026">
+      <div class="hint">Satu-satunya isian wajib. Tanggal ditetapkan, kota, dan nomor berurutan terisi otomatis.</div>
 
-<!-- Modal isi Nomor SK sebelum cetak -->
-<div class="modal fade" id="modalRilis" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header modal-header-custom">
-        <h5 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i> Rilis SK Mengajar - <span id="namaDosenModal"></span></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <form id="formRilis" action="/admin/sk/mengajar/cetak" method="GET" target="_blank">
-        <div class="modal-body">
-          <input type="hidden" name="dosenId" id="inputDosenId">
-          <input type="hidden" name="periodeId" value="<%= selectedPeriode.id %>">
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Nomor SK</label>
-            <input type="text" name="nomorSk" class="form-control" placeholder="Contoh: 598/ELK/Polidewa/III/2026" required>
-            <div class="form-text">Format umum: Urut/ELK/Polidewa/BulanRomawi/Tahun.</div>
+      <details class="ea-adv">
+        <summary>Ubah detail lain (opsional)</summary>
+        <div class="grid">
+          <div>
+            <label class="lb" for="nomorMode">Penomoran antar dosen</label>
+            <select class="ea-select" id="nomorMode" name="nomorMode">
+              <option value="berurutan">Berurutan (598, 599, 600, ... sesuai urutan nama)</option>
+              <option value="sama">Nomor sama untuk semua</option>
+            </select>
           </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label fw-semibold">Tanggal Ditetapkan</label>
-              <input type="date" name="tanggal" class="form-control" value="<%= today %>" required>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label fw-semibold">Kota</label>
-              <input type="text" name="kota" class="form-control" value="Palopo" required>
-            </div>
+          <div>
+            <label class="lb" for="tanggal">Tanggal ditetapkan</label>
+            <input type="date" class="ea-input" id="tanggal" name="tanggal" value="<%= today %>">
           </div>
-          <div class="mb-1">
-            <label class="form-label fw-semibold">Tanggal Rapat Prodi (opsional)</label>
-            <input type="date" name="tanggalRapat" class="form-control">
-            <div class="form-text">Kosongkan jika sama dengan tanggal ditetapkan.</div>
+          <div>
+            <label class="lb" for="kota">Kota</label>
+            <input type="text" class="ea-input" id="kota" name="kota" value="Palopo">
+          </div>
+          <div>
+            <label class="lb" for="tanggalRapat">Tanggal rapat prodi</label>
+            <input type="date" class="ea-input" id="tanggalRapat" name="tanggalRapat">
+            <div class="hint">Kosong = sama dengan tanggal ditetapkan</div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-primary rounded-pill px-4">
-            <i class="bi bi-printer me-1"></i> Buat &amp; Cetak SK
-          </button>
-        </div>
-      </form>
+      </details>
     </div>
-  </div>
+
+    <div class="ea-toolbar">
+      <div class="ea-search">
+        <i class="bi bi-search"></i>
+        <label for="eaCari" class="visually-hidden">Cari dosen atau mata kuliah</label>
+        <input type="search" id="eaCari" placeholder="Cari dosen atau mata kuliah" autocomplete="off">
+      </div>
+      <div class="ea-seg" role="group" aria-label="Status pengiriman">
+        <% const nSudah = dosenRilis.filter(d => sudahKirim[d.id]).length; %>
+        <button type="button" class="is-active" data-s="">Semua <small><%= dosenRilis.length %></small></button>
+        <button type="button" data-s="belum">Belum dikirim <small><%= dosenRilis.length - nSudah %></small></button>
+        <button type="button" data-s="sudah">Sudah dikirim <small><%= nSudah %></small></button>
+      </div>
+      <button type="button" class="ea-btn ea-btn-icon" id="eaCentangTampil"><i class="bi bi-check2-square"></i> Centang yang tampil</button>
+      <button type="button" class="ea-btn ea-btn-icon" id="eaKosongkanTampil"><i class="bi bi-square"></i> Kosongkan yang tampil</button>
+    </div>
+
+    <section class="ea-list" aria-label="Dosen pengampu">
+      <% if (dosenRilis.length === 0) { %>
+        <div class="ea-empty">
+          <i class="bi bi-inbox"></i>
+          <strong>Belum ada dosen dengan mata kuliah pada periode ini</strong>
+          Atur pengampu mata kuliah di menu <strong>Kelola Mata Kuliah</strong>.
+        </div>
+      <% } else { %>
+        <div class="ea-cols" aria-hidden="true">
+          <div><input type="checkbox" id="eaSemua" tabindex="-1" title="Centang / kosongkan yang tampil"></div>
+          <div>Dosen &amp; mata kuliah</div><div>Beban</div><div>Status</div>
+        </div>
+        <div id="eaRows">
+          <% dosenRilis.forEach(d => { const sudah = !!sudahKirim[d.id]; %>
+            <div class="ea-row <%= sudah ? '' : 'on' %>" data-s="<%= sudah ? 'sudah' : 'belum' %>"
+                 data-q="<%= (d.nama + ' ' + d.matkul.map(m => m.nama).join(' ')).toLowerCase() %>">
+              <input type="checkbox" name="dosenId" value="<%= d.id %>" <%= sudah ? '' : 'checked' %> aria-label="Pilih <%= d.nama %>">
+              <div>
+                <div class="ea-title"><%= d.nama %></div>
+                <div class="ea-meta">NIP/NUPTK: <%= d.nip %></div>
+                <details class="ea-mk">
+                  <summary>Lihat <%= d.jumlahMk %> mata kuliah</summary>
+                  <ul>
+                    <% d.matkul.forEach(mk => { %>
+                      <li><%= mk.nama %> (<%= mk.kelas %>) &middot; <%= Number.isInteger(mk.sks) ? mk.sks : mk.sks.toFixed(1) %> SKS<% if (mk.timTeaching) { %><span class="ea-tim">TIM</span><% } %></li>
+                    <% }) %>
+                  </ul>
+                </details>
+              </div>
+              <div class="ea-sks"><%= d.jumlahMk %> MK &middot; <%= d.totalSks %> SKS</div>
+              <div class="ea-state">
+                <% if (sudah) { %><span class="ea-pill s-ok" title="<%= sudahKirim[d.id].nomorSk %>">Sudah dikirim<%= sudahKirim[d.id].nomorSk ? ' · ' + sudahKirim[d.id].nomorSk.split('/')[0] : '' %></span>
+                <% } else { %><span class="ea-pill s-belum">Belum dikirim</span><% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+        <div class="ea-empty" id="eaKosong" hidden>
+          <i class="bi bi-search"></i><strong>Tidak ada hasil</strong>Coba kata kunci atau filter lain.
+        </div>
+        <div class="ea-more" id="eaMore" hidden><button type="button" class="ea-btn ea-btn-icon" id="eaMoreBtn"></button></div>
+      <% } %>
+    </section>
+
+    <div class="ea-bar">
+      <div class="jml"><strong id="eaJml">0</strong> dari <%= dosenRilis.length %> dosen dipilih</div>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="submit" class="ea-btn ea-btn-icon" id="eaCetak"><i class="bi bi-printer"></i> Cetak SK</button>
+        <button type="submit" class="ea-btn ea-btn-primary" id="eaKirim" formaction="/admin/sk/mengajar/kirim" formtarget="_self"><i class="bi bi-send"></i> Rilis &amp; Kirim ke Dosen</button>
+      </div>
+    </div>
+    <p style="font-size:.8rem;color:var(--ea-muted);margin:.5rem .25rem 0">
+      <strong>Rilis &amp; Kirim</strong> membuat PDF SK untuk tiap dosen terpilih, menyimpannya di menu SK, memunculkannya di &ldquo;SK Saya&rdquo; milik dosen, dan mengirim notifikasi. Dosen yang sudah dikirim pada periode ini akan <em>diganti</em> SK-nya (tidak dobel). Proses bisa memakan waktu beberapa detik per dosen.
+    </p>
+  </form>
 </div>
 
 <script>
-  document.getElementById('modalRilis').addEventListener('show.bs.modal', function (event) {
-    const btn = event.relatedTarget;
-    document.getElementById('inputDosenId').value = btn.getAttribute('data-dosen-id');
-    document.getElementById('namaDosenModal').textContent = btn.getAttribute('data-dosen-nama');
-  });
+  (function () {
+    var STEP = 40;
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#eaRows .ea-row'));
+    var cari = document.getElementById('eaCari');
+    var kosong = document.getElementById('eaKosong'), more = document.getElementById('eaMore'), moreBtn = document.getElementById('eaMoreBtn');
+    var jml = document.getElementById('eaJml'), cetak = document.getElementById('eaCetak'), kirim = document.getElementById('eaKirim'), semua = document.getElementById('eaSemua');
+    var segs = Array.prototype.slice.call(document.querySelectorAll('.ea-seg button'));
+    var status = '', limit = STEP, tampil = [];
+
+    function hitung() {
+      var n = rows.filter(function (r) { return r.querySelector('input').checked; }).length;
+      jml.textContent = n; cetak.disabled = n === 0; kirim.disabled = n === 0;
+      rows.forEach(function (r) { r.classList.toggle('on', r.querySelector('input').checked); });
+      if (semua) semua.checked = tampil.length > 0 && tampil.every(function (r) { return r.querySelector('input').checked; });
+    }
+    function terapkan() {
+      var kata = (cari.value || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
+      tampil = rows.filter(function (r) {
+        if (status && r.getAttribute('data-s') !== status) return false;
+        var q = r.getAttribute('data-q');
+        return kata.every(function (k) { return q.indexOf(k) !== -1; });
+      });
+      rows.forEach(function (r) { r.hidden = true; });
+      tampil.slice(0, limit).forEach(function (r) { r.hidden = false; });
+      if (kosong) kosong.hidden = tampil.length > 0;
+      var sisa = tampil.length - limit;
+      if (more) { more.hidden = sisa <= 0; if (sisa > 0) moreBtn.textContent = 'Tampilkan ' + Math.min(STEP, sisa) + ' lagi (sisa ' + sisa + ')'; }
+      hitung();
+    }
+    function setTampil(v) { tampil.forEach(function (r) { r.querySelector('input').checked = v; }); hitung(); }
+
+    cari.addEventListener('input', function () { limit = STEP; terapkan(); });
+    if (moreBtn) moreBtn.addEventListener('click', function () { limit += STEP; terapkan(); });
+    segs.forEach(function (b) { b.addEventListener('click', function () {
+      status = b.getAttribute('data-s');
+      segs.forEach(function (x) { x.classList.toggle('is-active', x === b); });
+      limit = STEP; terapkan();
+    }); });
+    document.getElementById('eaCentangTampil').addEventListener('click', function () { setTampil(true); });
+    document.getElementById('eaKosongkanTampil').addEventListener('click', function () { setTampil(false); });
+    if (semua) semua.addEventListener('click', function () { setTampil(semua.checked); });
+    rows.forEach(function (r) { r.querySelector('input').addEventListener('change', hitung); });
+
+    kirim.addEventListener('click', function (e) {
+      var nomor = document.getElementById('nomorSk').value.trim();
+      if (!nomor) return; // biarkan validasi 'required' browser yang bekerja
+      var n = rows.filter(function (r) { return r.querySelector('input').checked; }).length;
+      var ulang = rows.filter(function (r) { return r.querySelector('input').checked && r.getAttribute('data-s') === 'sudah'; }).length;
+      var pesan = 'Rilis SK Mengajar (mulai No. ' + nomor + ') dan kirim ke ' + n + ' dosen?\nSK muncul di menu SK Saya mereka dan mereka mendapat notifikasi.';
+      if (ulang) pesan += '\n\n' + ulang + ' di antaranya sudah pernah dikirim; SK lama mereka akan DIGANTI.';
+      if (!confirm(pesan)) e.preventDefault();
+    });
+    terapkan();
+  })();
 </script>
 
 <%- include('../../partials/footer') %>

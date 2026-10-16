@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>SK Mengajar - <%= namaDosen %></title>
+  <title><%= typeof judulHalaman !== 'undefined' ? judulHalaman : 'SK Mengajar - ' + daftarSk[0].namaDosen %></title>
   <style>
     @page {
       size: A4;
@@ -404,9 +404,9 @@
         print-color-adjust: exact;
       }
       .kode-validasi-print {
-        position: fixed;
-        bottom: 0.6cm;
-        right: 1cm;
+        position: absolute;
+        bottom: 0;
+        right: 0;
       }
     }
   </style>
@@ -418,6 +418,12 @@
   <button onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
 </div>
 
+<% daftarSk.forEach(function (sk) {
+     const nomorSurat = sk.nomorSurat, semester = sk.semester, tahunAkademik = sk.tahunAkademik,
+           namaDosen = sk.namaDosen, nipDosen = sk.nipDosen, daftarMk = sk.daftarMk,
+           tanggalTampil = sk.tanggalTampil, tanggalRapatTampil = sk.tanggalRapatTampil,
+           kota = sk.kota, kaprodi = sk.kaprodi, kodeValidasi = sk.kodeValidasi;
+%>
 <!-- ================= HALAMAN 1 : BADAN SK ================= -->
 <div class="lembar">
 
@@ -642,6 +648,8 @@
   </div>
   <div class="kode-validasi-print">Kode Validasi: <strong><%= kodeValidasi %></strong></div>
 </div>
+
+<% }) %>
 
 </body>
 </html>

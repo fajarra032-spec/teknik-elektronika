@@ -144,7 +144,10 @@ router.get('/', async (req, res) => {
     res.render('admin/sk/index', {
       title: 'Kelola SK Dosen', skList, dosenList,
       terkirim: req.query.terkirim ? parseInt(req.query.terkirim, 10) || 0 : 0,
-      terkirimNomor: req.query.nomor || ''
+      terkirimNomor: req.query.nomor || '',
+      terkirimJenis: req.query.jenis === 'mengajar' ? 'Mengajar' : 'Pembimbing Akademik',
+      terkirimDilewati: parseInt(req.query.dilewati, 10) || 0,
+      terkirimGagal: req.query.gagal || ''
     });
   } catch (error) {
     console.error(error);
@@ -289,11 +292,18 @@ router.get('/mengajar', async (req, res) => {
     }
     dosenRilis.sort((a, b) => a.nama.localeCompare(b.nama));
 
+    // Dosen yang SK Mengajar-nya sudah dirilis & dikirim lewat fitur ini untuk periode terpilih
+    const sudahKirim = {};
+    const kirimSnap = await db.collection('sk_dosen')
+      .where('kategori', '==', 'mengajar').where('periodeId', '==', selectedPeriode.id).get();
+    kirimSnap.docs.forEach(d => { const v = d.data(); if (v.dosenId) sudahKirim[v.dosenId] = { nomorSk: v.nomorSk || '' }; });
+
     res.render('admin/sk/mengajar_form', {
       title: 'Rilis SK Mengajar',
       periodeList,
       selectedPeriode,
       dosenRilis,
+      sudahKirim,
       today: new Date().toISOString().substring(0, 10)
     });
   } catch (error) {
@@ -302,10 +312,105 @@ router.get('/mengajar', async (req, res) => {
   }
 });
 
+const skDistribusi = require('../../helpers/skDistribusiHelper');
+
+const fmtTanggal = (v) => (v ? new Date(v) : new Date())
+  .toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
 /**
- * GET /admin/sk/mengajar/cetak
- * Halaman cetak SK Mengajar (siap Ctrl+P jadi PDF), kop & ttd otomatis
- * memakai aset yang sama dengan Surat Keterangan Aktif Kuliah.
+ * Nomor SK per dosen. Mode 'berurutan': angka pertama pada nomor dinaikkan
+ * satu per dosen (598/ELK/... -> 599/ELK/...), nol di depan dipertahankan.
+ * Mode 'sama' (atau nomor tanpa angka): semua dosen memakai nomor yang sama.
+ */
+function nomorUntuk(nomorAwal, urutan, mode) {
+  if (mode === 'sama' || urutan === 0) return nomorAwal;
+  const m = nomorAwal.match(/\d+/);
+  if (!m) return nomorAwal;
+  const baru = String(parseInt(m[0], 10) + urutan).padStart(m[0].length, '0');
+  return nomorAwal.slice(0, m.index) + baru + nomorAwal.slice(m.index + m[0].length);
+}
+
+/** Susun data satu SK Mengajar (untuk template mengajar_cetak). null bila dosen tidak mengampu MK pada periode. */
+function bangunSkMengajar({ dosenId, dosen, periode, mkList, nomorSurat, tanggalTampil, tanggalRapatTampil, kota }) {
+  const daftarMk = mkList
+    .filter(d => Array.isArray(d.dosenIdsPeriode) && d.dosenIdsPeriode.includes(dosenId))
+    .map(d => ({
+      nama: d.nama || d.kode || '-',
+      sks: hitungSksEfektif(d.sks, d.dosenIdsPeriode.length),
+      timTeaching: d.dosenIdsPeriode.length > 1,
+      kelas: normalizeKelas(d.kelas) || '-'
+    }))
+    .sort((a, b) => a.nama.localeCompare(b.nama));
+  if (daftarMk.length === 0) return null;
+  return {
+    dosenId,
+    nomorSurat,
+    semester: periode.semester,
+    tahunAkademik: `${periode.tahunAwal}/${periode.tahunAkhir}`,
+    namaDosen: dosen.nama || '-',
+    nipDosen: dosen.nip || '-',
+    daftarMk,
+    jumlahMk: daftarMk.length,
+    totalSks: Math.round(daftarMk.reduce((n, m) => n + (Number(m.sks) || 0), 0) * 100) / 100,
+    tanggalTampil, tanggalRapatTampil,
+    kota: kota || 'Palopo',
+    kaprodi: KAPRODI,
+    kodeValidasi: generateKodeValidasiMengajar()
+  };
+}
+
+/**
+ * Validasi isian + susun SK untuk BANYAK dosen sekaligus (cetak banyak / rilis & kirim).
+ * @returns {Promise<{error?: string, periode?: object, daftar?: object[], dilewati?: string[], nomorAwal?: string}>}
+ */
+async function siapkanSkMengajarBanyak(body) {
+  const periodeId = String(body.periodeId || '');
+  const nomorAwal = String(body.nomorSk || '').trim();
+  if (!periodeId) return { error: 'Periode wajib dipilih.' };
+  if (!nomorAwal) return { error: 'Nomor SK wajib diisi.' };
+
+  let ids = body.dosenId || [];
+  if (!Array.isArray(ids)) ids = [ids];
+  ids = [...new Set(ids.filter(Boolean))];
+  if (ids.length === 0) return { error: 'Centang minimal satu dosen.' };
+
+  const periode = generatePeriodeOptions(15, 2).find(p => p.id === periodeId);
+  if (!periode) return { error: 'Periode tidak dikenali.' };
+
+  const mode = body.nomorMode === 'sama' ? 'sama' : 'berurutan';
+  const tanggalTampil = fmtTanggal(body.tanggal);
+  const tanggalRapatTampil = body.tanggalRapat ? fmtTanggal(body.tanggalRapat) : tanggalTampil;
+  const kota = String(body.kota || '').trim() || 'Palopo';
+
+  const [mkList, dosenSnap] = await Promise.all([
+    getMataKuliahDenganPengampuPeriode(periodeId, periode.semester),
+    db.collection('dosen').get()
+  ]);
+  const dosenMap = {};
+  dosenSnap.docs.forEach(d => { dosenMap[d.id] = d.data(); });
+
+  // Urut nama dosen (A-Z) supaya nomor berurutan mudah ditebak
+  const terurut = ids.filter(id => dosenMap[id])
+    .sort((a, b) => (dosenMap[a].nama || '').localeCompare(dosenMap[b].nama || ''));
+
+  const daftar = [];
+  const dilewati = [];
+  terurut.forEach(id => {
+    const sk = bangunSkMengajar({
+      dosenId: id, dosen: dosenMap[id], periode, mkList,
+      nomorSurat: nomorUntuk(nomorAwal, daftar.length, mode),
+      tanggalTampil, tanggalRapatTampil, kota
+    });
+    if (sk) daftar.push(sk); else dilewati.push(dosenMap[id].nama || id);
+  });
+  if (daftar.length === 0) {
+    return { error: 'Dosen terpilih tidak mengampu mata kuliah pada periode tersebut - tidak ada SK yang bisa dibuat.' };
+  }
+  return { periode, daftar, dilewati, nomorAwal };
+}
+
+/**
+ * GET /admin/sk/mengajar/cetak  (satu dosen, tetap dipertahankan)
  */
 router.get('/mengajar/cetak', async (req, res) => {
   try {
@@ -316,59 +421,122 @@ router.get('/mengajar/cetak', async (req, res) => {
     if (!nomorSk) {
       return res.status(400).render('error', { title: 'Error', message: 'Nomor SK wajib diisi sebelum mencetak.' });
     }
-
-    const periodeList = generatePeriodeOptions(15, 2);
-    const periode = periodeList.find(p => p.id === periodeId);
+    const periode = generatePeriodeOptions(15, 2).find(p => p.id === periodeId);
     if (!periode) {
       return res.status(400).render('error', { title: 'Error', message: 'Periode tidak dikenali.' });
     }
-
     const dosenDoc = await db.collection('dosen').doc(dosenId).get();
     if (!dosenDoc.exists) {
       return res.status(404).render('error', { title: 'Error', message: 'Dosen tidak ditemukan.' });
     }
-    const dosen = dosenDoc.data();
-
     const mkList = await getMataKuliahDenganPengampuPeriode(periodeId, periode.semester);
-
-    const daftarMk = mkList
-      .filter(d => Array.isArray(d.dosenIdsPeriode) && d.dosenIdsPeriode.includes(dosenId))
-      .map(d => ({
-        nama: d.nama || d.kode || '-',
-        sks: hitungSksEfektif(d.sks, d.dosenIdsPeriode.length),
-        timTeaching: d.dosenIdsPeriode.length > 1,
-        kelas: normalizeKelas(d.kelas) || '-'
-      }))
-      .sort((a, b) => a.nama.localeCompare(b.nama));
-
-    if (daftarMk.length === 0) {
+    const tanggalTampil = fmtTanggal(tanggal);
+    const sk = bangunSkMengajar({
+      dosenId, dosen: dosenDoc.data(), periode, mkList, nomorSurat: nomorSk,
+      tanggalTampil, tanggalRapatTampil: tanggalRapat ? fmtTanggal(tanggalRapat) : tanggalTampil, kota
+    });
+    if (!sk) {
       return res.status(400).render('error', { title: 'Error', message: 'Dosen ini tidak mengampu mata kuliah pada periode tersebut - tidak ada yang bisa dicetak di lampiran.' });
     }
-
-    const tanggalTampil = tanggal
-      ? new Date(tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-      : new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-
-    const tanggalRapatTampil = tanggalRapat
-      ? new Date(tanggalRapat).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-      : tanggalTampil;
-
-    res.render('admin/sk/mengajar_cetak', {
-      nomorSurat: nomorSk,
-      semester: periode.semester,
-      tahunAkademik: `${periode.tahunAwal}/${periode.tahunAkhir}`,
-      namaDosen: dosen.nama || '-',
-      nipDosen: dosen.nip || '-',
-      daftarMk,
-      tanggalTampil,
-      tanggalRapatTampil,
-      kota: kota || 'Palopo',
-      kaprodi: KAPRODI,
-      kodeValidasi: generateKodeValidasiMengajar()
-    });
+    res.render('admin/sk/mengajar_cetak', { daftarSk: [sk] });
   } catch (error) {
     console.error('Error mencetak SK Mengajar:', error);
     res.status(500).render('error', { title: 'Error', message: 'Gagal membuat SK Mengajar: ' + error.message });
+  }
+});
+
+/**
+ * POST /admin/sk/mengajar/cetak-banyak
+ * Cetak SK Mengajar untuk dosen yang dicentang, dalam satu dokumen (tiap dosen = 2 halaman).
+ */
+router.post('/mengajar/cetak-banyak', async (req, res) => {
+  try {
+    const { error, daftar, periode } = await siapkanSkMengajarBanyak(req.body);
+    if (error) return res.status(400).send(error);
+    res.render('admin/sk/mengajar_cetak', {
+      daftarSk: daftar,
+      judulHalaman: `SK Mengajar ${periode.semester} ${periode.tahunAwal}/${periode.tahunAkhir} (${daftar.length} dosen)`
+    });
+  } catch (error) {
+    console.error('Error cetak banyak SK Mengajar:', error);
+    res.status(500).send('Gagal membuat SK Mengajar: ' + error.message);
+  }
+});
+
+/**
+ * POST /admin/sk/mengajar/kirim
+ * Rilis & kirim: tiap dosen terpilih dibuatkan PDF SK-nya sendiri -> Drive (folder
+ * SK Dosen) -> entri sk_dosen kategori 'mengajar' (muncul di "SK Saya") -> notifikasi.
+ * Kirim ulang untuk dosen + periode yang sama MENGGANTI SK lama (tidak dobel).
+ */
+router.post('/mengajar/kirim', async (req, res) => {
+  let browser;
+  try {
+    const { error, daftar, periode, dilewati, nomorAwal } = await siapkanSkMengajarBanyak(req.body);
+    if (error) return res.status(400).send(error);
+
+    const { createNotification } = require('../../helpers/notificationHelper');
+    const folderId = await getSkFolder();
+    const userPerDosen = await skDistribusi.petaUserPerDosen(db);
+    browser = await skDistribusi.bukaBrowser();
+
+    let terkirim = 0;
+    const gagal = [];
+    for (const sk of daftar) {
+      try {
+        const html = await new Promise((resolve, reject) => {
+          res.render('admin/sk/mengajar_cetak', { daftarSk: [sk], judulHalaman: `SK Mengajar - ${sk.namaDosen}` }, (err, out) => (err ? reject(err) : resolve(out)));
+        });
+        const pdf = await skDistribusi.htmlKePdf(browser, html);
+        const namaFile = `SK_Mengajar_${skDistribusi.amanNama(sk.semester)}_${skDistribusi.amanNama(sk.tahunAkademik)}_${skDistribusi.amanNama(sk.namaDosen)}.pdf`;
+        const { fileId, fileUrl } = await skDistribusi.unggahPdf(drive, folderId, namaFile, pdf);
+
+        const judul = `SK Mengajar ${sk.semester} ${sk.tahunAkademik} (No. ${sk.nomorSurat})`;
+        const isi = {
+          dosenId: sk.dosenId, kategori: 'mengajar', judul, fileUrl, fileId,
+          nomorSk: sk.nomorSurat, periodeId: req.body.periodeId, semester: sk.semester, tahunAjaran: sk.tahunAkademik,
+          jumlahMk: sk.jumlahMk, totalSks: sk.totalSks, sumber: 'rilis-otomatis-sk-mengajar',
+          tanggalUpload: new Date(), createdBy: req.user.id
+        };
+        const lama = await db.collection('sk_dosen').where('dosenId', '==', sk.dosenId)
+          .where('kategori', '==', 'mengajar').where('periodeId', '==', req.body.periodeId).get();
+        let diperbarui = false;
+        if (!lama.empty) {
+          diperbarui = true;
+          const fileLama = lama.docs[0].data().fileId;
+          await lama.docs[0].ref.update(isi);
+          if (fileLama && fileLama !== fileId) await skDistribusi.hapusFileBilaYatim(db, drive, fileLama);
+        } else {
+          await db.collection('sk_dosen').add(isi);
+        }
+
+        const uid = userPerDosen[sk.dosenId];
+        if (uid) {
+          try {
+            await createNotification(db, uid, {
+              type: 'sk',
+              title: diperbarui ? 'SK Mengajar diperbarui' : 'SK Mengajar baru',
+              message: `${judul}: Anda ditetapkan mengampu ${sk.jumlahMk} mata kuliah (${sk.totalSks} SKS).`,
+              link: '/dosen/sk'
+            });
+          } catch (e) { console.error('SK terkirim, tetapi notifikasi gagal dibuat:', e.message); }
+        }
+        terkirim++;
+      } catch (e) {
+        console.error('Gagal merilis SK Mengajar untuk', sk.namaDosen, e);
+        gagal.push(sk.namaDosen);
+      }
+    }
+    await browser.close(); browser = null;
+
+    const q = new URLSearchParams({ terkirim: String(terkirim), jenis: 'mengajar', nomor: nomorAwal });
+    if (dilewati.length) q.set('dilewati', String(dilewati.length));
+    if (gagal.length) q.set('gagal', gagal.join(', '));
+    res.redirect('/admin/sk?' + q.toString());
+  } catch (error) {
+    console.error('Error rilis & kirim SK Mengajar:', error);
+    if (browser) { try { await browser.close(); } catch (_) {} }
+    res.status(500).send('Gagal merilis & mengirim SK Mengajar: ' + error.message);
   }
 });
 

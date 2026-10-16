@@ -17,8 +17,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const fs = require('fs');
-const path = require('path');
+const skDistribusi = require('../../helpers/skDistribusiHelper');
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
 
 router.use(verifyToken);
@@ -295,36 +294,19 @@ router.post('/sk/kirim', async (req, res) => {
     if (error) return res.status(400).send(error);
 
     // --- 1) Render HTML -> PDF ---
-    let html = await new Promise((resolve, reject) => {
+    const html = await new Promise((resolve, reject) => {
       res.render('admin/bimbingan/sk_cetak', { ...data, modePdf: true }, (err, out) => (err ? reject(err) : resolve(out)));
     });
-    const ttdPath = path.join(__dirname, '../../public/images/ttd.png');
-    if (fs.existsSync(ttdPath)) {
-      const ttd64 = fs.readFileSync(ttdPath).toString('base64');
-      html = html.replace(/src="\/images\/ttd\.png"/g, `src="data:image/png;base64,${ttd64}"`);
-    }
-    const puppeteer = require('puppeteer'); // lazy: hanya fitur ini yang butuh
-    browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: 'new', timeout: 60000 });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 60000 });
-    const pdfBuffer = Buffer.from(await page.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true, margin: { top: '0', bottom: '0', left: '0', right: '0' } }));
+    browser = await skDistribusi.bukaBrowser();
+    const pdfBuffer = await skDistribusi.htmlKePdf(browser, html);
     await browser.close(); browser = null;
 
     // --- 2) Unggah ke Drive (folder SK Dosen), bagikan ---
     const drive = require('../../config/googleDrive');
-    const { Readable } = require('stream');
     const { getSkFolder } = require('./sk');
     const folderId = await getSkFolder();
-    const aman = (v) => String(v).replace(/[^\w.-]+/g, '_');
-    const namaFile = `SK_Pembimbing_Akademik_${aman(data.nomorSk)}_${aman(data.semester)}_${aman(data.tahunAjaran)}.pdf`;
-    const up = await drive.files.create({
-      resource: { name: namaFile, parents: [folderId] },
-      media: { mimeType: 'application/pdf', body: Readable.from(pdfBuffer) },
-      fields: 'id'
-    });
-    const fileId = up.data.id;
-    await drive.permissions.create({ fileId, requestBody: { role: 'reader', type: 'anyone' } });
-    const fileUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+    const namaFile = `SK_Pembimbing_Akademik_${skDistribusi.amanNama(data.nomorSk)}_${skDistribusi.amanNama(data.semester)}_${skDistribusi.amanNama(data.tahunAjaran)}.pdf`;
+    const { fileId, fileUrl } = await skDistribusi.unggahPdf(drive, folderId, namaFile, pdfBuffer);
 
     // --- 3) Entri sk_dosen per dosen (ganti bila Nomor SK sama sudah pernah dikirim) ---
     const judul = `SK Pembimbing Akademik ${data.semester} ${data.tahunAjaran} (No. ${data.nomorSk})`;
@@ -350,19 +332,13 @@ router.post('/sk/kirim', async (req, res) => {
 
     // File lama yang tidak dipakai lagi -> hapus dari Drive
     for (const lamaId of fileLama) {
-      if (lamaId === fileId) continue;
-      try {
-        const masih = await db.collection('sk_dosen').where('fileId', '==', lamaId).limit(1).get();
-        if (masih.empty) await drive.files.delete({ fileId: lamaId });
-      } catch (e) { console.error('Gagal membersihkan file SK lama:', e.message); }
+      if (lamaId !== fileId) await skDistribusi.hapusFileBilaYatim(db, drive, lamaId);
     }
 
     // --- 4) Notifikasi ke tiap dosen (userId = id akun user dosen tsb) ---
     try {
       const { createNotification } = require('../../helpers/notificationHelper');
-      const userSnap = await db.collection('users').where('role', '==', 'dosen').get();
-      const userPerDosen = {};
-      userSnap.docs.forEach(u => { const dId = u.data().dosenId; if (dId) userPerDosen[dId] = u.id; });
+      const userPerDosen = await skDistribusi.petaUserPerDosen(db);
       for (const d of data.perDosen) {
         const uid = userPerDosen[d.dosenId];
         if (!uid) continue;
