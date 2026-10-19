@@ -47,7 +47,24 @@
     <h5 class="fw-bold mb-3">Detail Permohonan</h5>
     <table class="table table-borderless">
       <tr><th style="width: 150px;">Judul</th><td><%= seminar.judul %></td></tr>
-      <tr><th>Tanggal</th><td><%= seminar.tanggal ? new Date(seminar.tanggal).toLocaleDateString('id-ID') : '-' %></td></tr>
+      <% if (seminar.lokasiMagang && seminar.lokasiMagang.length) { %>
+        <tr><th>Lokasi Magang</th><td>
+          <% seminar.lokasiMagang.forEach(l => { if (l.perusahaan) { %><div>Magang <%= l.ke %>: <%= l.perusahaan %></div><% } }) %>
+        </td></tr>
+      <% } %>
+      <% if (seminar.pendampingLapangan) { %><tr><th>Pendamping Lapangan</th><td><%= seminar.pendampingLapangan %></td></tr><% } %>
+      <% if (seminar.laporan) { %>
+        <tr><th>Laporan Magang</th><td>
+          <% [1, 2, 3].forEach(ke => { %>
+            <span class="badge <%= seminar.laporan[ke] ? 'bg-success' : 'bg-warning text-dark' %> me-1">Laporan <%= ke %>: <%= seminar.laporan[ke] ? 'sudah' : 'belum' %></span>
+          <% }) %>
+        </td></tr>
+      <% } %>
+      <% if (typeof seminar.pembayaranLunas !== 'undefined') { %>
+        <tr><th>Bukti Pelunasan</th><td><%= seminar.pembayaranLunas ? 'Mahasiswa menyatakan sudah dari Bagian Keuangan' : 'Belum' %></td></tr>
+      <% } %>
+      <% if (seminar.catatanMahasiswa) { %><tr><th>Catatan Mahasiswa</th><td><%= seminar.catatanMahasiswa %></td></tr><% } %>
+      <tr><th>Tanggal Usulan</th><td><%= seminar.tanggal ? new Date(seminar.tanggal).toLocaleDateString('id-ID') : '-' %></td></tr>
       <tr><th>Waktu</th><td><%= seminar.waktu || '-' %></td></tr>
       <tr><th>Tempat</th><td><%= seminar.tempat || '-' %></td></tr>
       <tr><th>Dosen Pembimbing (PA)</th><td><%= seminar.pembimbing || seminar.pembimbing1 || '-' %></td></tr>
@@ -91,46 +108,49 @@
     </div>
   <% } %>
 
-  <!-- Form Aksi (untuk pending) -->
-  <% if (seminar.status === 'pending') { %>
+  <!-- Form Aksi (pending: setujui/tolak; approved: ubah jadwal / batalkan) -->
+  <% if (seminar.status === 'pending' || seminar.status === 'approved') { %>
+  <% const sudah = seminar.status === 'approved'; const jd = seminar.jadwal || {}; %>
     <div class="row">
       <div class="col-md-6 mb-3">
         <div class="info-card">
-          <h5 class="fw-bold mb-3">Setujui Seminar</h5>
+          <h5 class="fw-bold mb-3"><%= sudah ? 'Ubah Jadwal Seminar' : 'Setujui & Tentukan Jadwal' %></h5>
+          <% if (!sudah) { %><p class="text-muted small">Jadwal yang Anda tetapkan otomatis masuk ke Jadwal Penting dan mahasiswa mendapat notifikasi.</p><% } %>
           <form method="POST" action="/admin/seminar/<%= seminar.id %>/approve">
             <div class="mb-2">
               <label>Tanggal</label>
-              <input type="date" name="tanggal" class="form-control" required>
+              <input type="date" name="tanggal" class="form-control" value="<%= jd.tanggal ? String(jd.tanggal).slice(0, 10) : '' %>" required>
             </div>
             <div class="mb-2">
               <label>Waktu</label>
-              <input type="text" name="waktu" class="form-control" placeholder="09:00 - 12:00" required>
+              <input type="text" name="waktu" class="form-control" placeholder="09:00 - 12:00" value="<%= jd.waktu || '' %>" required>
             </div>
             <div class="mb-2">
               <label>Tempat</label>
-              <input type="text" name="tempat" class="form-control" placeholder="Ruang Seminar" required>
+              <input type="text" name="tempat" class="form-control" placeholder="Ruang Seminar" value="<%= jd.tempat || '' %>" required>
             </div>
             <div class="mb-2">
               <label>Penguji (opsional)</label>
-              <input type="text" name="penguji" class="form-control">
+              <input type="text" name="penguji" class="form-control" value="<%= jd.penguji || '' %>">
             </div>
             <div class="mb-2">
               <label>Catatan (opsional)</label>
-              <input type="text" name="catatan" class="form-control">
+              <input type="text" name="catatan" class="form-control" value="<%= jd.catatan || '' %>">
             </div>
-            <button type="submit" class="btn btn-success">Setujui</button>
+            <button type="submit" class="btn btn-success"><%= sudah ? 'Simpan Jadwal' : 'Setujui' %></button>
           </form>
         </div>
       </div>
       <div class="col-md-6 mb-3">
         <div class="info-card">
-          <h5 class="fw-bold mb-3">Tolak Seminar</h5>
+          <h5 class="fw-bold mb-3"><%= sudah ? 'Batalkan Seminar' : 'Tolak Seminar' %></h5>
+          <% if (sudah) { %><p class="text-muted small">Agenda di Jadwal Penting ikut dihapus dan mahasiswa diberi tahu.</p><% } %>
           <form method="POST" action="/admin/seminar/<%= seminar.id %>/reject">
             <div class="mb-2">
               <label>Alasan Penolakan</label>
               <textarea name="alasan" class="form-control" rows="3" required></textarea>
             </div>
-            <button type="submit" class="btn btn-danger">Tolak</button>
+            <button type="submit" class="btn btn-danger"><%= sudah ? 'Batalkan' : 'Tolak' %></button>
           </form>
         </div>
       </div>

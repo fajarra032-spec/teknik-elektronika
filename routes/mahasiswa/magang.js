@@ -1040,14 +1040,10 @@ router.get('/seminar', async (req, res) => {
   }
 });
 
-router.get('/seminar/baru', async (req, res) => {
-  const pembimbing = await getPembimbingMahasiswa(req.user.id);
-  res.render('mahasiswa/magang/seminar_form', {
-    title: 'Ajukan Seminar Magang',
-    user: req.user,
-    seminar: null,
-    pembimbing
-  });
+router.get('/seminar/baru', (req, res) => {
+  // Pengajuan seminar sekarang lewat menu "Penyelesaian Studi" (formulir ->
+  // admin menetapkan hari -> berkas ujian), jadi form lama dialihkan ke sana.
+  res.redirect('/mahasiswa/penyelesaian-studi');
 });
 
 router.post('/seminar', async (req, res) => {

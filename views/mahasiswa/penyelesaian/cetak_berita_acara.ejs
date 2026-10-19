@@ -1,0 +1,76 @@
+<%
+  const j = d.jadwal;
+  const b = j ? j.bagian : { hari: '............', tgl: '.....', bulan: '.....................', tahun: '2026' };
+  const titik = '..............................';
+  const tim = [
+    ['Wakil Direktur'],
+    ['Program Pengelolaan Magang Mahasiswa (PPMA)'],
+    ['Ketua Program Studi Teknik Elektronika'],
+    [(d.pembimbingNama || titik) + ' (Pembimbing I)'],
+    [titik + ' (Pembimbing II)'],
+    [(d.pendampingLapangan || titik) + ' (Pendamping Lapangan)']
+  ];
+%>
+<%- include('_cetak_kepala', {
+  halaman: '1.27cm 1.96cm 2.92cm 2.54cm',
+  font: "'Times New Roman', Times, serif",
+  ukuran: '12pt',
+  gaya: `
+    .kop { margin: 0 0 .3cm .1cm; width: 11.48cm; }
+    .judul { text-align: center; font-weight: bold; }
+    .paragraf { text-align: justify; text-indent: 1.25cm; }
+    table.garis { border-collapse: collapse; width: 100%; }
+    table.garis td, table.garis th { border: 1px solid #000; padding: 1px 4px; line-height: 1.2; }
+    table.garis th { font-weight: bold; text-align: center; }
+    table.garis td.tengah { text-align: center; vertical-align: middle; }
+    table.garis td.kecil { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; }
+    table.tim { border-collapse: collapse; width: 100%; font-size: 11pt; margin-top: .5cm; }
+    table.tim td { padding: 0; vertical-align: middle; }
+    table.tim td.nama { width: 70%; padding-left: .8cm; height: 1.05cm; }
+    table.tim td.ttd { text-align: center; }
+    .ttd-blok { text-align: center; }
+  `
+}) %>
+
+    <% if (kop) { %><img class="kop" src="<%= kop %>" alt="Kop Politeknik Dewantara"><% } %>
+    <p class="judul">BERITA ACARA</p>
+    <p class="judul">PERSENTASI HASIL KEGIATAN MAGANG MAHASISWA</p>
+    <div class="kosong"></div>
+
+    <p class="paragraf">Pada hari ini <%= b.hari %> tanggal <%= b.tgl %> bulan <%= b.bulan %> tahun <%= b.tahun %>, bertempat di Palopo telah diselenggarakan kegiatan persentasi hasil kegiatan magang oleh mahasiswa yang telah menyelesaikan program magang 1, 2, dan 3 yang dilaksanakan di Industri/Perusahaan. Mahasiswa yang melaksanakan persentasi hasil magang yaitu :</p>
+
+    <table class="garis">
+      <thead><tr><th style="width: 3.4cm;">NIM</th><th style="width: 5.2cm;">Nama Mahasiswa</th><th>Lokasi Magang</th></tr></thead>
+      <tbody>
+        <% [0, 1, 2].forEach(i => { const l = d.lokasi[i]; %>
+          <tr>
+            <% if (i === 0) { %><td class="tengah" rowspan="3"><%= d.nim %></td><td class="tengah kecil" rowspan="3"><%= d.nama %></td><% } %>
+            <td class="kecil">Magang <%= i + 1 %> : <%= l && l.perusahaan ? l.perusahaan : '-' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <table class="tim">
+      <tr><td colspan="2" class="tengah" style="font-size: 11pt;">Tim Penguji</td></tr>
+      <tr><td style="padding-left: .5cm;">Nama (pembimbing, pendamping, penguji)</td><td class="ttd">ttd</td></tr>
+      <% tim.forEach((t, i) => { %>
+        <tr><td class="nama"><%= i + 1 %>.&nbsp;&nbsp;&nbsp;<%= t[0] %></td><td class="ttd">...................................</td></tr>
+      <% }) %>
+    </table>
+    <div class="kosong"></div>
+
+    <p>Demikian Berita Acara ini dibuat untuk dapat digunakan sebagaimana mestinya.</p>
+    <div class="kosong"></div>
+    <p style="text-align: right;"><%= d.kota %>, <%= j ? b.tgl + ' / ' + b.bulan + ' / ' + b.tahun : '...... / .......... / ' + b.tahun %></p>
+    <div class="kosong"></div>
+
+    <div class="ttd-blok">
+      <p>Mengetahui,</p>
+      <p>Ketua Progam Studi Teknik Elektronika</p>
+      <div class="kosong"></div><div class="kosong"></div><div class="kosong"></div><div class="kosong"></div>
+      <p style="text-decoration: underline;"><%= d.kaprodi.nama %></p>
+      <p>NUPTK: <%= d.kaprodi.nuptk %></p>
+    </div>
+
+<%- include('_cetak_kaki') %>

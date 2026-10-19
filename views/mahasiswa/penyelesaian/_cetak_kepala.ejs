@@ -1,0 +1,59 @@
+<%
+  // Parameter per dokumen: halaman (margin @page: atas kanan bawah kiri), font, ukuran
+  const _halaman = typeof halaman !== 'undefined' ? halaman : '2.54cm';
+  const _font = typeof font !== 'undefined' ? font : "'Times New Roman', Times, serif";
+  const _ukuran = typeof ukuran !== 'undefined' ? ukuran : '12pt';
+%><!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title><%= judulDokumen %> - <%= d.nama %></title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    @page { size: A4; margin: <%= _halaman %>; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #e9edf3; font-family: <%- _font %>; color: #000; font-size: <%= _ukuran %>; line-height: 1.15; }
+
+    /* Bilah alat: hanya di layar, tidak ikut tercetak */
+    .alat { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: space-between; padding: .6rem 1rem; background: #1b2a4a; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    .alat .judul { color: #fff; font-weight: 600; font-size: .95rem; }
+    .alat .tombol { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .alat a, .alat button { display: inline-flex; align-items: center; gap: .4rem; border: 1px solid rgba(255,255,255,.35); background: transparent; color: #fff; border-radius: 8px; padding: .4rem .9rem; font-size: .9rem; font-weight: 600; text-decoration: none; cursor: pointer; font-family: inherit; }
+    .alat a:hover, .alat button:hover { background: rgba(255,255,255,.12); }
+    .alat .utama { background: #fff; color: #1b2a4a; border-color: #fff; }
+    .alat .utama:hover { background: #e8eefc; }
+    .alat :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+    /* Lembar kertas A4 (di layar meniru margin halaman cetak) */
+    .kertas { position: relative; width: 21cm; min-height: 29.7cm; margin: 1.25rem auto; background: #fff; padding: <%= _halaman %>; box-shadow: 0 2px 14px rgba(27,42,74,.18); }
+
+    p { margin: 0; }
+    .kosong { height: 1.15em; }
+    .tengah { text-align: center; }
+    .rata { text-align: justify; }
+    .tebal { font-weight: bold; }
+    .kop { display: block; max-width: 100%; height: auto; }
+
+    @media print {
+      body { background: #fff; }
+      .alat { display: none !important; }
+      .kertas { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; }
+    }
+    @media (max-width: 22cm) {
+      .kertas { width: auto; margin: 0; padding: 1rem; box-shadow: none; }
+    }
+  </style>
+  <%- typeof gaya !== 'undefined' ? '<style>' + gaya + '</style>' : '' %>
+</head>
+<body>
+  <div class="alat">
+    <span class="judul"><%= judulDokumen %></span>
+    <div class="tombol">
+      <a href="<%= urlKembali %>"><i class="bi bi-arrow-left"></i> Kembali</a>
+      <a href="<%= urlWord %>"><i class="bi bi-file-earmark-word"></i> Unduh Word</a>
+      <button type="button" class="utama" onclick="window.print()"><i class="bi bi-printer"></i> Cetak</button>
+    </div>
+  </div>
+  <main class="kertas">

@@ -1,204 +1,204 @@
 <%- include('../partials/header') %>
 
+<%
+  var rekapList = typeof rekapList !== 'undefined' ? rekapList : [];
+  const st = (p) => p >= 100 ? 'done' : (p > 0 ? 'run' : 'none');
+  const totalMk = rekapList.reduce((n, r) => n + (r.totalMk || 0), 0);
+  const totalT = rekapList.reduce((n, r) => n + (r.totalTerlaksana || 0), 0);
+  const totalP = rekapList.reduce((n, r) => n + (r.totalPertemuan || 0), 0);
+  const persenAll = totalP ? Math.round((totalT / totalP) * 100) : 0;
+%>
+
 <style>
-  /* ===== VARIABEL WARNA ===== */
-  :root {
-    --primary-start: #2193b0;
-    --primary-end: #6dd5ed;
-    --primary-light: rgba(33,147,176,0.1);
-    --primary-dark: #1a7a8f;
+  .ea {
+    --ea-ink: #1b2a4a;
+    --ea-muted: #5d6b85;
+    --ea-line: #e2e7ef;
+    --ea-surface: #ffffff;
+    --ea-accent: #1e3a8a;
+    --ea-accent-soft: #e8eefc;
+    --ea-hover: #f6f8fd;
+    color: var(--ea-ink);
+    font-feature-settings: "tnum" 1;
+  }
+  .ea a { text-decoration: none; }
+  .ea :focus-visible { outline: 2px solid var(--ea-accent); outline-offset: 2px; border-radius: 6px; }
+
+  /* Judul halaman */
+  .ea-head { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: space-between; margin-bottom: 1.25rem; }
+  .ea-head h1 { font-size: 1.65rem; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 0.25rem; }
+  .ea-head p { margin: 0; color: var(--ea-muted); font-size: 0.95rem; }
+
+  .ea-btn { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid transparent; border-radius: 8px; padding: 0.45rem 0.9rem; font-size: 0.875rem; font-weight: 600; line-height: 1.3; cursor: pointer; background: none; transition: background-color .15s, border-color .15s, color .15s; }
+  .ea-btn-primary { background: var(--ea-accent); color: #fff; }
+  .ea-btn-primary:hover { background: #172f73; color: #fff; }
+  .ea-btn-edit { border-color: var(--ea-line); color: var(--ea-ink); padding: 0.3rem 0.7rem; font-size: 0.8rem; background: #fff; }
+  .ea-btn-edit:hover { background: var(--ea-hover); color: var(--ea-accent); }
+  .ea-btn-set { background: var(--ea-accent); color: #fff; padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+  .ea-btn-set:hover { background: #172f73; color: #fff; }
+  .ea-btn-icon { border-color: var(--ea-line); color: var(--ea-muted); padding: 0.3rem 0.55rem; background: #fff; }
+  .ea-btn-icon:hover { background: var(--ea-hover); color: var(--ea-ink); }
+
+  /* Info & peringatan */
+  .ea-info { background: var(--ea-accent-soft); border: 1px solid #cfdaf7; border-left: 4px solid var(--ea-accent); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1rem; color: var(--ea-ink); font-size: 0.92rem; line-height: 1.5; }
+  .ea-info a { color: var(--ea-accent); font-weight: 600; border-bottom: 1px solid currentColor; }
+  .ea-queue { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; background: #fff8e8; border: 1px solid #f0dcaa; border-left: 4px solid #d99a14; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; }
+  .ea-queue strong { font-weight: 700; }
+  .ea-queue span { color: #6f5200; font-size: 0.95rem; }
+  .ea-queue button { border: 0; background: none; padding: 0; color: #6f5200; font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid currentColor; }
+
+  /* Toolbar */
+  .ea-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; margin-bottom: 0.9rem; }
+  .ea-search { position: relative; flex: 1 1 260px; max-width: 420px; }
+  .ea-search i { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--ea-muted); pointer-events: none; }
+  .ea-search input { width: 100%; border: 1px solid var(--ea-line); border-radius: 8px; padding: 0.5rem 0.8rem 0.5rem 2.2rem; font-size: 0.9rem; background: #fff; color: var(--ea-ink); }
+  .ea-search input:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-seg { display: inline-flex; background: #eef1f6; border-radius: 9px; padding: 3px; gap: 2px; overflow-x: auto; max-width: 100%; }
+  .ea-seg button { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.75rem; border: 0; background: none; border-radius: 7px; color: var(--ea-muted); font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+  .ea-seg button:hover { color: var(--ea-ink); }
+  .ea-seg button.is-active { background: #fff; color: var(--ea-ink); box-shadow: 0 1px 2px rgba(27, 42, 74, 0.12); }
+  .ea-seg small { font-weight: 600; opacity: 0.75; }
+
+  /* Daftar */
+  .ea-list { background: var(--ea-surface); border: 1px solid var(--ea-line); border-radius: 12px; overflow: hidden; }
+  .ea-cols, .ea-row { display: grid; grid-template-columns: minmax(0, 1fr) 130px minmax(0, 1fr) 170px; column-gap: 1rem; align-items: center; }
+  .ea-cols { padding: 0.6rem 1rem 0.6rem 1.15rem; background: #fafbfd; border-bottom: 1px solid var(--ea-line); color: var(--ea-muted); font-size: 0.8rem; font-weight: 600; }
+  .ea-cols > :last-child { text-align: right; }
+  .ea-row { position: relative; padding: 0.85rem 1rem 0.85rem 1.15rem; border-bottom: 1px solid var(--ea-line); --c: #1d7a46; }
+  .ea-row:last-of-type { border-bottom: 0; }
+  .ea-row:hover { background: var(--ea-hover); }
+  .ea-row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c); }
+  .ea-row.belum { --c: #d99a14; }
+
+  .ea-title { display: block; color: var(--ea-ink); font-weight: 600; font-size: 0.95rem; line-height: 1.4; overflow-wrap: anywhere; }
+  .ea-meta { display: flex; flex-wrap: wrap; gap: 0.15rem 1rem; margin-top: 0.2rem; font-size: 0.8rem; color: var(--ea-muted); }
+  .ea-meta span { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+  .ea-pill { display: inline-block; border-radius: 999px; padding: 0.15rem 0.65rem; font-size: 0.78rem; font-weight: 600; }
+  .s-ok { background: #dff3e7; color: #1d6b3f; }
+  .s-belum { background: #fdf0d5; color: #8a5a00; }
+  .ea-pa { font-size: 0.9rem; color: var(--ea-ink); overflow-wrap: anywhere; }
+  .ea-pa.kosong { color: var(--ea-muted); font-style: italic; }
+  .ea-actions { display: flex; gap: 0.4rem; align-items: center; justify-content: flex-end; }
+
+  .ea-empty { padding: 3rem 1.5rem; text-align: center; color: var(--ea-muted); }
+  .ea-empty i { font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #b6bfce; }
+  .ea-empty strong { display: block; color: var(--ea-ink); margin-bottom: 0.25rem; }
+  .ea-more { text-align: center; padding: 0.9rem; border-top: 1px solid var(--ea-line); }
+  .ea-foot { color: var(--ea-muted); font-size: 0.8rem; margin: 0.6rem 0.25rem 0; }
+  [hidden] { display: none !important; }
+
+  /* Ponsel: satu kolom, status di bawah nama */
+  @media (max-width: 767.98px) {
+    .ea-cols { display: none; }
+    .ea-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.55rem; }
+    .ea-main { grid-column: 1 / -1; }
+    .ea-row > .ea-pa { grid-column: 1; }
+    .ea-row > .ea-state { grid-column: 2; grid-row: 2; text-align: right; }
+    .ea-actions { grid-column: 1 / -1; justify-content: flex-start; }
+    .ea-head h1 { font-size: 1.4rem; }
   }
 
-  /* ===== HEADER ===== */
-  .page-header {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border-radius: 1.5rem;
-    padding: 2rem;
-    color: white;
-    margin-bottom: 2rem;
-    box-shadow: 0 15px 30px rgba(33,147,176,0.25);
-    position: relative;
-    overflow: hidden;
-  }
-  .page-header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 300px;
-    height: 300px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 50%;
-    transform: rotate(25deg);
-  }
-  .page-header h2 {
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    position: relative;
-    z-index: 1;
-  }
-  .page-header p {
-    margin-bottom: 0;
-    opacity: 0.9;
-    position: relative;
-    z-index: 1;
-  }
+  /* ===== Bersama: halaman Informasi Pengajaran ===== */
+  .ea-filters { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-bottom: .9rem; }
+  .ea-filters .ea-search { flex: 1 1 240px; max-width: 360px; }
+  .ea-filters select { border: 1px solid var(--ea-line); border-radius: 8px; padding: .5rem .8rem; font-size: .88rem; background: #fff; color: var(--ea-ink); max-width: 230px; }
+  .ea-filters select:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-reset { color: var(--ea-muted); font-size: .88rem; font-weight: 600; padding: .45rem .6rem; border-radius: 8px; }
+  .ea-reset:hover { background: var(--ea-hover); color: var(--ea-ink); }
+  .ea-count { color: var(--ea-muted); font-size: .85rem; margin: 0 .25rem .6rem; }
+  .ea-row { cursor: default; --c: #9aa5b8; }
+  .ea-row.done { --c: #1d7a46; } .ea-row.run { --c: #2f6fed; } .ea-row.none { --c: #9aa5b8; }
+  .ea-cols > :last-child { text-align: right; }
+  .ea-title { display: inline; font-weight: 600; font-size: .94rem; line-height: 1.4; color: var(--ea-ink); overflow-wrap: anywhere; }
+  a.ea-title:hover { color: var(--ea-accent); text-decoration: underline; text-underline-offset: 3px; }
+  .ea-kode { display: inline-block; background: var(--ea-accent-soft); color: var(--ea-accent); border-radius: 6px; padding: .05rem .5rem; font-size: .76rem; font-weight: 700; letter-spacing: .02em; margin-right: .4rem; vertical-align: 1px; }
+  .ea-meta { font-size: .8rem; color: var(--ea-muted); margin-top: .2rem; overflow-wrap: anywhere; }
+  .ea-num { font-size: .88rem; line-height: 1.5; } .ea-num small { color: var(--ea-muted); display: block; font-size: .78rem; }
+  .ea-prog { display: flex; align-items: center; gap: .6rem; }
+  .ea-prog .txt { font-size: .8rem; color: var(--ea-muted); white-space: nowrap; min-width: 46px; }
+  .ea-track { flex: 1; height: 8px; border-radius: 999px; background: #e6ebf3; overflow: hidden; min-width: 70px; }
+  .ea-fill { height: 100%; border-radius: 999px; background: #2f6fed; }
+  .ea-fill.done { background: #1d7a46; } .ea-fill.none { background: #9aa5b8; }
+  .ea-prog b { font-size: .82rem; min-width: 38px; text-align: right; }
+  .ea-pill { display: inline-block; border-radius: 999px; padding: .12rem .6rem; font-size: .75rem; font-weight: 600; background: #eef1f6; color: var(--ea-muted); white-space: nowrap; }
+  .p-done { background: #dff3e7; color: #1d6b3f; } .p-run { background: var(--ea-accent-soft); color: var(--ea-accent); } .p-warn { background: #fdf0d5; color: #8a5a00; }
+  .ea-actions { display: flex; gap: .4rem; align-items: center; justify-content: flex-end; }
+  .ea-panel2 { background: var(--ea-surface); border: 1px solid var(--ea-line); border-radius: 12px; padding: 1rem 1.15rem; }
+  .ea-panel2 h2 { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ea-muted); margin: 0 0 .7rem; }
 
-  /* ===== TOMBOL KEMBALI ===== */
-  .btn-back {
-    background: white;
-    color: var(--primary-start);
-    border-radius: 50px;
-    padding: 0.5rem 1.5rem;
-    font-weight: 500;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-  }
-  .btn-back:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    color: var(--primary-dark);
-  }
 
-  /* ===== TABEL ===== */
-  .table-container {
-    background: white;
-    border-radius: 1.5rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-  }
-  .rekap-table {
-    margin-bottom: 0;
-  }
-  .rekap-table thead th {
-    background: linear-gradient(135deg, var(--primary-light), rgba(109,213,237,0.1));
-    color: var(--primary-dark);
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid var(--primary-start);
-    padding: 1rem 0.75rem;
-  }
-  .rekap-table tbody tr {
-    transition: all 0.2s;
-  }
-  .rekap-table tbody tr:hover {
-    background-color: var(--primary-light);
-    transform: scale(1.01);
-    box-shadow: 0 5px 15px rgba(33,147,176,0.1);
-  }
-  .rekap-table td {
-    padding: 1rem 0.75rem;
-    vertical-align: middle;
-    border-bottom: 1px solid #e9ecef;
-  }
-
-  /* ===== PROGRESS BAR ===== */
-  .progress-custom {
-    height: 8px;
-    border-radius: 50px;
-    background: #e9ecef;
-  }
-  .progress-bar-custom {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border-radius: 50px;
-  }
-
-  /* ===== EMPTY STATE ===== */
-  .empty-state {
-    padding: 4rem 2rem;
-    text-align: center;
-    background: #f8f9fa;
-    border-radius: 1.5rem;
-    margin: 2rem 0;
-  }
-  .empty-state i {
-    font-size: 4rem;
-    color: #adb5bd;
-    margin-bottom: 1.5rem;
-  }
-  .empty-state h4 {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.5rem;
-  }
-  .empty-state p {
-    color: #6c757d;
-    margin-bottom: 1.5rem;
+  .ea-cols, .ea-row { grid-template-columns: minmax(0, 1.4fr) 110px 170px minmax(0, 1fr); }
+  .ea-cols > :last-child { text-align: left; }
+  @media (max-width: 767.98px) {
+    .ea-cols { display: none; }
+    .ea-row { grid-template-columns: minmax(0, 1fr); row-gap: .3rem; }
   }
 </style>
 
-<div class="container-fluid mt-4">
-  <!-- Header dengan gradien -->
-  <div class="page-header d-flex flex-wrap justify-content-between align-items-center">
+<div class="container-fluid container-xl ea py-4">
+
+  <header class="ea-head">
     <div>
-      <h2><i class="bi bi-bar-chart-steps me-2"></i>Rekap Pengajaran per Dosen</h2>
-      <p class="mb-0">Rekapitulasi progress perkuliahan berdasarkan dosen pengampu</p>
+      <h1>Rekap Pengajaran per Dosen</h1>
+      <p>Rekapitulasi progres perkuliahan berdasarkan dosen pengampu.</p>
     </div>
-    <a href="/admin/pengajaran" class="btn-back mt-2 mt-sm-0">
-      <i class="bi bi-arrow-left"></i> Kembali
-    </a>
+    <a href="/admin/pengajaran" class="ea-btn ea-btn-icon"><i class="bi bi-arrow-left"></i> Kembali ke monitoring</a>
+  </header>
+
+  <div class="ea-info" role="note">
+    Keseluruhan: <strong><%= totalT %></strong> dari <strong><%= totalP %></strong> pertemuan terlaksana (<strong><%= persenAll %>%</strong>) pada <strong><%= totalMk %></strong> penugasan mata kuliah.
   </div>
 
-  <!-- Info jumlah ditampilkan -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <p class="mb-0">Menampilkan <strong><%= rekapList.length %></strong> dosen</p>
-  </div>
-
-  <!-- Tabel Rekap -->
-  <div class="table-container">
-    <div class="table-responsive">
-      <table class="table rekap-table">
-        <thead>
-          <tr>
-            <th>Dosen</th>
-            <th>Jumlah MK</th>
-            <th>Total Pertemuan</th>
-            <th>Total Terlaksana</th>
-            <th>Rata-rata Persentase</th>
-            <th>Progress</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (rekapList.length === 0) { %>
-            <tr>
-              <td colspan="6" class="text-center py-5">
-                <div class="empty-state">
-                  <i class="bi bi-inbox"></i>
-                  <h4>Belum Ada Data</h4>
-                  <p class="text-muted">Tidak ada data mata kuliah yang ditemukan.</p>
-                </div>
-              </td>
-            </tr>
-          <% } else { %>
-            <% rekapList.forEach(r => { %>
-              <tr>
-                <td><strong><%= r.nama %></strong></td>
-                <td class="text-center fw-semibold"><%= r.totalMk %></td>
-                <td class="text-center fw-semibold"><%= r.totalPertemuan %></td>
-                <td class="text-center fw-semibold"><%= r.totalTerlaksana %></td>
-                <td class="text-center"><span class="badge" style="background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); color: white; padding: 0.4rem 0.8rem; border-radius: 50px;"><%= r.rataPersentase %>%</span></td>
-                <td style="min-width: 150px;">
-                  <div class="d-flex align-items-center gap-2">
-                    <span class="small fw-semibold"><%= r.rataPersentase %>%</span>
-                    <div class="progress progress-custom flex-grow-1">
-                      <div class="progress-bar progress-bar-custom" role="progressbar" style="width: <%= r.rataPersentase %>%"></div>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            <% }) %>
-          <% } %>
-        </tbody>
-      </table>
+  <div class="ea-filters">
+    <div class="ea-search">
+      <i class="bi bi-search"></i>
+      <label for="eaCari" class="visually-hidden">Cari dosen</label>
+      <input type="search" id="eaCari" placeholder="Cari nama dosen" autocomplete="off">
     </div>
   </div>
+
+  <div class="ea-count" id="eaInfo" aria-live="polite">Menampilkan <strong><%= rekapList.length %></strong> dosen</div>
+
+  <section class="ea-list" aria-label="Rekap pengajaran">
+    <% if (rekapList.length === 0) { %>
+      <div class="ea-empty"><i class="bi bi-inbox"></i><strong>Belum ada data</strong>Tidak ada data mata kuliah yang ditemukan.</div>
+    <% } else { %>
+      <div class="ea-cols" aria-hidden="true"><div>Dosen</div><div>Jumlah MK</div><div>Pertemuan terlaksana</div><div>Rata-rata progres</div></div>
+      <div id="eaRows">
+      <% rekapList.forEach(r => { const s = st(r.rataPersentase); %>
+        <article class="ea-row <%= s %>" data-q="<%= String(r.nama).toLowerCase() %>">
+          <div><span class="ea-title"><%= r.nama %></span></div>
+          <div class="ea-num"><%= r.totalMk %> MK</div>
+          <div class="ea-num"><%= r.totalTerlaksana %> / <%= r.totalPertemuan %></div>
+          <div class="ea-prog">
+            <div class="ea-track"><div class="ea-fill <%= s %>" style="width: <%= r.rataPersentase %>%"></div></div>
+            <b><%= r.rataPersentase %>%</b>
+          </div>
+        </article>
+      <% }) %>
+      </div>
+      <div class="ea-empty" id="eaKosong" hidden><i class="bi bi-search"></i><strong>Tidak ada hasil</strong>Coba kata kunci lain.</div>
+    <% } %>
+  </section>
 </div>
+
+<script>
+  (function () {
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#eaRows .ea-row'));
+    var cari = document.getElementById('eaCari'), kosong = document.getElementById('eaKosong'), info = document.getElementById('eaInfo');
+    if (!cari || !rows.length) return;
+    cari.addEventListener('input', function () {
+      var kata = cari.value.toLowerCase().trim().split(/\s+/).filter(Boolean), n = 0;
+      rows.forEach(function (r) {
+        var q = r.getAttribute('data-q'), ok = kata.every(function (k) { return q.indexOf(k) !== -1; });
+        r.hidden = !ok; if (ok) n++;
+      });
+      kosong.hidden = n > 0;
+      info.innerHTML = kata.length ? 'Menampilkan <strong>' + n + '</strong> dari ' + rows.length + ' dosen' : 'Menampilkan <strong>' + rows.length + '</strong> dosen';
+    });
+    cari.closest('.ea-filters').addEventListener('submit', function (e) { e.preventDefault(); });
+  })();
+</script>
 
 <%- include('../partials/footer') %>

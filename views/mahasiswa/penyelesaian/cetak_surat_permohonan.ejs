@@ -1,0 +1,55 @@
+<%- include('_cetak_kepala', {
+  halaman: '0.65cm 2.54cm 2.54cm 2.54cm',
+  font: "Calibri, Carlito, 'Segoe UI', Arial, sans-serif",
+  ukuran: '12pt',
+  gaya: `
+    .kop { margin: 0 auto .65cm; width: 11.48cm; }
+    .judul { text-align: center; font-weight: bold; }
+    .isian { border-collapse: collapse; margin-left: .75cm; }
+    .isian td { vertical-align: top; padding: 0; line-height: 1.15; }
+    .isian td:first-child { width: 4.25cm; }
+    .isian td:nth-child(2) { width: .45cm; }
+    ol.lampiran { margin: 0; padding-left: 1.6cm; }
+    .ttd { margin-left: 9.5cm; }
+  `
+}) %>
+
+    <% if (kop) { %><img class="kop" src="<%= kop %>" alt="Kop Politeknik Dewantara"><% } %>
+    <p class="judul">SURAT PERMOHONAN UJIAN MAGANG</p>
+    <p class="judul">TAHUN AKADEMIK <%= d.tahunAkademik %></p>
+    <div class="kosong"></div>
+
+    <p>Kepada Yth.</p>
+    <p>Ketua Program Studi;</p>
+    <p>Politeknik Dewantara</p>
+    <div class="kosong"></div>
+
+    <p>Saya yang bertanda tangan dibawah ini:</p>
+    <table class="isian">
+      <tr><td>Nama</td><td>:</td><td><%= d.nama %></td></tr>
+      <tr><td>NIM</td><td>:</td><td><%= d.nim %></td></tr>
+      <tr><td>Program Studi</td><td>:</td><td><%= d.prodi %></td></tr>
+      <tr><td>Semester</td><td>:</td><td><%= d.semester %></td></tr>
+      <tr><td>Lokasi Magang</td><td>:</td><td><% d.lokasiBaris.forEach(l => { %><div><%= l %></div><% }) %></td></tr>
+    </table>
+    <div class="kosong"></div><div class="kosong"></div><div class="kosong"></div>
+
+    <p class="rata">Dengan ini mengajukan permohonan untuk dapat mengikuti ujian magang sebagai salah satu syarat akademik untuk kelulusan pada jenjang pendidikan Diploma III (D3) Program Studi Teknik Elektronika Politeknik Dewantara. Adapun kelengkapan dokumen persyaratan mengikuti ujian magang yang saya lampirkan sebagai berikut:</p>
+    <ol class="lampiran">
+      <li>Laporan Magang 1,2, dan 3</li>
+      <li>Logbook Magang 1,2, dan 3</li>
+      <li>Daftar Nilai Kegiatan Magang</li>
+      <li>Transkip Nilai</li>
+      <li>Bukti Pelunasan Pembayaran Kuliah</li>
+    </ol>
+    <div class="kosong"></div>
+
+    <p>Demikian permohonan ini, atas perhatian dan kesediaan Bapak/Ibu saya ucapkan terima kasih.</p>
+    <div class="kosong"></div>
+
+    <p class="ttd"><%= d.kota %>, <%= d.tanggalCetak %></p>
+    <div class="kosong"></div><div class="kosong"></div><div class="kosong"></div><div class="kosong"></div>
+    <p class="ttd"><%= d.nama %></p>
+    <p class="ttd">NIM. <%= d.nim %></p>
+
+<%- include('_cetak_kaki') %>

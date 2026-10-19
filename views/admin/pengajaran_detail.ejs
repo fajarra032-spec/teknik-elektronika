@@ -1,293 +1,297 @@
 <%- include('../partials/header') %>
 
+<%
+  var mk = typeof mk !== 'undefined' ? mk : {};
+  var dosenList = typeof dosenList !== 'undefined' ? dosenList : [];
+  var pertemuanList = typeof pertemuanList !== 'undefined' ? pertemuanList : [];
+  var tugasList = typeof tugasList !== 'undefined' ? tugasList : [];
+  var terlaksana = typeof terlaksana !== 'undefined' ? terlaksana : 0;
+  var persentase = typeof persentase !== 'undefined' ? persentase : 0;
+  const stProg = persentase >= 100 ? 'done' : (persentase > 0 ? 'run' : 'none');
+  const fmt = (v) => { if (!v) return '-'; const d = new Date(v); return isNaN(d) ? '-' : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }); };
+  const nilaiTgl = (v) => { if (!v) return ''; if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0, 10); const d = new Date(v); return isNaN(d) ? '' : d.toISOString().split('T')[0]; };
+%>
+
 <style>
-  .detail-header {
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
-    color: white;
-    padding: 2rem;
-    border-radius: 1rem;
-    margin-bottom: 2rem;
+  .ea {
+    --ea-ink: #1b2a4a;
+    --ea-muted: #5d6b85;
+    --ea-line: #e2e7ef;
+    --ea-surface: #ffffff;
+    --ea-accent: #1e3a8a;
+    --ea-accent-soft: #e8eefc;
+    --ea-hover: #f6f8fd;
+    color: var(--ea-ink);
+    font-feature-settings: "tnum" 1;
   }
-  .detail-header h1 {
-    font-size: 2.2rem;
-    font-weight: 700;
+  .ea a { text-decoration: none; }
+  .ea :focus-visible { outline: 2px solid var(--ea-accent); outline-offset: 2px; border-radius: 6px; }
+
+  /* Judul halaman */
+  .ea-head { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: space-between; margin-bottom: 1.25rem; }
+  .ea-head h1 { font-size: 1.65rem; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 0.25rem; }
+  .ea-head p { margin: 0; color: var(--ea-muted); font-size: 0.95rem; }
+
+  .ea-btn { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid transparent; border-radius: 8px; padding: 0.45rem 0.9rem; font-size: 0.875rem; font-weight: 600; line-height: 1.3; cursor: pointer; background: none; transition: background-color .15s, border-color .15s, color .15s; }
+  .ea-btn-primary { background: var(--ea-accent); color: #fff; }
+  .ea-btn-primary:hover { background: #172f73; color: #fff; }
+  .ea-btn-edit { border-color: var(--ea-line); color: var(--ea-ink); padding: 0.3rem 0.7rem; font-size: 0.8rem; background: #fff; }
+  .ea-btn-edit:hover { background: var(--ea-hover); color: var(--ea-accent); }
+  .ea-btn-set { background: var(--ea-accent); color: #fff; padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+  .ea-btn-set:hover { background: #172f73; color: #fff; }
+  .ea-btn-icon { border-color: var(--ea-line); color: var(--ea-muted); padding: 0.3rem 0.55rem; background: #fff; }
+  .ea-btn-icon:hover { background: var(--ea-hover); color: var(--ea-ink); }
+
+  /* Info & peringatan */
+  .ea-info { background: var(--ea-accent-soft); border: 1px solid #cfdaf7; border-left: 4px solid var(--ea-accent); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1rem; color: var(--ea-ink); font-size: 0.92rem; line-height: 1.5; }
+  .ea-info a { color: var(--ea-accent); font-weight: 600; border-bottom: 1px solid currentColor; }
+  .ea-queue { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; background: #fff8e8; border: 1px solid #f0dcaa; border-left: 4px solid #d99a14; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; }
+  .ea-queue strong { font-weight: 700; }
+  .ea-queue span { color: #6f5200; font-size: 0.95rem; }
+  .ea-queue button { border: 0; background: none; padding: 0; color: #6f5200; font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid currentColor; }
+
+  /* Toolbar */
+  .ea-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; margin-bottom: 0.9rem; }
+  .ea-search { position: relative; flex: 1 1 260px; max-width: 420px; }
+  .ea-search i { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--ea-muted); pointer-events: none; }
+  .ea-search input { width: 100%; border: 1px solid var(--ea-line); border-radius: 8px; padding: 0.5rem 0.8rem 0.5rem 2.2rem; font-size: 0.9rem; background: #fff; color: var(--ea-ink); }
+  .ea-search input:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-seg { display: inline-flex; background: #eef1f6; border-radius: 9px; padding: 3px; gap: 2px; overflow-x: auto; max-width: 100%; }
+  .ea-seg button { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.75rem; border: 0; background: none; border-radius: 7px; color: var(--ea-muted); font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+  .ea-seg button:hover { color: var(--ea-ink); }
+  .ea-seg button.is-active { background: #fff; color: var(--ea-ink); box-shadow: 0 1px 2px rgba(27, 42, 74, 0.12); }
+  .ea-seg small { font-weight: 600; opacity: 0.75; }
+
+  /* Daftar */
+  .ea-list { background: var(--ea-surface); border: 1px solid var(--ea-line); border-radius: 12px; overflow: hidden; }
+  .ea-cols, .ea-row { display: grid; grid-template-columns: minmax(0, 1fr) 130px minmax(0, 1fr) 170px; column-gap: 1rem; align-items: center; }
+  .ea-cols { padding: 0.6rem 1rem 0.6rem 1.15rem; background: #fafbfd; border-bottom: 1px solid var(--ea-line); color: var(--ea-muted); font-size: 0.8rem; font-weight: 600; }
+  .ea-cols > :last-child { text-align: right; }
+  .ea-row { position: relative; padding: 0.85rem 1rem 0.85rem 1.15rem; border-bottom: 1px solid var(--ea-line); --c: #1d7a46; }
+  .ea-row:last-of-type { border-bottom: 0; }
+  .ea-row:hover { background: var(--ea-hover); }
+  .ea-row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c); }
+  .ea-row.belum { --c: #d99a14; }
+
+  .ea-title { display: block; color: var(--ea-ink); font-weight: 600; font-size: 0.95rem; line-height: 1.4; overflow-wrap: anywhere; }
+  .ea-meta { display: flex; flex-wrap: wrap; gap: 0.15rem 1rem; margin-top: 0.2rem; font-size: 0.8rem; color: var(--ea-muted); }
+  .ea-meta span { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+  .ea-pill { display: inline-block; border-radius: 999px; padding: 0.15rem 0.65rem; font-size: 0.78rem; font-weight: 600; }
+  .s-ok { background: #dff3e7; color: #1d6b3f; }
+  .s-belum { background: #fdf0d5; color: #8a5a00; }
+  .ea-pa { font-size: 0.9rem; color: var(--ea-ink); overflow-wrap: anywhere; }
+  .ea-pa.kosong { color: var(--ea-muted); font-style: italic; }
+  .ea-actions { display: flex; gap: 0.4rem; align-items: center; justify-content: flex-end; }
+
+  .ea-empty { padding: 3rem 1.5rem; text-align: center; color: var(--ea-muted); }
+  .ea-empty i { font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #b6bfce; }
+  .ea-empty strong { display: block; color: var(--ea-ink); margin-bottom: 0.25rem; }
+  .ea-more { text-align: center; padding: 0.9rem; border-top: 1px solid var(--ea-line); }
+  .ea-foot { color: var(--ea-muted); font-size: 0.8rem; margin: 0.6rem 0.25rem 0; }
+  [hidden] { display: none !important; }
+
+  /* Ponsel: satu kolom, status di bawah nama */
+  @media (max-width: 767.98px) {
+    .ea-cols { display: none; }
+    .ea-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.55rem; }
+    .ea-main { grid-column: 1 / -1; }
+    .ea-row > .ea-pa { grid-column: 1; }
+    .ea-row > .ea-state { grid-column: 2; grid-row: 2; text-align: right; }
+    .ea-actions { grid-column: 1 / -1; justify-content: flex-start; }
+    .ea-head h1 { font-size: 1.4rem; }
   }
-  .info-card {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-  }
-  .progress-lg {
-    height: 1.5rem;
-    border-radius: 1rem;
-  }
-  .pertemuan-table th {
-    background: #f8f9fa;
-    font-weight: 600;
-  }
-  .badge-status {
-    padding: 0.4rem 1rem;
-    border-radius: 50px;
-    font-weight: 500;
-  }
-  .btn-edit-pertemuan {
-    background: transparent;
-    border: 1px solid #2193b0;
-    color: #2193b0;
-    border-radius: 50px;
-    padding: 0.25rem 1rem;
-    font-size: 0.8rem;
-    transition: all 0.2s;
-  }
-  .btn-edit-pertemuan:hover {
-    background: #2193b0;
-    color: white;
-  }
-  .btn-bulk {
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
-    border: none;
-    color: white;
-    border-radius: 50px;
-    padding: 0.5rem 1.5rem;
-    font-weight: 500;
+
+  /* ===== Bersama: halaman Informasi Pengajaran ===== */
+  .ea-filters { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-bottom: .9rem; }
+  .ea-filters .ea-search { flex: 1 1 240px; max-width: 360px; }
+  .ea-filters select { border: 1px solid var(--ea-line); border-radius: 8px; padding: .5rem .8rem; font-size: .88rem; background: #fff; color: var(--ea-ink); max-width: 230px; }
+  .ea-filters select:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-reset { color: var(--ea-muted); font-size: .88rem; font-weight: 600; padding: .45rem .6rem; border-radius: 8px; }
+  .ea-reset:hover { background: var(--ea-hover); color: var(--ea-ink); }
+  .ea-count { color: var(--ea-muted); font-size: .85rem; margin: 0 .25rem .6rem; }
+  .ea-row { cursor: default; --c: #9aa5b8; }
+  .ea-row.done { --c: #1d7a46; } .ea-row.run { --c: #2f6fed; } .ea-row.none { --c: #9aa5b8; }
+  .ea-cols > :last-child { text-align: right; }
+  .ea-title { display: inline; font-weight: 600; font-size: .94rem; line-height: 1.4; color: var(--ea-ink); overflow-wrap: anywhere; }
+  a.ea-title:hover { color: var(--ea-accent); text-decoration: underline; text-underline-offset: 3px; }
+  .ea-kode { display: inline-block; background: var(--ea-accent-soft); color: var(--ea-accent); border-radius: 6px; padding: .05rem .5rem; font-size: .76rem; font-weight: 700; letter-spacing: .02em; margin-right: .4rem; vertical-align: 1px; }
+  .ea-meta { font-size: .8rem; color: var(--ea-muted); margin-top: .2rem; overflow-wrap: anywhere; }
+  .ea-num { font-size: .88rem; line-height: 1.5; } .ea-num small { color: var(--ea-muted); display: block; font-size: .78rem; }
+  .ea-prog { display: flex; align-items: center; gap: .6rem; }
+  .ea-prog .txt { font-size: .8rem; color: var(--ea-muted); white-space: nowrap; min-width: 46px; }
+  .ea-track { flex: 1; height: 8px; border-radius: 999px; background: #e6ebf3; overflow: hidden; min-width: 70px; }
+  .ea-fill { height: 100%; border-radius: 999px; background: #2f6fed; }
+  .ea-fill.done { background: #1d7a46; } .ea-fill.none { background: #9aa5b8; }
+  .ea-prog b { font-size: .82rem; min-width: 38px; text-align: right; }
+  .ea-pill { display: inline-block; border-radius: 999px; padding: .12rem .6rem; font-size: .75rem; font-weight: 600; background: #eef1f6; color: var(--ea-muted); white-space: nowrap; }
+  .p-done { background: #dff3e7; color: #1d6b3f; } .p-run { background: var(--ea-accent-soft); color: var(--ea-accent); } .p-warn { background: #fdf0d5; color: #8a5a00; }
+  .ea-actions { display: flex; gap: .4rem; align-items: center; justify-content: flex-end; }
+  .ea-panel2 { background: var(--ea-surface); border: 1px solid var(--ea-line); border-radius: 12px; padding: 1rem 1.15rem; }
+  .ea-panel2 h2 { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ea-muted); margin: 0 0 .7rem; }
+
+
+  .ea-two { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+  .ea-dosen { display: flex; flex-wrap: wrap; gap: .35rem; }
+  .ea-dosen span { background: var(--ea-accent-soft); color: var(--ea-accent); border-radius: 999px; padding: .15rem .7rem; font-size: .82rem; font-weight: 600; }
+  .ea-kosong { color: #8a5a00; font-style: italic; font-size: .88rem; }
+  .ea-bigprog { display: flex; align-items: center; gap: .8rem; }
+  .ea-bigprog .ea-track { height: 12px; } .ea-bigprog b { font-size: 1.25rem; min-width: 56px; }
+  .ea-hint { font-size: .82rem; color: var(--ea-muted); margin-top: .5rem; }
+  .ea-bulkbox { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .4rem .8rem; margin: .4rem 0 .9rem; }
+  .ea-bulkbox label { display: flex; align-items: center; gap: .45rem; font-size: .88rem; cursor: pointer; }
+  .ea-bulkbox input, .ea-row input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--ea-accent); }
+
+  .ea-cols, .ea-row { grid-template-columns: 44px minmax(0, 1.4fr) 120px 95px 80px minmax(0, 1fr) 120px; }
+  .ea-row.done { --c: #1d7a46; } .ea-row.none { --c: #d99a14; }
+  .ea-no { font-weight: 700; color: var(--ea-muted); font-size: .9rem; }
+  .ea-edit { display: none; width: 100%; border: 1px solid var(--ea-line); border-radius: 8px; padding: .35rem .6rem; font-size: .88rem; background: #fff; color: var(--ea-ink); }
+  .ea-edit:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-row.editing .ea-view { display: none; } .ea-row.editing .ea-edit { display: block; }
+  .ea-row .on-edit { display: none; } .ea-row.editing .on-edit { display: inline-flex; } .ea-row.editing .off-edit { display: none; }
+  .ea-link { color: var(--ea-accent); font-weight: 600; font-size: .85rem; }
+  .ea-link:hover { text-decoration: underline; }
+  .ea-tugas { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem; padding: .7rem 1rem; border-bottom: 1px solid var(--ea-line); }
+  .ea-tugas:last-child { border-bottom: 0; }
+  @media (max-width: 991.98px) {
+    .ea-two { grid-template-columns: 1fr; }
+    .ea-cols { display: none; }
+    .ea-row { grid-template-columns: 36px minmax(0, 1fr); row-gap: .4rem; }
+    .ea-row > :nth-child(n+3) { grid-column: 2; }
+    .ea-actions { justify-content: flex-start; }
   }
 </style>
 
-<div class="container-fluid mt-4">
-  <!-- Header -->
-  <div class="detail-header">
-    <div class="d-flex justify-content-between align-items-center">
-      <div>
-        <h1><%= mk.kode %> - <%= mk.nama %></h1>
-        <p class="mb-0 opacity-75"><i class="bi bi-book me-2"></i><%= mk.sks %> SKS | <i class="bi bi-calendar me-2"></i><%= mk.semester || 'Semester ?' %> | <i class="bi bi-clock me-2"></i><%= mk.jadwal || 'Jadwal belum diatur' %></p>
+<div class="container-fluid container-xl ea py-4">
+
+  <header class="ea-head">
+    <div>
+      <h1><span class="ea-kode" style="font-size:.9rem;vertical-align:4px"><%= mk.kode %></span><%= mk.nama %></h1>
+      <p><%= mk.sks %> SKS &middot; Semester <%= mk.semester || '?' %> &middot; <%= mk.jadwal || 'Jadwal belum diatur' %></p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/admin/matakuliah/<%= mk.id %>/edit" class="ea-btn ea-btn-edit"><i class="bi bi-pencil-square"></i> Edit mata kuliah</a>
+      <a href="/admin/pengajaran" class="ea-btn ea-btn-icon"><i class="bi bi-arrow-left"></i> Kembali</a>
+    </div>
+  </header>
+
+  <div class="ea-two">
+    <div class="ea-panel2">
+      <h2>Dosen pengampu</h2>
+      <% if (dosenList.length > 0) { %>
+        <div class="ea-dosen"><% dosenList.forEach(d => { %><span><%= d.nama %></span><% }) %></div>
+      <% } else { %><span class="ea-kosong">Belum ada dosen pengampu</span><% } %>
+    </div>
+    <div class="ea-panel2">
+      <h2>Progres perkuliahan</h2>
+      <div class="ea-bigprog">
+        <div class="ea-track"><div class="ea-fill <%= stProg %>" style="width: <%= persentase %>%"></div></div>
+        <b><%= persentase %>%</b>
       </div>
-      <div>
-        <a href="/admin/pengajaran" class="btn btn-light">
-          <i class="bi bi-arrow-left me-2"></i>Kembali
-        </a>
-      </div>
+      <div class="ea-hint"><%= terlaksana %> dari 16 pertemuan telah dilaksanakan</div>
     </div>
   </div>
 
-  <!-- Info Dosen & Progress -->
-  <div class="row g-4 mb-4">
-    <div class="col-md-6">
-      <div class="info-card">
-        <h5 class="fw-bold mb-3"><i class="bi bi-people me-2"></i>Dosen Pengampu</h5>
-        <% if (dosenList && dosenList.length > 0) { %>
-          <div class="d-flex flex-wrap gap-2">
-            <% dosenList.forEach(d => { %>
-              <span class="badge bg-primary bg-opacity-10 text-primary p-2"><%= d.nama %></span>
-            <% }) %>
-          </div>
-        <% } else { %>
-          <p class="text-muted">Belum ada dosen tetap</p>
-        <% } %>
-      </div>
+  <div class="ea-panel2" style="margin-bottom:1rem">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <h2 style="margin:0">Rencana perkuliahan (16 pertemuan)</h2>
+      <button type="button" class="ea-btn ea-btn-edit" id="btnBulk"><i class="bi bi-check-all"></i> Tandai selesai massal</button>
     </div>
-    <div class="col-md-6">
-      <div class="info-card">
-        <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart-steps me-2"></i>Progress Perkuliahan</h5>
-        <div class="progress progress-lg mb-2">
-          <div class="progress-bar" role="progressbar" style="width: <%= persentase %>%; background: linear-gradient(90deg, #2193b0, #6dd5ed);" 
-               aria-valuenow="<%= persentase %>" aria-valuemin="0" aria-valuemax="100">
-            <%= persentase %>%
-          </div>
+    <div id="bulkPanel" hidden style="margin-top:.8rem">
+      <div class="ea-info" style="margin-bottom:.4rem">Centang pertemuan yang <strong>sudah selesai</strong>. Pertemuan yang tidak dicentang akan ditandai belum selesai.</div>
+      <form id="bulkForm">
+        <div class="ea-bulkbox">
+          <% for (let i = 1; i <= 16; i++) { const p = pertemuanList.find(x => x.pertemuan === i); %>
+            <label for="bulk<%= i %>"><input type="checkbox" name="completed" value="<%= i %>" id="bulk<%= i %>" <%= p && p.status === 'selesai' ? 'checked' : '' %>> Pertemuan <%= i %></label>
+          <% } %>
         </div>
-        <p class="text-muted"><%= terlaksana %> dari 16 pertemuan telah dilaksanakan</p>
-      </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="ea-btn ea-btn-primary" id="btnBulkSimpan">Simpan</button>
+          <button type="button" class="ea-btn ea-btn-icon" id="btnBulkBatal">Batal</button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <!-- Bulk Update Button -->
-  <div class="mb-3 text-end">
-    <button class="btn-bulk" onclick="toggleBulkMode()">
-      <i class="bi bi-check-all me-2"></i>Mode Bulk Update
-    </button>
-  </div>
+  <section class="ea-list" aria-label="Daftar pertemuan">
+    <div class="ea-cols" aria-hidden="true"><div>No</div><div>Topik</div><div>Tanggal</div><div>Status</div><div>Materi</div><div>Catatan</div><div>Aksi</div></div>
+    <% pertemuanList.forEach(p => { const selesai = p.status === 'selesai'; %>
+      <article class="ea-row <%= selesai ? 'done' : 'none' %>" data-p="<%= p.pertemuan %>">
+        <div class="ea-no"><%= p.pertemuan %></div>
+        <div>
+          <span class="ea-view ea-title"><%= p.topik %></span>
+          <input type="text" class="ea-edit" data-f="topik" value="<%= p.topik %>" aria-label="Topik pertemuan <%= p.pertemuan %>">
+        </div>
+        <div>
+          <span class="ea-view"><%= fmt(p.tanggal) %></span>
+          <input type="date" class="ea-edit" data-f="tanggal" value="<%= nilaiTgl(p.tanggal) %>" aria-label="Tanggal pertemuan <%= p.pertemuan %>">
+        </div>
+        <div><span class="ea-pill <%= selesai ? 'p-done' : 'p-warn' %>"><%= selesai ? 'Selesai' : 'Belum' %></span></div>
+        <div><% if (p.materiUrl) { %><a href="<%= p.materiUrl %>" target="_blank" rel="noopener" class="ea-link">Lihat</a><% } else { %><span class="text-muted">-</span><% } %></div>
+        <div>
+          <span class="ea-view" style="font-size:.86rem;color:var(--ea-muted)"><%= p.catatan || '-' %></span>
+          <input type="text" class="ea-edit" data-f="catatan" value="<%= p.catatan || '' %>" aria-label="Catatan pertemuan <%= p.pertemuan %>">
+        </div>
+        <div class="ea-actions">
+          <button type="button" class="ea-btn ea-btn-edit off-edit js-edit"><i class="bi bi-pencil-square"></i> Edit</button>
+          <button type="button" class="ea-btn ea-btn-primary on-edit js-simpan" title="Simpan"><i class="bi bi-check-lg"></i> Simpan</button>
+          <button type="button" class="ea-btn ea-btn-icon on-edit js-batal" title="Batal" aria-label="Batal"><i class="bi bi-x-lg"></i></button>
+        </div>
+      </article>
+    <% }) %>
+  </section>
 
-  <!-- Bulk Update Panel (hidden) -->
-  <div id="bulkPanel" class="info-card mb-4" style="display: none;">
-    <h5 class="fw-bold mb-3">Bulk Update Pertemuan</h5>
-    <form id="bulkForm">
-      <div class="row">
-        <% for (let i = 1; i <= 16; i++) { %>
-          <div class="col-md-3 col-6 mb-2">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="completed" value="<%= i %>" id="bulk<%= i %>">
-              <label class="form-check-label" for="bulk<%= i %>">Pertemuan <%= i %></label>
-            </div>
+  <% if (tugasList.length > 0) { %>
+    <div class="ea-panel2" style="margin-top:1rem;padding:0">
+      <h2 style="padding:1rem 1.15rem 0">Tugas terkait</h2>
+      <% tugasList.forEach(t => { %>
+        <div class="ea-tugas">
+          <div>
+            <div class="ea-title"><%= t.judul %></div>
+            <div class="ea-meta">Deadline: <%= fmt(t.deadline) %></div>
           </div>
-        <% } %>
-      </div>
-      <button type="button" class="btn btn-primary" onclick="submitBulk()">Simpan Bulk Update</button>
-      <button type="button" class="btn btn-secondary" onclick="toggleBulkMode()">Batal</button>
-    </form>
-  </div>
-
-  <!-- Tabel Pertemuan -->
-  <div class="info-card">
-    <h5 class="fw-bold mb-3"><i class="bi bi-list-task me-2"></i>Rencana Perkuliahan (16 Pertemuan)</h5>
-    <div class="table-responsive">
-      <table class="table table-bordered pertemuan-table">
-        <thead>
-          <tr>
-            <th>Pertemuan</th>
-            <th>Topik</th>
-            <th>Tanggal</th>
-            <th>Status</th>
-            <th>Materi</th>
-            <th>Catatan</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% pertemuanList.forEach(p => { %>
-            <tr class="<%= p.status === 'selesai' ? 'table-success' : '' %>">
-              <td class="text-center fw-bold"><%= p.pertemuan %></td>
-              <td>
-                <span class="topik-text-<%= p.pertemuan %>"><%= p.topik %></span>
-                <input type="text" class="form-control form-control-sm edit-input-<%= p.pertemuan %>" value="<%= p.topik %>" style="display: none;">
-              </td>
-              <td>
-                <span class="tanggal-text-<%= p.pertemuan %>"><%= p.tanggal ? new Date(p.tanggal).toLocaleDateString('id-ID') : '-' %></span>
-                <input type="date" class="form-control form-control-sm edit-input-<%= p.pertemuan %>" value="<%= p.tanggal ? p.tanggal.split('T')[0] : '' %>" style="display: none;">
-              </td>
-              <td>
-                <span class="badge-status bg-<%= p.status === 'selesai' ? 'success' : 'warning' %> text-white">
-                  <%= p.status %>
-                </span>
-              </td>
-              <td>
-                <% if (p.materiUrl) { %>
-                  <a href="<%= p.materiUrl %>" target="_blank" class="btn btn-sm btn-outline-info">Lihat</a>
-                <% } else { %>
-                  <span class="text-muted">-</span>
-                <% } %>
-              </td>
-              <td>
-                <span class="catatan-text-<%= p.pertemuan %>"><%= p.catatan || '-' %></span>
-                <input type="text" class="form-control form-control-sm edit-input-<%= p.pertemuan %>" value="<%= p.catatan || '' %>" style="display: none;">
-              </td>
-              <td>
-                <button class="btn btn-sm btn-outline-primary" onclick="editPertemuan(<%= p.pertemuan %>)">
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-success" onclick="submitEdit(<%= p.pertemuan %>)" style="display: none;" id="save-<%= p.pertemuan %>">
-                  <i class="bi bi-check-lg"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-secondary" onclick="cancelEdit(<%= p.pertemuan %>)" style="display: none;" id="cancel-<%= p.pertemuan %>">
-                  <i class="bi bi-x-lg"></i>
-                </button>
-              </td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Tugas Terkait (opsional) -->
-  <% if (tugasList && tugasList.length > 0) { %>
-    <div class="info-card mt-4">
-      <h5 class="fw-bold mb-3"><i class="bi bi-file-earmark-text me-2"></i>Tugas Terkait</h5>
-      <ul class="list-group">
-        <% tugasList.forEach(t => { %>
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            <div>
-              <strong><%= t.judul %></strong><br>
-              <small class="text-muted">Deadline: <%= new Date(t.deadline).toLocaleDateString('id-ID') %></small>
-            </div>
-            <span class="badge bg-primary"><%= t.tipe %></span>
-          </li>
-        <% }) %>
-      </ul>
+          <span class="ea-pill p-run"><%= t.tipe %></span>
+        </div>
+      <% }) %>
     </div>
   <% } %>
 </div>
 
 <script>
-  function toggleBulkMode() {
-    const panel = document.getElementById('bulkPanel');
-    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-  }
+  (function () {
+    var MK_ID = '<%= mk.id %>';
 
-  function submitBulk() {
-    const checkboxes = document.querySelectorAll('#bulkForm input[name="completed"]:checked');
-    const completed = Array.from(checkboxes).map(cb => parseInt(cb.value));
-    
-    fetch('/admin/pengajaran/<%= mk.id %>/pertemuan/bulk-update', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ completed })
-    })
-    .then(res => {
-      if (res.ok) location.reload();
-      else alert('Gagal update');
-    })
-    .catch(err => alert('Error: ' + err.message));
-  }
+    // ---- Tandai selesai massal ----
+    var panel = document.getElementById('bulkPanel');
+    document.getElementById('btnBulk').addEventListener('click', function () { panel.hidden = !panel.hidden; });
+    document.getElementById('btnBulkBatal').addEventListener('click', function () { panel.hidden = true; });
+    document.getElementById('btnBulkSimpan').addEventListener('click', function () {
+      var completed = Array.prototype.map.call(document.querySelectorAll('#bulkForm input[name="completed"]:checked'), function (c) { return parseInt(c.value, 10); });
+      fetch('/admin/pengajaran/' + MK_ID + '/pertemuan/bulk-update', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ completed: completed })
+      }).then(function (res) { if (res.ok) location.reload(); else alert('Gagal memperbarui pertemuan.'); })
+        .catch(function (err) { alert('Terjadi kesalahan: ' + err.message); });
+    });
 
-  function editPertemuan(pertemuan) {
-    // Sembunyikan teks
-    document.querySelector(`.topik-text-${pertemuan}`).style.display = 'none';
-    document.querySelector(`.tanggal-text-${pertemuan}`).style.display = 'none';
-    document.querySelector(`.catatan-text-${pertemuan}`).style.display = 'none';
-    
-    // Tampilkan input
-    document.querySelectorAll(`.edit-input-${pertemuan}`).forEach(el => el.style.display = 'block');
-    
-    // Tampilkan tombol save/cancel
-    document.getElementById(`save-${pertemuan}`).style.display = 'inline-block';
-    document.getElementById(`cancel-${pertemuan}`).style.display = 'inline-block';
-  }
-
-  function cancelEdit(pertemuan) {
-    // Tampilkan teks
-    document.querySelector(`.topik-text-${pertemuan}`).style.display = 'inline';
-    document.querySelector(`.tanggal-text-${pertemuan}`).style.display = 'inline';
-    document.querySelector(`.catatan-text-${pertemuan}`).style.display = 'inline';
-    
-    // Sembunyikan input
-    document.querySelectorAll(`.edit-input-${pertemuan}`).forEach(el => el.style.display = 'none');
-    
-    // Sembunyikan tombol
-    document.getElementById(`save-${pertemuan}`).style.display = 'none';
-    document.getElementById(`cancel-${pertemuan}`).style.display = 'none';
-  }
-
-  function submitEdit(pertemuan) {
-    const topik = document.querySelectorAll(`.edit-input-${pertemuan}`)[0].value;
-    const tanggal = document.querySelectorAll(`.edit-input-${pertemuan}`)[1].value;
-    const catatan = document.querySelectorAll(`.edit-input-${pertemuan}`)[2].value;
-    
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/admin/pengajaran/<%= mk.id %>/pertemuan/${pertemuan}`;
-    
-    const inputTopik = document.createElement('input');
-    inputTopik.type = 'hidden';
-    inputTopik.name = 'topik';
-    inputTopik.value = topik;
-    form.appendChild(inputTopik);
-    
-    const inputTanggal = document.createElement('input');
-    inputTanggal.type = 'hidden';
-    inputTanggal.name = 'tanggal';
-    inputTanggal.value = tanggal;
-    form.appendChild(inputTanggal);
-    
-    const inputCatatan = document.createElement('input');
-    inputCatatan.type = 'hidden';
-    inputCatatan.name = 'catatan';
-    inputCatatan.value = catatan;
-    form.appendChild(inputCatatan);
-    
-    document.body.appendChild(form);
-    form.submit();
-  }
+    // ---- Edit satu pertemuan (topik, tanggal, catatan) ----
+    document.addEventListener('click', function (e) {
+      var row = e.target.closest('.ea-row[data-p]');
+      if (!row) return;
+      if (e.target.closest('.js-edit')) { row.classList.add('editing'); var f = row.querySelector('.ea-edit'); if (f) f.focus(); }
+      else if (e.target.closest('.js-batal')) {
+        row.classList.remove('editing');
+        row.querySelectorAll('.ea-edit').forEach(function (i) { i.value = i.defaultValue; });
+      } else if (e.target.closest('.js-simpan')) {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/admin/pengajaran/' + MK_ID + '/pertemuan/' + row.getAttribute('data-p');
+        row.querySelectorAll('.ea-edit').forEach(function (i) {
+          var h = document.createElement('input'); h.type = 'hidden'; h.name = i.getAttribute('data-f'); h.value = i.value; form.appendChild(h);
+        });
+        document.body.appendChild(form); form.submit();
+      }
+    });
+  })();
 </script>
 
 <%- include('../partials/footer') %>

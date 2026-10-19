@@ -1,0 +1,278 @@
+<%- include('../../partials/header') %>
+
+<%
+  const base = '/mahasiswa/penyelesaian-studi';
+  const status = aktif ? aktif.status : null;
+  const disetujui = status === 'approved';
+  const menunggu = status === 'pending';
+  const ditolak = !aktif && terbaru && terbaru.status === 'rejected';
+  const nilaiForm = form || {
+    lokasi: awal.lokasi,
+    pendampingLapangan: awal.pendampingLapangan,
+    pembayaranLunas: false,
+    catatan: ''
+  };
+  const labelStatus = { pending: 'Menunggu persetujuan', approved: 'Disetujui', rejected: 'Ditolak', dibatalkan: 'Dibatalkan' };
+  const urlDok = (jenis, aksi) => base + '/' + aktif.id + '/dokumen/' + jenis + '/' + aksi;
+  const laporanLengkap = [1, 2, 3].every(ke => awal.laporan[ke]);
+%>
+
+<style>
+  .ps { --ps-ink: #1b2a4a; --ps-muted: #5d6b85; --ps-line: #e2e7ef; --ps-accent: #1e3a8a; --ps-soft: #e8eefc; max-width: 960px; color: var(--ps-ink); }
+  .ps-head { margin-bottom: 1.5rem; }
+  .ps-head h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 0.25rem; }
+  .ps-head p { color: var(--ps-muted); margin: 0; }
+
+  .ps-step { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); gap: 0 1rem; position: relative; padding-bottom: 1.5rem; }
+  .ps-step:not(:last-child)::before { content: ""; position: absolute; left: 1.05rem; top: 2.25rem; bottom: 0; width: 2px; background: var(--ps-line); }
+  .ps-no { width: 2.25rem; height: 2.25rem; border-radius: 50%; display: grid; place-items: center; font-weight: 700; background: #fff; border: 2px solid var(--ps-line); color: var(--ps-muted); }
+  .ps-step.is-aktif .ps-no { border-color: var(--ps-accent); color: var(--ps-accent); }
+  .ps-step.is-selesai .ps-no { background: var(--ps-accent); border-color: var(--ps-accent); color: #fff; }
+  .ps-card { background: #fff; border: 1px solid var(--ps-line); border-radius: 12px; padding: 1.25rem 1.4rem; }
+  .ps-card h2 { font-size: 1.1rem; font-weight: 700; margin: 0 0 0.2rem; }
+  .ps-sub { color: var(--ps-muted); font-size: 0.9rem; margin: 0 0 1rem; }
+  .ps-step.is-kunci .ps-card { background: #f8fafc; }
+
+  .ps-pill { display: inline-block; border-radius: 999px; padding: 0.15rem 0.7rem; font-size: 0.8rem; font-weight: 600; vertical-align: middle; margin-left: 0.4rem; }
+  .ps-pill.pending { background: #fdf0d5; color: #8a5a00; }
+  .ps-pill.approved { background: #dff3e7; color: #1d6b3f; }
+  .ps-pill.rejected, .ps-pill.dibatalkan { background: #fbe3e4; color: #a12a35; }
+  .ps-pill.kunci { background: #eef1f6; color: var(--ps-muted); }
+
+  .ps-data { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 0.45rem 1rem; margin: 0; }
+  .ps-data dt { color: var(--ps-muted); font-weight: 500; font-size: 0.9rem; }
+  .ps-data dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
+  .ps-chip { display: inline-block; border-radius: 6px; padding: 0.1rem 0.55rem; font-size: 0.82rem; font-weight: 600; margin: 0 0.3rem 0.2rem 0; }
+  .ps-chip.ok { background: #dff3e7; color: #1d6b3f; }
+  .ps-chip.no { background: #fdf0d5; color: #8a5a00; }
+
+  .ps-aksi { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.1rem; }
+  .ps-btn { display: inline-flex; align-items: center; gap: 0.4rem; border-radius: 8px; padding: 0.45rem 0.95rem; font-weight: 600; font-size: 0.9rem; border: 1px solid var(--ps-line); background: #fff; color: var(--ps-ink); text-decoration: none; cursor: pointer; }
+  .ps-btn:hover { background: #f6f8fd; color: var(--ps-ink); }
+  .ps-btn.utama { background: var(--ps-accent); border-color: var(--ps-accent); color: #fff; }
+  .ps-btn.utama:hover { background: #172f73; color: #fff; }
+  .ps-btn.bahaya { color: #a12a35; border-color: #e7b4b8; }
+  .ps-btn.bahaya:hover { background: #fbe3e4; }
+  .ps :focus-visible { outline: 2px solid var(--ps-accent); outline-offset: 2px; }
+
+  .ps-jadwal { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; }
+  .ps-jadwal > div { background: var(--ps-soft); border-radius: 10px; padding: 0.7rem 0.9rem; }
+  .ps-jadwal small { display: block; color: var(--ps-muted); font-size: 0.8rem; }
+  .ps-jadwal strong { font-size: 1rem; }
+
+  .ps-berkas { list-style: none; margin: 0; padding: 0; }
+  .ps-berkas > li { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; justify-content: space-between; padding: 0.85rem 0; border-top: 1px solid var(--ps-line); }
+  .ps-berkas > li:first-child { border-top: 0; padding-top: 0; }
+  .ps-berkas .isi { flex: 1 1 18rem; min-width: 0; }
+  .ps-berkas .isi strong { display: block; }
+  .ps-berkas .isi span { color: var(--ps-muted); font-size: 0.88rem; }
+  .ps-berkas .tombol { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .ps-info { background: #fff8e8; border: 1px solid #f0dcaa; border-radius: 8px; padding: 0.6rem 0.85rem; font-size: 0.9rem; color: #6f5200; margin-bottom: 0.9rem; }
+  .ps-field label { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; }
+  .ps-field .form-check-label { font-weight: 400; font-size: 0.95rem; }
+  .ps-riwayat { margin-top: 1rem; color: var(--ps-muted); font-size: 0.88rem; }
+
+  @media (max-width: 575.98px) {
+    .ps-step { grid-template-columns: 1.9rem minmax(0, 1fr); gap: 0 0.7rem; }
+    .ps-step:not(:last-child)::before { left: 0.9rem; }
+    .ps-no { width: 1.9rem; height: 1.9rem; font-size: 0.9rem; }
+    .ps-data { grid-template-columns: 1fr; gap: 0.1rem; }
+    .ps-data dd { margin-bottom: 0.5rem; }
+    .ps-card { padding: 1rem; }
+  }
+</style>
+
+<div class="container ps py-4">
+  <header class="ps-head">
+    <h1>Penyelesaian Studi</h1>
+    <p>Untuk mahasiswa yang akan seminar magang: ajukan jadwal dulu, lalu siapkan berkas ujian.</p>
+  </header>
+
+  <% if (error) { %>
+    <div class="alert alert-danger" role="alert"><%= error %></div>
+  <% } %>
+
+  <!-- ===== LANGKAH 1: FORMULIR ===== -->
+  <section class="ps-step <%= aktif ? 'is-selesai' : 'is-aktif' %>">
+    <div class="ps-no"><%= aktif ? '✓' : '1' %></div>
+    <div class="ps-card">
+      <h2>Formulir pengajuan jadwal seminar
+        <% if (aktif) { %><span class="ps-pill <%= status %>"><%= labelStatus[status] %></span><% } %>
+      </h2>
+
+      <% if (aktif) { %>
+        <p class="ps-sub">Pengajuan dikirim <%= fmt.tanggalPanjang(aktif.createdAt) %>.
+          <%= menunggu ? 'Admin akan memeriksa dan menentukan hari seminar Anda.' : 'Jadwal seminar Anda sudah ditetapkan.' %></p>
+        <dl class="ps-data">
+          <dt>Nama / NIM</dt><dd><%= user.nama %> / <%= user.nim %></dd>
+          <dt>Program studi</dt><dd><%= prodi %></dd>
+          <dt>Dosen pembimbing (PA)</dt><dd><%= aktif.pembimbing || '-' %></dd>
+          <dt>Pendamping lapangan</dt><dd><%= aktif.pendampingLapangan || '-' %></dd>
+          <dt>Lokasi magang</dt>
+          <dd>
+            <% (aktif.lokasiMagang || []).forEach(l => { if (l.perusahaan) { %>
+              <div>Magang <%= l.ke %>: <%= l.perusahaan %></div>
+            <% } }) %>
+            <% if (!(aktif.lokasiMagang || []).some(l => l.perusahaan)) { %>-<% } %>
+          </dd>
+          <dt>Laporan magang</dt>
+          <dd>
+            <% [1, 2, 3].forEach(ke => { const ada = aktif.laporan && aktif.laporan[ke]; %>
+              <span class="ps-chip <%= ada ? 'ok' : 'no' %>">Laporan <%= ke %>: <%= ada ? 'sudah' : 'belum' %></span>
+            <% }) %>
+          </dd>
+          <dt>Bukti pelunasan</dt><dd><%= aktif.pembayaranLunas ? 'Sudah dari Bagian Keuangan' : 'Belum' %></dd>
+          <% if (aktif.catatanMahasiswa) { %><dt>Catatan Anda</dt><dd><%= aktif.catatanMahasiswa %></dd><% } %>
+        </dl>
+        <div class="ps-aksi">
+          <a class="ps-btn utama" href="<%= urlDok('formulir', 'word') %>"><i class="bi bi-file-earmark-word"></i> Unduh Word</a>
+          <a class="ps-btn" href="<%= urlDok('formulir', 'cetak') %>" target="_blank" rel="noopener"><i class="bi bi-printer"></i> Cetak</a>
+          <% if (menunggu) { %>
+            <form method="POST" action="<%= base %>/<%= aktif.id %>/batal" onsubmit="return confirm('Batalkan pengajuan seminar ini?')">
+              <button type="submit" class="ps-btn bahaya"><i class="bi bi-x-circle"></i> Batalkan pengajuan</button>
+            </form>
+          <% } %>
+        </div>
+      <% } else { %>
+        <p class="ps-sub">Isi data berikut. Yang sudah ada di sistem terisi otomatis. Hari seminar ditentukan admin setelah pengajuan Anda diperiksa.</p>
+
+        <% if (ditolak) { %>
+          <div class="alert alert-warning">
+            Pengajuan sebelumnya ditolak<%= terbaru.alasanPenolakan ? ': ' + terbaru.alasanPenolakan : '.' %> Perbaiki lalu ajukan kembali.
+          </div>
+        <% } %>
+        <% if (!pembimbing) { %>
+          <div class="alert alert-warning">Dosen Pembimbing Akademik (PA) Anda belum ditetapkan, jadi pengajuan belum bisa dikirim. Hubungi admin program studi.</div>
+        <% } %>
+        <% if (!laporanLengkap) { %>
+          <div class="ps-info">
+            Laporan magang yang tercatat di sistem baru:
+            <% [1, 2, 3].forEach(ke => { %><span class="ps-chip <%= awal.laporan[ke] ? 'ok' : 'no' %>">Laporan <%= ke %>: <%= awal.laporan[ke] ? 'sudah' : 'belum' %></span><% }) %>
+            Pengajuan tetap bisa dikirim, tetapi sebaiknya unggah semua laporan di <a href="/mahasiswa/magang/laporan">ELK-Magang</a>.
+          </div>
+        <% } %>
+
+        <form method="POST" action="<%= base %>/ajukan" class="ps-field">
+          <dl class="ps-data mb-3">
+            <dt>Nama / NIM</dt><dd><%= user.nama %> / <%= user.nim %></dd>
+            <dt>Program studi</dt><dd><%= prodi %></dd>
+            <dt>Dosen pembimbing (PA)</dt><dd><%= pembimbing ? pembimbing.nama : '-' %></dd>
+          </dl>
+
+          <div class="row g-3">
+            <% nilaiForm.lokasi.forEach(l => { %>
+              <div class="col-md-4">
+                <label for="lokasi<%= l.ke %>">Lokasi Magang <%= l.ke %><%= l.ke === 1 ? ' *' : '' %></label>
+                <input type="text" class="form-control" id="lokasi<%= l.ke %>" name="lokasi<%= l.ke %>" maxlength="200" value="<%= l.perusahaan %>" <%= l.ke === 1 ? 'required' : '' %> placeholder="Nama perusahaan">
+              </div>
+            <% }) %>
+            <div class="col-md-6">
+              <label for="pendampingLapangan">Pendamping lapangan</label>
+              <input type="text" class="form-control" id="pendampingLapangan" name="pendampingLapangan" maxlength="150" value="<%= nilaiForm.pendampingLapangan %>" placeholder="Nama pembimbing di perusahaan">
+            </div>
+            <div class="col-md-6">
+              <label for="catatan">Catatan untuk admin (opsional)</label>
+              <input type="text" class="form-control" id="catatan" name="catatan" maxlength="500" value="<%= nilaiForm.catatan %>" placeholder="Mis. waktu yang sebaiknya dihindari">
+            </div>
+          </div>
+
+          <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" id="pembayaranLunas" name="pembayaranLunas" <%= nilaiForm.pembayaranLunas ? 'checked' : '' %>>
+            <label class="form-check-label" for="pembayaranLunas">Saya sudah melunasi pembayaran kuliah dan memegang bukti pelunasan dari Bagian Keuangan</label>
+          </div>
+
+          <div class="ps-aksi">
+            <button type="submit" class="ps-btn utama" <%= pembimbing ? '' : 'disabled' %>><i class="bi bi-send"></i> Ajukan jadwal seminar</button>
+          </div>
+        </form>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- ===== LANGKAH 2: JADWAL ===== -->
+  <section class="ps-step <%= disetujui ? 'is-selesai' : (menunggu ? 'is-aktif' : 'is-kunci') %>">
+    <div class="ps-no"><%= disetujui ? '✓' : '2' %></div>
+    <div class="ps-card">
+      <h2>Jadwal seminar
+        <% if (!aktif) { %><span class="ps-pill kunci"><i class="bi bi-lock"></i> Terkunci</span><% } %>
+      </h2>
+      <% if (disetujui && jadwal) { %>
+        <p class="ps-sub">Sudah masuk ke Jadwal Penting dan kalender akademik Anda.</p>
+        <div class="ps-jadwal">
+          <div><small>Hari, tanggal</small><strong><%= jadwal.bagian.hari %>, <%= jadwal.tanggalPanjang %></strong></div>
+          <div><small>Waktu</small><strong><%= jadwal.waktu || '-' %></strong></div>
+          <div><small>Tempat</small><strong><%= jadwal.tempat || '-' %></strong></div>
+          <% if (jadwal.penguji) { %><div><small>Penguji</small><strong><%= jadwal.penguji %></strong></div><% } %>
+        </div>
+        <% if (aktif.jadwal && aktif.jadwal.catatan) { %><p class="mt-3 mb-0"><strong>Catatan admin:</strong> <%= aktif.jadwal.catatan %></p><% } %>
+      <% } else if (menunggu) { %>
+        <p class="ps-sub mb-0">Admin belum menentukan hari seminar. Halaman ini akan menampilkan jadwalnya begitu disetujui, dan Anda juga mendapat notifikasi.</p>
+      <% } else { %>
+        <p class="ps-sub mb-0">Terbuka setelah Anda mengirim formulir pengajuan.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- ===== LANGKAH 3: BERKAS ===== -->
+  <section class="ps-step <%= disetujui ? 'is-aktif' : 'is-kunci' %>">
+    <div class="ps-no">3</div>
+    <div class="ps-card">
+      <h2>Berkas ujian magang
+        <% if (!disetujui) { %><span class="ps-pill kunci"><i class="bi bi-lock"></i> Terkunci</span><% } %>
+      </h2>
+      <p class="ps-sub">
+        <%= disetujui ? 'Unduh dalam format Word untuk diedit, atau cetak langsung. Data Anda sudah terisi otomatis.' : 'Terbuka setelah jadwal seminar disetujui admin.' %>
+      </p>
+
+      <ul class="ps-berkas">
+        <li>
+          <div class="isi"><strong>1. Surat permohonan ujian magang</strong><span>Ditujukan kepada Ketua Program Studi, lengkap dengan daftar lampiran.</span></div>
+          <div class="tombol">
+            <% if (disetujui) { %>
+              <a class="ps-btn utama" href="<%= urlDok('surat-permohonan', 'word') %>"><i class="bi bi-file-earmark-word"></i> Unduh Word</a>
+              <a class="ps-btn" href="<%= urlDok('surat-permohonan', 'cetak') %>" target="_blank" rel="noopener"><i class="bi bi-printer"></i> Cetak</a>
+            <% } %>
+          </div>
+        </li>
+        <li>
+          <div class="isi"><strong>2. Berita acara</strong><span>Tanggal dan tempat seminar terisi dari jadwal yang ditetapkan admin.</span></div>
+          <div class="tombol">
+            <% if (disetujui) { %>
+              <a class="ps-btn utama" href="<%= urlDok('berita-acara', 'word') %>"><i class="bi bi-file-earmark-word"></i> Unduh Word</a>
+              <a class="ps-btn" href="<%= urlDok('berita-acara', 'cetak') %>" target="_blank" rel="noopener"><i class="bi bi-printer"></i> Cetak</a>
+            <% } %>
+          </div>
+        </li>
+        <li>
+          <div class="isi"><strong>3. Transkrip nilai</strong><span>Diambil dari menu Transkrip di Akademik.</span></div>
+          <div class="tombol">
+            <% if (disetujui) { %>
+              <a class="ps-btn" href="/mahasiswa/akademik/transkrip"><i class="bi bi-table"></i> Buka transkrip</a>
+              <a class="ps-btn" href="/mahasiswa/akademik/transkrip/cetak" target="_blank" rel="noopener"><i class="bi bi-printer"></i> Cetak</a>
+            <% } %>
+          </div>
+        </li>
+        <li>
+          <div class="isi"><strong>4. Bukti pelunasan pembayaran</strong><span>Ambil keterangannya di Bagian Keuangan, lalu lampirkan bersama berkas lain.</span></div>
+          <div class="tombol">
+            <% if (disetujui) { %><a class="ps-btn" href="/mahasiswa/tagihan"><i class="bi bi-cash-coin"></i> Cek tagihan</a><% } %>
+          </div>
+        </li>
+      </ul>
+
+      <% if (disetujui) { %>
+        <p class="ps-sub mt-3 mb-0">Surat permohonan juga melampirkan Laporan Magang 1–3, Logbook Magang 1–3, dan Daftar Nilai Kegiatan Magang. Siapkan dari menu <a href="/mahasiswa/magang">ELK-Magang</a>.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <% const lama = riwayat.filter(r => !aktif || r.id !== aktif.id); %>
+  <% if (lama.length > 0) { %>
+    <p class="ps-riwayat">
+      Pengajuan sebelumnya:
+      <% lama.slice(0, 5).forEach((r, i) => { %><%= i ? '; ' : '' %><%= fmt.tanggalPanjang(r.createdAt) %> (<%= (labelStatus[r.status] || r.status).toLowerCase() %>)<% }) %>.
+    </p>
+  <% } %>
+</div>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,71 @@
+<%- include('_cetak_kepala', {
+  halaman: '0.42cm 2cm 1.55cm 2cm',
+  font: "Arial, Helvetica, sans-serif",
+  ukuran: '10pt',
+  gaya: `
+    .kop { margin: 0 auto; width: 13.9cm; }
+    .judul-besar { text-align: center; font-weight: bold; font-size: 16pt; margin-top: .5cm; }
+    .judul-kecil { text-align: center; font-weight: bold; font-size: 12pt; margin-top: .2cm; }
+    .pengantar { text-align: justify; margin-top: .35cm; }
+    h2 { font-size: 11pt; font-weight: bold; margin: .38cm 0 .18cm; }
+    table.garis { border-collapse: collapse; width: 100%; }
+    table.garis tr { height: .62cm; }
+    table.garis td, table.garis th { border: 1.5px solid #000; padding: 2px 6px; vertical-align: middle; }
+    table.garis th { background: #A2DBFF; text-align: center; font-weight: bold; }
+    table.garis td.label { font-weight: bold; width: 44%; }
+    table.garis td.isi { font-family: 'Times New Roman', Times, serif; font-size: 9.5pt; }
+    table.garis td.no { text-align: center; width: 1.3cm; }
+    table.garis td.dok { text-align: center; font-weight: bold; }
+    .ttd { margin-left: 9.7cm; }
+    .kaki { position: absolute; left: 0; right: 0; bottom: .9cm; text-align: center; font-size: 8pt; }
+    @media print { .kaki { position: fixed; } }
+  `
+}) %>
+
+    <% if (kop) { %><img class="kop" src="<%= kop %>" alt="Kop Politeknik Dewantara"><% } %>
+    <p class="judul-besar">FORMULIR PENGAJUAN</p>
+    <p class="judul-kecil">PEMBUATAN UNDANGAN SEMINAR MAGANG</p>
+
+    <p class="pengantar">Formulir ini merupakan persyaratan pengajuan pembuatan Undangan Seminar Magang oleh Bagian Kurikulum dan Pembelajaran. Ketua Program Studi wajib mengisi seluruh data yang dipersyaratkan secara lengkap dan benar untuk selanjutnya diverifikasi oleh Bagian Kurikulum dan Pembelajaran.</p>
+
+    <h2>A. IDENTITAS MAHASISWA</h2>
+    <table class="garis">
+      <tr><td class="label">Nama Mahasiswa</td><td class="isi"><%= (d.nama || '').toUpperCase() %></td></tr>
+      <tr><td class="label">NIM</td><td class="isi"><%= d.nim %></td></tr>
+      <tr><td class="label">Program Studi</td><td class="isi"><%= d.prodi %></td></tr>
+    </table>
+
+    <h2>B. DATA PEMBIMBING MAGANG</h2>
+    <table class="garis">
+      <tr><td class="label">Pembimbing 1</td><td class="isi"><%= d.pembimbingNama || '-' %></td></tr>
+      <tr><td class="label">Pembimbing 2</td><td class="isi">-</td></tr>
+    </table>
+
+    <h2>C. KELENGKAPAN LAPORAN MAGANG</h2>
+    <table class="garis">
+      <tr><th style="width: 1.3cm;">No.</th><th>Dokumen</th><th style="width: 5.6cm;">Bukti Dikumpulkan</th></tr>
+      <% d.laporan.forEach((l, i) => { %>
+        <tr><td class="no"><%= i + 1 %></td><td class="dok">Laporan Magang <%= l.ke %></td><td style="text-align: center;"><%= l.sudah ? '☒' : '☐' %> Sudah dikumpulkan</td></tr>
+      <% }) %>
+    </table>
+
+    <h2>D. BUKTI PELUNASAN PEMBAYARAN</h2>
+    <table class="garis">
+      <tr><th style="width: 1.3cm;">No.</th><th>Kelengkapan</th><th style="width: 5.6cm;">Bukti</th></tr>
+      <tr><td class="no">1</td><td style="font-weight: bold;">Bukti pelunasan pembayaran dari Bagian Keuangan</td><td style="text-align: center;"><%= d.pembayaranLunas ? '☒' : '☐' %> Sudah</td></tr>
+    </table>
+
+    <h2>D. PERSETUJUAN KETUA PROGRAM STUDI</h2>
+    <p>Saya menyatakan bahwa data dan dokumen mahasiswa telah diperiksa dan dinyatakan lengkap untuk diajukan dalam pembuatan Undangan Seminar Magang.</p>
+
+    <div style="height: 1.7cm;"></div>
+    <p class="ttd"><%= d.kota %>, <%= d.tanggalCetak %></p>
+    <p class="ttd">Ketua Program Studi,</p>
+    <p class="ttd"><%= d.prodi %></p>
+    <div style="height: 2cm;"></div>
+    <p class="ttd"><%= d.kaprodi.nama %></p>
+    <p class="ttd">NUPTK. <%= d.kaprodi.nuptk %></p>
+
+    <p class="kaki">Dokumen Pengajuan Seminar Magang</p>
+
+<%- include('_cetak_kaki') %>

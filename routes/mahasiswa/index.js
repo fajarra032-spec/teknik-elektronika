@@ -36,6 +36,8 @@ router.use('/kartu-mahasiswa', kartuMahasiswaRouter);
 
 router.use('/konsultasi-pa', require('./konsultasiPa'));
 
+router.use('/penyelesaian-studi', require('./penyelesaianStudi'));
+
 const tagihanRouter = require('./tagihan');
 router.use('/tagihan', tagihanRouter);
 

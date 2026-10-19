@@ -111,7 +111,9 @@ router.get('/', async (req, res) => {
  * GET /admin/pengajaran/:id
  * Menampilkan detail pertemuan dan progress MK
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
+  // '/export' satu segmen sehingga ikut cocok dengan '/:id'; teruskan ke rute export di bawah
+  if (req.params.id === 'export') return next();
   try {
     const mkDoc = await db.collection('mataKuliah').doc(req.params.id).get();
     if (!mkDoc.exists) {
@@ -280,6 +282,44 @@ router.post('/:id/pertemuan/bulk-update', async (req, res) => {
   }
 });
 
+/**
+ * POST /admin/pengajaran/:id/pertemuan/:pertemuan
+ * Simpan perubahan satu pertemuan (topik, tanggal, catatan) dari halaman detail.
+ * Status dan file materi yang sudah ada TIDAK diubah. Harus didaftarkan SETELAH
+ * 'bulk-update' supaya "bulk-update" tidak dianggap nomor pertemuan.
+ */
+router.post('/:id/pertemuan/:pertemuan', async (req, res, next) => {
+  try {
+    const nomor = parseInt(req.params.pertemuan, 10);
+    if (!Number.isInteger(nomor) || nomor < 1 || nomor > 16) return next();
+
+    const mkRef = db.collection('mataKuliah').doc(req.params.id);
+    const mkDoc = await mkRef.get();
+    if (!mkDoc.exists) {
+      return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Mata kuliah tidak ditemukan' });
+    }
+
+    const topik = String(req.body.topik || '').trim() || `Pertemuan ${nomor}`;
+    const tanggal = String(req.body.tanggal || '').trim() || null;
+    const catatan = String(req.body.catatan || '').trim();
+
+    const materi = Array.isArray(mkDoc.data().materi) ? mkDoc.data().materi.slice() : [];
+    const idx = materi.findIndex(m => m.pertemuan === nomor);
+    if (idx !== -1) {
+      materi[idx] = { ...materi[idx], topik, tanggal, catatan };
+    } else {
+      materi.push({ pertemuan: nomor, topik, tanggal, catatan, status: 'belum' });
+    }
+    materi.sort((a, b) => a.pertemuan - b.pertemuan);
+
+    await mkRef.update({ materi, updatedAt: new Date().toISOString() });
+    res.redirect(`/admin/pengajaran/${req.params.id}`);
+  } catch (error) {
+    console.error('Error simpan pertemuan:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal menyimpan pertemuan' });
+  }
+});
+
 // ============================================================================
 // REKAP PER SEMESTER
 // ============================================================================
@@ -428,6 +468,7 @@ router.get('/export', async (req, res) => {
         nama: data.nama,
         sks: data.sks,
         semester: data.semester,
+        jadwal: data.jadwal || '',
         dosen: dosenNames.join(', '),
         totalPertemuan: progress.total,
         terlaksana: progress.terlaksana,
