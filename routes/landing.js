@@ -878,7 +878,7 @@ router.get('/yudisium/:tahun', async (req, res) => {
     const wisudawanDenganIpk = await Promise.all(
       wisudawan.map(async m => {
         try {
-          const { ipk } = await getTranskripMahasiswa(m.id);
+          const { ipk } = await getTranskripMahasiswa(m.id, { nim: m.nim });
           const angkatan = getAngkatanFromNim(m.nim);
           const lamaStudi = hitungLamaStudi(angkatan, m.tanggalYudisium);
           return { ...m, ipk, angkatan, lamaStudi };

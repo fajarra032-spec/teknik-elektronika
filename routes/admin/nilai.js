@@ -227,7 +227,7 @@ router.get('/mahasiswa', async (req, res) => {
         const i = cursor++;
         const m = mahasiswaList[i];
         try {
-          const { perSemester, ipk, totalSKS } = await getTranskripMahasiswa(m.id);
+          const { perSemester, ipk, totalSKS } = await getTranskripMahasiswa(m.id, { nim: m.nim });
           hasilNilai[i] = { ...m, ipk, totalSKS, semesterList: perSemester };
         } catch (err) {
           console.error('Gagal memuat nilai', m.nim, err.message);
@@ -328,7 +328,7 @@ router.get('/transkrip/cetak-semua', async (req, res) => {
         const i = cursor++;
         const m = daftar[i];
         try {
-          const t = await getTranskripMahasiswa(m.id);
+          const t = await getTranskripMahasiswa(m.id, { nim: m.nim });
           hasil[i] = {
             user: m,
             angkatan: getAngkatanFromNim(m.nim),

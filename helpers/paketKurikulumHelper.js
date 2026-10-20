@@ -21,6 +21,7 @@
  */
 
 const { normalizeKelas } = require('./academicHelper');
+const { pakaiKodeLama, angkatanDariNim } = require('./kurikulumAngkatanHelper');
 
 const PAKET_KURIKULUM = {
   1: {
@@ -146,6 +147,23 @@ function parseSemesterNumber(semesterLabel) {
  * @returns {Promise<{ok:boolean, message:string, jumlahBaru?:number, kodeTidakDitemukan?:string[]}>}
  */
 async function aktifkanPaketKrs(db, mahasiswaId, semesterNumber, konsentrasi, academicLabel, actorId) {
+  // Ambil profil mahasiswa lebih dulu (dipakai untuk cek angkatan, agama, dan kelas).
+  const mahasiswaSnap = await db.collection('users').doc(mahasiswaId).get();
+  const mahasiswaData = mahasiswaSnap.exists ? mahasiswaSnap.data() : {};
+
+  // Angkatan yang masih pakai KODE LAMA (mis. 2023) TIDAK diberi paket kurikulum
+  // baru: nilainya sudah memakai kode lama di koleksi `grades`, dan enrollment
+  // ber-kode-baru hanya akan membuat mata kuliah yang sama tampil dobel di
+  // KHS/Transkrip. Lihat helpers/kurikulumAngkatanHelper.js.
+  if (pakaiKodeLama(mahasiswaData.nim)) {
+    return {
+      ok: true,
+      skipped: true,
+      message: `Angkatan ${angkatanDariNim(mahasiswaData.nim)} masih memakai kurikulum lama (kode mata kuliah lama), jadi paket KRS kurikulum baru TIDAK diterapkan otomatis.`,
+      jumlahBaru: 0, kodeTidakDitemukan: [], kelasTidakCocok: []
+    };
+  }
+
   const paketDasar = getPaketMk(semesterNumber, konsentrasi);
   if (!paketDasar) {
     if (semesterNumber >= SEMESTER_MULAI_KONSENTRASI && !konsentrasi) {
@@ -162,10 +180,6 @@ async function aktifkanPaketKrs(db, mahasiswaId, semesterNumber, konsentrasi, ac
 
   // Salin paket dasar supaya tidak mengubah PAKET_KURIKULUM asli.
   let paket = [...paketDasar];
-
-  // Ambil profil mahasiswa sekali saja (dipakai untuk agama & kelas).
-  const mahasiswaSnap = await db.collection('users').doc(mahasiswaId).get();
-  const mahasiswaData = mahasiswaSnap.exists ? mahasiswaSnap.data() : {};
 
   // Khusus Semester 1: sisipkan mata kuliah "Pendidikan Agama" yang sesuai
   // berdasarkan field `agama` di profil mahasiswa (collection `users`).

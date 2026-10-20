@@ -62,7 +62,7 @@ router.get('/list', async (req, res) => {
       const angkatanMhs = getAngkatanFromNim(mahasiswa.nim);
       if (angkatan && angkatanMhs !== angkatan) continue;
 
-      const { perSemester } = await getTranskripMahasiswa(mahasiswa.id);
+      const { perSemester } = await getTranskripMahasiswa(mahasiswa.id, { nim: mahasiswa.nim });
       perSemester.forEach(s => {
         semesterSet.add(s.semester);
         if (semester && s.semester !== semester) return;

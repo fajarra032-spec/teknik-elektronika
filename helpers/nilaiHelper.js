@@ -1,6 +1,7 @@
 // helpers/nilaiHelper.js
 const { db } = require('../config/firebaseAdmin');
 const { getCurrentAcademicSemester, getSemesterForDate, bandingkanLabelPeriode } = require('./academicHelper');
+const { pakaiKodeLama } = require('./kurikulumAngkatanHelper');
 
 /**
  * Label periode akademik aktif saat ini (mis. "Ganjil 2025/2026").
@@ -379,10 +380,17 @@ function nilaiKeHuruf(nilai) {
  * (pakai skala huruf resmi nilaiKeHuruf, sama persis dengan KHS/Transkrip Excel),
  * DAN rekap per semester (IPS tiap semester) - dipakai halaman KHS.
  *
+ * ANGKATAN KODE LAMA (mis. 2023 - lihat helpers/kurikulumAngkatanHelper.js):
+ * hanya nilai di koleksi 'grades' yang dipakai (kode lama disimpan langsung di
+ * tiap dokumen grade). Enrollment diabaikan, supaya mata kuliah yang sama tidak
+ * tampil dobel (kode lama + kode baru dari paket KRS kurikulum baru).
+ *
  * @param {string} mahasiswaId - UID mahasiswa
+ * @param {{nim?: string}} [opsi] - kirim `nim` kalau sudah diketahui pemanggil
+ *   (mis. di dalam perulangan) supaya tidak perlu membaca dokumen mahasiswa lagi.
  * @returns {Promise<{items: Array, totalSKS: number, ipk: string, perSemester: Array}>}
  */
-async function getTranskripMahasiswa(mahasiswaId) {
+async function getTranskripMahasiswa(mahasiswaId, opsi = {}) {
   // Digabung dari 2 sumber:
   // 1. 'grades'     - nilai akhir yang SUDAH dikunci admin (sumber huruf/indeks).
   // 2. 'enrollment' - matkul yang mahasiswa PROGRAM di KRS dan sudah disetujui
@@ -392,9 +400,18 @@ async function getTranskripMahasiswa(mahasiswaId) {
   // tampil dengan status "Belum Ada Nilai" (nilai/huruf/indeks = null),
   // supaya IPS/IPK jelas dihitung dari berapa matkul, dan mahasiswa tidak
   // bingung kenapa sebagian matkul yang diprogram "hilang" dari KHS.
+  let nimMahasiswa = opsi && opsi.nim;
+  if (nimMahasiswa === undefined || nimMahasiswa === null) {
+    const userDoc = await db.collection('users').doc(mahasiswaId).get();
+    nimMahasiswa = userDoc.exists ? userDoc.data().nim : '';
+  }
+  const hanyaKodeLama = pakaiKodeLama(nimMahasiswa);
+
   const [gradesSnapshot, enrollmentSnapshot] = await Promise.all([
     db.collection('grades').where('userId', '==', mahasiswaId).get(),
-    db.collection('enrollment').where('userId', '==', mahasiswaId).where('status', '==', 'active').get()
+    hanyaKodeLama
+      ? Promise.resolve({ docs: [] }) // angkatan kode lama: enrollment (kode baru) tidak dipakai
+      : db.collection('enrollment').where('userId', '==', mahasiswaId).where('status', '==', 'active').get()
   ]);
 
   // Nilai terkunci, key: "semester|kodeMk" - dipakai untuk mencocokkan ke matkul yang diprogram
