@@ -1,234 +1,256 @@
 <%- include('../partials/header') %>
 
+<%
+  var mahasiswaList = typeof mahasiswaList !== 'undefined' ? mahasiswaList : [];
+  var totalMahasiswa = typeof totalMahasiswa !== 'undefined' ? totalMahasiswa : mahasiswaList.length;
+  var angkatanList = typeof angkatanList !== 'undefined' ? angkatanList : [];
+  var pageInfo = typeof pageInfo !== 'undefined' ? pageInfo : null;
+  var showAll = typeof showAll !== 'undefined' ? showAll : false;
+  var filters = typeof filters !== 'undefined' ? filters : { search: '', angkatan: '', statusMahasiswa: '' };
+  const adaFilter = !!(filters.search || filters.angkatan || filters.statusMahasiswa);
+  const hurufCls = (h) => !h ? 'huruf-none' : 'huruf-' + String(h).charAt(0);
+  const stCls = { 'Aktif': 'p-aktif', 'Lulus': 'p-lulus', 'Cuti': 'p-cuti', 'Keluar': 'p-keluar' };
+  const urlCetakSemua = '/admin/nilai/transkrip/cetak-semua?search=' + encodeURIComponent(filters.search) + '&angkatan=' + encodeURIComponent(filters.angkatan) + '&statusMahasiswa=' + encodeURIComponent(filters.statusMahasiswa);
+%>
+
 <style>
-  :root {
-    --primary-start: #2193b0;
-    --primary-end: #6dd5ed;
-    --primary-light: rgba(33,147,176,0.1);
-    --primary-dark: #1a7a8f;
+  .ea {
+    --ea-ink: #1b2a4a;
+    --ea-muted: #5d6b85;
+    --ea-line: #e2e7ef;
+    --ea-surface: #ffffff;
+    --ea-accent: #1e3a8a;
+    --ea-accent-soft: #e8eefc;
+    --ea-hover: #f6f8fd;
+    color: var(--ea-ink);
+    font-feature-settings: "tnum" 1;
   }
-  .filter-card {
-    border-radius: 1.2rem; border: 1px solid rgba(33,147,176,0.1);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05); background: #fff;
-    padding: 1.5rem; margin-bottom: 1.5rem;
-  }
-  .filter-card .form-label { font-weight: 600; color: #1e293b; }
-  .filter-card .form-select, .filter-card .form-control {
-    border-radius: 50px; border: 1px solid #dee2e6; padding: 0.6rem 1rem;
-  }
-  .filter-card .form-select:focus, .filter-card .form-control:focus {
-    border-color: var(--primary-start); box-shadow: 0 0 0 0.25rem rgba(33,147,176,0.25);
-  }
-  .btn-filter {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border: none; color: #fff; font-weight: 500; padding: 0.6rem 1.5rem;
-    border-radius: 50px; width: 100%; box-shadow: 0 5px 15px rgba(33,147,176,0.2);
-  }
-  .btn-filter:hover { color: #fff; transform: translateY(-2px); }
-  .btn-reset {
-    display: block; text-align: center; text-decoration: none; background: transparent;
-    border: 2px solid var(--primary-start); color: var(--primary-start);
-    font-weight: 500; padding: 0.5rem 1.5rem; border-radius: 50px; width: 100%;
-  }
-  .btn-reset:hover { background: var(--primary-start); color: #fff; }
+  .ea a { text-decoration: none; }
+  .ea :focus-visible { outline: 2px solid var(--ea-accent); outline-offset: 2px; border-radius: 6px; }
 
-  /* ===== KARTU MAHASISWA ===== */
-  .mhs-card {
-    background: #fff; border-radius: 1.1rem; border: 1px solid #e9ecef;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.04); margin-bottom: 0.9rem; overflow: hidden;
-    transition: box-shadow .2s, border-color .2s;
-  }
-  .mhs-card.open { border-color: var(--primary-start); box-shadow: 0 10px 25px rgba(33,147,176,0.15); }
-  .mhs-head {
-    display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1.25rem;
-    cursor: pointer; user-select: none;
-  }
-  .mhs-head:hover { background: var(--primary-light); }
-  .mhs-avatar {
-    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center;
-  }
-  .mhs-info { flex: 1; min-width: 0; }
-  .mhs-nama { font-weight: 600; color: #1e293b; margin: 0; }
-  .mhs-meta { font-size: .82rem; color: #6c757d; }
-  .mhs-ringkas { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
-  .chev { transition: transform .2s; color: var(--primary-dark); font-size: 1.1rem; }
-  .mhs-card.open .chev { transform: rotate(180deg); }
+  /* Judul halaman */
+  .ea-head { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: space-between; margin-bottom: 1.25rem; }
+  .ea-head h1 { font-size: 1.65rem; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 0.25rem; }
+  .ea-head p { margin: 0; color: var(--ea-muted); font-size: 0.95rem; }
 
-  .mhs-body { display: none; padding: 0 1.25rem 1.25rem; border-top: 1px dashed #dee2e6; }
-  .mhs-card.open .mhs-body { display: block; }
-  .mhs-actions { display: flex; flex-wrap: wrap; gap: .5rem; padding: .9rem 0; }
+  .ea-btn { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid transparent; border-radius: 8px; padding: 0.45rem 0.9rem; font-size: 0.875rem; font-weight: 600; line-height: 1.3; cursor: pointer; background: none; transition: background-color .15s, border-color .15s, color .15s; }
+  .ea-btn-primary { background: var(--ea-accent); color: #fff; }
+  .ea-btn-primary:hover { background: #172f73; color: #fff; }
+  .ea-btn-edit { border-color: var(--ea-line); color: var(--ea-ink); padding: 0.3rem 0.7rem; font-size: 0.8rem; background: #fff; }
+  .ea-btn-edit:hover { background: var(--ea-hover); color: var(--ea-accent); }
+  .ea-btn-set { background: var(--ea-accent); color: #fff; padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+  .ea-btn-set:hover { background: #172f73; color: #fff; }
+  .ea-btn-icon { border-color: var(--ea-line); color: var(--ea-muted); padding: 0.3rem 0.55rem; background: #fff; }
+  .ea-btn-icon:hover { background: var(--ea-hover); color: var(--ea-ink); }
 
-  .sem-block { margin-bottom: 1rem; }
-  .sem-title {
-    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
-    gap: .5rem; background: linear-gradient(135deg, var(--primary-light), rgba(109,213,237,0.1));
-    border-left: 4px solid var(--primary-start); border-radius: .6rem;
-    padding: .55rem .9rem; font-weight: 600; color: var(--primary-dark); margin-bottom: .4rem;
+  /* Info & peringatan */
+  .ea-info { background: var(--ea-accent-soft); border: 1px solid #cfdaf7; border-left: 4px solid var(--ea-accent); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1rem; color: var(--ea-ink); font-size: 0.92rem; line-height: 1.5; }
+  .ea-info a { color: var(--ea-accent); font-weight: 600; border-bottom: 1px solid currentColor; }
+  .ea-queue { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; background: #fff8e8; border: 1px solid #f0dcaa; border-left: 4px solid #d99a14; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; }
+  .ea-queue strong { font-weight: 700; }
+  .ea-queue span { color: #6f5200; font-size: 0.95rem; }
+  .ea-queue button { border: 0; background: none; padding: 0; color: #6f5200; font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid currentColor; }
+
+  /* Toolbar */
+  .ea-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; margin-bottom: 0.9rem; }
+  .ea-search { position: relative; flex: 1 1 260px; max-width: 420px; }
+  .ea-search i { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--ea-muted); pointer-events: none; }
+  .ea-search input { width: 100%; border: 1px solid var(--ea-line); border-radius: 8px; padding: 0.5rem 0.8rem 0.5rem 2.2rem; font-size: 0.9rem; background: #fff; color: var(--ea-ink); }
+  .ea-search input:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-seg { display: inline-flex; background: #eef1f6; border-radius: 9px; padding: 3px; gap: 2px; overflow-x: auto; max-width: 100%; }
+  .ea-seg button { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.75rem; border: 0; background: none; border-radius: 7px; color: var(--ea-muted); font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+  .ea-seg button:hover { color: var(--ea-ink); }
+  .ea-seg button.is-active { background: #fff; color: var(--ea-ink); box-shadow: 0 1px 2px rgba(27, 42, 74, 0.12); }
+  .ea-seg small { font-weight: 600; opacity: 0.75; }
+
+  /* Daftar */
+  .ea-list { background: var(--ea-surface); border: 1px solid var(--ea-line); border-radius: 12px; overflow: hidden; }
+  .ea-cols, .ea-row { display: grid; grid-template-columns: minmax(0, 1fr) 130px minmax(0, 1fr) 170px; column-gap: 1rem; align-items: center; }
+  .ea-cols { padding: 0.6rem 1rem 0.6rem 1.15rem; background: #fafbfd; border-bottom: 1px solid var(--ea-line); color: var(--ea-muted); font-size: 0.8rem; font-weight: 600; }
+  .ea-cols > :last-child { text-align: right; }
+  .ea-row { position: relative; padding: 0.85rem 1rem 0.85rem 1.15rem; border-bottom: 1px solid var(--ea-line); --c: #1d7a46; }
+  .ea-row:last-of-type { border-bottom: 0; }
+  .ea-row:hover { background: var(--ea-hover); }
+  .ea-row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c); }
+  .ea-row.belum { --c: #d99a14; }
+
+  .ea-title { display: block; color: var(--ea-ink); font-weight: 600; font-size: 0.95rem; line-height: 1.4; overflow-wrap: anywhere; }
+  .ea-meta { display: flex; flex-wrap: wrap; gap: 0.15rem 1rem; margin-top: 0.2rem; font-size: 0.8rem; color: var(--ea-muted); }
+  .ea-meta span { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+  .ea-pill { display: inline-block; border-radius: 999px; padding: 0.15rem 0.65rem; font-size: 0.78rem; font-weight: 600; }
+  .s-ok { background: #dff3e7; color: #1d6b3f; }
+  .s-belum { background: #fdf0d5; color: #8a5a00; }
+  .ea-pa { font-size: 0.9rem; color: var(--ea-ink); overflow-wrap: anywhere; }
+  .ea-pa.kosong { color: var(--ea-muted); font-style: italic; }
+  .ea-actions { display: flex; gap: 0.4rem; align-items: center; justify-content: flex-end; }
+
+  .ea-empty { padding: 3rem 1.5rem; text-align: center; color: var(--ea-muted); }
+  .ea-empty i { font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #b6bfce; }
+  .ea-empty strong { display: block; color: var(--ea-ink); margin-bottom: 0.25rem; }
+  .ea-more { text-align: center; padding: 0.9rem; border-top: 1px solid var(--ea-line); }
+  .ea-foot { color: var(--ea-muted); font-size: 0.8rem; margin: 0.6rem 0.25rem 0; }
+  [hidden] { display: none !important; }
+
+  /* Ponsel: satu kolom, status di bawah nama */
+  @media (max-width: 767.98px) {
+    .ea-cols { display: none; }
+    .ea-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.55rem; }
+    .ea-main { grid-column: 1 / -1; }
+    .ea-row > .ea-pa { grid-column: 1; }
+    .ea-row > .ea-state { grid-column: 2; grid-row: 2; text-align: right; }
+    .ea-actions { grid-column: 1 / -1; justify-content: flex-start; }
+    .ea-head h1 { font-size: 1.4rem; }
   }
-  .sem-title small { font-weight: 500; color: #475569; }
-  .mk-table { margin-bottom: 0; font-size: .92rem; }
-  .mk-table thead th {
-    font-size: .75rem; text-transform: uppercase; letter-spacing: .4px; color: #64748b;
-    border-bottom: 1px solid #dee2e6; font-weight: 600;
-  }
-  .mk-table td { vertical-align: middle; }
 
-  .huruf { display: inline-block; min-width: 2.2rem; text-align: center; padding: .15rem .5rem;
-    border-radius: 50px; font-weight: 700; font-size: .85rem; }
-  .huruf-A  { background: #d1fae5; color: #065f46; }
-  .huruf-B  { background: #dbeafe; color: #1e40af; }
-  .huruf-C  { background: #fef3c7; color: #92400e; }
-  .huruf-D, .huruf-E { background: #fee2e2; color: #991b1b; }
-  .huruf-none { background: #f1f5f9; color: #64748b; font-weight: 500; }
+  /* ===== Bersama: Rekap Nilai (per MK & per mahasiswa) ===== */
+  .ea-tabs { display: inline-flex; background: #eef1f6; border-radius: 9px; padding: 3px; gap: 2px; margin-bottom: 1rem; }
+  .ea-tabs a { padding: .35rem .9rem; border-radius: 7px; color: var(--ea-muted); font-size: .86rem; font-weight: 600; white-space: nowrap; }
+  .ea-tabs a:hover { color: var(--ea-ink); }
+  .ea-tabs a.is-active { background: #fff; color: var(--ea-ink); box-shadow: 0 1px 2px rgba(27, 42, 74, .12); }
+  .ea-filters { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-bottom: .9rem; }
+  .ea-filters .ea-search { flex: 1 1 240px; max-width: 360px; }
+  .ea-filters select { border: 1px solid var(--ea-line); border-radius: 8px; padding: .5rem .8rem; font-size: .88rem; background: #fff; color: var(--ea-ink); max-width: 210px; }
+  .ea-filters select:focus { outline: 2px solid var(--ea-accent); outline-offset: 0; border-color: transparent; }
+  .ea-reset { color: var(--ea-muted); font-size: .88rem; font-weight: 600; padding: .45rem .6rem; border-radius: 8px; }
+  .ea-reset:hover { background: var(--ea-hover); color: var(--ea-ink); }
+  .ea-count { display: flex; flex-wrap: wrap; gap: .25rem 1rem; justify-content: space-between; align-items: center; color: var(--ea-muted); font-size: .85rem; margin: 0 .25rem .6rem; }
+  .ea-title { font-weight: 600; font-size: .94rem; line-height: 1.4; color: var(--ea-ink); overflow-wrap: anywhere; }
+  a.ea-title:hover { color: var(--ea-accent); text-decoration: underline; text-underline-offset: 3px; }
+  .ea-kode { display: inline-block; background: var(--ea-accent-soft); color: var(--ea-accent); border-radius: 6px; padding: .05rem .5rem; font-size: .76rem; font-weight: 700; letter-spacing: .02em; }
+  .ea-pill { display: inline-block; border-radius: 999px; padding: .12rem .6rem; font-size: .75rem; font-weight: 600; background: #eef1f6; color: var(--ea-muted); white-space: nowrap; }
+  .p-aktif { background: #dff3e7; color: #1d6b3f; } .p-lulus { background: #ece3fa; color: #5b3aa3; } .p-cuti { background: #fdf0d5; color: #8a5a00; } .p-keluar { background: #fde3e3; color: #9b2c2c; }
+  .ea-actions { display: flex; gap: .4rem; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+  .ea-pagebar { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between; padding: .75rem 1rem; border-top: 1px solid var(--ea-line); color: var(--ea-muted); font-size: .85rem; }
+  .ea-pagebar .btns { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .ea-btn.is-disabled { opacity: .45; pointer-events: none; }
+  .ea-row { cursor: default; --c: #2f6fed; }
 
-  .ipk-box { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .25rem; }
-  .ipk-pill { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: .7rem; padding: .35rem .8rem; font-size: .85rem; }
-  .ipk-pill b { color: var(--primary-dark); }
-
-  .empty-state { padding: 3rem 2rem; text-align: center; background: #f8f9fa; border-radius: 1.5rem; }
-  .empty-state i { font-size: 3.5rem; color: #adb5bd; }
+  .ea-card { background: var(--ea-surface); border: 1px solid var(--ea-line); border-radius: 12px; overflow: hidden; margin-bottom: .75rem; position: relative; --c: #9aa5b8; }
+  .ea-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c); }
+  .ea-card.aktif { --c: #1d7a46; } .ea-card.lulus { --c: #7c55c8; }
+  .ea-card summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; gap: .6rem 1rem; align-items: center; padding: .8rem 1rem .8rem 1.15rem; }
+  .ea-card summary::-webkit-details-marker { display: none; }
+  .ea-card summary:hover { background: var(--ea-hover); }
+  .ea-av { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 50%; background: var(--ea-accent-soft); color: var(--ea-accent); display: grid; place-items: center; font-weight: 700; border: 1px solid var(--ea-line); }
+  .ea-who { display: flex; gap: .75rem; align-items: center; flex: 1 1 260px; min-width: 0; }
+  .ea-meta { font-size: .8rem; color: var(--ea-muted); margin-top: .1rem; overflow-wrap: anywhere; }
+  .ea-sum { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+  .ea-chev { color: var(--ea-muted); transition: transform .15s; } .ea-card[open] .ea-chev { transform: rotate(180deg); }
+  .ea-body { border-top: 1px solid var(--ea-line); padding: .9rem 1rem 1rem 1.15rem; }
+  .ea-toolrow { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .9rem; }
+  .ea-sem { margin-bottom: 1rem; } .ea-sem:last-child { margin-bottom: 0; }
+  .ea-semhead { display: flex; flex-wrap: wrap; gap: .25rem 1rem; align-items: baseline; justify-content: space-between; margin-bottom: .4rem; }
+  .ea-semhead strong { font-size: .92rem; } .ea-semhead small { color: var(--ea-muted); font-size: .8rem; }
+  .ea-semhead a { color: var(--ea-accent); font-weight: 600; } .ea-semhead a:hover { text-decoration: underline; }
+  .ea-warn { color: #8a5a00; font-weight: 600; font-size: .88rem; }
+  .ea-tbl { width: 100%; border-collapse: collapse; font-size: .86rem; }
+  .ea-tbl th { text-align: left; color: var(--ea-muted); font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: .4rem .6rem; background: #fafbfd; border-bottom: 1px solid var(--ea-line); white-space: nowrap; }
+  .ea-tbl td { padding: .45rem .6rem; border-bottom: 1px solid var(--ea-line); vertical-align: middle; }
+  .ea-tbl tr:last-child td { border-bottom: 0; } .ea-tbl .c { text-align: center; }
+  .huruf { display: inline-block; min-width: 2.2rem; text-align: center; padding: .12rem .5rem; border-radius: 6px; font-weight: 700; font-size: .8rem; }
+  .huruf-A { background: #d1fae5; color: #065f46; } .huruf-B { background: #dbeafe; color: #1e40af; } .huruf-C { background: #fef3c7; color: #92400e; }
+  .huruf-D, .huruf-E { background: #fee2e2; color: #991b1b; } .huruf-none { background: #f1f5f9; color: #64748b; font-weight: 500; }
+  .ea-pagecard { background: var(--ea-surface); border: 1px solid var(--ea-line); border-radius: 12px; overflow: hidden; }
+  .ea-pagecard .ea-pagebar { border-top: 0; }
+  @media (max-width: 767.98px) { .ea-tbl { font-size: .82rem; } .ea-tbl th, .ea-tbl td { padding: .4rem .4rem; } }
 </style>
 
-<div class="container-fluid mt-4">
-  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-    <h2 class="fw-bold mb-0">
-      <i class="bi bi-people-fill me-2" style="color: var(--primary-start);"></i>Nilai per Mahasiswa
-    </h2>
-    <div class="d-flex flex-wrap gap-2">
-      <a href="/admin/nilai/transkrip/cetak-semua?search=<%= encodeURIComponent(filters.search) %>&angkatan=<%= encodeURIComponent(filters.angkatan) %>&statusMahasiswa=<%= encodeURIComponent(filters.statusMahasiswa) %>" target="_blank" class="btn btn-primary rounded-pill" title="Cetak transkrip semua mahasiswa sesuai filter di bawah (bukan hanya halaman ini)">
-        <i class="bi bi-printer-fill me-1"></i>Cetak Semua Transkrip
-      </a>
-    <a href="/admin/nilai" class="btn btn-outline-primary rounded-pill">
-      <i class="bi bi-journal-text me-1"></i>Rekap per Mata Kuliah
-    </a>
-    </div>
-  </div>
-  <p class="text-muted">Semua mata kuliah dan nilai tiap mahasiswa langsung ditampilkan. Klik nama mahasiswa bila ingin meringkas barisnya.</p>
+<div class="container-fluid container-xl ea py-4">
 
-  <!-- Filter -->
-  <div class="filter-card">
-    <form method="GET" action="/admin/nilai/mahasiswa" class="row g-3 align-items-end">
-      <div class="col-md-4">
-        <label for="search" class="form-label"><i class="bi bi-search me-1"></i>Cari</label>
-        <input type="text" class="form-control" id="search" name="search" placeholder="Nama atau NIM" value="<%= filters.search %>">
-      </div>
-      <div class="col-md-2">
-        <label for="angkatan" class="form-label"><i class="bi bi-calendar3 me-1"></i>Angkatan</label>
-        <select class="form-select" id="angkatan" name="angkatan">
-          <option value="">Semua</option>
-          <% angkatanList.forEach(a => { %>
-            <option value="<%= a %>" <%= filters.angkatan === a ? 'selected' : '' %>><%= a %></option>
-          <% }) %>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label for="statusMahasiswa" class="form-label"><i class="bi bi-funnel me-1"></i>Status</label>
-        <select class="form-select" id="statusMahasiswa" name="statusMahasiswa">
-          <option value="">Semua</option>
-          <% ['Aktif','Lulus','Cuti','Keluar'].forEach(st => { %>
-            <option value="<%= st %>" <%= filters.statusMahasiswa === st ? 'selected' : '' %>><%= st %></option>
-          <% }) %>
-        </select>
-      </div>
-      <div class="col-md-2"><button type="submit" class="btn-filter">Terapkan</button></div>
-      <div class="col-md-2"><a href="/admin/nilai/mahasiswa" class="btn-reset">Reset</a></div>
-    </form>
+  <header class="ea-head">
+    <div>
+      <h1>Rekap Nilai</h1>
+      <p>Mata kuliah dan nilai setiap mahasiswa, dikelompokkan per semester.</p>
+    </div>
+    <a href="<%= urlCetakSemua %>" target="_blank" class="ea-btn ea-btn-primary" title="Cetak transkrip semua mahasiswa sesuai filter di bawah (bukan hanya halaman ini)"><i class="bi bi-printer"></i> Cetak semua transkrip</a>
+  </header>
+
+  <nav class="ea-tabs" aria-label="Sudut pandang rekap nilai">
+    <a href="/admin/nilai">Per mata kuliah</a>
+    <a href="/admin/nilai/mahasiswa" class="is-active" aria-current="page">Per mahasiswa</a>
+  </nav>
+
+  <form method="GET" action="/admin/nilai/mahasiswa" class="ea-filters">
+    <div class="ea-search">
+      <i class="bi bi-search"></i>
+      <label for="search" class="visually-hidden">Cari nama atau NIM</label>
+      <input type="search" id="search" name="search" placeholder="Cari nama atau NIM" value="<%= filters.search %>" autocomplete="off">
+    </div>
+    <select name="angkatan" aria-label="Angkatan" onchange="this.form.submit()">
+      <option value="">Semua angkatan</option>
+      <% angkatanList.forEach(a => { %><option value="<%= a %>" <%= filters.angkatan === a ? 'selected' : '' %>><%= a %></option><% }) %>
+    </select>
+    <select name="statusMahasiswa" aria-label="Status mahasiswa" onchange="this.form.submit()">
+      <option value="">Status mahasiswa</option>
+      <% ['Aktif','Lulus','Cuti','Keluar'].forEach(st => { %><option value="<%= st %>" <%= filters.statusMahasiswa === st ? 'selected' : '' %>><%= st %></option><% }) %>
+    </select>
+    <button type="submit" class="ea-btn ea-btn-edit">Terapkan</button>
+    <% if (adaFilter) { %><a href="/admin/nilai/mahasiswa" class="ea-reset"><i class="bi bi-x-lg"></i> Reset</a><% } %>
+  </form>
+
+  <div class="ea-count">
+    <span>Total <strong><%= totalMahasiswa %></strong> mahasiswa</span>
+    <span class="d-flex gap-2">
+      <button type="button" class="ea-btn ea-btn-icon" id="btnBukaSemua"><i class="bi bi-arrows-expand"></i> Buka semua</button>
+      <button type="button" class="ea-btn ea-btn-icon" id="btnTutupSemua"><i class="bi bi-arrows-collapse"></i> Ciutkan semua</button>
+    </span>
   </div>
 
-  <!-- Info + kontrol -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-    <p class="mb-0">Total <strong><%= totalMahasiswa %></strong> mahasiswa</p>
-    <div class="d-flex gap-2">
-      <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" id="btnBukaSemua">
-        <i class="bi bi-arrows-expand me-1"></i>Buka semua
-      </button>
-      <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" id="btnTutupSemua">
-        <i class="bi bi-arrows-collapse me-1"></i>Ciutkan semua
-      </button>
-    </div>
-  </div>
-
-  <!-- Daftar mahasiswa + nilai (langsung tampil) -->
-  <% if (!mahasiswaList || mahasiswaList.length === 0) { %>
-    <div class="empty-state">
-      <i class="bi bi-inbox"></i>
-      <h4 class="mt-3">Tidak Ada Mahasiswa</h4>
-      <p class="text-muted mb-0">Tidak ada mahasiswa yang cocok dengan filter/pencarian.</p>
-    </div>
+  <% if (mahasiswaList.length === 0) { %>
+    <div class="ea-list"><div class="ea-empty"><i class="bi bi-inbox"></i><strong>Tidak ada mahasiswa</strong>Tidak ada mahasiswa yang cocok dengan filter atau pencarian.</div></div>
   <% } else { %>
-    <% const hurufCls = (h) => !h ? 'huruf-none' : 'huruf-' + String(h).charAt(0); %>
     <% mahasiswaList.forEach(m => { %>
-      <div class="mhs-card open" data-user-id="<%= m.id %>">
-        <div class="mhs-head" role="button" tabindex="0" aria-expanded="true">
-          <div class="mhs-avatar"><%= (m.nama || '?').trim().charAt(0).toUpperCase() %></div>
-          <div class="mhs-info">
-            <p class="mhs-nama"><%= m.nama %></p>
-            <div class="mhs-meta">
-              NIM <%= m.nim %> &bull; Angkatan <%= m.angkatan %>
-              <% if (m.kelas) { %>&bull; Kelas <%= m.kelas %><% } %>
-              <% if (m.semester) { %>&bull; <%= m.semester %><% } %>
+      <details class="ea-card <%= m.statusMahasiswa === 'Aktif' ? 'aktif' : (m.statusMahasiswa === 'Lulus' ? 'lulus' : '') %>" open>
+        <summary>
+          <div class="ea-who">
+            <div class="ea-av"><%= (m.nama || '?').trim().charAt(0).toUpperCase() %></div>
+            <div style="min-width:0">
+              <div class="ea-title"><%= m.nama %></div>
+              <div class="ea-meta">NIM <%= m.nim %> &middot; Angkatan <%= m.angkatan %><% if (m.kelas) { %> &middot; Kelas <%= m.kelas %><% } %><% if (m.semester) { %> &middot; <%= m.semester %><% } %></div>
             </div>
           </div>
-          <div class="mhs-ringkas">
-            <% if (m.statusMahasiswa) { %>
-              <span class="badge bg-<%= m.statusMahasiswa === 'Aktif' ? 'success' : (m.statusMahasiswa === 'Lulus' ? 'primary' : 'secondary') %> bg-opacity-10 text-<%= m.statusMahasiswa === 'Aktif' ? 'success' : (m.statusMahasiswa === 'Lulus' ? 'primary' : 'secondary') %>"><%= m.statusMahasiswa %></span>
-            <% } %>
-            <span class="badge bg-light text-dark border">IPK <%= m.ipk %></span>
-            <span class="badge bg-light text-dark border"><%= m.totalSKS %> SKS</span>
+          <div class="ea-sum">
+            <% if (m.statusMahasiswa) { %><span class="ea-pill <%= stCls[m.statusMahasiswa] || '' %>"><%= m.statusMahasiswa %></span><% } %>
+            <span class="ea-pill">IPK <%= m.ipk %></span>
+            <span class="ea-pill"><%= m.totalSKS %> SKS</span>
           </div>
-          <i class="bi bi-chevron-down chev"></i>
-        </div>
-        <div class="mhs-body">
-          <div class="mhs-actions">
-            <a class="btn btn-sm btn-primary rounded-pill" href="/admin/nilai/mahasiswa/<%= encodeURIComponent(m.id) %>/tambah">
-              <i class="bi bi-pencil-square me-1"></i>Input / Ubah Nilai
-            </a>
-            <a class="btn btn-sm btn-outline-primary rounded-pill" target="_blank" href="/admin/nilai/mahasiswa/<%= encodeURIComponent(m.id) %>/transkrip/cetak">
-              <i class="bi bi-printer me-1"></i>Transkrip
-            </a>
+          <i class="bi bi-chevron-down ea-chev" aria-hidden="true"></i>
+        </summary>
+
+        <div class="ea-body">
+          <div class="ea-toolrow">
+            <a class="ea-btn ea-btn-edit" href="/admin/nilai/mahasiswa/<%= encodeURIComponent(m.id) %>/tambah"><i class="bi bi-pencil-square"></i> Input / ubah nilai</a>
+            <a class="ea-btn ea-btn-icon" target="_blank" href="/admin/nilai/mahasiswa/<%= encodeURIComponent(m.id) %>/transkrip/cetak"><i class="bi bi-printer"></i> Transkrip</a>
           </div>
 
           <% if (m.error) { %>
-            <div class="text-danger small"><i class="bi bi-exclamation-triangle me-1"></i>Gagal memuat nilai: <%= m.error %></div>
+            <div class="ea-warn"><i class="bi bi-exclamation-triangle me-1"></i>Gagal memuat nilai: <%= m.error %></div>
           <% } else if (!m.semesterList || m.semesterList.length === 0) { %>
-            <div class="text-muted py-2"><i class="bi bi-info-circle me-1"></i>Belum ada mata kuliah / nilai untuk mahasiswa ini.</div>
+            <div class="ea-meta"><i class="bi bi-info-circle me-1"></i>Belum ada mata kuliah atau nilai untuk mahasiswa ini.</div>
           <% } else { %>
             <% m.semesterList.forEach(s => { %>
-              <div class="sem-block">
-                <div class="sem-title">
-                  <span><%= s.semester %></span>
+              <div class="ea-sem">
+                <div class="ea-semhead">
+                  <strong><%= s.semester %></strong>
                   <small>
-                    IPS <b><%= s.ips %></b> &bull; <%= s.totalSKSDiprogram %> SKS diprogram
-                    <% if (s.jumlahBelumNilai) { %>&bull; <span class="text-danger"><%= s.jumlahBelumNilai %> belum bernilai</span><% } %>
-                    &bull; <a href="/admin/nilai/mahasiswa/<%= encodeURIComponent(m.id) %>/khs/cetak?semester=<%= encodeURIComponent(s.semester) %>" target="_blank">Cetak KHS</a>
+                    IPS <b><%= s.ips %></b> &middot; <%= s.totalSKSDiprogram %> SKS diprogram
+                    <% if (s.jumlahBelumNilai) { %>&middot; <span class="ea-warn"><%= s.jumlahBelumNilai %> belum bernilai</span><% } %>
+                    &middot; <a href="/admin/nilai/mahasiswa/<%= encodeURIComponent(m.id) %>/khs/cetak?semester=<%= encodeURIComponent(s.semester) %>" target="_blank">Cetak KHS</a>
                   </small>
                 </div>
                 <div class="table-responsive">
-                  <table class="table table-sm table-hover mk-table">
-                    <thead>
-                      <tr>
-                        <th style="width:110px">Kode</th>
-                        <th>Mata Kuliah</th>
-                        <th class="text-center" style="width:70px">SKS</th>
-                        <th class="text-center" style="width:90px">Nilai</th>
-                        <th class="text-center" style="width:90px">Huruf</th>
-                        <th class="text-center" style="width:80px">Indeks</th>
-                      </tr>
-                    </thead>
+                  <table class="ea-tbl">
+                    <thead><tr><th style="width:110px">Kode</th><th>Mata kuliah</th><th class="c" style="width:60px">SKS</th><th class="c" style="width:70px">Nilai</th><th class="c" style="width:80px">Huruf</th><th class="c" style="width:70px">Indeks</th></tr></thead>
                     <tbody>
                       <% s.matkul.forEach(k => { %>
                         <tr>
-                          <td><span class="badge bg-primary bg-opacity-10 text-primary"><%= k.kodeMk %></span></td>
+                          <td><span class="ea-kode"><%= k.kodeMk %></span></td>
                           <td><%= k.namaMk %></td>
-                          <td class="text-center"><%= k.sks %></td>
-                          <td class="text-center"><%= k.belumAdaNilai ? '-' : k.nilai %></td>
-                          <td class="text-center">
-                            <% if (k.belumAdaNilai) { %><span class="huruf huruf-none">Belum</span>
-                            <% } else { %><span class="huruf <%= hurufCls(k.huruf) %>"><%= k.huruf %></span><% } %>
-                          </td>
-                          <td class="text-center"><%= k.belumAdaNilai ? '-' : Number(k.indeks).toFixed(1) %></td>
+                          <td class="c"><%= k.sks %></td>
+                          <td class="c"><%= k.belumAdaNilai ? '-' : k.nilai %></td>
+                          <td class="c"><% if (k.belumAdaNilai) { %><span class="huruf huruf-none">Belum</span><% } else { %><span class="huruf <%= hurufCls(k.huruf) %>"><%= k.huruf %></span><% } %></td>
+                          <td class="c"><%= k.belumAdaNilai ? '-' : Number(k.indeks).toFixed(1) %></td>
                         </tr>
                       <% }) %>
                     </tbody>
@@ -238,31 +260,38 @@
             <% }) %>
           <% } %>
         </div>
-      </div>
+      </details>
     <% }) %>
-  <% } %>
 
-  <%- include('../partials/pagination', { pageInfo: typeof pageInfo !== 'undefined' ? pageInfo : null, showAll: typeof showAll !== 'undefined' ? showAll : false, pageListUrl: typeof pageListUrl !== 'undefined' ? pageListUrl : '/admin/nilai/mahasiswa' }) %>
+    <div class="ea-pagecard">
+
+      <% if (showAll) { %>
+        <div class="ea-pagebar">
+          <span>Menampilkan semua entri.</span>
+          <div class="btns"><a href="<%= typeof pageListUrl !== 'undefined' ? pageListUrl : '/admin/nilai/mahasiswa' %>" class="ea-btn ea-btn-icon"><i class="bi bi-list-ol"></i> Tampilkan 10 per halaman</a></div>
+        </div>
+      <% } else if (pageInfo) { %>
+        <div class="ea-pagebar">
+          <span>Menampilkan <%= pageInfo.count %> entri<% if (typeof pageInfo.total === 'number') { %> dari <%= pageInfo.total %> total<% } %></span>
+          <div class="btns">
+            <a href="<%= pageInfo.hasPrev ? pageInfo.prevUrl : '#' %>" class="ea-btn ea-btn-icon <%= pageInfo.hasPrev ? '' : 'is-disabled' %>" <%= pageInfo.hasPrev ? '' : 'aria-disabled="true" tabindex="-1"' %>><i class="bi bi-chevron-left"></i> Sebelumnya</a>
+            <a href="<%= pageInfo.hasNext ? pageInfo.nextUrl : '#' %>" class="ea-btn ea-btn-icon <%= pageInfo.hasNext ? '' : 'is-disabled' %>" <%= pageInfo.hasNext ? '' : 'aria-disabled="true" tabindex="-1"' %>>Selanjutnya <i class="bi bi-chevron-right"></i></a>
+            <a href="<%= pageInfo.allUrl %>" class="ea-btn ea-btn-edit"><i class="bi bi-list-ul"></i> Tampilkan semua</a>
+          </div>
+        </div>
+      <% } %>
+
+    </div>
+  <% } %>
 </div>
 
 <script>
-(function () {
-  var cards = Array.prototype.slice.call(document.querySelectorAll('.mhs-card'));
-  function toggle(card, buka) {
-    if (typeof buka !== 'boolean') buka = !card.classList.contains('open');
-    card.classList.toggle('open', buka);
-    card.querySelector('.mhs-head').setAttribute('aria-expanded', buka ? 'true' : 'false');
-  }
-  cards.forEach(function (card) {
-    var head = card.querySelector('.mhs-head');
-    head.addEventListener('click', function () { toggle(card); });
-    head.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(card); }
-    });
-  });
-  document.getElementById('btnBukaSemua').addEventListener('click', function () { cards.forEach(function (c) { toggle(c, true); }); });
-  document.getElementById('btnTutupSemua').addEventListener('click', function () { cards.forEach(function (c) { toggle(c, false); }); });
-})();
+  (function () {
+    var cards = Array.prototype.slice.call(document.querySelectorAll('details.ea-card'));
+    function semua(buka) { cards.forEach(function (c) { c.open = buka; }); }
+    document.getElementById('btnBukaSemua').addEventListener('click', function () { semua(true); });
+    document.getElementById('btnTutupSemua').addEventListener('click', function () { semua(false); });
+  })();
 </script>
 
 <%- include('../partials/footer') %>

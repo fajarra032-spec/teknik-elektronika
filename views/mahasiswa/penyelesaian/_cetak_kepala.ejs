@@ -3,6 +3,11 @@
   const _halaman = typeof halaman !== 'undefined' ? halaman : '2.54cm';
   const _font = typeof font !== 'undefined' ? font : "'Times New Roman', Times, serif";
   const _ukuran = typeof ukuran !== 'undefined' ? ukuran : '12pt';
+
+  const _m = _halaman.split(/\s+/).map(parseFloat);
+  const _atas = _m[0];
+  const _bawah = _m.length === 1 ? _m[0] : (_m.length === 2 ? _m[0] : _m[2]);
+  const _tinggiIsi = (29.7 - _atas - _bawah - 0.4).toFixed(2); // 0.4cm cadangan
 %><!DOCTYPE html>
 <html lang="id">
 <head>
@@ -41,7 +46,7 @@
       .alat { display: none !important; }
       .kertas { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; }
     }
-    @media (max-width: 22cm) {
+    @media screen and (max-width: 22cm) {
       .kertas { width: auto; margin: 0; padding: 1rem; box-shadow: none; }
     }
   </style>
@@ -56,4 +61,28 @@
       <button type="button" class="utama" onclick="window.print()"><i class="bi bi-printer"></i> Cetak</button>
     </div>
   </div>
+  <script>
+    // Pastikan hasil cetak tidak lebih dari 1 lembar A4: bila isi lebih tinggi dari
+    // area cetak (mis. nama atau nama perusahaan sangat panjang), skalanya diperkecil.
+    (function () {
+      var maks = <%= _tinggiIsi %> * 96 / 2.54; // cm -> px
+      function kertas() { return document.querySelector('.kertas'); }
+      function sesuaikan() {
+        var k = kertas(); if (!k) return;
+        k.style.zoom = '';
+        var cs = getComputedStyle(k);
+        var atas = k.getBoundingClientRect().top + parseFloat(cs.paddingTop);
+        var bawah = atas;
+        Array.prototype.forEach.call(k.children, function (el) {
+          var pos = getComputedStyle(el).position;
+          if (pos === 'absolute' || pos === 'fixed') return;
+          bawah = Math.max(bawah, el.getBoundingClientRect().bottom);
+        });
+        var isi = bawah - atas;
+        if (isi > maks) k.style.zoom = (maks / isi).toFixed(3);
+      }
+      window.addEventListener('beforeprint', sesuaikan);
+      window.addEventListener('afterprint', function () { var k = kertas(); if (k) k.style.zoom = ''; });
+    })();
+  </script>
   <main class="kertas">

@@ -125,6 +125,28 @@ function ubahBlok(documentXml, fn) {
 }
 
 /**
+ * Ganti paragraf-paragraf kosong di ujung dokumen (setelah blok terakhir yang
+ * bukan paragraf) dengan SATU paragraf setipis mungkin. Dokumen yang diakhiri
+ * tabel wajib punya paragraf penutup, tetapi paragraf kosong biasa (tinggi satu
+ * baris) bisa terdorong ke halaman 2 dan menghasilkan lembar kosong.
+ */
+function ringkasPenutup(blok) {
+  const kosong = (b) => b.jenis === 'p' && teksParagraf(b.xml).trim() === '' && !/<w:drawing|<w:br\b/.test(b.xml);
+  const sect = blok.length && blok[blok.length - 1].jenis === 'sectPr' ? [blok.pop()] : [];
+  while (blok.length && kosong(blok[blok.length - 1])) blok.pop();
+  blok.push({ jenis: 'p', xml: '<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr></w:pPr></w:p>' });
+  return blok.concat(sect);
+}
+
+/** Perkiraan jumlah baris sebuah teks bila tiap baris muat sekitar `kar` karakter */
+const perkiraanBaris = (teks, kar) => Math.max(1, Math.ceil(String(teks || '').length / kar));
+
+/** Tandai paragraf kosong (menurut urutan prioritas) untuk dibuang sebanyak `jumlah` baris */
+function hematRuang(blok, urutan, jumlah) {
+  urutan.slice(0, Math.max(0, jumlah)).forEach((i) => { if (blok[i]) blok[i].hapus = true; });
+}
+
+/**
  * Blok tanda tangan di contoh surat memakai deretan tab untuk menggeser teks ke
  * kanan; nama/tanggal yang panjang jadi turun baris. Di sini deretan tab diganti
  * indentasi tetap (posisi mirip) supaya tidak pernah terpotong.
@@ -158,6 +180,12 @@ function isiSuratPermohonan(doc, d) {
     nilai(12, ' ' + (d.semester || ''));
 
     const lokasi = d.lokasiBaris;
+
+    // Isian panjang -> baris tambahan. Agar tetap 1 halaman, jarak kosong dikurangi
+    // (urutan: jarak tanda tangan lalu jarak setelah identitas, dst.).
+    const lebih = lokasi.reduce((n, l) => n + perkiraanBaris(l, 50) - 1, 0) + perkiraanBaris(d.nama, 28) - 1;
+    hematRuang(blok, [30, 16, 29, 15, 14, 28, 23, 25, 7, 3], lebih);
+
     nilai(13, ' ' + lokasi[0]);
     // Baris lokasi berikutnya: paragraf baru yang diratakan dengan nilai di atasnya
     const pPr = (P(13).match(/<w:pPr>[\s\S]*?<\/w:pPr>/) || [''])[0]
@@ -175,7 +203,7 @@ function isiSuratPermohonan(doc, d) {
     blok[iTgl].xml = blok[iTgl].xml.replace(/(<w:t>,<\/w:t>)/, `<w:t xml:space="preserve">, ${esc(d.tanggalCetak)}</w:t>`);
     blok[iNama].xml = blok[iNama].xml.replace(/<w:t>Nama<\/w:t>/, `<w:t xml:space="preserve">${esc(d.nama)}</w:t>`);
     blok[iNim].xml = blok[iNim].xml.replace(/<w:t>Nim<\/w:t>/, `<w:t xml:space="preserve">NIM. ${esc(d.nim)}</w:t>`);
-    return blok;
+    return blok.filter((b) => !b.hapus);
   });
 }
 
@@ -190,6 +218,14 @@ function isiBeritaAcara(doc, d) {
       .replace(/hari ini\s+\.+\s+tanggal\s+\.+\s+bulan\s+\.+\s+tahun\s+\d+/,
         `hari ini ${bagian.hari} tanggal ${bagian.tgl} bulan ${bagian.bulan} tahun ${bagian.tahun}`);
     blok[3].xml = setTeks(blok[3].xml, teks);
+
+    // Isian panjang -> baris tambahan; kurangi jarak kosong (dari yang paling tidak penting)
+    const lebih =
+      d.lokasi.reduce((n, l) => n + perkiraanBaris(`Magang 1 : ${l.perusahaan || '-'}`, 40) - 1, 0) +
+      perkiraanBaris(`${d.pembimbingNama || titik} (Pembimbing I)`, 52) - 1 +
+      perkiraanBaris(`${d.pendampingLapangan || titik} (Pendamping Lapangan)`, 52) - 1;
+    hematRuang(blok, [12, 11, 9, 7, 5, 2], lebih);
+    const kurangiTtd = Math.max(0, lebih - 2); // jarak tanda tangan Kaprodi (5 paragraf kosong, sisakan 3)
 
     // Tabel mahasiswa: NIM | Nama | Lokasi Magang 1-3
     blok[4].xml = editTabel(blok[4].xml, (b, s, q, p) => {
@@ -216,10 +252,11 @@ function isiBeritaAcara(doc, d) {
 
     // Kaprodi
     blok[14].xml = editTabel(blok[14].xml, (b, s, q, p) => {
+      if (b === 0 && q >= 4 && q - 3 <= Math.min(kurangiTtd, 2)) return ''; // buang paragraf kosong jarak ttd
       if (b === 1 && q === 0) return setTeks(p, d.kaprodi.nama);
       if (b === 1 && q === 1) return setTeks(p, `NUPTK: ${d.kaprodi.nuptk}`);
     });
-    return blok;
+    return ringkasPenutup(blok.filter((b) => !b.hapus));
   });
 }
 
