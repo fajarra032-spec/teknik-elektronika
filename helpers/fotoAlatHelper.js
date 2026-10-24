@@ -38,7 +38,9 @@ async function simpanFoto(buffer, kodeAlat) {
     fields: 'id'
   });
   await drive.permissions.create({ fileId: res.data.id, requestBody: { role: 'reader', type: 'anyone' } });
-  return { fotoUrl: `https://drive.google.com/uc?export=view&id=${res.data.id}`, fotoFileId: res.data.id };
+  // thumbnail?id=...&sz=w1000 lebih konsisten tampil di <img> daripada uc?export=view
+  // (konvensi yang sama dipakai di views/landing/*.ejs)
+  return { fotoUrl: `https://drive.google.com/thumbnail?id=${res.data.id}&sz=w1000`, fotoFileId: res.data.id };
 }
 
 /** Hapus foto di Drive. Tidak pernah melempar error (best effort). */

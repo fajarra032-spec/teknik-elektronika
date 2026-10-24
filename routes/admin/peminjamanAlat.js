@@ -13,6 +13,13 @@ const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const H = require('../../helpers/peminjamanAlatHelper');
 const { STATUS } = H;
+const { invalidateAlatPublik } = require('../../helpers/alatPublikHelper');
+
+// Stok berubah saat disetujui / diverifikasi -> segarkan status ketersediaan di etalase publik
+router.use((req, res, next) => {
+  if (req.method === 'POST') res.on('finish', invalidateAlatPublik);
+  next();
+});
 
 router.use(verifyToken);
 router.use(isAdmin);

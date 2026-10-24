@@ -11,6 +11,13 @@ const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const H = require('../../helpers/peminjamanAlatHelper');
 const { simpanFoto, hapusFoto } = require('../../helpers/fotoAlatHelper');
+const { invalidateAlatPublik } = require('../../helpers/alatPublikHelper');
+
+// Setiap perubahan inventaris membuang cache etalase publik di landing
+router.use((req, res, next) => {
+  if (req.method === 'POST') res.on('finish', invalidateAlatPublik);
+  next();
+});
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 

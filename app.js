@@ -158,6 +158,7 @@ app.get('/sitemap.xml', async (req, res) => {
     { url: '/elk-library', changefreq: 'weekly', priority: 0.7 },
     { url: '/berita', changefreq: 'daily', priority: 0.8 },
     { url: '/lulusan', changefreq: 'weekly', priority: 0.6 },
+    { url: '/peralatan-lab', changefreq: 'weekly', priority: 0.6 },
     { url: '/validasi', changefreq: 'monthly', priority: 0.3 },
     // Catatan: halaman /auth/login dan /auth/register sengaja TIDAK
     // dimasukkan ke sitemap. Halaman login tidak punya nilai konten untuk

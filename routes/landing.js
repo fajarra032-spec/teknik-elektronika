@@ -12,6 +12,7 @@ const fs = require('fs');
 const { getProgressMagangHarian } = require('../helpers/magangHelper');
 const { getGabunganLulusan, normalisasiStatus } = require('../helpers/lulusanHelper');
 const { getAllMahasiswa } = require('../helpers/cache');
+const { getAlatPublik } = require('../helpers/alatPublikHelper');
 const { getTranskripMahasiswa } = require('../helpers/nilaiHelper');
 
 // ============================================================================
@@ -1547,6 +1548,29 @@ router.get('/kerjasama', (req, res) => {
       'Mitra Instansi Pemerintah'
     ]
   });
+});
+
+// ============================================================================
+// PERALATAN LABORATORIUM (etalase publik)
+// ============================================================================
+router.get('/peralatan-lab', async (req, res) => {
+  try {
+    const alat = await getAlatPublik(db);
+    const kategoriList = [...new Set(alat.map(a => a.kategori))].sort((a, b) => a.localeCompare(b));
+    const stats = {
+      jenis: alat.length,
+      unit: alat.reduce((s, a) => s + a.jumlahTotal, 0),
+      kategori: kategoriList.length
+    };
+    res.render('landing/peralatan_lab', {
+      title: 'Peralatan Laboratorium',
+      user: req.user || null,
+      alat, kategoriList, stats
+    });
+  } catch (error) {
+    console.error('Error memuat etalase peralatan lab:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat data peralatan lab' });
+  }
 });
 
 // ============================================================================
