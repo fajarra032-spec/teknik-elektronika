@@ -45,7 +45,7 @@
     <table class="table table-bordered table-hover align-middle" id="tabelAlat">
       <thead class="table-light">
         <tr>
-          <th>Kode</th><th>Nama Alat</th><th>Kategori</th><th>Lokasi</th>
+          <th style="width:70px">Foto</th><th>Kode</th><th>Nama Alat</th><th>Kategori</th><th>Lokasi</th>
           <th class="text-center">Total</th><th class="text-center">Tersedia</th>
           <th class="text-center">Dipinjam</th><th class="text-center">Rusak</th><th>Status</th><th style="min-width:150px">Aksi</th>
         </tr>
@@ -53,6 +53,13 @@
       <tbody>
         <% data.forEach(a => { %>
         <tr data-kategori="<%= a.kategori || '' %>" data-cari="<%= [a.kode, a.nama, a.merk, a.lokasi].join(' ').toLowerCase() %>">
+          <td>
+            <% if (a.fotoUrl) { %>
+              <img src="<%= a.fotoUrl %>" alt="<%= a.nama %>" loading="lazy" referrerpolicy="no-referrer" style="width:56px;height:56px;object-fit:cover;border-radius:.5rem;">
+            <% } else { %>
+              <div class="d-flex align-items-center justify-content-center bg-light text-muted" style="width:56px;height:56px;border-radius:.5rem;"><i class="bi bi-image"></i></div>
+            <% } %>
+          </td>
           <td><code><%= a.kode %></code></td>
           <td><strong><%= a.nama %></strong><% if (a.merk) { %><div class="small text-muted"><%= a.merk %></div><% } %></td>
           <td><%= a.kategori || '-' %></td>
@@ -79,7 +86,7 @@
         </tr>
         <% }) %>
         <% if (data.length === 0) { %>
-          <tr><td colspan="10" class="text-center text-muted py-4">Belum ada alat terdata. Klik "Tambah Alat" atau "Import Excel".</td></tr>
+          <tr><td colspan="11" class="text-center text-muted py-4">Belum ada alat terdata. Klik "Tambah Alat" atau "Import Excel".</td></tr>
         <% } %>
       </tbody>
     </table>

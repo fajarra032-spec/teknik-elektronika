@@ -3,9 +3,14 @@
   .form-card { background: #fff; border-radius: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,.05); overflow: hidden; }
   .form-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 1.25rem 1.5rem; color: #fff; }
   .sec { font-weight: 700; margin: 1.5rem 0 .75rem; border-left: 5px solid #1e3a8a; padding-left: .75rem; color: #1e3a8a; }
-  .alat-row.habis { opacity: .5; }
-  .alat-row.dipilih { background: #eff6ff; }
-  .qty { width: 80px; }
+  .alat-card { background: #fff; border: 2px solid #e5e7eb; border-radius: 1rem; overflow: hidden; display: flex; flex-direction: column; transition: border-color .15s, box-shadow .15s; }
+  .alat-card.dipilih { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+  .alat-card.habis { opacity: .55; }
+  .alat-foto { position: relative; aspect-ratio: 4 / 3; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 3rem; }
+  .alat-foto[data-foto] { cursor: zoom-in; }
+  .alat-foto img { width: 100%; height: 100%; object-fit: cover; }
+  .alat-stok { position: absolute; top: .5rem; left: .5rem; font-size: .7rem; }
+  .qty { -moz-appearance: textfield; }
 </style>
 <div class="container mt-4 mb-5" style="max-width: 900px;">
   <a href="/mahasiswa/peminjaman-alat" class="btn btn-sm btn-outline-secondary mb-3"><i class="bi bi-arrow-left"></i> Kembali</a>
@@ -15,28 +20,39 @@
       <%- include('../../partials/pesan_flash') %>
       <form method="POST" action="/mahasiswa/peminjaman-alat/ajukan" id="formPinjam">
         <div class="sec">1. Pilih Alat</div>
-        <input type="search" id="cari" class="form-control mb-2" placeholder="Cari alat (nama, kode, merk)...">
-        <div class="table-responsive border rounded-3" style="max-height: 420px; overflow-y: auto;">
-          <table class="table table-sm align-middle mb-0">
-            <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
-              <tr><th>Alat</th><th>Kategori</th><th class="text-center">Tersedia</th><th class="text-center">Jumlah Pinjam</th></tr>
-            </thead>
-            <tbody>
-              <% alat.forEach(a => { const habis = (a.jumlahTersedia || 0) < 1; %>
-                <tr class="alat-row <%= habis ? 'habis' : '' %>" data-cari="<%= [a.kode, a.nama, a.merk].join(' ').toLowerCase() %>">
-                  <td><strong><%= a.nama %></strong> <code class="small"><%= a.kode %></code>
-                    <% if (a.merk) { %><div class="small text-muted"><%= a.merk %></div><% } %></td>
-                  <td class="small"><%= a.kategori || '-' %></td>
-                  <td class="text-center"><span class="badge bg-<%= habis ? 'danger' : 'success' %>"><%= habis ? 'Habis' : a.jumlahTersedia %></span></td>
-                  <td class="text-center">
-                    <input type="number" class="form-control form-control-sm qty mx-auto" name="jumlah_<%= a.id %>" min="0" max="<%= a.jumlahTersedia || 0 %>" value="0" <%= habis ? 'disabled' : '' %>>
-                  </td>
-                </tr>
-              <% }) %>
-              <% if (alat.length === 0) { %><tr><td colspan="4" class="text-center text-muted py-4">Belum ada alat terdata di inventaris.</td></tr><% } %>
-            </tbody>
-          </table>
+        <input type="search" id="cari" class="form-control mb-3" placeholder="Cari alat (nama, kode, merk, kategori)...">
+        <div class="row g-3" id="etalase">
+          <% alat.forEach(a => { const habis = (a.jumlahTersedia || 0) < 1; %>
+            <div class="col-6 col-md-4 alat-item" data-cari="<%= [a.kode, a.nama, a.merk, a.kategori].join(' ').toLowerCase() %>">
+              <div class="alat-card h-100 <%= habis ? 'habis' : '' %>">
+                <div class="alat-foto" <% if (a.fotoUrl) { %>role="button" data-foto="<%= a.fotoUrl %>" data-nama="<%= a.nama %>"<% } %>>
+                  <% if (a.fotoUrl) { %>
+                    <img src="<%= a.fotoUrl %>" alt="<%= a.nama %>" loading="lazy" referrerpolicy="no-referrer">
+                  <% } else { %>
+                    <i class="bi bi-motherboard"></i>
+                  <% } %>
+                  <span class="badge bg-<%= habis ? 'danger' : 'success' %> alat-stok"><%= habis ? 'Habis' : 'Tersedia ' + a.jumlahTersedia %></span>
+                </div>
+                <div class="p-2 d-flex flex-column flex-grow-1">
+                  <div class="fw-semibold lh-sm"><%= a.nama %></div>
+                  <div class="small text-muted"><code><%= a.kode %></code><% if (a.kategori) { %> · <%= a.kategori %><% } %></div>
+                  <% if (a.merk) { %><div class="small text-muted"><%= a.merk %></div><% } %>
+                  <% if (a.lokasi) { %><div class="small text-muted"><i class="bi bi-geo-alt"></i> <%= a.lokasi %></div><% } %>
+                  <div class="mt-auto pt-2 d-flex align-items-center justify-content-between gap-1">
+                    <span class="small text-muted">Jumlah</span>
+                    <div class="input-group input-group-sm" style="width:116px;">
+                      <button type="button" class="btn btn-outline-secondary btn-min" <%= habis ? 'disabled' : '' %>>−</button>
+                      <input type="number" class="form-control text-center qty" name="jumlah_<%= a.id %>" min="0" max="<%= a.jumlahTersedia || 0 %>" value="0" <%= habis ? 'disabled' : '' %>>
+                      <button type="button" class="btn btn-outline-secondary btn-plus" <%= habis ? 'disabled' : '' %>>+</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+          <% if (alat.length === 0) { %><div class="col-12"><div class="alert alert-info mb-0">Belum ada alat terdata di inventaris.</div></div><% } %>
         </div>
+        <div id="kosongCari" class="alert alert-light border text-center mt-3" style="display:none;">Tidak ada alat yang cocok dengan pencarian.</div>
         <div class="small text-muted mt-1">Dipilih: <strong id="ringkas">0 jenis alat (0 unit)</strong></div>
 
         <div class="sec">2. Waktu Peminjaman</div>
@@ -72,29 +88,49 @@
     </div>
   </div>
 </div>
+<div class="modal fade" id="modalFoto" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header py-2"><h6 class="modal-title" id="modalFotoNama"></h6><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
+      <div class="modal-body p-0 text-center bg-dark"><img id="modalFotoImg" alt="" referrerpolicy="no-referrer" style="max-width:100%;max-height:75vh;"></div>
+    </div>
+  </div>
+</div>
 <script>
   (function () {
-    var rows = document.querySelectorAll('.alat-row');
+    var items = document.querySelectorAll('.alat-item');
     var cari = document.getElementById('cari');
     function ringkas() {
       var jenis = 0, unit = 0;
       document.querySelectorAll('.qty').forEach(function (i) {
         var n = parseInt(i.value, 10) || 0;
-        i.closest('tr').classList.toggle('dipilih', n > 0);
+        i.closest('.alat-card').classList.toggle('dipilih', n > 0);
         if (n > 0) { jenis++; unit += n; }
       });
       document.getElementById('ringkas').textContent = jenis + ' jenis alat (' + unit + ' unit)';
     }
-    document.querySelectorAll('.qty').forEach(function (i) {
-      i.addEventListener('input', function () {
-        var max = parseInt(i.max, 10) || 0, n = parseInt(i.value, 10) || 0;
-        if (n > max) i.value = max; if (n < 0) i.value = 0;
-        ringkas();
-      });
+    function set(i, n) {
+      var max = parseInt(i.max, 10) || 0;
+      i.value = Math.max(0, Math.min(max, n || 0));
+      ringkas();
+    }
+    document.querySelectorAll('.alat-card').forEach(function (c) {
+      var i = c.querySelector('.qty');
+      i.addEventListener('input', function () { set(i, parseInt(i.value, 10)); });
+      c.querySelector('.btn-min').addEventListener('click', function () { set(i, (parseInt(i.value, 10) || 0) - 1); });
+      c.querySelector('.btn-plus').addEventListener('click', function () { set(i, (parseInt(i.value, 10) || 0) + 1); });
     });
     cari.addEventListener('input', function () {
-      var q = cari.value.trim().toLowerCase();
-      rows.forEach(function (r) { r.style.display = (!q || r.dataset.cari.indexOf(q) > -1) ? '' : 'none'; });
+      var q = cari.value.trim().toLowerCase(), tampil = 0;
+      items.forEach(function (r) { var ok = !q || r.dataset.cari.indexOf(q) > -1; r.style.display = ok ? '' : 'none'; if (ok) tampil++; });
+      document.getElementById('kosongCari').style.display = (items.length && !tampil) ? '' : 'none';
+    });
+    document.querySelectorAll('.alat-foto[data-foto]').forEach(function (f) {
+      f.addEventListener('click', function () {
+        document.getElementById('modalFotoImg').src = f.dataset.foto;
+        document.getElementById('modalFotoNama').textContent = f.dataset.nama;
+        new bootstrap.Modal(document.getElementById('modalFoto')).show();
+      });
     });
     var p = document.getElementById('tglPinjam'), k = document.getElementById('tglKembali');
     p.addEventListener('change', function () { k.min = p.value; if (k.value < p.value) k.value = p.value; });

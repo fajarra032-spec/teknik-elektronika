@@ -11,8 +11,31 @@
     </div>
     <div class="p-4">
       <%- include('../../partials/pesan_flash') %>
-      <form method="POST" action="<%= edit ? '/admin/alat-lab/update/' + alat.id : '/admin/alat-lab' %>">
+      <form method="POST" enctype="multipart/form-data" action="<%= edit ? '/admin/alat-lab/update/' + alat.id : '/admin/alat-lab' %>">
         <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label fw-semibold">Foto Alat</label>
+            <div class="d-flex gap-3 align-items-start flex-wrap">
+              <div id="fotoBox" class="border rounded-3 bg-light d-flex align-items-center justify-content-center overflow-hidden" style="width:160px;height:120px;">
+                <% if (edit && alat.fotoUrl) { %>
+                  <img id="fotoPreview" src="<%= alat.fotoUrl %>" alt="<%= alat.nama %>" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;">
+                <% } else { %>
+                  <i id="fotoKosong" class="bi bi-image text-muted" style="font-size:2.5rem;"></i>
+                  <img id="fotoPreview" alt="" style="width:100%;height:100%;object-fit:cover;display:none;">
+                <% } %>
+              </div>
+              <div class="flex-grow-1" style="min-width:220px;">
+                <input type="file" name="foto" id="fotoInput" class="form-control" accept="image/jpeg,image/png,image/webp,image/gif">
+                <div class="form-text">JPG/PNG/WEBP, maks 8 MB. Otomatis dikompres. <%= edit && alat.fotoUrl ? 'Pilih file baru untuk mengganti foto.' : 'Boleh dikosongkan.' %></div>
+                <% if (edit && alat.fotoUrl) { %>
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" name="hapusFoto" id="hapusFoto">
+                    <label class="form-check-label small text-danger" for="hapusFoto">Hapus foto saat ini</label>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
           <div class="col-md-4">
             <label class="form-label fw-semibold">Kode Alat</label>
             <input type="text" name="kode" class="form-control" value="<%= v('kode') %>" maxlength="30" <%= edit ? 'required' : '' %> placeholder="<%= edit ? '' : 'Kosongkan = otomatis (LAB-0001)' %>">
@@ -71,4 +94,13 @@
     </div>
   </div>
 </div>
+<script>
+  document.getElementById('fotoInput').addEventListener('change', function () {
+    var f = this.files[0], img = document.getElementById('fotoPreview'), kosong = document.getElementById('fotoKosong');
+    if (!f) return;
+    if (f.size > 8 * 1024 * 1024) { alert('Ukuran foto maksimal 8 MB.'); this.value = ''; return; }
+    img.src = URL.createObjectURL(f); img.style.display = 'block'; if (kosong) kosong.style.display = 'none';
+    var h = document.getElementById('hapusFoto'); if (h) h.checked = false;
+  });
+</script>
 <%- include('../../partials/footer') %>

@@ -56,7 +56,7 @@
           <tbody>
             <% p.items.forEach(it => { %>
               <tr>
-                <td><code><%= it.kode || '-' %></code></td><td><%= it.nama %></td><td class="text-center"><%= it.jumlah %></td>
+                <td><code><%= it.kode || '-' %></code></td><td><% if (it.fotoUrl) { %><img src="<%= it.fotoUrl %>" alt="" loading="lazy" referrerpolicy="no-referrer" style="width:44px;height:44px;object-fit:cover;border-radius:.4rem;" class="me-2"><% } %><%= it.nama %></td><td class="text-center"><%= it.jumlah %></td>
                 <% if (p.status === 'diajukan') {
                      const s = (typeof stok !== 'undefined' && stok) ? stok[it.alatId] : undefined; %>
                   <td class="text-center">
@@ -110,7 +110,7 @@
               <tbody>
                 <% p.items.forEach((it, i) => { %>
                   <tr data-jumlah="<%= it.jumlah %>">
-                    <td><%= it.nama %></td><td class="text-center"><%= it.jumlah %></td>
+                    <td><% if (it.fotoUrl) { %><img src="<%= it.fotoUrl %>" alt="" loading="lazy" referrerpolicy="no-referrer" style="width:44px;height:44px;object-fit:cover;border-radius:.4rem;" class="me-2"><% } %><%= it.nama %></td><td class="text-center"><%= it.jumlah %></td>
                     <td><input type="number" class="form-control form-control-sm in-baik" name="baik_<%= i %>" min="0" max="<%= it.jumlah %>" value="<%= it.jumlah %>"></td>
                     <td><input type="number" class="form-control form-control-sm in-rusak" name="rusak_<%= i %>" min="0" max="<%= it.jumlah %>" value="0"></td>
                     <td><input type="number" class="form-control form-control-sm in-hilang" name="hilang_<%= i %>" min="0" max="<%= it.jumlah %>" value="0"></td>

@@ -10,8 +10,22 @@ const XLSX = require('xlsx');
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const H = require('../../helpers/peminjamanAlatHelper');
+const { simpanFoto, hapusFoto } = require('../../helpers/fotoAlatHelper');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+
+// Upload foto alat (opsional, 1 file, gambar saja, maks 8 MB). Error upload
+// ditampilkan sebagai pesan di form, bukan halaman error.
+const uploadFoto = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => cb(null, /^image\/(jpeg|png|webp|gif)$/.test(file.mimetype))
+}).single('foto');
+const terimaFoto = (urlBalik) => (req, res, next) => uploadFoto(req, res, (err) => {
+  if (!err) return next();
+  const pesan = err.code === 'LIMIT_FILE_SIZE' ? 'Ukuran foto maksimal 8 MB.' : 'Foto gagal diproses: ' + err.message;
+  H.redirectPesan(res, typeof urlBalik === 'function' ? urlBalik(req) : urlBalik, 'err', pesan);
+});
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -146,7 +160,7 @@ router.get('/tambah', (req, res) => {
   });
 });
 
-router.post('/', async (req, res) => {
+router.post('/', terimaFoto('/admin/alat-lab/tambah'), async (req, res) => {
   try {
     const b = req.body;
     const nama = (b.nama || '').trim();
@@ -161,8 +175,16 @@ router.post('/', async (req, res) => {
     if (kode && kodeTerpakai.has(kode)) return H.redirectPesan(res, '/admin/alat-lab/tambah', 'err', `Kode ${kode} sudah dipakai alat lain.`);
     if (!kode) kode = kodeBerikutnya(kodeTerpakai)();
 
+    // Unggah foto (jika ada) setelah semua validasi lolos
+    let foto = { fotoUrl: '', fotoFileId: '' };
+    if (req.file) {
+      try { foto = await simpanFoto(req.file.buffer, kode); }
+      catch (e) { console.error('Upload foto gagal:', e); return H.redirectPesan(res, '/admin/alat-lab/tambah', 'err', 'Gagal mengunggah foto: ' + e.message); }
+    }
+
     const now = new Date().toISOString();
     await col().add({
+      ...foto,
       kode, nama,
       kategori: b.kategori || 'Lainnya',
       merk: (b.merk || '').trim(),
@@ -197,9 +219,11 @@ router.get('/edit/:id', async (req, res) => {
   }
 });
 
-router.post('/update/:id', async (req, res) => {
+router.post('/update/:id', terimaFoto((req) => `/admin/alat-lab/edit/${req.params.id}`), async (req, res) => {
   const id = req.params.id;
   const balik = `/admin/alat-lab/edit/${id}`;
+  let fotoBaru = null;   // foto yang baru diunggah (dibersihkan bila transaksi gagal)
+  let fotoLamaId = '';   // foto lama yang perlu dihapus setelah transaksi sukses
   try {
     const b = req.body;
     const nama = (b.nama || '').trim();
@@ -208,10 +232,16 @@ router.post('/update/:id', async (req, res) => {
     const rusak = toInt(b.jumlahRusak, 0);
     const kodeBaru = (b.kode || '').trim().toUpperCase();
     if (!kodeBaru) return H.redirectPesan(res, balik, 'err', 'Kode alat wajib diisi.');
+    if (total < 1) return H.redirectPesan(res, balik, 'err', 'Jumlah total minimal 1.');
 
     // Pastikan kode tidak bentrok dengan alat lain
     const dup = await col().where('kode', '==', kodeBaru).get();
     if (dup.docs.some(d => d.id !== id)) return H.redirectPesan(res, balik, 'err', `Kode ${kodeBaru} sudah dipakai alat lain.`);
+
+    if (req.file) {
+      try { fotoBaru = await simpanFoto(req.file.buffer, kodeBaru); }
+      catch (e) { console.error('Upload foto gagal:', e); return H.redirectPesan(res, balik, 'err', 'Gagal mengunggah foto: ' + e.message); }
+    }
 
     // Transaksi: stok tersedia dihitung ulang dari data terbaru supaya tidak
     // bentrok dengan peminjaman yang sedang disetujui admin lain.
@@ -225,7 +255,16 @@ router.post('/update/:id', async (req, res) => {
       if (tersedia < 0) {
         throw new H.AturanError(`Jumlah total (${total}) dikurangi rusak (${rusak}) tidak cukup menutup ${dipinjam} unit yang sedang dipinjam.`);
       }
+      const fotoUpdate = {};
+      if (fotoBaru) {
+        Object.assign(fotoUpdate, fotoBaru);
+        fotoLamaId = lama.fotoFileId || '';
+      } else if (b.hapusFoto === 'on' && lama.fotoFileId) {
+        Object.assign(fotoUpdate, { fotoUrl: '', fotoFileId: '' });
+        fotoLamaId = lama.fotoFileId;
+      }
       tx.update(ref, {
+        ...fotoUpdate,
         kode: kodeBaru, nama,
         kategori: b.kategori || 'Lainnya',
         merk: (b.merk || '').trim(),
@@ -236,8 +275,10 @@ router.post('/update/:id', async (req, res) => {
         updatedAt: new Date().toISOString()
       });
     });
+    await hapusFoto(fotoLamaId);
     H.redirectPesan(res, '/admin/alat-lab', 'ok', `Data alat "${nama}" diperbarui.`);
   } catch (err) {
+    if (fotoBaru) await hapusFoto(fotoBaru.fotoFileId);
     if (err instanceof H.AturanError) return H.redirectPesan(res, balik, 'err', err.message);
     console.error('Gagal update alat lab:', err);
     res.status(500).send('Gagal memperbarui alat: ' + err.message);
@@ -275,6 +316,7 @@ router.post('/perbaikan/:id', async (req, res) => {
 // HAPUS (hanya jika tidak ada unit yang sedang dipinjam)
 // ============================================================================
 router.post('/hapus/:id', async (req, res) => {
+  let fotoId = '';
   try {
     await db.runTransaction(async (tx) => {
       const ref = col().doc(req.params.id);
@@ -282,8 +324,10 @@ router.post('/hapus/:id', async (req, res) => {
       if (!snap.exists) throw new H.AturanError('Alat tidak ditemukan.');
       const dipinjam = sedangDipinjam(snap.data());
       if (dipinjam > 0) throw new H.AturanError(`Alat tidak bisa dihapus: masih ada ${dipinjam} unit yang sedang dipinjam. Nonaktifkan saja jika tidak ingin dipinjam lagi.`);
+      fotoId = snap.data().fotoFileId || '';
       tx.delete(ref);
     });
+    await hapusFoto(fotoId);
     H.redirectPesan(res, '/admin/alat-lab', 'ok', 'Alat dihapus dari inventaris.');
   } catch (err) {
     if (err instanceof H.AturanError) return H.redirectPesan(res, '/admin/alat-lab', 'err', err.message);

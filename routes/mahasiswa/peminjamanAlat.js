@@ -106,7 +106,7 @@ router.post('/ajukan', async (req, res) => {
       if (n > (a.jumlahTersedia || 0)) {
         return H.redirectPesan(res, balik, 'err', `Stok ${a.nama} tidak cukup (diminta ${n}, tersedia ${a.jumlahTersedia || 0}).`);
       }
-      items.push({ alatId: s.id, kode: a.kode || '', nama: a.nama, jumlah: n });
+      items.push({ alatId: s.id, kode: a.kode || '', nama: a.nama, fotoUrl: a.fotoUrl || '', jumlah: n });
     }
 
     const now = new Date().toISOString();

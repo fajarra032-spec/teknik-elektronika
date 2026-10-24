@@ -57,7 +57,7 @@
           </thead>
           <tbody>
             <% p.items.forEach(it => { %>
-              <tr><td><code><%= it.kode || '-' %></code></td><td><%= it.nama %></td><td class="text-center"><%= it.jumlah %></td>
+              <tr><td><code><%= it.kode || '-' %></code></td><td><% if (it.fotoUrl) { %><img src="<%= it.fotoUrl %>" alt="" loading="lazy" referrerpolicy="no-referrer" style="width:44px;height:44px;object-fit:cover;border-radius:.4rem;" class="me-2"><% } %><%= it.nama %></td><td class="text-center"><%= it.jumlah %></td>
                 <% if (p.status === 'dikembalikan') { %>
                   <td class="text-center text-success"><%= it.jumlahBaik %></td>
                   <td class="text-center <%= it.jumlahRusak ? 'text-warning fw-bold' : '' %>"><%= it.jumlahRusak %></td>
