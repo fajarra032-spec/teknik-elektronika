@@ -41,4 +41,7 @@ router.use('/penyelesaian-studi', require('./penyelesaianStudi'));
 const tagihanRouter = require('./tagihan');
 router.use('/tagihan', tagihanRouter);
 
+// Peminjaman alat lab (ajukan, kembalikan; diverifikasi admin)
+router.use('/peminjaman-alat', require('./peminjamanAlat'));
+
 module.exports = router;

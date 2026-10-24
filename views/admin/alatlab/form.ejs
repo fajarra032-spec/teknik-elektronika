@@ -1,0 +1,74 @@
+<%- include('../../partials/header') %>
+<% const edit = !!alat; const v = (k, d) => (alat && alat[k] !== undefined ? alat[k] : (d === undefined ? '' : d)); %>
+<style>
+  .form-card { background: #fff; border-radius: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,.05); overflow: hidden; }
+  .form-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 1.25rem 1.5rem; color: #fff; }
+</style>
+<div class="container mt-4 mb-5" style="max-width: 820px;">
+  <div class="form-card">
+    <div class="form-header">
+      <h4 class="fw-bold mb-0"><%= edit ? 'Edit Alat Lab' : 'Tambah Alat Lab' %></h4>
+    </div>
+    <div class="p-4">
+      <%- include('../../partials/pesan_flash') %>
+      <form method="POST" action="<%= edit ? '/admin/alat-lab/update/' + alat.id : '/admin/alat-lab' %>">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Kode Alat</label>
+            <input type="text" name="kode" class="form-control" value="<%= v('kode') %>" maxlength="30" <%= edit ? 'required' : '' %> placeholder="<%= edit ? '' : 'Kosongkan = otomatis (LAB-0001)' %>">
+          </div>
+          <div class="col-md-8">
+            <label class="form-label fw-semibold">Nama Alat <span class="text-danger">*</span></label>
+            <input type="text" name="nama" class="form-control" value="<%= v('nama') %>" required maxlength="120" placeholder="mis. Multimeter Digital">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Kategori</label>
+            <select name="kategori" class="form-select">
+              <% kategori.forEach(k => { %><option value="<%= k %>" <%= v('kategori', 'Lainnya') === k ? 'selected' : '' %>><%= k %></option><% }) %>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Merk / Model</label>
+            <input type="text" name="merk" class="form-control" value="<%= v('merk') %>" maxlength="120">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Lokasi Penyimpanan</label>
+            <input type="text" name="lokasi" class="form-control" value="<%= v('lokasi') %>" maxlength="120" placeholder="mis. Lemari A, Lab Dasar">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Jumlah Total (unit) <span class="text-danger">*</span></label>
+            <input type="number" name="jumlahTotal" class="form-control" min="1" value="<%= v('jumlahTotal', 1) %>" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Unit Rusak</label>
+            <input type="number" name="jumlahRusak" class="form-control" min="0" value="<%= v('jumlahRusak', 0) %>">
+            <div class="form-text">Unit rusak tidak bisa dipinjam.</div>
+          </div>
+          <% if (edit) { %>
+          <div class="col-12">
+            <div class="alert alert-info py-2 mb-0 small">
+              Saat ini <strong><%= v('jumlahTersedia', 0) %></strong> unit tersedia dan <strong><%= dipinjam %></strong> unit sedang dipinjam.
+              Stok tersedia dihitung otomatis: total − rusak − sedang dipinjam.
+            </div>
+          </div>
+          <% } %>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Keterangan</label>
+            <textarea name="keterangan" class="form-control" rows="2" maxlength="500"><%= v('keterangan') %></textarea>
+          </div>
+          <div class="col-12">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" name="aktif" id="aktif" <%= (!edit || alat.aktif !== false) ? 'checked' : '' %>>
+              <label class="form-check-label" for="aktif">Aktif (tampil di katalog dan bisa dipinjam)</label>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Simpan</button>
+          <a href="/admin/alat-lab" class="btn btn-outline-secondary">Batal</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<%- include('../../partials/footer') %>

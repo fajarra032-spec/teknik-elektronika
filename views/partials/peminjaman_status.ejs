@@ -1,0 +1,7 @@
+<%
+  var _warna = {
+    diajukan: 'warning text-dark', ditolak: 'danger', dibatalkan: 'secondary',
+    dipinjam: 'primary', menunggu_verifikasi_kembali: 'info text-dark', dikembalikan: 'success'
+  };
+  var _label = (typeof statusLabel !== 'undefined' && statusLabel && statusLabel[status]) ? statusLabel[status] : status;
+%><span class="badge bg-<%= _warna[status] || 'secondary' %>"><%= _label %></span><% if (typeof terlambat !== 'undefined' && terlambat) { %> <span class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill"></i> Terlambat</span><% } %>

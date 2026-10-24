@@ -487,6 +487,19 @@
             <h6 class="menu-title">Kelola Tagihan</h6>
             <p class="menu-desc">Atur tagihan SPP</p>
         </a>
+        <a href="/admin/peminjaman-alat" class="menu-card">
+            <div class="menu-icon" style="color: #0891b2;"><i class="bi bi-box-arrow-right"></i></div>
+            <h6 class="menu-title">Peminjaman Alat Lab</h6>
+            <p class="menu-desc">Verifikasi pinjam &amp; kembali</p>
+            <% if (stats.peminjamanPending > 0) { %>
+                <span class="badge-new"><%= stats.peminjamanPending %></span>
+            <% } %>
+        </a>
+        <a href="/admin/alat-lab" class="menu-card">
+            <div class="menu-icon" style="color: #7c3aed;"><i class="bi bi-motherboard"></i></div>
+            <h6 class="menu-title">Inventaris Alat Lab</h6>
+            <p class="menu-desc">Data seluruh alat &amp; stok</p>
+        </a>
 
         <!-- ✅ MENU RPS DOSEN (TAMBAHAN BARU) -->
         <a href="/admin/rps" class="menu-card">

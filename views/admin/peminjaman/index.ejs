@@ -1,0 +1,69 @@
+<%- include('../../partials/header') %>
+<style>
+  .page-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: #fff; border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .nav-pills .nav-link { border-radius: 2rem; font-size: .9rem; }
+  @media (max-width: 768px) { .page-header { padding: 1rem; } }
+</style>
+<%
+  const tabs = [
+    ['perlu', 'Perlu Tindakan', hitung.perlu, 'danger'],
+    ['diajukan', 'Pengajuan Baru', hitung.diajukan, 'warning'],
+    ['dipinjam', 'Sedang Dipinjam', hitung.dipinjam, 'primary'],
+    ['terlambat', 'Terlambat', hitung.terlambat, 'danger'],
+    ['dikembalikan', 'Selesai', hitung.dikembalikan, 'success'],
+    ['semua', 'Semua', hitung.semua, 'secondary']
+  ];
+  const tgl = (s) => s ? new Date(s).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+%>
+<div class="container mt-4 mb-5">
+  <div class="page-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-arrow-left-right me-2"></i>Peminjaman Alat Lab</h2>
+        <p class="mb-0 opacity-75">Verifikasi pengajuan peminjaman dan pengembalian alat oleh mahasiswa</p>
+      </div>
+      <a href="/admin/alat-lab" class="btn btn-light btn-sm fw-bold"><i class="bi bi-motherboard"></i> Inventaris Alat</a>
+    </div>
+  </div>
+
+  <%- include('../../partials/pesan_flash') %>
+
+  <ul class="nav nav-pills gap-2 mb-3 flex-wrap">
+    <% tabs.forEach(t => { %>
+      <li class="nav-item">
+        <a class="nav-link <%= filter === t[0] ? 'active' : 'bg-white border text-dark' %>" href="/admin/peminjaman-alat?status=<%= t[0] %>">
+          <%= t[1] %> <span class="badge bg-<%= t[3] %> ms-1"><%= t[2] %></span>
+        </a>
+      </li>
+    <% }) %>
+  </ul>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-light">
+        <tr><th>Kode</th><th>Peminjam</th><th>Alat</th><th>Pinjam</th><th>Rencana Kembali</th><th>Status</th><th>Aksi</th></tr>
+      </thead>
+      <tbody>
+        <% data.forEach(p => { %>
+        <tr>
+          <td><code><%= p.kode %></code><div class="small text-muted"><%= tgl(p.createdAt) %></div></td>
+          <td><strong><%= p.namaMahasiswa %></strong><div class="small text-muted"><%= p.nim %></div></td>
+          <td class="small">
+            <% p.items.slice(0, 3).forEach(it => { %><div><%= it.nama %> <span class="text-muted">×<%= it.jumlah %></span></div><% }) %>
+            <% if (p.items.length > 3) { %><div class="text-muted">+<%= p.items.length - 3 %> lainnya</div><% } %>
+          </td>
+          <td><%= tgl(p.tanggalPinjam) %></td>
+          <td><%= tgl(p.tanggalRencanaKembali) %></td>
+          <td><%- include('../../partials/peminjaman_status', { status: p.status, terlambat: p.terlambat }) %></td>
+          <td><a href="/admin/peminjaman-alat/<%= p.id %>" class="btn btn-sm btn-<%= (p.status === 'diajukan' || p.status === 'menunggu_verifikasi_kembali') ? 'primary' : 'outline-primary' %>">
+            <%= (p.status === 'diajukan' || p.status === 'menunggu_verifikasi_kembali') ? 'Verifikasi' : 'Detail' %></a></td>
+        </tr>
+        <% }) %>
+        <% if (data.length === 0) { %>
+          <tr><td colspan="7" class="text-center text-muted py-4">Tidak ada data pada kategori ini.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../../partials/footer') %>

@@ -78,6 +78,10 @@ router.use('/berkas', require('./berkas'));
 // Kelola Tagihan Mahasiswa
 router.use('/tagihan', require('./tagihan'));
 
+// Inventaris Alat Lab & verifikasi peminjaman/pengembalian alat oleh mahasiswa
+router.use('/alat-lab', require('./alatLab'));
+router.use('/peminjaman-alat', require('./peminjamanAlat'));
+
 // E‑Magang – lihat logbook mahasiswa
 router.use('/emagang', require('./emagang'));
 
@@ -133,6 +137,8 @@ router.get('/', async (req, res) => {
     const suratMahasiswaPending = (await db.collection('surat').where('status', '==', 'pending').count().get()).data().count;
     const suratDosenPending = (await db.collection('surat_dosen').where('status', '==', 'pending').count().get()).data().count;
     const suratPending = suratMahasiswaPending + suratDosenPending;
+    // Peminjaman alat lab yang butuh tindakan admin (pengajuan baru + pengajuan pengembalian)
+    const peminjamanPending = (await db.collection('peminjamanAlat').where('status', 'in', ['diajukan', 'menunggu_verifikasi_kembali']).count().get()).data().count;
 
     // Acara mendatang - sumber tunggal: koleksi jadwalPenting yang dikelola
     // di /admin/jadwalpenting (sebelumnya widget ini tidak pernah mengambil
@@ -150,7 +156,7 @@ router.get('/', async (req, res) => {
       title: 'Dashboard Admin',
       stats: {
         dosenCount, mahasiswaCount, mkCount,
-        krsPending, logbookPending, laporanPending, suratPending
+        krsPending, logbookPending, laporanPending, suratPending, peminjamanPending
       },
       beritaBaru: beritaBaru.docs.map(d => d.data()),
       events

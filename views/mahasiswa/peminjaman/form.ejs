@@ -1,0 +1,107 @@
+<%- include('../../partials/header') %>
+<style>
+  .form-card { background: #fff; border-radius: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,.05); overflow: hidden; }
+  .form-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 1.25rem 1.5rem; color: #fff; }
+  .sec { font-weight: 700; margin: 1.5rem 0 .75rem; border-left: 5px solid #1e3a8a; padding-left: .75rem; color: #1e3a8a; }
+  .alat-row.habis { opacity: .5; }
+  .alat-row.dipilih { background: #eff6ff; }
+  .qty { width: 80px; }
+</style>
+<div class="container mt-4 mb-5" style="max-width: 900px;">
+  <a href="/mahasiswa/peminjaman-alat" class="btn btn-sm btn-outline-secondary mb-3"><i class="bi bi-arrow-left"></i> Kembali</a>
+  <div class="form-card">
+    <div class="form-header"><h4 class="fw-bold mb-0">Ajukan Peminjaman Alat Lab</h4></div>
+    <div class="p-4">
+      <%- include('../../partials/pesan_flash') %>
+      <form method="POST" action="/mahasiswa/peminjaman-alat/ajukan" id="formPinjam">
+        <div class="sec">1. Pilih Alat</div>
+        <input type="search" id="cari" class="form-control mb-2" placeholder="Cari alat (nama, kode, merk)...">
+        <div class="table-responsive border rounded-3" style="max-height: 420px; overflow-y: auto;">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+              <tr><th>Alat</th><th>Kategori</th><th class="text-center">Tersedia</th><th class="text-center">Jumlah Pinjam</th></tr>
+            </thead>
+            <tbody>
+              <% alat.forEach(a => { const habis = (a.jumlahTersedia || 0) < 1; %>
+                <tr class="alat-row <%= habis ? 'habis' : '' %>" data-cari="<%= [a.kode, a.nama, a.merk].join(' ').toLowerCase() %>">
+                  <td><strong><%= a.nama %></strong> <code class="small"><%= a.kode %></code>
+                    <% if (a.merk) { %><div class="small text-muted"><%= a.merk %></div><% } %></td>
+                  <td class="small"><%= a.kategori || '-' %></td>
+                  <td class="text-center"><span class="badge bg-<%= habis ? 'danger' : 'success' %>"><%= habis ? 'Habis' : a.jumlahTersedia %></span></td>
+                  <td class="text-center">
+                    <input type="number" class="form-control form-control-sm qty mx-auto" name="jumlah_<%= a.id %>" min="0" max="<%= a.jumlahTersedia || 0 %>" value="0" <%= habis ? 'disabled' : '' %>>
+                  </td>
+                </tr>
+              <% }) %>
+              <% if (alat.length === 0) { %><tr><td colspan="4" class="text-center text-muted py-4">Belum ada alat terdata di inventaris.</td></tr><% } %>
+            </tbody>
+          </table>
+        </div>
+        <div class="small text-muted mt-1">Dipilih: <strong id="ringkas">0 jenis alat (0 unit)</strong></div>
+
+        <div class="sec">2. Waktu Peminjaman</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Tanggal Pinjam <span class="text-danger">*</span></label>
+            <input type="date" name="tanggalPinjam" id="tglPinjam" class="form-control" min="<%= hariIni %>" value="<%= hariIni %>" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Rencana Tanggal Kembali <span class="text-danger">*</span></label>
+            <input type="date" name="tanggalRencanaKembali" id="tglKembali" class="form-control" min="<%= hariIni %>" value="<%= hariIni %>" required>
+          </div>
+        </div>
+
+        <div class="sec">3. Keperluan</div>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label fw-semibold">Keperluan <span class="text-danger">*</span></label>
+            <textarea name="keperluan" class="form-control" rows="2" maxlength="500" required placeholder="mis. Praktikum Rangkaian Listrik modul 3 / Tugas akhir"></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Mata Kuliah / Kegiatan (opsional)</label>
+            <input type="text" name="kegiatan" class="form-control" maxlength="150">
+          </div>
+        </div>
+
+        <div class="alert alert-warning small mt-4 mb-3">
+          Dengan mengajukan, Anda bertanggung jawab atas alat yang dipinjam dan akan mengembalikannya tepat waktu dalam kondisi baik.
+          Kerusakan atau kehilangan akan dicatat saat verifikasi pengembalian oleh admin.
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Kirim Pengajuan</button>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  (function () {
+    var rows = document.querySelectorAll('.alat-row');
+    var cari = document.getElementById('cari');
+    function ringkas() {
+      var jenis = 0, unit = 0;
+      document.querySelectorAll('.qty').forEach(function (i) {
+        var n = parseInt(i.value, 10) || 0;
+        i.closest('tr').classList.toggle('dipilih', n > 0);
+        if (n > 0) { jenis++; unit += n; }
+      });
+      document.getElementById('ringkas').textContent = jenis + ' jenis alat (' + unit + ' unit)';
+    }
+    document.querySelectorAll('.qty').forEach(function (i) {
+      i.addEventListener('input', function () {
+        var max = parseInt(i.max, 10) || 0, n = parseInt(i.value, 10) || 0;
+        if (n > max) i.value = max; if (n < 0) i.value = 0;
+        ringkas();
+      });
+    });
+    cari.addEventListener('input', function () {
+      var q = cari.value.trim().toLowerCase();
+      rows.forEach(function (r) { r.style.display = (!q || r.dataset.cari.indexOf(q) > -1) ? '' : 'none'; });
+    });
+    var p = document.getElementById('tglPinjam'), k = document.getElementById('tglKembali');
+    p.addEventListener('change', function () { k.min = p.value; if (k.value < p.value) k.value = p.value; });
+    document.getElementById('formPinjam').addEventListener('submit', function (e) {
+      var ada = Array.prototype.some.call(document.querySelectorAll('.qty'), function (i) { return (parseInt(i.value, 10) || 0) > 0; });
+      if (!ada) { e.preventDefault(); alert('Pilih minimal satu alat dengan jumlah lebih dari 0.'); }
+    });
+  })();
+</script>
+<%- include('../../partials/footer') %>

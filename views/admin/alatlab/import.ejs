@@ -1,0 +1,50 @@
+<%- include('../../partials/header') %>
+<div class="container mt-4 mb-5" style="max-width: 820px;">
+  <div class="card shadow-sm border-0" style="border-radius:1.25rem;">
+    <div class="card-body p-4">
+      <h4 class="fw-bold mb-1"><i class="bi bi-file-earmark-excel text-success me-2"></i>Import Alat Lab dari Excel / CSV</h4>
+      <p class="text-muted">Daftarkan banyak alat sekaligus. Baris pertama harus berisi nama kolom.</p>
+
+      <%- include('../../partials/pesan_flash') %>
+
+      <% if (hasil) { %>
+        <div class="alert alert-<%= hasil.gagal.length ? 'warning' : 'success' %>">
+          <strong><%= hasil.berhasil %></strong> alat berhasil ditambahkan,
+          <strong><%= hasil.dilewati.length %></strong> dilewati (kode sudah ada),
+          <strong><%= hasil.gagal.length %></strong> gagal.
+          <% if (hasil.dilewati.length || hasil.gagal.length) { %>
+            <details class="mt-2"><summary>Lihat detail</summary>
+              <ul class="small mb-0 mt-1">
+                <% hasil.dilewati.forEach(m => { %><li><%= m %></li><% }) %>
+                <% hasil.gagal.forEach(m => { %><li class="text-danger"><%= m %></li><% }) %>
+              </ul>
+            </details>
+          <% } %>
+        </div>
+      <% } %>
+
+      <div class="table-responsive mb-3">
+        <table class="table table-sm table-bordered small mb-0">
+          <thead class="table-light"><tr><th>Kolom</th><th>Wajib?</th><th>Keterangan</th></tr></thead>
+          <tbody>
+            <tr><td><code>nama</code></td><td>Ya</td><td>Nama alat</td></tr>
+            <tr><td><code>jumlah</code></td><td>Ya</td><td>Jumlah total unit (default 1)</td></tr>
+            <tr><td><code>kode</code></td><td>Tidak</td><td>Kosong = dibuat otomatis (LAB-0001, ...). Kode yang sudah ada dilewati</td></tr>
+            <tr><td><code>kategori</code></td><td>Tidak</td><td>mis. Alat Ukur</td></tr>
+            <tr><td><code>merk</code></td><td>Tidak</td><td>Merk / model</td></tr>
+            <tr><td><code>lokasi</code></td><td>Tidak</td><td>Tempat penyimpanan</td></tr>
+            <tr><td><code>rusak</code></td><td>Tidak</td><td>Jumlah unit rusak (default 0)</td></tr>
+            <tr><td><code>keterangan</code></td><td>Tidak</td><td>Catatan bebas</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <form method="POST" action="/admin/alat-lab/import" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2">
+        <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
+        <button type="submit" class="btn btn-success text-nowrap"><i class="bi bi-upload"></i> Import</button>
+        <a href="/admin/alat-lab" class="btn btn-outline-secondary">Kembali</a>
+      </form>
+    </div>
+  </div>
+</div>
+<%- include('../../partials/footer') %>

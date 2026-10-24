@@ -1,0 +1,103 @@
+<%- include('../../partials/header') %>
+<style>
+  .page-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: #fff; border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .stat-card { background: #fff; border-radius: 1rem; padding: 1rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .stat-number { font-size: 1.75rem; font-weight: 800; color: #1e3a8a; }
+  @media (max-width: 768px) { .page-header { padding: 1rem; } .stat-number { font-size: 1.4rem; } }
+</style>
+
+<div class="container mt-4 mb-5">
+  <div class="page-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-motherboard me-2"></i>Inventaris Alat Lab</h2>
+        <p class="mb-0 opacity-75">Semua alat harus terdata di sini sebelum dapat dipinjam mahasiswa</p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="/admin/peminjaman-alat" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left-right"></i> Peminjaman</a>
+        <a href="/admin/alat-lab/import" class="btn btn-outline-light btn-sm"><i class="bi bi-file-earmark-excel"></i> Import Excel</a>
+        <a href="/admin/alat-lab/tambah" class="btn btn-light btn-sm fw-bold"><i class="bi bi-plus-circle"></i> Tambah Alat</a>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../../partials/pesan_flash') %>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md"><div class="stat-card"><div class="stat-number"><%= stat.jenis %></div><div class="text-muted small">Jenis Alat</div></div></div>
+    <div class="col-6 col-md"><div class="stat-card"><div class="stat-number"><%= stat.total %></div><div class="text-muted small">Total Unit</div></div></div>
+    <div class="col-6 col-md"><div class="stat-card"><div class="stat-number text-success"><%= stat.tersedia %></div><div class="text-muted small">Tersedia</div></div></div>
+    <div class="col-6 col-md"><div class="stat-card"><div class="stat-number text-primary"><%= stat.dipinjam %></div><div class="text-muted small">Dipinjam</div></div></div>
+    <div class="col-12 col-md"><div class="stat-card"><div class="stat-number text-danger"><%= stat.rusak %></div><div class="text-muted small">Rusak</div></div></div>
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-8"><input type="search" id="cari" class="form-control" placeholder="Cari kode, nama, merk, atau lokasi..."></div>
+    <div class="col-md-4">
+      <select id="filterKategori" class="form-select">
+        <option value="">Semua kategori</option>
+        <% kategori.forEach(k => { %><option value="<%= k %>"><%= k %></option><% }) %>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle" id="tabelAlat">
+      <thead class="table-light">
+        <tr>
+          <th>Kode</th><th>Nama Alat</th><th>Kategori</th><th>Lokasi</th>
+          <th class="text-center">Total</th><th class="text-center">Tersedia</th>
+          <th class="text-center">Dipinjam</th><th class="text-center">Rusak</th><th>Status</th><th style="min-width:150px">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% data.forEach(a => { %>
+        <tr data-kategori="<%= a.kategori || '' %>" data-cari="<%= [a.kode, a.nama, a.merk, a.lokasi].join(' ').toLowerCase() %>">
+          <td><code><%= a.kode %></code></td>
+          <td><strong><%= a.nama %></strong><% if (a.merk) { %><div class="small text-muted"><%= a.merk %></div><% } %></td>
+          <td><%= a.kategori || '-' %></td>
+          <td><%= a.lokasi || '-' %></td>
+          <td class="text-center"><%= a.jumlahTotal %></td>
+          <td class="text-center fw-bold <%= a.jumlahTersedia > 0 ? 'text-success' : 'text-danger' %>"><%= a.jumlahTersedia %></td>
+          <td class="text-center"><%= a.jumlahDipinjam %></td>
+          <td class="text-center">
+            <%= a.jumlahRusak || 0 %>
+            <% if ((a.jumlahRusak || 0) > 0) { %>
+              <form method="POST" action="/admin/alat-lab/perbaikan/<%= a.id %>" class="d-flex gap-1 mt-1">
+                <input type="number" name="jumlah" min="1" max="<%= a.jumlahRusak %>" value="<%= a.jumlahRusak %>" class="form-control form-control-sm" style="width:60px">
+                <button class="btn btn-sm btn-outline-success" title="Tandai selesai diperbaiki"><i class="bi bi-wrench"></i></button>
+              </form>
+            <% } %>
+          </td>
+          <td><span class="badge bg-<%= a.aktif === false ? 'secondary' : 'success' %>"><%= a.aktif === false ? 'Nonaktif' : 'Aktif' %></span></td>
+          <td>
+            <a href="/admin/alat-lab/edit/<%= a.id %>" class="btn btn-sm btn-warning" title="Edit"><i class="bi bi-pencil"></i></a>
+            <form method="POST" action="/admin/alat-lab/hapus/<%= a.id %>" class="d-inline" onsubmit="return confirm('Hapus alat ini dari inventaris?')">
+              <button class="btn btn-sm btn-danger" title="Hapus"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        <% }) %>
+        <% if (data.length === 0) { %>
+          <tr><td colspan="10" class="text-center text-muted py-4">Belum ada alat terdata. Klik "Tambah Alat" atau "Import Excel".</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var cari = document.getElementById('cari'), kat = document.getElementById('filterKategori');
+    var rows = document.querySelectorAll('#tabelAlat tbody tr[data-cari]');
+    function saring() {
+      var q = cari.value.trim().toLowerCase(), k = kat.value;
+      rows.forEach(function (r) {
+        var cocok = (!q || r.dataset.cari.indexOf(q) > -1) && (!k || r.dataset.kategori === k);
+        r.style.display = cocok ? '' : 'none';
+      });
+    }
+    cari.addEventListener('input', saring); kat.addEventListener('change', saring);
+  })();
+</script>
+<%- include('../../partials/footer') %>
