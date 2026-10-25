@@ -359,6 +359,11 @@ async function startServer() {
           ]);
           res.locals.navNotifikasi = navNotifikasi;
           res.locals.navPesan = navPesan;
+          // Badge pekerjaan admin yang menunggu tindakan (kunjungan industri,
+          // peminjaman alat lab, seminar magang) untuk menu "Layanan" di navbar.
+          if (req.user.role === 'admin') {
+            res.locals.navAdminPending = await require('./helpers/adminBadgeHelper').getAdminPending(db);
+          }
         } catch (error) {
           console.error('Gagal memuat badge navbar (notifikasi/pesan):', error);
           res.locals.navNotifikasi = { unreadCount: 0, items: [] };

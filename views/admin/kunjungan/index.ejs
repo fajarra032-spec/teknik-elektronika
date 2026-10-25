@@ -1,0 +1,48 @@
+<%- include('../../partials/header') %>
+<style>
+  .page-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: #fff; border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .nav-pills .nav-link { border-radius: 2rem; font-size: .9rem; }
+  @media (max-width: 768px) { .page-header { padding: 1rem; } }
+</style>
+<%
+  const tabs = [['diajukan', 'Menunggu Verifikasi', hitung.diajukan, 'warning'], ['disetujui', 'Disetujui', hitung.disetujui, 'success'], ['ditolak', 'Ditolak', hitung.ditolak, 'danger'], ['semua', 'Semua', hitung.semua, 'secondary']];
+  const warna = { diajukan: 'warning text-dark', disetujui: 'success', ditolak: 'danger' };
+%>
+<div class="container mt-4 mb-5">
+  <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-building me-2"></i>Pengajuan Kunjungan Industri</h2>
+      <p class="mb-0 opacity-75">Pengajuan dari publik. Isi nomor permohonan untuk menerbitkan surat otomatis.</p>
+    </div>
+    <a href="/dokumen/kunjungan-industri" target="_blank" class="btn btn-light btn-sm fw-bold"><i class="bi bi-box-arrow-up-right"></i> Halaman Publik</a>
+  </div>
+
+  <%- include('../../partials/pesan_flash') %>
+
+  <ul class="nav nav-pills gap-2 mb-3 flex-wrap">
+    <% tabs.forEach(t => { %>
+      <li class="nav-item"><a class="nav-link <%= filter === t[0] ? 'active' : 'bg-white border text-dark' %>" href="/admin/kunjungan-industri?status=<%= t[0] %>"><%= t[1] %> <span class="badge bg-<%= t[3] %> ms-1"><%= t[2] %></span></a></li>
+    <% }) %>
+  </ul>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-light"><tr><th>Kode</th><th>Perusahaan</th><th>Pengaju</th><th>Tanggal Kunjungan</th><th>MK Terkait</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <% data.forEach(p => { %>
+          <tr>
+            <td><code><%= p.kode %></code><div class="small text-muted"><%= new Date(p.createdAt).toLocaleDateString('id-ID') %></div></td>
+            <td><strong><%= p.namaPerusahaan %></strong><% if (p.nomorSurat) { %><div class="small text-success">No. <%= p.nomorSurat %></div><% } %></td>
+            <td><%= p.namaPengaju %><div class="small text-muted"><%= p.noHp %></div></td>
+            <td><%= tanggalPanjang(p.tanggalKunjungan) %></td>
+            <td class="small"><%= (p.mataKuliah || []).map(m => m.nama).join(', ') %></td>
+            <td><span class="badge bg-<%= warna[p.status] || 'secondary' %>"><%= statusLabel[p.status] || p.status %></span></td>
+            <td><a href="/admin/kunjungan-industri/<%= p.id %>" class="btn btn-sm btn-<%= p.status === 'diajukan' ? 'primary' : 'outline-primary' %>"><%= p.status === 'diajukan' ? 'Verifikasi' : 'Detail' %></a></td>
+          </tr>
+        <% }) %>
+        <% if (data.length === 0) { %><tr><td colspan="7" class="text-center text-muted py-4">Tidak ada data.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../../partials/footer') %>

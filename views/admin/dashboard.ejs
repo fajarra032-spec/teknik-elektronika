@@ -372,7 +372,7 @@
         <div class="card-body">
             <!-- Pending Stats Grid -->
             <div class="row g-3">
-                <div class="col-md-3 col-6">
+                <div class="col-lg-3 col-md-4 col-6">
                     <div class="stat-item d-flex align-items-center">
                         <div class="stat-icon me-2">
                             <i class="bi bi-file-earmark-text"></i>
@@ -384,7 +384,7 @@
                         <a href="/admin/krs" class="btn-warning-custom ms-2">Lihat</a>
                     </div>
                 </div>
-                <div class="col-md-3 col-6">
+                <div class="col-lg-3 col-md-4 col-6">
                     <div class="stat-item d-flex align-items-center">
                         <div class="stat-icon me-2" style="color: #198754; background: rgba(25,135,84,0.1);">
                             <i class="bi bi-file-earmark-pdf"></i>
@@ -396,7 +396,7 @@
                         <a href="/admin/laporan-magang/rekap" class="btn-warning-custom ms-2">Lihat</a>
                     </div>
                 </div>
-                <div class="col-md-3 col-6">
+                <div class="col-lg-3 col-md-4 col-6">
                     <div class="stat-item d-flex align-items-center">
                         <div class="stat-icon me-2" style="color: #ffc107; background: rgba(255,193,7,0.1);">
                             <i class="bi bi-journal-bookmark-fill"></i>
@@ -408,7 +408,7 @@
                         <a href="/admin/emagang" class="btn-warning-custom ms-2">Lihat</a>
                     </div>
                 </div>
-                <div class="col-md-3 col-6">
+                <div class="col-lg-3 col-md-4 col-6">
                     <div class="stat-item d-flex align-items-center">
                         <div class="stat-icon me-2" style="color: #0dcaf0; background: rgba(13,202,240,0.1);">
                             <i class="bi bi-envelope-paper"></i>
@@ -418,6 +418,42 @@
                             <div class="stat-number"><%= stats.suratPending || 0 %></div>
                         </div>
                         <a href="/admin/surat" class="btn-warning-custom ms-2">Lihat</a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 col-6">
+                    <div class="stat-item d-flex align-items-center">
+                        <div class="stat-icon me-2" style="color: #ea580c; background: rgba(234,88,12,0.1);">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Kunjungan Industri</div>
+                            <div class="stat-number"><%= stats.kunjunganPending || 0 %></div>
+                        </div>
+                        <a href="/admin/kunjungan-industri" class="btn-warning-custom ms-2">Lihat</a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 col-6">
+                    <div class="stat-item d-flex align-items-center">
+                        <div class="stat-icon me-2" style="color: #0891b2; background: rgba(8,145,178,0.1);">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Peminjaman Alat</div>
+                            <div class="stat-number"><%= stats.peminjamanPending || 0 %></div>
+                        </div>
+                        <a href="/admin/peminjaman-alat" class="btn-warning-custom ms-2">Lihat</a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 col-6">
+                    <div class="stat-item d-flex align-items-center">
+                        <div class="stat-icon me-2" style="color: #7c3aed; background: rgba(124,58,237,0.1);">
+                            <i class="bi bi-easel"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Seminar Magang</div>
+                            <div class="stat-number"><%= stats.seminarPending || 0 %></div>
+                        </div>
+                        <a href="/admin/seminar" class="btn-warning-custom ms-2">Lihat</a>
                     </div>
                 </div>
             </div>
@@ -493,6 +529,22 @@
             <p class="menu-desc">Verifikasi pinjam &amp; kembali</p>
             <% if (stats.peminjamanPending > 0) { %>
                 <span class="badge-new"><%= stats.peminjamanPending %></span>
+            <% } %>
+        </a>
+        <a href="/admin/seminar" class="menu-card">
+            <div class="menu-icon" style="color: #7c3aed;"><i class="bi bi-easel"></i></div>
+            <h6 class="menu-title">Seminar Magang</h6>
+            <p class="menu-desc">Setujui jadwal seminar</p>
+            <% if (stats.seminarPending > 0) { %>
+                <span class="badge-new"><%= stats.seminarPending %></span>
+            <% } %>
+        </a>
+        <a href="/admin/kunjungan-industri" class="menu-card">
+            <div class="menu-icon" style="color: #ea580c;"><i class="bi bi-building"></i></div>
+            <h6 class="menu-title">Kunjungan Industri</h6>
+            <p class="menu-desc">Verifikasi &amp; terbitkan surat</p>
+            <% if (stats.kunjunganPending > 0) { %>
+                <span class="badge-new"><%= stats.kunjunganPending %></span>
             <% } %>
         </a>
         <a href="/admin/alat-lab" class="menu-card">

@@ -704,6 +704,14 @@ router.get('/validasi', async (req, res) => {
           hasil = { jenis: 'Surat Tugas Dosen', nama: d.dosenNama || '-', jenisSurat: 'Surat Tugas', tanggal: d.createdAt, status: d.status };
         }
       }
+
+      if (!hasil) {
+        const kiSnap = await db.collection('kunjunganIndustri').where('kodeValidasi', '==', kodeTrim).limit(1).get();
+        if (!kiSnap.empty) {
+          const d = kiSnap.docs[0].data();
+          hasil = { jenis: 'Surat Permohonan Kunjungan Industri', nama: d.namaPerusahaan || '-', jenisSurat: `Nomor ${d.nomorSurat || '-'}`, tanggal: d.tanggalSurat || d.disetujuiAt, status: 'Disetujui' };
+        }
+      }
     } catch (error) {
       console.error('Error validasi surat:', error);
     }

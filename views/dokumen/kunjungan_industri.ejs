@@ -45,63 +45,236 @@
     text-align: center; color: white; max-width: 780px; margin: 0 auto 3rem;
   }
   .cta-box .btn-light { border-radius: 50px; font-weight: 600; padding: 0.6rem 1.8rem; }
+
+  .form-card { max-width: 900px; margin: 0 auto 3rem; background: #fff; border-radius: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,.07); overflow: hidden; }
+  .form-card .head { background: linear-gradient(135deg, #0d6efd, #0dcaf0); color: #fff; padding: 1.2rem 1.6rem; }
+  .form-card .body { padding: 1.6rem; }
+  .sec-t { font-weight: 700; color: #0d6efd; border-left: 4px solid #0d6efd; padding-left: .7rem; margin: 1.4rem 0 .8rem; }
+  .chip { display: inline-flex; align-items: center; gap: .4rem; background: #e7f1ff; color: #0a58ca; border-radius: 2rem; padding: .3rem .4rem .3rem .8rem; font-size: .85rem; margin: .2rem .3rem .2rem 0; }
+  .chip button { border: 0; background: #0d6efd; color: #fff; width: 22px; height: 22px; border-radius: 50%; line-height: 1; font-size: .8rem; cursor: pointer; }
+  .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .setuju-card { background: #fff; border-radius: 1rem; padding: 1.1rem 1.3rem; box-shadow: 0 8px 20px rgba(0,0,0,.06); border: 1px solid #e8f0fe; height: 100%; display: flex; flex-direction: column; }
+  .setuju-card .no { font-size: .78rem; color: #64748b; }
+  .wrap-wide { max-width: 1000px; margin: 0 auto 3rem; padding: 0 1rem; }
 </style>
 
 <div class="doc-hero">
   <h1><i class="bi bi-building-fill me-2"></i>Pengajuan Kunjungan Industri</h1>
-  <p>SOP bagi sekolah, kampus, atau perusahaan yang ingin berkunjung ke Prodi Teknik Elektronika</p>
+  <p>Ajukan kunjungan industri Program Studi Teknik Elektronika secara daring &mdash; surat permohonan terbit otomatis setelah disetujui admin</p>
 </div>
 
 <div class="flow-wrap">
   <div class="flow-step">
     <div class="flow-num">1</div>
     <div class="flow-content">
-      <h5>Mengirim Surat Permohonan</h5>
-      <p>Instansi/sekolah/perusahaan mengirimkan surat permohonan resmi kunjungan industri kepada Program Studi Teknik Elektronika, mencantumkan tujuan, jumlah peserta, dan rencana tanggal kunjungan.</p>
-      <div class="syarat"><i class="bi bi-envelope me-1"></i> Surat dapat dikirim melalui email prodi atau langsung ke sekretariat kampus.</div>
+      <h5>Isi Formulir Pengajuan</h5>
+      <p>Isi waktu kunjungan, perusahaan tujuan, mata kuliah terkait, dan keterkaitan perusahaan dengan mata kuliah tersebut. Pengajuan terbuka untuk umum, tanpa perlu akun.</p>
+      <div class="syarat"><i class="bi bi-clock me-1"></i> Sebaiknya diajukan paling lambat H-14 sebelum tanggal kunjungan.</div>
     </div>
   </div>
   <div class="flow-step">
     <div class="flow-num">2</div>
     <div class="flow-content">
-      <h5>Peninjauan &amp; Penjadwalan</h5>
-      <p>Program studi meninjau permohonan dan menentukan jadwal yang sesuai dengan ketersediaan fasilitas laboratorium dan dosen pendamping.</p>
+      <h5>Verifikasi Admin</h5>
+      <p>Admin prodi meninjau pengajuan dan menyesuaikan dengan jadwal serta ketersediaan dosen pendamping. Simpan <strong>kode pengajuan</strong> Anda untuk memantau status.</p>
     </div>
   </div>
   <div class="flow-step">
     <div class="flow-num">3</div>
     <div class="flow-content">
-      <h5>Konfirmasi Jadwal &amp; Rundown Acara</h5>
-      <p>Pihak prodi mengirimkan konfirmasi jadwal beserta susunan acara (rundown) kunjungan kepada instansi pemohon.</p>
+      <h5>Surat Permohonan Terbit Otomatis</h5>
+      <p>Setelah admin mengisi nomor permohonan, surat kunjungan industri langsung dibuat dan muncul di bagian <a href="#disetujui">Pengajuan yang Disetujui</a>.</p>
     </div>
   </div>
   <div class="flow-step">
     <div class="flow-num">4</div>
     <div class="flow-content">
-      <h5>Pelaksanaan Kunjungan</h5>
-      <p>Kunjungan dilaksanakan sesuai jadwal, meliputi pengenalan program studi, kunjungan laboratorium, dan sesi tanya jawab.</p>
+      <h5>Cetak / Unduh &amp; Serahkan ke Perusahaan</h5>
+      <p>Unduh PDF atau cetak surat, lalu serahkan kepada perusahaan tujuan sebagai surat permohonan resmi.</p>
     </div>
   </div>
   <div class="flow-step">
     <div class="flow-num">5</div>
     <div class="flow-content">
-      <h5>Dokumentasi &amp; Tindak Lanjut</h5>
-      <p>Kegiatan didokumentasikan dan dapat ditindaklanjuti dengan kerja sama lebih lanjut, seperti magang atau kunjungan balasan.</p>
+      <h5>Pelaksanaan &amp; Tindak Lanjut</h5>
+      <p>Kunjungan dilaksanakan sesuai jadwal, didokumentasikan, dan dapat ditindaklanjuti dengan kerja sama lebih lanjut, seperti magang.</p>
       <div class="syarat"><i class="bi bi-arrow-right-circle me-1"></i> Lihat juga <a href="/dokumen/kerjasama-perusahaan">halaman kerjasama perusahaan</a></div>
     </div>
   </div>
 </div>
 
-<div class="info-grid">
-  <div class="info-item"><i class="bi bi-people"></i><div class="lbl">Kelompok/Rombongan</div></div>
-  <div class="info-item"><i class="bi bi-clock"></i><div class="lbl">H-14 Sebelum Kunjungan</div></div>
-  <div class="info-item"><i class="bi bi-geo-alt"></i><div class="lbl">Kampus Politeknik Dewantara</div></div>
+<div class="wrap-wide" id="form">
+  <% if (terkirim) { %>
+    <div class="alert alert-success shadow-sm">
+      <h5 class="fw-bold mb-1"><i class="bi bi-check-circle-fill me-1"></i> Pengajuan berhasil dikirim</h5>
+      <div>Kode pengajuan Anda: <strong class="fs-5 user-select-all"><%= terkirim %></strong></div>
+      <div class="small mt-1">Simpan kode ini. Anda dapat memeriksa status pengajuan kapan saja pada kotak &ldquo;Cek Status Pengajuan&rdquo; di bawah.</div>
+    </div>
+  <% } %>
+  <% if (err) { %>
+    <div class="alert alert-danger shadow-sm"><i class="bi bi-exclamation-triangle-fill me-1"></i> <%= err %></div>
+  <% } %>
+
+  <div class="form-card">
+    <div class="head"><h4 class="fw-bold mb-0"><i class="bi bi-pencil-square me-2"></i>Formulir Pengajuan Kunjungan Industri</h4></div>
+    <div class="body">
+      <form method="POST" action="/dokumen/kunjungan-industri" id="formKI" autocomplete="off">
+        <input type="hidden" name="ts" value="<%= ts %>">
+        <div class="hp-field" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+
+        <div class="sec-t">1. Data Pengaju</div>
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
+            <input type="text" name="namaPengaju" class="form-control" maxlength="100" required value="<%= form.namaPengaju || '' %>"></div>
+          <div class="col-md-6"><label class="form-label fw-semibold">Jabatan / Asal Pengaju</label>
+            <input type="text" name="jabatanPengaju" class="form-control" maxlength="100" placeholder="mis. Dosen pengampu / Ketua Himpunan" value="<%= form.jabatanPengaju || '' %>"></div>
+          <div class="col-md-6"><label class="form-label fw-semibold">No. HP / WhatsApp <span class="text-danger">*</span></label>
+            <input type="tel" name="noHp" class="form-control" maxlength="20" required value="<%= form.noHp || '' %>"></div>
+          <div class="col-md-6"><label class="form-label fw-semibold">Email</label>
+            <input type="email" name="email" class="form-control" maxlength="100" value="<%= form.email || '' %>"></div>
+        </div>
+
+        <div class="sec-t">2. Perusahaan Tujuan</div>
+        <div class="row g-3">
+          <div class="col-12"><label class="form-label fw-semibold">Nama Perusahaan / Instansi <span class="text-danger">*</span></label>
+            <input type="text" name="namaPerusahaan" class="form-control" maxlength="150" required value="<%= form.namaPerusahaan || '' %>"></div>
+          <div class="col-12"><label class="form-label fw-semibold">Alamat Perusahaan <span class="text-danger">*</span></label>
+            <textarea name="alamatPerusahaan" class="form-control" rows="2" maxlength="300" required><%= form.alamatPerusahaan || '' %></textarea></div>
+        </div>
+
+        <div class="sec-t">3. Waktu &amp; Peserta Kunjungan</div>
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label fw-semibold">Tanggal Kunjungan <span class="text-danger">*</span></label>
+            <input type="date" name="tanggalKunjungan" id="tglMulai" class="form-control" min="<%= hariIni %>" required value="<%= form.tanggalKunjungan || '' %>"></div>
+          <div class="col-md-6"><label class="form-label fw-semibold">Sampai Tanggal <span class="text-muted fw-normal">(jika lebih dari sehari)</span></label>
+            <input type="date" name="tanggalSelesai" id="tglSelesai" class="form-control" min="<%= hariIni %>" value="<%= form.tanggalSelesai || '' %>"></div>
+          <div class="col-6 col-md-3"><label class="form-label fw-semibold">Jam Mulai</label>
+            <input type="time" name="waktuMulai" class="form-control" value="<%= form.waktuMulai || '' %>"></div>
+          <div class="col-6 col-md-3"><label class="form-label fw-semibold">Jam Selesai</label>
+            <input type="time" name="waktuSelesai" class="form-control" value="<%= form.waktuSelesai || '' %>"></div>
+          <div class="col-6 col-md-3"><label class="form-label fw-semibold">Jumlah Mahasiswa <span class="text-danger">*</span></label>
+            <input type="number" name="jumlahMahasiswa" class="form-control" min="1" max="500" required value="<%= form.jumlahMahasiswa || '' %>"></div>
+          <div class="col-6 col-md-3"><label class="form-label fw-semibold">Dosen Pendamping</label>
+            <input type="number" name="jumlahPendamping" class="form-control" min="0" max="50" value="<%= form.jumlahPendamping || '0' %>"></div>
+        </div>
+
+        <div class="sec-t">4. Mata Kuliah Terkait &amp; Keterkaitannya</div>
+        <label class="form-label fw-semibold">Mata Kuliah Terkait <span class="text-danger">*</span></label>
+        <div class="input-group mb-1">
+          <select id="pilihMk" class="form-select">
+            <option value="">&mdash; Pilih mata kuliah lalu klik Tambah &mdash;</option>
+            <% let _sem = null; mkList.forEach(function (m) { if (m.semester !== _sem) { if (_sem !== null) { %></optgroup><% } _sem = m.semester; %><optgroup label="<%= m.semester ? 'Semester ' + m.semester : 'Lainnya' %>"><% } %>
+              <option value="<%= m.id %>" data-nama="<%= m.nama %>" data-kode="<%= m.kode %>"><%= m.kode ? m.kode + ' - ' : '' %><%= m.nama %></option>
+            <% }) %><% if (_sem !== null) { %></optgroup><% } %>
+          </select>
+          <button type="button" class="btn btn-outline-primary" id="btnTambahMk"><i class="bi bi-plus-lg"></i> Tambah</button>
+        </div>
+        <div id="chipMk" class="mb-1"></div>
+        <div id="inputMk"></div>
+        <div class="form-text mb-3">Boleh lebih dari satu (maks. 10).</div>
+
+        <div class="mb-3"><label class="form-label fw-semibold">Keterkaitan Perusahaan dengan Mata Kuliah <span class="text-danger">*</span></label>
+          <textarea name="keterkaitan" class="form-control" rows="4" minlength="20" maxlength="1500" required placeholder="Jelaskan mengapa perusahaan ini relevan dengan mata kuliah di atas, mis. perusahaan memproduksi/menggunakan PLC yang dipelajari pada mata kuliah ..."><%= form.keterkaitan || '' %></textarea></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Tujuan / Kegiatan yang Diharapkan <span class="text-muted fw-normal">(opsional)</span></label>
+          <textarea name="tujuan" class="form-control" rows="2" maxlength="1000"><%= form.tujuan || '' %></textarea></div>
+
+        <div class="alert alert-light border small">Surat permohonan yang diterbitkan memuat data perusahaan, jadwal, peserta, dan mata kuliah di atas. Nomor HP dan email Anda <strong>tidak</strong> ditampilkan kepada publik.</div>
+        <button type="submit" class="btn btn-primary btn-lg rounded-pill px-4"><i class="bi bi-send-fill me-1"></i> Kirim Pengajuan</button>
+      </form>
+    </div>
+  </div>
 </div>
 
-<div class="cta-box">
-  <h5 class="fw-bold mb-2">Ingin mengatur jadwal kunjungan?</h5>
+<div class="wrap-wide">
+  <div class="card border-0 shadow-sm" style="border-radius:1.25rem;">
+    <div class="card-body p-4">
+      <h5 class="fw-bold mb-2"><i class="bi bi-search me-1"></i> Cek Status Pengajuan</h5>
+      <form method="GET" action="/dokumen/kunjungan-industri#cekStatus" class="d-flex gap-2 flex-wrap" id="cekStatus">
+        <input type="text" name="kode" class="form-control" style="max-width:340px" placeholder="Masukkan kode pengajuan, mis. KI-20261101-AB12C" value="<%= cekStatus ? cekStatus.kode : '' %>" maxlength="40" required>
+        <button class="btn btn-outline-primary">Cek</button>
+      </form>
+      <% if (cekStatus) { %>
+        <div class="mt-3">
+          <% if (cekStatus.tidakDitemukan) { %>
+            <div class="alert alert-warning mb-0">Kode <strong><%= cekStatus.kode %></strong> tidak ditemukan. Periksa kembali penulisannya.</div>
+          <% } else { %>
+            <div class="alert alert-<%= cekStatus.status === 'disetujui' ? 'success' : (cekStatus.status === 'ditolak' ? 'danger' : 'info') %> mb-0">
+              <div><strong><%= cekStatus.label %></strong> &mdash; <%= cekStatus.namaPerusahaan %> (<%= tanggalPanjang(cekStatus.tanggalKunjungan) %>)</div>
+              <% if (cekStatus.status === 'disetujui') { %>
+                <div class="small mt-1">Nomor permohonan: <strong><%= cekStatus.nomorSurat %></strong> &middot;
+                  <a href="/dokumen/kunjungan-industri/surat/<%= cekStatus.suratId %>">Buka surat</a></div>
+              <% } else if (cekStatus.status === 'ditolak' && cekStatus.alasanPenolakan) { %>
+                <div class="small mt-1">Alasan: <%= cekStatus.alasanPenolakan %></div>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="wrap-wide" id="disetujui">
+  <h3 class="fw-bold mb-1"><i class="bi bi-patch-check-fill text-success me-2"></i>Pengajuan yang Disetujui</h3>
+  <p class="text-muted">Surat permohonan kunjungan industri yang sudah diterbitkan. Silakan cetak atau unduh sebagai PDF.</p>
+  <% if (disetujui.length === 0) { %>
+    <div class="alert alert-light border text-center">Belum ada pengajuan yang disetujui.</div>
+  <% } %>
+  <div class="row g-3">
+    <% disetujui.forEach(function (d) { %>
+      <div class="col-md-6">
+        <div class="setuju-card">
+          <div class="no"><i class="bi bi-file-earmark-text"></i> No. <%= d.nomorSurat %></div>
+          <div class="fw-bold fs-6 mt-1"><%= d.namaPerusahaan %></div>
+          <div class="small text-muted"><i class="bi bi-calendar-event"></i> <%= rentangHari(d.tanggalKunjungan, d.tanggalSelesai) %></div>
+          <div class="small mt-1"><% d.mataKuliah.forEach(function (m) { %><span class="badge bg-light text-dark border me-1"><%= m.nama %></span><% }) %></div>
+          <div class="small text-muted mt-1">Diajukan oleh <%= d.namaPengaju %></div>
+          <div class="d-flex gap-2 mt-auto pt-3 flex-wrap">
+            <a href="/dokumen/kunjungan-industri/surat/<%= d.id %>" class="btn btn-sm btn-primary" target="_blank" rel="noopener"><i class="bi bi-printer"></i> Lihat / Cetak</a>
+            <% if (d.adaPdf) { %><a href="/dokumen/kunjungan-industri/surat/<%= d.id %>/pdf" class="btn btn-sm btn-outline-success"><i class="bi bi-download"></i> Unduh PDF</a><% } %>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</div>
+
+<div class="cta-box" style="margin-top:3rem;">
+  <h5 class="fw-bold mb-2">Butuh bantuan mengajukan?</h5>
   <p class="mb-3 opacity-90">Hubungi kami untuk informasi lebih lanjut mengenai kunjungan industri.</p>
   <a href="/panduan" class="btn btn-light"><i class="bi bi-question-circle me-1"></i> Lihat Panduan</a>
 </div>
+
+<script>
+  (function () {
+    var pilih = document.getElementById('pilihMk'), chip = document.getElementById('chipMk'), inputs = document.getElementById('inputMk');
+    var terpilih = {};
+    function gambar() {
+      chip.innerHTML = ''; inputs.innerHTML = '';
+      Object.keys(terpilih).forEach(function (id) {
+        var c = document.createElement('span'); c.className = 'chip'; c.textContent = terpilih[id];
+        var x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.setAttribute('aria-label', 'Hapus');
+        x.onclick = function () { delete terpilih[id]; gambar(); };
+        c.appendChild(x); chip.appendChild(c);
+        var h = document.createElement('input'); h.type = 'hidden'; h.name = 'mkIds'; h.value = id; inputs.appendChild(h);
+      });
+    }
+    document.getElementById('btnTambahMk').addEventListener('click', function () {
+      var o = pilih.options[pilih.selectedIndex];
+      if (!o || !o.value) return;
+      if (Object.keys(terpilih).length >= 10) { alert('Maksimal 10 mata kuliah.'); return; }
+      terpilih[o.value] = o.dataset.nama; pilih.value = ''; gambar();
+    });
+    document.getElementById('formKI').addEventListener('submit', function (e) {
+      if (!Object.keys(terpilih).length) { e.preventDefault(); alert('Pilih minimal satu mata kuliah terkait, lalu klik Tambah.'); pilih.focus(); }
+    });
+    var a = document.getElementById('tglMulai'), b = document.getElementById('tglSelesai');
+    a.addEventListener('change', function () { b.min = a.value; if (b.value && b.value < a.value) b.value = a.value; });
+    // Pulihkan pilihan MK bila halaman dirender ulang karena error validasi
+    var awal = <%- JSON.stringify([].concat(form.mkIds || []).map(String)).replace(/</g, '\\u003c') %>;
+    awal.forEach(function (id) { for (var i = 0; i < pilih.options.length; i++) { if (pilih.options[i].value === id) terpilih[id] = pilih.options[i].dataset.nama; } });
+    gambar();
+  })();
+</script>
 
 <%- include('../partials/footer-landing') %>

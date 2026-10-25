@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Surat Permohonan Kunjungan Industri - <%= namaPerusahaan %></title>
+  <style>
+    @page { size: A4; margin: 2cm; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; color: #000; background: #e9edf3; margin: 0; }
+    .kertas { background: #fff; width: 21cm; min-height: 29.7cm; margin: 0 auto; padding: 2cm; position: relative; }
+    .kop-surat { display: flex; align-items: center; margin-bottom: 20px; border-bottom: 3px double #000; padding-bottom: 10px; }
+    .logo-kop { width: 90px; height: auto; margin-right: 20px; }
+    .teks-kop { flex: 1; font-family: Arial, Helvetica, sans-serif; }
+    .teks-kop .nama-kampus { font-size: 27pt; font-weight: bold; margin: 0; color: #3b60a3; text-transform: uppercase; }
+    .teks-kop .alamat, .teks-kop .kontak { font-size: 13pt; margin: 0; color: #333; }
+    .meta { margin: 20px 0 10px; border-collapse: collapse; }
+    .meta td { padding: 1px 0; vertical-align: top; }
+    .meta .l { width: 90px; } .meta .t { width: 14px; }
+    .tujuan p { margin: 2px 0; }
+    .isi { text-align: justify; margin: 14px 0; }
+    .isi p { margin: 8px 0; }
+    .tabel-data { width: 100%; margin: 10px 0 10px 24px; border-collapse: collapse; }
+    .tabel-data td { padding: 3px 0; vertical-align: top; }
+    .col-label { width: 170px; } .col-titik { width: 14px; }
+    .daftar-mk { margin: 0; padding-left: 18px; }
+    .ttd-wrap { display: flex; justify-content: flex-end; margin-top: 30px; page-break-inside: avoid; }
+    .ttd { width: 290px; text-align: left; }
+    .area-ttd { position: relative; height: 50px; }
+    .img-ttd { position: absolute; top: -55px; left: -20px; height: 180px; width: auto; z-index: 10; mix-blend-mode: multiply; }
+    .nama-ttd { font-weight: bold; text-decoration: underline; margin: 0; position: relative; z-index: 1; }
+    .nip-ttd { margin: 0; position: relative; z-index: 1; }
+    .footer { margin-top: 30px; font-size: 8pt; font-family: Arial, sans-serif; color: #555; border-top: 1px dashed #ccc; padding-top: 8px; }
+    .toolbar { position: sticky; top: 0; z-index: 100; background: #1e3a8a; color: #fff; padding: .6rem 1rem; display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; font-family: Arial, sans-serif; font-size: 14px; }
+    .toolbar a, .toolbar button { background: #fff; color: #1e3a8a; border: 0; border-radius: 6px; padding: .4rem .9rem; text-decoration: none; cursor: pointer; font-weight: 600; font-size: 14px; }
+    .toolbar .spacer { flex: 1; }
+    @media (max-width: 21.5cm) { .kertas { width: 100%; min-height: 0; padding: 1rem; } .teks-kop .nama-kampus { font-size: 16pt; } .teks-kop .alamat, .teks-kop .kontak { font-size: 9pt; } .logo-kop { width: 56px; } .col-label { width: 120px; } }
+    @media print {
+      body { background: #fff; }
+      .toolbar { display: none !important; }
+      .kertas { width: auto; min-height: 0; margin: 0; padding: 0; }
+      .img-ttd { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+<% if (typeof mode === 'undefined' || mode !== 'pdf') { %>
+  <div class="toolbar">
+    <button type="button" onclick="window.print()">&#128424; Cetak / Simpan PDF</button>
+    <% if (typeof pdfUrl !== 'undefined' && pdfUrl) { %><a href="<%= pdfUrl %>">&#11015; Unduh PDF</a><% } %>
+    <span class="spacer"></span>
+    <a href="/dokumen/kunjungan-industri#disetujui">&larr; Kembali</a>
+  </div>
+<% } %>
+<div class="kertas">
+  <div class="kop-surat">
+    <img src="/images/logo.png" alt="Logo Politeknik Dewantara" class="logo-kop">
+    <div class="teks-kop">
+      <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
+      <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo. Sulawesi Selatan</p>
+      <p class="kontak">E-mail: elektronika@polidewa.ac.id | Website: elektronika.polidewa.ac.id</p>
+    </div>
+  </div>
+
+  <table class="meta">
+    <tr><td class="l">Nomor</td><td class="t">:</td><td><%= nomorSurat %></td></tr>
+    <tr><td class="l">Lampiran</td><td class="t">:</td><td>-</td></tr>
+    <tr><td class="l">Perihal</td><td class="t">:</td><td><strong>Permohonan Kunjungan Industri</strong></td></tr>
+  </table>
+
+  <div class="tujuan">
+    <p>Kepada Yth.</p>
+    <p>Pimpinan <strong><%= namaPerusahaan %></strong></p>
+    <p>di <%= alamatPerusahaan %></p>
+  </div>
+
+  <div class="isi">
+    <p>Dengan hormat,</p>
+    <p>Dalam rangka menunjang kegiatan pembelajaran dan memperkenalkan mahasiswa pada dunia kerja secara langsung, Program Studi Teknik Elektronika Politeknik Dewantara bermaksud melaksanakan kunjungan industri. Sehubungan dengan hal tersebut, kami mohon kesediaan Bapak/Ibu Pimpinan untuk menerima kunjungan kami pada:</p>
+
+    <table class="tabel-data">
+      <tr><td class="col-label">Hari/Tanggal</td><td class="col-titik">:</td><td><strong><%= hariTanggal %></strong></td></tr>
+      <tr><td class="col-label">Waktu</td><td class="col-titik">:</td><td><%= waktu %></td></tr>
+      <tr><td class="col-label">Tempat</td><td class="col-titik">:</td><td><%= namaPerusahaan %></td></tr>
+      <tr><td class="col-label">Peserta</td><td class="col-titik">:</td><td><%= jumlahMahasiswa %> mahasiswa<% if (jumlahPendamping > 0) { %> dan <%= jumlahPendamping %> dosen pendamping<% } %></td></tr>
+      <tr><td class="col-label">Narahubung</td><td class="col-titik">:</td><td><%= namaPengaju %><% if (jabatanPengaju) { %> (<%= jabatanPengaju %>)<% } %></td></tr>
+      <tr><td class="col-label">Mata Kuliah Terkait</td><td class="col-titik">:</td><td>
+        <ul class="daftar-mk">
+          <% mataKuliah.forEach(mk => { %><li><%= mk.nama %><% if (mk.kode) { %> (<%= mk.kode %>)<% } %></li><% }) %>
+        </ul>
+      </td></tr>
+    </table>
+
+    <p><strong>Keterkaitan dengan perusahaan/instansi:</strong><br><%- String(keterkaitan).split('\n').map(function (b) { return b.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }).join('<br>') %></p>
+    <% if (tujuan) { %><p><strong>Tujuan kunjungan:</strong><br><%- String(tujuan).split('\n').map(function (b) { return b.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }).join('<br>') %></p><% } %>
+
+    <p>Demikian surat permohonan ini kami sampaikan. Atas perhatian dan kerja sama Bapak/Ibu, kami ucapkan terima kasih.</p>
+  </div>
+
+  <div class="ttd-wrap">
+    <div class="ttd">
+      <p style="position: relative; z-index: 1; margin: 0;">Palopo, <%= tanggalSuratFormatted %><br><%= kaprodi.jabatan %>,</p>
+      <div class="area-ttd"><img src="/images/ttd.png" alt="Tanda Tangan" class="img-ttd"></div>
+      <p class="nama-ttd"><%= kaprodi.nama %></p>
+      <p class="nip-ttd">NUPTK. <%= kaprodi.nuptk %></p>
+    </div>
+  </div>
+
+  <div class="footer">
+    Dokumen ini diterbitkan secara digital oleh Sistem Informasi Elektronika Polidewa. Kode Validasi: <strong><%= kodeValidasi %></strong><br>
+    Periksa keaslian dokumen di: <em>https://elektronika.polidewa.ac.id/validasi</em>
+  </div>
+</div>
+</body>
+</html>

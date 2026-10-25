@@ -169,16 +169,135 @@ router.get('/pengajuan-cuti', (req, res) => {
   });
 });
 
-/**
- * GET /dokumen/kunjungan-industri
- * SOP / alur proses pengajuan kunjungan industri - halaman statis
- */
-router.get('/kunjungan-industri', (req, res) => {
-  res.render('dokumen/kunjungan_industri', {
+// ============================================================================
+// KUNJUNGAN INDUSTRI
+// Publik mengisi formulir -> masuk ke admin (/admin/kunjungan-industri) ->
+// setelah admin mengisi nomor surat, surat permohonan terbit otomatis dan
+// tampil di bagian "Pengajuan yang Disetujui" (cetak / unduh PDF).
+// ============================================================================
+const KI = require('../helpers/kunjunganIndustriHelper');
+const { getAllMataKuliah } = require('../helpers/cache');
+const { notifikasiAdmin } = require('../helpers/peminjamanAlatHelper');
+
+async function daftarMkPublik() {
+  const semua = await getAllMataKuliah(db);
+  return semua
+    .filter(m => m.nama)
+    .map(m => ({ id: m.id, kode: m.kode || '', nama: m.nama, semester: m.semester || 0, sks: m.sks || '' }))
+    .sort((a, b) => (a.semester - b.semester) || a.nama.localeCompare(b.nama));
+}
+
+async function renderKunjungan(req, res, extra = {}, status = 200) {
+  const [mkList, disetujui] = await Promise.all([daftarMkPublik(), KI.getDisetujuiPublik(db)]);
+
+  // Cek status pengajuan memakai kode pengajuan (publik tidak punya akun)
+  let cekStatus = null;
+  const kode = String(req.query.kode || '').trim().toUpperCase().slice(0, 40);
+  if (kode) {
+    const snap = await db.collection(KI.KOLEKSI).where('kode', '==', kode).limit(1).get();
+    if (snap.empty) cekStatus = { kode, tidakDitemukan: true };
+    else {
+      const d = snap.docs[0].data();
+      cekStatus = {
+        kode, status: d.status, label: KI.STATUS_LABEL[d.status] || d.status,
+        namaPerusahaan: d.namaPerusahaan, tanggalKunjungan: d.tanggalKunjungan,
+        nomorSurat: d.status === KI.STATUS.DISETUJUI ? d.nomorSurat : '',
+        suratId: d.status === KI.STATUS.DISETUJUI ? snap.docs[0].id : '',
+        alasanPenolakan: d.status === KI.STATUS.DITOLAK ? (d.alasanPenolakan || '') : ''
+      };
+    }
+  }
+
+  res.status(status).render('dokumen/kunjungan_industri', {
     title: 'Pengajuan Kunjungan Industri',
-    description: 'SOP dan alur pengajuan kunjungan industri ke Program Studi Teknik Elektronika Politeknik Dewantara.',
-    user: req.user || null
+    description: 'Formulir pengajuan kunjungan industri Program Studi Teknik Elektronika Politeknik Dewantara dan daftar pengajuan yang disetujui.',
+    user: req.user || null,
+    mkList, disetujui, cekStatus,
+    terkirim: String(req.query.terkirim || '').slice(0, 40),
+    hariIni: KI.hariIni(),
+    tanggalPanjang: KI.tanggalPanjang, rentangHari: KI.rentangHari,
+    form: {}, err: '', ts: Date.now(),
+    ...extra
   });
+}
+
+router.get('/kunjungan-industri', async (req, res) => {
+  try {
+    await renderKunjungan(req, res);
+  } catch (error) {
+    console.error('Error halaman kunjungan industri:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat halaman kunjungan industri' });
+  }
+});
+
+router.post('/kunjungan-industri', async (req, res) => {
+  try {
+    const b = req.body || {};
+    // Honeypot: kolom "website" disembunyikan dari manusia; bot biasanya mengisinya.
+    if (b.website) return res.redirect('/dokumen/kunjungan-industri');
+
+    const gagal = (pesan) => renderKunjungan(req, res, { form: b, err: pesan }, 400);
+    const waktuIsi = Date.now() - parseInt(b.ts, 10);
+    if (!Number.isFinite(waktuIsi) || waktuIsi < 3000) return gagal('Formulir terkirim terlalu cepat. Silakan periksa isian lalu kirim ulang.');
+    if (!KI.lolosBatasKiriman(req.ip || 'x')) return gagal('Terlalu banyak pengajuan dari perangkat ini. Coba lagi dalam satu jam.');
+
+    const mkMap = new Map((await daftarMkPublik()).map(m => [m.id, m]));
+    const hasil = KI.validasiPengajuan(b, mkMap);
+    if (hasil.error) return gagal(hasil.error);
+
+    KI.catatKiriman(req.ip || 'x');
+    const kode = KI.generateKodePengajuan();
+    const now = new Date().toISOString();
+    const ref = await db.collection(KI.KOLEKSI).add({
+      ...hasil.data,
+      kode, status: KI.STATUS.DIAJUKAN,
+      nomorSurat: '', tanggalSurat: '', kodeValidasi: '', pdfUrl: '', pdfFileId: '',
+      riwayat: [{ status: KI.STATUS.DIAJUKAN, oleh: hasil.data.namaPengaju, catatan: 'Pengajuan dibuat', waktu: now }],
+      ip: req.ip || '', createdAt: now, updatedAt: now
+    });
+
+    await notifikasiAdmin(db, {
+      type: 'kunjungan_industri', title: 'Pengajuan kunjungan industri baru',
+      message: `${hasil.data.namaPengaju} mengajukan kunjungan ke ${hasil.data.namaPerusahaan} (${kode})`,
+      link: `/admin/kunjungan-industri/${ref.id}`
+    });
+    res.redirect(`/dokumen/kunjungan-industri?terkirim=${encodeURIComponent(kode)}#form`);
+  } catch (error) {
+    console.error('Error submit kunjungan industri:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Terjadi kesalahan saat mengirim pengajuan. Silakan coba lagi.' });
+  }
+});
+
+// Surat permohonan yang sudah terbit (hanya pengajuan berstatus disetujui)
+async function ambilSuratTerbit(id) {
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) return null;
+  const doc = await db.collection(KI.KOLEKSI).doc(id).get();
+  if (!doc.exists) return null;
+  const p = { id: doc.id, ...doc.data() };
+  return p.status === KI.STATUS.DISETUJUI && p.nomorSurat ? p : null;
+}
+
+router.get('/kunjungan-industri/surat/:id', async (req, res) => {
+  try {
+    const p = await ambilSuratTerbit(req.params.id);
+    if (!p) return res.status(404).render('404', { title: 'Surat tidak ditemukan', user: req.user || null });
+    res.render('dokumen/surat_kunjungan_industri', { ...KI.dataSurat(p), pdfUrl: p.pdfUrl || '', mode: 'preview' });
+  } catch (error) {
+    console.error('Error tampil surat kunjungan industri:', error);
+    res.status(500).send('Gagal memuat surat');
+  }
+});
+
+router.get('/kunjungan-industri/surat/:id/pdf', async (req, res) => {
+  try {
+    const p = await ambilSuratTerbit(req.params.id);
+    if (!p) return res.status(404).render('404', { title: 'Surat tidak ditemukan', user: req.user || null });
+    if (!p.pdfUrl) return res.redirect(`/dokumen/kunjungan-industri/surat/${p.id}`); // PDF belum ada -> buka versi cetak
+    res.redirect(p.pdfUrl);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Gagal mengunduh surat');
+  }
 });
 
 /**

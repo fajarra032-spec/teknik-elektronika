@@ -1,0 +1,124 @@
+<%- include('../../partials/header') %>
+<style>
+  .detail-card { background: #fff; border-radius: 1.5rem; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,.05); }
+  .detail-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 1.25rem 1.5rem; color: #fff; }
+  .sec { border-left: 3px solid #3b82f6; padding-left: .75rem; margin: 1.5rem 0 .75rem; font-weight: 700; color: #1e3a8a; }
+  .info-row { display: flex; flex-wrap: wrap; margin-bottom: .4rem; }
+  .info-label { width: 32%; font-weight: 600; } .info-value { width: 68%; }
+  .mk-box { max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: .5rem; padding: .5rem .75rem; }
+  .timeline { list-style: none; padding-left: 0; margin: 0; }
+  .timeline li { border-left: 2px solid #cbd5e1; padding: 0 0 .9rem 1rem; position: relative; }
+  .timeline li::before { content: ''; position: absolute; left: -6px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: #3b82f6; }
+  @media (max-width: 768px) { .info-label, .info-value { width: 100%; } }
+</style>
+<%
+  const warna = { diajukan: 'warning text-dark', disetujui: 'success', ditolak: 'danger' };
+  const waktu = (s) => s ? new Date(s).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
+%>
+<div class="container mt-4 mb-5" style="max-width: 960px;">
+  <a href="/admin/kunjungan-industri" class="btn btn-sm btn-outline-secondary mb-3"><i class="bi bi-arrow-left"></i> Kembali</a>
+  <%- include('../../partials/pesan_flash') %>
+
+  <div class="detail-card">
+    <div class="detail-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div><h4 class="fw-bold mb-1"><%= p.namaPerusahaan %></h4><div class="opacity-75 small">Kode <%= p.kode %> &middot; diajukan <%= waktu(p.createdAt) %></div></div>
+      <span class="badge fs-6 bg-<%= warna[p.status] || 'secondary' %>"><%= statusLabel[p.status] || p.status %></span>
+    </div>
+    <div class="p-4">
+
+      <div class="sec">Ringkasan Pengajuan</div>
+      <div class="info-row"><div class="info-label">Pengaju</div><div class="info-value"><%= p.namaPengaju %><% if (p.jabatanPengaju) { %> (<%= p.jabatanPengaju %>)<% } %></div></div>
+      <div class="info-row"><div class="info-label">Kontak</div><div class="info-value"><%= p.noHp %><% if (p.email) { %> &middot; <%= p.email %><% } %>
+        <a class="ms-2 small" target="_blank" rel="noopener" href="https://wa.me/<%= String(p.noHp).replace(/[^0-9]/g, '').replace(/^0/, '62') %>"><i class="bi bi-whatsapp"></i> WhatsApp</a></div></div>
+      <div class="info-row"><div class="info-label">Alamat Perusahaan</div><div class="info-value"><%= p.alamatPerusahaan %></div></div>
+      <div class="info-row"><div class="info-label">Waktu</div><div class="info-value"><%= rentangHari(p.tanggalKunjungan, p.tanggalSelesai) %><br><span class="text-muted"><%= rentangWaktu(p.waktuMulai, p.waktuSelesai) %></span></div></div>
+      <div class="info-row"><div class="info-label">Peserta</div><div class="info-value"><%= p.jumlahMahasiswa %> mahasiswa, <%= p.jumlahPendamping || 0 %> dosen pendamping</div></div>
+      <div class="info-row"><div class="info-label">Mata Kuliah Terkait</div><div class="info-value"><% (p.mataKuliah || []).forEach(m => { %><span class="badge bg-light text-dark border me-1"><%= m.nama %></span><% }) %></div></div>
+      <div class="info-row"><div class="info-label">Keterkaitan</div><div class="info-value" style="white-space:pre-line"><%= p.keterkaitan %></div></div>
+      <% if (p.tujuan) { %><div class="info-row"><div class="info-label">Tujuan</div><div class="info-value" style="white-space:pre-line"><%= p.tujuan %></div></div><% } %>
+      <% if (p.status === 'ditolak') { %><div class="info-row"><div class="info-label">Alasan Penolakan</div><div class="info-value text-danger"><%= p.alasanPenolakan %></div></div><% } %>
+
+      <% if (p.status === 'diajukan') { %>
+        <div class="sec">Verifikasi</div>
+        <div class="row g-3">
+          <div class="col-md-7">
+            <form method="POST" action="/admin/kunjungan-industri/<%= p.id %>/setujui" class="border rounded-3 p-3 h-100">
+              <label class="form-label fw-semibold text-success"><i class="bi bi-check-circle"></i> Setujui &amp; Terbitkan Surat</label>
+              <input type="text" name="nomorSurat" class="form-control mb-2" maxlength="100" required placeholder="Nomor permohonan, mis. 012/ELK-PD/KI/XI/2026">
+              <label class="form-label small mb-1">Tanggal surat</label>
+              <input type="date" name="tanggalSurat" class="form-control mb-2" value="<%= hariIni %>">
+              <button class="btn btn-success w-100" onclick="return confirm('Terbitkan surat dengan nomor ini? Surat langsung tampil di halaman publik.')">Setujui &amp; Terbitkan Surat</button>
+              <div class="form-text">Surat dan PDF dibuat otomatis begitu nomor disimpan.</div>
+            </form>
+          </div>
+          <div class="col-md-5">
+            <form method="POST" action="/admin/kunjungan-industri/<%= p.id %>/tolak" class="border rounded-3 p-3 h-100">
+              <label class="form-label fw-semibold text-danger"><i class="bi bi-x-circle"></i> Tolak</label>
+              <textarea name="alasan" class="form-control mb-2" rows="3" maxlength="500" required placeholder="Alasan (wajib, tampil ke pengaju)"></textarea>
+              <button class="btn btn-outline-danger w-100">Tolak Pengajuan</button>
+            </form>
+          </div>
+        </div>
+      <% } %>
+
+      <% if (p.status === 'disetujui') { %>
+        <div class="sec">Surat Terbit</div>
+        <div class="alert alert-success">
+          <div>Nomor: <strong><%= p.nomorSurat %></strong> &middot; Tanggal surat: <%= tanggalPanjang(p.tanggalSurat) %> &middot; Kode validasi: <code><%= p.kodeValidasi %></code></div>
+          <div class="small mt-1">Disetujui oleh <%= p.disetujuiOleh %> &middot; <%= waktu(p.disetujuiAt) %></div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="/dokumen/kunjungan-industri/surat/<%= p.id %>" target="_blank" class="btn btn-primary"><i class="bi bi-printer"></i> Lihat / Cetak Surat</a>
+          <% if (p.pdfUrl) { %><a href="<%= p.pdfUrl %>" class="btn btn-outline-success"><i class="bi bi-download"></i> Unduh PDF</a>
+          <% } else { %><span class="badge bg-warning text-dark align-self-center">PDF belum tersedia</span><% } %>
+          <form method="POST" action="/admin/kunjungan-industri/<%= p.id %>/buat-ulang-pdf"><button class="btn btn-outline-secondary"><i class="bi bi-arrow-repeat"></i> Buat Ulang PDF</button></form>
+          <form method="POST" action="/admin/kunjungan-industri/<%= p.id %>/tarik" onsubmit="return confirm('Tarik surat dari halaman publik? Nomor surat dan PDF akan dihapus.')"><button class="btn btn-outline-danger"><i class="bi bi-arrow-counterclockwise"></i> Tarik Surat</button></form>
+        </div>
+      <% } %>
+
+      <div class="sec">Edit Data Pengajuan</div>
+      <details <%= p.status === 'diajukan' ? '' : '' %>>
+        <summary class="mb-3 text-primary" style="cursor:pointer">Perbaiki isian (mis. salah ketik)<% if (p.status === 'disetujui') { %> &mdash; PDF akan dibuat ulang otomatis<% } %></summary>
+        <form method="POST" action="/admin/kunjungan-industri/<%= p.id %>/update">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Nama Pengaju</label><input name="namaPengaju" class="form-control" required maxlength="100" value="<%= p.namaPengaju %>"></div>
+            <div class="col-md-6"><label class="form-label">Jabatan / Asal</label><input name="jabatanPengaju" class="form-control" maxlength="100" value="<%= p.jabatanPengaju || '' %>"></div>
+            <div class="col-md-6"><label class="form-label">No. HP</label><input name="noHp" class="form-control" required maxlength="20" value="<%= p.noHp %>"></div>
+            <div class="col-md-6"><label class="form-label">Email</label><input name="email" class="form-control" maxlength="100" value="<%= p.email || '' %>"></div>
+            <div class="col-12"><label class="form-label">Nama Perusahaan</label><input name="namaPerusahaan" class="form-control" required maxlength="150" value="<%= p.namaPerusahaan %>"></div>
+            <div class="col-12"><label class="form-label">Alamat Perusahaan</label><textarea name="alamatPerusahaan" class="form-control" rows="2" required maxlength="300"><%= p.alamatPerusahaan %></textarea></div>
+            <div class="col-md-3"><label class="form-label">Tanggal Kunjungan</label><input type="date" name="tanggalKunjungan" class="form-control" required value="<%= p.tanggalKunjungan %>"></div>
+            <div class="col-md-3"><label class="form-label">Sampai Tanggal</label><input type="date" name="tanggalSelesai" class="form-control" value="<%= p.tanggalSelesai || '' %>"></div>
+            <div class="col-md-3"><label class="form-label">Jam Mulai</label><input type="time" name="waktuMulai" class="form-control" value="<%= p.waktuMulai || '' %>"></div>
+            <div class="col-md-3"><label class="form-label">Jam Selesai</label><input type="time" name="waktuSelesai" class="form-control" value="<%= p.waktuSelesai || '' %>"></div>
+            <div class="col-md-6"><label class="form-label">Jumlah Mahasiswa</label><input type="number" name="jumlahMahasiswa" class="form-control" min="1" max="500" required value="<%= p.jumlahMahasiswa %>"></div>
+            <div class="col-md-6"><label class="form-label">Dosen Pendamping</label><input type="number" name="jumlahPendamping" class="form-control" min="0" max="50" value="<%= p.jumlahPendamping || 0 %>"></div>
+            <div class="col-12"><label class="form-label">Mata Kuliah Terkait</label>
+              <div class="mk-box">
+                <% mkList.forEach(m => { %>
+                  <div class="form-check"><input class="form-check-input" type="checkbox" name="mkIds" value="<%= m.id %>" id="mk_<%= m.id %>" <%= terpilih.has(m.id) ? 'checked' : '' %>>
+                    <label class="form-check-label small" for="mk_<%= m.id %>"><%= m.kode ? m.kode + ' - ' : '' %><%= m.nama %><% if (m.semester) { %> <span class="text-muted">(Smt <%= m.semester %>)</span><% } %></label></div>
+                <% }) %>
+              </div></div>
+            <div class="col-12"><label class="form-label">Keterkaitan</label><textarea name="keterkaitan" class="form-control" rows="3" required minlength="20" maxlength="1500"><%= p.keterkaitan %></textarea></div>
+            <div class="col-12"><label class="form-label">Tujuan</label><textarea name="tujuan" class="form-control" rows="2" maxlength="1000"><%= p.tujuan || '' %></textarea></div>
+          </div>
+          <button class="btn btn-primary mt-3"><i class="bi bi-save"></i> Simpan Perubahan</button>
+        </form>
+      </details>
+
+      <div class="sec">Riwayat</div>
+      <ul class="timeline">
+        <% (p.riwayat || []).forEach(r => { %>
+          <li><div><strong><%= statusLabel[r.status] || r.status %></strong> <span class="text-muted small">&middot; <%= r.oleh %> &middot; <%= waktu(r.waktu) %></span></div>
+            <% if (r.catatan) { %><div class="small text-muted"><%= r.catatan %></div><% } %></li>
+        <% }) %>
+      </ul>
+
+      <form method="POST" action="/admin/kunjungan-industri/<%= p.id %>/hapus" class="mt-4" onsubmit="return confirm('Hapus pengajuan ini secara permanen?')">
+        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Hapus Pengajuan</button>
+      </form>
+    </div>
+  </div>
+</div>
+<%- include('../../partials/footer') %>
