@@ -1,0 +1,27 @@
+<div class="d-flex justify-content-between align-items-center mb-3 print-btn">
+  <a href="<%= backUrl %>" class="btn btn-outline-secondary btn-sm back-btn"><i class="bi bi-arrow-left"></i> Kembali</a>
+  <button onclick="window.print()" class="btn btn-primary btn-sm print-btn shadow-sm"><i class="bi bi-printer"></i> Cetak / Simpan PDF</button>
+</div>
+<%- include('kop_surat') %>
+<div class="judul-dokumen">Lembar Kerja Mahasiswa (LKM) <%= nomorLkm %></div>
+<div class="sub-judul"><%= subLkm %></div>
+<table class="info-lkm">
+  <tr>
+    <td class="label">Mata Kuliah</td><td>: <%= mk.kode %> - <%= mk.nama %></td>
+    <td class="label">Estimasi Waktu</td><td>: <%= modul.estimasiWaktu %></td>
+  </tr>
+  <tr>
+    <td class="label">Nama Mahasiswa</td><td>: <span class="isian-titik">&nbsp;<%= namaMahasiswa || '' %>&nbsp;</span></td>
+    <td class="label">NIM</td><td>: <span class="isian-titik">&nbsp;<%= nimMahasiswa || '' %>&nbsp;</span></td>
+  </tr>
+  <tr>
+    <td class="label">Kelas</td><td>: <span class="isian-titik">&nbsp;<%= mk.kelas || '' %>&nbsp;</span></td>
+    <td class="label">Hari / Tanggal</td><td>: <span class="isian-titik">&nbsp;</span></td>
+  </tr>
+  <tr>
+    <td class="label">Dosen Pengampu</td><td colspan="3">: <span class="isian-titik">&nbsp;<%= namaDosen || '' %>&nbsp;</span></td>
+  </tr>
+</table>
+<div class="sect-title">Tujuan</div>
+<div class="ref-box"><ol><% modul.tujuan.forEach(t => { %><li><%= t %></li><% }) %></ol></div>
+<% if (modul.k3) { %><div class="k3-box"><strong>&#9888; Keselamatan:</strong> <%= modul.k3 %></div><% } %>

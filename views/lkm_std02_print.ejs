@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<%- include('partials/lkm_std_top', { nomorLkm: 2, subLkm: 'Tujuan dan Hierarki Standar' }) %>
+
+<div class="sect-title">A. Mengapa Perlu Standar?</div>
+<p class="catatan-kecil">Pilih satu produk elektronik (misalnya charger atau colokan). Tulis contoh nyata untuk setiap tujuan standardisasi berikut.</p>
+<p class="catatan-kecil">Produk yang dipilih: ......................................................................................</p>
+<table class="tabel-data">
+  <thead><tr><th style="width:26%;">Tujuan standardisasi</th><th>Contoh nyata pada produk tersebut</th></tr></thead>
+  <tbody>
+    <% ['Keselamatan pengguna','Mutu dan keandalan','Keterhubungan antarproduk (interoperabilitas)','Efisiensi produksi dan biaya','Perlindungan konsumen dan lingkungan'].forEach(t => { %>
+      <tr><td class="label"><%= t %></td><td class="t40"></td></tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">B. Pemetaan Organisasi Standardisasi</div>
+<p class="catatan-kecil">Telusuri situs resmi masing-masing organisasi, lalu lengkapi tabel.</p>
+<table class="tabel-data">
+  <thead><tr><th style="width:12%;">Organisasi</th><th style="width:18%;">Tingkatan</th><th style="width:30%;">Bidang yang diatur</th><th>Contoh standar yang diterbitkan</th></tr></thead>
+  <tbody>
+    <% ['ISO','IEC','ITU','IEEE','BSN'].forEach(o => { %>
+      <tr><td class="label tengah"><%= o %></td><td class="t40"></td><td></td><td></td></tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. Hierarki Standar</div>
+<p class="catatan-kecil">Lengkapi contoh dan pihak penetap untuk setiap tingkatan standar, dari yang paling luas (atas) sampai paling spesifik (bawah).</p>
+<table class="tabel-data">
+  <thead><tr><th style="width:22%;">Tingkatan</th><th style="width:30%;">Siapa yang menetapkan</th><th>Contoh standar / dokumen</th></tr></thead>
+  <tbody>
+    <% ['Internasional','Regional','Nasional','Industri / asosiasi','Perusahaan / internal'].forEach(t => { %>
+      <tr><td class="label"><%= t %></td><td class="t55"></td><td></td></tr>
+    <% }) %>
+  </tbody>
+</table>
+<div class="sub-title">Gambar diagram hierarki (piramida/tangga) dengan bahasa visual Anda sendiri</div>
+<div class="kotak-gambar" style="height:170px;"></div>
+
+<div class="sect-title">D. Penelusuran Standar untuk Satu Produk</div>
+<p class="catatan-kecil">Produk: .................................................................</p>
+<table class="tabel-data">
+  <thead><tr><th style="width:5%;">No</th><th style="width:22%;">Nomor standar</th><th style="width:38%;">Judul / ruang lingkup singkat</th><th style="width:17%;">Tingkatan</th><th>Sumber</th></tr></thead>
+  <tbody><% [1,2,3].forEach(i => { %><tr><td class="tengah t40"><%= i %></td><td></td><td></td><td></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">E. Kesimpulan</div>
+<p class="catatan-kecil">Menurut Anda, apa risikonya bila produk elektronik beredar tanpa mengikuti standar apa pun?</p>
+<%- g(5) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

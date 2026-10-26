@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<%- include('partials/lkm_std_top', { nomorLkm: 6, subLkm: 'Kalibrasi dan Ketertelusuran Pengukuran' }) %>
+
+<div class="sect-title">A. Data Referensi dan Alat yang Dibandingkan</div>
+<table class="tabel-data">
+  <tr><td class="label" style="width:26%;">Besaran yang diukur</td><td class="t30" style="width:24%;"></td><td class="label" style="width:20%;">Satuan</td><td></td></tr>
+  <tr><td class="label">Sumber/benda referensi</td><td colspan="3" class="t30"></td></tr>
+  <tr><td class="label">Nilai referensi</td><td class="t30"></td><td class="label">Ketelitian referensi</td><td></td></tr>
+  <tr><td class="label">Alat A (merek/tipe)</td><td class="t30"></td><td class="label">Alat B (merek/tipe)</td><td></td></tr>
+  <tr><td class="label">Rentang ukur yang dipakai</td><td class="t30"></td><td class="label">Rentang ukur yang dipakai</td><td></td></tr>
+</table>
+
+<div class="sect-title">B. Tabel Pengukuran Berulang</div>
+<div class="rumus-box">Penyimpangan = rata-rata hasil ukur &minus; nilai referensi. &nbsp; Penyimpangan (%) = penyimpangan / nilai referensi &times; 100%. &nbsp; Rentang = hasil terbesar &minus; hasil terkecil (gambaran presisi).</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:36%;">Pengukuran ke-</th><th>Alat A</th><th>Alat B</th></tr></thead>
+  <tbody>
+    <% [1,2,3,4,5].forEach(i => { %><tr><td class="label tengah t30"><%= i %></td><td></td><td></td></tr><% }) %>
+    <tr><td class="label">Rata-rata</td><td class="t30"></td><td></td></tr>
+    <tr><td class="label">Penyimpangan terhadap referensi</td><td class="t30"></td><td></td></tr>
+    <tr><td class="label">Penyimpangan (%)</td><td class="t30"></td><td></td></tr>
+    <tr><td class="label">Rentang (terbesar &minus; terkecil)</td><td class="t30"></td><td></td></tr>
+  </tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. Akurasi dan Presisi</div>
+<p class="catatan-kecil">
+  Alat yang lebih akurat (lebih dekat ke referensi): <span class="kotak-centang"></span> A <span class="kotak-centang"></span> B &nbsp;&nbsp;
+  Alat yang lebih presisi (hasil berulang lebih konsisten): <span class="kotak-centang"></span> A <span class="kotak-centang"></span> B
+</p>
+<div class="pertanyaan-item"><div class="no-pertanyaan">Jelaskan perbedaan akurasi dan presisi berdasarkan data Anda, dan sebutkan kemungkinan penyebab penyimpangan.</div><%- g(4) %></div>
+
+<div class="sect-title">D. Membaca Sertifikat Kalibrasi</div>
+<p class="catatan-kecil">Gunakan contoh sertifikat kalibrasi dari dosen.</p>
+<table class="tabel-data">
+  <tr><td class="label" style="width:30%;">Identitas alat yang dikalibrasi</td><td class="t30"></td></tr>
+  <tr><td class="label">Lembaga penerbit dan status akreditasi</td><td class="t30"></td></tr>
+  <tr><td class="label">Standar acuan laboratorium</td><td class="t30"></td></tr>
+  <tr><td class="label">Hasil kalibrasi (ringkas)</td><td class="t40"></td></tr>
+  <tr><td class="label">Ketidakpastian pengukuran</td><td class="t30"></td></tr>
+  <tr><td class="label">Tanggal kalibrasi</td><td class="t30"></td></tr>
+  <tr><td class="label">Pernyataan ketertelusuran</td><td class="t40"></td></tr>
+</table>
+
+<div class="sect-title">E. Pertanyaan</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Jelaskan arti ketertelusuran (traceability) pengukuran dengan bahasa sendiri.</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Standar apa yang menjadi dasar kompetensi laboratorium kalibrasi dan pengujian?</div><%- g(2) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">3. Kapan sebuah alat ukur perlu dikalibrasi ulang, dan apa akibatnya jika tidak pernah dikalibrasi?</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">4. Mengapa pengecekan sederhana di praktikum ini tidak dapat menggantikan kalibrasi resmi?</div><%- g(3) %></div>
+
+<div class="sect-title">F. Kesimpulan</div>
+<%- g(3) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

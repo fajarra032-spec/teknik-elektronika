@@ -1,0 +1,54 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= title %></title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+<style>
+  @page { size: A4 portrait; margin: 1.3cm 1.4cm; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; font-size: 9.5pt; }
+  .print-btn, .back-btn { margin: 20px 5px; font-family: Arial, sans-serif; }
+  .kop-surat { display: flex; align-items: center; margin-bottom: 10px; }
+  .logo-kop { width: 56px; height: auto; margin-right: 14px; }
+  .teks-kop { flex: 1; }
+  .teks-kop .nama-kampus { font-size: 15pt; font-weight: bold; margin: 0; color: #3b60a3; letter-spacing: 0.5px; }
+  .teks-kop .alamat, .teks-kop .kontak { font-size: 8pt; margin: 1px 0; color: #333; }
+  .garis-kop { border-bottom: 3px solid #3b60a3; margin-bottom: 10px; }
+  .judul-dokumen { text-align: center; font-size: 13pt; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
+  .sub-judul { text-align: center; font-size: 10.5pt; margin-bottom: 10px; font-weight: 600; color: #333; }
+  table.info-lkm { width: 100%; margin-bottom: 8px; font-size: 9.5pt; border-collapse: collapse; }
+  table.info-lkm td { padding: 2px 4px; vertical-align: top; }
+  table.info-lkm .label { width: 120px; }
+  table.info-lkm .isian-titik { border-bottom: 1px dotted #000; display: inline-block; min-width: 150px; }
+  .sect-title { font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin: 12px 0 6px 0; background: #eef2f7; padding: 4px 8px; border-left: 4px solid #3b60a3; page-break-after: avoid; break-after: avoid; }
+  .sub-title { font-weight: bold; font-size: 9.7pt; margin: 8px 0 3px 0; page-break-after: avoid; break-after: avoid; }
+  .ref-box { font-size: 9.2pt; background: #fafafa; border: 1px solid #ddd; border-radius: 4px; padding: 6px 10px; margin-bottom: 4px; }
+  .ref-box ul, .ref-box ol { margin: 3px 0 0 0; padding-left: 18px; }
+  .ref-box li { margin-bottom: 2px; }
+  .k3-box { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 6px 10px; border-radius: 4px; font-size: 9pt; margin-bottom: 8px; }
+  .rumus-box { background: #f0f7ff; border: 1px solid #bcd7f5; padding: 5px 10px; border-radius: 4px; font-size: 9pt; margin: 4px 0; }
+  .garis-isi { border-bottom: 1px solid #999; height: 21px; margin-bottom: 2px; }
+  .catatan-kecil { font-size: 8.5pt; color: #444; margin: 2px 0 4px 0; }
+  table.tabel-data { width: 100%; border-collapse: collapse; font-size: 8.8pt; margin-top: 4px; }
+  table.tabel-data th, table.tabel-data td { border: 1px solid #000; padding: 4px; vertical-align: top; }
+  table.tabel-data th { background: #dbe5f1; font-weight: bold; text-align: center; }
+  table.tabel-data td.tengah { text-align: center; vertical-align: middle; }
+  table.tabel-data td.label { background: #f6f8fb; font-weight: bold; }
+  table.tabel-data td.t40 { height: 40px; } table.tabel-data td.t55 { height: 55px; } table.tabel-data td.t75 { height: 75px; } table.tabel-data td.t30 { height: 30px; }
+  table.tabel-data tr { page-break-inside: avoid; break-inside: avoid; }
+  .foto-wrap { display: flex; gap: 8px; margin-top: 4px; }
+  .foto-box { flex: 1; border: 1px dashed #666; height: 100px; text-align: center; font-size: 8.5pt; color: #666; padding-top: 6px; }
+  .kotak-gambar { border: 1px solid #000; height: 190px; margin-top: 4px; font-size: 8.5pt; color: #777; padding: 4px 6px; }
+  .grid-simbol { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .grid-simbol .sel { width: calc(33.33% - 4px); border: 1px solid #000; height: 78px; font-size: 8.5pt; padding: 3px 5px; }
+  .pertanyaan-item { margin-bottom: 8px; page-break-inside: avoid; break-inside: avoid; }
+  .no-pertanyaan { font-weight: bold; font-size: 9.5pt; margin-bottom: 3px; }
+  .kotak-centang { display: inline-block; width: 11px; height: 11px; border: 1px solid #000; vertical-align: middle; margin: 0 3px 0 8px; }
+  .pernyataan { font-size: 9pt; border: 1px solid #999; border-radius: 4px; padding: 6px 10px; margin-top: 10px; page-break-inside: avoid; break-inside: avoid; }
+  .ttd-wrap { display: flex; justify-content: space-between; margin-top: 22px; page-break-inside: avoid; break-inside: avoid; }
+  .ttd-box { text-align: center; width: 250px; font-size: 9.5pt; }
+  .ttd-box .nama-ttd { font-weight: bold; text-decoration: underline; margin-top: 50px; }
+  .nilai-box { text-align: center; width: 140px; font-size: 9.5pt; border: 1px solid #000; border-radius: 4px; padding: 8px; }
+  .nilai-box .angka { font-size: 20pt; font-weight: bold; height: 32px; }
+  .halaman-baru { page-break-before: always; break-before: page; }
+  @media print { .btn, .print-btn, .back-btn { display: none !important; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>

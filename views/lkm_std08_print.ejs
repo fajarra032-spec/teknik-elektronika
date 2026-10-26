@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<%- include('partials/lkm_std_top', { nomorLkm: 8, subLkm: 'Proyek Mini: Audit Kesesuaian Produk Elektronik terhadap Standar' }) %>
+
+<div class="sect-title">A. Objek dan Acuan Audit</div>
+<table class="tabel-data">
+  <tr><td class="label" style="width:26%;">Produk yang diaudit</td><td class="t30"></td></tr>
+  <tr><td class="label">Merek / model / nomor seri</td><td class="t30"></td></tr>
+  <tr><td class="label">Standar atau persyaratan acuan</td><td class="t40"></td></tr>
+  <tr><td class="label">Ruang lingkup audit (yang diperiksa dan tidak diperiksa)</td><td class="t40"></td></tr>
+</table>
+
+<div class="sect-title">B. Checklist Audit (visual)</div>
+<p class="catatan-kecil">Turunkan persyaratan standar menjadi 10 butir yang dapat diamati. Beri tanda &#10003; (sesuai), &#10007; (tidak sesuai), atau N/A. Audit hanya pengamatan visual; jangan membongkar produk.</p>
+<table class="tabel-data">
+  <thead><tr><th style="width:4%;">No</th><th style="width:40%;">Butir persyaratan yang diperiksa</th><th style="width:16%;">Acuan klausul/standar</th><th style="width:8%;">Status</th><th style="width:9%;">No. foto</th><th>Bukti / catatan</th></tr></thead>
+  <tbody><% for (let i = 1; i <= 10; i++) { %><tr><td class="tengah t40"><%= i %></td><td></td><td></td><td></td><td></td><td></td></tr><% } %></tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. Rekapitulasi dan Tingkat Kesesuaian</div>
+<div class="rumus-box">Kesesuaian (%) = jumlah sesuai / (jumlah sesuai + jumlah tidak sesuai) &times; 100%. Butir N/A tidak dihitung.</div>
+<table class="tabel-data">
+  <thead><tr><th>Sesuai (&#10003;)</th><th>Tidak sesuai (&#10007;)</th><th>N/A</th><th>Kesesuaian (%)</th></tr></thead>
+  <tbody><tr><td class="t30"></td><td></td><td></td><td></td></tr></tbody>
+</table>
+
+<div class="sect-title">D. Temuan dan Rekomendasi</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:4%;">No</th><th style="width:30%;">Temuan (butir tidak sesuai)</th><th style="width:34%;">Rekomendasi perbaikan</th><th style="width:20%;">Standar acuan</th><th>Prioritas (tinggi/sedang/rendah)</th></tr></thead>
+  <tbody><% [1,2,3].forEach(i => { %><tr><td class="tengah t55"><%= i %></td><td></td><td></td><td></td><td></td></tr><% }) %></tbody>
+</table>
+<div class="sub-title">Temuan paling kritis dan alasannya</div>
+<%- g(3) %>
+
+<div class="sect-title">E. Dokumentasi Bukti</div>
+<p class="catatan-kecil">Tempel atau lampirkan foto bukti sendiri dan beri nomor sesuai kolom "No. foto" pada checklist.</p>
+<div class="foto-wrap"><div class="foto-box">Foto 1</div><div class="foto-box">Foto 2</div><div class="foto-box">Foto 3</div><div class="foto-box">Foto 4</div></div>
+
+<div class="sect-title">F. Refleksi</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">Apa pembelajaran terpenting dari mata kuliah Standarisasi yang Anda terapkan pada audit ini, dan apa kendala yang dihadapi?</div><%- g(5) %></div>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

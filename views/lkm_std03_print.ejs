@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<%- include('partials/lkm_std_top', { nomorLkm: 3, subLkm: 'Standar Nasional Indonesia (SNI)' }) %>
+
+<div class="sect-title">A. Kartu Penelusuran SNI</div>
+<p class="catatan-kecil">Telusuri melalui situs resmi BSN dengan kata kunci produk. Isi satu kartu untuk tiap produk (3 produk).</p>
+<% [1,2,3].forEach(i => { %>
+<table class="tabel-data" style="margin-bottom:8px;">
+  <tr><td class="label" style="width:20%;">Produk <%= i %></td><td colspan="3" class="t30"></td></tr>
+  <tr><td class="label">Kata kunci pencarian</td><td class="t30" style="width:30%;"></td><td class="label" style="width:18%;">Nomor SNI</td><td></td></tr>
+  <tr><td class="label">Judul SNI</td><td colspan="3" class="t30"></td></tr>
+  <tr><td class="label">Status</td><td><span class="kotak-centang"></span> Sukarela <span class="kotak-centang"></span> Wajib <span class="kotak-centang"></span> Tidak ditemukan</td><td class="label">Adopsi standar internasional?</td><td><span class="kotak-centang"></span> Ya, dari: ............ <span class="kotak-centang"></span> Tidak</td></tr>
+  <tr><td class="label">Sumber informasi</td><td colspan="3" class="t30"></td></tr>
+</table>
+<% }) %>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">B. Membaca Struktur Dokumen Standar</div>
+<p class="catatan-kecil">Baca dokumen atau ringkasan standar yang disiapkan dosen. Judul/nomor standar yang dibaca: ..................................................................</p>
+<table class="tabel-data">
+  <thead><tr><th style="width:26%;">Bagian dokumen</th><th>Ringkasan isi yang Anda temukan</th></tr></thead>
+  <tbody>
+    <% ['Ruang lingkup','Acuan normatif','Istilah dan definisi','Persyaratan','Metode uji'].forEach(b => { %>
+      <tr><td class="label"><%= b %></td><td class="t55"></td></tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">C. Pemeriksaan Tanda SNI pada Produk Nyata</div>
+<table class="tabel-data">
+  <thead>
+    <tr><th rowspan="2" style="width:4%;">No</th><th rowspan="2" style="width:20%;">Produk dan merek</th><th colspan="2">Tanda SNI</th><th rowspan="2" style="width:18%;">Nomor registrasi / model</th><th rowspan="2">Penandaan lengkap dan terbaca?</th></tr>
+    <tr><th style="width:8%;">Ada</th><th style="width:8%;">Tidak</th></tr>
+  </thead>
+  <tbody><% [1,2,3].forEach(i => { %><tr><td class="tengah t55"><%= i %></td><td></td><td></td><td></td><td></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">D. Pertanyaan</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Apa perbedaan SNI sukarela dan SNI wajib? Mengapa pemerintah mewajibkan SNI pada produk tertentu?</div><%- g(4) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Apa hubungan IEC, BSN, dan SNI? Tuliskan satu contoh SNI yang diadopsi dari standar internasional (sebutkan nomornya).</div><%- g(4) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">3. Apa risiko bagi pengguna bila produk tidak mencantumkan tanda dan nomor SNI yang jelas?</div><%- g(3) %></div>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

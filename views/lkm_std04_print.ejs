@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<%- include('partials/lkm_std_top', { nomorLkm: 4, subLkm: 'Penilaian Kesesuaian: Akreditasi dan Sertifikasi' }) %>
+
+<div class="sect-title">A. Perbandingan Akreditasi dan Sertifikasi</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:24%;">Aspek</th><th style="width:38%;">Akreditasi</th><th>Sertifikasi</th></tr></thead>
+  <tbody>
+    <% ['Objek yang dinilai','Pihak yang menilai','Dasar / standar acuan','Hasil yang diterbitkan','Contoh nyata'].forEach(a => { %>
+      <tr><td class="label"><%= a %></td><td class="t40"></td><td></td></tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">B. Jenis Penilaian Kesesuaian</div>
+<p class="catatan-kecil">Tentukan jenis penilaian kesesuaian untuk setiap situasi: pengujian/kalibrasi, inspeksi, sertifikasi produk, sertifikasi sistem manajemen, atau akreditasi. Beri alasan singkat.</p>
+<table class="tabel-data">
+  <thead><tr><th style="width:4%;">No</th><th style="width:48%;">Situasi</th><th style="width:20%;">Jenis</th><th>Alasan singkat</th></tr></thead>
+  <tbody>
+    <% [
+      'Sebuah laboratorium kalibrasi diakui kompeten oleh Komite Akreditasi Nasional (KAN).',
+      'Sebuah pabrik memperoleh sertifikat ISO 9001.',
+      'Laboratorium mengukur ketahanan isolasi sebuah charger sesuai metode uji pada standar.',
+      'Petugas memeriksa pemasangan APAR dan jalur evakuasi di sebuah gedung.',
+      'Lembaga menerbitkan sertifikat SNI untuk sebuah produk elektronik.'
+    ].forEach((s, i) => { %>
+      <tr><td class="tengah t40"><%= i + 1 %></td><td><%= s %></td><td></td><td></td></tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. Analisis Contoh Sertifikat</div>
+<p class="catatan-kecil">Gunakan contoh sertifikat (SNI/ISO/kalibrasi) dari dosen atau sumber resmi. Tempelkan atau lampirkan salinannya.</p>
+<table class="tabel-data">
+  <tr><td class="label" style="width:28%;">Jenis sertifikat</td><td class="t30"></td></tr>
+  <tr><td class="label">Nama pemegang</td><td class="t30"></td></tr>
+  <tr><td class="label">Standar acuan</td><td class="t30"></td></tr>
+  <tr><td class="label">Ruang lingkup</td><td class="t40"></td></tr>
+  <tr><td class="label">Nomor sertifikat</td><td class="t30"></td></tr>
+  <tr><td class="label">Tanggal terbit dan masa berlaku</td><td class="t30"></td></tr>
+  <tr><td class="label">Lembaga penerbit</td><td class="t30"></td></tr>
+  <tr><td class="label">Jenis penilaian kesesuaian</td><td class="t30"></td></tr>
+</table>
+
+<div class="sect-title">D. Lembaga Terakreditasi KAN</div>
+<table class="tabel-data">
+  <tr><td class="label" style="width:28%;">Nama lembaga</td><td class="t30"></td></tr>
+  <tr><td class="label">Jenis (lab uji/kalibrasi/lembaga sertifikasi/inspeksi)</td><td class="t30"></td></tr>
+  <tr><td class="label">Ruang lingkup akreditasi</td><td class="t40"></td></tr>
+  <tr><td class="label">Sumber informasi</td><td class="t30"></td></tr>
+</table>
+
+<div class="sect-title">E. Analisis Dampak</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Apa akibatnya bagi konsumen jika sebuah produk dijual tanpa sertifikat atau sertifikat yang tidak berlaku?</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Mengapa hasil uji dari laboratorium yang tidak terakreditasi sulit dijadikan dasar keputusan teknis?</div><%- g(3) %></div>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

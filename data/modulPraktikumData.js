@@ -2500,6 +2500,243 @@ module.exports = {
       ],
       k3: 'Jangan mengukur tegangan jaringan (220 V) dengan alat ukur di rumah. Cabut perangkat dari stop kontak sebelum memeriksa label di bagian belakang atau bawahnya. Jika menemukan kondisi berbahaya (kabel terkelupas, stop kontak hangus), jangan diperbaiki sendiri: laporkan kepada orang tua/pemilik rumah dan teknisi listrik yang kompeten.',
       estimasiWaktu: '2-3 jam (dikerjakan di rumah, individu)'
+    },
+    {
+      id: 'std-02',
+      viewCetak: 'lkm_std02_print', // views/lkm_std02_print.ejs
+      judul: 'LKM 2: Tujuan dan Hierarki Standar: dari Standar Perusahaan sampai Standar Internasional',
+      pertemuanSaran: 3,
+      tujuan: [
+        'Menjelaskan tujuan standardisasi (keselamatan, mutu, keterhubungan antarproduk, efisiensi, dan perlindungan konsumen)',
+        'Membedakan tingkatan standar: internasional, regional, nasional, industri/asosiasi, dan perusahaan',
+        'Menelusuri organisasi standardisasi yang relevan bagi teknisi elektronika (ISO, IEC, ITU, IEEE, BSN) dan memetakan peran masing-masing'
+      ],
+      alatBahan: [
+        'Komputer/ponsel dengan akses internet',
+        'Situs resmi iso.org, iec.ch, itu.int, ieee.org, dan bsn.go.id',
+        'Lembar kerja pemetaan organisasi standardisasi',
+        'Dua atau tiga contoh produk elektronik di sekitar (untuk dicari standar yang berlaku)'
+      ],
+      dasarTeori: 'Standar adalah dokumen kesepakatan yang memuat aturan, pedoman, atau karakteristik untuk digunakan secara berulang agar hasil yang diperoleh konsisten. Standar disusun pada beberapa tingkatan: internasional (misalnya ISO dan IEC), regional, nasional (di Indonesia ditetapkan BSN sebagai SNI), standar asosiasi/industri, dan standar internal perusahaan. Tujuan utamanya adalah menjamin keselamatan, mutu, interoperabilitas antarproduk, efisiensi produksi, serta melindungi konsumen dan lingkungan.',
+      langkahKerja: [
+        'Tuliskan alasan mengapa sebuah produk elektronik (misalnya charger atau colokan) perlu mengikuti standar, lalu diskusikan hasilnya bersama kelompok',
+        'Buka situs resmi ISO, IEC, ITU, IEEE, dan BSN, lalu catat tahun berdiri, kedudukan, dan ruang lingkup masing-masing',
+        'Isi tabel pemetaan: organisasi, tingkatan standar, bidang yang diatur, dan satu contoh standar yang dihasilkan',
+        'Pilih satu produk elektronik, lalu telusuri minimal dua standar yang berlaku untuk produk tersebut dan tentukan tingkatannya',
+        'Susun diagram sederhana hierarki standar dari tingkat perusahaan sampai internasional beserta contohnya'
+      ],
+      tugasLaporan: [
+        'Tabel pemetaan organisasi standardisasi (ISO, IEC, ITU, IEEE, BSN) beserta tingkatan dan bidangnya',
+        'Hasil penelusuran minimal dua standar untuk satu produk elektronik beserta nomor, judul, dan tingkatannya',
+        'Diagram hierarki standar dan kesimpulan tentang tujuan standardisasi'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'std-03',
+      viewCetak: 'lkm_std03_print', // views/lkm_std03_print.ejs
+      judul: 'LKM 3: Standar Nasional Indonesia (SNI): Menelusuri, Membaca, dan Memeriksa Penerapannya',
+      pertemuanSaran: 5,
+      tujuan: [
+        'Menjelaskan peran BSN dan proses penetapan SNI, serta perbedaan SNI sukarela dan SNI wajib',
+        'Menelusuri dokumen atau informasi SNI melalui situs resmi BSN berdasarkan kata kunci produk',
+        'Membaca struktur dokumen standar (ruang lingkup, acuan normatif, istilah dan definisi, persyaratan, metode uji)',
+        'Memeriksa tanda dan nomor SNI pada produk nyata'
+      ],
+      alatBahan: [
+        'Komputer/ponsel dengan akses internet ke situs resmi bsn.go.id',
+        'Contoh dokumen standar atau ringkasan SNI yang disiapkan dosen',
+        'Dua atau tiga produk elektronik rumah tangga (charger, kabel ekstensi, lampu, dan sejenisnya) beserta label pada produk',
+        'Lembar kerja pembacaan standar'
+      ],
+      dasarTeori: 'SNI adalah standar yang ditetapkan oleh Badan Standardisasi Nasional (BSN) dan berlaku secara nasional. Sebagian SNI diadopsi dari standar internasional seperti IEC dan ISO, sebagian lainnya disusun sesuai kebutuhan nasional. SNI pada dasarnya sukarela, namun pemerintah dapat memberlakukannya secara wajib untuk produk tertentu demi alasan keselamatan, keamanan, kesehatan, atau lingkungan. Dokumen standar umumnya memuat ruang lingkup, acuan normatif, istilah dan definisi, persyaratan, serta metode pengujian.',
+      langkahKerja: [
+        'Pelajari penjelasan dosen tentang peran BSN dan proses penetapan SNI',
+        'Tentukan satu produk elektronik, lalu telusuri melalui situs resmi BSN apakah ada SNI yang terkait dan catat nomor serta judulnya',
+        'Baca ringkasan atau dokumen standar yang disediakan dosen, lalu identifikasi bagian ruang lingkup, istilah, persyaratan, dan metode uji',
+        'Periksa dua atau tiga produk di rumah/laboratorium: apakah bertanda SNI, apakah nomor registrasi tertera, dan apa keterangan modelnya',
+        'Tentukan apakah SNI untuk produk tersebut bersifat sukarela atau wajib, lengkap dengan sumber informasinya',
+        'Catat perbedaan SNI hasil adopsi standar internasional dengan SNI yang disusun nasional, serta contoh yang ditemukan'
+      ],
+      tugasLaporan: [
+        'Tabel hasil penelusuran SNI (produk, nomor SNI, judul, status sukarela/wajib, dan sumber)',
+        'Ringkasan struktur satu dokumen standar yang dibaca (ruang lingkup, persyaratan, dan metode uji)',
+        'Hasil pemeriksaan tanda SNI pada produk nyata beserta analisis kelengkapan penandaannya',
+        'Penjelasan hubungan IEC, BSN, dan SNI berikut satu contoh adopsi'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'std-04',
+      viewCetak: 'lkm_std04_print', // views/lkm_std04_print.ejs
+      judul: 'LKM 4: Penilaian Kesesuaian: Akreditasi dan Sertifikasi',
+      pertemuanSaran: 7,
+      tujuan: [
+        'Membedakan akreditasi, sertifikasi, inspeksi, dan pengujian/kalibrasi sebagai bagian dari penilaian kesesuaian',
+        'Menjelaskan peran Komite Akreditasi Nasional (KAN) dan jenis lembaga yang diakreditasi',
+        'Mengenali standar yang menjadi dasar lembaga penilai kesesuaian (misalnya ISO/IEC 17025, ISO/IEC 17065, ISO 9001)',
+        'Membaca contoh sertifikat dan memeriksa ruang lingkup serta masa berlakunya'
+      ],
+      alatBahan: [
+        'Komputer/ponsel dengan akses internet',
+        'Contoh sertifikat (SNI/ISO/kalibrasi) yang disiapkan dosen atau dicari dari sumber resmi',
+        'Situs resmi KAN dan BSN, serta iso.org',
+        'Lembar kerja analisis sertifikat'
+      ],
+      dasarTeori: 'Penilaian kesesuaian adalah kegiatan untuk menunjukkan bahwa produk, proses, sistem, atau jasa memenuhi persyaratan standar. Bentuknya meliputi pengujian dan kalibrasi, inspeksi, serta sertifikasi (produk, sistem manajemen, atau personel). Akreditasi adalah pengakuan formal dari lembaga akreditasi, di Indonesia Komite Akreditasi Nasional (KAN), bahwa suatu lembaga penilai kesesuaian kompeten menjalankan tugasnya. Dengan kata lain, sertifikasi menilai produk atau sistem, sedangkan akreditasi menilai lembaga yang melakukan penilaian tersebut.',
+      langkahKerja: [
+        'Pelajari perbedaan akreditasi dan sertifikasi, lalu buat tabel perbandingan: objek yang dinilai, pihak yang menilai, dan hasilnya',
+        'Cari satu contoh lembaga yang terakreditasi KAN (laboratorium uji/kalibrasi atau lembaga sertifikasi) dan catat ruang lingkup akreditasinya',
+        'Analisis contoh sertifikat: nama pemegang, standar acuan, ruang lingkup, nomor, tanggal terbit, dan masa berlaku',
+        'Identifikasi jenis penilaian kesesuaian pada contoh sertifikat tersebut (pengujian, inspeksi, atau sertifikasi)',
+        'Diskusikan akibat bila sebuah produk atau laboratorium tidak memiliki sertifikat atau akreditasi yang valid'
+      ],
+      tugasLaporan: [
+        'Tabel perbandingan akreditasi dan sertifikasi dengan bahasa sendiri',
+        'Analisis satu contoh sertifikat (standar acuan, ruang lingkup, masa berlaku, dan lembaga penerbit)',
+        'Contoh satu lembaga terakreditasi beserta ruang lingkup akreditasinya dan sumber informasinya',
+        'Kesimpulan tentang pentingnya sertifikasi dan akreditasi bagi mutu dan keselamatan produk elektronika'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'std-05',
+      viewCetak: 'lkm_std05_print', // views/lkm_std05_print.ejs
+      judul: 'LKM 5: Standardisasi Komponen Elektronika: Kode, Simbol, dan Nilai Preferensi',
+      pertemuanSaran: 9,
+      tujuan: [
+        'Membaca kode warna dan kode angka resistor serta kode kapasitor sesuai standar penandaan komponen',
+        'Menggunakan simbol grafis standar dalam gambar skema rangkaian',
+        'Memahami deret nilai preferensi (seri E) dan toleransi komponen',
+        'Memverifikasi nilai komponen terhadap datasheet dan hasil ukur'
+      ],
+      alatBahan: [
+        'Resistor dengan berbagai nilai dan toleransi (karbon/metal film)',
+        'Kapasitor keramik dan elektrolit dengan kode berbeda',
+        'Multimeter digital dan lembar kerja pembacaan kode',
+        'Datasheet komponen (diunduh dari sumber resmi produsen)',
+        'Tabel kode warna resistor dan daftar simbol standar (misalnya IEC 60617)'
+      ],
+      dasarTeori: 'Komponen elektronika mengikuti standar agar nilai dan simbolnya dapat dibaca sama oleh semua pihak. Penandaan resistor dan kapasitor (kode warna dan kode angka) mengacu pada IEC 60062, deret nilai preferensi seperti seri E12 dan E24 mengacu pada IEC 60063, dan simbol grafis untuk diagram skema mengacu pada IEC 60617. Toleransi menyatakan batas penyimpangan nilai sebenarnya terhadap nilai nominal, sedangkan datasheet memuat karakteristik dan batas operasi komponen yang ditetapkan produsen.',
+      langkahKerja: [
+        'Baca nilai dan toleransi tiap resistor dari kode warnanya, lalu catat hasilnya',
+        'Ukur nilai resistor dengan multimeter dan hitung selisih terhadap nilai nominal, lalu periksa apakah masih dalam toleransi',
+        'Baca kode angka kapasitor dan catat nilai serta tegangan kerjanya',
+        'Cocokkan nilai yang dibaca dengan deret preferensi (misalnya E12/E24) dan jelaskan mengapa nilai tertentu tersedia di pasaran',
+        'Cari datasheet satu komponen, lalu catat parameter utamanya (nilai maksimum, rentang suhu, dan toleransi)',
+        'Gambar satu rangkaian sederhana dengan simbol standar dan beri label nilai komponennya'
+      ],
+      tugasLaporan: [
+        'Tabel hasil baca kode, hasil ukur multimeter, selisih, dan kesimpulan apakah komponen masih dalam toleransi',
+        'Penjelasan standar yang mengatur penandaan komponen dan deret nilai preferensi, lengkap dengan nomor standarnya',
+        'Ringkasan parameter utama dari datasheet satu komponen beserta sumbernya',
+        'Gambar rangkaian dengan simbol standar'
+      ],
+      k3: 'Gunakan alat ukur sesuai fungsinya dan jangan mengukur komponen yang terhubung dengan sumber tegangan tinggi.',
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'std-06',
+      viewCetak: 'lkm_std06_print', // views/lkm_std06_print.ejs
+      judul: 'LKM 6: Standardisasi Jasa Teknik: Kalibrasi dan Ketertelusuran Pengukuran',
+      pertemuanSaran: 11,
+      tujuan: [
+        'Menjelaskan pengertian kalibrasi, akurasi, presisi, dan ketertelusuran (traceability) pengukuran',
+        'Melakukan pengecekan sederhana multimeter terhadap resistor/sumber referensi dan menghitung penyimpangannya',
+        'Mengenali standar yang mendasari laboratorium kalibrasi dan pengujian (ISO/IEC 17025)',
+        'Membaca contoh sertifikat kalibrasi dan memahami informasi pentingnya'
+      ],
+      alatBahan: [
+        'Dua multimeter digital (atau lebih) untuk dibandingkan',
+        'Resistor presisi (toleransi kecil) atau sumber referensi tegangan DC rendah (baterai/catu daya DC tegangan rendah)',
+        'Lembar kerja pengecekan alat ukur',
+        'Contoh sertifikat kalibrasi (disiapkan dosen)'
+      ],
+      dasarTeori: 'Kalibrasi adalah kegiatan membandingkan hasil ukur suatu alat dengan alat atau acuan yang lebih akurat untuk mengetahui besarnya penyimpangan. Ketertelusuran berarti hasil ukur dapat ditelusuri melalui rantai pembandingan yang tidak terputus sampai ke standar pengukuran nasional/internasional. Laboratorium kalibrasi dan pengujian yang kompeten umumnya mengacu pada ISO/IEC 17025. Pengecekan sederhana di praktikum ini hanya untuk melatih konsep, bukan pengganti kalibrasi resmi oleh laboratorium terakreditasi.',
+      langkahKerja: [
+        'Pelajari konsep akurasi, presisi, penyimpangan (error), dan ketertelusuran',
+        'Ukur resistor/sumber referensi dengan masing-masing multimeter minimal lima kali, lalu catat hasilnya',
+        'Hitung nilai rata-rata dan penyimpangan tiap alat terhadap nilai referensi',
+        'Bandingkan hasil kedua alat dan tentukan alat yang lebih mendekati nilai referensi',
+        'Baca contoh sertifikat kalibrasi dan catat identitas alat, hasil kalibrasi, ketidakpastian, tanggal, dan lembaga penerbit',
+        'Diskusikan kapan alat ukur harus dikalibrasi ulang dan akibatnya bila alat ukur tidak pernah dikalibrasi'
+      ],
+      tugasLaporan: [
+        'Tabel hasil pengukuran berulang, rata-rata, dan penyimpangan tiap alat ukur',
+        'Analisis perbandingan akurasi dan presisi kedua alat',
+        'Ringkasan isi sertifikat kalibrasi dan arti informasi pentingnya',
+        'Penjelasan peran ISO/IEC 17025 dan pentingnya ketertelusuran pengukuran'
+      ],
+      k3: 'Gunakan hanya sumber tegangan DC rendah (baterai atau catu daya DC tegangan rendah). Jangan mengukur tegangan jaringan (220 V) pada praktikum ini.',
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'std-07',
+      viewCetak: 'lkm_std07_print', // views/lkm_std07_print.ejs
+      judul: 'LKM 7: Sistem Manajemen Mutu dan K3: Menyusun SOP Layanan Teknik',
+      pertemuanSaran: 12,
+      tujuan: [
+        'Menjelaskan fokus ISO 9001 (sistem manajemen mutu) dan ISO 45001 (sistem manajemen keselamatan dan kesehatan kerja)',
+        'Menerapkan siklus PDCA (Plan, Do, Check, Act) pada sebuah layanan teknik',
+        'Menyusun SOP satu layanan teknik lengkap dengan catatan keselamatan',
+        'Menggambar diagram alir prosedur dan memeriksa kualitas SOP secara mandiri'
+      ],
+      alatBahan: [
+        'Formulir SOP dan lembar diagram alir (disediakan pada LKM)',
+        'Contoh SOP dari laboratorium atau bengkel kampus (disiapkan dosen)',
+        'Alat tulis dan penggaris/stensil diagram alir',
+        'Ringkasan ISO 9001 dan ISO 45001 dari materi kuliah'
+      ],
+      dasarTeori: 'Sistem manajemen mutu (ISO 9001) berfokus pada konsistensi layanan dan kepuasan pelanggan, sedangkan sistem manajemen keselamatan dan kesehatan kerja (ISO 45001) berfokus pada pencegahan cedera dan penyakit akibat kerja. Keduanya memakai siklus perbaikan berkelanjutan PDCA. Salah satu alat penerapannya adalah SOP (prosedur operasi standar), yaitu dokumen tertulis yang menjelaskan siapa melakukan apa, kapan, dan bagaimana, termasuk langkah keselamatannya, agar hasil kerja konsisten dan aman.',
+      langkahKerja: [
+        'Pilih satu layanan teknik sederhana (misalnya servis perangkat elektronik atau pengecekan alat di laboratorium)',
+        'Uraikan layanan tersebut menurut siklus PDCA',
+        'Isi formulir SOP: identitas, tujuan, ruang lingkup, alat dan bahan, serta APD',
+        'Tulis langkah prosedur berurutan beserta pelaksana, waktu, dan catatan K3',
+        'Gambar diagram alir prosedur',
+        'Periksa SOP dengan daftar pemeriksaan mandiri dan perbaiki bagian yang kurang'
+      ],
+      tugasLaporan: [
+        'Uraian PDCA untuk layanan yang dipilih',
+        'SOP lengkap beserta diagram alirnya',
+        'Jawaban perbedaan fokus ISO 9001 dan ISO 45001 dan hasil pemeriksaan mandiri SOP'
+      ],
+      estimasiWaktu: '2 x 50 menit'
+    },
+    {
+      id: 'std-08',
+      viewCetak: 'lkm_std08_print', // views/lkm_std08_print.ejs
+      judul: 'LKM 8: Proyek Mini: Audit Kesesuaian Produk Elektronik terhadap Standar',
+      pertemuanSaran: 14,
+      tujuan: [
+        'Menyusun daftar periksa (checklist) kesesuaian produk elektronik terhadap persyaratan standar',
+        'Mengaudit satu produk secara visual terhadap checklist tersebut',
+        'Menyimpulkan tingkat kesesuaian dan merumuskan rekomendasi perbaikan',
+        'Mengomunikasikan temuan secara profesional dalam laporan dan presentasi singkat'
+      ],
+      alatBahan: [
+        'Satu produk elektronik (charger, power bank, kabel ekstensi, lampu, atau sejenisnya) yang aman diamati',
+        'Dokumen standar atau ringkasan persyaratan yang relevan (misalnya SNI terkait, IEC 60529, IEC 61140)',
+        'Kamera ponsel untuk dokumentasi',
+        'Formulir checklist audit'
+      ],
+      dasarTeori: 'Audit kesesuaian adalah pemeriksaan sistematis apakah suatu produk, proses, atau jasa memenuhi persyaratan yang ditetapkan dalam standar. Hasilnya dicatat sebagai temuan sesuai atau tidak sesuai, disertai bukti (foto, catatan, atau data) dan rekomendasi tindak lanjut. Proyek ini menggabungkan seluruh materi sebelumnya: hierarki standar, SNI, penilaian kesesuaian, penandaan komponen, dan ketertelusuran pengukuran.',
+      langkahKerja: [
+        'Pilih satu produk elektronik dan tetapkan standar atau persyaratan yang menjadi acuan audit',
+        'Turunkan persyaratan tersebut menjadi checklist minimal 10 butir pemeriksaan yang dapat diamati secara visual',
+        'Lakukan audit visual terhadap produk dan catat status tiap butir (sesuai, tidak sesuai, atau tidak berlaku) beserta bukti foto',
+        'Hitung persentase kesesuaian dan tentukan temuan paling kritis',
+        'Susun rekomendasi perbaikan yang realistis dan sebutkan standar yang menjadi dasarnya',
+        'Presentasikan hasil audit secara singkat di depan kelas'
+      ],
+      tugasLaporan: [
+        'Checklist audit lengkap dengan status dan bukti foto tiap butir',
+        'Ringkasan temuan, persentase kesesuaian, dan temuan paling kritis',
+        'Rekomendasi perbaikan beserta standar acuannya',
+        'Refleksi pembelajaran selama mata kuliah Standarisasi'
+      ],
+      k3: 'Audit hanya berupa pengamatan visual. Jangan membongkar produk atau menyentuh bagian yang bertegangan, dan cabut produk dari stop kontak sebelum diperiksa.',
+      estimasiWaktu: '3 x 50 menit (dapat dikerjakan lintas pertemuan)'
     }
   ]
 };

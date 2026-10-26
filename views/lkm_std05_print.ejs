@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<%- include('partials/lkm_std_top', { nomorLkm: 5, subLkm: 'Standardisasi Komponen Elektronika: Kode, Simbol, dan Nilai Preferensi' }) %>
+
+<div class="sect-title">A. Resistor: Kode Warna dan Pengukuran</div>
+<div class="rumus-box">Selisih (%) = |hasil ukur &minus; nilai nominal| / nilai nominal &times; 100%. Komponen dinyatakan sesuai bila selisih tidak melebihi toleransinya.</div>
+<table class="tabel-data">
+  <thead>
+    <tr><th rowspan="2" style="width:4%;">No</th><th colspan="4">Warna gelang</th><th rowspan="2">Nilai nominal terbaca</th><th rowspan="2" style="width:9%;">Toleransi</th><th rowspan="2">Hasil ukur</th><th rowspan="2" style="width:9%;">Selisih (%)</th><th rowspan="2" style="width:11%;">Dalam toleransi?</th></tr>
+    <tr><th style="width:8%;">1</th><th style="width:8%;">2</th><th style="width:8%;">3</th><th style="width:8%;">4</th></tr>
+  </thead>
+  <tbody><% [1,2,3,4,5].forEach(i => { %><tr><td class="tengah t30"><%= i %></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="tengah" style="font-size:8pt;">Ya / Tidak</td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">B. Kapasitor: Membaca Kode</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:4%;">No</th><th style="width:20%;">Kode tertulis</th><th style="width:22%;">Nilai kapasitansi (pF/nF/&micro;F)</th><th style="width:20%;">Tegangan kerja</th><th style="width:16%;">Jenis (keramik/elektrolit)</th><th>Polaritas (ya/tidak)</th></tr></thead>
+  <tbody><% [1,2,3].forEach(i => { %><tr><td class="tengah t30"><%= i %></td><td></td><td></td><td></td><td></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">C. Deret Nilai Preferensi dan Toleransi</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:4%;">No</th><th style="width:20%;">Nilai resistor</th><th style="width:22%;">Termasuk deret E12 / E24?</th><th>Penjelasan singkat</th></tr></thead>
+  <tbody><% [1,2,3,4].forEach(i => { %><tr><td class="tengah t30"><%= i %></td><td></td><td></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">D. Simbol Grafis Standar</div>
+<p class="catatan-kecil">Gambar simbol setiap komponen pada kotak yang tersedia. Standar acuan simbol: ............................................</p>
+<div class="grid-simbol">
+  <% ['Resistor tetap','Kapasitor non-polar','Kapasitor elektrolit (polar)','Dioda','LED','Transistor NPN'].forEach(n => { %>
+    <div class="sel"><strong><%= n %></strong></div>
+  <% }) %>
+</div>
+
+<div class="sect-title">E. Membaca Datasheet</div>
+<table class="tabel-data">
+  <tr><td class="label" style="width:28%;">Komponen (tipe/nomor)</td><td class="t30"></td></tr>
+  <tr><td class="label">Produsen</td><td class="t30"></td></tr>
+  <tr><td class="label">Nilai maksimum yang diizinkan</td><td class="t30"></td></tr>
+  <tr><td class="label">Rentang suhu kerja</td><td class="t30"></td></tr>
+  <tr><td class="label">Toleransi / karakteristik utama</td><td class="t30"></td></tr>
+  <tr><td class="label">Sumber datasheet</td><td class="t30"></td></tr>
+</table>
+
+<div class="sect-title">F. Rangkaian dengan Simbol Standar</div>
+<p class="catatan-kecil">Gambar satu rangkaian sederhana (misalnya pembagi tegangan atau LED dengan resistor pembatas) menggunakan simbol standar, lengkap dengan nilai komponennya.</p>
+<div class="kotak-gambar" style="height:150px;"></div>
+
+<div class="sect-title">G. Kesimpulan</div>
+<p class="catatan-kecil">Apa manfaat penandaan, simbol, dan deret nilai yang distandarkan bagi teknisi?</p>
+<%- g(4) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>
