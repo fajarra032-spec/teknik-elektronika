@@ -1,160 +1,152 @@
 <%- include('../../partials/header') %>
-<style>
-  .detail-card { background: #fff; border-radius: 1.5rem; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,.05); }
-  .detail-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 1.25rem 1.5rem; color: #fff; }
-  .sec { border-left: 3px solid #3b82f6; padding-left: .75rem; margin: 1.5rem 0 .75rem; font-weight: 700; color: #1e3a8a; }
-  .info-row { display: flex; flex-wrap: wrap; margin-bottom: .4rem; }
-  .info-label { width: 35%; font-weight: 600; } .info-value { width: 65%; }
-  .timeline { list-style: none; padding-left: 0; margin: 0; }
-  .timeline li { border-left: 2px solid #cbd5e1; padding: 0 0 .9rem 1rem; position: relative; }
-  .timeline li::before { content: ''; position: absolute; left: -6px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: #3b82f6; }
-  @media (max-width: 768px) { .info-label, .info-value { width: 100%; } }
-</style>
+<link rel="stylesheet" href="/css/lab-ui.css?v=2">
 <%
-  const tgl = (s) => s ? new Date(s).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-';
+  const tgl = (s) => s ? new Date(s).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
   const waktu = (s) => s ? new Date(s).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
   const bisaVerifikasiKembali = p.status === 'dipinjam' || p.status === 'menunggu_verifikasi_kembali';
 %>
 <div class="container mt-4 mb-5" style="max-width: 960px;">
-  <a href="/admin/peminjaman-alat" class="btn btn-sm btn-outline-secondary mb-3"><i class="bi bi-arrow-left"></i> Kembali</a>
-  <%- include('../../partials/pesan_flash') %>
-
-  <div class="detail-card">
-    <div class="detail-header d-flex justify-content-between align-items-start flex-wrap gap-2">
-      <div>
-        <h4 class="fw-bold mb-1">Peminjaman <%= p.kode %></h4>
-        <div class="opacity-75 small">Diajukan <%= waktu(p.createdAt) %></div>
-      </div>
+  <div class="lab-hero">
+    <a href="/admin/peminjaman-alat" class="btn btn-sm btn-outline-light rounded-pill mb-3"><i class="bi bi-arrow-left"></i> Daftar peminjaman</a>
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div><h2><%= p.kode %></h2><p class="lab-sub"><%= p.namaMahasiswa %> (<%= p.nim || '-' %>) &middot; diajukan <%= waktu(p.createdAt) %></p></div>
       <div class="fs-6"><%- include('../../partials/peminjaman_status', { status: p.status, terlambat: p.terlambat }) %></div>
     </div>
-
-    <div class="p-4">
-      <div class="sec">Peminjam &amp; Keperluan</div>
-      <div class="info-row"><div class="info-label">Mahasiswa</div><div class="info-value"><%= p.namaMahasiswa %> (<%= p.nim || '-' %>)</div></div>
-      <div class="info-row"><div class="info-label">Keperluan</div><div class="info-value"><%= p.keperluan %></div></div>
-      <div class="info-row"><div class="info-label">Mata Kuliah / Kegiatan</div><div class="info-value"><%= p.kegiatan || '-' %></div></div>
-      <div class="info-row"><div class="info-label">Tanggal Pinjam</div><div class="info-value"><%= tgl(p.tanggalPinjam) %></div></div>
-      <div class="info-row"><div class="info-label">Rencana Kembali</div><div class="info-value"><%= tgl(p.tanggalRencanaKembali) %></div></div>
-      <% if (p.status === 'dikembalikan') { %>
-        <div class="info-row"><div class="info-label">Dikembalikan</div><div class="info-value"><%= tgl(p.tanggalKembali) %>
-          <% if (p.hariTerlambat > 0) { %><span class="badge bg-danger ms-1">Terlambat <%= p.hariTerlambat %> hari</span><% } else { %><span class="badge bg-success ms-1">Tepat waktu</span><% } %></div></div>
-        <div class="info-row"><div class="info-label">Diverifikasi oleh</div><div class="info-value"><%= p.diverifikasiOleh || '-' %> · <%= waktu(p.diverifikasiAt) %></div></div>
-        <% if (p.catatanVerifikasi) { %><div class="info-row"><div class="info-label">Catatan Verifikasi</div><div class="info-value"><%= p.catatanVerifikasi %></div></div><% } %>
-      <% } %>
-      <% if (p.status === 'ditolak') { %><div class="info-row"><div class="info-label">Alasan Penolakan</div><div class="info-value text-danger"><%= p.alasanPenolakan %></div></div><% } %>
-      <% if (p.catatanPengembalian) { %><div class="info-row"><div class="info-label">Catatan Mahasiswa (kembali)</div><div class="info-value"><%= p.catatanPengembalian %></div></div><% } %>
-
-      <div class="sec">Alat yang Dipinjam</div>
-      <div class="table-responsive">
-        <table class="table table-bordered align-middle mb-0">
-          <thead class="table-light">
-            <tr><th>Kode</th><th>Nama Alat</th><th class="text-center">Jumlah</th>
-              <% if (p.status === 'diajukan') { %><th class="text-center">Stok Tersedia Saat Ini</th><% } %>
-              <% if (p.status === 'dikembalikan') { %><th class="text-center">Baik</th><th class="text-center">Rusak</th><th class="text-center">Hilang</th><% } %>
-            </tr>
-          </thead>
-          <tbody>
-            <% p.items.forEach(it => { %>
-              <tr>
-                <td><code><%= it.kode || '-' %></code></td><td><% if (it.fotoUrl) { %><img src="<%= it.fotoUrl %>" alt="" loading="lazy" referrerpolicy="no-referrer" style="width:44px;height:44px;object-fit:cover;border-radius:.4rem;" class="me-2"><% } %><%= it.nama %></td><td class="text-center"><%= it.jumlah %></td>
-                <% if (p.status === 'diajukan') {
-                     const s = (typeof stok !== 'undefined' && stok) ? stok[it.alatId] : undefined; %>
-                  <td class="text-center">
-                    <% if (s === undefined) { %><span class="text-muted">-</span>
-                    <% } else if (s === null) { %><span class="badge bg-danger">Alat tidak tersedia</span>
-                    <% } else { %><span class="badge bg-<%= s >= it.jumlah ? 'success' : 'danger' %>"><%= s %></span><% } %>
-                  </td>
-                <% } %>
-                <% if (p.status === 'dikembalikan') { %>
-                  <td class="text-center text-success fw-bold"><%= it.jumlahBaik %></td>
-                  <td class="text-center <%= it.jumlahRusak ? 'text-warning fw-bold' : '' %>"><%= it.jumlahRusak %></td>
-                  <td class="text-center <%= it.jumlahHilang ? 'text-danger fw-bold' : '' %>"><%= it.jumlahHilang %></td>
-                <% } %>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
-
-      <% if (p.status === 'diajukan') { %>
-        <div class="sec">Verifikasi Pengajuan</div>
-        <div class="row g-3">
-          <div class="col-md-6">
-            <form method="POST" action="/admin/peminjaman-alat/<%= p.id %>/setujui" class="border rounded-3 p-3 h-100">
-              <label class="form-label fw-semibold text-success"><i class="bi bi-check-circle"></i> Setujui</label>
-              <textarea name="catatan" class="form-control mb-2" rows="2" placeholder="Catatan (opsional), mis. ambil alat di Lab Dasar"></textarea>
-              <button class="btn btn-success w-100" onclick="return confirm('Setujui dan serahkan alat? Stok akan otomatis berkurang.')">Setujui &amp; Serahkan Alat</button>
-            </form>
-          </div>
-          <div class="col-md-6">
-            <form method="POST" action="/admin/peminjaman-alat/<%= p.id %>/tolak" class="border rounded-3 p-3 h-100">
-              <label class="form-label fw-semibold text-danger"><i class="bi bi-x-circle"></i> Tolak</label>
-              <textarea name="alasan" class="form-control mb-2" rows="2" required placeholder="Alasan penolakan (wajib)"></textarea>
-              <button class="btn btn-outline-danger w-100">Tolak Pengajuan</button>
-            </form>
-          </div>
-        </div>
-      <% } %>
-
-      <% if (bisaVerifikasiKembali) { %>
-        <div class="sec">Verifikasi Pengembalian</div>
-        <% if (p.status === 'dipinjam') { %>
-          <div class="alert alert-secondary py-2 small">Mahasiswa belum mengajukan pengembalian. Anda tetap bisa memverifikasi langsung jika alat sudah diterima.</div>
-        <% } %>
-        <% if (p.terlambat) { %><div class="alert alert-danger py-2 small"><i class="bi bi-exclamation-triangle-fill"></i> Melewati batas rencana kembali (<%= tgl(p.tanggalRencanaKembali) %>).</div><% } %>
-        <form method="POST" action="/admin/peminjaman-alat/<%= p.id %>/verifikasi-kembali" id="formKembali">
-          <p class="small text-muted mb-2">Periksa fisik alat, lalu isi kondisi tiap item. Baik + rusak + hilang harus sama dengan jumlah dipinjam.</p>
-          <div class="table-responsive">
-            <table class="table table-bordered align-middle">
-              <thead class="table-light"><tr><th>Alat</th><th class="text-center">Dipinjam</th><th style="width:100px">Baik</th><th style="width:100px">Rusak</th><th style="width:100px">Hilang</th></tr></thead>
-              <tbody>
-                <% p.items.forEach((it, i) => { %>
-                  <tr data-jumlah="<%= it.jumlah %>">
-                    <td><% if (it.fotoUrl) { %><img src="<%= it.fotoUrl %>" alt="" loading="lazy" referrerpolicy="no-referrer" style="width:44px;height:44px;object-fit:cover;border-radius:.4rem;" class="me-2"><% } %><%= it.nama %></td><td class="text-center"><%= it.jumlah %></td>
-                    <td><input type="number" class="form-control form-control-sm in-baik" name="baik_<%= i %>" min="0" max="<%= it.jumlah %>" value="<%= it.jumlah %>"></td>
-                    <td><input type="number" class="form-control form-control-sm in-rusak" name="rusak_<%= i %>" min="0" max="<%= it.jumlah %>" value="0"></td>
-                    <td><input type="number" class="form-control form-control-sm in-hilang" name="hilang_<%= i %>" min="0" max="<%= it.jumlah %>" value="0"></td>
-                  </tr>
-                <% }) %>
-              </tbody>
-            </table>
-          </div>
-          <textarea name="catatan" class="form-control mb-2" rows="2" placeholder="Catatan verifikasi (opsional), mis. detail kerusakan"></textarea>
-          <button class="btn btn-success"><i class="bi bi-check2-all"></i> Verifikasi Pengembalian</button>
-        </form>
-        <% if (p.status === 'menunggu_verifikasi_kembali') { %>
-          <form method="POST" action="/admin/peminjaman-alat/<%= p.id %>/tolak-kembali" class="border rounded-3 p-3 mt-3">
-            <label class="form-label fw-semibold text-danger small">Alat belum diterima / pengembalian bermasalah?</label>
-            <div class="d-flex gap-2 flex-wrap">
-              <input type="text" name="alasan" class="form-control" style="flex:1;min-width:200px" required placeholder="Alasan (wajib)">
-              <button class="btn btn-outline-danger">Kembalikan ke "Sedang Dipinjam"</button>
-            </div>
-          </form>
-        <% } %>
-        <script>
-          // Saat rusak/hilang diisi, kolom "baik" otomatis menyesuaikan sisa unit
-          document.querySelectorAll('#formKembali tbody tr').forEach(function (tr) {
-            var jml = parseInt(tr.dataset.jumlah, 10);
-            var baik = tr.querySelector('.in-baik'), rusak = tr.querySelector('.in-rusak'), hilang = tr.querySelector('.in-hilang');
-            function hitung() {
-              var sisa = jml - (parseInt(rusak.value, 10) || 0) - (parseInt(hilang.value, 10) || 0);
-              baik.value = Math.max(0, sisa);
-            }
-            rusak.addEventListener('input', hitung); hilang.addEventListener('input', hitung);
-          });
-        </script>
-      <% } %>
-
-      <div class="sec">Riwayat</div>
-      <ul class="timeline">
-        <% (p.riwayat || []).forEach(r => { %>
-          <li>
-            <div><strong><%= statusLabel[r.status] || r.status %></strong> <span class="text-muted small">· <%= r.oleh %> · <%= waktu(r.waktu) %></span></div>
-            <% if (r.catatan) { %><div class="small text-muted"><%= r.catatan %></div><% } %>
-          </li>
-        <% }) %>
-      </ul>
-    </div>
   </div>
+
+  <%- include('../../partials/pesan_flash') %>
+
+  <div class="lab-panel mb-3"><div class="lab-panel-body pb-3"><%- include('../../partials/peminjaman_stepper', { status: p.status }) %></div></div>
+
+  <div class="lab-panel mb-3"><div class="lab-panel-body">
+    <div class="lab-sec"><i class="bi bi-info-circle"></i> Peminjam dan keperluan</div>
+    <dl class="lab-dl">
+      <dt>Mahasiswa</dt><dd><%= p.namaMahasiswa %> (<%= p.nim || '-' %>)</dd>
+      <dt>Keperluan</dt><dd><%= p.keperluan %></dd>
+      <dt>Mata kuliah / kegiatan</dt><dd><%= p.kegiatan || '-' %></dd>
+      <dt>Tanggal pinjam</dt><dd><%= tgl(p.tanggalPinjam) %></dd>
+      <dt>Rencana kembali</dt><dd><%= tgl(p.tanggalRencanaKembali) %></dd>
+      <% if (p.status === 'dikembalikan') { %>
+        <dt>Dikembalikan</dt><dd><%= tgl(p.tanggalKembali) %> <% if (p.hariTerlambat > 0) { %><span class="pill bad">Terlambat <%= p.hariTerlambat %> hari</span><% } else { %><span class="pill ok">Tepat waktu</span><% } %></dd>
+        <dt>Diverifikasi oleh</dt><dd><%= p.diverifikasiOleh || '-' %> &middot; <%= waktu(p.diverifikasiAt) %></dd>
+        <% if (p.catatanVerifikasi) { %><dt>Catatan verifikasi</dt><dd><%= p.catatanVerifikasi %></dd><% } %>
+      <% } %>
+      <% if (p.status === 'ditolak') { %><dt>Alasan penolakan</dt><dd class="text-danger"><%= p.alasanPenolakan %></dd><% } %>
+      <% if (p.catatanPengembalian) { %><dt>Catatan mahasiswa (kembali)</dt><dd><%= p.catatanPengembalian %></dd><% } %>
+    </dl>
+  </div></div>
+
+  <% const thumb = (it) => it.fotoUrl ? '<img class="lab-thumb" style="width:44px;height:44px;" src="' + it.fotoUrl.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="lab-thumb no-photo" style="width:44px;height:44px;"></span>'; %>
+  <div class="lab-panel mb-3"><div class="lab-panel-body">
+    <div class="lab-sec"><i class="bi bi-motherboard"></i> Alat yang dipinjam</div>
+    <div class="lab-table-wrap"><div class="table-responsive">
+      <table class="lab-table">
+        <thead>
+          <tr><th>Alat</th><th class="text-center">Jumlah</th>
+            <% if (p.status === 'diajukan') { %><th class="text-center">Stok tersedia saat ini</th><% } %>
+            <% if (p.status === 'dikembalikan') { %><th class="text-center">Baik</th><th class="text-center">Rusak</th><th class="text-center">Hilang</th><% } %>
+          </tr>
+        </thead>
+        <tbody>
+          <% p.items.forEach(it => { %>
+            <tr>
+              <td><div class="d-flex align-items-center gap-2"><%- thumb(it) %><div><div class="fw-semibold"><%= it.nama %></div><% if (it.kode) { %><span class="lab-code"><%= it.kode %></span><% } %></div></div></td>
+              <td class="text-center fw-semibold"><%= it.jumlah %></td>
+              <% if (p.status === 'diajukan') { const s = (typeof stok !== 'undefined' && stok) ? stok[it.alatId] : undefined; %>
+                <td class="text-center">
+                  <% if (s === undefined) { %><span class="text-muted">-</span>
+                  <% } else if (s === null) { %><span class="pill bad">Alat tidak tersedia</span>
+                  <% } else { %><span class="pill <%= s >= it.jumlah ? 'ok' : 'bad' %>"><%= s %> unit</span><% } %>
+                </td>
+              <% } %>
+              <% if (p.status === 'dikembalikan') { %>
+                <td class="text-center text-success fw-bold"><%= it.jumlahBaik %></td>
+                <td class="text-center <%= it.jumlahRusak ? 'text-warning fw-bold' : 'text-muted' %>"><%= it.jumlahRusak %></td>
+                <td class="text-center <%= it.jumlahHilang ? 'text-danger fw-bold' : 'text-muted' %>"><%= it.jumlahHilang %></td>
+              <% } %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div></div>
+  </div></div>
+
+  <% if (p.status === 'diajukan') { %>
+    <div class="lab-panel mb-3"><div class="lab-panel-body lab-form">
+      <div class="lab-sec"><i class="bi bi-patch-check"></i> Verifikasi pengajuan</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <form method="POST" action="/admin/peminjaman-alat/<%= p.id %>/setujui" class="border rounded-3 p-3 h-100" style="border-color: var(--lab-line) !important;">
+            <label class="form-label text-success"><i class="bi bi-check-circle"></i> Setujui</label>
+            <textarea name="catatan" class="form-control mb-2" rows="2" placeholder="Catatan (opsional), misalnya ambil alat di Lab Dasar"></textarea>
+            <button class="btn btn-success rounded-pill w-100" onclick="return confirm('Setujui dan serahkan alat? Stok akan otomatis berkurang.')">Setujui dan serahkan alat</button>
+          </form>
+        </div>
+        <div class="col-md-6">
+          <form method="POST" action="/admin/peminjaman-alat/<%= p.id %>/tolak" class="border rounded-3 p-3 h-100" style="border-color: var(--lab-line) !important;">
+            <label class="form-label text-danger"><i class="bi bi-x-circle"></i> Tolak</label>
+            <textarea name="alasan" class="form-control mb-2" rows="2" required placeholder="Alasan penolakan (wajib)"></textarea>
+            <button class="btn btn-outline-danger rounded-pill w-100">Tolak pengajuan</button>
+          </form>
+        </div>
+      </div>
+    </div></div>
+  <% } %>
+
+  <% if (bisaVerifikasiKembali) { %>
+    <div class="lab-panel mb-3"><div class="lab-panel-body lab-form">
+      <div class="lab-sec"><i class="bi bi-clipboard-check"></i> Verifikasi pengembalian</div>
+      <% if (p.status === 'dipinjam') { %><div class="lab-note mb-3">Mahasiswa belum mengajukan pengembalian. Anda tetap bisa memverifikasi langsung jika alat sudah diterima.</div><% } %>
+      <% if (p.terlambat) { %><div class="alert alert-danger py-2 small"><i class="bi bi-exclamation-triangle-fill"></i> Melewati batas rencana kembali (<%= tgl(p.tanggalRencanaKembali) %>).</div><% } %>
+      <form method="POST" action="/admin/peminjaman-alat/<%= p.id %>/verifikasi-kembali" id="formKembali">
+        <p class="small text-muted">Periksa fisik alat, lalu isi kondisi tiap item. Baik + rusak + hilang harus sama dengan jumlah dipinjam.</p>
+        <div class="lab-table-wrap mb-3"><div class="table-responsive">
+          <table class="lab-table">
+            <thead><tr><th>Alat</th><th class="text-center">Dipinjam</th><th style="width:100px">Baik</th><th style="width:100px">Rusak</th><th style="width:100px">Hilang</th></tr></thead>
+            <tbody>
+              <% p.items.forEach((it, i) => { %>
+                <tr data-jumlah="<%= it.jumlah %>">
+                  <td><div class="d-flex align-items-center gap-2"><%- thumb(it) %><span class="fw-semibold"><%= it.nama %></span></div></td>
+                  <td class="text-center fw-semibold"><%= it.jumlah %></td>
+                  <td><input type="number" class="form-control form-control-sm in-baik" name="baik_<%= i %>" min="0" max="<%= it.jumlah %>" value="<%= it.jumlah %>" aria-label="Baik"></td>
+                  <td><input type="number" class="form-control form-control-sm in-rusak" name="rusak_<%= i %>" min="0" max="<%= it.jumlah %>" value="0" aria-label="Rusak"></td>
+                  <td><input type="number" class="form-control form-control-sm in-hilang" name="hilang_<%= i %>" min="0" max="<%= it.jumlah %>" value="0" aria-label="Hilang"></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div></div>
+        <textarea name="catatan" class="form-control mb-3" rows="2" placeholder="Catatan verifikasi (opsional), misalnya detail kerusakan"></textarea>
+        <button class="btn btn-success rounded-pill px-4">Verifikasi pengembalian</button>
+      </form>
+      <% if (p.status === 'menunggu_verifikasi_kembali') { %>
+        <form method="POST" action="/admin/peminjaman-alat/<%= p.id %>/tolak-kembali" class="lab-note mt-3">
+          <label class="form-label small text-danger mb-1">Alat belum diterima atau pengembalian bermasalah?</label>
+          <div class="d-flex gap-2 flex-wrap">
+            <input type="text" name="alasan" class="form-control" style="flex:1;min-width:200px" required placeholder="Alasan (wajib)">
+            <button class="btn btn-outline-danger rounded-pill px-3">Kembalikan ke "Sedang dipinjam"</button>
+          </div>
+        </form>
+      <% } %>
+    </div></div>
+    <script>
+      document.querySelectorAll('#formKembali tbody tr').forEach(function (tr) {
+        var jml = parseInt(tr.dataset.jumlah, 10);
+        var baik = tr.querySelector('.in-baik'), rusak = tr.querySelector('.in-rusak'), hilang = tr.querySelector('.in-hilang');
+        function hitung() { baik.value = Math.max(0, jml - (parseInt(rusak.value, 10) || 0) - (parseInt(hilang.value, 10) || 0)); }
+        rusak.addEventListener('input', hitung); hilang.addEventListener('input', hitung);
+      });
+    </script>
+  <% } %>
+
+  <div class="lab-panel"><div class="lab-panel-body">
+    <div class="lab-sec"><i class="bi bi-clock-history"></i> Riwayat</div>
+    <ul class="lab-timeline">
+      <% (p.riwayat || []).forEach(r => { %>
+        <li><div class="fw-semibold"><%= statusLabel[r.status] || r.status %></div><div class="who"><%= r.oleh %> &middot; <%= waktu(r.waktu) %></div>
+          <% if (r.catatan) { %><div class="note"><%= r.catatan %></div><% } %></li>
+      <% }) %>
+    </ul>
+  </div></div>
 </div>
 <%- include('../../partials/footer') %>

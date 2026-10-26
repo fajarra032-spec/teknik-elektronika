@@ -1,0 +1,15 @@
+<%
+  /* Pelacak langkah. Masukan: steps (array label), aktif (indeks langkah berjalan),
+     selesai (true = semua langkah tuntas), gagal (indeks langkah yang gagal, opsional). */
+  var _g = (typeof gagal === 'number') ? gagal : null;
+  var _s = (typeof selesai !== 'undefined' && selesai) ? true : false;
+%><ol class="steps" aria-label="Tahapan">
+<% steps.forEach(function (label, i) {
+     var c = '';
+     if (_g !== null && i === _g) c = 'fail';
+     else if (_g !== null && i > _g) c = '';
+     else if (_g !== null && i < _g) c = 'done';
+     else if (_s || i < aktif) c = 'done';
+     else if (i === aktif) c = 'now';
+%>  <li class="<%= c %>"<% if (c === 'now') { %> aria-current="step"<% } %>><%= label %></li>
+<% }) %></ol>

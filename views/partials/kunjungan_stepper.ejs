@@ -1,0 +1,9 @@
+<%
+  var _s = status, _steps, _aktif = 0, _gagal, _selesai = false;
+  if (_s === 'ditolak') { _steps = ['Diajukan', 'Ditolak admin']; _gagal = 1; }
+  else {
+    _steps = ['Diajukan', 'Verifikasi admin', 'Surat terbit'];
+    if (_s === 'diajukan') _aktif = 1;
+    else if (_s === 'disetujui') _selesai = true;
+  }
+%><%- include('lab_stepper', { steps: _steps, aktif: _aktif, selesai: _selesai, gagal: _gagal }) %>

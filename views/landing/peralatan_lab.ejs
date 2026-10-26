@@ -1,94 +1,94 @@
 <%- include('../partials/header-landing') %>
-<style>
-  .lab-hero { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: #fff; padding: 4rem 0 3rem; margin-bottom: 2rem; }
-  .lab-hero h1 { font-size: 2.6rem; font-weight: 700; }
-  .lab-stat { background: rgba(255,255,255,.15); border-radius: 1rem; padding: .9rem 1.25rem; text-align: center; min-width: 120px; }
-  .lab-stat b { display: block; font-size: 1.8rem; line-height: 1.1; }
-  .lab-card { background: #fff; border-radius: 1rem; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,.06); height: 100%; display: flex; flex-direction: column; transition: transform .25s, box-shadow .25s; cursor: pointer; }
-  .lab-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(30,58,138,.15); }
-  .lab-foto { position: relative; aspect-ratio: 4 / 3; background: #eef2f7; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 3.2rem; }
-  .lab-foto img { width: 100%; height: 100%; object-fit: cover; }
-  .lab-badge { position: absolute; top: .6rem; left: .6rem; font-size: .72rem; }
-  .lab-chip { border-radius: 2rem; padding: .35rem .9rem; font-size: .85rem; border: 1px solid #cbd5e1; background: #fff; color: #334155; cursor: pointer; }
-  .lab-chip.active { background: #1e3a8a; border-color: #1e3a8a; color: #fff; }
-  .lab-cta { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-radius: 1.25rem; padding: 1.5rem; }
-  @media (max-width: 768px) { .lab-hero { padding: 2.5rem 0 2rem; } .lab-hero h1 { font-size: 1.9rem; } }
-</style>
-
-<section class="lab-hero">
-  <div class="container">
-    <h1><i class="bi bi-motherboard me-2"></i>Peralatan Laboratorium</h1>
-    <p class="lead opacity-90 mb-4">Alat dan perangkat Laboratorium Teknik Elektronika yang dapat dipakai untuk praktikum, tugas, dan penelitian mahasiswa.</p>
-    <div class="d-flex gap-3 flex-wrap">
-      <div class="lab-stat"><b><%= stats.jenis %></b><small>Jenis Alat</small></div>
-      <div class="lab-stat"><b><%= stats.unit %></b><small>Total Unit</small></div>
+<link rel="stylesheet" href="/css/lab-ui.css?v=2">
+<%
+  var _tersediaSekarang = alat.filter(function (a) { return a.tersedia; }).length;
+  var _hitungKat = {};
+  alat.forEach(function (a) { _hitungKat[a.kategori] = (_hitungKat[a.kategori] || 0) + 1; });
+%>
+<section class="lab-hero lab-hero--full">
+  <div class="lab-inner px-3">
+    <h1>Peralatan Laboratorium</h1>
+    <p class="lab-sub">Alat ukur, sumber daya, dan perangkat praktik Laboratorium Teknik Elektronika yang dapat dipakai mahasiswa untuk praktikum, tugas, dan penelitian.</p>
+    <div class="lab-stats">
+      <div class="lab-stat"><b><%= stats.jenis %></b><small>Jenis alat</small></div>
+      <div class="lab-stat"><b><%= stats.unit %></b><small>Total unit</small></div>
+      <div class="lab-stat"><b><%= _tersediaSekarang %></b><small>Siap dipinjam</small></div>
       <div class="lab-stat"><b><%= stats.kategori %></b><small>Kategori</small></div>
     </div>
   </div>
 </section>
 
-<div class="container mb-5">
-  <div class="lab-cta d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
-    <div>
-      <h5 class="fw-bold mb-1"><i class="bi bi-box-arrow-right me-1"></i>Ingin meminjam alat?</h5>
-      <div class="text-muted small">Mahasiswa Teknik Elektronika dapat mengajukan peminjaman secara online. Pengajuan dan pengembalian diverifikasi oleh admin lab.</div>
+<div class="lab-inner px-3 py-4 mb-4">
+  <div class="lab-panel mb-4">
+    <div class="lab-panel-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+      <div>
+        <div class="fw-bold" style="color: var(--lab-ink);"><i class="bi bi-box-arrow-right me-1"></i> Ingin meminjam alat?</div>
+        <div class="small text-muted">Mahasiswa mengajukan secara daring. Pengajuan dan pengembalian diverifikasi oleh admin lab.</div>
+      </div>
+      <a href="/mahasiswa/peminjaman-alat/ajukan" class="btn btn-primary rounded-pill px-4 text-nowrap">Ajukan peminjaman</a>
     </div>
-    <a href="/mahasiswa/peminjaman-alat" class="btn btn-primary rounded-pill px-4 text-nowrap"><i class="bi bi-box-arrow-in-right me-1"></i>Ajukan Peminjaman</a>
   </div>
 
-  <div class="row g-2 mb-3">
-    <div class="col-md-5"><input type="search" id="cariLab" class="form-control rounded-pill px-3" placeholder="Cari alat, merk, atau lokasi..."></div>
-    <div class="col-md-7 d-flex flex-wrap gap-2 align-items-center">
-      <button type="button" class="lab-chip active" data-kat="">Semua</button>
-      <% kategoriList.forEach(k => { %><button type="button" class="lab-chip" data-kat="<%= k %>"><%= k %></button><% }) %>
+  <div class="lab-toolbar">
+    <label class="lab-search">
+      <i class="bi bi-search"></i>
+      <input type="search" id="cariLab" placeholder="Cari nama alat, merk, atau lokasi" aria-label="Cari alat">
+    </label>
+    <div class="lab-chips" id="chipKat">
+      <button type="button" class="lab-chip active" data-kat="">Semua<em><%= alat.length %></em></button>
+      <% kategoriList.forEach(function (k) { %><button type="button" class="lab-chip" data-kat="<%= k %>"><%= k %><em><%= _hitungKat[k] %></em></button><% }) %>
     </div>
   </div>
 
   <% if (alat.length === 0) { %>
-    <div class="alert alert-info text-center">Data peralatan laboratorium belum tersedia.</div>
+    <div class="lab-empty"><i class="bi bi-motherboard"></i>Data peralatan laboratorium belum tersedia. Silakan kembali lagi nanti.</div>
   <% } %>
 
-  <div class="row g-3" id="gridLab">
-    <% alat.forEach(a => { %>
-      <div class="col-6 col-md-4 col-lg-3 lab-item" data-kat="<%= a.kategori %>" data-cari="<%= [a.nama, a.merk, a.lokasi, a.kategori].join(' ').toLowerCase() %>">
-        <div class="lab-card"
-             data-nama="<%= a.nama %>" data-kat-label="<%= a.kategori %>" data-merk="<%= a.merk %>" data-lokasi="<%= a.lokasi %>"
-             data-ket="<%= a.keterangan %>" data-foto="<%= a.fotoUrl %>" data-unit="<%= a.jumlahTotal %>" data-tersedia="<%= a.tersedia ? '1' : '0' %>">
-          <div class="lab-foto">
-            <% if (a.fotoUrl) { %><img src="<%= a.fotoUrl %>" alt="<%= a.nama %>" loading="lazy" referrerpolicy="no-referrer"><% } else { %><i class="bi bi-motherboard"></i><% } %>
-            <span class="badge bg-<%= a.tersedia ? 'success' : 'secondary' %> lab-badge"><%= a.tersedia ? 'Tersedia' : 'Sedang dipakai' %></span>
-          </div>
-          <div class="p-3 d-flex flex-column flex-grow-1">
-            <div class="fw-semibold lh-sm"><%= a.nama %></div>
-            <div class="small text-primary mt-1"><%= a.kategori %></div>
-            <% if (a.merk) { %><div class="small text-muted"><%= a.merk %></div><% } %>
-            <div class="small text-muted mt-auto pt-2">
-              <% if (a.lokasi) { %><i class="bi bi-geo-alt"></i> <%= a.lokasi %> · <% } %><i class="bi bi-boxes"></i> <%= a.jumlahTotal %> unit
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="tool-grid" id="gridLab">
+    <% alat.forEach(function (a) { %>
+      <button type="button" class="tool-card js-item" data-kat="<%= a.kategori %>" data-cari="<%= [a.nama, a.merk, a.lokasi, a.kategori, a.kode].join(' ').toLowerCase() %>"
+        data-nama="<%= a.nama %>" data-kat-label="<%= a.kategori %>" data-merk="<%= a.merk %>" data-lokasi="<%= a.lokasi %>"
+        data-ket="<%= a.keterangan %>" data-foto="<%= a.fotoUrl %>" data-kode="<%= a.kode %>" data-unit="<%= a.jumlahTotal %>" data-tersedia="<%= a.tersedia ? '1' : '0' %>">
+        <span class="tool-photo <%= a.fotoUrl ? '' : 'no-photo' %>">
+          <% if (a.fotoUrl) { %><img src="<%= a.fotoUrl %>" alt="<%= a.nama %>" loading="lazy" referrerpolicy="no-referrer"><% } %>
+          <% if (a.kode) { %><span class="tool-tag"><%= a.kode %></span><% } %>
+        </span>
+        <span class="tool-body">
+          <span class="tool-name"><%= a.nama %></span>
+          <span class="tool-meta"><%= a.kategori %><% if (a.merk) { %> &middot; <%= a.merk %><% } %></span>
+          <% if (a.lokasi) { %><span class="tool-meta"><i class="bi bi-geo-alt"></i> <%= a.lokasi %></span><% } %>
+          <span class="tool-foot d-flex justify-content-between align-items-center">
+            <span class="pill <%= a.tersedia ? 'ok' : 'mute' %>"><%= a.tersedia ? 'Tersedia' : 'Sedang dipakai' %></span>
+            <span class="tool-meta"><%= a.jumlahTotal %> unit</span>
+          </span>
+        </span>
+      </button>
     <% }) %>
   </div>
-  <div id="kosongLab" class="alert alert-light border text-center mt-3" style="display:none;">Tidak ada alat yang cocok dengan pencarian.</div>
+  <div id="kosongLab" class="lab-empty" style="display:none;"><i class="bi bi-search"></i>Tidak ada alat yang cocok. Coba kata kunci atau kategori lain.</div>
 </div>
 
-<div class="modal fade" id="modalLab" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalLab" tabindex="-1" aria-labelledby="mlNama" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content" style="border-radius:1rem;overflow:hidden;">
-      <div class="modal-header py-2"><h5 class="modal-title" id="mlNama"></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
-      <div class="modal-body">
-        <div class="row g-3">
-          <div class="col-md-6"><div class="lab-foto rounded-3 overflow-hidden" id="mlFoto"></div></div>
-          <div class="col-md-6">
-            <div class="mb-2" id="mlStatus"></div>
-            <dl class="row small mb-2">
-              <dt class="col-4">Kategori</dt><dd class="col-8" id="mlKat"></dd>
-              <dt class="col-4">Merk / Model</dt><dd class="col-8" id="mlMerk"></dd>
-              <dt class="col-4">Lokasi</dt><dd class="col-8" id="mlLokasi"></dd>
-              <dt class="col-4">Jumlah</dt><dd class="col-8" id="mlUnit"></dd>
+    <div class="modal-content" style="border-radius:1.1rem;overflow:hidden;">
+      <div class="modal-body p-0">
+        <div class="row g-0">
+          <div class="col-md-6"><div class="tool-photo" id="mlFoto" style="aspect-ratio:auto;min-height:260px;height:100%;"></div></div>
+          <div class="col-md-6 p-4">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <h5 class="fw-bold mb-1" id="mlNama" style="color:var(--lab-ink);"></h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="mb-3" id="mlStatus"></div>
+            <dl class="lab-dl small mb-3">
+              <dt>Kode</dt><dd id="mlKode"></dd>
+              <dt>Kategori</dt><dd id="mlKat"></dd>
+              <dt>Merk / model</dt><dd id="mlMerk"></dd>
+              <dt>Lokasi</dt><dd id="mlLokasi"></dd>
+              <dt>Jumlah</dt><dd id="mlUnit"></dd>
             </dl>
-            <p class="small text-muted mb-0" id="mlKet"></p>
+            <p class="small text-muted" id="mlKet"></p>
+            <a href="/mahasiswa/peminjaman-alat/ajukan" class="btn btn-primary btn-sm rounded-pill px-3">Pinjam alat ini</a>
           </div>
         </div>
       </div>
@@ -98,7 +98,7 @@
 
 <script>
   (function () {
-    var items = document.querySelectorAll('.lab-item'), chips = document.querySelectorAll('.lab-chip');
+    var items = document.querySelectorAll('.js-item'), chips = document.querySelectorAll('#chipKat .lab-chip');
     var cari = document.getElementById('cariLab'), kat = '';
     function saring() {
       var q = cari.value.trim().toLowerCase(), tampil = 0;
@@ -114,20 +114,21 @@
     }); });
 
     var modalEl = document.getElementById('modalLab');
-    document.querySelectorAll('.lab-card').forEach(function (c) {
+    items.forEach(function (c) {
       c.addEventListener('click', function () {
         var d = c.dataset, foto = document.getElementById('mlFoto');
         document.getElementById('mlNama').textContent = d.nama;
+        document.getElementById('mlKode').textContent = d.kode || '-';
         document.getElementById('mlKat').textContent = d.katLabel || '-';
         document.getElementById('mlMerk').textContent = d.merk || '-';
         document.getElementById('mlLokasi').textContent = d.lokasi || '-';
         document.getElementById('mlUnit').textContent = d.unit + ' unit';
         document.getElementById('mlKet').textContent = d.ket || '';
         document.getElementById('mlStatus').innerHTML = d.tersedia === '1'
-          ? '<span class="badge bg-success">Tersedia</span>' : '<span class="badge bg-secondary">Sedang dipakai</span>';
+          ? '<span class="pill ok">Tersedia</span>' : '<span class="pill mute">Sedang dipakai</span>';
         foto.innerHTML = '';
+        foto.className = 'tool-photo' + (d.foto ? '' : ' no-photo');
         if (d.foto) { var im = document.createElement('img'); im.src = d.foto; im.alt = d.nama; im.referrerPolicy = 'no-referrer'; foto.appendChild(im); }
-        else { foto.innerHTML = '<i class="bi bi-motherboard"></i>'; }
         new bootstrap.Modal(modalEl).show();
       });
     });

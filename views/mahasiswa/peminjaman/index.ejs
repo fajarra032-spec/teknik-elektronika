@@ -1,54 +1,53 @@
 <%- include('../../partials/header') %>
-<style>
-  .page-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: #fff; border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; }
-  .stat-card { background: #fff; border-radius: 1rem; padding: 1rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-  .stat-number { font-size: 1.75rem; font-weight: 800; color: #1e3a8a; }
-  .pinjam-card { background: #fff; border-radius: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); border: 1px solid #eef2ff; }
-  @media (max-width: 768px) { .page-header { padding: 1rem; } .stat-number { font-size: 1.4rem; } }
-</style>
+<link rel="stylesheet" href="/css/lab-ui.css?v=2">
 <%
-  const tgl = (s) => s ? new Date(s).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
-  const ringkas = (p) => p.items.map(it => it.nama + ' ×' + it.jumlah).join(', ');
+  const tgl = (s) => s ? new Date(s).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
 %>
-<div class="container mt-4 mb-5">
-  <div class="page-header">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+<div class="container mt-4 mb-5" style="max-width: 980px;">
+  <div class="lab-hero">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
       <div>
-        <h2 class="fw-bold mb-1"><i class="bi bi-motherboard me-2"></i>Peminjaman Alat Lab</h2>
-        <p class="mb-0 opacity-75">Ajukan peminjaman, kembalikan alat, dan pantau verifikasi admin</p>
+        <h2>Peminjaman Alat Lab</h2>
+        <p class="lab-sub">Ajukan peminjaman, kembalikan alat, dan pantau verifikasi admin di satu tempat.</p>
       </div>
-      <a href="/mahasiswa/peminjaman-alat/ajukan" class="btn btn-light btn-sm fw-bold shadow-sm"><i class="bi bi-plus-circle"></i> Ajukan Peminjaman</a>
+      <a href="/mahasiswa/peminjaman-alat/ajukan" class="btn btn-light rounded-pill px-4 text-nowrap"><i class="bi bi-plus-lg me-1"></i> Ajukan peminjaman</a>
     </div>
   </div>
 
   <%- include('../../partials/pesan_flash') %>
 
-  <div class="row g-3 mb-4">
-    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-number"><%= stat.total %></div><div class="text-muted small">Total Pengajuan</div></div></div>
-    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-number text-warning"><%= stat.menunggu %></div><div class="text-muted small">Menunggu Persetujuan</div></div></div>
-    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-number text-primary"><%= stat.dipinjam %></div><div class="text-muted small">Sedang Dipinjam</div></div></div>
-    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-number text-danger"><%= stat.terlambat %></div><div class="text-muted small">Terlambat</div></div></div>
+  <div class="lab-stats">
+    <div class="lab-stat"><b><%= stat.total %></b><small>Total pengajuan</small></div>
+    <div class="lab-stat warn"><b><%= stat.menunggu %></b><small>Menunggu persetujuan</small></div>
+    <div class="lab-stat"><b><%= stat.dipinjam %></b><small>Sedang dipinjam</small></div>
+    <div class="lab-stat <%= stat.terlambat ? 'bad' : 'ok' %>"><b><%= stat.terlambat %></b><small>Terlambat</small></div>
   </div>
 
   <% if (data.length === 0) { %>
-    <div class="alert alert-info text-center">Belum ada riwayat peminjaman. Klik "Ajukan Peminjaman" untuk memulai.</div>
+    <div class="lab-panel"><div class="lab-empty"><i class="bi bi-box-seam"></i>Belum ada peminjaman.<div class="mt-3"><a href="/mahasiswa/peminjaman-alat/ajukan" class="btn btn-primary rounded-pill px-4">Pilih alat yang ingin dipinjam</a></div></div></div>
   <% } %>
 
-  <% data.forEach(p => { %>
-    <div class="pinjam-card">
-      <div class="p-3 d-flex justify-content-between align-items-start flex-wrap gap-2">
-        <div>
-          <strong class="text-primary"><%= p.kode %></strong>
-          <div class="mt-1"><%- include('../../partials/peminjaman_status', { status: p.status, terlambat: p.terlambat }) %></div>
+  <div class="d-grid gap-3">
+    <% data.forEach(p => { %>
+      <a href="/mahasiswa/peminjaman-alat/<%= p.id %>" class="lab-panel text-decoration-none text-reset d-block" style="padding:1rem 1.15rem;">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <span class="lab-code"><%= p.kode %></span>
+            <div class="mt-2"><%- include('../../partials/peminjaman_status', { status: p.status, terlambat: p.terlambat }) %></div>
+          </div>
+          <div class="text-md-end small text-muted">
+            <div>Pinjam <strong class="text-dark"><%= tgl(p.tanggalPinjam) %></strong></div>
+            <div>Kembali <strong class="<%= p.terlambat ? 'text-danger' : 'text-dark' %>"><%= tgl(p.tanggalRencanaKembali) %></strong></div>
+          </div>
         </div>
-        <div class="text-muted small text-md-end">
-          <div>Pinjam: <%= tgl(p.tanggalPinjam) %></div>
-          <div>Kembali: <%= tgl(p.tanggalRencanaKembali) %></div>
+        <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+          <% p.items.slice(0, 4).forEach(it => { %>
+            <% if (it.fotoUrl) { %><img class="lab-thumb" style="width:40px;height:40px;" src="<%= it.fotoUrl %>" alt="" loading="lazy" referrerpolicy="no-referrer"><% } else { %><span class="lab-thumb no-photo" style="width:40px;height:40px;"></span><% } %>
+          <% }) %>
+          <span class="small text-muted ms-1"><%= p.items.map(it => it.nama + ' ×' + it.jumlah).join(', ') %></span>
         </div>
-      </div>
-      <div class="px-3 pb-2 small"><i class="bi bi-tools"></i> <%= ringkas(p) %></div>
-      <div class="px-3 pb-3"><a href="/mahasiswa/peminjaman-alat/<%= p.id %>" class="btn btn-sm btn-outline-primary">Detail<% if (p.status === 'dipinjam') { %> / Kembalikan<% } %></a></div>
-    </div>
-  <% }) %>
+      </a>
+    <% }) %>
+  </div>
 </div>
 <%- include('../../partials/footer') %>

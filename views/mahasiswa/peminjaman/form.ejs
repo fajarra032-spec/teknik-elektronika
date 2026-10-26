@@ -1,93 +1,85 @@
 <%- include('../../partials/header') %>
-<style>
-  .form-card { background: #fff; border-radius: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,.05); overflow: hidden; }
-  .form-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 1.25rem 1.5rem; color: #fff; }
-  .sec { font-weight: 700; margin: 1.5rem 0 .75rem; border-left: 5px solid #1e3a8a; padding-left: .75rem; color: #1e3a8a; }
-  .alat-card { background: #fff; border: 2px solid #e5e7eb; border-radius: 1rem; overflow: hidden; display: flex; flex-direction: column; transition: border-color .15s, box-shadow .15s; }
-  .alat-card.dipilih { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
-  .alat-card.habis { opacity: .55; }
-  .alat-foto { position: relative; aspect-ratio: 4 / 3; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 3rem; }
-  .alat-foto[data-foto] { cursor: zoom-in; }
-  .alat-foto img { width: 100%; height: 100%; object-fit: cover; }
-  .alat-stok { position: absolute; top: .5rem; left: .5rem; font-size: .7rem; }
-  .qty { -moz-appearance: textfield; }
-</style>
-<div class="container mt-4 mb-5" style="max-width: 900px;">
-  <a href="/mahasiswa/peminjaman-alat" class="btn btn-sm btn-outline-secondary mb-3"><i class="bi bi-arrow-left"></i> Kembali</a>
-  <div class="form-card">
-    <div class="form-header"><h4 class="fw-bold mb-0">Ajukan Peminjaman Alat Lab</h4></div>
-    <div class="p-4">
-      <%- include('../../partials/pesan_flash') %>
-      <form method="POST" action="/mahasiswa/peminjaman-alat/ajukan" id="formPinjam">
-        <div class="sec">1. Pilih Alat</div>
-        <input type="search" id="cari" class="form-control mb-3" placeholder="Cari alat (nama, kode, merk, kategori)...">
-        <div class="row g-3" id="etalase">
-          <% alat.forEach(a => { const habis = (a.jumlahTersedia || 0) < 1; %>
-            <div class="col-6 col-md-4 alat-item" data-cari="<%= [a.kode, a.nama, a.merk, a.kategori].join(' ').toLowerCase() %>">
-              <div class="alat-card h-100 <%= habis ? 'habis' : '' %>">
-                <div class="alat-foto" <% if (a.fotoUrl) { %>role="button" data-foto="<%= a.fotoUrl %>" data-nama="<%= a.nama %>"<% } %>>
-                  <% if (a.fotoUrl) { %>
-                    <img src="<%= a.fotoUrl %>" alt="<%= a.nama %>" loading="lazy" referrerpolicy="no-referrer">
-                  <% } else { %>
-                    <i class="bi bi-motherboard"></i>
-                  <% } %>
-                  <span class="badge bg-<%= habis ? 'danger' : 'success' %> alat-stok"><%= habis ? 'Habis' : 'Tersedia ' + a.jumlahTersedia %></span>
-                </div>
-                <div class="p-2 d-flex flex-column flex-grow-1">
-                  <div class="fw-semibold lh-sm"><%= a.nama %></div>
-                  <div class="small text-muted"><code><%= a.kode %></code><% if (a.kategori) { %> · <%= a.kategori %><% } %></div>
-                  <% if (a.merk) { %><div class="small text-muted"><%= a.merk %></div><% } %>
-                  <% if (a.lokasi) { %><div class="small text-muted"><i class="bi bi-geo-alt"></i> <%= a.lokasi %></div><% } %>
-                  <div class="mt-auto pt-2 d-flex align-items-center justify-content-between gap-1">
-                    <span class="small text-muted">Jumlah</span>
-                    <div class="input-group input-group-sm" style="width:116px;">
-                      <button type="button" class="btn btn-outline-secondary btn-min" <%= habis ? 'disabled' : '' %>>−</button>
-                      <input type="number" class="form-control text-center qty" name="jumlah_<%= a.id %>" min="0" max="<%= a.jumlahTersedia || 0 %>" value="0" <%= habis ? 'disabled' : '' %>>
-                      <button type="button" class="btn btn-outline-secondary btn-plus" <%= habis ? 'disabled' : '' %>>+</button>
-                    </div>
-                  </div>
+<link rel="stylesheet" href="/css/lab-ui.css?v=2">
+<%
+  var _kat = {}; alat.forEach(function (a) { var k = a.kategori || 'Lainnya'; _kat[k] = (_kat[k] || 0) + 1; });
+%>
+<div class="container mt-4 mb-5" style="max-width: 1080px;">
+  <div class="lab-hero">
+    <a href="/mahasiswa/peminjaman-alat" class="btn btn-sm btn-outline-light rounded-pill mb-3"><i class="bi bi-arrow-left"></i> Riwayat peminjaman</a>
+    <h2>Pilih alat yang ingin dipinjam</h2>
+    <p class="lab-sub">Atur jumlah pada kartu alat, lalu isi jadwal dan keperluan di bagian bawah. Stok berkurang setelah admin menyetujui.</p>
+  </div>
+
+  <%- include('../../partials/pesan_flash') %>
+
+  <form method="POST" action="/mahasiswa/peminjaman-alat/ajukan" id="formPinjam" class="lab-form">
+    <div class="lab-toolbar">
+      <label class="lab-search"><i class="bi bi-search"></i><input type="search" id="cari" placeholder="Cari nama, kode, merk, atau kategori" aria-label="Cari alat"></label>
+      <div class="lab-chips" id="chipKat">
+        <button type="button" class="lab-chip active" data-kat="">Semua<em><%= alat.length %></em></button>
+        <% Object.keys(_kat).sort().forEach(function (k) { %><button type="button" class="lab-chip" data-kat="<%= k %>"><%= k %><em><%= _kat[k] %></em></button><% }) %>
+      </div>
+    </div>
+
+    <div class="tool-grid" id="etalase">
+      <% alat.forEach(function (a) { var habis = (a.jumlahTersedia || 0) < 1; var total = a.jumlahTotal || 0;
+           var persen = total ? Math.round(((a.jumlahTersedia || 0) / total) * 100) : 0;
+           var gaugeKelas = habis ? 'none' : (persen < 50 ? 'low' : ''); %>
+        <div class="tool-card alat-item <%= habis ? 'empty-stock' : '' %>" data-kat="<%= a.kategori || 'Lainnya' %>" data-cari="<%= [a.kode, a.nama, a.merk, a.kategori].join(' ').toLowerCase() %>">
+          <div class="tool-photo <%= a.fotoUrl ? '' : 'no-photo' %>" <% if (a.fotoUrl) { %>role="button" tabindex="0" style="cursor:zoom-in" data-foto="<%= a.fotoUrl %>" data-nama="<%= a.nama %>" aria-label="Perbesar foto <%= a.nama %>"<% } %>>
+            <% if (a.fotoUrl) { %><img src="<%= a.fotoUrl %>" alt="<%= a.nama %>" loading="lazy" referrerpolicy="no-referrer"><% } %>
+            <% if (a.kode) { %><span class="tool-tag"><%= a.kode %></span><% } %>
+          </div>
+          <div class="tool-body">
+            <div class="tool-name"><%= a.nama %></div>
+            <div class="tool-meta"><%= a.kategori || 'Lainnya' %><% if (a.merk) { %> &middot; <%= a.merk %><% } %></div>
+            <% if (a.lokasi) { %><div class="tool-meta"><i class="bi bi-geo-alt"></i> <%= a.lokasi %></div><% } %>
+            <div class="tool-foot">
+              <div class="tool-stock"><span><%= habis ? 'Stok habis' : 'Tersedia' %></span><span><b><%= a.jumlahTersedia || 0 %></b> dari <%= total %> unit</span></div>
+              <div class="gauge <%= gaugeKelas %>" style="--v: <%= persen %>%"><i></i></div>
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <span class="tool-meta">Jumlah pinjam</span>
+                <div class="qty-step">
+                  <button type="button" class="btn-min" aria-label="Kurangi <%= a.nama %>" <%= habis ? 'disabled' : '' %>>&minus;</button>
+                  <input type="number" class="qty" name="jumlah_<%= a.id %>" min="0" max="<%= a.jumlahTersedia || 0 %>" value="0" aria-label="Jumlah <%= a.nama %>" <%= habis ? 'disabled' : '' %>>
+                  <button type="button" class="btn-plus" aria-label="Tambah <%= a.nama %>" <%= habis ? 'disabled' : '' %>>+</button>
                 </div>
               </div>
             </div>
-          <% }) %>
-          <% if (alat.length === 0) { %><div class="col-12"><div class="alert alert-info mb-0">Belum ada alat terdata di inventaris.</div></div><% } %>
-        </div>
-        <div id="kosongCari" class="alert alert-light border text-center mt-3" style="display:none;">Tidak ada alat yang cocok dengan pencarian.</div>
-        <div class="small text-muted mt-1">Dipilih: <strong id="ringkas">0 jenis alat (0 unit)</strong></div>
-
-        <div class="sec">2. Waktu Peminjaman</div>
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Tanggal Pinjam <span class="text-danger">*</span></label>
-            <input type="date" name="tanggalPinjam" id="tglPinjam" class="form-control" min="<%= hariIni %>" value="<%= hariIni %>" required>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Rencana Tanggal Kembali <span class="text-danger">*</span></label>
-            <input type="date" name="tanggalRencanaKembali" id="tglKembali" class="form-control" min="<%= hariIni %>" value="<%= hariIni %>" required>
           </div>
         </div>
-
-        <div class="sec">3. Keperluan</div>
-        <div class="row g-3">
-          <div class="col-12">
-            <label class="form-label fw-semibold">Keperluan <span class="text-danger">*</span></label>
-            <textarea name="keperluan" class="form-control" rows="2" maxlength="500" required placeholder="mis. Praktikum Rangkaian Listrik modul 3 / Tugas akhir"></textarea>
-          </div>
-          <div class="col-12">
-            <label class="form-label fw-semibold">Mata Kuliah / Kegiatan (opsional)</label>
-            <input type="text" name="kegiatan" class="form-control" maxlength="150">
-          </div>
-        </div>
-
-        <div class="alert alert-warning small mt-4 mb-3">
-          Dengan mengajukan, Anda bertanggung jawab atas alat yang dipinjam dan akan mengembalikannya tepat waktu dalam kondisi baik.
-          Kerusakan atau kehilangan akan dicatat saat verifikasi pengembalian oleh admin.
-        </div>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Kirim Pengajuan</button>
-      </form>
+      <% }) %>
     </div>
-  </div>
+    <% if (alat.length === 0) { %><div class="lab-empty"><i class="bi bi-motherboard"></i>Belum ada alat terdata di inventaris. Hubungi admin lab.</div><% } %>
+    <div id="kosongCari" class="lab-empty" style="display:none;"><i class="bi bi-search"></i>Tidak ada alat yang cocok dengan pencarian.</div>
+
+    <div class="lab-panel mt-4">
+      <div class="lab-panel-body">
+        <div class="lab-sec"><i class="bi bi-calendar-event"></i> Jadwal peminjaman</div>
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">Tanggal pinjam <span class="text-danger">*</span></label>
+            <input type="date" name="tanggalPinjam" id="tglPinjam" class="form-control" min="<%= hariIni %>" value="<%= hariIni %>" required></div>
+          <div class="col-md-6"><label class="form-label">Rencana tanggal kembali <span class="text-danger">*</span></label>
+            <input type="date" name="tanggalRencanaKembali" id="tglKembali" class="form-control" min="<%= hariIni %>" value="<%= hariIni %>" required></div>
+        </div>
+        <div class="lab-sec"><i class="bi bi-chat-left-text"></i> Keperluan</div>
+        <div class="row g-3">
+          <div class="col-12"><label class="form-label">Keperluan <span class="text-danger">*</span></label>
+            <textarea name="keperluan" class="form-control" rows="2" maxlength="500" required placeholder="Contoh: Praktikum Rangkaian Listrik modul 3"></textarea></div>
+          <div class="col-12"><label class="form-label">Mata kuliah / kegiatan <span class="text-muted fw-normal">(opsional)</span></label>
+            <input type="text" name="kegiatan" class="form-control" maxlength="150"></div>
+        </div>
+        <div class="lab-note mt-4">Anda bertanggung jawab atas alat yang dipinjam dan wajib mengembalikannya tepat waktu dalam kondisi baik. Kerusakan atau kehilangan dicatat admin saat verifikasi pengembalian.</div>
+      </div>
+    </div>
+
+    <div class="lab-cartbar">
+      <div><i class="bi bi-basket2 me-1"></i> Dipilih: <b id="ringkas">0 jenis alat (0 unit)</b></div>
+      <button type="submit" class="btn btn-light rounded-pill px-4 fw-semibold">Kirim pengajuan</button>
+    </div>
+  </form>
 </div>
+
 <div class="modal fade" id="modalFoto" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
@@ -98,45 +90,45 @@
 </div>
 <script>
   (function () {
-    var items = document.querySelectorAll('.alat-item');
-    var cari = document.getElementById('cari');
+    var items = document.querySelectorAll('.alat-item'), cari = document.getElementById('cari');
+    var chips = document.querySelectorAll('#chipKat .lab-chip'), kat = '';
     function ringkas() {
       var jenis = 0, unit = 0;
       document.querySelectorAll('.qty').forEach(function (i) {
         var n = parseInt(i.value, 10) || 0;
-        i.closest('.alat-card').classList.toggle('dipilih', n > 0);
+        i.closest('.tool-card').classList.toggle('selected', n > 0);
         if (n > 0) { jenis++; unit += n; }
       });
       document.getElementById('ringkas').textContent = jenis + ' jenis alat (' + unit + ' unit)';
     }
-    function set(i, n) {
-      var max = parseInt(i.max, 10) || 0;
-      i.value = Math.max(0, Math.min(max, n || 0));
-      ringkas();
-    }
-    document.querySelectorAll('.alat-card').forEach(function (c) {
+    function set(i, n) { var max = parseInt(i.max, 10) || 0; i.value = Math.max(0, Math.min(max, n || 0)); ringkas(); }
+    document.querySelectorAll('.tool-card').forEach(function (c) {
       var i = c.querySelector('.qty');
       i.addEventListener('input', function () { set(i, parseInt(i.value, 10)); });
       c.querySelector('.btn-min').addEventListener('click', function () { set(i, (parseInt(i.value, 10) || 0) - 1); });
       c.querySelector('.btn-plus').addEventListener('click', function () { set(i, (parseInt(i.value, 10) || 0) + 1); });
     });
-    cari.addEventListener('input', function () {
+    function saring() {
       var q = cari.value.trim().toLowerCase(), tampil = 0;
-      items.forEach(function (r) { var ok = !q || r.dataset.cari.indexOf(q) > -1; r.style.display = ok ? '' : 'none'; if (ok) tampil++; });
+      items.forEach(function (r) { var ok = (!q || r.dataset.cari.indexOf(q) > -1) && (!kat || r.dataset.kat === kat); r.style.display = ok ? '' : 'none'; if (ok) tampil++; });
       document.getElementById('kosongCari').style.display = (items.length && !tampil) ? '' : 'none';
-    });
-    document.querySelectorAll('.alat-foto[data-foto]').forEach(function (f) {
-      f.addEventListener('click', function () {
-        document.getElementById('modalFotoImg').src = f.dataset.foto;
-        document.getElementById('modalFotoNama').textContent = f.dataset.nama;
-        new bootstrap.Modal(document.getElementById('modalFoto')).show();
-      });
+    }
+    cari.addEventListener('input', saring);
+    chips.forEach(function (c) { c.addEventListener('click', function () { chips.forEach(function (x) { x.classList.remove('active'); }); c.classList.add('active'); kat = c.dataset.kat; saring(); }); });
+    function buka(f) {
+      document.getElementById('modalFotoImg').src = f.dataset.foto;
+      document.getElementById('modalFotoNama').textContent = f.dataset.nama;
+      new bootstrap.Modal(document.getElementById('modalFoto')).show();
+    }
+    document.querySelectorAll('.tool-photo[data-foto]').forEach(function (f) {
+      f.addEventListener('click', function () { buka(f); });
+      f.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); buka(f); } });
     });
     var p = document.getElementById('tglPinjam'), k = document.getElementById('tglKembali');
     p.addEventListener('change', function () { k.min = p.value; if (k.value < p.value) k.value = p.value; });
     document.getElementById('formPinjam').addEventListener('submit', function (e) {
       var ada = Array.prototype.some.call(document.querySelectorAll('.qty'), function (i) { return (parseInt(i.value, 10) || 0) > 0; });
-      if (!ada) { e.preventDefault(); alert('Pilih minimal satu alat dengan jumlah lebih dari 0.'); }
+      if (!ada) { e.preventDefault(); alert('Pilih minimal satu alat dengan jumlah lebih dari 0.'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
     });
   })();
 </script>
