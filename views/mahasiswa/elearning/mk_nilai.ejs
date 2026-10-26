@@ -1,0 +1,139 @@
+<%- include('../../partials/header') %>
+
+<style>
+  :root { --primary-start: #1e3a8a; --primary-end: #3b82f6; --primary-light: rgba(30,58,138,0.1); --primary-dark: #0f2b5c; }
+  body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; }
+  .page-header {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+    border-radius: 1.5rem; padding: 1.8rem 2rem; color: white; margin-bottom: 1.5rem;
+    box-shadow: 0 15px 30px rgba(30,58,138,0.25);
+  }
+  .page-header h2 { font-weight: 700; margin-bottom: 0.3rem; }
+  .page-header p { margin: 0; opacity: 0.9; }
+  .page-header .btn-back {
+    background: white; border: none; border-radius: 50px; padding: 0.5rem 1.4rem; font-weight: 600;
+    color: var(--primary-start); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+  .nilai-card {
+    background: white; border-radius: 1.2rem; padding: 1.25rem 1.5rem; margin-bottom: 1rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.04); border: 1px solid rgba(30,58,138,0.08);
+  }
+  .nilai-card h5 { font-weight: 700; color: var(--primary-dark); font-size: 1rem; margin-bottom: 0.9rem; }
+  .nilai-row { display: flex; justify-content: space-between; padding: 0.45rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+  .nilai-row:last-child { border-bottom: none; }
+  .nilai-akhir-box { display: flex; justify-content: space-between; align-items: center; margin-top: 0.8rem; padding: 0.7rem 1rem; background: var(--primary-light); border-radius: 0.8rem; }
+  .nilai-akhir-box .huruf { font-size: 1.5rem; font-weight: 800; color: var(--primary-dark); }
+  .tbl { width: 100%; font-size: 0.88rem; border-collapse: collapse; }
+  .tbl th { text-align: left; color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.4rem 0.5rem; border-bottom: 2px solid #e2e8f0; }
+  .tbl td { padding: 0.55rem 0.5rem; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+  .pill { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 50px; white-space: nowrap; }
+  .pill.belum { background: #f1f5f9; color: #64748b; }
+  .pill.kumpul { background: #d1fae5; color: #065f46; }
+  .pill.periksa { background: #dbeafe; color: #1e40af; }
+  .skor { font-weight: 800; color: var(--primary-dark); font-size: 1rem; }
+  .table-scroll { overflow-x: auto; }
+  @media (max-width: 576px) { .nilai-card { padding: 1rem; } .page-header { padding: 1.2rem; } }
+</style>
+
+<%
+  const h = hasilRubrikSaya || {};
+  const ada = v => v !== null && v !== undefined && v !== '' && !Number.isNaN(Number(v));
+  const tampil = v => ada(v) ? v : '-';
+%>
+
+<div class="container mt-4">
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+      <h2><i class="bi bi-award me-2"></i>Nilai</h2>
+      <p><%= mk.kode %> - <%= mk.nama %> &middot; <%= periode %></p>
+    </div>
+    <a href="/mahasiswa/elearning/mk/<%= mk.id %>" class="btn-back"><i class="bi bi-arrow-left"></i> Kembali</a>
+  </div>
+
+  <%- include('./partials/mk_tabs', { mk, activeTab: 'nilai' }) %>
+
+  <div class="row g-3">
+    <div class="col-lg-5">
+      <div class="nilai-card">
+        <h5><i class="bi bi-clipboard-data"></i> Komponen Nilai</h5>
+        <div class="nilai-row"><span>Kehadiran</span><strong><%= tampil(h.kehadiranAkhir) %></strong></div>
+        <div class="nilai-row"><span>Sikap</span><strong><%= tampil(h.sikap) %></strong></div>
+        <div class="nilai-row"><span>Keaktifan</span><strong><%= tampil(h.keaktifan) %></strong></div>
+        <div class="nilai-row"><span>Rata-rata Tugas</span><strong><%= ada(h.rataTugas) ? Math.round(h.rataTugas) : '-' %></strong></div>
+        <div class="nilai-row"><span>Kuis</span><strong><%= tampil(h.kuis) %></strong></div>
+        <div class="nilai-row"><span>UTS</span><strong><%= tampil(h.uts) %></strong></div>
+        <div class="nilai-row"><span>UAS</span><strong><%= tampil(h.uas) %></strong></div>
+        <% if (ada(h.nilaiAkhir)) { %>
+          <div class="nilai-akhir-box">
+            <span class="text-muted small">Nilai Akhir</span>
+            <span class="huruf"><%= h.huruf %> <span style="font-size:0.9rem; font-weight:600;">(<%= Math.round(h.nilaiAkhir) %>)</span></span>
+          </div>
+        <% } else { %>
+          <p class="text-muted small mt-2 mb-0">Nilai akhir belum lengkap<% if (h.belumLengkap && h.belumLengkap.length) { %>: <%= h.belumLengkap.join(', ') %><% } %>.</p>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="nilai-card">
+        <h5><i class="bi bi-file-earmark-text"></i> Nilai Tugas</h5>
+        <% if (tugasNilaiList.length === 0) { %>
+          <p class="text-muted small mb-0">Belum ada tugas untuk mata kuliah ini.</p>
+        <% } else { %>
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead><tr><th>Tugas</th><th>Status</th><th>Nilai</th></tr></thead>
+              <tbody>
+                <% tugasNilaiList.forEach(t => { %>
+                  <tr>
+                    <td><a href="/mahasiswa/elearning/tugas/<%= t.id %>"><%= t.judul %></a>
+                      <% if (t.komentar) { %><div class="text-muted small"><i class="bi bi-chat"></i> <%= t.komentar %></div><% } %></td>
+                    <td>
+                      <% if (!t.dikumpulkan) { %><span class="pill belum">Belum dikumpulkan</span>
+                      <% } else if (ada(t.nilai)) { %><span class="pill periksa">Dinilai</span>
+                      <% } else { %><span class="pill kumpul">Menunggu penilaian</span><% } %>
+                    </td>
+                    <td class="skor"><%= tampil(t.nilai) %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+
+      <% if (lkmList && lkmList.length) { %>
+        <div class="nilai-card">
+          <h5><i class="bi bi-pencil-square"></i> Nilai LKM Praktikum
+            <% if (ringkasanLkm) { %>
+              <span class="text-muted fw-normal small">&middot; rata-rata <strong><%= ringkasanLkm.rataRata !== null ? ringkasanLkm.rataRata : '-' %></strong> (<%= ringkasanLkm.dinilai %>/<%= ringkasanLkm.total %> dinilai)</span>
+            <% } %>
+          </h5>
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead><tr><th>#</th><th>Modul</th><th>Status</th><th>Nilai</th></tr></thead>
+              <tbody>
+                <% lkmList.forEach(r => { const p = r.p; %>
+                  <tr>
+                    <td><%= r.no %></td>
+                    <td><%= r.judul %>
+                      <% if (p && p.catatanDosen) { %><div class="text-muted small"><i class="bi bi-chat-left-text"></i> <%= p.catatanDosen %></div><% } %></td>
+                    <td>
+                      <% if (!p) { %><span class="pill belum">Belum dikumpulkan</span>
+                      <% } else if (p.status === 'diperiksa') { %><span class="pill periksa">Diperiksa</span>
+                      <% } else { %><span class="pill kumpul">Menunggu pemeriksaan</span><% } %>
+                    </td>
+                    <td class="skor"><%= p && p.status === 'diperiksa' ? tampil(p.nilaiPraktikum) : '-' %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <a href="/mahasiswa/elearning/mk/<%= mk.id %>/modul" class="small d-inline-block mt-2">Buka halaman Modul untuk mengumpulkan / mengganti file &rarr;</a>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

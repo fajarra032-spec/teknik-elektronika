@@ -12,6 +12,24 @@ const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
+
+// Khusus unggahan LKM (foto/scan): maks 10 MB, hanya gambar atau PDF.
+const uploadLkmMulter = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ok = /^image\//.test(file.mimetype) || file.mimetype === 'application/pdf';
+    cb(ok ? null : new Error('FORMAT_LKM'), ok);
+  }
+});
+function uploadLkm(req, res, next) {
+  uploadLkmMulter.single('file')(req, res, (err) => {
+    if (!err) return next();
+    if (err.code === 'LIMIT_FILE_SIZE') return res.status(400).send('Ukuran file LKM maksimal 10 MB.');
+    if (err.message === 'FORMAT_LKM') return res.status(400).send('File LKM harus berupa foto (JPG/PNG) atau PDF.');
+    return res.status(400).send('Gagal membaca file: ' + err.message);
+  });
+}
 const { getPeriodeAktif, getHasilRubrikSatuMahasiswa } = require('../../helpers/nilaiHelper');
 const { periodeKeUrutan, bandingkanLabelPeriode } = require('../../helpers/academicHelper');
 const { mataKuliahCache, tugasAktifCache, dosenCache } = require('../../helpers/cache');
@@ -712,7 +730,7 @@ async function getOrCreateLkmFolder(mk, nim, tahunAjaran) {
  * POST /mk/:id/modul-template/:modulId/kumpul
  * Unggah foto/scan LKM yang sudah diisi tangan untuk satu modul praktikum.
  */
-router.post('/mk/:id/modul-template/:modulId/kumpul', upload.single('file'), async (req, res) => {
+router.post('/mk/:id/modul-template/:modulId/kumpul', uploadLkm, async (req, res) => {
   try {
     const mkId = req.params.id;
     const modulId = req.params.modulId;
@@ -785,7 +803,7 @@ router.post('/mk/:id/modul-template/:modulId/kumpul', upload.single('file'), asy
  * POST /mk/:id/modul-template/:modulId/kumpul/revisi
  * Ganti file LKM yang sudah dikumpulkan (selama belum diperiksa dosen).
  */
-router.post('/mk/:id/modul-template/:modulId/kumpul/revisi', upload.single('file'), async (req, res) => {
+router.post('/mk/:id/modul-template/:modulId/kumpul/revisi', uploadLkm, async (req, res) => {
   try {
     const mkId = req.params.id;
     const modulId = req.params.modulId;
@@ -824,22 +842,116 @@ router.post('/mk/:id/modul-template/:modulId/kumpul/revisi', upload.single('file
     });
     await drive.permissions.create({ fileId: response.data.id, requestBody: { role: 'reader', type: 'anyone' } });
 
+    // Cek ulang secara atomik: kalau dosen KEBETULAN baru saja memeriksa LKM
+    // ini saat file baru diunggah, jangan timpa - hapus file baru tadi.
+    const lkmRef = db.collection('lkmPengumpulan').doc(existing.id);
+    const hasil = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(lkmRef);
+      if (!snap.exists) return 'hilang';
+      const cur = snap.data();
+      if (cur.status === 'diperiksa') return 'diperiksa';
+      tx.update(lkmRef, {
+        fileUrl: response.data.webViewLink,
+        fileId: response.data.id,
+        fileNama: file.originalname,
+        submittedAt: new Date().toISOString(),
+        status: 'dikumpulkan',
+        direvisiPada: new Date().toISOString(),
+        jumlahRevisi: (cur.jumlahRevisi || 0) + 1
+      });
+      return 'ok';
+    });
+
+    if (hasil !== 'ok') {
+      try { await drive.files.delete({ fileId: response.data.id }); } catch (e) { console.error('Gagal hapus file LKM baru:', e.message); }
+      return res.status(409).send(hasil === 'diperiksa'
+        ? 'LKM Anda baru saja diperiksa dosen, sehingga file tidak jadi diganti.'
+        : 'Pengumpulan LKM tidak ditemukan.');
+    }
+
+    // File lama dihapus SETELAH pembaruan berhasil (bukan sebelumnya),
+    // supaya mahasiswa tidak kehilangan file kalau pembaruan gagal.
     if (existing.fileId) {
       try { await drive.files.delete({ fileId: existing.fileId }); } catch (e) { console.error('Gagal hapus file LKM lama:', e.message); }
     }
-
-    await db.collection('lkmPengumpulan').doc(existing.id).update({
-      fileUrl: response.data.webViewLink,
-      fileId: response.data.id,
-      fileNama: file.originalname,
-      submittedAt: new Date().toISOString(),
-      status: 'dikumpulkan'
-    });
 
     res.redirect(`/mahasiswa/elearning/mk/${mkId}/modul`);
   } catch (error) {
     console.error('Gagal revisi LKM:', error);
     res.status(500).send('Revisi LKM gagal: ' + error.message);
+  }
+});
+
+// ============================================================================
+// TAB NILAI (rincian rubrik + nilai LKM + nilai tiap tugas)
+// ============================================================================
+router.get('/mk/:id/nilai', async (req, res) => {
+  try {
+    const mkId = req.params.id;
+    const akses = await cekAksesKelas(mkId, req.user.id);
+    if (!akses.ok) return res.status(akses.status).send(akses.message);
+    const mk = akses.mk;
+
+    const periodeSekarang = getPeriodeAktif();
+    const enrolSaya = await db.collection('enrollment')
+      .where('userId', '==', req.user.id)
+      .where('mkId', '==', mkId)
+      .where('status', '==', 'active')
+      .get();
+    const semesterSaya = enrolSaya.docs.map(d => d.data().semester).filter(Boolean);
+    const periode = semesterSaya.includes(periodeSekarang)
+      ? periodeSekarang
+      : (semesterSaya.sort(bandingkanLabelPeriode).pop() || periodeSekarang);
+
+    const hasilRubrikSaya = await getHasilRubrikSatuMahasiswa(req.user.id, mkId, periode);
+
+    // Nilai tiap tugas
+    const tugasSnap = await db.collection('tugas').where('mkId', '==', mkId).get();
+    const tugasDocs = tugasSnap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(t => (t.periode || periode) === periode)
+      .sort((a, b) => (a.deadline || '').localeCompare(b.deadline || ''));
+    const tugasNilaiList = await Promise.all(tugasDocs.map(async t => {
+      const p = await getPengumpulan(t.id, req.user.id);
+      return {
+        id: t.id,
+        judul: t.judul,
+        deadline: t.deadline,
+        dikumpulkan: !!p,
+        nilai: p && p.nilai !== undefined ? p.nilai : null,
+        komentar: p ? (p.komentar || '') : ''
+      };
+    }));
+
+    // Nilai LKM per modul (kalau MK ini punya modul praktikum yang dipublikasikan)
+    let lkmList = [];
+    let ringkasanLkm = null;
+    if (mk.praktikumPublished === true) {
+      const { modulList } = getPublishedModulPraktikum(mk);
+      if (modulList.length > 0) {
+        const snap = await db.collection('lkmPengumpulan')
+          .where('mkId', '==', mkId)
+          .where('mahasiswaId', '==', req.user.id)
+          .get();
+        const lkmMap = new Map();
+        snap.docs.forEach(doc => lkmMap.set(doc.data().modulId, { id: doc.id, ...doc.data() }));
+        lkmList = modulList.map((m, i) => ({ no: i + 1, judul: m.judul, p: lkmMap.get(m.id) || null }));
+        ringkasanLkm = hitungRingkasanLkm(modulList, lkmMap);
+      }
+    }
+
+    res.render('mahasiswa/elearning/mk_nilai', {
+      title: `Nilai - ${mk.kode} ${mk.nama}`,
+      mk,
+      periode,
+      hasilRubrikSaya,
+      tugasNilaiList,
+      lkmList,
+      ringkasanLkm
+    });
+  } catch (error) {
+    console.error('Error tab nilai mahasiswa:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat nilai mata kuliah' });
   }
 });
 

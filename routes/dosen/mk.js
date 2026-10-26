@@ -1117,6 +1117,23 @@ router.post('/:id/modul-template/:modulId/kumpulan/:pengumpulanId/periksa', asyn
       diperiksaPada: new Date().toISOString()
     });
 
+    // Beri tahu mahasiswa bahwa LKM-nya sudah diperiksa. Kegagalan notifikasi
+    // TIDAK boleh membatalkan penyimpanan pemeriksaan yang sudah berhasil.
+    try {
+      const { createNotification } = require('../../helpers/notificationHelper');
+      const data = pengumpulanDoc.data();
+      await createNotification(db, data.mahasiswaId, {
+        type: 'nilai',
+        title: `LKM "${data.modulJudul || 'praktikum'}" sudah diperiksa`,
+        message: nilaiAngka !== null
+          ? `Nilai LKM Anda: ${nilaiAngka} (${akses.mk.nama || akses.mk.kode || 'mata kuliah'}).`
+          : `Dosen sudah memeriksa LKM Anda di ${akses.mk.nama || akses.mk.kode || 'mata kuliah'}.`,
+        link: `/mahasiswa/elearning/mk/${akses.mk.id}/modul`
+      });
+    } catch (notifError) {
+      console.error('Gagal membuat notifikasi LKM:', notifError);
+    }
+
     res.redirect(`/dosen/mk/${akses.mk.id}/modul-template/${req.params.modulId}/kumpulan`);
   } catch (error) {
     console.error('Error periksa LKM:', error);

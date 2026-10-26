@@ -198,6 +198,7 @@
             <div class="nilai-row"><span>Kuis</span><span><%= hasilRubrikSaya.kuis !== null ? hasilRubrikSaya.kuis : '-' %></span></div>
             <div class="nilai-row"><span>UTS</span><span><%= hasilRubrikSaya.uts !== null ? hasilRubrikSaya.uts : '-' %></span></div>
             <div class="nilai-row"><span>UAS</span><span><%= hasilRubrikSaya.uas !== null ? hasilRubrikSaya.uas : '-' %></span></div>
+            <a href="/mahasiswa/elearning/mk/<%= mk.id %>/nilai" class="small d-inline-block mt-1">Lihat rincian nilai &rarr;</a>
             <% if (hasilRubrikSaya.nilaiAkhir !== null && hasilRubrikSaya.nilaiAkhir !== undefined) { %>
               <div class="nilai-akhir-box">
                 <span class="text-muted small">Nilai Akhir</span>

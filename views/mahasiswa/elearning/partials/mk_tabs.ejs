@@ -1,7 +1,7 @@
 <%
 /**
- * Tab navigasi workspace kelas mahasiswa: Ringkasan | Pertemuan | Tugas | Modul
- * Locals: mk { id, kode, nama }, activeTab: 'ringkasan'|'pertemuan'|'tugas'|'modul'
+ * Tab navigasi workspace kelas mahasiswa: Ringkasan | Pertemuan | Tugas | Modul | Nilai
+ * Locals: mk { id, kode, nama }, activeTab: 'ringkasan'|'pertemuan'|'tugas'|'modul'|'nilai'
  */
 %>
 <style>
@@ -43,5 +43,8 @@
   </a>
   <a href="/mahasiswa/elearning/mk/<%= mk.id %>/modul" class="mk-tab-mhs <%= activeTab === 'modul' ? 'active' : '' %>">
     <i class="bi bi-journal-richtext"></i> Modul
+  </a>
+  <a href="/mahasiswa/elearning/mk/<%= mk.id %>/nilai" class="mk-tab-mhs <%= activeTab === 'nilai' ? 'active' : '' %>">
+    <i class="bi bi-award"></i> Nilai
   </a>
 </div>

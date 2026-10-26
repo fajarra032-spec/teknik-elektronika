@@ -88,6 +88,7 @@
             <span class="text-muted small ms-2">
               <%= new Date(p.submittedAt).toLocaleString('id-ID', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) %>
             </span>
+            <% if (p.jumlahRevisi) { %><span class="badge bg-warning text-dark ms-1">Direvisi <%= p.jumlahRevisi %>x</span><% } %>
           <% } %>
         </div>
       </div>
