@@ -280,6 +280,21 @@ router.get('/', async (req, res) => {
     
     const now = new Date();
 
+    // Badge "belum dikumpulkan" hanya untuk periode berjalan (aktif, atau
+    // periode terbaru mahasiswa kalau periode aktif belum ada KRS-nya).
+    const tampilStatusKumpul = periodeDipilih === periodeAktif || periodeDipilih === daftarPeriode[0];
+    const tugasSudahSet = new Set();
+    const lkmSudahSet = new Set();
+    if (tampilStatusKumpul && mkList.length > 0) {
+      // Dua query saja (bukan satu per tugas/modul): semua pengumpulan milik mahasiswa ini
+      const [pengumpulanSnap, lkmSnap] = await Promise.all([
+        db.collection('pengumpulan').where('mahasiswaId', '==', req.user.id).get(),
+        db.collection('lkmPengumpulan').where('mahasiswaId', '==', req.user.id).get()
+      ]);
+      pengumpulanSnap.docs.forEach(d => tugasSudahSet.add(d.data().tugasId));
+      lkmSnap.docs.forEach(d => lkmSudahSet.add(`${d.data().mkId}:${d.data().modulId}`));
+    }
+
     await Promise.all(mkList.map(async (mk) => {
       // Hitung jumlah mahasiswa terdaftar di MK ini (query count() sudah murah,
       // dibilling sebagai 1 read terlepas dari jumlah dokumen yang cocok)
@@ -299,17 +314,32 @@ router.get('/', async (req, res) => {
         persen: Math.round((terlaksana / 16) * 100)
       };
 
-      // Cek apakah ada tugas aktif (deadline > sekarang) - di-cache singkat (3
-      // menit) karena hasil ini sama untuk semua mahasiswa di MK yang sama,
-      // jadi tidak perlu query ulang setiap kali dashboard dibuka.
-      mk.adaTugasAktif = await tugasAktifCache.getOrFetch(`ada-tugas-aktif:${mk.id}`, async () => {
-        const tugasSnapshot = await db.collection('tugas')
-          .where('mkId', '==', mk.id)
-          .where('deadline', '>', now.toISOString())
-          .limit(1)
-          .get();
-        return !tugasSnapshot.empty;
-      });
+      // Status pengumpulan (tugas & LKM) untuk badge "belum dikumpulkan".
+      // Hanya dihitung untuk periode berjalan - di semester lama semua tugas
+      // sudah lewat sehingga badge tidak berguna dan hanya jadi noise.
+      mk.statusKumpul = { tampil: tampilStatusKumpul, tugasBelum: 0, tugasTerlewat: 0, tugasTotal: 0, tugasTerdekat: null, lkmBelum: 0, lkmTotal: 0 };
+      mk.adaTugasAktif = false;
+      if (tampilStatusKumpul) {
+        const tugasSnap = await db.collection('tugas').where('mkId', '==', mk.id).get();
+        const tugasPeriode = tugasSnap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter(t => (t.periode || periodeDipilih) === periodeDipilih);
+        mk.statusKumpul.tugasTotal = tugasPeriode.length;
+        const belum = tugasPeriode.filter(t => !tugasSudahSet.has(t.id));
+        const aktif = belum
+          .filter(t => t.deadline && new Date(t.deadline) > now)
+          .sort((a, b) => a.deadline.localeCompare(b.deadline));
+        mk.statusKumpul.tugasBelum = aktif.length;
+        mk.statusKumpul.tugasTerlewat = belum.length - aktif.length;
+        mk.statusKumpul.tugasTerdekat = aktif[0] ? { judul: aktif[0].judul, deadline: aktif[0].deadline } : null;
+        mk.adaTugasAktif = tugasPeriode.some(t => t.deadline && new Date(t.deadline) > now);
+
+        if (mk.praktikumPublished === true) {
+          const { modulList } = getPublishedModulPraktikum(mk);
+          mk.statusKumpul.lkmTotal = modulList.length;
+          mk.statusKumpul.lkmBelum = modulList.filter(m => !lkmSudahSet.has(`${mk.id}:${m.id}`)).length;
+        }
+      }
 
       // Info dosen pengampu (nama, foto, kontak) supaya tampil langsung di card MK
       mk.dosenList = (await Promise.all((mk.dosenIds || []).map(async (dId) => {
@@ -321,9 +351,17 @@ router.get('/', async (req, res) => {
       }))).filter(Boolean);
     }));
 
+    const ringkasanKumpul = mkList.reduce((acc, mk) => {
+      acc.tugasBelum += mk.statusKumpul.tugasBelum;
+      acc.lkmBelum += mk.statusKumpul.lkmBelum;
+      if (mk.statusKumpul.tugasBelum + mk.statusKumpul.lkmBelum > 0) acc.mkPerluPerhatian++;
+      return acc;
+    }, { tugasBelum: 0, lkmBelum: 0, mkPerluPerhatian: 0, tampil: tampilStatusKumpul });
+
     res.render('mahasiswa/elearning/index', {
       title: 'ELK‑Learning',
       mkList,
+      ringkasanKumpul,
       daftarPeriode,
       periodeDipilih,
       periodeAktif

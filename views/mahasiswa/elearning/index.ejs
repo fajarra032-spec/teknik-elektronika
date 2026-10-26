@@ -1,7 +1,6 @@
 <%- include('../../partials/header') %>
 
 <%
-  // Fungsi untuk mengekstrak ID file dari URL Google Drive (jika diperlukan nanti)
   const getFileIdFromUrl = (url) => {
     if (!url) return null;
     let match = url.match(/[?&]id=([^&]+)/);
@@ -10,485 +9,315 @@
     if (match) return match[1];
     return null;
   };
-
-  // Thumbnail foto dosen untuk ditampilkan di card MK
   const getDosenThumb = (fotoUrl) => {
     const fid = getFileIdFromUrl(fotoUrl);
     return fid ? `https://drive.google.com/thumbnail?id=${fid}&sz=w60-h60` : fotoUrl;
   };
+  // "3 hari lagi", "5 jam lagi", "besok" - dihitung saat halaman dibuka
+  const sisaWaktu = (iso) => {
+    const selisih = new Date(iso).getTime() - Date.now();
+    if (selisih <= 0) return 'sudah lewat';
+    const jam = Math.floor(selisih / 3600000);
+    if (jam < 1) return 'kurang dari 1 jam lagi';
+    if (jam < 24) return jam + ' jam lagi';
+    const hari = Math.floor(jam / 24);
+    return hari === 1 ? 'besok' : hari + ' hari lagi';
+  };
+  const rk = (typeof ringkasanKumpul !== 'undefined' && ringkasanKumpul) ? ringkasanKumpul : { tugasBelum: 0, lkmBelum: 0, mkPerluPerhatian: 0, tampil: false };
 %>
 
 <style>
-  /* ===== VARIABEL DARI LANDING + GAYA ASLI ===== */
   :root {
-    /* Tambahan dari landing */
-    --primary: #0d6efd;
-    --primary-dark: #0b5ed7;
-    --secondary: #0dcaf0;
-    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
-    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
-    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.12);
-    --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-    
-    /* Variabel asli */
     --primary-start: #1e3a8a;
     --primary-end: #3b82f6;
     --primary-light: rgba(30,58,138,0.1);
     --primary-dark: #0f2b5c;
+    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.14);
+    --transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   }
-
-  /* ===== BASE FLUID FONT (SAMA PERSIS DENGAN LANDING) ===== */
-  html {
-    font-size: clamp(14px, 1vw + 10px, 16px);
-  }
-
-  body {
-    font-family: var(--font-sans);
-    background-color: #f8fafc;
-  }
+  html { font-size: clamp(14px, 1vw + 10px, 16px); }
+  body { font-family: var(--font-sans); background-color: #f8fafc; }
 
   /* ===== HEADER ===== */
   .page-header {
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border-radius: 1.2rem;
-    padding: clamp(0.8rem, 3vw, 1.2rem);
-    color: white;
-    margin-bottom: 1.5rem;
+    border-radius: 1.2rem; padding: clamp(0.9rem, 3vw, 1.3rem); color: white; margin-bottom: 1.1rem;
     box-shadow: 0 10px 20px rgba(30,58,138,0.2);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.8rem;
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.8rem;
   }
-  .page-header h2 {
-    font-weight: 700;
-    font-size: clamp(1.1rem, 4vw, 1.4rem);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-  .page-header p {
-    font-size: clamp(0.7rem, 2.5vw, 0.8rem);
-    opacity: 0.9;
-    margin: 0.2rem 0 0;
-  }
+  .page-header h2 { font-weight: 700; font-size: clamp(1.1rem, 4vw, 1.4rem); margin: 0; display: flex; align-items: center; gap: 0.4rem; }
+  .page-header p { font-size: clamp(0.72rem, 2.5vw, 0.85rem); opacity: 0.9; margin: 0.2rem 0 0; }
   .btn-back {
-    background: rgba(255,255,255,0.2);
-    backdrop-filter: blur(4px);
-    border-radius: 50px;
-    padding: clamp(0.3rem, 2vw, 0.4rem) clamp(0.6rem, 2.5vw, 1rem);
-    font-weight: 500;
-    color: white;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    font-size: clamp(0.7rem, 2.5vw, 0.8rem);
-    transition: var(--transition);
+    background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); border-radius: 50px;
+    padding: 0.4rem 1rem; font-weight: 500; color: white; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; transition: var(--transition);
   }
-  .btn-back:hover {
-    background: rgba(255,255,255,0.3);
-    transform: translateY(-2px);
-    color: white;
-  }
+  .btn-back:hover { background: rgba(255,255,255,0.3); color: white; }
 
-  /* ===== TABEL RESPONSIF ===== */
-  .table-wrapper {
-    background: white;
-    border-radius: 1.2rem;
-    box-shadow: var(--shadow-sm);
-    overflow-x: auto;
-    border: 1px solid rgba(30,58,138,0.1);
-    -webkit-overflow-scrolling: touch;
+  /* ===== RINGKASAN ===== */
+  .ringkasan { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 1rem; }
+  .ringkasan .tile {
+    background: white; border-radius: 1rem; padding: 0.7rem 0.8rem; border: 1px solid rgba(30,58,138,0.08);
+    box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 0.1rem; min-width: 0;
   }
-  .table-mk {
-    width: 100%;
-    min-width: 480px; /* Agar tabel tidak terlalu sempit di hp, bisa di-scroll */
-    margin-bottom: 0;
-  }
-  .table-mk th {
-    background: #f8fafc;
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: clamp(0.6rem, 2vw, 0.7rem);
-    padding: clamp(0.4rem, 2vw, 0.7rem) clamp(0.3rem, 1.5vw, 0.5rem);
-    border-bottom: 2px solid #e2e8f0;
-    text-align: center;
-  }
-  .table-mk td {
-    padding: clamp(0.4rem, 2vw, 0.7rem) clamp(0.3rem, 1.5vw, 0.5rem);
-    vertical-align: middle;
-    border-bottom: 1px solid #f0f2f5;
-    font-size: clamp(0.7rem, 2.5vw, 0.8rem);
-    text-align: center;
-  }
-  .table-mk td:first-child {
-    text-align: left;
-    font-weight: 500;
-  }
-  .table-mk tr {
-    transition: var(--transition);
-  }
-  .table-mk tr:hover {
-    background: #fefce8;
-    transform: scale(1.01);
-    box-shadow: var(--shadow-sm);
-  }
-  .progress-bar-bg {
-    background: #e2e8f0;
-    height: 6px;
-    border-radius: 3px;
-    width: 100%;
-    overflow: hidden;
-    margin-top: 4px;
-  }
-  .progress-bar-fill {
-    background: linear-gradient(90deg, var(--primary-start), var(--primary-end));
-    height: 100%;
-    border-radius: 3px;
-  }
-  .progress-text {
-    font-size: clamp(0.6rem, 2vw, 0.7rem);
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 2px;
-  }
-  .badge-tugas {
-    background: #d1fae5;
-    color: #065f46;
-    padding: clamp(0.15rem, 1.5vw, 0.2rem) clamp(0.3rem, 1.5vw, 0.5rem);
-    border-radius: 50px;
-    font-size: clamp(0.55rem, 2vw, 0.65rem);
-    font-weight: 600;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2rem;
-  }
-  .badge-tidak {
-    background: #fef3c7;
-    color: #92400e;
-  }
-  .btn-detail {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border: none;
-    color: white;
-    padding: clamp(0.2rem, 1.5vw, 0.25rem) clamp(0.5rem, 2vw, 0.7rem);
-    border-radius: 50px;
-    font-size: clamp(0.6rem, 2vw, 0.7rem);
-    transition: var(--transition);
-    text-decoration: none;
-    display: inline-block;
-    white-space: nowrap;
-  }
-  .btn-detail:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(30,58,138,0.3);
-    color: white;
-  }
+  .ringkasan .angka { font-size: clamp(1.3rem, 5vw, 1.7rem); font-weight: 800; line-height: 1.1; color: var(--primary-dark); }
+  .ringkasan .label { font-size: clamp(0.62rem, 2.4vw, 0.75rem); color: #64748b; font-weight: 600; line-height: 1.25; }
+  .ringkasan .tile.merah { background: #fef2f2; border-color: #fecaca; }
+  .ringkasan .tile.merah .angka { color: #b91c1c; }
+  .ringkasan .tile.kuning { background: #fffbeb; border-color: #fde68a; }
+  .ringkasan .tile.kuning .angka { color: #b45309; }
+  .ringkasan .tile.hijau { background: #f0fdf4; border-color: #bbf7d0; }
+  .ringkasan .tile.hijau .angka { color: #15803d; }
 
-  /* ===== EMPTY STATE ===== */
-  .empty-state {
-    text-align: center;
-    padding: clamp(1rem, 5vw, 2rem);
+  /* ===== TOOLBAR (periode + filter) ===== */
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 1rem; }
+  .toolbar form { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0; }
+  .toolbar label { font-weight: 600; font-size: 0.85rem; margin: 0; }
+  .toolbar select { max-width: 240px; min-height: 40px; }
+  .filter-chips { display: inline-flex; gap: 0.4rem; flex-wrap: wrap; }
+  .chip-btn {
+    border: 1.5px solid #cbd5e1; background: white; color: #475569; border-radius: 50px;
+    padding: 0.4rem 0.9rem; font-size: 0.8rem; font-weight: 600; min-height: 40px; cursor: pointer; transition: var(--transition);
   }
-  .empty-state i {
-    font-size: clamp(1.8rem, 6vw, 2.5rem);
-    color: #cbd5e1;
-  }
-  .empty-state h5 {
-    font-size: clamp(0.9rem, 4vw, 1.1rem);
-    margin-top: 0.5rem;
-  }
-  .empty-state p {
-    font-size: clamp(0.75rem, 2.5vw, 0.85rem);
-  }
+  .chip-btn.active { background: var(--primary-start); border-color: var(--primary-start); color: white; }
 
-  /* ===== KARTU MATA KULIAH (khusus tampilan HP) ===== */
-  .mk-card-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
+  /* ===== GRID KARTU (1 kolom HP, 2 tablet, 3 desktop) ===== */
+  .mk-grid { display: grid; grid-template-columns: 1fr; gap: 0.9rem; }
+  @media (min-width: 640px)  { .mk-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1100px) { .mk-grid { grid-template-columns: repeat(3, 1fr); } }
+
   .mk-card {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid rgba(30,58,138,0.1);
-    padding: 0.9rem 1rem;
+    background: white; border-radius: 1.1rem; border: 1px solid rgba(30,58,138,0.1);
+    box-shadow: var(--shadow-sm); padding: 1rem; display: flex; flex-direction: column; gap: 0.7rem;
+    border-left: 5px solid #cbd5e1; transition: var(--transition); min-width: 0; position: relative;
   }
-  .mk-card-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-  .mk-card-title {
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: #1e293b;
-    line-height: 1.3;
-  }
+  .mk-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+  .mk-card.s-merah  { border-left-color: #ef4444; }
+  .mk-card.s-kuning { border-left-color: #f59e0b; }
+  .mk-card.s-hijau  { border-left-color: #22c55e; }
+
+  .mk-kode { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; color: #64748b; text-transform: uppercase; }
+  .mk-nama { font-weight: 700; font-size: 1rem; color: #1e293b; line-height: 1.3; word-break: break-word; }
+  .mk-meta { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.35rem; }
   .mk-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-size: 0.65rem;
-    font-weight: 600;
-    padding: 0.15rem 0.5rem;
-    border-radius: 50px;
-    margin-top: 0.3rem;
+    display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.68rem; font-weight: 600;
+    padding: 0.18rem 0.55rem; border-radius: 50px; background: #f1f5f9; color: #475569; max-width: 100%;
   }
-  .mk-chip-kelas {
-    background: rgba(30,58,138,0.1);
-    color: var(--primary-start);
-  }
-  .mk-card-jadwal {
-    font-size: 0.78rem;
-    color: #475569;
-    background: #f8fafc;
-    border-radius: 0.6rem;
-    padding: 0.4rem 0.6rem;
-    margin-bottom: 0.6rem;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-  .mk-card-progress { margin-bottom: 0.6rem; }
-  .mk-card-bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 0.5rem;
-    border-top: 1px solid #f0f2f5;
-  }
+  .mk-chip.kelas { background: rgba(30,58,138,0.1); color: var(--primary-start); }
 
-  /* ===== RESPONSIVE LENGKAP (SESUAI LANDING) ===== */
-  @media (max-width: 768px) {
-    .table-mk {
-      min-width: 500px;
-    }
+  /* ===== BADGE STATUS PENGUMPULAN ===== */
+  .status-wrap { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .badge-kumpul {
+    display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.76rem; font-weight: 700;
+    padding: 0.4rem 0.75rem; border-radius: 50px; text-decoration: none; line-height: 1.2; min-height: 34px;
   }
+  a.badge-kumpul:hover { filter: brightness(0.96); }
+  .badge-kumpul.merah  { background: #fee2e2; color: #991b1b; }
+  .badge-kumpul.kuning { background: #fef3c7; color: #92400e; }
+  .badge-kumpul.abu    { background: #f1f5f9; color: #64748b; }
+  .badge-kumpul.hijau  { background: #dcfce7; color: #166534; }
+  .badge-kumpul .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: denyut 1.6s infinite; }
+  @keyframes denyut { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.8); } }
+  @media (prefers-reduced-motion: reduce) { .badge-kumpul .dot { animation: none; } }
 
-  @media (max-width: 480px) {
-    .table-mk {
-      min-width: 450px;
-    }
-    .table-mk th {
-      font-size: 0.6rem;
-      padding: 0.4rem 0.3rem;
-    }
-    .table-mk td {
-      font-size: 0.7rem;
-      padding: 0.4rem 0.3rem;
-    }
-    .badge-tugas {
-      font-size: 0.55rem;
-    }
-    .btn-detail {
-      font-size: 0.6rem;
-      padding: 0.2rem 0.5rem;
-    }
+  .tenggat {
+    font-size: 0.76rem; color: #7f1d1d; background: #fef2f2; border-radius: 0.7rem; padding: 0.45rem 0.65rem;
+    display: flex; gap: 0.4rem; align-items: flex-start; line-height: 1.35;
   }
+  .tenggat i { margin-top: 2px; }
+
+  .jadwal { font-size: 0.78rem; color: #475569; background: #f8fafc; border-radius: 0.6rem; padding: 0.4rem 0.6rem; display: flex; gap: 0.4rem; align-items: flex-start; }
+  .dosen-row { display: flex; flex-wrap: wrap; gap: 0.35rem 0.8rem; }
+  .dosen-row span { font-size: 0.78rem; color: #475569; display: inline-flex; align-items: center; gap: 0.35rem; }
+  .dosen-row img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+
+  .progress-text { font-size: 0.72rem; display: flex; justify-content: space-between; margin-bottom: 3px; color: #475569; }
+  .progress-bar-bg { background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden; }
+  .progress-bar-fill { background: linear-gradient(90deg, var(--primary-start), var(--primary-end)); height: 100%; border-radius: 3px; }
+
+  .mk-foot { display: flex; justify-content: flex-end; align-items: center; gap: 0.6rem; padding-top: 0.7rem; border-top: 1px solid #f0f2f5; margin-top: auto; }
+  .btn-detail {
+    background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); border: none; color: white;
+    padding: 0.55rem 1.1rem; border-radius: 50px; font-size: 0.82rem; font-weight: 600; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 0.35rem; min-height: 40px; transition: var(--transition);
+  }
+  .btn-detail:hover { color: white; box-shadow: 0 4px 10px rgba(30,58,138,0.3); }
+  @media (max-width: 640px) { .mk-foot { display: block; } .btn-detail { width: 100%; justify-content: center; } }
+
+  .empty-state { text-align: center; padding: clamp(1.5rem, 6vw, 2.5rem); background: white; border-radius: 1.1rem; border: 1px dashed #cbd5e1; }
+  .empty-state i { font-size: 2.5rem; color: #cbd5e1; }
+  .empty-state h5 { font-size: 1.05rem; margin-top: 0.5rem; }
+  .tidak-ada-hasil { display: none; text-align: center; color: #64748b; padding: 1.5rem; background: white; border-radius: 1rem; border: 1px dashed #cbd5e1; }
 
   @media (max-width: 400px) {
-    .page-header {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    .btn-back {
-      align-self: flex-start;
-    }
-    .table-mk {
-      min-width: 400px;
-    }
-    .table-mk th, .table-mk td {
-      padding: 0.35rem 0.25rem;
-    }
-    .progress-text {
-      font-size: 0.55rem;
-    }
+    .page-header { flex-direction: column; align-items: flex-start; }
+    .ringkasan { gap: 0.4rem; }
+    .ringkasan .tile { padding: 0.55rem 0.55rem; }
   }
 </style>
 
-<div class="container mt-3">
-  <!-- Header responsif -->
+<div class="container mt-3 mb-4">
   <div class="page-header">
     <div>
       <h2><i class="bi bi-laptop"></i> ELK‑Learning</h2>
-      <p>Mata kuliah Anda dengan progres & tugas</p>
+      <p>Mata kuliah Anda, progres, dan tugas / LKM yang perlu dikumpulkan</p>
     </div>
-    <a href="/mahasiswa/dashboard" class="btn-back">
-      <i class="bi bi-arrow-left"></i> Kembali
-    </a>
+    <a href="/mahasiswa/dashboard" class="btn-back"><i class="bi bi-arrow-left"></i> Kembali</a>
   </div>
 
-  <!-- Dropdown Tahun Akademik - supaya MK semester lama tidak tercampur -->
-  <% if (typeof daftarPeriode !== 'undefined' && daftarPeriode.length > 0) { %>
-    <form method="GET" class="mb-3 d-flex align-items-center gap-2 flex-wrap">
-      <label for="periode" class="fw-semibold mb-0"><i class="bi bi-calendar3"></i> Tahun Akademik:</label>
-      <select name="periode" id="periode" class="form-select" style="max-width: 260px;" onchange="this.form.submit()">
-        <% daftarPeriode.forEach(p => { %>
-          <option value="<%= p %>" <%= p === periodeDipilih ? 'selected' : '' %>>
-            <%= p %><%= p === periodeAktif ? ' (aktif)' : '' %>
-          </option>
-        <% }) %>
-      </select>
-      <noscript><button type="submit" class="btn btn-sm btn-primary">Tampilkan</button></noscript>
-    </form>
+  <% if (rk.tampil && mkList.length > 0) { %>
+    <div class="ringkasan">
+      <div class="tile <%= rk.tugasBelum > 0 ? 'merah' : 'hijau' %>">
+        <span class="angka"><%= rk.tugasBelum %></span>
+        <span class="label">Tugas belum dikumpulkan</span>
+      </div>
+      <div class="tile <%= rk.lkmBelum > 0 ? 'kuning' : 'hijau' %>">
+        <span class="angka"><%= rk.lkmBelum %></span>
+        <span class="label">LKM belum dikumpulkan</span>
+      </div>
+      <div class="tile">
+        <span class="angka"><%= mkList.length %></span>
+        <span class="label">Mata kuliah<% if (rk.mkPerluPerhatian > 0) { %> (<%= rk.mkPerluPerhatian %> perlu perhatian)<% } %></span>
+      </div>
+    </div>
   <% } %>
 
-  <!-- ===== Tampilan KARTU - khusus layar kecil/HP ===== -->
-  <div class="mk-card-list d-md-none">
-    <% if (mkList.length === 0) { %>
-      <div class="empty-state">
-        <i class="bi bi-inbox"></i>
-        <h5>Belum Ada Mata Kuliah</h5>
-        <p class="text-muted small">Anda belum terdaftar di mata kuliah manapun.</p>
-        <a href="/mahasiswa/akademik/krs" class="btn-detail mt-2">Buat KRS</a>
+  <div class="toolbar">
+    <% if (typeof daftarPeriode !== 'undefined' && daftarPeriode.length > 0) { %>
+      <form method="GET">
+        <label for="periode"><i class="bi bi-calendar3"></i> Tahun Akademik</label>
+        <select name="periode" id="periode" class="form-select" onchange="this.form.submit()">
+          <% daftarPeriode.forEach(p => { %>
+            <option value="<%= p %>" <%= p === periodeDipilih ? 'selected' : '' %>><%= p %><%= p === periodeAktif ? ' (aktif)' : '' %></option>
+          <% }) %>
+        </select>
+        <noscript><button type="submit" class="btn btn-sm btn-primary">Tampilkan</button></noscript>
+      </form>
+    <% } %>
+    <% if (rk.tampil && mkList.length > 0) { %>
+      <div class="filter-chips" role="group" aria-label="Filter mata kuliah">
+        <button type="button" class="chip-btn active" data-filter="semua">Semua</button>
+        <button type="button" class="chip-btn" data-filter="belum">Perlu dikumpulkan<% if (rk.mkPerluPerhatian > 0) { %> (<%= rk.mkPerluPerhatian %>)<% } %></button>
       </div>
-    <% } else { %>
-      <% mkList.forEach(mk => { %>
-        <div class="mk-card">
-          <div class="mk-card-top">
-            <div>
-              <div class="mk-card-title"><%= mk.kode %> - <%= mk.nama %></div>
-              <% if (mk.kelas) { %><span class="mk-chip mk-chip-kelas"><i class="bi bi-people-fill"></i> <%= mk.kelas %></span><% } %>
+    <% } %>
+  </div>
+
+  <% if (mkList.length === 0) { %>
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <h5>Belum Ada Mata Kuliah</h5>
+      <p class="text-muted small">Anda belum terdaftar di mata kuliah manapun.</p>
+      <a href="/mahasiswa/akademik/krs" class="btn-detail mt-2">Buat KRS</a>
+    </div>
+  <% } else { %>
+    <div class="mk-grid" id="mkGrid">
+      <% mkList.forEach(mk => {
+        const sk = mk.statusKumpul || { tampil: false, tugasBelum: 0, tugasTerlewat: 0, tugasTotal: 0, tugasTerdekat: null, lkmBelum: 0, lkmTotal: 0 };
+        const perluKumpul = sk.tugasBelum + sk.lkmBelum > 0;
+        const adaIsi = sk.tugasTotal > 0 || sk.lkmTotal > 0;
+        const semuaBeres = !perluKumpul && sk.tugasTerlewat === 0 && adaIsi;
+        const warna = !sk.tampil ? '' : (sk.tugasBelum > 0 ? 's-merah' : (sk.lkmBelum > 0 ? 's-kuning' : (semuaBeres ? 's-hijau' : '')));
+      %>
+        <article class="mk-card <%= warna %>" data-pending="<%= perluKumpul ? '1' : '0' %>">
+          <div>
+            <div class="mk-kode"><%= mk.kode %></div>
+            <div class="mk-nama"><%= mk.nama %></div>
+            <div class="mk-meta">
+              <% if (mk.kelas) { %><span class="mk-chip kelas"><i class="bi bi-people-fill"></i> <%= mk.kelas %></span><% } %>
+              <span class="mk-chip"><i class="bi bi-person-lines-fill"></i> <%= mk.jumlahMahasiswa || 0 %> mhs</span>
             </div>
-            <% if (mk.adaTugasAktif) { %>
-              <span class="badge-tugas"><i class="bi bi-check-circle-fill"></i> Ada Tugas</span>
-            <% } else { %>
-              <span class="badge-tugas badge-tidak"><i class="bi bi-clock-history"></i> Tidak Ada</span>
-            <% } %>
           </div>
 
+          <% if (sk.tampil) { %>
+            <div class="status-wrap">
+              <% if (sk.tugasBelum > 0) { %>
+                <a href="/mahasiswa/elearning/mk/<%= mk.id %>/tugas" class="badge-kumpul merah">
+                  <span class="dot"></span> <%= sk.tugasBelum %> tugas belum dikumpulkan
+                </a>
+              <% } %>
+              <% if (sk.lkmBelum > 0) { %>
+                <a href="/mahasiswa/elearning/mk/<%= mk.id %>/modul" class="badge-kumpul kuning">
+                  <i class="bi bi-pencil-square"></i> <%= sk.lkmBelum %> LKM belum dikumpulkan
+                </a>
+              <% } %>
+              <% if (sk.tugasTerlewat > 0) { %>
+                <a href="/mahasiswa/elearning/mk/<%= mk.id %>/tugas" class="badge-kumpul abu" title="Tenggat sudah lewat dan belum dikumpulkan">
+                  <i class="bi bi-exclamation-circle"></i> <%= sk.tugasTerlewat %> tugas terlewat
+                </a>
+              <% } %>
+              <% if (semuaBeres) { %>
+                <span class="badge-kumpul hijau"><i class="bi bi-check-circle-fill"></i> Semua sudah dikumpulkan</span>
+              <% } else if (!adaIsi) { %>
+                <span class="badge-kumpul abu"><i class="bi bi-dash-circle"></i> Belum ada tugas</span>
+              <% } %>
+            </div>
+            <% if (sk.tugasTerdekat) { %>
+              <div class="tenggat">
+                <i class="bi bi-alarm"></i>
+                <span><strong>Tenggat terdekat:</strong> <%= sk.tugasTerdekat.judul %><br>
+                  <%= new Date(sk.tugasTerdekat.deadline).toLocaleString('id-ID', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) %> &middot; <%= sisaWaktu(sk.tugasTerdekat.deadline) %></span>
+              </div>
+            <% } %>
+          <% } %>
+
           <% if (mk.jadwal) { %>
-            <div class="mk-card-jadwal"><i class="bi bi-clock"></i> <%= mk.jadwal %></div>
+            <div class="jadwal"><i class="bi bi-clock"></i> <span><%= mk.jadwal %></span></div>
           <% } %>
 
           <% if (mk.dosenList && mk.dosenList.length) { %>
-            <div class="d-flex flex-wrap gap-2 mb-2">
-              <% mk.dosenList.forEach(d => { %>
-                <%
-                  const fotoDosenThumb = d.foto ? getDosenThumb(d.foto) : null;
-                  const fallbackDosenThumb = `https://ui-avatars.com/api/?name=${encodeURIComponent(d.nama)}&background=1e3a8a&color=fff&size=24`;
-                %>
-                <span class="text-muted small d-inline-flex align-items-center gap-1">
-                  <img src="<%= fotoDosenThumb || fallbackDosenThumb %>" alt=""
-                    style="width:22px; height:22px; border-radius:50%; object-fit:cover;"
-                    onerror="this.onerror=null; this.src='<%= fallbackDosenThumb %>';">
+            <div class="dosen-row">
+              <% mk.dosenList.forEach(d => {
+                const thumb = d.foto ? getDosenThumb(d.foto) : null;
+                const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(d.nama)}&background=1e3a8a&color=fff&size=24`;
+              %>
+                <span>
+                  <img src="<%= thumb || fallback %>" alt="" loading="lazy" onerror="this.onerror=null; this.src='<%= fallback %>';">
                   <%= d.nama %>
                 </span>
               <% }) %>
             </div>
           <% } %>
 
-          <div class="mk-card-progress">
+          <div>
             <div class="progress-text">
-              <span>Progress: <%= mk.progressPertemuan.terlaksana %>/16 pertemuan</span>
+              <span>Progres: <%= mk.progressPertemuan.terlaksana %>/16 pertemuan</span>
               <span><%= mk.progressPertemuan.persen %>%</span>
             </div>
-            <div class="progress-bar-bg">
-              <div class="progress-bar-fill" style="width: <%= mk.progressPertemuan.persen %>%;"></div>
-            </div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: <%= mk.progressPertemuan.persen %>%;"></div></div>
           </div>
 
-          <div class="mk-card-bottom">
-            <span class="text-muted small"><i class="bi bi-person-lines-fill"></i> <%= mk.jumlahMahasiswa || 0 %> mahasiswa</span>
-            <a href="/mahasiswa/elearning/mk/<%= mk.id %>" class="btn-detail">
-              <i class="bi bi-eye"></i> Detail
-            </a>
+          <div class="mk-foot">
+            <a href="/mahasiswa/elearning/mk/<%= mk.id %>" class="btn-detail"><i class="bi bi-box-arrow-in-right"></i> Buka Kelas</a>
           </div>
-        </div>
+        </article>
       <% }) %>
-    <% } %>
-  </div>
-
-  <!-- ===== Tampilan TABEL - layar sedang ke atas (tablet/desktop) ===== -->
-  <div class="table-wrapper d-none d-md-block">
-    <div class="table-responsive">
-      <table class="table table-mk">
-        <thead>
-          <tr>
-            <th>Mata Kuliah</th>
-            <th>Kelas</th>
-            <th>Dosen</th>
-            <th>Jadwal</th>
-            <th>Jml Mhs</th>
-            <th>Progress</th>
-            <th>Status Tugas</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (mkList.length === 0) { %>
-            <tr>
-              <td colspan="8" class="empty-state">
-                <i class="bi bi-inbox"></i>
-                <h5>Belum Ada Mata Kuliah</h5>
-                <p class="text-muted small">Anda belum terdaftar di mata kuliah manapun.</p>
-                <a href="/mahasiswa/akademik/krs" class="btn-detail mt-2">Buat KRS</a>
-              </td>
-            </tr>
-          <% } else { %>
-            <% mkList.forEach(mk => { %>
-              <tr>
-                <td class="fw-semibold text-start"><%= mk.kode %> - <%= mk.nama %></td>
-                <td><%= mk.kelas || '-' %></td>
-                <td class="text-start">
-                  <% if (mk.dosenList && mk.dosenList.length) { %>
-                    <% mk.dosenList.forEach(d => { %>
-                      <%
-                        const fotoDosenThumbTbl = d.foto ? getDosenThumb(d.foto) : null;
-                        const fallbackDosenThumbTbl = `https://ui-avatars.com/api/?name=${encodeURIComponent(d.nama)}&background=1e3a8a&color=fff&size=24`;
-                      %>
-                      <div class="d-flex align-items-center gap-1 small text-nowrap">
-                        <img src="<%= fotoDosenThumbTbl || fallbackDosenThumbTbl %>" alt=""
-                          style="width:22px; height:22px; border-radius:50%; object-fit:cover;"
-                          onerror="this.onerror=null; this.src='<%= fallbackDosenThumbTbl %>';">
-                        <%= d.nama %>
-                      </div>
-                    <% }) %>
-                  <% } else { %>
-                    <span class="text-muted small">-</span>
-                  <% } %>
-                </td>
-                <td class="small"><%= mk.jadwal || '-' %></td>
-                <td><%= mk.jumlahMahasiswa || 0 %></td>
-                <td>
-                  <div class="progress-text">
-                    <span><%= mk.progressPertemuan.terlaksana %>/16</span>
-                    <span><%= mk.progressPertemuan.persen %>%</span>
-                  </div>
-                  <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" style="width: <%= mk.progressPertemuan.persen %>%;"></div>
-                  </div>
-                </td>
-                <td>
-                  <% if (mk.adaTugasAktif) { %>
-                    <span class="badge-tugas"><i class="bi bi-check-circle-fill"></i> Ada</span>
-                  <% } else { %>
-                    <span class="badge-tugas badge-tidak"><i class="bi bi-clock-history"></i> Tidak</span>
-                  <% } %>
-                </td>
-                <td>
-                  <a href="/mahasiswa/elearning/mk/<%= mk.id %>" class="btn-detail">
-                    <i class="bi bi-eye"></i> Detail
-                  </a>
-                </td>
-              </tr>
-            <% }) %>
-          <% } %>
-        </tbody>
-      </table>
     </div>
-  </div>
+    <div class="tidak-ada-hasil" id="tidakAdaHasil"><i class="bi bi-emoji-smile"></i> Semua tugas dan LKM sudah dikumpulkan. Kerja bagus!</div>
+  <% } %>
 </div>
+
+<script>
+  (function () {
+    var tombol = document.querySelectorAll('.chip-btn');
+    var kartu = document.querySelectorAll('#mkGrid .mk-card');
+    var kosong = document.getElementById('tidakAdaHasil');
+    if (!tombol.length) return;
+    tombol.forEach(function (b) {
+      b.addEventListener('click', function () {
+        tombol.forEach(function (x) { x.classList.toggle('active', x === b); });
+        var hanyaBelum = b.getAttribute('data-filter') === 'belum';
+        var tampil = 0;
+        kartu.forEach(function (k) {
+          var sembunyi = hanyaBelum && k.getAttribute('data-pending') !== '1';
+          k.style.display = sembunyi ? 'none' : '';
+          if (!sembunyi) tampil++;
+        });
+        if (kosong) kosong.style.display = (hanyaBelum && tampil === 0) ? 'block' : 'none';
+      });
+    });
+  })();
+</script>
 
 <%- include('../../partials/footer') %>
