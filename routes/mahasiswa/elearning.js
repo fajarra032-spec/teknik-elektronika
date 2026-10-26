@@ -614,7 +614,7 @@ router.get('/mk/:id/modul-template/:modulId/cetak', async (req, res) => {
     if (!modul) return res.status(404).send('Modul tidak ditemukan atau belum diaktifkan dosen');
     const nomorModul = modulList.findIndex(m => m.id === req.params.modulId) + 1;
 
-    res.render('lkm_praktikum_print', {
+    res.render(modul.viewCetak || 'lkm_praktikum_print', {
       title: `LKM - ${modul.judul}`,
       mk,
       modul,

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <style>
+    @page { size: A4 portrait; margin: 1.3cm 1.4cm; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; font-size: 9.5pt; }
+    .print-btn, .back-btn { margin: 20px 5px; font-family: Arial, sans-serif; }
+
+    .kop-surat { display: flex; align-items: center; margin-bottom: 10px; }
+    .logo-kop { width: 56px; height: auto; margin-right: 14px; }
+    .teks-kop { flex: 1; }
+    .teks-kop .nama-kampus { font-size: 15pt; font-weight: bold; margin: 0; color: #3b60a3; letter-spacing: 0.5px; }
+    .teks-kop .alamat, .teks-kop .kontak { font-size: 8pt; margin: 1px 0; color: #333; }
+    .garis-kop { border-bottom: 3px solid #3b60a3; margin-bottom: 10px; }
+
+    .judul-dokumen { text-align: center; font-size: 13pt; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
+    .sub-judul { text-align: center; font-size: 10.5pt; margin-bottom: 10px; font-weight: 600; color: #333; }
+
+    table.info-lkm { width: 100%; margin-bottom: 8px; font-size: 9.5pt; border-collapse: collapse; }
+    table.info-lkm td { padding: 2px 4px; vertical-align: top; }
+    table.info-lkm .label { width: 120px; }
+    table.info-lkm .isian-titik { border-bottom: 1px dotted #000; display: inline-block; min-width: 150px; }
+
+    .sect-title {
+      font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin: 12px 0 6px 0;
+      background: #eef2f7; padding: 4px 8px; border-left: 4px solid #3b60a3;
+      page-break-after: avoid; break-after: avoid;
+    }
+    .sub-title { font-weight: bold; font-size: 9.7pt; margin: 8px 0 3px 0; page-break-after: avoid; break-after: avoid; }
+    .ref-box { font-size: 9.2pt; background: #fafafa; border: 1px solid #ddd; border-radius: 4px; padding: 6px 10px; margin-bottom: 4px; }
+    .ref-box ul, .ref-box ol { margin: 3px 0 0 0; padding-left: 18px; }
+    .ref-box li { margin-bottom: 2px; }
+    .ref-box p { margin: 3px 0 0 0; }
+    .k3-box { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 6px 10px; border-radius: 4px; font-size: 9pt; margin-bottom: 8px; }
+
+    .garis-isi { border-bottom: 1px solid #999; height: 21px; margin-bottom: 2px; }
+    .catatan-kecil { font-size: 8.5pt; color: #444; margin: 2px 0 4px 0; }
+
+    table.tabel-data { width: 100%; border-collapse: collapse; font-size: 8.8pt; margin-top: 4px; }
+    table.tabel-data th, table.tabel-data td { border: 1px solid #000; padding: 4px; vertical-align: top; }
+    table.tabel-data th { background: #dbe5f1; font-weight: bold; text-align: center; }
+    table.tabel-data td.isi { height: 62px; }
+    table.tabel-data td.isi-b { height: 74px; }
+    table.tabel-data td.tengah { text-align: center; }
+    table.tabel-data tr { page-break-inside: avoid; break-inside: avoid; }
+
+    .foto-wrap { display: flex; gap: 8px; margin-top: 4px; }
+    .foto-box { flex: 1; border: 1px dashed #666; height: 110px; text-align: center; font-size: 8.5pt; color: #666; padding-top: 6px; }
+
+    .pertanyaan-item { margin-bottom: 8px; page-break-inside: avoid; break-inside: avoid; }
+    .pertanyaan-item .no-pertanyaan { font-weight: bold; font-size: 9.5pt; margin-bottom: 3px; }
+
+    .kotak-centang { display: inline-block; width: 11px; height: 11px; border: 1px solid #000; vertical-align: middle; margin: 0 3px 0 8px; }
+
+    .pernyataan { font-size: 9pt; border: 1px solid #999; border-radius: 4px; padding: 6px 10px; margin-top: 10px; page-break-inside: avoid; break-inside: avoid; }
+
+    .ttd-wrap { display: flex; justify-content: space-between; margin-top: 22px; page-break-inside: avoid; break-inside: avoid; }
+    .ttd-box { text-align: center; width: 250px; font-size: 9.5pt; }
+    .ttd-box .nama-ttd { font-weight: bold; text-decoration: underline; margin-top: 50px; }
+    .nilai-box { text-align: center; width: 140px; font-size: 9.5pt; border: 1px solid #000; border-radius: 4px; padding: 8px; }
+    .nilai-box .angka { font-size: 20pt; font-weight: bold; height: 32px; }
+
+    .halaman-baru { page-break-before: always; break-before: page; }
+
+    @media print {
+      .btn, .print-btn, .back-btn { display: none !important; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3 print-btn">
+      <a href="<%= backUrl %>" class="btn btn-outline-secondary btn-sm back-btn">
+        <i class="bi bi-arrow-left"></i> Kembali
+      </a>
+      <button onclick="window.print()" class="btn btn-primary btn-sm print-btn shadow-sm">
+        <i class="bi bi-printer"></i> Cetak / Simpan PDF
+      </button>
+    </div>
+
+    <%- include('partials/kop_surat') %>
+
+    <div class="judul-dokumen">Lembar Kerja Mahasiswa (LKM) 1</div>
+    <div class="sub-judul">ISO, IEC, dan Standar Keselamatan (Tugas Rumah Individu)</div>
+
+    <table class="info-lkm">
+      <tr>
+        <td class="label">Mata Kuliah</td><td>: <%= mk.kode %> - <%= mk.nama %></td>
+        <td class="label">Estimasi Waktu</td><td>: <%= modul.estimasiWaktu %></td>
+      </tr>
+      <tr>
+        <td class="label">Nama Mahasiswa</td>
+        <td>: <span class="isian-titik">&nbsp;<%= namaMahasiswa || '' %>&nbsp;</span></td>
+        <td class="label">NIM</td>
+        <td>: <span class="isian-titik">&nbsp;<%= nimMahasiswa || '' %>&nbsp;</span></td>
+      </tr>
+      <tr>
+        <td class="label">Kelas</td>
+        <td>: <span class="isian-titik">&nbsp;<%= mk.kelas || '' %>&nbsp;</span></td>
+        <td class="label">Hari / Tanggal</td>
+        <td>: <span class="isian-titik">&nbsp;</span></td>
+      </tr>
+      <tr>
+        <td class="label">Dosen Pengampu</td>
+        <td colspan="3">: <span class="isian-titik">&nbsp;<%= namaDosen || '' %>&nbsp;</span></td>
+      </tr>
+    </table>
+
+    <div class="sect-title">Tujuan</div>
+    <div class="ref-box">
+      <ol>
+        <% modul.tujuan.forEach(t => { %><li><%= t %></li><% }) %>
+      </ol>
+    </div>
+
+    <% if (modul.k3) { %>
+      <div class="k3-box"><strong>&#9888; Peringatan Keselamatan (wajib dibaca):</strong> Tugas ini hanya berupa pengamatan dan pencatatan. Jangan membongkar perangkat, membuka panel listrik, atau memegang bagian yang bertegangan. <%= modul.k3 %></div>
+    <% } %>
+
+    <!-- ====================== BAGIAN A ====================== -->
+    <div class="sect-title">Bagian A. Pemetaan Penandaan Standar pada Perangkat (Bobot 25%)</div>
+    <p class="catatan-kecil">Pilih 3 perangkat berbeda (misalnya charger ponsel, setrika, kipas angin, power bank, TV, atau kabel ekstensi). Foto label masing-masing perangkat (foto sendiri), lalu isi tabel berikut. Cabut perangkat dari stop kontak sebelum memeriksa labelnya.</p>
+
+    <table class="tabel-data">
+      <thead>
+        <tr>
+          <th style="width: 4%;">No</th>
+          <th style="width: 15%;">Nama perangkat</th>
+          <th style="width: 15%;">Tegangan / arus / daya</th>
+          <th style="width: 20%;">Logo atau kode standar yang tertera</th>
+          <th style="width: 11%;">Kelas isolasi (I/II/III)</th>
+          <th style="width: 11%;">IP Code (jika ada)</th>
+          <th>Lembaga penerbit standar</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (let i = 1; i <= 3; i++) { %>
+          <tr>
+            <td class="tengah isi"><%= i %></td>
+            <td class="isi"></td><td class="isi"></td><td class="isi"></td>
+            <td class="isi"></td><td class="isi"></td><td class="isi"></td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+
+    <div class="sub-title">Foto label perangkat (tempel atau lampirkan foto sendiri)</div>
+    <div class="foto-wrap">
+      <div class="foto-box">Foto label perangkat 1</div>
+      <div class="foto-box">Foto label perangkat 2</div>
+      <div class="foto-box">Foto label perangkat 3</div>
+    </div>
+
+    <div class="halaman-baru">
+      <%- include('partials/kop_surat') %>
+
+      <div class="sub-title">Jawaban pertanyaan Bagian A (2-4 kalimat per perangkat)</div>
+      <p class="catatan-kecil">Untuk setiap perangkat jawab: (a) apakah bertanda SNI, dan apakah nomor registrasi atau keterangan model tertera jelas; (b) arti penandaan terpenting bagi keselamatan pengguna; (c) risiko jika penandaan tidak lengkap.</p>
+      <% for (let p = 1; p <= 3; p++) { %>
+        <div class="pertanyaan-item">
+          <div class="no-pertanyaan">Perangkat <%= p %>: ................................................</div>
+          <% for (let j = 0; j < 4; j++) { %><div class="garis-isi"></div><% } %>
+        </div>
+      <% } %>
+
+      <div class="pertanyaan-item">
+        <div class="no-pertanyaan">Perbedaan tanda CE dan sertifikasi SNI (jelaskan dengan kata-kata sendiri):</div>
+        <% for (let j = 0; j < 4; j++) { %><div class="garis-isi"></div><% } %>
+      </div>
+
+      <!-- ====================== BAGIAN B ====================== -->
+      <div class="sect-title">Bagian B. Analisis Studi Kasus Mini (Bobot 25%)</div>
+      <p class="catatan-kecil">
+        Pilih satu:
+        <span class="kotak-centang"></span> Opsi 1: salah satu dari 10 studi kasus di kelas, dianalisis lebih dalam
+        <span class="kotak-centang"></span> Opsi 2: kasus dari pengalaman sendiri atau berita (cantumkan sumber)
+      </p>
+      <p class="catatan-kecil">Judul/sumber kasus: ..............................................................................................................</p>
+
+      <table class="tabel-data">
+        <thead>
+          <tr><th style="width: 22%;">Bagian</th><th>Jawaban</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Deskripsi kejadian</strong><br><small>Apa yang terjadi, di mana, dan akibatnya</small></td>
+            <td class="isi-b"></td>
+          </tr>
+          <tr>
+            <td><strong>Penyebab utama</strong><br><small>Minimal 2 penyebab teknis atau non-teknis</small></td>
+            <td class="isi-b"></td>
+          </tr>
+          <tr>
+            <td><strong>Standar yang relevan</strong><br><small>Nomor standar dan judul singkat, serta fungsinya (contoh: IEC 61140, IEC 60529, ISO 45001)</small></td>
+            <td class="isi-b"></td>
+          </tr>
+          <tr>
+            <td><strong>Rekomendasi pencegahan</strong><br><small>Minimal 3 tindakan konkret yang mengacu pada standar</small></td>
+            <td class="isi-b"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ====================== BAGIAN C ====================== -->
+    <div class="halaman-baru">
+      <%- include('partials/kop_surat') %>
+
+      <div class="sect-title">Bagian C. Inspeksi Keselamatan Listrik Rumah (Bobot 25%)</div>
+      <p class="catatan-kecil">Lakukan inspeksi visual di satu ruangan: <span class="kotak-centang"></span> Dapur <span class="kotak-centang"></span> Ruang keluarga <span class="kotak-centang"></span> Kamar <span class="kotak-centang"></span> Lainnya: ................. &nbsp; Beri tanda &#10003; (sesuai), &#10007; (tidak sesuai), atau N/A, serta catatan singkat/foto. Jangan memperbaiki sendiri kondisi berbahaya; laporkan kepada orang tua/pemilik rumah dan teknisi listrik yang kompeten.</p>
+
+      <table class="tabel-data">
+        <thead>
+          <tr>
+            <th style="width: 4%;">No</th>
+            <th style="width: 46%;">Item pemeriksaan</th>
+            <th style="width: 9%;">Status</th>
+            <th>Catatan / foto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% const checklist = [
+            'Kabel perangkat tidak terkelupas, retak, atau terlipat tajam',
+            'Colokan tidak longgar, tidak gosong, tidak berubah warna',
+            'Stop kontak tidak dibebani bertumpuk (satu stop kontak banyak perangkat daya besar)',
+            'Stop kontak untuk perangkat berbodi logam memiliki lubang/kontak pembumian',
+            'Tersedia MCB pada panel rumah; RCD/ELCB (jika ada) tampak terpasang',
+            'Warna kabel mengikuti ketentuan umum (PE hijau-kuning, netral biru) pada bagian yang terlihat',
+            'Perangkat di area basah (dapur/kamar mandi) terlindungi dari percikan air',
+            'Tidak ada kabel melintas di lantai/area lalu lintas tanpa pelindung',
+            'Tersedia APAR atau tindakan pencegahan kebakaran sederhana, dan jalur keluar tidak terhalang',
+            'Perangkat berbaterai (power bank, charger) tidak diisi di atas kasur/bantal'
+          ]; %>
+          <% checklist.forEach((item, i) => { %>
+            <tr>
+              <td class="tengah"><%= i + 1 %></td>
+              <td><%= item %></td>
+              <td></td>
+              <td style="height: 38px;"></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+
+      <div class="sub-title">Rangkuman (maksimal 5 kalimat)</div>
+      <p class="catatan-kecil">Tulis temuan paling berisiko, standar yang relevan (misalnya IEC 61140, IEC 60364/PUIL 2011), dan rekomendasi perbaikan yang realistis.</p>
+      <% for (let j = 0; j < 6; j++) { %><div class="garis-isi"></div><% } %>
+
+      <div class="sub-title">Foto pendukung inspeksi (tempel atau lampirkan foto sendiri)</div>
+      <div class="foto-wrap">
+        <div class="foto-box" style="height: 90px;">Foto temuan 1</div>
+        <div class="foto-box" style="height: 90px;">Foto temuan 2</div>
+        <div class="foto-box" style="height: 90px;">Foto temuan 3</div>
+      </div>
+    </div>
+
+    <!-- ====================== BAGIAN D ====================== -->
+    <div class="halaman-baru">
+      <%- include('partials/kop_surat') %>
+
+      <div class="sect-title">Bagian D. Soal Uraian (Bobot 25%)</div>
+      <p class="catatan-kecil">Jawab dengan bahasa sendiri, ringkas, dan tepat. Sebutkan nomor standar jika relevan.</p>
+
+      <% const soalD = [
+        'Jelaskan perbedaan ruang lingkup ISO dan IEC, beserta dua contoh standar masing-masing yang relevan bagi teknisi elektronika.',
+        'Apa hubungan IEC, BSN, dan SNI? Berikan satu contoh standar IEC yang diadopsi menjadi SNI.',
+        'Jelaskan arti kode IP54 dan IP67, lalu sebutkan satu contoh perangkat untuk masing-masing.',
+        'Mengapa multimeter berkategori CAT II tidak layak dipakai mengukur di panel distribusi? Standar apa yang mengatur kategori tersebut?',
+        'Sebutkan dan jelaskan secara singkat lima aturan keselamatan sebelum bekerja pada peralatan listrik.'
+      ]; %>
+      <% soalD.forEach((soal, i) => { %>
+        <div class="pertanyaan-item">
+          <div class="no-pertanyaan"><%= i + 1 %>. <%= soal %></div>
+          <% for (let j = 0; j < (i === 4 ? 6 : 4); j++) { %><div class="garis-isi"></div><% } %>
+        </div>
+      <% }) %>
+
+      <div class="pernyataan">
+        <strong>Pernyataan integritas akademik:</strong> Saya mengerjakan tugas ini secara individu dan dengan kata-kata sendiri. Foto diambil sendiri, kutipan sumber saya cantumkan, dan penggunaan alat bantu (termasuk AI) saya cantumkan serta hasilnya saya verifikasi terhadap sumber standar yang valid.<br>
+        Alat bantu yang digunakan: ...........................................................................................
+        <br>Sumber rujukan: ...........................................................................................................
+      </div>
+
+      <div class="ttd-wrap">
+        <div class="ttd-box">
+          <div>Mahasiswa,</div>
+          <div class="nama-ttd"><%= namaMahasiswa || '..........................' %></div>
+          <div>NIM. <%= nimMahasiswa || '..........................' %></div>
+        </div>
+        <div class="nilai-box">
+          <div>Nilai LKM 1</div>
+          <div class="angka">&nbsp;</div>
+        </div>
+        <div class="ttd-box">
+          <div>Dosen Pengampu,</div>
+          <div class="nama-ttd"><%= namaDosen || '..........................' %></div>
+          <div>&nbsp;</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

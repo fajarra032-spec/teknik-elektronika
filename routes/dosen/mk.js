@@ -1003,7 +1003,7 @@ router.get('/:id/modul-template/:modulId/cetak', async (req, res) => {
     if (!modul) return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Modul tidak ditemukan.' });
     const nomorModul = modulList.findIndex(m => m.id === req.params.modulId) + 1;
 
-    res.render('lkm_praktikum_print', {
+    res.render(modul.viewCetak || 'lkm_praktikum_print', {
       title: `LKM - ${modul.judul}`,
       mk: akses.mk,
       modul,

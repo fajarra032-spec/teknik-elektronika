@@ -2464,6 +2464,7 @@ module.exports = {
   standarisasi: [
     {
       id: 'std-01',
+      viewCetak: 'lkm_std01_print', // template cetak khusus (views/lkm_std01_print.ejs)
       judul: 'LKM 1: ISO, IEC, dan Standar Keselamatan (Tugas Rumah)',
       pertemuanSaran: 2,
       tujuan: [
