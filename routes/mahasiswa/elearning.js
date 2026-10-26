@@ -34,6 +34,7 @@ const { getPeriodeAktif, getHasilRubrikSatuMahasiswa } = require('../../helpers/
 const { periodeKeUrutan, bandingkanLabelPeriode } = require('../../helpers/academicHelper');
 const { mataKuliahCache, tugasAktifCache, dosenCache } = require('../../helpers/cache');
 const { getPublishedModulPraktikum } = require('../../helpers/modulPraktikumHelper');
+const { filterEnrollmentDocsAktif, filterIdMahasiswaAktif } = require('../../helpers/statusMahasiswaHelper');
 
 // ============================================================================
 // KONSTANTA FOLDER UTAMA (Data WEB)
@@ -296,14 +297,18 @@ router.get('/', async (req, res) => {
     }
 
     await Promise.all(mkList.map(async (mk) => {
-      // Hitung jumlah mahasiswa terdaftar di MK ini (query count() sudah murah,
-      // dibilling sebagai 1 read terlepas dari jumlah dokumen yang cocok)
-      const countSnapshot = await db.collection('enrollment')
+      // Jumlah mahasiswa kelas ini: HANYA periode yang sedang ditampilkan dan
+      // tanpa mahasiswa Cuti/Keluar - sama dengan hitungan di sisi dosen
+      // (routes/dosen/mk.js). Dulu cuma mkId+status sehingga enrollment
+      // semester lama yang statusnya tidak pernah diubah ikut terhitung.
+      const kelasEnrollSnap = await db.collection('enrollment')
         .where('mkId', '==', mk.id)
+        .where('semester', '==', periodeDipilih)
         .where('status', '==', 'active')
-        .count()
         .get();
-      mk.jumlahMahasiswa = countSnapshot.data().count;
+      const idUnik = new Set((await filterEnrollmentDocsAktif(db, kelasEnrollSnap.docs))
+        .map(d => d.data().userId).filter(Boolean));
+      mk.jumlahMahasiswa = idUnik.size;
 
       // Hitung progress perkuliahan (dari field materi)
       const materi = mk.materi || [];
@@ -452,16 +457,27 @@ router.get('/mk/:id', async (req, res) => {
       return dData ? { id: dId, nama: dData.nama, foto: dData.foto || null, kontak: dData.kontak || null } : null;
     }))).filter(Boolean);
 
-    // Teman sekelas
-    const periodeAktifUntukKelas = getPeriodeAktif();
+    // Teman sekelas - periode mengikuti pendaftaran mahasiswa ini sendiri
+    // (periode aktif kalau ia terdaftar di situ, kalau tidak periode
+    // terbarunya), supaya konsisten dengan angka di halaman daftar kelas.
+    const periodeSekarangKelas = getPeriodeAktif();
+    const enrolSayaKelas = await db.collection('enrollment')
+      .where('userId', '==', req.user.id)
+      .where('mkId', '==', mkId)
+      .where('status', '==', 'active')
+      .get();
+    const semesterSayaKelas = enrolSayaKelas.docs.map(d => d.data().semester).filter(Boolean);
+    const periodeAktifUntukKelas = semesterSayaKelas.includes(periodeSekarangKelas)
+      ? periodeSekarangKelas
+      : (semesterSayaKelas.sort(bandingkanLabelPeriode).pop() || periodeSekarangKelas);
     const kelasEnrollmentSnapshot = await db.collection('enrollment')
       .where('mkId', '==', mkId)
       .where('semester', '==', periodeAktifUntukKelas)
       .where('status', '==', 'active')
       .get();
-    const mahasiswaIdsKelas = kelasEnrollmentSnapshot.docs
+    const mahasiswaIdsKelas = await filterIdMahasiswaAktif(db, [...new Set(kelasEnrollmentSnapshot.docs
       .map(doc => doc.data().userId)
-      .filter(uid => uid && typeof uid === 'string' && uid.trim() !== '');
+      .filter(uid => uid && typeof uid === 'string' && uid.trim() !== ''))]); // tanpa Cuti/Keluar, tanpa duplikat
 
     let mahasiswaList = [];
     if (mahasiswaIdsKelas.length > 0) {
@@ -472,12 +488,8 @@ router.get('/mk/:id', async (req, res) => {
       mahasiswaList.sort((a, b) => String(a.nim).localeCompare(String(b.nim)));
     }
 
-    const countSnapshot = await db.collection('enrollment')
-      .where('mkId', '==', mkId)
-      .where('status', '==', 'active')
-      .count()
-      .get();
-    const jumlahMahasiswa = countSnapshot.data().count;
+    // Sama dengan jumlah teman sekelas yang ditampilkan (satu sumber angka)
+    const jumlahMahasiswa = mahasiswaIdsKelas.length;
 
     // Progress belajar: pertemuan terlaksana vs sudah lewat tanggal tapi
     // belum ditandai selesai oleh dosen (perlu perhatian)
