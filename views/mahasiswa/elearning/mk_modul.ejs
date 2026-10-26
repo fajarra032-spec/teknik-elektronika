@@ -43,6 +43,20 @@
   .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
   .k3-box { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 0.6rem 0.9rem; border-radius: 0.7rem; font-size: 0.82rem; margin-top: 0.6rem; }
 
+  .lkm-summary { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
+  .lkm-summary .item { flex: 1 1 140px; background: white; border: 1px solid rgba(30,58,138,0.08); border-radius: 1rem; padding: 0.75rem 1rem; box-shadow: 0 6px 16px rgba(0,0,0,0.04); }
+  .lkm-summary .label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
+  .lkm-summary .value { font-size: 1.4rem; font-weight: 800; color: var(--primary-dark); }
+  .lkm-badge { margin-left: auto; margin-right: 0.75rem; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 50px; white-space: nowrap; }
+  .lkm-badge.belum { background: #f1f5f9; color: #64748b; }
+  .lkm-badge.kumpul { background: #d1fae5; color: #065f46; }
+  .lkm-badge.periksa { background: #dbeafe; color: #1e40af; }
+  .lkm-badge.nilai { background: #1e3a8a; color: #fff; }
+  .lkm-nilai-box { display: flex; align-items: center; gap: 0.9rem; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.9rem; padding: 0.7rem 1rem; margin: 0.5rem 0; }
+  .lkm-nilai-box .angka { font-size: 1.9rem; font-weight: 800; color: #1e3a8a; line-height: 1; }
+  .lkm-nilai-box .ket { font-size: 0.8rem; color: #475569; }
+  .accordion-button .lkm-badge + ::after { margin-left: 0; }
+
   @media (max-width: 576px) {
     .modul-card { padding: 1rem; }
     .modul-card iframe { height: 320px !important; }
@@ -63,12 +77,35 @@
   <!-- Modul Template (job sheet) - hanya muncul kalau dosen mempublikasikan -->
   <% if (templateModulList && templateModulList.length) { %>
     <div class="section-divider">Modul Template &mdash; <%= jenisPraktikumLabel %></div>
+    <%
+      const _ringkas = (typeof ringkasanLkm !== 'undefined' && ringkasanLkm) ? ringkasanLkm : null;
+    %>
+    <% if (_ringkas) { %>
+      <div class="lkm-summary">
+        <div class="item"><div class="label">LKM Dikumpulkan</div><div class="value"><%= _ringkas.dikumpulkan %> / <%= _ringkas.total %></div></div>
+        <div class="item"><div class="label">Sudah Dinilai</div><div class="value"><%= _ringkas.dinilai %></div></div>
+        <div class="item"><div class="label">Rata-rata Nilai LKM</div><div class="value"><%= _ringkas.rataRata !== null ? _ringkas.rataRata : '-' %></div></div>
+      </div>
+    <% } %>
     <div class="accordion mb-3" id="accordionTemplate">
       <% templateModulList.forEach((m, i) => { %>
         <div class="accordion-item">
           <h2 class="accordion-header">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tpl-<%= m.id %>">
               <span class="me-2 fw-bold">#<%= i + 1 %></span> <%= m.judul %>
+              <%
+                const _p = m.pengumpulanLkm;
+                const _adaNilai = _p && _p.nilaiPraktikum !== null && _p.nilaiPraktikum !== undefined && !Number.isNaN(Number(_p.nilaiPraktikum));
+              %>
+              <% if (!_p) { %>
+                <span class="lkm-badge belum">Belum dikumpulkan</span>
+              <% } else if (_p.status === 'diperiksa' && _adaNilai) { %>
+                <span class="lkm-badge nilai">Nilai <%= _p.nilaiPraktikum %></span>
+              <% } else if (_p.status === 'diperiksa') { %>
+                <span class="lkm-badge periksa">Sudah diperiksa</span>
+              <% } else { %>
+                <span class="lkm-badge kumpul">Dikumpulkan</span>
+              <% } %>
             </button>
           </h2>
           <div id="tpl-<%= m.id %>" class="accordion-collapse collapse" data-bs-parent="#accordionTemplate">
@@ -108,7 +145,7 @@
                 <i class="bi bi-printer"></i> Cetak LKM Kosong
               </a>
 
-              <% const p = m.pengumpulanLkm; %>
+              <% const p = m.pengumpulanLkm; const _adaNilaiDetail = p && p.nilaiPraktikum !== null && p.nilaiPraktikum !== undefined && !Number.isNaN(Number(p.nilaiPraktikum)); %>
               <% if (!p) { %>
                 <form method="POST" action="/mahasiswa/elearning/mk/<%= mk.id %>/modul-template/<%= m.id %>/kumpul" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center">
                   <input type="file" name="file" class="form-control form-control-sm" style="max-width: 260px;" accept="image/*,.pdf" required>
@@ -117,16 +154,23 @@
               <% } else { %>
                 <div class="alert <%= p.status === 'diperiksa' ? 'alert-primary' : 'alert-success' %> py-2 px-3 small mb-2">
                   <i class="bi <%= p.status === 'diperiksa' ? 'bi-check-circle' : 'bi-check2' %>"></i>
-                  <%= p.status === 'diperiksa' ? 'Sudah diperiksa dosen' : 'Sudah dikumpulkan' %>
+                  <%= p.status === 'diperiksa' ? 'Sudah diperiksa dosen' : 'Sudah dikumpulkan - menunggu pemeriksaan dosen' %>
                   &middot; <%= new Date(p.submittedAt).toLocaleString('id-ID', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) %>
                   &middot; <a href="<%= p.fileUrl %>" target="_blank">Lihat file</a>
-                  <% if (p.status === 'diperiksa' && p.nilaiPraktikum !== null && p.nilaiPraktikum !== undefined) { %>
-                    &middot; Nilai: <strong><%= p.nilaiPraktikum %></strong>
-                  <% } %>
-                  <% if (p.catatanDosen) { %>
-                    <div class="mt-1">Catatan dosen: <%= p.catatanDosen %></div>
-                  <% } %>
                 </div>
+                <% if (p.status === 'diperiksa') { %>
+                  <div class="lkm-nilai-box">
+                    <% if (_adaNilaiDetail) { %>
+                      <div class="angka"><%= p.nilaiPraktikum %></div>
+                      <div class="ket">Nilai LKM<% if (p.diperiksaPada) { %><br>Diperiksa <%= new Date(p.diperiksaPada).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) %><% } %></div>
+                    <% } else { %>
+                      <div class="ket"><i class="bi bi-hourglass-split"></i> Sudah diperiksa dosen, <strong>nilai belum diisi</strong>.</div>
+                    <% } %>
+                  </div>
+                  <% if (p.catatanDosen) { %>
+                    <div class="alert alert-light border py-2 px-3 small mb-2"><i class="bi bi-chat-left-text"></i> <strong>Catatan dosen:</strong> <%= p.catatanDosen %></div>
+                  <% } %>
+                <% } %>
                 <% if (p.status !== 'diperiksa') { %>
                   <form method="POST" action="/mahasiswa/elearning/mk/<%= mk.id %>/modul-template/<%= m.id %>/kumpul/revisi" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center">
                     <input type="file" name="file" class="form-control form-control-sm" style="max-width: 260px;" accept="image/*,.pdf" required>

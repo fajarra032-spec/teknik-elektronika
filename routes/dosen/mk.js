@@ -1102,8 +1102,16 @@ router.post('/:id/modul-template/:modulId/kumpulan/:pengumpulanId/periksa', asyn
       return res.status(404).send('Pengumpulan LKM tidak ditemukan');
     }
 
+    // Terima koma desimal ("85,5") dan tolak nilai di luar 0-100 / bukan angka
+    const nilaiAngka = (nilaiPraktikum !== undefined && String(nilaiPraktikum).trim() !== '')
+      ? parseFloat(String(nilaiPraktikum).replace(',', '.'))
+      : null;
+    if (nilaiAngka !== null && (!Number.isFinite(nilaiAngka) || nilaiAngka < 0 || nilaiAngka > 100)) {
+      return res.status(400).send('Nilai LKM harus berupa angka 0-100');
+    }
+
     await pengumpulanRef.update({
-      nilaiPraktikum: nilaiPraktikum !== undefined && nilaiPraktikum !== '' ? parseFloat(nilaiPraktikum) : null,
+      nilaiPraktikum: nilaiAngka,
       catatanDosen: catatanDosen || '',
       status: 'diperiksa',
       diperiksaPada: new Date().toISOString()

@@ -74,7 +74,12 @@
           </div>
           <div class="text-end">
             <% if (t.pengumpulan) { %>
-              <span class="badge bg-success mb-1 d-inline-block">Sudah Dikumpul</span><br>
+              <% const _nilaiT = t.pengumpulan.nilai; %>
+              <% if (_nilaiT !== null && _nilaiT !== undefined && _nilaiT !== '') { %>
+                <span class="badge bg-primary mb-1 d-inline-block">Nilai: <%= _nilaiT %></span><br>
+              <% } else { %>
+                <span class="badge bg-success mb-1 d-inline-block">Sudah Dikumpul</span><br>
+              <% } %>
               <a href="/mahasiswa/elearning/tugas/<%= t.id %>" class="btn-tugas btn-tugas-sm">Detail</a>
             <% } else { %>
               <a href="/mahasiswa/elearning/tugas/<%= t.id %>" class="btn-tugas">Kumpul</a>

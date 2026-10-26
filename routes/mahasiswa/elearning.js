@@ -133,6 +133,50 @@ function getMateri(mk) {
 }
 
 /**
+ * Ringkasan LKM satu mahasiswa untuk satu MK: jumlah modul template yang
+ * tampil, yang sudah dikumpulkan, yang sudah dinilai dosen, dan rata-rata
+ * nilainya. Dipakai di tab Ringkasan & Modul supaya nilai LKM tidak hanya
+ * tersembunyi di dalam accordion masing-masing modul.
+ * @param {Array} templateModulList modul template yang sudah dipublikasikan
+ * @param {Map<string, Object>} lkmMap modulId -> dokumen lkmPengumpulan
+ */
+function hitungRingkasanLkm(templateModulList, lkmMap) {
+  const total = templateModulList.length;
+  let dikumpulkan = 0;
+  const nilaiList = [];
+  templateModulList.forEach(m => {
+    const p = lkmMap.get(m.id);
+    if (!p) return;
+    dikumpulkan++;
+    const n = Number(p.nilaiPraktikum);
+    if (p.status === 'diperiksa' && p.nilaiPraktikum !== null && p.nilaiPraktikum !== undefined && p.nilaiPraktikum !== '' && Number.isFinite(n)) {
+      nilaiList.push(n);
+    }
+  });
+  const rataRata = nilaiList.length > 0
+    ? Math.round((nilaiList.reduce((a, b) => a + b, 0) / nilaiList.length) * 100) / 100
+    : null;
+  return { total, dikumpulkan, dinilai: nilaiList.length, rataRata };
+}
+
+/**
+ * Ambil ringkasan LKM mahasiswa untuk MK ini (null kalau MK belum punya
+ * modul praktikum yang dipublikasikan dosen).
+ */
+async function getRingkasanLkmMahasiswa(mk, mahasiswaId) {
+  if (mk.praktikumPublished !== true) return null;
+  const { modulList } = getPublishedModulPraktikum(mk);
+  if (!modulList || modulList.length === 0) return null;
+  const snap = await db.collection('lkmPengumpulan')
+    .where('mkId', '==', mk.id)
+    .where('mahasiswaId', '==', mahasiswaId)
+    .get();
+  const lkmMap = new Map();
+  snap.docs.forEach(doc => lkmMap.set(doc.data().modulId, { id: doc.id, ...doc.data() }));
+  return hitungRingkasanLkm(modulList, lkmMap);
+}
+
+/**
  * Mendapatkan status pengumpulan untuk setiap tugas
  * @param {string} tugasId - ID tugas
  * @param {string} mahasiswaId - UID mahasiswa
@@ -398,6 +442,9 @@ router.get('/mk/:id', async (req, res) => {
     const periodeAktif = getPeriodeAktif();
     const hasilRubrikSaya = await getHasilRubrikSatuMahasiswa(req.user.id, mkId, periodeAktif);
 
+    // Ringkasan nilai LKM praktikum (null kalau MK ini tidak punya modul praktikum)
+    const ringkasanLkm = await getRingkasanLkmMahasiswa(mk, req.user.id);
+
     res.render('mahasiswa/elearning/mk_detail', {
       title: `${mk.kode} - ${mk.nama}`,
       mk,
@@ -411,7 +458,8 @@ router.get('/mk/:id', async (req, res) => {
       totalDiambilAbsensi,
       jumlahHadirSaya,
       persenHadirSaya,
-      hasilRubrikSaya
+      hasilRubrikSaya,
+      ringkasanLkm
     });
   } catch (error) {
     console.error('Error ringkasan MK:', error);
@@ -549,6 +597,7 @@ router.get('/mk/:id/modul', async (req, res) => {
     // mempublikasikannya (mk.praktikumPublished) DAN modul tsb diaktifkan.
     let templateModulList = [];
     let jenisPraktikumLabel = null;
+    let ringkasanLkm = null;
     if (mk.praktikumPublished === true) {
       const hasilTemplate = getPublishedModulPraktikum(mk);
       templateModulList = hasilTemplate.modulList;
@@ -565,6 +614,7 @@ router.get('/mk/:id/modul', async (req, res) => {
         const lkmMap = new Map();
         lkmSnapshot.docs.forEach(doc => lkmMap.set(doc.data().modulId, { id: doc.id, ...doc.data() }));
         templateModulList = templateModulList.map(m => ({ ...m, pengumpulanLkm: lkmMap.get(m.id) || null }));
+        ringkasanLkm = hitungRingkasanLkm(templateModulList, lkmMap);
       }
     }
 
@@ -573,7 +623,8 @@ router.get('/mk/:id/modul', async (req, res) => {
       mk,
       modulList,
       templateModulList,
-      jenisPraktikumLabel
+      jenisPraktikumLabel,
+      ringkasanLkm
     });
   } catch (error) {
     console.error('Error modul mahasiswa:', error);
