@@ -39,7 +39,8 @@ const JENIS_LABEL = {
   dasar_sistem_tenaga_listrik: 'Dasar Sistem Tenaga Listrik',
   peralatan_teknik: 'Peralatan Teknik',
   keselamatan_kesehatan_kerja: 'Keselamatan dan Kesehatan Kerja (K3)',
-  perawatan_dan_perbaikan: 'Perawatan dan Perbaikan'
+  perawatan_dan_perbaikan: 'Perawatan dan Perbaikan',
+  standarisasi: 'Standarisasi'
 };
 
 // Kata kunci pencocokan (huruf kecil semua) - dicek terhadap "kode + nama" MK.
@@ -59,7 +60,9 @@ const KEYWORDS = {
   dasar_sistem_tenaga_listrik: ['dasar sistem tenaga listrik'],
   peralatan_teknik: ['peralatan teknik'],
   keselamatan_kesehatan_kerja: ['keselamatan dan kesehatan kerja'],
-  perawatan_dan_perbaikan: ['perawatan dan perbaikan']
+  perawatan_dan_perbaikan: ['perawatan dan perbaikan'],
+  // ejaan dosen: 'Standarisasi'; ejaan kurikulum: 'Standardisasi' (PD3202)
+  standarisasi: ['standarisasi', 'standardisasi']
 };
 
 /**

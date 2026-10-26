@@ -2455,5 +2455,50 @@ module.exports = {
       ],
       estimasiWaktu: '3 x 50 menit (dapat dikerjakan lintas pertemuan)'
     }
+  ],
+
+  // ==========================================================================
+  // STANDARISASI / STANDARDISASI (kode a.l. PD3202)
+  // LKM 1 - Tugas rumah (individu): ISO, IEC, dan Standar Keselamatan
+  // ==========================================================================
+  standarisasi: [
+    {
+      id: 'std-01',
+      judul: 'LKM 1: ISO, IEC, dan Standar Keselamatan (Tugas Rumah)',
+      pertemuanSaran: 2,
+      tujuan: [
+        'Membaca dan menjelaskan penandaan standar (SNI, CE, kelas isolasi, IP, CAT) pada perangkat nyata',
+        'Menghubungkan kasus nyata dengan standar ISO/IEC yang relevan',
+        'Mengidentifikasi risiko keselamatan listrik di lingkungan rumah secara aman',
+        'Menjelaskan konsep ISO, IEC, dan standar keselamatan dengan tepat'
+      ],
+      alatBahan: [
+        'Tiga perangkat listrik/elektronik di rumah (misalnya charger ponsel, setrika, kipas angin, power bank, TV, atau kabel ekstensi)',
+        'Kamera ponsel untuk memotret label/penandaan dan kondisi ruangan (foto harus diambil sendiri)',
+        'Materi PPT pertemuan ini (ISO, IEC, dan Standar Keselamatan)',
+        'Situs resmi: iso.org, iec.ch, bsn.go.id',
+        'PUIL 2011 (SNI 0225:2011)',
+        'Label dan manual perangkat yang diamati'
+      ],
+      dasarTeori: 'ISO (International Organization for Standardization) menyusun standar internasional lintas bidang, sedangkan IEC (International Electrotechnical Commission) khusus pada bidang elektroteknik dan elektronika. Di Indonesia, BSN (Badan Standardisasi Nasional) menetapkan Standar Nasional Indonesia (SNI), yang sebagian di antaranya diadopsi dari standar IEC/ISO. Penandaan pada perangkat memberi informasi keselamatan bagi pengguna, misalnya tanda SNI, kelas isolasi (I/II/III), IP Code untuk perlindungan terhadap benda padat dan air, serta kategori pengukuran (CAT) pada alat ukur. Tanda CE adalah deklarasi kesesuaian dari produsen untuk pasar Eropa dan bukan pengganti sertifikasi SNI.',
+      langkahKerja: [
+        'Baca peringatan keselamatan. Tugas ini hanya berupa pengamatan dan pencatatan, jangan membongkar perangkat, membuka panel listrik, atau memegang bagian yang bertegangan',
+        'Bagian A (bobot 25%): pilih 3 perangkat berbeda, foto label masing-masing, lalu isi tabel (tegangan/arus/daya, logo atau kode standar, kelas isolasi, IP Code, lembaga penerbit standar)',
+        'Bagian A: jawab 2-4 kalimat per perangkat tentang tanda SNI dan nomor registrasi, arti penandaan terpenting bagi keselamatan, dan risiko bila penandaan tidak lengkap; jelaskan perbedaan CE dan SNI dengan kata-kata sendiri',
+        'Bagian B (bobot 25%): pilih satu studi kasus (Opsi 1: salah satu dari 10 kasus di kelas; Opsi 2: kasus dari pengalaman sendiri atau berita dengan sumber), lalu tulis analisis maksimal 1 halaman',
+        'Bagian C (bobot 25%): lakukan inspeksi visual di satu ruangan (dapur, ruang keluarga, atau kamar), isi checklist 10 item dengan tanda sesuai, tidak sesuai, atau N/A beserta catatan/foto, lalu tulis rangkuman maksimal 5 kalimat',
+        'Bagian D (bobot 25%): jawab soal uraian dengan bahasa sendiri, ringkas, dan tepat, serta sebutkan nomor standar bila relevan',
+        'Susun semua bagian menjadi satu berkas PDF 3-5 halaman (font 11-12) dan beri nama berkas NIM_Nama_TugasStandarisasi_Pertemuan(isi nomor).pdf'
+      ],
+      tugasLaporan: [
+        'Bagian A: tabel pemetaan penandaan standar pada 3 perangkat disertai foto label (foto sendiri), jawaban tiga pertanyaan per perangkat, dan penjelasan perbedaan CE dengan SNI',
+        'Bagian B: analisis studi kasus dengan struktur deskripsi kejadian, penyebab utama (minimal 2), standar yang relevan (nomor, judul singkat, dan fungsinya), dan rekomendasi pencegahan (minimal 3 tindakan konkret yang mengacu pada standar)',
+        'Bagian C: checklist inspeksi 10 item disertai foto, dan rangkuman (temuan paling berisiko, standar relevan seperti IEC 61140 dan IEC 60364/PUIL 2011, serta rekomendasi perbaikan yang realistis)',
+        'Bagian D: (1) perbedaan ruang lingkup ISO dan IEC beserta dua contoh standar masing-masing; (2) hubungan IEC, BSN, dan SNI beserta satu contoh standar IEC yang diadopsi menjadi SNI; (3) arti kode IP54 dan IP67 beserta contoh perangkat; (4) alasan multimeter CAT II tidak layak dipakai di panel distribusi dan standar yang mengatur kategori tersebut; (5) lima aturan keselamatan sebelum bekerja pada peralatan listrik',
+        'Pernyataan integritas akademik: tugas dikerjakan sendiri dengan kata-kata sendiri, kutipan sumber dicantumkan, dan penggunaan alat bantu (termasuk AI) dicantumkan serta diverifikasi terhadap sumber standar yang valid'
+      ],
+      k3: 'Jangan mengukur tegangan jaringan (220 V) dengan alat ukur di rumah. Cabut perangkat dari stop kontak sebelum memeriksa label di bagian belakang atau bawahnya. Jika menemukan kondisi berbahaya (kabel terkelupas, stop kontak hangus), jangan diperbaiki sendiri: laporkan kepada orang tua/pemilik rumah dan teknisi listrik yang kompeten.',
+      estimasiWaktu: '2-3 jam (dikerjakan di rumah, individu)'
+    }
   ]
 };
