@@ -546,7 +546,9 @@ async function getTranskripMahasiswa(mahasiswaId, opsi = {}) {
 //   'KUIS'             -> nilai kuis (0-100)
 // (UTS/UAS memakai tipe 'UTS'/'UAS' yang sudah dipakai di alur lama.)
 
-const TIPE_RUBRIK_KOMPONEN = ['KEHADIRAN_JUMLAH', 'KEHADIRAN_TOTAL', 'SIKAP', 'KEAKTIFAN', 'KUIS', 'UTS', 'UAS'];
+// 'LKM' = rata-rata nilai LKM praktikum, diisi OTOMATIS dari koleksi
+// 'lkmPengumpulan' (lihat helpers/lkmRubrikHelper.js), bukan diketik dosen.
+const TIPE_RUBRIK_KOMPONEN = ['KEHADIRAN_JUMLAH', 'KEHADIRAN_TOTAL', 'SIKAP', 'KEAKTIFAN', 'KUIS', 'LKM', 'UTS', 'UAS'];
 
 /**
  * Bobot default rubrik (dipakai kalau dosen belum pernah mengatur bobot
@@ -559,6 +561,7 @@ const BOBOT_DEFAULT = {
   kuis: 10,
   uts: 30,
   uas: 30,
+  lkm: 0, // bobot LKM praktikum; default 0 = tidak dipakai (rubrik lama tidak berubah)
   persenHadir: 50,
   sikap: 25,
   keaktifan: 25
@@ -686,6 +689,7 @@ function hitungRubrik(komponen, rataTugas, bobot = BOBOT_DEFAULT) {
   const sikap = komponen.SIKAP ?? null;
   const keaktifan = komponen.KEAKTIFAN ?? null;
   const kuis = komponen.KUIS ?? null;
+  const lkm = komponen.LKM ?? null;
   const uts = komponen.UTS ?? null;
   const uas = komponen.UAS ?? null;
 
@@ -718,6 +722,7 @@ function hitungRubrik(komponen, rataTugas, bobot = BOBOT_DEFAULT) {
     { label: 'Kehadiran', nilai: kehadiranAkhir, bobot: bobot.kehadiran },
     { label: 'Tugas', nilai: rataTugas, bobot: bobot.tugas },
     { label: 'Kuis', nilai: kuis, bobot: bobot.kuis },
+    { label: 'LKM', nilai: lkm, bobot: bobot.lkm },
     { label: 'UTS', nilai: uts, bobot: bobot.uts },
     { label: 'UAS', nilai: uas, bobot: bobot.uas }
   ].filter(k => (k.bobot || 0) > 0);
@@ -747,7 +752,8 @@ function hitungRubrik(komponen, rataTugas, bobot = BOBOT_DEFAULT) {
     persenHadir: persenHadir !== null ? Math.round(persenHadir * 100) / 100 : null,
     jumlahHadir: jumlahHadir ?? null,
     totalPertemuan,
-    sikap, keaktifan, kuis, uts, uas,
+    sikap, keaktifan, kuis, lkm, uts, uas,
+    bobotLkm: bobot.lkm || 0,
     kehadiranAkhir: kehadiranAkhir !== null ? Math.round(kehadiranAkhir * 100) / 100 : null,
     rataTugas: (rataTugas !== null && rataTugas !== undefined) ? Math.round(rataTugas * 100) / 100 : null,
     nilaiAkhir,

@@ -1117,6 +1117,22 @@ router.post('/:id/modul-template/:modulId/kumpulan/:pengumpulanId/periksa', asyn
       diperiksaPada: new Date().toISOString()
     });
 
+    // Masukkan nilai LKM ke RUBRIK (rata-rata LKM -> komponen 'LKM') kalau
+    // dosen sudah memberi bobot LKM > 0 untuk MK ini. Kegagalan sinkron TIDAK
+    // membatalkan penyimpanan pemeriksaan (tombol "Sinkronkan" di halaman
+    // rubrik bisa dipakai ulang).
+    try {
+      const { getBobotRubrik } = require('../../helpers/nilaiHelper');
+      const { sinkronLkmMahasiswa } = require('../../helpers/lkmRubrikHelper');
+      const periodeRubrik = getPeriodeAktif();
+      const bobotRubrik = await getBobotRubrik(akses.mk.id, periodeRubrik);
+      if ((bobotRubrik.lkm || 0) > 0) {
+        await sinkronLkmMahasiswa(akses.mk.id, pengumpulanDoc.data().mahasiswaId, periodeRubrik);
+      }
+    } catch (rubrikError) {
+      console.error('Gagal sinkron nilai LKM ke rubrik:', rubrikError);
+    }
+
     // Beri tahu mahasiswa bahwa LKM-nya sudah diperiksa. Kegagalan notifikasi
     // TIDAK boleh membatalkan penyimpanan pemeriksaan yang sudah berhasil.
     try {

@@ -26,6 +26,7 @@ const {
   hitungRubrik
 } = require('../../helpers/nilaiHelper');
 const { getSemesterForDate } = require('../../helpers/academicHelper');
+const { sinkronLkmSatuMk } = require('../../helpers/lkmRubrikHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -411,6 +412,7 @@ router.post('/:mkId/bobot', async (req, res) => {
       kehadiran: parseFloat(req.body.kehadiran) || 0,
       tugas: parseFloat(req.body.tugas) || 0,
       kuis: parseFloat(req.body.kuis) || 0,
+      lkm: parseFloat(req.body.lkm) || 0,
       uts: parseFloat(req.body.uts) || 0,
       uas: parseFloat(req.body.uas) || 0,
       persenHadir: parseFloat(req.body.persenHadir) || 0,
@@ -418,10 +420,34 @@ router.post('/:mkId/bobot', async (req, res) => {
       keaktifan: parseFloat(req.body.keaktifan) || 0
     };
     await saveBobotRubrik(mkId, bobot, periode);
+
+    // Bobot LKM dinyalakan -> langsung tarik nilai LKM yang sudah ada ke rubrik
+    if (bobot.lkm > 0) {
+      try {
+        await sinkronLkmSatuMk(mkId, periode);
+      } catch (e) {
+        console.error('Gagal sinkron nilai LKM ke rubrik:', e);
+      }
+    }
     res.redirect(`/dosen/rubrik/${mkId}?periode=${encodeURIComponent(periode)}`);
   } catch (error) {
     console.error('Error simpan bobot rubrik:', error);
     res.status(500).send('Gagal menyimpan bobot: ' + error.message);
+  }
+});
+
+// ============================================================================
+// SINKRONKAN ULANG NILAI LKM KE RUBRIK (tombol manual di halaman rubrik)
+// ============================================================================
+router.post('/:mkId/sinkron-lkm', async (req, res) => {
+  try {
+    const { mkId } = req.params;
+    const periode = req.body.periode || getPeriodeAktif();
+    await sinkronLkmSatuMk(mkId, periode);
+    res.redirect(`/dosen/rubrik/${mkId}?periode=${encodeURIComponent(periode)}`);
+  } catch (error) {
+    console.error('Error sinkron LKM ke rubrik:', error);
+    res.status(500).send('Gagal sinkron nilai LKM: ' + error.message);
   }
 });
 

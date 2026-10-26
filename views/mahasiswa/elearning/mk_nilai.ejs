@@ -61,6 +61,9 @@
         <div class="nilai-row"><span>Keaktifan</span><strong><%= tampil(h.keaktifan) %></strong></div>
         <div class="nilai-row"><span>Rata-rata Tugas</span><strong><%= ada(h.rataTugas) ? Math.round(h.rataTugas) : '-' %></strong></div>
         <div class="nilai-row"><span>Kuis</span><strong><%= tampil(h.kuis) %></strong></div>
+        <% if (h.bobotLkm > 0) { %>
+          <div class="nilai-row"><span>LKM Praktikum <small class="text-muted">(bobot <%= h.bobotLkm %>%)</small></span><strong><%= ada(h.lkm) ? Number(h.lkm).toFixed(2) : '-' %></strong></div>
+        <% } %>
         <div class="nilai-row"><span>UTS</span><strong><%= tampil(h.uts) %></strong></div>
         <div class="nilai-row"><span>UAS</span><strong><%= tampil(h.uas) %></strong></div>
         <% if (ada(h.nilaiAkhir)) { %>

@@ -102,15 +102,16 @@
     <strong>Dosen Pengampu:</strong> <%= mk.namaDosen || '-' %> &nbsp;|&nbsp;
     <strong>Periode:</strong> <%= periode %> &nbsp;|&nbsp;
     <strong>Bobot:</strong> Kehadiran <%= bobot.kehadiran %>% (%Hadir <%= bobot.persenHadir %>%, Sikap <%= bobot.sikap %>%, Keaktifan <%= bobot.keaktifan %>%),
-    Tugas <%= bobot.tugas %>%, Kuis <%= bobot.kuis %>%, UTS <%= bobot.uts %>%, UAS <%= bobot.uas %>%
+    Tugas <%= bobot.tugas %>%, Kuis <%= bobot.kuis %>%<% if ((bobot.lkm || 0) > 0) { %>, LKM <%= bobot.lkm %>%<% } %>, UTS <%= bobot.uts %>%, UAS <%= bobot.uas %>%
   </div>
 
   <%
     const pakaiSikap = (bobot.sikap || 0) > 0;
     const pakaiKeaktifan = (bobot.keaktifan || 0) > 0;
     const pakaiKuis = (bobot.kuis || 0) > 0;
+    const pakaiLkm = (bobot.lkm || 0) > 0;
     const kehadiranColspan = 1 + (pakaiSikap ? 1 : 0) + (pakaiKeaktifan ? 1 : 0);
-    const totalKolom = 3 + kehadiranColspan + 1 + (pakaiKuis ? 1 : 0) + 2 + 4;
+    const totalKolom = 3 + kehadiranColspan + 1 + (pakaiKuis ? 1 : 0) + (pakaiLkm ? 1 : 0) + 2 + 4;
   %>
 
   <div class="table-responsive">
@@ -123,6 +124,7 @@
           <th colspan="<%= kehadiranColspan %>">Kehadiran<% if (pakaiSikap || pakaiKeaktifan) { %>, Sikap &amp; Keaktifan<% } %></th>
           <th rowspan="2">Tugas</th>
           <% if (pakaiKuis) { %><th rowspan="2">Kuis</th><% } %>
+          <% if (pakaiLkm) { %><th rowspan="2">LKM</th><% } %>
           <th rowspan="2">UTS</th>
           <th rowspan="2">UAS</th>
           <th rowspan="2">Nilai<br>Akhir</th>
@@ -150,6 +152,7 @@
             <% if (pakaiKeaktifan) { %><td><%= h.keaktifan ?? '-' %></td><% } %>
             <td><%= h.rataTugas !== null ? h.rataTugas.toFixed(2) : '-' %></td>
             <% if (pakaiKuis) { %><td><%= h.kuis ?? '-' %></td><% } %>
+            <% if (pakaiLkm) { %><td><%= h.lkm !== null && h.lkm !== undefined ? Number(h.lkm).toFixed(2) : '-' %></td><% } %>
             <td><%= h.uts ?? '-' %></td>
             <td><%= h.uas ?? '-' %></td>
             <td>

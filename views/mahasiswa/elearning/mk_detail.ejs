@@ -193,7 +193,7 @@
             <div class="nilai-row"><span>Keaktifan</span><span><%= hasilRubrikSaya.keaktifan !== null ? hasilRubrikSaya.keaktifan : '-' %></span></div>
             <div class="nilai-row"><span>Rata-rata Tugas</span><span><%= hasilRubrikSaya.rataTugas !== null ? Math.round(hasilRubrikSaya.rataTugas) : '-' %></span></div>
             <% if (typeof ringkasanLkm !== 'undefined' && ringkasanLkm) { %>
-              <div class="nilai-row"><span>LKM Praktikum <small class="text-muted">(<%= ringkasanLkm.dinilai %>/<%= ringkasanLkm.total %> dinilai)</small></span><span><%= ringkasanLkm.rataRata !== null ? ringkasanLkm.rataRata : '-' %></span></div>
+              <div class="nilai-row"><span>LKM Praktikum <small class="text-muted">(<%= ringkasanLkm.dinilai %>/<%= ringkasanLkm.total %> dinilai<% if (hasilRubrikSaya.bobotLkm > 0) { %> &middot; bobot <%= hasilRubrikSaya.bobotLkm %>%<% } %>)</small></span><span><%= ringkasanLkm.rataRata !== null ? ringkasanLkm.rataRata : '-' %></span></div>
             <% } %>
             <div class="nilai-row"><span>Kuis</span><span><%= hasilRubrikSaya.kuis !== null ? hasilRubrikSaya.kuis : '-' %></span></div>
             <div class="nilai-row"><span>UTS</span><span><%= hasilRubrikSaya.uts !== null ? hasilRubrikSaya.uts : '-' %></span></div>
