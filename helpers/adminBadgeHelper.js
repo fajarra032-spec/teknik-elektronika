@@ -13,15 +13,16 @@ async function hitung(db, koleksi, field, op, nilai) {
   return (await db.collection(koleksi).where(field, op, nilai).count().get()).data().count;
 }
 
-/** @returns {Promise<{kunjungan:number, peminjaman:number, seminar:number, total:number}>} */
+/** @returns {Promise<{kunjungan:number, peminjaman:number, seminar:number, pmb:number, total:number}>} */
 async function getAdminPending(db) {
   return cache.getOrFetch(KEY, async () => {
-    const [kunjungan, peminjaman, seminar] = await Promise.all([
+    const [kunjungan, peminjaman, seminar, pmb] = await Promise.all([
       hitung(db, 'kunjunganIndustri', 'status', '==', 'diajukan'),
       hitung(db, 'peminjamanAlat', 'status', 'in', ['diajukan', 'menunggu_verifikasi_kembali']),
-      hitung(db, 'permohonanMagang', 'status', '==', 'pending')
+      hitung(db, 'permohonanMagang', 'status', '==', 'pending'),
+      hitung(db, 'pmb_pendaftaran', 'status', '==', 'pending')
     ]);
-    return { kunjungan, peminjaman, seminar, total: kunjungan + peminjaman + seminar };
+    return { kunjungan, peminjaman, seminar, pmb, total: kunjungan + peminjaman + seminar + pmb };
   });
 }
 

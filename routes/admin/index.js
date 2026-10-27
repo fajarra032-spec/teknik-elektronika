@@ -141,7 +141,7 @@ router.get('/', async (req, res) => {
     const suratDosenPending = (await db.collection('surat_dosen').where('status', '==', 'pending').count().get()).data().count;
     const suratPending = suratMahasiswaPending + suratDosenPending;
     // Peminjaman alat lab, kunjungan industri, dan seminar magang yang menunggu tindakan admin
-    const { kunjungan: kunjunganPending, peminjaman: peminjamanPending, seminar: seminarPending } =
+    const { kunjungan: kunjunganPending, peminjaman: peminjamanPending, seminar: seminarPending, pmb: pmbPending } =
       await require('../../helpers/adminBadgeHelper').getAdminPending(db);
 
     // Acara mendatang - sumber tunggal: koleksi jadwalPenting yang dikelola
@@ -160,7 +160,7 @@ router.get('/', async (req, res) => {
       title: 'Dashboard Admin',
       stats: {
         dosenCount, mahasiswaCount, mkCount,
-        krsPending, logbookPending, laporanPending, suratPending, peminjamanPending, kunjunganPending, seminarPending
+        krsPending, logbookPending, laporanPending, suratPending, peminjamanPending, kunjunganPending, seminarPending, pmbPending
       },
       beritaBaru: beritaBaru.docs.map(d => d.data()),
       events

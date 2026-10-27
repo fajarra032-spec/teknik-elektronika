@@ -1102,53 +1102,12 @@ router.post('/:id/modul-template/:modulId/kumpulan/:pengumpulanId/periksa', asyn
       return res.status(404).send('Pengumpulan LKM tidak ditemukan');
     }
 
-    // Terima koma desimal ("85,5") dan tolak nilai di luar 0-100 / bukan angka
-    const nilaiAngka = (nilaiPraktikum !== undefined && String(nilaiPraktikum).trim() !== '')
-      ? parseFloat(String(nilaiPraktikum).replace(',', '.'))
-      : null;
-    if (nilaiAngka !== null && (!Number.isFinite(nilaiAngka) || nilaiAngka < 0 || nilaiAngka > 100)) {
-      return res.status(400).send('Nilai LKM harus berupa angka 0-100');
-    }
-
     await pengumpulanRef.update({
-      nilaiPraktikum: nilaiAngka,
+      nilaiPraktikum: nilaiPraktikum !== undefined && nilaiPraktikum !== '' ? parseFloat(nilaiPraktikum) : null,
       catatanDosen: catatanDosen || '',
       status: 'diperiksa',
       diperiksaPada: new Date().toISOString()
     });
-
-    // Masukkan nilai LKM ke RUBRIK (rata-rata LKM -> komponen 'LKM') kalau
-    // dosen sudah memberi bobot LKM > 0 untuk MK ini. Kegagalan sinkron TIDAK
-    // membatalkan penyimpanan pemeriksaan (tombol "Sinkronkan" di halaman
-    // rubrik bisa dipakai ulang).
-    try {
-      const { getBobotRubrik } = require('../../helpers/nilaiHelper');
-      const { sinkronLkmMahasiswa } = require('../../helpers/lkmRubrikHelper');
-      const periodeRubrik = getPeriodeAktif();
-      const bobotRubrik = await getBobotRubrik(akses.mk.id, periodeRubrik);
-      if ((bobotRubrik.lkm || 0) > 0) {
-        await sinkronLkmMahasiswa(akses.mk.id, pengumpulanDoc.data().mahasiswaId, periodeRubrik);
-      }
-    } catch (rubrikError) {
-      console.error('Gagal sinkron nilai LKM ke rubrik:', rubrikError);
-    }
-
-    // Beri tahu mahasiswa bahwa LKM-nya sudah diperiksa. Kegagalan notifikasi
-    // TIDAK boleh membatalkan penyimpanan pemeriksaan yang sudah berhasil.
-    try {
-      const { createNotification } = require('../../helpers/notificationHelper');
-      const data = pengumpulanDoc.data();
-      await createNotification(db, data.mahasiswaId, {
-        type: 'nilai',
-        title: `LKM "${data.modulJudul || 'praktikum'}" sudah diperiksa`,
-        message: nilaiAngka !== null
-          ? `Nilai LKM Anda: ${nilaiAngka} (${akses.mk.nama || akses.mk.kode || 'mata kuliah'}).`
-          : `Dosen sudah memeriksa LKM Anda di ${akses.mk.nama || akses.mk.kode || 'mata kuliah'}.`,
-        link: `/mahasiswa/elearning/mk/${akses.mk.id}/modul`
-      });
-    } catch (notifError) {
-      console.error('Gagal membuat notifikasi LKM:', notifError);
-    }
 
     res.redirect(`/dosen/mk/${akses.mk.id}/modul-template/${req.params.modulId}/kumpulan`);
   } catch (error) {

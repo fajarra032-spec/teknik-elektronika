@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<%- include('partials/lkm_std_top', { nomorLkm: 4, subLkm: 'Flip-Flop dan Rangkaian Sekuensial Dasar' }) %>
+
+<div class="sect-title">A. Latch RS dari Gerbang NAND (7400)</div>
+<div class="dua-kolom">
+  <div>
+    <table class="tt">
+      <caption>Hasil pengujian (input aktif LOW)</caption>
+      <thead><tr><th>S-bar</th><th>R-bar</th><th>Q</th><th>Q-bar</th><th>Keadaan</th></tr></thead>
+      <tbody><% ['1 1','0 1','1 0','0 0'].forEach(r => { const p=r.split(' '); %><tr><td><%= p[0] %></td><td><%= p[1] %></td><td class="k" style="height:24px;"></td><td></td><td></td></tr><% }) %></tbody>
+    </table>
+    <p class="catatan-kecil">Setelah 0 0, saat berpindah ke 1 1 keadaan Q menjadi: ..................</p>
+  </div>
+  <div><div class="sub-title" style="margin-top:0;">Skema latch yang dirakit</div><div class="kotak-gambar" style="height:92px;"></div></div>
+</div>
+<div class="petunjuk">Aplikasi debounce: hubungkan saklar SPDT ke S-bar dan R-bar. Ceritakan hasilnya: ......................................................................</div>
+
+<div class="sect-title">B. D Flip-Flop 7474</div>
+<table class="tt kecil">
+  <thead><tr><th>PRE</th><th>CLR</th><th>D</th><th>CLK</th><th>Q teori</th><th>Q ukur</th><th>Q-bar ukur</th><th style="width:26%;">Keterangan</th></tr></thead>
+  <tbody>
+    <% [['0','1','x','x'],['1','0','x','x'],['1','1','0','naik'],['1','1','1','naik'],['1','1','1','D berubah, CLK tetap HIGH'],['1','1','0','D berubah, CLK tetap LOW'],['1','1','1','turun']].forEach(r => { %>
+      <tr><td><%= r[0] %></td><td><%= r[1] %></td><td><%= r[2] %></td><td style="font-size:7.5pt;"><%= r[3] %></td><td class="k" style="height:22px;"></td><td></td><td></td><td></td></tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. JK Flip-Flop 7476 (PRE dan CLR ke HIGH)</div>
+<table class="tt kecil">
+  <thead><tr><th>J</th><th>K</th><th>Q awal</th><th>Q sesudah pulsa clock</th><th>Mode</th></tr></thead>
+  <tbody>
+    <% ['0 0','0 1','1 0','1 1'].forEach(jk => { const p=jk.split(' '); [0,1].forEach(q => { %>
+      <tr><td><%= p[0] %></td><td><%= p[1] %></td><td><%= q %></td><td class="k" style="height:22px;"></td><td></td></tr>
+    <% }) }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">D. Flip-Flop T (JK dengan J = K = 1) dan Pembagi Frekuensi</div>
+<table class="tt kecil">
+  <thead><tr><th>Pulsa clock ke-</th><% for (let i=1;i<=8;i++){ %><th><%= i %></th><% } %></tr></thead>
+  <tbody><tr><td><strong>Q</strong></td><% for (let i=1;i<=8;i++){ %><td class="k" style="height:24px;"></td><% } %></tr></tbody>
+</table>
+<p class="catatan-kecil">Perbandingan frekuensi output terhadap frekuensi clock (f<sub>Q</sub> : f<sub>CLK</sub>) = ...............</p>
+
+<div class="sect-title">E. Diagram Pewaktuan (gambar dari hasil pengamatan)</div>
+<div class="petunjuk">Pola: D = 1 0 1 1 0 0 1 0, J = 1 1 0 0 1 1 0 1, K = 0 1 1 0 1 0 0 1. Setiap kolom satu siklus clock. Gambar Q sesuai tepi pemicu masing-masing IC.</div>
+<%- include('partials/lkm_ed_timing', {rows:['CLK','D','Q (7474)','J','K','Q (7476)'], cols:16}) %>
+
+<div class="sect-title">F. Analisis</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Jelaskan perbedaan rangkaian kombinasional dan sekuensial berdasarkan hasil praktik Anda.</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Pada tepi clock yang mana output 7474 dan 7476 berubah? Mengapa saklar mekanik langsung tidak cocok sebagai sumber clock?</div><%- g(3) %></div>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

@@ -12,29 +12,10 @@ const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
-
-// Khusus unggahan LKM (foto/scan): maks 10 MB, hanya gambar atau PDF.
-const uploadLkmMulter = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const ok = /^image\//.test(file.mimetype) || file.mimetype === 'application/pdf';
-    cb(ok ? null : new Error('FORMAT_LKM'), ok);
-  }
-});
-function uploadLkm(req, res, next) {
-  uploadLkmMulter.single('file')(req, res, (err) => {
-    if (!err) return next();
-    if (err.code === 'LIMIT_FILE_SIZE') return res.status(400).send('Ukuran file LKM maksimal 10 MB.');
-    if (err.message === 'FORMAT_LKM') return res.status(400).send('File LKM harus berupa foto (JPG/PNG) atau PDF.');
-    return res.status(400).send('Gagal membaca file: ' + err.message);
-  });
-}
 const { getPeriodeAktif, getHasilRubrikSatuMahasiswa } = require('../../helpers/nilaiHelper');
 const { periodeKeUrutan, bandingkanLabelPeriode } = require('../../helpers/academicHelper');
 const { mataKuliahCache, tugasAktifCache, dosenCache } = require('../../helpers/cache');
 const { getPublishedModulPraktikum } = require('../../helpers/modulPraktikumHelper');
-const { filterEnrollmentDocsAktif, filterIdMahasiswaAktif } = require('../../helpers/statusMahasiswaHelper');
 
 // ============================================================================
 // KONSTANTA FOLDER UTAMA (Data WEB)
@@ -152,50 +133,6 @@ function getMateri(mk) {
 }
 
 /**
- * Ringkasan LKM satu mahasiswa untuk satu MK: jumlah modul template yang
- * tampil, yang sudah dikumpulkan, yang sudah dinilai dosen, dan rata-rata
- * nilainya. Dipakai di tab Ringkasan & Modul supaya nilai LKM tidak hanya
- * tersembunyi di dalam accordion masing-masing modul.
- * @param {Array} templateModulList modul template yang sudah dipublikasikan
- * @param {Map<string, Object>} lkmMap modulId -> dokumen lkmPengumpulan
- */
-function hitungRingkasanLkm(templateModulList, lkmMap) {
-  const total = templateModulList.length;
-  let dikumpulkan = 0;
-  const nilaiList = [];
-  templateModulList.forEach(m => {
-    const p = lkmMap.get(m.id);
-    if (!p) return;
-    dikumpulkan++;
-    const n = Number(p.nilaiPraktikum);
-    if (p.status === 'diperiksa' && p.nilaiPraktikum !== null && p.nilaiPraktikum !== undefined && p.nilaiPraktikum !== '' && Number.isFinite(n)) {
-      nilaiList.push(n);
-    }
-  });
-  const rataRata = nilaiList.length > 0
-    ? Math.round((nilaiList.reduce((a, b) => a + b, 0) / nilaiList.length) * 100) / 100
-    : null;
-  return { total, dikumpulkan, dinilai: nilaiList.length, rataRata };
-}
-
-/**
- * Ambil ringkasan LKM mahasiswa untuk MK ini (null kalau MK belum punya
- * modul praktikum yang dipublikasikan dosen).
- */
-async function getRingkasanLkmMahasiswa(mk, mahasiswaId) {
-  if (mk.praktikumPublished !== true) return null;
-  const { modulList } = getPublishedModulPraktikum(mk);
-  if (!modulList || modulList.length === 0) return null;
-  const snap = await db.collection('lkmPengumpulan')
-    .where('mkId', '==', mk.id)
-    .where('mahasiswaId', '==', mahasiswaId)
-    .get();
-  const lkmMap = new Map();
-  snap.docs.forEach(doc => lkmMap.set(doc.data().modulId, { id: doc.id, ...doc.data() }));
-  return hitungRingkasanLkm(modulList, lkmMap);
-}
-
-/**
  * Mendapatkan status pengumpulan untuk setiap tugas
  * @param {string} tugasId - ID tugas
  * @param {string} mahasiswaId - UID mahasiswa
@@ -281,34 +218,15 @@ router.get('/', async (req, res) => {
     
     const now = new Date();
 
-    // Badge "belum dikumpulkan" hanya untuk periode berjalan (aktif, atau
-    // periode terbaru mahasiswa kalau periode aktif belum ada KRS-nya).
-    const tampilStatusKumpul = periodeDipilih === periodeAktif || periodeDipilih === daftarPeriode[0];
-    const tugasSudahSet = new Set();
-    const lkmSudahSet = new Set();
-    if (tampilStatusKumpul && mkList.length > 0) {
-      // Dua query saja (bukan satu per tugas/modul): semua pengumpulan milik mahasiswa ini
-      const [pengumpulanSnap, lkmSnap] = await Promise.all([
-        db.collection('pengumpulan').where('mahasiswaId', '==', req.user.id).get(),
-        db.collection('lkmPengumpulan').where('mahasiswaId', '==', req.user.id).get()
-      ]);
-      pengumpulanSnap.docs.forEach(d => tugasSudahSet.add(d.data().tugasId));
-      lkmSnap.docs.forEach(d => lkmSudahSet.add(`${d.data().mkId}:${d.data().modulId}`));
-    }
-
     await Promise.all(mkList.map(async (mk) => {
-      // Jumlah mahasiswa kelas ini: HANYA periode yang sedang ditampilkan dan
-      // tanpa mahasiswa Cuti/Keluar - sama dengan hitungan di sisi dosen
-      // (routes/dosen/mk.js). Dulu cuma mkId+status sehingga enrollment
-      // semester lama yang statusnya tidak pernah diubah ikut terhitung.
-      const kelasEnrollSnap = await db.collection('enrollment')
+      // Hitung jumlah mahasiswa terdaftar di MK ini (query count() sudah murah,
+      // dibilling sebagai 1 read terlepas dari jumlah dokumen yang cocok)
+      const countSnapshot = await db.collection('enrollment')
         .where('mkId', '==', mk.id)
-        .where('semester', '==', periodeDipilih)
         .where('status', '==', 'active')
+        .count()
         .get();
-      const idUnik = new Set((await filterEnrollmentDocsAktif(db, kelasEnrollSnap.docs))
-        .map(d => d.data().userId).filter(Boolean));
-      mk.jumlahMahasiswa = idUnik.size;
+      mk.jumlahMahasiswa = countSnapshot.data().count;
 
       // Hitung progress perkuliahan (dari field materi)
       const materi = mk.materi || [];
@@ -319,32 +237,17 @@ router.get('/', async (req, res) => {
         persen: Math.round((terlaksana / 16) * 100)
       };
 
-      // Status pengumpulan (tugas & LKM) untuk badge "belum dikumpulkan".
-      // Hanya dihitung untuk periode berjalan - di semester lama semua tugas
-      // sudah lewat sehingga badge tidak berguna dan hanya jadi noise.
-      mk.statusKumpul = { tampil: tampilStatusKumpul, tugasBelum: 0, tugasTerlewat: 0, tugasTotal: 0, tugasTerdekat: null, lkmBelum: 0, lkmTotal: 0 };
-      mk.adaTugasAktif = false;
-      if (tampilStatusKumpul) {
-        const tugasSnap = await db.collection('tugas').where('mkId', '==', mk.id).get();
-        const tugasPeriode = tugasSnap.docs
-          .map(d => ({ id: d.id, ...d.data() }))
-          .filter(t => (t.periode || periodeDipilih) === periodeDipilih);
-        mk.statusKumpul.tugasTotal = tugasPeriode.length;
-        const belum = tugasPeriode.filter(t => !tugasSudahSet.has(t.id));
-        const aktif = belum
-          .filter(t => t.deadline && new Date(t.deadline) > now)
-          .sort((a, b) => a.deadline.localeCompare(b.deadline));
-        mk.statusKumpul.tugasBelum = aktif.length;
-        mk.statusKumpul.tugasTerlewat = belum.length - aktif.length;
-        mk.statusKumpul.tugasTerdekat = aktif[0] ? { judul: aktif[0].judul, deadline: aktif[0].deadline } : null;
-        mk.adaTugasAktif = tugasPeriode.some(t => t.deadline && new Date(t.deadline) > now);
-
-        if (mk.praktikumPublished === true) {
-          const { modulList } = getPublishedModulPraktikum(mk);
-          mk.statusKumpul.lkmTotal = modulList.length;
-          mk.statusKumpul.lkmBelum = modulList.filter(m => !lkmSudahSet.has(`${mk.id}:${m.id}`)).length;
-        }
-      }
+      // Cek apakah ada tugas aktif (deadline > sekarang) - di-cache singkat (3
+      // menit) karena hasil ini sama untuk semua mahasiswa di MK yang sama,
+      // jadi tidak perlu query ulang setiap kali dashboard dibuka.
+      mk.adaTugasAktif = await tugasAktifCache.getOrFetch(`ada-tugas-aktif:${mk.id}`, async () => {
+        const tugasSnapshot = await db.collection('tugas')
+          .where('mkId', '==', mk.id)
+          .where('deadline', '>', now.toISOString())
+          .limit(1)
+          .get();
+        return !tugasSnapshot.empty;
+      });
 
       // Info dosen pengampu (nama, foto, kontak) supaya tampil langsung di card MK
       mk.dosenList = (await Promise.all((mk.dosenIds || []).map(async (dId) => {
@@ -356,17 +259,9 @@ router.get('/', async (req, res) => {
       }))).filter(Boolean);
     }));
 
-    const ringkasanKumpul = mkList.reduce((acc, mk) => {
-      acc.tugasBelum += mk.statusKumpul.tugasBelum;
-      acc.lkmBelum += mk.statusKumpul.lkmBelum;
-      if (mk.statusKumpul.tugasBelum + mk.statusKumpul.lkmBelum > 0) acc.mkPerluPerhatian++;
-      return acc;
-    }, { tugasBelum: 0, lkmBelum: 0, mkPerluPerhatian: 0, tampil: tampilStatusKumpul });
-
     res.render('mahasiswa/elearning/index', {
       title: 'ELK‑Learning',
       mkList,
-      ringkasanKumpul,
       daftarPeriode,
       periodeDipilih,
       periodeAktif
@@ -457,27 +352,16 @@ router.get('/mk/:id', async (req, res) => {
       return dData ? { id: dId, nama: dData.nama, foto: dData.foto || null, kontak: dData.kontak || null } : null;
     }))).filter(Boolean);
 
-    // Teman sekelas - periode mengikuti pendaftaran mahasiswa ini sendiri
-    // (periode aktif kalau ia terdaftar di situ, kalau tidak periode
-    // terbarunya), supaya konsisten dengan angka di halaman daftar kelas.
-    const periodeSekarangKelas = getPeriodeAktif();
-    const enrolSayaKelas = await db.collection('enrollment')
-      .where('userId', '==', req.user.id)
-      .where('mkId', '==', mkId)
-      .where('status', '==', 'active')
-      .get();
-    const semesterSayaKelas = enrolSayaKelas.docs.map(d => d.data().semester).filter(Boolean);
-    const periodeAktifUntukKelas = semesterSayaKelas.includes(periodeSekarangKelas)
-      ? periodeSekarangKelas
-      : (semesterSayaKelas.sort(bandingkanLabelPeriode).pop() || periodeSekarangKelas);
+    // Teman sekelas
+    const periodeAktifUntukKelas = getPeriodeAktif();
     const kelasEnrollmentSnapshot = await db.collection('enrollment')
       .where('mkId', '==', mkId)
       .where('semester', '==', periodeAktifUntukKelas)
       .where('status', '==', 'active')
       .get();
-    const mahasiswaIdsKelas = await filterIdMahasiswaAktif(db, [...new Set(kelasEnrollmentSnapshot.docs
+    const mahasiswaIdsKelas = kelasEnrollmentSnapshot.docs
       .map(doc => doc.data().userId)
-      .filter(uid => uid && typeof uid === 'string' && uid.trim() !== ''))]); // tanpa Cuti/Keluar, tanpa duplikat
+      .filter(uid => uid && typeof uid === 'string' && uid.trim() !== '');
 
     let mahasiswaList = [];
     if (mahasiswaIdsKelas.length > 0) {
@@ -488,8 +372,12 @@ router.get('/mk/:id', async (req, res) => {
       mahasiswaList.sort((a, b) => String(a.nim).localeCompare(String(b.nim)));
     }
 
-    // Sama dengan jumlah teman sekelas yang ditampilkan (satu sumber angka)
-    const jumlahMahasiswa = mahasiswaIdsKelas.length;
+    const countSnapshot = await db.collection('enrollment')
+      .where('mkId', '==', mkId)
+      .where('status', '==', 'active')
+      .count()
+      .get();
+    const jumlahMahasiswa = countSnapshot.data().count;
 
     // Progress belajar: pertemuan terlaksana vs sudah lewat tanggal tapi
     // belum ditandai selesai oleh dosen (perlu perhatian)
@@ -510,9 +398,6 @@ router.get('/mk/:id', async (req, res) => {
     const periodeAktif = getPeriodeAktif();
     const hasilRubrikSaya = await getHasilRubrikSatuMahasiswa(req.user.id, mkId, periodeAktif);
 
-    // Ringkasan nilai LKM praktikum (null kalau MK ini tidak punya modul praktikum)
-    const ringkasanLkm = await getRingkasanLkmMahasiswa(mk, req.user.id);
-
     res.render('mahasiswa/elearning/mk_detail', {
       title: `${mk.kode} - ${mk.nama}`,
       mk,
@@ -526,8 +411,7 @@ router.get('/mk/:id', async (req, res) => {
       totalDiambilAbsensi,
       jumlahHadirSaya,
       persenHadirSaya,
-      hasilRubrikSaya,
-      ringkasanLkm
+      hasilRubrikSaya
     });
   } catch (error) {
     console.error('Error ringkasan MK:', error);
@@ -665,7 +549,6 @@ router.get('/mk/:id/modul', async (req, res) => {
     // mempublikasikannya (mk.praktikumPublished) DAN modul tsb diaktifkan.
     let templateModulList = [];
     let jenisPraktikumLabel = null;
-    let ringkasanLkm = null;
     if (mk.praktikumPublished === true) {
       const hasilTemplate = getPublishedModulPraktikum(mk);
       templateModulList = hasilTemplate.modulList;
@@ -682,7 +565,6 @@ router.get('/mk/:id/modul', async (req, res) => {
         const lkmMap = new Map();
         lkmSnapshot.docs.forEach(doc => lkmMap.set(doc.data().modulId, { id: doc.id, ...doc.data() }));
         templateModulList = templateModulList.map(m => ({ ...m, pengumpulanLkm: lkmMap.get(m.id) || null }));
-        ringkasanLkm = hitungRingkasanLkm(templateModulList, lkmMap);
       }
     }
 
@@ -691,8 +573,7 @@ router.get('/mk/:id/modul', async (req, res) => {
       mk,
       modulList,
       templateModulList,
-      jenisPraktikumLabel,
-      ringkasanLkm
+      jenisPraktikumLabel
     });
   } catch (error) {
     console.error('Error modul mahasiswa:', error);
@@ -780,7 +661,7 @@ async function getOrCreateLkmFolder(mk, nim, tahunAjaran) {
  * POST /mk/:id/modul-template/:modulId/kumpul
  * Unggah foto/scan LKM yang sudah diisi tangan untuk satu modul praktikum.
  */
-router.post('/mk/:id/modul-template/:modulId/kumpul', uploadLkm, async (req, res) => {
+router.post('/mk/:id/modul-template/:modulId/kumpul', upload.single('file'), async (req, res) => {
   try {
     const mkId = req.params.id;
     const modulId = req.params.modulId;
@@ -853,7 +734,7 @@ router.post('/mk/:id/modul-template/:modulId/kumpul', uploadLkm, async (req, res
  * POST /mk/:id/modul-template/:modulId/kumpul/revisi
  * Ganti file LKM yang sudah dikumpulkan (selama belum diperiksa dosen).
  */
-router.post('/mk/:id/modul-template/:modulId/kumpul/revisi', uploadLkm, async (req, res) => {
+router.post('/mk/:id/modul-template/:modulId/kumpul/revisi', upload.single('file'), async (req, res) => {
   try {
     const mkId = req.params.id;
     const modulId = req.params.modulId;
@@ -892,116 +773,22 @@ router.post('/mk/:id/modul-template/:modulId/kumpul/revisi', uploadLkm, async (r
     });
     await drive.permissions.create({ fileId: response.data.id, requestBody: { role: 'reader', type: 'anyone' } });
 
-    // Cek ulang secara atomik: kalau dosen KEBETULAN baru saja memeriksa LKM
-    // ini saat file baru diunggah, jangan timpa - hapus file baru tadi.
-    const lkmRef = db.collection('lkmPengumpulan').doc(existing.id);
-    const hasil = await db.runTransaction(async (tx) => {
-      const snap = await tx.get(lkmRef);
-      if (!snap.exists) return 'hilang';
-      const cur = snap.data();
-      if (cur.status === 'diperiksa') return 'diperiksa';
-      tx.update(lkmRef, {
-        fileUrl: response.data.webViewLink,
-        fileId: response.data.id,
-        fileNama: file.originalname,
-        submittedAt: new Date().toISOString(),
-        status: 'dikumpulkan',
-        direvisiPada: new Date().toISOString(),
-        jumlahRevisi: (cur.jumlahRevisi || 0) + 1
-      });
-      return 'ok';
-    });
-
-    if (hasil !== 'ok') {
-      try { await drive.files.delete({ fileId: response.data.id }); } catch (e) { console.error('Gagal hapus file LKM baru:', e.message); }
-      return res.status(409).send(hasil === 'diperiksa'
-        ? 'LKM Anda baru saja diperiksa dosen, sehingga file tidak jadi diganti.'
-        : 'Pengumpulan LKM tidak ditemukan.');
-    }
-
-    // File lama dihapus SETELAH pembaruan berhasil (bukan sebelumnya),
-    // supaya mahasiswa tidak kehilangan file kalau pembaruan gagal.
     if (existing.fileId) {
       try { await drive.files.delete({ fileId: existing.fileId }); } catch (e) { console.error('Gagal hapus file LKM lama:', e.message); }
     }
+
+    await db.collection('lkmPengumpulan').doc(existing.id).update({
+      fileUrl: response.data.webViewLink,
+      fileId: response.data.id,
+      fileNama: file.originalname,
+      submittedAt: new Date().toISOString(),
+      status: 'dikumpulkan'
+    });
 
     res.redirect(`/mahasiswa/elearning/mk/${mkId}/modul`);
   } catch (error) {
     console.error('Gagal revisi LKM:', error);
     res.status(500).send('Revisi LKM gagal: ' + error.message);
-  }
-});
-
-// ============================================================================
-// TAB NILAI (rincian rubrik + nilai LKM + nilai tiap tugas)
-// ============================================================================
-router.get('/mk/:id/nilai', async (req, res) => {
-  try {
-    const mkId = req.params.id;
-    const akses = await cekAksesKelas(mkId, req.user.id);
-    if (!akses.ok) return res.status(akses.status).send(akses.message);
-    const mk = akses.mk;
-
-    const periodeSekarang = getPeriodeAktif();
-    const enrolSaya = await db.collection('enrollment')
-      .where('userId', '==', req.user.id)
-      .where('mkId', '==', mkId)
-      .where('status', '==', 'active')
-      .get();
-    const semesterSaya = enrolSaya.docs.map(d => d.data().semester).filter(Boolean);
-    const periode = semesterSaya.includes(periodeSekarang)
-      ? periodeSekarang
-      : (semesterSaya.sort(bandingkanLabelPeriode).pop() || periodeSekarang);
-
-    const hasilRubrikSaya = await getHasilRubrikSatuMahasiswa(req.user.id, mkId, periode);
-
-    // Nilai tiap tugas
-    const tugasSnap = await db.collection('tugas').where('mkId', '==', mkId).get();
-    const tugasDocs = tugasSnap.docs
-      .map(d => ({ id: d.id, ...d.data() }))
-      .filter(t => (t.periode || periode) === periode)
-      .sort((a, b) => (a.deadline || '').localeCompare(b.deadline || ''));
-    const tugasNilaiList = await Promise.all(tugasDocs.map(async t => {
-      const p = await getPengumpulan(t.id, req.user.id);
-      return {
-        id: t.id,
-        judul: t.judul,
-        deadline: t.deadline,
-        dikumpulkan: !!p,
-        nilai: p && p.nilai !== undefined ? p.nilai : null,
-        komentar: p ? (p.komentar || '') : ''
-      };
-    }));
-
-    // Nilai LKM per modul (kalau MK ini punya modul praktikum yang dipublikasikan)
-    let lkmList = [];
-    let ringkasanLkm = null;
-    if (mk.praktikumPublished === true) {
-      const { modulList } = getPublishedModulPraktikum(mk);
-      if (modulList.length > 0) {
-        const snap = await db.collection('lkmPengumpulan')
-          .where('mkId', '==', mkId)
-          .where('mahasiswaId', '==', req.user.id)
-          .get();
-        const lkmMap = new Map();
-        snap.docs.forEach(doc => lkmMap.set(doc.data().modulId, { id: doc.id, ...doc.data() }));
-        lkmList = modulList.map((m, i) => ({ no: i + 1, judul: m.judul, p: lkmMap.get(m.id) || null }));
-        ringkasanLkm = hitungRingkasanLkm(modulList, lkmMap);
-      }
-    }
-
-    res.render('mahasiswa/elearning/mk_nilai', {
-      title: `Nilai - ${mk.kode} ${mk.nama}`,
-      mk,
-      periode,
-      hasilRubrikSaya,
-      tugasNilaiList,
-      lkmList,
-      ringkasanLkm
-    });
-  } catch (error) {
-    console.error('Error tab nilai mahasiswa:', error);
-    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat nilai mata kuliah' });
   }
 });
 

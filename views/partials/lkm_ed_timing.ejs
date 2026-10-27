@@ -1,0 +1,5 @@
+<table class="timing">
+  <% rows.forEach(r => { %>
+    <tr><td class="nama"><%= r %></td><% for (let i = 0; i < (typeof cols !== 'undefined' ? cols : 16); i++) { %><td></td><% } %></tr>
+  <% }) %>
+</table>

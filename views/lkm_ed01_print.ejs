@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<%- include('partials/lkm_std_top', { nomorLkm: 1, subLkm: 'Gerbang Logika Dasar' }) %>
+
+<div class="sect-title">A. Persiapan: Datasheet dan Catu Daya</div>
+<p class="catatan-kecil">Isi dari datasheet. Perhatikan bahwa susunan pin salah satu IC berbeda dari yang lain.</p>
+<table class="tt">
+  <thead><tr><th style="width:11%;">IC</th><th style="width:20%;">Fungsi gerbang</th><th style="width:14%;">Jumlah gerbang per IC</th><th style="width:9%;">Pin VCC</th><th style="width:9%;">Pin GND</th><th style="width:11%;">Input gerbang 1 (pin)</th><th style="width:11%;">Output gerbang 1 (pin)</th><th>Catatan</th></tr></thead>
+  <tbody>
+    <% ['7408','7432','7404','7400','7402','7486'].forEach(ic => { %><tr><td><strong><%= ic %></strong></td><td class="k" style="height:24px;"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+<table class="tt" style="margin-top:6px;">
+  <tr><td style="text-align:left;width:34%;">Tegangan catu terukur sebelum IC dipasang</td><td class="k" style="width:16%;"></td><td style="text-align:left;width:26%;">Dalam batas 4,75 V - 5,25 V?</td><td><span class="cb"></span> Ya <span class="cb"></span> Tidak</td></tr>
+</table>
+
+<div class="sect-title">B. Tingkat Tegangan Logika</div>
+<p class="catatan-kecil">Ukur dengan multimeter pada gerbang NAND 7400 (satu gerbang dengan LED indikator).</p>
+<table class="tt">
+  <thead><tr><th style="width:40%;">Titik ukur</th><th style="width:20%;">Hasil ukur (V)</th><th style="width:20%;">Batas TTL (dari datasheet)</th><th>Sesuai?</th></tr></thead>
+  <tbody>
+    <% ['Input saklar posisi 0 (LOW)','Input saklar posisi 1 (HIGH)','Output tertinggi (HIGH)','Output terendah (LOW)'].forEach(t => { %><tr><td style="text-align:left;"><%= t %></td><td class="k" style="height:24px;"></td><td></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. Tabel Kebenaran Hasil Pengujian</div>
+<div class="petunjuk">Y logika: tulis 1 bila tegangan output &ge; 2,4 V dan 0 bila &le; 0,4 V. Jangan hanya menandai nyala LED, karena LED pada output TTL biasanya menyala saat output LOW.</div>
+<div class="tiga-kolom" style="margin-top:6px;">
+  <div><%- include('partials/lkm_ed_tt2', {gate:'AND', ic:'7408'}) %></div>
+  <div><%- include('partials/lkm_ed_tt2', {gate:'OR', ic:'7432'}) %></div>
+  <div><%- include('partials/lkm_ed_tt2', {gate:'NAND', ic:'7400'}) %></div>
+</div>
+<div class="tiga-kolom" style="margin-top:8px;">
+  <div><%- include('partials/lkm_ed_tt2', {gate:'NOR', ic:'7402'}) %></div>
+  <div><%- include('partials/lkm_ed_tt2', {gate:'XOR', ic:'7486'}) %></div>
+  <div><%- include('partials/lkm_ed_tt2', {gate:'XNOR (XOR + NOT)', ic:'7486 + 7404'}) %></div>
+</div>
+<div class="dua-kolom" style="margin-top:8px;">
+  <div>
+    <table class="tt kecil">
+      <caption>NOT (IC 7404)</caption>
+      <thead><tr><th>A</th><th>Y teori</th><th>Y ukur (V)</th><th>Y logika</th></tr></thead>
+      <tbody><tr><td>0</td><td class="k"></td><td></td><td></td></tr><tr><td>1</td><td class="k"></td><td></td><td></td></tr></tbody>
+    </table>
+  </div>
+  <div>
+    <div class="sub-title" style="margin-top:0;">Gambar rangkaian XNOR yang dirakit</div>
+    <div class="kotak-gambar" style="height:70px;"></div>
+  </div>
+</div>
+
+<div class="sect-title">D. Gerbang Universal: Semua dengan NAND (7400)</div>
+<table class="tt">
+  <thead><tr><th style="width:12%;">Fungsi</th><th style="width:20%;">Jumlah gerbang NAND</th><th>Skema rangkaian NAND</th><th style="width:20%;">Hasil uji sesuai tabel?</th></tr></thead>
+  <tbody>
+    <% ['NOT','AND','OR'].forEach(f => { %><tr><td><strong><%= f %></strong></td><td></td><td style="height:62px;"></td><td><span class="cb"></span> Ya <span class="cb"></span> Tidak</td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">E. Analisis</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Tandai baris tabel kebenaran yang tidak sesuai teori (bila ada), lalu jelaskan kemungkinan penyebabnya.</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Mengapa pembacaan logika sebaiknya berdasarkan tegangan terukur, bukan hanya nyala LED?</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">3. Jelaskan mengapa NAND disebut gerbang universal berdasarkan hasil praktik Anda.</div><%- g(3) %></div>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

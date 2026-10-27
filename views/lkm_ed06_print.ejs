@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<%- include('partials/lkm_std_top', { nomorLkm: 6, subLkm: 'Proyek Akhir: Prototipe Sistem Digital Sederhana' }) %>
+
+<div class="sect-title">A. Identitas Kelompok dan Studi Kasus</div>
+<table class="tt">
+  <thead><tr><th style="width:4%;">No</th><th style="width:36%;">Nama anggota</th><th style="width:16%;">NIM</th><th>Peran/tanggung jawab</th></tr></thead>
+  <tbody><% [1,2,3,4].forEach(i => { %><tr><td><%= i %></td><td class="k" style="height:24px;"></td><td></td><td></td></tr><% }) %></tbody>
+</table>
+<p class="catatan-kecil" style="margin-top:6px;">Studi kasus yang dipilih:
+  <span class="cb"></span> Lampu lalu lintas dua arah
+  <span class="cb"></span> Penghitung antrian 0-9 naik/turun
+  <span class="cb"></span> Pemilih dan penampil 4 kanal
+  <span class="cb"></span> Usulan sendiri: ............................</p>
+
+<div class="sect-title">B. Spesifikasi dan Diagram Blok</div>
+<table class="tt">
+  <tr><td style="text-align:left;width:22%;"><strong>Input sistem</strong></td><td style="height:30px;"></td></tr>
+  <tr><td style="text-align:left;"><strong>Output sistem</strong></td><td style="height:30px;"></td></tr>
+  <tr><td style="text-align:left;"><strong>Aturan kerja</strong></td><td style="height:44px;"></td></tr>
+  <tr><td style="text-align:left;"><strong>Batasan/asumsi</strong></td><td style="height:30px;"></td></tr>
+</table>
+<div class="sub-title">Diagram blok</div>
+<div class="kotak-gambar" style="height:130px;"></div>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. Tonggak (Milestone)</div>
+<table class="tt">
+  <thead><tr><th style="width:22%;">Tonggak</th><th>Target yang harus dicapai</th><th style="width:14%;">Tanggal</th><th style="width:12%;">Paraf dosen</th></tr></thead>
+  <tbody>
+    <tr><td style="text-align:left;"><strong>T1</strong><br>Perencanaan</td><td style="text-align:left;">Spesifikasi, diagram blok, dan daftar komponen disetujui dosen</td><td class="k" style="height:34px;"></td><td></td></tr>
+    <tr><td style="text-align:left;"><strong>T2</strong><br>Uji per blok</td><td style="text-align:left;">Setiap blok teruji berfungsi sendiri-sendiri</td><td class="k" style="height:34px;"></td><td></td></tr>
+    <tr><td style="text-align:left;"><strong>T3</strong><br>Integrasi dan demo</td><td style="text-align:left;">Sistem utuh didemonstrasikan dan dokumentasi diserahkan</td><td class="k" style="height:34px;"></td><td></td></tr>
+  </tbody>
+</table>
+
+<div class="sect-title">D. Daftar Komponen</div>
+<table class="tt">
+  <thead><tr><th style="width:4%;">No</th><th style="width:24%;">Komponen</th><th style="width:14%;">Tipe/nilai</th><th style="width:9%;">Jumlah</th><th>Fungsi dalam sistem</th><th style="width:13%;">Tersedia di lab?</th></tr></thead>
+  <tbody><% for (let i=1;i<=8;i++){ %><tr><td><%= i %></td><td class="k" style="height:22px;"></td><td></td><td></td><td></td><td></td></tr><% } %></tbody>
+</table>
+
+<div class="sect-title">E. Pengujian per Blok (T2)</div>
+<table class="tt">
+  <thead><tr><th style="width:15%;">Blok</th><th style="width:28%;">Skenario uji</th><th style="width:24%;">Hasil yang diharapkan</th><th style="width:20%;">Hasil sebenarnya</th><th>Status</th></tr></thead>
+  <tbody><% for (let i=1;i<=5;i++){ %><tr><td class="k" style="height:30px;"></td><td></td><td></td><td></td><td style="font-size:7.8pt;">OK / Perbaiki</td></tr><% } %></tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">F. Pengujian Sistem Terintegrasi (T3)</div>
+<table class="tt">
+  <thead><tr><th style="width:4%;">No</th><th style="width:34%;">Skenario uji sistem</th><th style="width:28%;">Hasil yang diharapkan</th><th>Hasil sebenarnya dan catatan</th></tr></thead>
+  <tbody><% for (let i=1;i<=5;i++){ %><tr><td><%= i %></td><td class="k" style="height:32px;"></td><td></td><td></td></tr><% } %></tbody>
+</table>
+
+<div class="sub-title">Kendala dan solusi</div>
+<table class="tt">
+  <thead><tr><th style="width:4%;">No</th><th style="width:36%;">Kendala yang dihadapi</th><th>Cara mengatasi</th></tr></thead>
+  <tbody><% for (let i=1;i<=3;i++){ %><tr><td><%= i %></td><td class="k" style="height:34px;"></td><td></td></tr><% } %></tbody>
+</table>
+
+<div class="sub-title">Dokumentasi (foto prototipe dan foto saat pengujian)</div>
+<div class="foto-wrap"><div class="foto-box">Foto prototipe</div><div class="foto-box">Foto pengujian blok</div><div class="foto-box">Foto demo sistem</div></div>
+
+<div class="sect-title">G. Rubrik Penilaian</div>
+<table class="tt">
+  <thead><tr><th>Aspek</th><th style="width:10%;">Bobot</th><th style="width:14%;">Skor mandiri</th><th style="width:14%;">Skor dosen</th></tr></thead>
+  <tbody>
+    <% [['Fungsi sistem sesuai spesifikasi','30'],['Rancangan dan dokumentasi (skema, diagram blok)','25'],['Pengujian bertahap dan analisis hasil','20'],['Kerapian rakitan dan K3','10'],['Presentasi/demonstrasi','10'],['Kerja sama dan pembagian peran','5']].forEach(r => { %>
+      <tr><td style="text-align:left;"><%= r[0] %></td><td><%= r[1] %></td><td class="k" style="height:22px;"></td><td></td></tr>
+    <% }) %>
+    <tr><td style="text-align:left;"><strong>Total</strong></td><td><strong>100</strong></td><td></td><td></td></tr>
+  </tbody>
+</table>
+
+<div class="pertanyaan-item" style="margin-top:6px;"><div class="no-pertanyaan">Refleksi kelompok: apa pelajaran terpenting dari proyek ini dan apa yang akan diperbaiki bila diulang?</div><%- g(4) %></div>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

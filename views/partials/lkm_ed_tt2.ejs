@@ -1,0 +1,9 @@
+<table class="tt kecil">
+  <caption><%= gate %> (IC <%= ic %>)</caption>
+  <thead><tr><th>A</th><th>B</th><th>Y teori</th><th>Y ukur (V)</th><th>Y logika</th></tr></thead>
+  <tbody>
+    <% ['0 0','0 1','1 0','1 1'].forEach(r => { const p = r.split(' '); %>
+      <tr><td><%= p[0] %></td><td><%= p[1] %></td><td class="k"></td><td></td><td></td></tr>
+    <% }) %>
+  </tbody>
+</table>

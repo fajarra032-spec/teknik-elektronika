@@ -1,0 +1,14 @@
+<% const four = (typeof vars !== 'undefined' && vars === 4); %>
+<% if (four) { %>
+<table class="kmap">
+  <tr><th class="sudut" rowspan="1">&nbsp;</th><th class="sudut2" colspan="4" style="text-align:center;border:none;background:#fff;">CD</th></tr>
+  <tr><th class="sudut">AB &nbsp;&#8595;</th><th>00</th><th>01</th><th>11</th><th>10</th></tr>
+  <% ['00','01','11','10'].forEach(r => { %><tr><th><%= r %></th><td></td><td></td><td></td><td></td></tr><% }) %>
+</table>
+<% } else { %>
+<table class="kmap">
+  <tr><th class="sudut">&nbsp;</th><th class="sudut2" colspan="4" style="text-align:center;border:none;background:#fff;">BC</th></tr>
+  <tr><th class="sudut">A &nbsp;&#8595;</th><th>00</th><th>01</th><th>11</th><th>10</th></tr>
+  <% ['0','1'].forEach(r => { %><tr><th><%= r %></th><td></td><td></td><td></td><td></td></tr><% }) %>
+</table>
+<% } %>

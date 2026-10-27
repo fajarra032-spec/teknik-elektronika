@@ -13,6 +13,8 @@ const { getProgressMagangHarian } = require('../helpers/magangHelper');
 const { getGabunganLulusan, normalisasiStatus } = require('../helpers/lulusanHelper');
 const { getAllMahasiswa } = require('../helpers/cache');
 const { getAlatPublik } = require('../helpers/alatPublikHelper');
+const { notifikasiAdmin } = require('../helpers/peminjamanAlatHelper');
+const { invalidateAdminPending } = require('../helpers/adminBadgeHelper');
 const { getTranskripMahasiswa } = require('../helpers/nilaiHelper');
 
 // ============================================================================
@@ -953,6 +955,14 @@ router.post('/pmb/submit', upload.single('bukti_pembayaran'), async (req, res) =
       createdAt: new Date().toISOString(),
       ip: req.ip,
       userAgent: req.headers['user-agent']
+    });
+
+    // Kabari admin (lonceng + badge). Gagal kirim notifikasi tidak boleh menggagalkan pendaftaran.
+    invalidateAdminPending();
+    await notifikasiAdmin(db, {
+      type: 'pmb', title: 'Pendaftar PMB baru',
+      message: `${String(nama).slice(0, 80)} mendaftar (${String(jurusan).slice(0, 60)}, jalur ${String(jalur).slice(0, 40)})`,
+      link: '/admin/pmb'
     });
 
     res.render('landing/pmb_success', {

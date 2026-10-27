@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<%- include('partials/lkm_std_top', { nomorLkm: 5, subLkm: 'Register Geser dan Pencacah (Counter)' }) %>
+
+<div class="sect-title">A. Counter Asinkron 7493 (4-bit) dan Modulus 10</div>
+<p class="catatan-kecil">Sambungan luar yang dibuat: ........................................................................ &nbsp; Sumber clock: <span class="cb"></span> pulser manual <span class="cb"></span> 555 (f = ........ Hz)</p>
+<div class="dua-kolom">
+  <div>
+    <table class="tt kecil">
+      <caption>7493 biasa (0-15)</caption>
+      <thead><tr><th>Pulsa</th><th>QD</th><th>QC</th><th>QB</th><th>QA</th><th>Des</th></tr></thead>
+      <tbody><% for (let i=0;i<=15;i++){ %><tr><td><%= i %></td><td class="k"></td><td></td><td></td><td></td><td></td></tr><% } %></tbody>
+    </table>
+  </div>
+  <div>
+    <table class="tt kecil">
+      <caption>Modulus 10 (QB dan QD ke R0)</caption>
+      <thead><tr><th>Pulsa</th><th>QD</th><th>QC</th><th>QB</th><th>QA</th><th>Des</th></tr></thead>
+      <tbody><% for (let i=0;i<=11;i++){ %><tr><td><%= i %></td><td class="k"></td><td></td><td></td><td></td><td></td></tr><% } %></tbody>
+    </table>
+    <div class="sub-title">Skema modulus 10</div>
+    <div class="kotak-gambar" style="height:92px;"></div>
+  </div>
+</div>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">B. Counter Sinkron Up/Down 74193</div>
+<div class="petunjuk">Hitung naik: pulsa ke input UP, input DOWN = HIGH. Hitung turun: pulsa ke input DOWN, input UP = HIGH. CLR = LOW, LOAD = HIGH.</div>
+<table class="tt kecil" style="margin-top:4px;">
+  <thead><tr><th rowspan="2">Pulsa</th><th colspan="5">Hitung naik (mulai 0000)</th><th colspan="5">Hitung turun (mulai 1000)</th></tr>
+  <tr><th>QD</th><th>QC</th><th>QB</th><th>QA</th><th>Des</th><th>QD</th><th>QC</th><th>QB</th><th>QA</th><th>Des</th></tr></thead>
+  <tbody><% for (let i=1;i<=8;i++){ %><tr><td><%= i %></td><% for (let j=0;j<10;j++){ %><td class="k"></td><% } %></tr><% } %></tbody>
+</table>
+<table class="tt kecil" style="margin-top:6px;">
+  <thead><tr><th style="width:34%;">Uji</th><th>Data input DCBA</th><th>Hasil keluaran QD QC QB QA</th><th>Sesuai?</th></tr></thead>
+  <tbody>
+    <tr><td style="text-align:left;">Load data (LOAD = LOW)</td><td class="k" style="height:24px;"></td><td></td><td></td></tr>
+    <tr><td style="text-align:left;">Clear (CLR = HIGH)</td><td class="k" style="height:24px;"></td><td></td><td></td></tr>
+  </tbody>
+</table>
+
+<div class="sect-title">C. Register Geser 74164 (serial-in parallel-out)</div>
+<div class="petunjuk">Data serial masuk satu bit tiap pulsa clock: <strong>1 0 1 1 0 0 1 0</strong> (bit pertama = 1). CLR = HIGH.</div>
+<table class="tt kecil" style="margin-top:4px;">
+  <thead><tr><th>Pulsa</th><th>Data masuk</th><% for (let i=0;i<8;i++){ %><th>Q<%= i %></th><% } %></tr></thead>
+  <tbody><% const d=[1,0,1,1,0,0,1,0]; for (let i=1;i<=8;i++){ %><tr><td><%= i %></td><td><%= d[i-1] %></td><% for (let j=0;j<8;j++){ %><td class="k"></td><% } %></tr><% } %></tbody>
+</table>
+
+<div class="sect-title">D. Diagram Pewaktuan Counter Asinkron</div>
+<p class="catatan-kecil">Gambar CLK dan keluaran QA, QB, QC, QD selama 16 pulsa clock (satu kolom satu pulsa). Beri tanda bila ada tundaan antarkeluaran.</p>
+<%- include('partials/lkm_ed_timing', {rows:['CLK','QA','QB','QC','QD'], cols:16}) %>
+
+<div class="sect-title">E. Perbandingan Counter</div>
+<table class="tt">
+  <thead><tr><th style="width:22%;">Aspek</th><th>Counter asinkron (7493)</th><th>Counter sinkron (74193)</th></tr></thead>
+  <tbody><% ['Sumber clock flip-flop','Tundaan antarkeluaran','Keadaan sesaat (glitch)','Contoh pemakaian'].forEach(a => { %><tr><td style="text-align:left;"><strong><%= a %></strong></td><td class="k" style="height:26px;"></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="pertanyaan-item" style="margin-top:6px;"><div class="no-pertanyaan">Jelaskan mengapa counter modulus 10 pada 7493 bisa menimbulkan keadaan sesaat 1010, dan apa dampaknya bagi rangkaian berikutnya?</div><%- g(3) %></div>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

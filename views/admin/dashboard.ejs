@@ -456,6 +456,18 @@
                         <a href="/admin/seminar" class="btn-warning-custom ms-2">Lihat</a>
                     </div>
                 </div>
+                <div class="col-lg-3 col-md-4 col-6">
+                    <div class="stat-item d-flex align-items-center">
+                        <div class="stat-icon me-2" style="color: #db2777; background: rgba(219,39,119,0.1);">
+                            <i class="bi bi-person-plus"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Pendaftar PMB</div>
+                            <div class="stat-number"><%= stats.pmbPending || 0 %></div>
+                        </div>
+                        <a href="/admin/pmb" class="btn-warning-custom ms-2">Lihat</a>
+                    </div>
+                </div>
             </div>
 
             <!-- Event Mendatang -->
@@ -493,6 +505,14 @@
             <p class="menu-desc">Setujui jadwal seminar</p>
             <% if (stats.seminarPending > 0) { %>
                 <span class="badge-new"><%= stats.seminarPending %></span>
+            <% } %>
+        </a>
+        <a href="/admin/pmb" class="menu-card">
+            <div class="menu-icon" style="color: #db2777;"><i class="bi bi-person-plus"></i></div>
+            <h6 class="menu-title">Pendaftar PMB</h6>
+            <p class="menu-desc">Verifikasi calon mahasiswa baru</p>
+            <% if (stats.pmbPending > 0) { %>
+                <span class="badge-new"><%= stats.pmbPending %></span>
             <% } %>
         </a>
         <a href="/admin/kunjungan-industri" class="menu-card">

@@ -32,181 +32,240 @@ module.exports = {
   elektronika_digital: [
     {
       id: 'ed-01',
-      judul: 'Gerbang Logika Dasar (AND, OR, NOT, NAND, NOR, XOR, XNOR)',
+      viewCetak: 'lkm_ed01_print', // views/lkm_ed01_print.ejs
+      judul: 'LKM 1: Gerbang Logika Dasar (AND, OR, NOT, NAND, NOR, XOR, XNOR)',
       pertemuanSaran: 2,
       tujuan: [
-        'Mengidentifikasi kaki (pin) IC gerbang logika TTL/CMOS umum (7408, 7432, 7404, 7400, 7402, 7486)',
-        'Merangkai dan menguji tabel kebenaran tiap jenis gerbang logika dasar',
-        'Membandingkan hasil pengujian rangkaian dengan tabel kebenaran teoritis'
+        'Mengidentifikasi pin VCC, GND, dan susunan pin IC gerbang logika TTL (7408, 7432, 7404, 7400, 7402, 7486) dari datasheet',
+        'Mengukur tingkat tegangan logika HIGH dan LOW pada input dan output gerbang, lalu membandingkannya dengan spesifikasi TTL',
+        'Merangkai dan menguji tabel kebenaran gerbang AND, OR, NOT, NAND, NOR, XOR, dan XNOR (XNOR dirakit dari XOR dan NOT)',
+        'Membuktikan bahwa gerbang NAND bersifat universal dengan merealisasikan NOT, AND, dan OR hanya memakai IC 7400',
+        'Membandingkan hasil pengujian dengan tabel kebenaran teori dan menjelaskan penyimpangan bila ada'
       ],
       alatBahan: [
-        'Trainer/project board digital + catu daya 5V',
-        'IC 7408 (AND), 7432 (OR), 7404 (NOT), 7400 (NAND), 7402 (NOR), 7486 (XOR)',
-        'LED indikator output, resistor 330 ohm',
-        'Saklar toggle/DIP switch untuk input logika',
-        'Multimeter dan kabel jumper'
+        'Trainer/project board digital + catu daya 5 V terregulasi (batas aman TTL 4,75 V sampai 5,25 V)',
+        'IC 7408 (AND), 7432 (OR), 7404 (NOT), 7400 (NAND), 7402 (NOR), 7486 (XOR), masing-masing 1 buah',
+        'LED indikator 5 mm dan resistor 330 sampai 470 ohm (4 set)',
+        'Saklar toggle/DIP switch untuk dua input logika (A dan B)',
+        'Multimeter digital untuk mengukur tegangan catu dan tegangan logika',
+        'Kabel jumper secukupnya dan datasheet tiap IC (dari sumber resmi produsen)'
       ],
-      dasarTeori: 'Gerbang logika adalah blok bangunan dasar rangkaian digital yang mengimplementasikan operasi aljabar Boolean (AND, OR, NOT, dan turunannya NAND/NOR/XOR/XNOR). Setiap gerbang memiliki tabel kebenaran yang memetakan kombinasi input biner ke satu output biner.',
+      dasarTeori: 'Gerbang logika adalah blok dasar rangkaian digital yang menjalankan operasi aljabar Boolean pada input biner. Pada IC TTL seri 74, input dianggap logika 1 (HIGH) bila tegangannya minimal 2,0 V dan logika 0 (LOW) bila maksimal 0,8 V. Output yang sehat menghasilkan HIGH minimal 2,4 V dan LOW maksimal 0,4 V, sehingga ada daerah aman (noise margin) antara keluaran satu gerbang dan masukan gerbang berikutnya. Pembacaan logika sebaiknya berdasarkan tegangan yang diukur, bukan hanya nyala LED, karena IC TTL kuat menarik arus ke bawah (sink) tetapi lemah memberi arus ke atas (source). Karena itu LED pada output TTL umumnya dipasang dari +5 V melalui resistor ke output, sehingga menyala saat output LOW. Gerbang XNOR adalah kebalikan XOR (XOR yang diikuti NOT), sedangkan NAND dan NOR disebut gerbang universal karena semua gerbang lain dapat dibentuk hanya dari salah satu jenis tersebut. Input TTL yang dibiarkan mengambang cenderung terbaca HIGH tetapi mudah terganggu derau, jadi input yang tidak dipakai harus dihubungkan ke level yang jelas.',
       langkahKerja: [
-        'Siapkan project board dan pastikan catu daya 5V terukur benar sebelum IC dipasang',
-        'Pasang IC gerbang logika sesuai datasheet, perhatikan posisi pin VCC dan GND',
-        'Hubungkan input gerbang ke saklar logika dan output ke LED indikator',
-        'Ubah kombinasi input sesuai tabel kebenaran, catat kondisi output (nyala/mati) untuk tiap kombinasi',
-        'Ulangi langkah untuk setiap jenis gerbang (AND, OR, NOT, NAND, NOR, XOR, XNOR)',
-        'Bandingkan hasil pengamatan dengan tabel kebenaran teori, catat penyimpangan bila ada'
+        'Baca datasheet tiap IC, lalu catat pin VCC dan GND serta pin input dan output gerbang pertama. Perhatikan bahwa 7402 (NOR) memiliki susunan pin yang berbeda dari 7408, 7432, 7400, dan 7486',
+        'Nyalakan catu daya tanpa IC terpasang, ukur tegangannya dengan multimeter, dan pastikan berada pada 4,75 V sampai 5,25 V sebelum IC dipasang',
+        'Pasang satu IC pada project board dalam keadaan catu daya mati, sambungkan VCC ke +5 V dan GND ke ground, lalu pastikan tidak ada pin yang bengkok atau terbalik',
+        'Hubungkan input A dan B ke saklar, serta output ke LED indikator. Ukur tegangan saklar posisi 0 dan 1 serta tegangan output tertinggi dan terendah yang muncul, lalu catat di tabel tingkat tegangan',
+        'Ubah empat kombinasi input (00, 01, 10, 11) satu per satu. Catat tegangan output yang terukur dan tentukan logikanya (1 bila minimal 2,4 V, 0 bila maksimal 0,4 V) pada tabel kebenaran',
+        'Ulangi untuk 7408, 7432, 7400, 7402, dan 7486. Untuk gerbang NOT (7404) uji dua kondisi input (0 dan 1)',
+        'Rakit XNOR dengan menyambungkan output gerbang XOR (7486) ke satu gerbang NOT (7404), lalu isi tabel kebenarannya',
+        'Rakit NOT, AND, dan OR hanya dengan gerbang NAND 7400 (misalnya NOT dari NAND dengan dua input disatukan), gambar skemanya, lalu uji dan catat hasilnya',
+        'Bandingkan seluruh hasil praktik dengan tabel kebenaran teori. Tandai baris yang berbeda dan telusuri penyebabnya (sambungan longgar, input mengambang, atau pembacaan LED terbalik)',
+        'Matikan catu daya, lepas IC, dan rapikan peralatan sebelum meninggalkan meja kerja'
       ],
       tugasLaporan: [
-        'Tabel kebenaran hasil pengujian tiap gerbang beserta gambar rangkaian',
-        'Analisis kesesuaian hasil praktik dengan teori',
-        'Kesimpulan karakteristik tiap jenis gerbang logika'
+        'Tabel pin VCC/GND dan susunan pin tiap IC, serta tabel tingkat tegangan input dan output yang diukur',
+        'Tabel kebenaran hasil pengujian tujuh gerbang (teori, tegangan ukur, dan logika hasil) beserta gambar rangkaiannya',
+        'Skema dan hasil uji NOT, AND, dan OR dari gerbang NAND',
+        'Analisis kesesuaian teori dan praktik, termasuk penjelasan penyimpangan dan alasan pembacaan logika berdasarkan tegangan',
+        'Kesimpulan karakteristik tiap jenis gerbang dan pengertian gerbang universal'
       ],
-      k3: 'Pastikan polaritas catu daya benar sebelum IC dipasang untuk menghindari IC terbakar.',
+      k3: 'Sambungkan catu daya hanya setelah rangkaian selesai dan polaritas diperiksa; polaritas terbalik atau tegangan di atas 5,25 V dapat merusak IC TTL dan membuatnya panas. Matikan catu daya setiap kali mengubah kabel. Jangan menghubungkan dua output gerbang secara langsung. Jangan menyentuh IC yang terasa panas.',
       estimasiWaktu: '2 x 50 menit'
     },
     {
       id: 'ed-02',
-      judul: 'Aljabar Boolean dan Penyederhanaan Rangkaian (Peta Karnaugh)',
+      viewCetak: 'lkm_ed02_print', // views/lkm_ed02_print.ejs
+      judul: 'LKM 2: Aljabar Boolean dan Penyederhanaan Rangkaian (Peta Karnaugh)',
       pertemuanSaran: 4,
       tujuan: [
-        'Menerapkan hukum aljabar Boolean untuk menyederhanakan persamaan logika',
-        'Menggunakan Peta Karnaugh (K-Map) untuk minimasi 3-4 variabel',
-        'Mengimplementasikan hasil penyederhanaan ke rangkaian gerbang logika nyata'
+        'Menerapkan postulat dan teorema aljabar Boolean untuk menyederhanakan persamaan logika',
+        'Menyusun tabel kebenaran dari daftar minterm dan memetakannya ke K-Map 3 variabel dan 4 variabel',
+        'Mengelompokkan sel pada K-Map (termasuk kelompok yang melingkar di tepi dan sel tidak peduli) untuk mendapatkan persamaan minimal',
+        'Merakit rangkaian sebelum dan sesudah penyederhanaan, lalu membuktikan fungsinya sama dan membandingkan jumlah gerbang'
       ],
       alatBahan: [
-        'Trainer/project board digital',
-        'IC gerbang logika (AND, OR, NOT sesuai kebutuhan hasil minimasi)',
-        'LED indikator, saklar logika, kabel jumper'
+        'Trainer/project board digital + catu daya 5 V terregulasi',
+        'IC gerbang AND (7408), OR (7432), NOT (7404), dan NAND (7400) sesuai kebutuhan hasil minimasi',
+        'LED indikator output + resistor 330 sampai 470 ohm',
+        'Saklar logika (minimal 4 buah untuk variabel A, B, C, D)',
+        'Kabel jumper, multimeter, dan lembar K-Map pada LKM'
       ],
-      dasarTeori: 'Penyederhanaan rangkaian logika bertujuan mengurangi jumlah gerbang yang dipakai tanpa mengubah fungsi logikanya, sehingga rangkaian lebih hemat komponen, lebih murah, dan lebih cepat. Peta Karnaugh adalah metode visual untuk minimasi persamaan Boolean berdasarkan pengelompokan sel-sel yang bernilai 1 (atau 0).',
+      dasarTeori: 'Penyederhanaan rangkaian logika bertujuan mengurangi jumlah gerbang tanpa mengubah fungsi, sehingga rangkaian lebih hemat komponen, lebih murah, dan lebih andal. Aljabar Boolean dapat dipakai langsung, tetapi untuk 3 sampai 4 variabel metode Peta Karnaugh (K-Map) lebih sistematis. K-Map menyusun sel dengan urutan kode Gray (00, 01, 11, 10) sehingga sel bertetangga hanya berbeda satu variabel. Kelompok yang dibuat harus berukuran 1, 2, 4, atau 8 sel (pangkat dua), sedekat mungkin berukuran besar, dan boleh melingkar ke sisi seberang. Kondisi tidak peduli (ditulis X) boleh dimasukkan ke kelompok bila membantu menyederhanakan, tetapi tidak wajib. Setiap kelompok menghasilkan satu suku produk (SOP) yang hanya memuat variabel yang nilainya tidak berubah dalam kelompok tersebut.',
       langkahKerja: [
-        'Tentukan fungsi Boolean awal (SOP) dari studi kasus yang diberikan asisten/dosen',
-        'Petakan fungsi ke K-Map 3 atau 4 variabel',
-        'Lakukan pengelompokan (grouping) untuk mendapatkan persamaan minimal',
-        'Gambar rangkaian gerbang logika hasil minimasi',
-        'Rangkai hasil minimasi pada project board dan uji dengan tabel kebenaran',
-        'Bandingkan jumlah gerbang sebelum dan sesudah penyederhanaan'
+        'Kasus 1 (3 variabel): F(A,B,C) = m(1,3,4,5,7). Isi tabel kebenaran 8 baris, petakan ke K-Map, kelompokkan, dan tulis persamaan minimalnya',
+        'Kasus 2 (4 variabel): F(A,B,C,D) = m(0,2,5,7,8,10,13,15). Isi tabel kebenaran 16 baris, petakan ke K-Map 4x4, perhatikan kelompok yang melingkar di sudut dan tepi, lalu tulis persamaan minimalnya',
+        'Kasus 3 (BCD dengan sel tidak peduli): input BCD ABCD (A paling berarti). Lampu menyala (F=1) untuk bilangan desimal 5 sampai 9, kombinasi 10 sampai 15 tidak mungkin muncul sehingga ditandai X. Cari persamaan minimal dengan memanfaatkan sel X',
+        'Gambar rangkaian sebelum penyederhanaan (dari persamaan SOP minterm) dan sesudah penyederhanaan (dari K-Map), lalu hitung jumlah gerbang dan jumlah IC yang diperlukan masing-masing',
+        'Rakit rangkaian hasil minimasi Kasus 2 pada project board, hubungkan A sampai D ke saklar dan F ke LED',
+        'Uji seluruh 16 kombinasi input, bandingkan keluaran dengan tabel kebenaran, dan catat bila ada yang berbeda',
+        'Rakit juga versi sebelum penyederhanaan untuk Kasus 1, uji, dan buktikan bahwa fungsinya sama dengan versi minimal',
+        'Isi tabel perbandingan jumlah gerbang, jumlah IC, dan jumlah input sebelum dan sesudah penyederhanaan, lalu tarik kesimpulan'
       ],
       tugasLaporan: [
-        'Langkah minimasi K-Map lengkap (tabel kebenaran awal, K-Map, hasil SOP minimal)',
-        'Perbandingan rangkaian sebelum dan sesudah penyederhanaan (jumlah IC/gerbang)',
-        'Hasil pengujian rangkaian minimal dan pembahasan'
+        'Tabel kebenaran dan K-Map lengkap dengan pengelompokan untuk tiga kasus',
+        'Persamaan minimal tiap kasus beserta langkah penyederhanaan',
+        'Gambar rangkaian sebelum dan sesudah penyederhanaan dan tabel perbandingan jumlah gerbang/IC',
+        'Hasil pengujian rangkaian minimal Kasus 2 dan pembahasan kesesuaiannya',
+        'Penjelasan peran sel tidak peduli pada Kasus 3'
       ],
+      k3: 'Matikan catu daya sebelum mengubah susunan kabel dan jangan membiarkan input IC mengambang. Periksa polaritas dan tegangan catu sebelum menyalakan rangkaian.',
       estimasiWaktu: '2 x 50 menit'
     },
     {
       id: 'ed-03',
-      judul: 'Rangkaian Kombinasional: Decoder/Encoder dan Multiplexer/Demultiplexer',
+      viewCetak: 'lkm_ed03_print', // views/lkm_ed03_print.ejs
+      judul: 'LKM 3: Rangkaian Kombinasional: Decoder/Encoder dan Multiplexer/Demultiplexer',
       pertemuanSaran: 6,
       tujuan: [
-        'Memahami prinsip kerja decoder, encoder, multiplexer, dan demultiplexer',
-        'Merangkai IC decoder (74138) dan multiplexer (74151) pada aplikasi sederhana',
-        'Menerapkan multiplexer/decoder untuk studi kasus seleksi data atau tampilan'
+        'Menjelaskan prinsip kerja decoder, encoder (termasuk prioritas), multiplexer, dan demultiplexer',
+        'Menguji decoder 74138 dan mengisi tabel fungsi lengkap dengan kondisi enable',
+        'Menguji encoder prioritas 74148 dan mengamati prioritas saat beberapa input aktif bersamaan',
+        'Menguji multiplexer 74151 dan menggunakan decoder 74138 sebagai demultiplexer',
+        'Menerapkan multiplexer untuk studi kasus pemilih satu dari empat sensor ke satu indikator'
       ],
       alatBahan: [
-        'IC 74138 (3-to-8 line decoder), 74148 (encoder), 74151 (8-to-1 multiplexer), 74153',
-        'Seven segment display + IC driver (opsional)',
-        'Project board, LED, saklar logika, kabel jumper'
+        'IC 74138 (decoder 3-ke-8), 74148 (encoder prioritas 8-ke-3), 74151 (multiplexer 8-ke-1)',
+        'Saklar logika minimal 8 buah (untuk input data dan select) dan LED indikator 8 buah dengan resistor 330 sampai 470 ohm',
+        'Trainer/project board digital + catu daya 5 V terregulasi',
+        'Seven segment + IC driver (opsional untuk tampilan)',
+        'Multimeter, kabel jumper, dan datasheet tiap IC'
       ],
-      dasarTeori: 'Decoder mengubah kode biner menjadi salah satu dari beberapa saluran output aktif, sedangkan encoder melakukan kebalikannya. Multiplexer memilih salah satu dari beberapa saluran input untuk diteruskan ke satu output berdasarkan sinyal select, sedangkan demultiplexer mendistribusikan satu input ke banyak output.',
+      dasarTeori: 'Decoder mengubah kode biner n bit menjadi salah satu dari 2 pangkat n saluran output yang aktif. IC 74138 memiliki tiga input select (A, B, C), tiga input enable (G1 aktif HIGH, G2A dan G2B aktif LOW), dan delapan output Y0 sampai Y7 yang aktif LOW. Encoder bekerja sebaliknya; 74148 adalah encoder prioritas 8-ke-3 dengan input dan output aktif LOW, di mana input bernomor lebih tinggi didahulukan bila beberapa input aktif bersamaan, serta memiliki output GS dan EO untuk menandai ada tidaknya input aktif. Multiplexer 74151 memilih satu dari delapan input data (D0 sampai D7) berdasarkan tiga sinyal select (A, B, C) dan menghasilkan output Y beserta komplemen W, dengan strobe aktif LOW. Demultiplexer mendistribusikan satu data ke salah satu dari banyak output; decoder 74138 dapat berfungsi sebagai demultiplexer bila data diberikan pada salah satu input enable.',
       langkahKerja: [
-        'Pelajari datasheet IC 74138 dan 74151, identifikasi pin select dan enable',
-        'Rangkai decoder 74138, uji setiap kombinasi input select dan amati output yang aktif',
-        'Rangkai multiplexer 74151 dengan beberapa sumber data input, uji perpindahan output berdasarkan sinyal select',
-        'Implementasikan studi kasus sederhana, misalnya seleksi tampilan salah satu dari 4 sensor pada 1 indikator',
-        'Dokumentasikan hasil pengujian tiap kombinasi input'
+        'Pelajari datasheet 74138, 74148, dan 74151: catat pin VCC dan GND, pin select, pin enable/strobe, dan pin output',
+        'Rangkai decoder 74138. Hubungkan G1 ke HIGH, G2A dan G2B ke LOW. Ubah input CBA dari 000 sampai 111 dan catat output Y yang bernilai LOW',
+        'Uji kondisi enable 74138: nonaktifkan G1 (LOW), lalu G2A (HIGH), lalu G2B (HIGH), dan amati bahwa semua output menjadi HIGH',
+        'Rangkai encoder 74148 dengan input aktif LOW. Aktifkan satu input saja, lalu beberapa input bersamaan, dan catat keluaran A2 A1 A0, GS, dan EO. Tentukan input mana yang menang',
+        'Rangkai multiplexer 74151. Atur data D0 sampai D7 dengan pola tertentu (misalnya 10110010), ubah select CBA dari 000 sampai 111, dan catat output Y dan W. Uji juga strobe nonaktif',
+        'Gunakan 74138 sebagai demultiplexer: berikan data ke salah satu input enable, ubah select CBA, dan catat output Y yang mengikuti data',
+        'Studi kasus: rancang pemilih 1 dari 4 sensor (diwakili empat saklar) menggunakan 74151 dengan select tertinggi dihubungkan ke LOW, lalu gambar skemanya',
+        'Rakit dan uji studi kasus, dokumentasikan hasil tiap kombinasi select, lalu rapikan peralatan'
       ],
       tugasLaporan: [
-        'Tabel fungsi (function table) hasil pengujian decoder dan multiplexer',
-        'Gambar rangkaian dan penjelasan aplikasi studi kasus yang dibuat',
-        'Analisis dan kesimpulan'
+        'Tabel fungsi 74138 (termasuk kondisi enable), 74148, 74151, dan demultiplexer hasil pengujian',
+        'Penjelasan prioritas pada encoder 74148 berdasarkan data pengamatan',
+        'Skema dan hasil uji studi kasus pemilih sensor',
+        'Analisis perbedaan decoder dan demultiplexer serta kesimpulan'
       ],
+      k3: 'Perhatikan bahwa output 74138 dan 74148 aktif LOW; hubungkan LED sebagai beban sink (anoda ke +5 V melalui resistor) agar menyala saat output LOW. Jangan membiarkan pin enable, strobe, atau input data mengambang. Matikan catu daya sebelum mengubah kabel.',
       estimasiWaktu: '2 x 50 menit'
     },
     {
       id: 'ed-04',
-      judul: 'Flip-Flop dan Rangkaian Sekuensial Dasar (RS, D, JK, T)',
+      viewCetak: 'lkm_ed04_print', // views/lkm_ed04_print.ejs
+      judul: 'LKM 4: Flip-Flop dan Rangkaian Sekuensial Dasar (RS, D, JK, T)',
       pertemuanSaran: 9,
       tujuan: [
-        'Membedakan prinsip kerja flip-flop RS, D, JK, dan T',
-        'Merangkai dan menguji karakteristik pencacahan bit (bistable) pada IC flip-flop (7474, 7476)',
-        'Memahami peran sinyal clock pada rangkaian sekuensial'
+        'Membedakan rangkaian kombinasional dan sekuensial serta menjelaskan peran memori dan clock',
+        'Merakit latch RS dari gerbang NAND (7400), menguji keempat kondisi, dan mengenali keadaan terlarang',
+        'Menguji D flip-flop 7474 dan JK flip-flop 7476, termasuk input asinkron preset dan clear',
+        'Membentuk flip-flop T dari JK (J=K=1) dan menunjukkan fungsi pembagi frekuensi',
+        'Menggambar diagram pewaktuan (timing diagram) berdasarkan hasil pengamatan'
       ],
       alatBahan: [
-        'IC 7474 (D flip-flop), 7476 (JK flip-flop)',
-        'Pulser/clock generator sederhana atau saklar debounce',
-        'LED indikator output Q dan Q-bar, project board'
+        'IC 7400 (NAND) untuk latch RS, 7474 (dual D flip-flop), 7476 (dual JK flip-flop)',
+        'Sumber clock: pulser manual berdebounce (latch NAND dengan saklar SPDT) atau generator clock 1 Hz',
+        'LED indikator untuk Q dan Q-bar dengan resistor 330 sampai 470 ohm',
+        'Saklar logika, trainer/project board, dan catu daya 5 V terregulasi',
+        'Multimeter, kabel jumper, dan datasheet tiap IC'
       ],
-      dasarTeori: 'Berbeda dengan rangkaian kombinasional yang outputnya hanya bergantung pada input saat itu, rangkaian sekuensial memiliki elemen memori (flip-flop) sehingga output juga bergantung pada kondisi/state sebelumnya. Flip-flop adalah elemen memori 1-bit yang berubah state mengikuti sinyal clock.',
+      dasarTeori: 'Rangkaian kombinasional menghasilkan output yang hanya bergantung pada input saat ini, sedangkan rangkaian sekuensial punya elemen memori sehingga output juga bergantung pada keadaan sebelumnya. Latch RS dari dua gerbang NAND memiliki input aktif LOW: kombinasi 11 mempertahankan keadaan, 01 dan 10 mengatur atau mereset, sedangkan 00 menghasilkan kondisi terlarang karena kedua output sama-sama HIGH dan keadaan akhirnya tidak pasti saat kedua input kembali 1. Flip-flop D 7474 menyalin input D ke output Q pada tepi naik clock, sedangkan JK 7476 memiliki empat mode: hold (J=0, K=0), reset (0,1), set (1,0), dan toggle (1,1), dengan output berubah saat clock turun. Input asinkron preset dan clear (aktif LOW) bekerja tanpa menunggu clock dan harus dihubungkan ke HIGH bila tidak dipakai. Saklar mekanik menghasilkan pantulan (bounce) sehingga satu penekanan dapat terbaca sebagai banyak pulsa clock; latch NAND dengan saklar SPDT dipakai sebagai debounce.',
       langkahKerja: [
-        'Rangkai D flip-flop, berikan input data dan pulsa clock, amati perubahan output Q',
-        'Rangkai JK flip-flop, uji keempat kombinasi J-K (set, reset, hold, toggle)',
-        'Bandingkan respons flip-flop terhadap clock edge (naik/turun)',
-        'Catat tabel kondisi (state table) hasil pengujian tiap flip-flop'
+        'Rakit latch RS dari dua gerbang NAND 7400 (output tiap gerbang disilangkan ke input gerbang lain). Uji kombinasi S-bar R-bar = 11, 01, 10, 00 dan catat Q serta Q-bar. Amati apa yang terjadi saat berpindah dari 00 ke 11',
+        'Gunakan latch yang sama dengan saklar SPDT sebagai debounce, lalu pakai keluarannya sebagai pulser clock manual untuk langkah-langkah berikutnya',
+        'Rakit D flip-flop 7474. Hubungkan preset dan clear ke HIGH. Berikan D=0 lalu D=1, beri pulsa clock, dan catat Q. Ubah D saat clock tetap HIGH atau LOW untuk melihat bahwa output tidak berubah',
+        'Uji input asinkron: aktifkan preset (LOW) dan clear (LOW) secara bergantian tanpa clock dan catat Q',
+        'Rakit JK flip-flop 7476 dengan preset dan clear ke HIGH. Uji empat kombinasi J-K (hold, reset, set, toggle) untuk masing-masing keadaan awal Q=0 dan Q=1, lalu catat Q berikutnya',
+        'Bentuk flip-flop T dengan J=K=1, berikan delapan pulsa clock, dan catat Q pada setiap pulsa. Tentukan perbandingan frekuensi output terhadap clock',
+        'Berdasarkan hasil pengamatan, gambar diagram pewaktuan CLK, D, Q (7474), J, K, dan Q (7476) pada kisi yang tersedia',
+        'Rapikan peralatan dan isi kesimpulan perbedaan karakteristik latch RS, D, JK, dan T'
       ],
       tugasLaporan: [
-        'Tabel kondisi (state table) hasil praktik untuk tiap jenis flip-flop',
-        'Diagram pewaktuan (timing diagram) sederhana dari hasil pengamatan',
-        'Kesimpulan perbedaan karakteristik flip-flop RS, D, JK, dan T'
+        'Tabel kondisi (state table) latch RS, D flip-flop, JK flip-flop, dan T flip-flop hasil pengujian',
+        'Penjelasan kondisi terlarang pada latch RS dan fungsi debounce berdasarkan pengamatan',
+        'Diagram pewaktuan lengkap dengan penjelasan titik perubahan output',
+        'Kesimpulan perbedaan karakteristik flip-flop RS, D, JK, dan T serta peran clock'
       ],
+      k3: 'Input preset dan clear yang tidak dipakai harus dihubungkan ke +5 V (idealnya melalui resistor 1 kilo ohm), jangan dibiarkan mengambang. Jangan memberi pulsa clock dari kabel yang digesek-gesek karena memicu banyak pulsa. Matikan catu daya sebelum mengubah kabel.',
       estimasiWaktu: '2 x 50 menit'
     },
     {
       id: 'ed-05',
-      judul: 'Register Geser dan Pencacah (Counter) Sinkron/Asinkron',
+      viewCetak: 'lkm_ed05_print', // views/lkm_ed05_print.ejs
+      judul: 'LKM 5: Register Geser dan Pencacah (Counter) Sinkron/Asinkron',
       pertemuanSaran: 11,
       tujuan: [
-        'Merangkai pencacah (counter) asinkron dan sinkron menggunakan IC 7493/74193',
-        'Merangkai register geser (shift register) menggunakan IC 7494/74164',
-        'Menganalisis perbedaan mode hitung naik (up) dan turun (down) pada counter'
+        'Merakit counter asinkron 4-bit dengan IC 7493 dan mengamati urutan hitung biner 0 sampai 15',
+        'Memodifikasi 7493 menjadi counter modulus 10 (decade) dengan rangkaian reset',
+        'Merakit counter sinkron up/down dengan IC 74193 dan menguji mode hitung naik, turun, dan pemuatan data',
+        'Merakit register geser dengan IC 74164 dan mengamati pergeseran data serial pada setiap pulsa clock',
+        'Membandingkan karakteristik counter sinkron dan asinkron serta menggambar diagram pewaktuannya'
       ],
       alatBahan: [
-        'IC 7493 (counter asinkron), 74193 (counter sinkron up/down)',
-        'IC 7494 atau 74164 (shift register)',
-        'Seven segment + BCD to 7-segment decoder (opsional)',
-        'Project board, LED, clock generator'
+        'IC 7493 (counter asinkron 4-bit), 74193 (counter sinkron up/down), 74164 (register geser 8-bit serial-in parallel-out); 7494 dapat dipakai bila tersedia',
+        'Generator clock 1 Hz (misalnya timer 555 astabil: R1 = 10 kilo ohm, R2 = 68 kilo ohm, C = 10 mikrofarad menghasilkan sekitar 1 Hz) atau pulser manual berdebounce',
+        'IC 7447 (dekoder BCD ke seven segment) dan seven segment common anode (opsional)',
+        'LED indikator 8 buah, resistor 330 sampai 470 ohm, saklar logika, project board, catu daya 5 V terregulasi',
+        'Multimeter, kabel jumper, dan datasheet tiap IC'
       ],
-      dasarTeori: 'Counter adalah rangkaian sekuensial yang menghitung jumlah pulsa clock yang masuk, dapat berupa hitungan naik, turun, atau modulo tertentu. Register geser menyimpan dan menggeser data bit demi bit pada setiap pulsa clock, sering dipakai untuk konversi data serial-paralel.',
+      dasarTeori: 'Counter adalah rangkaian sekuensial yang menghitung pulsa clock. Pada counter asinkron (ripple) hanya flip-flop pertama yang menerima clock luar, sedangkan flip-flop berikutnya dipicu oleh output flip-flop sebelumnya, sehingga perubahan output merambat berurutan dan menimbulkan tundaan serta keadaan sesaat yang tidak diinginkan. IC 7493 terdiri atas satu flip-flop pembagi dua dan bagian pembagi delapan yang harus dihubungkan secara luar (QA ke input clock bagian kedua) agar menjadi counter 4-bit, dan memiliki dua input reset R0(1) dan R0(2) yang bila keduanya HIGH mengembalikan hitungan ke 0000. Dengan menghubungkan QB dan QD ke input reset, hitungan dipaksa kembali ke 0 saat mencapai 1010 sehingga menjadi counter 0 sampai 9. Counter sinkron seperti 74193 memicu semua flip-flop oleh clock yang sama sehingga lebih cepat dan bebas keadaan sesaat; 74193 punya dua input clock terpisah (up dan down), input clear aktif HIGH, dan input load aktif LOW. Register geser 74164 menggeser data satu bit pada setiap tepi naik clock dari input serial ke output paralel Q0 sampai Q7, dengan clear aktif LOW.',
       langkahKerja: [
-        'Rangkai counter asinkron 4-bit, amati pola hitung biner pada LED output',
-        'Rangkai counter sinkron dengan fitur up/down, uji perpindahan arah hitung',
-        'Rangkai register geser, masukkan data secara serial, amati pergeseran bit pada tiap clock',
-        'Hubungkan output counter ke decoder BCD-seven segment untuk verifikasi visual (jika tersedia)'
+        'Rakit counter asinkron dengan 7493: hubungkan QA ke input clock bagian kedua, kedua input reset R0 ke ground, dan clock ke input pertama. Berikan pulsa clock secara manual dan catat QD QC QB QA beserta nilai desimalnya untuk pulsa ke-0 sampai ke-15',
+        'Ubah menjadi counter modulus 10: hubungkan QB dan QD ke R0(1) dan R0(2). Catat urutan hitung selama 12 pulsa dan amati kembali ke 0 setelah angka 9',
+        'Rakit counter sinkron 74193: clear ke LOW, load ke HIGH, input down ke HIGH saat menghitung naik. Berikan 8 pulsa pada input up dan catat keluaran',
+        'Balik arah hitung: hubungkan pulsa ke input down dan input up ke HIGH, lalu catat 8 pulsa hitung turun. Uji juga pemuatan data (load) dan clear',
+        'Rakit register geser 74164: hubungkan clear (CLR) ke HIGH, sambungkan kedua input serial, berikan data serial pola 10110010 satu bit tiap pulsa, dan catat Q0 sampai Q7 pada tiap pulsa',
+        'Hubungkan output counter ke 7447 dan seven segment (bila tersedia) untuk verifikasi visual hitungan',
+        'Gambar diagram pewaktuan CLK, QA, QB, QC, dan QD counter asinkron berdasarkan pengamatan',
+        'Isi tabel perbandingan counter sinkron dan asinkron, tulis kesimpulan, lalu rapikan peralatan'
       ],
       tugasLaporan: [
-        'Diagram rangkaian dan tabel hasil pencacahan (waveform/urutan biner)',
-        'Perbandingan karakteristik counter asinkron vs sinkron',
-        'Analisis hasil praktik register geser'
+        'Tabel urutan hitung 7493 (0 sampai 15), counter modulus 10, dan hitung naik/turun 74193',
+        'Tabel pergeseran data pada register geser 74164 untuk pola data yang digunakan',
+        'Diagram pewaktuan counter dan penjelasan sifat pembagi frekuensi tiap output',
+        'Perbandingan karakteristik counter sinkron vs asinkron dan analisis hasil praktik register geser'
       ],
+      k3: 'Periksa polaritas catu daya, jangan menghubungkan dua output secara langsung, dan pastikan common seven segment sesuai jenisnya (common anode untuk 7447). Matikan catu daya sebelum mengubah kabel. Gunakan catu daya dan ground yang sama untuk generator clock dan rangkaian digital.',
       estimasiWaktu: '2 x 50 menit'
     },
     {
       id: 'ed-06',
-      judul: 'Proyek Akhir: Prototipe Sistem Digital Sederhana',
+      viewCetak: 'lkm_ed06_print', // views/lkm_ed06_print.ejs
+      judul: 'LKM 6: Proyek Akhir: Prototipe Sistem Digital Sederhana',
       pertemuanSaran: 14,
       tujuan: [
         'Mengintegrasikan gerbang logika, rangkaian kombinasional, dan sekuensial dalam satu sistem',
-        'Merancang dan merealisasikan prototipe sesuai studi kasus yang dipilih (mis. pengontrol lampu lalu lintas sederhana atau penghitung antrian digital)',
-        'Mempresentasikan dan mendemonstrasikan hasil rancangan'
+        'Menyusun spesifikasi, diagram blok, daftar komponen, dan rencana pengujian sebelum merakit',
+        'Merealisasikan prototipe secara bertahap (uji per blok, lalu integrasi) sesuai tonggak yang ditetapkan',
+        'Mendokumentasikan hasil dan mempresentasikan prototipe dalam demonstrasi singkat'
       ],
       alatBahan: [
-        'Kombinasi IC gerbang logika, counter, dan decoder sesuai rancangan kelompok',
-        'Project board/PCB prototyping, LED/seven segment, catu daya',
-        'Alat ukur (multimeter, osiloskop bila tersedia)'
+        'Kombinasi IC gerbang logika, counter, decoder, dan multiplexer sesuai rancangan kelompok',
+        'Project board atau PCB prototyping, LED/seven segment, resistor, dan catu daya 5 V terregulasi',
+        'Generator clock (555 astabil atau pulser berdebounce)',
+        'Multimeter dan osiloskop bila tersedia',
+        'Datasheet semua IC dan lembar proyek pada LKM'
       ],
-      dasarTeori: 'Proyek akhir menggabungkan seluruh konsep elektronika digital (gerbang logika, minimasi, rangkaian kombinasional, dan sekuensial) menjadi satu sistem fungsional, melatih kemampuan perancangan sistem digital secara utuh dari studi kasus hingga implementasi perangkat keras.',
+      dasarTeori: 'Proyek akhir menggabungkan seluruh konsep elektronika digital menjadi satu sistem fungsional. Pendekatan yang disarankan adalah dari atas ke bawah: tentukan fungsi dan batasan sistem, uraikan menjadi blok-blok (misalnya pembangkit clock, counter, decoder, dan tampilan), rancang dan uji tiap blok secara terpisah, baru kemudian integrasikan. Pengujian bertahap memudahkan penelusuran kesalahan karena sumber masalah dapat dipersempit ke satu blok. Pilihan studi kasus: (1) pengontrol lampu lalu lintas dua arah dengan counter dan decoder, (2) penghitung antrian 0 sampai 9 dengan tombol naik/turun dan tampilan seven segment, atau (3) pemilih dan penampil empat kanal data menggunakan multiplexer dan counter. Studi kasus lain boleh diusulkan dengan persetujuan dosen.',
       langkahKerja: [
-        'Tentukan studi kasus dan buat diagram blok sistem',
-        'Rancang persamaan logika/rangkaian tiap blok fungsi',
-        'Rakit dan uji tiap blok secara terpisah sebelum diintegrasikan',
-        'Integrasikan seluruh blok dan lakukan pengujian sistem secara keseluruhan',
-        'Siapkan dokumentasi dan lakukan demonstrasi di depan dosen/kelas'
+        'Bentuk kelompok, pilih studi kasus, dan isi identitas kelompok serta pembagian peran pada LKM',
+        'Tulis spesifikasi: input, output, dan aturan kerja sistem, lalu gambar diagram blok',
+        'Tonggak 1: serahkan spesifikasi, diagram blok, dan daftar komponen kepada dosen untuk disetujui sebelum merakit',
+        'Rancang persamaan logika dan rangkaian tiap blok, lalu cek ketersediaan komponen di laboratorium',
+        'Tonggak 2: rakit dan uji tiap blok secara terpisah, catat skenario uji dan hasilnya pada tabel pengujian blok',
+        'Integrasikan seluruh blok, lakukan pengujian sistem sesuai skenario, dan catat kendala beserta solusinya',
+        'Tonggak 3: demonstrasikan prototipe di depan dosen/kelas, lalu serahkan dokumentasi lengkap',
+        'Isi rubrik penilaian mandiri, lalu rapikan peralatan'
       ],
       tugasLaporan: [
-        'Laporan rancangan lengkap (diagram blok, skematik, perhitungan logika)',
-        'Dokumentasi pengujian tiap blok dan sistem terintegrasi',
-        'Video/foto demonstrasi serta refleksi kendala dan solusi selama proyek'
+        'Spesifikasi sistem, diagram blok, skematik lengkap, dan perhitungan logika',
+        'Daftar komponen dan dokumentasi pengujian tiap blok serta sistem terintegrasi',
+        'Foto/video demonstrasi dan catatan kendala beserta solusi',
+        'Refleksi kelompok dan penilaian mandiri'
       ],
-      estimasiWaktu: '3 x 50 menit (dapat dikerjakan lintas pertemuan)'
+      k3: 'Periksa seluruh sambungan sebelum catu daya dinyalakan dan jangan mengubah kabel dalam keadaan menyala. Pastikan tegangan catu 5 V terregulasi, batasi arus LED dengan resistor, dan jangan menyentuh IC yang panas. Rapikan kabel agar tidak tersandung dan matikan catu daya setelah selesai.',
+      estimasiWaktu: '3 x 50 menit (dapat dikerjakan lintas pertemuan; mulai dipersiapkan sejak pertemuan 11)'
     }
   ],
 
