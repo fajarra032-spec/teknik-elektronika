@@ -1,0 +1,70 @@
+PEMBARUAN MAGANG KE FORMAT BARU (4 PDF Politeknik Dewantara)
+=============================================================
+
+RINGKASAN PERUBAHAN
+-------------------
+1. FORM PENILAIAN DOSEN PEMBIMBING (Dosen PA) - SATU FORM, 18 INDIKATOR
+   Laporan (8) + Kepribadian (7) + Pengetahuan (3). Menggantikan "Nilai Laporan"
+   (13 indikator) dan "Nilai Logbook" (11 indikator) yang dulu terpisah.
+   "Presentasi Magang" TIDAK ada lagi di format baru.
+   Form ada di /dosen/magang/:userId (halaman Monitoring Magang). Ada rata-rata per
+   kategori, Total, Rata-rata Nilai Akhir (hitung langsung di layar), huruf per item,
+   dan kolom Catatan Dosen Pembimbing.
+   Prasyarat: minimal satu laporan di-ACC DAN logbook dikunci (sama seperti sebelumnya).
+2. FORM PENDAMPING LAPANGAN (diinput Admin) - 10 INDIKATOR
+   Keterampilan (2) + Pengetahuan (2) + Sikap Kerja (5, ada tambahan "Disiplin")
+   + Laporan (1, dulu bernama "Logbook"). Ditambah kolom Catatan.
+   Form tidak lagi terkunci setelah disimpan pertama kali (boleh diedit selama periode
+   belum dikunci ke KHS) - perlu karena nilai lama hanya 9 indikator.
+3. NILAI AKHIR = rata-rata 2 komponen (Dosen Pembimbing 50% + Pendamping Lapangan 50%).
+   Sebelumnya 3 komponen @ 1/3.   <<< KONFIRMASI KE KAPRODI: PDF tidak menyebut bobot >>>
+4. CETAK FORMAT RESMI (kop + tata letak mengikuti PDF)
+   - Form Penilaian Dosen   : /dosen/magang/print-penilaian/:userId?periodId=...
+                              /admin/emagang/print-penilaian/:userId?periodId=...&jenis=dosen
+   - Form Penilaian Lapangan: /admin/emagang/print-penilaian/:userId?periodId=...&jenis=lapangan
+     (angka diletakkan di kolom huruf sesuai rentang, sesuai keterangan b;
+      kalau belum dinilai, form dicetak KOSONG untuk diisi pendamping)
+   - Kartu Kontrol Bimbingan Magang: /dosen/magang/print-kartu-kontrol/:userId?periodId=...
+                                     /mahasiswa/konsultasi-pa/magang/kartu-kontrol
+   - Lembar Isian Hasil Konsultasi (per pertemuan): tautan "[lembar isian]" di kartu kontrol
+   Sumber kartu kontrol & lembar isian = Lembar Konsultasi PA yang BERKATEGORI "Magang"
+   (tidak ada data baru; Dosen PA mencatat seperti biasa di menu Konsultasi).
+   Agenda = Topik; Hasil = Uraian + Saran.
+
+KOMPATIBILITAS DATA LAMA
+------------------------
+ - Koleksi nilaiMagang: field BARU nilaiDosenItems, nilaiDosen, nilaiDosenOleh,
+   nilaiDosenAt, catatanDosen, catatanLapangan. Field lama TIDAK dihapus/diubah.
+ - Mahasiswa yang baru punya Nilai Laporan & Nilai Logbook lama: komponen Dosen
+   dihitung dari rata-rata keduanya (tampil label "format lama") sampai dosen mengisi
+   form baru. Nilai yang SUDAH dikunci ke KHS/grades tidak berubah.
+ - nilaiLapangan lama (9 indikator) tetap berlaku; form admin diisi awal dari data lama
+   (kunci `logbook` -> `laporan`), admin perlu melengkapi "Disiplin" lalu simpan.
+ - Tidak perlu migrasi data atau index Firestore baru.
+
+FILE
+----
+BARU   : helpers/formPenilaianMagangHelper.js
+         helpers/kartuKontrolMagangHelper.js
+         views/magang/_kop.ejs, _kop_css.ejs
+         views/magang/form_penilaian_print.ejs
+         views/magang/kartu_kontrol_print.ejs
+         views/magang/lembar_konsultasi_print.ejs
+TIMPA  : helpers/nilaiMagangHelper.js
+         routes/dosen/magang.js, routes/dosen/laporanReview.js
+         routes/admin/emagang.js, routes/mahasiswa/konsultasiPa.js
+         views/dosen/magang_detail.ejs, laporan_review_detail.ejs,
+         laporan_review_list.ejs, magang_period.ejs
+         views/admin/emagang_mahasiswa.ejs, views/mahasiswa/konsultasi_pa.ejs
+
+Rute lama POST /dosen/magang/:userId/nilai-logbook dan
+POST /dosen/laporan-review/mahasiswa/:userId/nilai tetap ada tetapi hanya
+mengarahkan ke form baru (agar tombol/bookmark lama tidak 404).
+
+CATATAN
+-------
+ - Logo kop memakai URL yang sama dengan template cetak Anda yang sudah ada.
+ - Belum diuji dengan Firestore asli / browser. Yang sudah diuji: semua JS lolos
+   node --check, semua EJS lolos kompilasi, helper nilai & 4 template cetak dirender
+   dengan data tiruan (hasil dicek visual terhadap PDF).
+ - File di root (magang1.js, landing.js, dst.) tidak dipakai app.js dan tidak disentuh.

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <%- include('_kop_css') %>
+  <style>
+    table.kartu { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 6px; }
+    table.kartu th, table.kartu td { border: 1px solid #000; padding: 4px 6px; vertical-align: top; }
+    table.kartu th { text-align: center; }
+    table.kartu td.no { width: 6%; text-align: center; }
+    table.kartu td.tgl { width: 22%; }
+    table.kartu td.paraf { width: 16%; }
+    table.kartu tr { height: 44px; page-break-inside: avoid; }
+    .lembar { font-size: 7.5pt; }
+    .ttd-kartu { margin: 28px 0 0 52%; font-size: 10pt; page-break-inside: avoid; }
+    .ttd-kartu .area { height: 62px; }
+  </style>
+</head>
+<body>
+<%
+  const MIN_BARIS = 9; // sama dengan jumlah baris pada form resmi
+  const sisa = Math.max(0, MIN_BARIS - daftar.length);
+%>
+<div class="halaman">
+  <%- include('_kop') %>
+
+  <div class="judul">
+    <h4>Kartu Kontrol Konsultasi/Bimbingan Magang Mahasiswa</h4>
+    <h4>Tahun Akademik <%= tahunAkademik || '………………' %></h4>
+  </div>
+
+  <table class="identitas">
+    <tr><td>Nama Mahasiswa</td><td class="sep">:</td><td><%= mahasiswa.nama || '' %></td></tr>
+    <tr><td>NIM</td><td class="sep">:</td><td><%= mahasiswa.nim || '' %></td></tr>
+    <tr><td>Program Studi</td><td class="sep">:</td><td><%= prodi %></td></tr>
+    <tr><td>Dosen Pembimbing</td><td class="sep">:</td><td><%= dosenPa ? dosenPa.nama : '' %></td></tr>
+  </table>
+
+  <table class="kartu">
+    <thead>
+      <tr><th>No.</th><th>Hari/Tanggal</th><th>Agenda/Kegiatan</th><th>Paraf Dosen<br>Pembimbing</th></tr>
+    </thead>
+    <tbody>
+      <% daftar.forEach(function (k, i) { %>
+        <tr>
+          <td class="no"><%= i + 1 %></td>
+          <td class="tgl"><%= k.hariTanggal %></td>
+          <td><%= k.agenda %><% if (lembarBase) { %> <a class="lembar no-print" href="<%= lembarBase + k.id %>" target="_blank">[lembar isian]</a><% } %></td>
+          <td class="paraf"></td>
+        </tr>
+      <% }) %>
+      <% for (let j = 0; j < sisa; j++) { %>
+        <tr><td class="no"></td><td class="tgl"></td><td></td><td class="paraf"></td></tr>
+      <% } %>
+    </tbody>
+  </table>
+
+  <div class="ttd-kartu">
+    Mengetahui,<br>Dosen Pembimbing
+    <div class="area"></div>
+    <% if (dosenPa) { %><strong style="text-decoration:underline;"><%= dosenPa.nama %></strong><% } else { %>…………………………………………<% } %><br>
+    NIDN. <%= dosenPa && dosenPa.nidn && dosenPa.nidn !== '-' ? dosenPa.nidn : '' %>
+  </div>
+
+  <div class="cetak-info no-print">Dicetak: <%= generatedAt %> | Sumber: Lembar Konsultasi PA kategori Magang</div>
+</div>
+</body>
+</html>

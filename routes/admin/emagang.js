@@ -11,7 +11,8 @@ const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { filterEnrollmentDocsAktif } = require('../../helpers/statusMahasiswaHelper');
 const { invalidateProgressMagangHarian } = require('../../helpers/magangHelper');
-const { ITEM_PENDAMPING_LAPANGAN, getNilaiMagang, savePenilaianPendampingLapangan, hitungNilaiAkhirMagang, kunciNilaiMagangKeGrades } = require('../../helpers/nilaiMagangHelper');
+const { ITEM_PENDAMPING_LAPANGAN, daftarKategori, hitungRincian, getNilaiMagang, getNilaiDosenEfektif, savePenilaianPendampingLapangan, hitungNilaiAkhirMagang, kunciNilaiMagangKeGrades } = require('../../helpers/nilaiMagangHelper');
+const { buildFormPenilaianData } = require('../../helpers/formPenilaianMagangHelper');
 const {
   lockMagangPeriod,
   unlockMagangPeriod,
@@ -420,12 +421,21 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       nama: doc.data().nama
     }));
 
-    // Nilai Magang 3-komponen (Laporan/Logbook/Lapangan) untuk periode yang
-    // sedang dipilih - dipakai form input Nilai Lapangan + tombol Kunci.
+    // Nilai Magang 2-komponen (Dosen Pembimbing + Pendamping Lapangan) untuk
+    // periode yang sedang dipilih - dipakai form input Pendamping Lapangan + tombol Kunci.
     let nilaiMagangInfo = null;
     if (selectedPeriod) {
       const nilaiMagang = await getNilaiMagang(userId, selectedPeriod.pdkId);
-      nilaiMagangInfo = { ...nilaiMagang, hasil: hitungNilaiAkhirMagang(nilaiMagang) };
+      // Data lama memakai kunci `logbook` (sekarang `laporan`) - isi awal form baru
+      const itemsLapangan = { ...nilaiMagang.nilaiLapanganItems };
+      if (itemsLapangan.laporan === undefined && itemsLapangan.logbook !== undefined) itemsLapangan.laporan = itemsLapangan.logbook;
+      nilaiMagangInfo = {
+        ...nilaiMagang,
+        nilaiLapanganItemsForm: itemsLapangan,
+        nilaiDosenEfektif: getNilaiDosenEfektif(nilaiMagang),
+        rincianLapangan: hitungRincian(itemsLapangan, ITEM_PENDAMPING_LAPANGAN),
+        hasil: hitungNilaiAkhirMagang(nilaiMagang)
+      };
     }
 
     res.render('admin/emagang_mahasiswa', {
@@ -441,6 +451,7 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       bimbingan,
       nilaiMagangInfo,
       ITEM_PENDAMPING_LAPANGAN,
+      KATEGORI_PENDAMPING: daftarKategori(ITEM_PENDAMPING_LAPANGAN),
       user: req.user
     });
   } catch (error) {
@@ -695,7 +706,7 @@ router.post('/period/:periodId/edit-tanggal-mulai', async (req, res) => {
 /**
  * POST /admin/emagang/mahasiswa/:userId/nilai-lapangan
  * Admin input Nilai Pendamping Lapangan (mewakili pendamping lapangan di
- * IDUKA, yang tidak punya akses ke sistem) - 9 indikator, lihat
+ * IDUKA, yang tidak punya akses ke sistem) - 10 indikator (format baru), lihat
  * ITEM_PENDAMPING_LAPANGAN.
  */
 router.post('/mahasiswa/:userId/nilai-lapangan', async (req, res) => {
@@ -718,7 +729,7 @@ router.post('/mahasiswa/:userId/nilai-lapangan', async (req, res) => {
       itemScores[it.key] = angka;
     }
 
-    await savePenilaianPendampingLapangan(userId, pdkId, itemScores, req.user.id);
+    await savePenilaianPendampingLapangan(userId, pdkId, itemScores, req.user.id, req.body.catatan);
     req.session.success = 'Nilai Pendamping Lapangan berhasil disimpan';
     res.redirect(`/admin/emagang/mahasiswa/${userId}?periodId=${req.body.periodId || ''}`);
   } catch (error) {
@@ -729,9 +740,26 @@ router.post('/mahasiswa/:userId/nilai-lapangan', async (req, res) => {
 });
 
 /**
+ * GET /admin/emagang/print-penilaian/:userId?periodId=&jenis=dosen|lapangan
+ * Cetak FORM PENILAIAN MAGANG INDUSTRI (format resmi) - jenis `dosen` (diisi
+ * Dosen Pembimbing) atau `lapangan` (diisi Pendamping Lapangan di IDUKA).
+ */
+router.get('/print-penilaian/:userId', async (req, res) => {
+  try {
+    const jenis = req.query.jenis === 'lapangan' ? 'lapangan' : 'dosen';
+    const data = await buildFormPenilaianData(req.params.userId, req.query.periodId, jenis);
+    if (!data) return res.status(404).send('Data mahasiswa tidak ditemukan');
+    res.render('magang/form_penilaian_print', data);
+  } catch (error) {
+    console.error('Error cetak form penilaian (admin):', error);
+    res.status(500).send('Gagal mencetak form penilaian');
+  }
+});
+
+/**
  * POST /admin/emagang/mahasiswa/:userId/kunci-nilai-magang
- * Kunci nilai akhir magang (gabungan 3 komponen) ke koleksi grades/KHS.
- * Ditolak kalau salah satu dari 3 komponen belum terisi.
+ * Kunci nilai akhir magang (gabungan 2 komponen: Dosen Pembimbing + Pendamping
+ * Lapangan) ke koleksi grades/KHS. Ditolak kalau salah satu komponen belum terisi.
  */
 router.post('/mahasiswa/:userId/kunci-nilai-magang', async (req, res) => {
   try {

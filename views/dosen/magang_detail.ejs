@@ -13,7 +13,10 @@
   if (typeof isPembimbing === 'undefined') isPembimbing = false; // true = Dosen PA mahasiswa ini (satu-satunya pembimbing)
   if (typeof laporanList === 'undefined') laporanList = [];
   if (typeof adaLaporanYangAcc === 'undefined') adaLaporanYangAcc = false;
-  if (typeof ITEM_NILAI_LAPORAN === 'undefined') ITEM_NILAI_LAPORAN = [];
+  if (typeof ITEM_NILAI_DOSEN === 'undefined') ITEM_NILAI_DOSEN = [];
+  if (typeof KATEGORI_NILAI_DOSEN === 'undefined') KATEGORI_NILAI_DOSEN = [];
+  if (typeof nilaiDosenEfektif === 'undefined') nilaiDosenEfektif = { nilai: null, sumber: null };
+  if (typeof rincianDosen === 'undefined') rincianDosen = null;
   
   // Fungsi untuk mendapatkan URL gambar dari Google Drive
   const getImageUrl = (url, size = 200) => {
@@ -581,7 +584,7 @@
   <!-- Role Badge: Dosen PA = satu-satunya pembimbing -->
   <% if (isPembimbing) { %>
     <div class="role-badge role-pembimbing">
-      <i class="bi bi-star-fill"></i> Anda adalah Dosen Pembimbing (Dosen PA) mahasiswa ini - Anda dapat menyetujui/menolak/mengunci logbook, meninjau &amp; meng-ACC laporan, serta mengisi Nilai Logbook dan Nilai Laporan
+      <i class="bi bi-star-fill"></i> Anda adalah Dosen Pembimbing (Dosen PA) mahasiswa ini - Anda dapat menyetujui/menolak/mengunci logbook, meninjau &amp; meng-ACC laporan, serta mengisi Form Penilaian Dosen Pembimbing
     </div>
   <% } %>
 
@@ -676,17 +679,17 @@
     </div>
   <% } %>
 
-  <!-- Panel Kunci Logbook & Nilai Logbook (Dosen Pembimbing/PA) -->
+  <!-- Panel Kunci Logbook (Dosen Pembimbing/PA) - prasyarat Form Penilaian Dosen Pembimbing -->
   <% if (isPembimbing && selectedPeriod) { %>
     <div class="nilai-logbook-card">
       <% if (!nilaiMagang || !nilaiMagang.logbookDikunci) { %>
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <div>
             <strong><i class="bi bi-lock"></i> Kunci Logbook untuk Penilaian</strong>
-            <p class="mb-0 small text-muted">Setelah semua logbook periode ini selesai ditinjau, kunci supaya Nilai Logbook bisa diisi. <strong>Ini beda dari "Kunci Periode"</strong> di halaman Kelola Magang - itu cuma menghentikan mahasiswa isi logbook harian, tidak ada hubungannya dengan penilaian.</p>
+            <p class="mb-0 small text-muted">Setelah semua logbook periode ini selesai ditinjau, kunci (bersama ACC laporan) supaya Form Penilaian Dosen Pembimbing bisa diisi. <strong>Ini beda dari "Kunci Periode"</strong> di halaman Kelola Magang - itu cuma menghentikan mahasiswa isi logbook harian, tidak ada hubungannya dengan penilaian.</p>
           </div>
           <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/kunci-logbook"
-                onsubmit="return confirm('Kunci logbook periode ini? Setelah dikunci, form Nilai Logbook akan muncul.');">
+                onsubmit="return confirm('Kunci logbook periode ini? Setelah dikunci dan laporan di-ACC, form penilaian bisa diisi.');">
             <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
             <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
             <button type="submit" class="btn btn-warning btn-sm"><i class="bi bi-lock-fill"></i> Kunci Logbook untuk Penilaian</button>
@@ -698,51 +701,8 @@
           <p class="mb-0 small text-muted">Terkunci oleh Anda pada <%= new Date(nilaiMagang.logbookDikunciAt).toLocaleDateString('id-ID') %>.</p>
         </div>
 
-        <h6 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> Nilai Logbook & Sikap</h6>
-        <p class="text-muted small mb-2">Sesuai Pedoman Magang - 11 indikator (Laporan/Sikap, Pengetahuan, Presentasi Magang), tiap indikator diisi angka 0-100.</p>
-        <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/nilai-logbook">
-          <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
-          <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
-
-          <%
-            const itemsLogbook = (nilaiMagang && nilaiMagang.nilaiLogbookItems) ? nilaiMagang.nilaiLogbookItems : {};
-            let kategoriLogbook = null;
-          %>
-          <div class="table-responsive">
-            <table class="table table-sm align-middle">
-              <thead>
-                <tr><th style="width:60%;">Indikator</th><th style="width:40%;">Nilai (0-100)</th></tr>
-              </thead>
-              <tbody>
-                <% ITEM_NILAI_LOGBOOK.forEach(it => { %>
-                  <% if (it.kategori !== kategoriLogbook) { kategoriLogbook = it.kategori; %>
-                    <tr class="table-light"><td colspan="2" class="fw-bold small text-uppercase text-muted"><%= it.kategori %></td></tr>
-                  <% } %>
-                  <tr>
-                    <td><%= it.label %></td>
-                    <td>
-                      <input type="number" name="item[<%= it.key %>]" min="0" max="100" step="0.01" class="form-control form-control-sm"
-                             value="<%= itemsLogbook[it.key] !== undefined ? itemsLogbook[it.key] : '' %>" required style="max-width:140px;">
-                    </td>
-                  </tr>
-                <% }) %>
-              </tbody>
-            </table>
-          </div>
-
-          <% if (nilaiMagang && nilaiMagang.nilaiLogbook !== null && nilaiMagang.nilaiLogbook !== undefined) { %>
-            <div class="alert alert-primary d-inline-block px-3 py-2 mb-3">
-              Rata-rata saat ini: <strong><%= nilaiMagang.nilaiLogbook %></strong>
-            </div>
-          <% } %>
-
-          <div class="d-flex gap-2 flex-wrap">
-            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-save"></i> Simpan Nilai Logbook</button>
-          </div>
-        </form>
-
         <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/buka-kunci-logbook" class="mt-2"
-              onsubmit="return confirm('Buka kunci logbook lagi? Nilai Logbook yang sudah ada tidak akan hilang.');">
+              onsubmit="return confirm('Buka kunci logbook lagi? Penilaian yang sudah ada tidak akan hilang.');">
           <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
           <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
           <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-unlock"></i> Buka Kunci Logbook</button>
@@ -751,11 +711,11 @@
     </div>
   <% } %>
 
-  <!-- Panel Laporan Magang & Nilai Laporan (Dosen Pembimbing/PA) -->
+  <!-- Panel Laporan Magang & Form Penilaian Dosen Pembimbing (Dosen PA) -->
   <% if (isPembimbing) { %>
     <div class="nilai-logbook-card mb-3">
       <h6 class="fw-bold mb-1"><i class="bi bi-file-earmark-check"></i> Laporan Magang</h6>
-      <p class="text-muted small mb-3">Tinjau laporan yang diunggah mahasiswa, ACC atau minta revisi. Setelah minimal satu laporan di-ACC, isi Nilai Laporan di bawah.</p>
+      <p class="text-muted small mb-3">Tinjau laporan yang diunggah mahasiswa, ACC atau minta revisi. Setelah minimal satu laporan di-ACC dan logbook dikunci, isi Form Penilaian Dosen Pembimbing di bawah.</p>
 
       <% if (!laporanList || laporanList.length === 0) { %>
         <div class="text-center text-muted py-3">Mahasiswa ini belum mengunggah laporan.</div>
@@ -793,62 +753,129 @@
         <% }) %>
       <% } %>
 
-      <% if (adaLaporanYangAcc) { %>
-        <hr>
-        <h6 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> Nilai Laporan</h6>
-        <p class="text-muted small mb-2">Sesuai Pedoman Magang - 13 indikator (Laporan, Pengetahuan, Presentasi Magang), tiap indikator diisi angka 0-100.</p>
-        <form method="POST" action="/dosen/laporan-review/mahasiswa/<%= mahasiswa.id %>/nilai">
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Periode Magang (PDK)</label>
-            <select name="pdkId" class="form-select" style="max-width:420px;">
-              <% (allPeriods || []).forEach(p => { %>
-                <option value="<%= p.pdkId %>" <%= selectedPeriod && p.pdkId === selectedPeriod.pdkId ? 'selected' : '' %>><%= p.pdkKode %> - <%= p.pdkNama %></option>
-              <% }) %>
-            </select>
-          </div>
+      <hr>
+      <h6 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> Form Penilaian Dosen Pembimbing</h6>
+      <p class="text-muted small mb-2">
+        Format baru: <strong>18 indikator</strong> (Laporan 8, Kepribadian 7, Pengetahuan 3). Tiap indikator diisi angka 0-100;
+        huruf mengikuti skala A 86-100, B+ 76-85, B 60-75, C+ 50-59, C 25-49, D 10-24, E &lt;10.
+      </p>
 
+      <% if (selectedPeriod && nilaiDosenEfektif.sumber === 'lama') { %>
+        <div class="alert alert-warning py-2 small">
+          Nilai format lama (Laporan &amp; Logbook) tercatat dan dihitung rata-ratanya = <strong><%= nilaiDosenEfektif.nilai %></strong>.
+          Mengisi form di bawah akan menggantikannya.
+        </div>
+      <% } %>
+
+      <% if (!selectedPeriod) { %>
+        <div class="text-center text-muted small py-2 border-top mt-2">Pilih periode magang dulu.</div>
+      <% } else if (!adaLaporanYangAcc || !nilaiMagang || !nilaiMagang.logbookDikunci) { %>
+        <div class="text-center text-muted small py-2 border-top mt-2">
+          <i class="bi bi-lock"></i> Form penilaian terbuka setelah
+          <strong class="<%= adaLaporanYangAcc ? 'text-success' : '' %>"><%- adaLaporanYangAcc ? '&#10003; ' : '' %>minimal satu laporan di-ACC</strong> dan
+          <strong class="<%= (nilaiMagang && nilaiMagang.logbookDikunci) ? 'text-success' : '' %>"><%- (nilaiMagang && nilaiMagang.logbookDikunci) ? '&#10003; ' : '' %>logbook dikunci</strong>.
+        </div>
+      <% } else { %>
+        <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/nilai-dosen" id="formNilaiDosen">
+          <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
+          <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
           <%
-            const itemsP1 = (nilaiMagang && nilaiMagang.nilaiLaporanItems) ? nilaiMagang.nilaiLaporanItems : {};
-            let kategoriP1 = null;
+            const itemsDosen = (nilaiMagang && nilaiMagang.nilaiDosenItems) ? nilaiMagang.nilaiDosenItems : {};
           %>
           <div class="table-responsive">
             <table class="table table-sm align-middle">
               <thead>
-                <tr><th style="width:60%;">Indikator</th><th style="width:40%;">Nilai (0-100)</th></tr>
+                <tr><th style="width:55%;">Objek Penilaian</th><th style="width:25%;">Nilai (0-100)</th><th style="width:20%;">Huruf</th></tr>
               </thead>
               <tbody>
-                <% ITEM_NILAI_LAPORAN.forEach(it => { %>
-                  <% if (it.kategori !== kategoriP1) { kategoriP1 = it.kategori; %>
-                    <tr class="table-light"><td colspan="2" class="fw-bold small text-uppercase text-muted"><%= it.kategori %></td></tr>
-                  <% } %>
+                <% KATEGORI_NILAI_DOSEN.forEach(kat => { %>
+                  <tr class="table-light"><td colspan="3" class="fw-bold small text-uppercase text-muted"><%= kat %></td></tr>
+                  <% ITEM_NILAI_DOSEN.filter(it => it.kategori === kat).forEach((it, idx) => { %>
+                    <tr>
+                      <td><%= idx + 1 %>. <%= it.label %></td>
+                      <td>
+                        <input type="number" name="item[<%= it.key %>]" data-kat="<%= kat %>" min="0" max="100" step="0.01"
+                               class="form-control form-control-sm nilai-dosen-input"
+                               value="<%= itemsDosen[it.key] !== undefined ? itemsDosen[it.key] : '' %>" required style="max-width:140px;">
+                      </td>
+                      <td class="huruf-item fw-semibold">-</td>
+                    </tr>
+                  <% }) %>
                   <tr>
-                    <td><%= it.label %></td>
-                    <td>
-                      <input type="number" name="item[<%= it.key %>]" min="0" max="100" step="0.01" class="form-control form-control-sm"
-                             value="<%= itemsP1[it.key] !== undefined ? itemsP1[it.key] : '' %>" required style="max-width:140px;">
-                    </td>
+                    <td class="text-end small text-muted">Nilai rata-rata <%= kat %></td>
+                    <td colspan="2" class="fw-bold rata-kat" data-kat="<%= kat %>"><%= (rincianDosen && rincianDosen.perKategori[kat] !== null && rincianDosen.perKategori[kat] !== undefined) ? rincianDosen.perKategori[kat] : '-' %></td>
                   </tr>
                 <% }) %>
               </tbody>
+              <tfoot>
+                <tr class="table-light">
+                  <td class="fw-bold text-end">Total</td>
+                  <td colspan="2" class="fw-bold" id="totalDosen"><%= (rincianDosen && rincianDosen.total !== null) ? rincianDosen.total : '-' %></td>
+                </tr>
+                <tr class="table-light">
+                  <td class="fw-bold text-end">Rata-rata Nilai Akhir</td>
+                  <td colspan="2" class="fw-bold" id="rataDosen"><%= (rincianDosen && rincianDosen.rataAkhir !== null) ? rincianDosen.rataAkhir : '-' %></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
 
-          <% if (nilaiMagang && nilaiMagang.nilaiLaporan !== null && nilaiMagang.nilaiLaporan !== undefined) { %>
-            <div class="alert alert-primary d-inline-block px-3 py-2 mb-3">
-              Rata-rata saat ini: <strong><%= nilaiMagang.nilaiLaporan %></strong>
-            </div>
-          <% } %>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Catatan Dosen Pembimbing (opsional)</label>
+            <textarea name="catatan" rows="3" maxlength="1000" class="form-control form-control-sm"><%= (nilaiMagang && nilaiMagang.catatanDosen) ? nilaiMagang.catatanDosen : '' %></textarea>
+          </div>
 
-          <div>
-            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-save"></i> Simpan Nilai Laporan</button>
+          <div class="d-flex gap-2 flex-wrap">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-save"></i> Simpan Penilaian</button>
+            <% if (nilaiMagang && nilaiMagang.nilaiDosen !== null && nilaiMagang.nilaiDosen !== undefined) { %>
+              <a href="/dosen/magang/print-penilaian/<%= mahasiswa.id %>?periodId=<%= selectedPeriod.id %>" target="_blank" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer"></i> Cetak Form Penilaian</a>
+            <% } %>
           </div>
         </form>
         <p class="text-muted small mt-2 mb-0">
-          Rata-rata 13 indikator ini digabung dengan Nilai Logbook (di atas) dan Nilai Pendamping Lapangan (Admin) menjadi Nilai Akhir Magang.
+          Nilai ini (50%) digabung dengan Nilai Pendamping Lapangan yang diinput Admin (50%) menjadi Nilai Akhir Magang.
         </p>
-      <% } else { %>
-        <div class="text-center text-muted small py-2 border-top mt-2">
-          <i class="bi bi-lock"></i> Form Nilai Laporan baru muncul setelah minimal satu laporan di-ACC.
+        <script>
+          (function () {
+            function huruf(n) {
+              if (isNaN(n)) return '-';
+              if (n >= 86) return 'A'; if (n >= 76) return 'B+'; if (n >= 60) return 'B';
+              if (n >= 50) return 'C+'; if (n >= 25) return 'C'; if (n >= 10) return 'D'; return 'E';
+            }
+            var form = document.getElementById('formNilaiDosen');
+            if (!form) return;
+            var inputs = [].slice.call(form.querySelectorAll('.nilai-dosen-input'));
+            function r2(x) { return Math.round(x * 100) / 100; }
+            function hitung() {
+              var total = 0, lengkap = true, perKat = {};
+              inputs.forEach(function (inp) {
+                var n = parseFloat(inp.value);
+                inp.closest('tr').querySelector('.huruf-item').textContent = huruf(n);
+                var k = inp.getAttribute('data-kat');
+                perKat[k] = perKat[k] || { jml: 0, n: 0, ok: true };
+                if (isNaN(n)) { perKat[k].ok = false; lengkap = false; } else { perKat[k].jml += n; total += n; }
+                perKat[k].n++;
+              });
+              [].slice.call(form.querySelectorAll('.rata-kat')).forEach(function (td) {
+                var d = perKat[td.getAttribute('data-kat')];
+                td.textContent = (d && d.ok) ? r2(d.jml / d.n) : '-';
+              });
+              document.getElementById('totalDosen').textContent = lengkap ? r2(total) : '-';
+              document.getElementById('rataDosen').textContent = lengkap ? r2(total / inputs.length) : '-';
+            }
+            inputs.forEach(function (i) { i.addEventListener('input', hitung); });
+            hitung();
+          })();
+        </script>
+      <% } %>
+
+      <% if (selectedPeriod) { %>
+        <hr>
+        <h6 class="fw-bold mb-1"><i class="bi bi-journal-check"></i> Kartu Kontrol Bimbingan Magang</h6>
+        <p class="text-muted small mb-2">Diambil dari Lembar Konsultasi PA dengan kategori <strong>Magang</strong> (catat di menu Konsultasi pada halaman Mahasiswa PA).</p>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="/dosen/magang/print-kartu-kontrol/<%= mahasiswa.id %>?periodId=<%= selectedPeriod.id %>" target="_blank" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer"></i> Cetak Kartu Kontrol</a>
+          <a href="/dosen/mahasiswa-pa/<%= mahasiswa.id %>/konsultasi" class="btn btn-outline-primary btn-sm"><i class="bi bi-chat-left-text"></i> Catat Konsultasi</a>
         </div>
       <% } %>
     </div>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <%- include('_kop_css') %>
+  <style>
+    .judul h4 { font-size: 10.5pt; }
+    table.isi { border-collapse: collapse; font-size: 10.5pt; margin-bottom: 4px; }
+    table.isi td { padding: 1px 6px 1px 0; vertical-align: top; }
+    .catatan-kecil { font-size: 8pt; font-style: italic; font-weight: 700; margin: 8px 0 0; }
+    .kotak { border: 1px solid #000; min-height: 17cm; padding: 8px 10px; white-space: pre-wrap; font-size: 10.5pt; }
+    .ttd-lembar { margin: 8px 0 0 55%; font-size: 10.5pt; page-break-inside: avoid; }
+    .ttd-lembar .area { height: 60px; }
+  </style>
+</head>
+<body>
+<div class="halaman">
+  <%- include('_kop') %>
+
+  <div class="judul"><h4>Lembar Isian Hasil Konsultasi/Bimbingan Magang Mahasiswa</h4></div>
+
+  <table class="isi">
+    <tr><td>Hari/Tanggal</td><td>:</td><td><%= hariTanggal %></td></tr>
+    <tr><td>Agenda Konsultasi</td><td>:</td><td><%= agenda %></td></tr>
+    <tr><td>Hasil Konsultasi/Bimbingan</td><td>:</td><td></td></tr>
+  </table>
+  <p class="catatan-kecil" style="margin-top:0;">(Diisi oleh Dosen Pembimbing)</p>
+  <div class="kotak"><%= hasil %></div>
+
+  <div class="ttd-lembar">
+    Dosen Pembimbing
+    <div class="area"></div>
+    <% if (dosenPa) { %><strong style="text-decoration:underline;"><%= dosenPa.nama %></strong><% } else { %>…………………………………………<% } %><br>
+    NIDN. <%= dosenPa && dosenPa.nidn && dosenPa.nidn !== '-' ? dosenPa.nidn : '' %>
+  </div>
+</div>
+</body>
+</html>

@@ -341,69 +341,114 @@
       </div>
     </div>
 
-    <!-- Nilai Magang 3-Komponen: Laporan (Dosen PA) + Logbook (Dosen PA) + Lapangan (Admin) -->
+    <!-- Nilai Magang 2-Komponen: Dosen Pembimbing (Dosen PA) + Pendamping Lapangan (Admin) -->
     <% if (typeof nilaiMagangInfo !== 'undefined' && nilaiMagangInfo) { %>
       <div class="info-period mt-3">
-        <h6 class="mb-3"><i class="bi bi-clipboard-data"></i> Nilai Magang (3 Komponen)</h6>
+        <h6 class="mb-3"><i class="bi bi-clipboard-data"></i> Nilai Magang (2 Komponen)</h6>
         <div class="row g-2 mb-3">
-          <div class="col-md-4">
-            <div class="p-2 border rounded <%= nilaiMagangInfo.nilaiLaporan !== null ? 'bg-success-subtle' : 'bg-warning-subtle' %>">
-              <small class="text-muted d-block">Nilai Laporan (Dosen PA)</small>
-              <strong><%= nilaiMagangInfo.nilaiLaporan !== null ? nilaiMagangInfo.nilaiLaporan : 'Belum diisi' %></strong>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="p-2 border rounded <%= nilaiMagangInfo.nilaiLogbook !== null ? 'bg-success-subtle' : 'bg-warning-subtle' %>">
-              <small class="text-muted d-block">Nilai Logbook (Dosen PA)</small>
-              <strong><%= nilaiMagangInfo.nilaiLogbook !== null ? nilaiMagangInfo.nilaiLogbook : 'Belum diisi' %></strong>
-              <% if (!nilaiMagangInfo.logbookDikunci) { %>
+          <div class="col-md-6">
+            <div class="p-2 border rounded <%= nilaiMagangInfo.nilaiDosenEfektif.nilai !== null ? 'bg-success-subtle' : 'bg-warning-subtle' %>">
+              <small class="text-muted d-block">Penilaian Dosen Pembimbing (Dosen PA)</small>
+              <strong><%= nilaiMagangInfo.nilaiDosenEfektif.nilai !== null ? nilaiMagangInfo.nilaiDosenEfektif.nilai : 'Belum diisi' %></strong>
+              <% if (nilaiMagangInfo.nilaiDosenEfektif.sumber === 'lama') { %>
+                <div class="small text-muted">(rata-rata Nilai Laporan &amp; Logbook format lama)</div>
+              <% } else if (nilaiMagangInfo.nilaiDosenEfektif.nilai === null && !nilaiMagangInfo.logbookDikunci) { %>
                 <div class="small text-muted">(logbook belum dikunci Dosen PA)</div>
+              <% } %>
+              <% if (nilaiMagangInfo.nilaiDosen !== null && nilaiMagangInfo.nilaiDosen !== undefined) { %>
+                <div class="mt-1"><a href="/admin/emagang/print-penilaian/<%= mahasiswa.id %>?periodId=<%= selectedPeriod.id %>&jenis=dosen" target="_blank" class="small"><i class="bi bi-printer"></i> Cetak form</a></div>
               <% } %>
             </div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-6">
             <div class="p-2 border rounded <%= nilaiMagangInfo.nilaiLapangan !== null ? 'bg-success-subtle' : 'bg-warning-subtle' %>">
-              <small class="text-muted d-block">Nilai Pendamping Lapangan (Admin)</small>
+              <small class="text-muted d-block">Penilaian Pendamping Lapangan (Admin)</small>
               <strong><%= nilaiMagangInfo.nilaiLapangan !== null ? nilaiMagangInfo.nilaiLapangan : 'Belum diisi' %></strong>
+              <div class="mt-1"><a href="/admin/emagang/print-penilaian/<%= mahasiswa.id %>?periodId=<%= selectedPeriod.id %>&jenis=lapangan" target="_blank" class="small"><i class="bi bi-printer"></i> Cetak form<%= nilaiMagangInfo.nilaiLapangan === null ? ' kosong (untuk diisi pendamping)' : '' %></a></div>
             </div>
           </div>
         </div>
 
-        <% if (nilaiMagangInfo.nilaiLapangan === null) { %>
-          <h6 class="fw-bold mb-1 mt-2"><i class="bi bi-pencil-square"></i> Nilai Pendamping Lapangan</h6>
+        <% if (selectedPeriod.status !== 'completed') { %>
+          <h6 class="fw-bold mb-1 mt-2"><i class="bi bi-pencil-square"></i> Penilaian Pendamping Lapangan</h6>
           <p class="text-muted small mb-2">
-            Diinput Admin mewakili pendamping lapangan IDUKA (tidak punya akses sistem). Sesuai Pedoman Magang - 9 indikator, tiap indikator diisi angka 0-100.
+            Diinput Admin mewakili pendamping lapangan IDUKA (tidak punya akses sistem), dari form kertas yang sudah bertanda tangan &amp; bercap. Format baru: 10 indikator
+            (Keterampilan 2, Pengetahuan 2, Sikap Kerja 5, Laporan 1), tiap indikator diisi angka 0-100.
+            <% if (nilaiMagangInfo.nilaiLapangan !== null && nilaiMagangInfo.nilaiLapanganItems && nilaiMagangInfo.nilaiLapanganItems.disiplin === undefined) { %>
+              <br><strong class="text-warning">Nilai lama (format 9 indikator) masih berlaku. Isi lengkap lalu simpan untuk memperbarui ke format baru.</strong>
+            <% } %>
           </p>
           <form method="POST" action="/admin/emagang/mahasiswa/<%= mahasiswa.id %>/nilai-lapangan" class="mb-3">
             <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
             <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
             <%
-              const itemsPL = (nilaiMagangInfo && nilaiMagangInfo.nilaiLapanganItems) ? nilaiMagangInfo.nilaiLapanganItems : {};
-              let kategoriPL = null;
+              const itemsPL = nilaiMagangInfo.nilaiLapanganItemsForm || {};
+              const rincPL = nilaiMagangInfo.rincianLapangan;
             %>
             <div class="table-responsive">
               <table class="table table-sm align-middle">
                 <thead>
-                  <tr><th style="width:60%;">Indikator</th><th style="width:40%;">Nilai (0-100)</th></tr>
+                  <tr><th style="width:55%;">Objek Penilaian</th><th style="width:25%;">Nilai (0-100)</th><th style="width:20%;">Huruf</th></tr>
                 </thead>
                 <tbody>
-                  <% ITEM_PENDAMPING_LAPANGAN.forEach(it => { %>
-                    <% if (it.kategori !== kategoriPL) { kategoriPL = it.kategori; %>
-                      <tr class="table-light"><td colspan="2" class="fw-bold small text-uppercase text-muted"><%= it.kategori %></td></tr>
+                  <% KATEGORI_PENDAMPING.forEach(kat => { %>
+                    <tr class="table-light"><td colspan="3" class="fw-bold small text-uppercase text-muted"><%= kat %></td></tr>
+                    <% ITEM_PENDAMPING_LAPANGAN.filter(it => it.kategori === kat).forEach((it, idx, arr) => { %>
+                      <tr>
+                        <td><%= arr.length > 1 ? (idx + 1) + '. ' : '' %><%= it.label %></td>
+                        <td>
+                          <input type="number" name="item[<%= it.key %>]" data-kat="<%= kat %>" min="0" max="100" step="0.01" class="form-control form-control-sm nilai-pl-input"
+                                 value="<%= itemsPL[it.key] !== undefined ? itemsPL[it.key] : '' %>" required style="max-width:140px;">
+                        </td>
+                        <td class="huruf-item fw-semibold">-</td>
+                      </tr>
+                    <% }) %>
+                    <% if (ITEM_PENDAMPING_LAPANGAN.filter(it => it.kategori === kat).length > 1) { %>
+                      <tr>
+                        <td class="text-end small text-muted">Nilai rata-rata <%= kat %></td>
+                        <td colspan="2" class="fw-bold rata-kat" data-kat="<%= kat %>"><%= (rincPL && rincPL.perKategori[kat] !== null && rincPL.perKategori[kat] !== undefined) ? rincPL.perKategori[kat] : '-' %></td>
+                      </tr>
                     <% } %>
-                    <tr>
-                      <td><%= it.label %></td>
-                      <td>
-                        <input type="number" name="item[<%= it.key %>]" min="0" max="100" step="0.01" class="form-control form-control-sm"
-                               value="<%= itemsPL[it.key] !== undefined ? itemsPL[it.key] : '' %>" required style="max-width:140px;">
-                      </td>
-                    </tr>
                   <% }) %>
                 </tbody>
+                <tfoot>
+                  <tr class="table-light"><td class="fw-bold text-end">Total</td><td colspan="2" class="fw-bold" id="totalPL"><%= (rincPL && rincPL.total !== null) ? rincPL.total : '-' %></td></tr>
+                  <tr class="table-light"><td class="fw-bold text-end">Rata-rata Nilai Akhir</td><td colspan="2" class="fw-bold" id="rataPL"><%= (rincPL && rincPL.rataAkhir !== null) ? rincPL.rataAkhir : '-' %></td></tr>
+                </tfoot>
               </table>
             </div>
-            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-save"></i> Simpan Nilai Pendamping Lapangan</button>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Catatan Pembimbing/Pendamping Industri (opsional)</label>
+              <textarea name="catatan" rows="2" maxlength="1000" class="form-control form-control-sm"><%= nilaiMagangInfo.catatanLapangan || '' %></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-save"></i> Simpan Penilaian Pendamping Lapangan</button>
           </form>
+          <script>
+            (function () {
+              function huruf(n) { if (isNaN(n)) return '-'; if (n >= 86) return 'A'; if (n >= 76) return 'B+'; if (n >= 60) return 'B'; if (n >= 50) return 'C+'; if (n >= 25) return 'C'; if (n >= 10) return 'D'; return 'E'; }
+              var inputs = [].slice.call(document.querySelectorAll('.nilai-pl-input'));
+              function r2(x) { return Math.round(x * 100) / 100; }
+              function hitung() {
+                var total = 0, lengkap = true, perKat = {};
+                inputs.forEach(function (inp) {
+                  var n = parseFloat(inp.value);
+                  inp.closest('tr').querySelector('.huruf-item').textContent = huruf(n);
+                  var k = inp.getAttribute('data-kat');
+                  perKat[k] = perKat[k] || { jml: 0, n: 0, ok: true };
+                  if (isNaN(n)) { perKat[k].ok = false; lengkap = false; } else { perKat[k].jml += n; total += n; }
+                  perKat[k].n++;
+                });
+                [].slice.call(document.querySelectorAll('.rata-kat')).forEach(function (td) {
+                  var d = perKat[td.getAttribute('data-kat')];
+                  if (td.closest('form')) td.textContent = (d && d.ok) ? r2(d.jml / d.n) : '-';
+                });
+                document.getElementById('totalPL').textContent = lengkap ? r2(total) : '-';
+                document.getElementById('rataPL').textContent = lengkap ? r2(total / inputs.length) : '-';
+              }
+              inputs.forEach(function (i) { i.addEventListener('input', hitung); });
+              hitung();
+            })();
+          </script>
         <% } %>
 
         <% if (nilaiMagangInfo.hasil.nilaiAkhir !== null) { %>

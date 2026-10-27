@@ -77,64 +77,26 @@
   <% if (pdkList.length > 0) { %>
     <% if (adaYangAcc) { %>
       <div class="nilai-card">
-        <h5 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> Nilai Laporan</h5>
+        <h5 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> Penilaian Dosen Pembimbing</h5>
         <p class="text-muted small mb-3">
-          Sesuai Pedoman Magang - 13 indikator (Laporan, Pengetahuan, Presentasi Magang), tiap indikator diisi angka 0-100.
+          Sesuai format penilaian terbaru, nilai laporan tidak lagi diisi terpisah. Laporan, Kepribadian, dan Pengetahuan
+          (18 indikator) diisi dalam <strong>satu Form Penilaian Dosen Pembimbing</strong> di halaman Logbook/Magang mahasiswa.
+          Form ini aktif setelah laporan di-ACC <em>dan</em> logbook dikunci.
         </p>
-        <form method="POST" action="/dosen/laporan-review/mahasiswa/<%= mahasiswa.id %>/nilai">
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Periode Magang (PDK)</label>
-            <select name="pdkId" class="form-select" style="max-width:420px;">
-              <% pdkList.forEach(p => { %>
-                <option value="<%= p.pdkId %>" <%= p.pdkId === pdkIdDipilih ? 'selected' : '' %>><%= p.pdkKode %> - <%= p.pdkNama %></option>
-              <% }) %>
-            </select>
+        <% if (nilaiDosenEfektif && nilaiDosenEfektif.nilai !== null) { %>
+          <div class="alert alert-primary d-inline-block px-3 py-2 mb-3">
+            Nilai Dosen Pembimbing saat ini: <strong><%= nilaiDosenEfektif.nilai %></strong>
+            <% if (nilaiDosenEfektif.sumber === 'lama') { %><small class="d-block text-muted">dihitung dari Nilai Laporan &amp; Logbook format lama</small><% } %>
           </div>
-
-          <%
-            const items = (nilaiMagang && nilaiMagang.nilaiLaporanItems) ? nilaiMagang.nilaiLaporanItems : {};
-            let kategoriSaatIni = null;
-          %>
-          <div class="table-responsive">
-            <table class="table table-sm align-middle">
-              <thead>
-                <tr><th style="width:60%;">Indikator</th><th style="width:40%;">Nilai (0-100)</th></tr>
-              </thead>
-              <tbody>
-                <% ITEM_NILAI_LAPORAN.forEach(it => { %>
-                  <% if (it.kategori !== kategoriSaatIni) { kategoriSaatIni = it.kategori; %>
-                    <tr class="table-light"><td colspan="2" class="fw-bold small text-uppercase text-muted"><%= it.kategori %></td></tr>
-                  <% } %>
-                  <tr>
-                    <td><%= it.label %></td>
-                    <td>
-                      <input type="number" name="item[<%= it.key %>]" min="0" max="100" step="0.01" class="form-control form-control-sm"
-                             value="<%= items[it.key] !== undefined ? items[it.key] : '' %>" required style="max-width:140px;">
-                    </td>
-                  </tr>
-                <% }) %>
-              </tbody>
-            </table>
-          </div>
-
-          <% if (nilaiMagang && nilaiMagang.nilaiLaporan !== null && nilaiMagang.nilaiLaporan !== undefined) { %>
-            <div class="alert alert-primary d-inline-block px-3 py-2 mb-3">
-              Rata-rata saat ini: <strong><%= nilaiMagang.nilaiLaporan %></strong>
-            </div>
-          <% } %>
-
-          <div>
-            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Simpan Nilai Laporan</button>
-          </div>
-        </form>
-        <p class="text-muted small mt-3 mb-0">
-          Rata-rata 13 indikator ini akan digabung dengan Nilai Logbook (diisi di halaman logbook mahasiswa) dan Nilai Pendamping Lapangan (Admin) menjadi Nilai Akhir Magang.
-        </p>
+        <% } %>
+        <div>
+          <a href="/dosen/magang/<%= mahasiswa.id %>" class="btn btn-primary"><i class="bi bi-arrow-right-circle"></i> Buka Form Penilaian</a>
+        </div>
       </div>
     <% } else { %>
       <div class="nilai-locked">
         <i class="bi bi-lock fs-3 d-block mb-2"></i>
-        Form Nilai Laporan baru muncul setelah minimal satu laporan di-ACC.
+        Form Penilaian Dosen Pembimbing baru bisa diisi setelah minimal satu laporan di-ACC.
       </div>
     <% } %>
   <% } %>

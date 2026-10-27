@@ -3,8 +3,9 @@
  * Monitoring magang untuk dosen PEMBIMBING (= Dosen PA mahasiswa).
  *
  * REVISI: Pembimbing 1 & 2 ditiadakan. Hanya ada SATU pembimbing, yaitu Dosen
- * PA (users.dosenPaId). Dosen PA menyetujui/menolak/mengunci logbook, mengisi
- * Nilai Logbook, serta meninjau laporan & mengisi Nilai Laporan.
+ * PA (users.dosenPaId). Dosen PA menyetujui/menolak/mengunci logbook, meninjau
+ * laporan, dan mengisi FORM PENILAIAN DOSEN PEMBIMBING (18 indikator - format
+ * baru, menggantikan Nilai Laporan + Nilai Logbook yang dulu terpisah).
  * 
  * OPTIMASI: Gunakan Promise.all untuk paralelisasi query, tanpa mengubah logika bisnis.
  */
@@ -18,13 +19,17 @@ const { paginate } = require('../../helpers/pagination');
 const { getSemesterListLogbook } = require('../../helpers/cache');
 const LOGBOOK_PAGE_SIZE = 10;
 const {
-  ITEM_NILAI_LAPORAN,
-  ITEM_NILAI_LOGBOOK,
+  ITEM_NILAI_DOSEN,
+  daftarKategori,
+  hitungRincian,
   getNilaiMagang,
+  getNilaiDosenEfektif,
   kunciLogbookMagang,
   bukaKunciLogbookMagang,
-  savePenilaianLogbook
+  savePenilaianDosen
 } = require('../../helpers/nilaiMagangHelper');
+const { buildFormPenilaianData } = require('../../helpers/formPenilaianMagangHelper');
+const { buildKartuKontrolData } = require('../../helpers/kartuKontrolMagangHelper');
 const { buildLogbookPrintData } = require('../../helpers/logbookPrintHelper');
 const {
   ROLE_PEMBIMBING,
@@ -386,8 +391,8 @@ router.get('/:userId', async (req, res) => {
       pdkStats.push({ ...period, ...stats });
     }
     
-    // Nilai Magang (3 komponen: laporan/logbook/lapangan) - hanya relevan
-    // kalau ada periode magang yang dipilih.
+    // Nilai Magang (2 komponen: Dosen Pembimbing + Pendamping Lapangan) - hanya
+    // relevan kalau ada periode magang yang dipilih.
     const nilaiMagang = selectedPeriod ? await getNilaiMagang(userId, selectedPeriod.pdkId) : null;
 
     res.render('dosen/magang_detail', {
@@ -404,8 +409,10 @@ router.get('/:userId', async (req, res) => {
       isPembimbing,
       pembimbingNama: req.dosen.nama,
       nilaiMagang,
-      ITEM_NILAI_LOGBOOK,
-      ITEM_NILAI_LAPORAN,
+      nilaiDosenEfektif: getNilaiDosenEfektif(nilaiMagang),
+      rincianDosen: nilaiMagang ? hitungRincian(nilaiMagang.nilaiDosenItems, ITEM_NILAI_DOSEN) : null,
+      ITEM_NILAI_DOSEN,
+      KATEGORI_NILAI_DOSEN: daftarKategori(ITEM_NILAI_DOSEN),
       laporanList,
       adaLaporanYangAcc,
       user: req.user,
@@ -421,8 +428,8 @@ router.get('/:userId', async (req, res) => {
 
 // ============================================================================
 // KUNCI LOGBOOK (Pembimbing/Dosen PA) - kunci KESELURUHAN logbook periode magang
-// ini, menandai "sudah selesai ditinjau". Setelah dikunci, baru bisa isi
-// Nilai Logbook. Beda dari "Setujui 1 Minggu" yang cuma menyetujui entri
+// ini, menandai "sudah selesai ditinjau". Setelah dikunci (dan laporan di-ACC),
+// baru bisa isi Form Penilaian Dosen Pembimbing. Beda dari "Setujui 1 Minggu" yang cuma menyetujui entri
 // harian - ini kunci final utk satu periode magang penuh.
 // ============================================================================
 router.post('/:userId/kunci-logbook', async (req, res) => {
@@ -437,7 +444,7 @@ router.post('/:userId/kunci-logbook', async (req, res) => {
     }
 
     await kunciLogbookMagang(userId, pdkId, req.dosen.id);
-    req.session.success = 'Logbook berhasil dikunci. Nilai Logbook sekarang bisa diisi.';
+    req.session.success = 'Logbook berhasil dikunci. Form Penilaian Dosen Pembimbing bisa diisi setelah laporan di-ACC.';
     res.redirect(`/dosen/magang/${userId}?periodId=${req.body.periodId || ''}`);
   } catch (error) {
     console.error('Error kunci logbook magang:', error);
@@ -469,43 +476,60 @@ router.post('/:userId/buka-kunci-logbook', async (req, res) => {
 });
 
 // ============================================================================
-// SIMPAN NILAI LOGBOOK (Pembimbing/Dosen PA) - hanya boleh kalau sudah dikunci
+// SIMPAN PENILAIAN DOSEN PEMBIMBING (Dosen PA) - 18 indikator (format baru).
+// Prasyarat: minimal satu laporan di-ACC DAN logbook sudah dikunci.
 // ============================================================================
-router.post('/:userId/nilai-logbook', async (req, res) => {
+router.post('/:userId/nilai-dosen', async (req, res) => {
+  const { userId } = req.params;
+  const kembali = `/dosen/magang/${userId}?periodId=${encodeURIComponent(req.body.periodId || '')}`;
   try {
-    const { userId } = req.params;
     const { pdkId } = req.body;
     if (!pdkId) return res.status(400).send('Periode magang (PDK) tidak diketahui');
 
     const { isBimbingan } = await isMahasiswaBimbingan(req.dosen.id, userId);
     if (!isBimbingan) {
-      return res.status(403).send('Hanya Dosen Pembimbing (Dosen PA) mahasiswa ini yang dapat mengisi Nilai Logbook');
+      return res.status(403).send('Hanya Dosen Pembimbing (Dosen PA) mahasiswa ini yang dapat mengisi penilaian');
     }
 
     const nilaiMagang = await getNilaiMagang(userId, pdkId);
     if (!nilaiMagang.logbookDikunci) {
-      return res.status(400).send('Kunci logbook dulu sebelum mengisi nilainya');
+      req.session.error = 'Kunci logbook dulu sebelum mengisi penilaian.';
+      return res.redirect(kembali);
+    }
+    const laporanAcc = await db.collection('laporanMagang')
+      .where('userId', '==', userId).get();
+    if (!laporanAcc.docs.some(d => d.data().status === 'approved')) {
+      req.session.error = 'Laporan mahasiswa ini belum di-ACC - ACC dulu sebelum memberi penilaian.';
+      return res.redirect(kembali);
     }
 
-    // Kumpulkan skor indikator Nilai Logbook (lihat ITEM_NILAI_LOGBOOK) dari body form.
+    // Kumpulkan skor 18 indikator (lihat ITEM_NILAI_DOSEN) dari body form.
     const itemScores = {};
-    for (const it of ITEM_NILAI_LOGBOOK) {
+    for (const it of ITEM_NILAI_DOSEN) {
       const v = req.body.item ? req.body.item[it.key] : undefined;
       const angka = parseFloat(v);
       if (v === undefined || v === '' || isNaN(angka) || angka < 0 || angka > 100) {
-        return res.status(400).send(`Isi semua ${ITEM_NILAI_LOGBOOK.length} indikator dengan angka 0-100 (indikator "${it.label}" belum valid).`);
+        req.session.error = `Isi semua ${ITEM_NILAI_DOSEN.length} indikator dengan angka 0-100 (indikator "${it.label}" belum valid).`;
+        return res.redirect(kembali);
       }
       itemScores[it.key] = angka;
     }
 
-    await savePenilaianLogbook(userId, pdkId, itemScores, req.dosen.id);
-    req.session.success = 'Nilai Logbook berhasil disimpan.';
-    res.redirect(`/dosen/magang/${userId}?periodId=${req.body.periodId || ''}`);
+    await savePenilaianDosen(userId, pdkId, itemScores, req.dosen.id, req.body.catatan);
+
+    req.session.success = 'Penilaian Dosen Pembimbing berhasil disimpan.';
+    res.redirect(kembali);
   } catch (error) {
-    console.error('Error simpan nilai logbook:', error);
-    req.session.error = 'Gagal menyimpan nilai logbook: ' + error.message;
-    res.redirect('back');
+    console.error('Error simpan penilaian dosen pembimbing:', error);
+    req.session.error = 'Gagal menyimpan penilaian: ' + error.message;
+    res.redirect(kembali);
   }
+});
+
+// Rute lama (form terpisah Nilai Logbook) - diarahkan ke form baru
+router.post('/:userId/nilai-logbook', (req, res) => {
+  req.session.error = 'Form Nilai Logbook sudah digantikan Form Penilaian Dosen Pembimbing (format baru).';
+  res.redirect(`/dosen/magang/${req.params.userId}?periodId=${encodeURIComponent(req.body.periodId || '')}`);
 });
 
 // ============================================================================
@@ -752,6 +776,39 @@ router.get('/print/:userId', async (req, res) => {
   } catch (error) {
     console.error('Error print logbook dosen:', error);
     res.status(500).send('Gagal mencetak logbook');
+  }
+});
+
+// ============================================================================
+// CETAK FORMAT RESMI (PDF baru): Form Penilaian Dosen Pembimbing, Kartu Kontrol
+// Bimbingan, dan Lembar Isian Hasil Konsultasi. Hanya Dosen PA mahasiswa.
+// ============================================================================
+router.get('/print-penilaian/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { isBimbingan } = await isMahasiswaBimbingan(req.dosen.id, userId);
+    if (!isBimbingan) return res.status(403).send('Anda tidak memiliki akses ke mahasiswa ini.');
+    const data = await buildFormPenilaianData(userId, req.query.periodId, 'dosen');
+    if (!data) return res.status(404).send('Data mahasiswa tidak ditemukan');
+    res.render('magang/form_penilaian_print', data);
+  } catch (error) {
+    console.error('Error cetak form penilaian dosen:', error);
+    res.status(500).send('Gagal mencetak form penilaian');
+  }
+});
+
+router.get('/print-kartu-kontrol/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { isBimbingan } = await isMahasiswaBimbingan(req.dosen.id, userId);
+    if (!isBimbingan) return res.status(403).send('Anda tidak memiliki akses ke mahasiswa ini.');
+    const lembarBase = `/dosen/magang/print-kartu-kontrol/${userId}?periodId=${encodeURIComponent(req.query.periodId || '')}&kid=`;
+    const data = await buildKartuKontrolData(userId, req.query.periodId, req.query.kid || null, lembarBase);
+    if (!data) return res.status(404).send('Data mahasiswa tidak ditemukan');
+    res.render(req.query.kid ? 'magang/lembar_konsultasi_print' : 'magang/kartu_kontrol_print', data);
+  } catch (error) {
+    console.error('Error cetak kartu kontrol magang:', error);
+    res.status(500).send('Gagal mencetak kartu kontrol');
   }
 });
 

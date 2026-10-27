@@ -10,6 +10,7 @@ const { verifyToken } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getPembimbingMahasiswa } = require('../../helpers/pembimbingHelper');
 const { getKonsultasiMahasiswa, buildPrintData } = require('../../helpers/konsultasiPaHelper');
+const { buildKartuKontrolData } = require('../../helpers/kartuKontrolMagangHelper');
 
 router.use(verifyToken);
 
@@ -43,6 +44,31 @@ router.get('/print', async (req, res) => {
     res.render('konsultasi_pa_print', data);
   } catch (error) {
     console.error('Error mencetak lembar konsultasi mahasiswa:', error);
+    res.status(500).send('Gagal mencetak lembar konsultasi');
+  }
+});
+
+// GET /mahasiswa/konsultasi-pa/magang/kartu-kontrol - Kartu Kontrol Bimbingan Magang
+// (format resmi; isi = konsultasi PA berkategori Magang). Hanya milik sendiri.
+router.get('/magang/kartu-kontrol', async (req, res) => {
+  try {
+    const data = await buildKartuKontrolData(req.user.id, req.query.periodId, null, '/mahasiswa/konsultasi-pa/magang/lembar/');
+    if (!data) return res.status(404).send('Data mahasiswa tidak ditemukan');
+    res.render('magang/kartu_kontrol_print', data);
+  } catch (error) {
+    console.error('Error mencetak kartu kontrol magang:', error);
+    res.status(500).send('Gagal mencetak kartu kontrol');
+  }
+});
+
+// GET /mahasiswa/konsultasi-pa/magang/lembar/:kid - Lembar Isian Hasil Konsultasi satu pertemuan
+router.get('/magang/lembar/:kid', async (req, res) => {
+  try {
+    const data = await buildKartuKontrolData(req.user.id, req.query.periodId, req.params.kid);
+    if (!data) return res.status(404).send('Data konsultasi tidak ditemukan');
+    res.render('magang/lembar_konsultasi_print', data);
+  } catch (error) {
+    console.error('Error mencetak lembar konsultasi magang:', error);
     res.status(500).send('Gagal mencetak lembar konsultasi');
   }
 });

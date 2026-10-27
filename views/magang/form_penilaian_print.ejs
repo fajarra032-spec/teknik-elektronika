@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <%- include('_kop_css') %>
+  <style>
+    .judul h4 { text-decoration: underline; }
+    table.nilai { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-top: 4px; }
+    table.nilai th, table.nilai td { border: 1px solid #000; padding: 3px 6px; vertical-align: middle; }
+    table.nilai th { text-align: center; font-weight: 700; }
+    table.nilai td.skala { width: 6.4%; text-align: center; height: 22px; font-weight: 700; }
+    table.nilai td.rata { width: 11%; text-align: center; font-weight: 700; }
+    table.nilai tr.kat td { font-weight: 700; }
+    table.nilai tr { page-break-inside: avoid; }
+    table.bawah { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    table.bawah td { border: 1px solid #000; padding: 4px 6px; vertical-align: top; }
+    table.bawah .ket div { margin-left: 14px; }
+    table.bawah .ket ol { margin: 2px 0 0; padding-left: 16px; }
+    .box-nilai { font-weight: 700; }
+    .ttd { text-align: center; }
+    .ttd .area { height: 64px; }
+  </style>
+</head>
+<body>
+<%
+  const dosen = jenis === 'dosen';
+  const kolom = skala.length;
+  const fmtAngka = (n) => (n === null || n === undefined) ? '' : String(n).replace('.', ',');
+%>
+<div class="halaman">
+  <%- include('_kop') %>
+
+  <div class="judul">
+    <h4>Form Penilaian Magang Industri</h4>
+    <div class="sub">(form ini diisi oleh <%= dosen ? 'Dosen Pembimbing' : 'pendamping magang di Industri' %>)</div>
+  </div>
+
+  <table class="identitas">
+    <tr><td>Nama</td><td class="sep">:</td><td><%= mahasiswa.nama || '' %></td></tr>
+    <tr><td>NIM</td><td class="sep">:</td><td><%= mahasiswa.nim || '' %></td></tr>
+    <tr><td>Prodi</td><td class="sep">:</td><td><%= prodi %></td></tr>
+    <tr><td>Lokasi Magang</td><td class="sep">:</td><td><%= lokasi %></td></tr>
+    <tr><td>Waktu Magang</td><td class="sep">:</td><td><%= mulai %><% if (mulai || selesai) { %> &nbsp;s/d&nbsp; <% } else { %><span style="display:inline-block;width:120px"></span> s/d <% } %><%= selesai %></td></tr>
+    <tr><td>Semester</td><td class="sep">:</td><td><%= semester %></td></tr>
+  </table>
+
+  <table class="nilai">
+    <thead>
+      <tr>
+        <th rowspan="2" style="width:<%= dosen ? '38' : '36' %>%;">Objek Penilaian</th>
+        <th colspan="<%= kolom %>">Skala Penilaian</th>
+        <th rowspan="2" style="width:11%;">Nilai<br>Rata-rata</th>
+      </tr>
+      <tr><% skala.forEach(function (h) { %><th><%= h %></th><% }) %></tr>
+    </thead>
+    <tbody>
+      <% kategori.forEach(function (k) { %>
+        <% if (k.tunggal) { %>
+          <tr class="kat">
+            <td><%= k.nama %></td>
+            <% skala.forEach(function (h) { %><td class="skala"><%= (k.items[0].huruf === h) ? fmtAngka(k.items[0].nilai) : '' %></td><% }) %>
+            <td class="rata"><%= fmtAngka(k.rata) %></td>
+          </tr>
+        <% } else { %>
+          <tr class="kat"><td colspan="<%= kolom + 1 %>"><%= k.nama %></td><td class="rata" rowspan="<%= k.items.length + 1 %>"><%= fmtAngka(k.rata) %></td></tr>
+          <% k.items.forEach(function (it, i) { %>
+            <tr>
+              <td><%= i + 1 %>. &nbsp;<%= it.label %></td>
+              <% skala.forEach(function (h) { %><td class="skala"><%= (it.huruf === h) ? fmtAngka(it.nilai) : '' %></td><% }) %>
+            </tr>
+          <% }) %>
+        <% } %>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <table class="bawah" style="margin-top:-1px;">
+    <tr>
+      <td style="width:68%; height:70px;">
+        <%= dosen ? 'Catatan Dosen Pembimbing' : 'Catatan Pembimbing/Pendamping Industri:' %>
+        <div style="margin-top:3px; white-space:pre-wrap; font-size:9pt;"><%= catatan %></div>
+      </td>
+      <td class="box-nilai">
+        Total: <%= fmtAngka(total) %>
+        <div style="margin-top:16px;">Rata-rata Nilai Akhir: <%= fmtAngka(rataAkhir) %></div>
+      </td>
+    </tr>
+  </table>
+
+  <table class="bawah" style="margin-top:-1px;">
+    <tr>
+      <td class="ket" style="width:55%;">
+        Keterangan:
+        <div>a. &nbsp;Nilai: &nbsp;A &nbsp; = &nbsp;86 – 100</div>
+        <div style="margin-left:62px;">B+ &nbsp;= &nbsp;76 – 85<br>B &nbsp; &nbsp;= &nbsp;60 – 75<br>C+ &nbsp;= &nbsp;50 – 59<br>C &nbsp; &nbsp;= &nbsp;25 – 49<br>D &nbsp; &nbsp;= &nbsp;10 – 24<br>E &nbsp; &nbsp;= &nbsp;&lt;10</div>
+        <div>b. &nbsp;Penilaian ini berisi angka, peletakan sesuai dengan Batasan pada keterangan.</div>
+        <% if (dosen) { %>
+          <div>c. &nbsp;Penilaian dilakukan secara subjektif.</div>
+          <div>d. &nbsp;Keabsahan penilaian apabila ada tanda tangan asli dosen pembimbing</div>
+        <% } else { %>
+          <div>c. &nbsp;Penilaian akhir dapat diberikan langsung kepada mahasiswa dalam amplop tertutup atau dikirimkan/disampaikan kepada dosen pembimbing dalam bentuk jpg/pdf</div>
+          <div>d. &nbsp;Keabsahan penilaian apabila ada tanda tangan asli pembimbing/pendamping industri atau yang diberikan wewenang serta ada cap</div>
+        <% } %>
+      </td>
+      <td class="ttd">
+        <div style="text-align:left;"><% if (!dosen) { %>Tempat:<br><% } %>Tanggal:</div>
+        <div style="margin-top:10px;"><%= dosen ? 'Dosen Pembimbing,' : 'Pembimbing/Pendamping Industri,' %></div>
+        <div class="area"></div>
+        <% if (dosen) { %>
+          (<%= dosenPa ? dosenPa.nama : '……………………………….' %>)<br>
+          <span style="display:block;text-align:left;margin-top:2px;">NIDN. <%= dosenPa && dosenPa.nidn && dosenPa.nidn !== '-' ? dosenPa.nidn : '' %></span>
+        <% } else { %>
+          (<%= pendamping || '…………..………………….' %>)
+        <% } %>
+      </td>
+    </tr>
+  </table>
+
+  <div class="cetak-info no-print">Dicetak: <%= generatedAt %> melalui sistem informasi akademik</div>
+</div>
+</body>
+</html>
