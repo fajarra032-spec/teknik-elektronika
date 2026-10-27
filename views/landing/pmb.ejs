@@ -28,8 +28,69 @@
     ]
   };
   const rp = n => 'Rp' + Number(n).toLocaleString('id-ID');
+  const semuaProdi = pmb.d3.map(p => 'D3 ' + p.nama).concat(pmb.d4.map(p => p.nama + ' (' + p.gelar + ')'));
+  const faq = [
+    { q: 'Apa saja program studi yang dibuka pada PMB Politeknik Dewantara Gelombang II 2027/2028?',
+      a: 'Program Diploma Tiga (A.Md.T): Teknik Sipil, Mesin Otomotif, dan Teknik Elektronika. Program Sarjana Terapan: Teknologi Rekayasa Multimedia (S.Tr.Kom), Teknologi Rekayasa Pangan (S.Tr.P), Arsitektur Bangunan Gedung (S.Tr.Ars), dan Teknologi Pertambangan (Metalurgi) (S.Tr.T).' },
+    { q: 'Berapa biaya pendaftaran dan SPP di Politeknik Dewantara?',
+      a: 'Biaya pendaftaran Rp200.000. SPP Rp1.200.000 untuk Teknik Sipil, Mesin Otomotif, Teknik Elektronika, Teknologi Rekayasa Multimedia, Teknologi Rekayasa Pangan, dan Arsitektur Bangunan Gedung, sedangkan Teknologi Pertambangan (Metalurgi) Rp1.800.000.' },
+    { q: 'Apakah tersedia beasiswa di Politeknik Dewantara?',
+      a: 'Ya, tersedia beasiswa bagi calon mahasiswa yang kurang mampu dan berprestasi. Pilih jalur Beasiswa pada formulir pendaftaran online, lalu bergabung ke grup WhatsApp sesuai jenis beasiswa (KIP Kuliah, Tahfidz, Kredit Mahasiswa, atau Prestasi).' },
+    { q: 'Bagaimana cara mendaftar kuliah di Politeknik Dewantara?',
+      a: 'Pilih program studi, transfer biaya pendaftaran Rp200.000 ke rekening resmi Politeknik Dewantara, isi formulir pendaftaran online dan unggah bukti transfer, lalu konfirmasi melalui WhatsApp ke ' + pmb.kontak.tampil + ' (' + pmb.kontak.nama + ').' },
+    { q: 'Di mana lokasi Politeknik Dewantara dan siapa yang bisa dihubungi?',
+      a: 'Politeknik Dewantara berada di Palopo, Sulawesi Selatan. Informasi PMB dapat ditanyakan ke ' + pmb.kontak.nama + ', ' + pmb.kontak.jabatan + ', WhatsApp ' + pmb.kontak.tampil + ', atau Instagram @pmbpoliteknikdewantara.' }
+  ];
+  const BASE = 'https://elektronika.polidewa.ac.id';
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollegeOrUniversity',
+      '@id': BASE + '/pmb#org',
+      name: 'Politeknik Dewantara',
+      alternateName: 'Polidewa',
+      url: 'https://polidewa.ac.id',
+      logo: 'https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png',
+      image: BASE + '/images/pmb-gelombang2-2027-2028.jpg',
+      address: { '@type': 'PostalAddress', addressLocality: 'Palopo', addressRegion: 'Sulawesi Selatan', addressCountry: 'ID' },
+      sameAs: pmb.instagram.map(i => i.url),
+      contactPoint: { '@type': 'ContactPoint', telephone: pmb.kontak.tel, contactType: 'admissions', areaServed: 'ID', availableLanguage: 'id', name: pmb.kontak.nama }
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      '@id': BASE + '/pmb',
+      url: BASE + '/pmb',
+      name: 'PMB Politeknik Dewantara ' + pmb.gelombang + ' ' + pmb.tahunAkademik,
+      inLanguage: 'id-ID',
+      primaryImageOfPage: BASE + '/images/pmb-gelombang2-2027-2028.jpg',
+      isPartOf: { '@type': 'WebSite', name: 'Teknik Elektronika Politeknik Dewantara', url: BASE },
+      about: { '@id': BASE + '/pmb#org' }
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: 'Program Studi PMB Politeknik Dewantara ' + pmb.tahunAkademik,
+      itemListElement: semuaProdi.map((n, i) => ({ '@type': 'ListItem', position: i + 1, name: n }))
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Beranda', item: BASE + '/' },
+        { '@type': 'ListItem', position: 2, name: 'PMB', item: BASE + '/pmb' }
+      ]
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faq.map(f => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } }))
+    }
+  ];
 %>
 <%- include('../partials/header-landing') %>
+<% jsonLd.forEach(function(o){ %><script type="application/ld+json"><%- JSON.stringify(o).replace(/</g, '\\u003c') %></script>
+<% }); %>
 
 <style>
     :root {
@@ -279,6 +340,18 @@
         padding: .8rem 1rem; font-size: .9rem;
     }
 
+    /* ===== FAQ ===== */
+    .faq-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; margin-bottom: .75rem; overflow: hidden; }
+    .faq-item summary {
+        cursor: pointer; list-style: none; padding: 1rem 1.25rem; font-weight: 700; color: var(--pmb-ink);
+        display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after { content: '\F282'; font-family: 'bootstrap-icons'; color: var(--pmb-blue); transition: transform .2s; flex: 0 0 auto; }
+    .faq-item[open] summary::after { transform: rotate(180deg); }
+    .faq-item[open] summary { color: var(--pmb-blue); }
+    .faq-item .faq-a { padding: 0 1.25rem 1.1rem; color: #475569; font-size: .95rem; }
+
     /* ===== FLOATING WA ===== */
     .wa-float {
         position: fixed; right: 18px; bottom: 18px; z-index: 1040;
@@ -328,7 +401,7 @@
                 </div>
                 <div class="col-lg-5">
                     <a class="hero-flyer" href="/images/pmb-gelombang2-2027-2028.jpg" target="_blank" rel="noopener" aria-label="Lihat flyer PMB ukuran penuh">
-                        <img src="/images/pmb-gelombang2-2027-2028.jpg" alt="Flyer Penerimaan Mahasiswa Baru Gelombang II Tahun Akademik 2027/2028 Politeknik Dewantara">
+                        <img src="/images/pmb-gelombang2-2027-2028.jpg" width="1024" height="1280" fetchpriority="high" decoding="async" alt="Flyer Penerimaan Mahasiswa Baru Gelombang II Tahun Akademik 2027/2028 Politeknik Dewantara">
                         <span class="zoom-tip"><i class="bi bi-zoom-in"></i> Flyer</span>
                     </a>
                 </div>
@@ -499,6 +572,20 @@
                     <% }); %>
                 </div>
             </div>
+        </section>
+
+        <!-- ===== FAQ ===== -->
+        <section class="pmb-section" id="faq">
+            <div class="sec-head">
+                <div class="tag">FAQ</div>
+                <h2>Pertanyaan yang sering diajukan</h2>
+            </div>
+            <% faq.forEach(function(f, i){ %>
+            <details class="faq-item" <%= i === 0 ? 'open' : '' %>>
+                <summary><%= f.q %></summary>
+                <div class="faq-a"><%= f.a %></div>
+            </details>
+            <% }); %>
         </section>
 
         <!-- ===== FORMULIR ===== -->

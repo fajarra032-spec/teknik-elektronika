@@ -84,6 +84,7 @@ Disallow: /mahasiswa
 Disallow: /dosen
 Disallow: /auth
 Disallow: /webhook
+Disallow: /pmb/submit
 Disallow: /*?*search=
 Disallow: /*?*page=
 
@@ -152,6 +153,7 @@ app.get('/sitemap.xml', async (req, res) => {
   // URL Statis
   const staticUrls = [
     { url: '/', changefreq: 'daily', priority: 1.0 },
+    { url: '/pmb', changefreq: 'daily', priority: 0.9 },
     { url: '/panduan', changefreq: 'monthly', priority: 0.7 },
     { url: '/display', changefreq: 'weekly', priority: 0.6 },
     { url: '/ic3', changefreq: 'weekly', priority: 0.7 },

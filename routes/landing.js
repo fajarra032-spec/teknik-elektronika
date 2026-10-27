@@ -1025,7 +1025,15 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage, limits: { fileSize: 2 * 1024 * 1024 }, fileFilter });
 
 router.get('/pmb', (req, res) => {
-  res.render('landing/pmb', { title: 'Pendaftaran Mahasiswa Baru - Polidewa', user: req.user || null });
+  const base = 'https://elektronika.polidewa.ac.id';
+  res.render('landing/pmb', {
+    title: 'PMB Politeknik Dewantara 2027/2028 Gelombang II',
+    description: 'Pendaftaran mahasiswa baru Politeknik Dewantara Palopo Gelombang II TA 2027/2028. 3 prodi D3 dan 4 prodi Sarjana Terapan, SPP mulai Rp1.200.000, biaya pendaftaran Rp200.000, tersedia beasiswa. Daftar online sekarang.',
+    keywords: 'PMB Politeknik Dewantara, pendaftaran mahasiswa baru Palopo, Politeknik Dewantara 2027/2028, kuliah D3 Palopo, D3 Teknik Elektronika, Teknik Sipil, Mesin Otomotif, beasiswa kuliah Palopo, Sarjana Terapan',
+    ogImage: base + '/images/pmb-gelombang2-2027-2028.jpg',
+    ogImageAlt: 'Flyer Penerimaan Mahasiswa Baru Gelombang II 2027/2028 Politeknik Dewantara',
+    user: req.user || null
+  });
 });
 
 router.post('/pmb/submit', upload.single('bukti_pembayaran'), async (req, res) => {
@@ -1057,6 +1065,8 @@ router.post('/pmb/submit', upload.single('bukti_pembayaran'), async (req, res) =
 
     res.render('landing/pmb_success', {
       title: 'Pendaftaran Berhasil - Politeknik Dewantara',
+      robotsMeta: 'noindex, nofollow',
+      canonicalUrl: 'https://elektronika.polidewa.ac.id/pmb',
       user: req.user || null,
       nama, jenis_kelamin, nis, asal_sekolah, wa, jurusan, jalur
     });

@@ -1,13 +1,17 @@
-PATCH TAMPILAN PMB - Gelombang II TA 2027/2028
-==============================================
-Salin ke folder proyek (struktur folder sama), timpa file lama:
+PATCH PMB GELOMBANG II TA 2027/2028 + SEO GOOGLE
+================================================
+Salin ke folder proyek (struktur sama), timpa file lama:
 
-  views/landing/pmb.ejs                         TIMPA  (halaman PMB dirombak total)
-  views/landing/pmb_success.ejs                 TIMPA  (kontak Fajar Ramadhan, WA terisi otomatis)
-  views/landing/index.ejs                       TIMPA  (teks tombol beranda)
-  public/images/pmb-gelombang2-2027-2028.jpg    BARU   (flyer, tampil di hero)
+  views/landing/pmb.ejs                         TIMPA  (halaman PMB + JSON-LD + FAQ)
+  views/landing/pmb_success.ejs                 TIMPA
+  views/landing/index.ejs                       TIMPA
+  views/partials/header-landing.ejs             TIMPA  (og:url, twitter card, keywords, locale)
+  routes/landing.js                             TIMPA  (meta SEO /pmb; halaman sukses noindex)
+  app.js                                        TIMPA  (/pmb masuk sitemap.xml; robots: Disallow /pmb/submit)
+  public/images/pmb-gelombang2-2027-2028.jpg    BARU   (flyer, juga jadi gambar pratinjau share)
 
-Tidak ada perubahan di route / database. Nama field form tetap sama.
-Restart server lalu buka /pmb (Ctrl+F5).
-
-Data (prodi, SPP, kontak, Instagram) ada di blok <% const pmb = {...} %> paling atas pmb.ejs.
+Restart server, lalu:
+  1. Cek https://elektronika.polidewa.ac.id/sitemap.xml  -> harus ada /pmb
+  2. Google Search Console -> Inspeksi URL -> /pmb -> "Minta pengindeksan"
+  3. Search Console -> Sitemap -> kirim sitemap.xml (jika belum)
+  4. Uji: search.google.com/test/rich-results  (FAQ, breadcrumb)
