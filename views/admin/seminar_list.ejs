@@ -1,75 +1,78 @@
 <%- include('../partials/header') %>
+<link rel="stylesheet" href="/css/lab-ui.css?v=2">
+<%
+  const tabs = [['pending', 'Menunggu verifikasi', hitung.pending, true], ['approved', 'Dijadwalkan', hitung.approved, false], ['rejected', 'Ditolak', hitung.rejected, false], ['dibatalkan', 'Dibatalkan', hitung.dibatalkan, false], ['semua', 'Semua', hitung.semua, false]];
+  const pil = { pending: ['wait', 'Menunggu'], approved: ['ok', 'Dijadwalkan'], rejected: ['bad', 'Ditolak'], dibatalkan: ['mute', 'Dibatalkan'] };
+  const tglPendek = (s) => s ? new Date(s).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
+  const tglJadwal = (s) => s ? new Date(String(s).slice(0, 10) + 'T00:00:00Z').toLocaleDateString('id-ID', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '-';
+%>
+<div class="container-fluid mt-4 mb-5" style="max-width: 1180px;">
+  <div class="lab-hero">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h2>Manajemen Seminar Magang</h2>
+        <p class="lab-sub">Tinjau permohonan seminar, tetapkan jadwal, dan pantau seminar yang akan berlangsung.</p>
+      </div>
+      <a href="/admin/jadwalpenting" class="btn btn-light btn-sm rounded-pill px-3"><i class="bi bi-calendar3 me-1"></i> Jadwal penting</a>
+    </div>
+  </div>
 
-<style>
-  .seminar-table th {
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
-    color: white;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-    border: none;
-  }
-  .table-responsive {
-    border-radius: 1rem;
-    overflow: hidden;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-  }
-</style>
+  <%- include('../partials/pesan_flash') %>
 
-<div class="container-fluid mt-4">
-  <h2 class="fw-bold mb-4">Manajemen Seminar Magang</h2>
+  <div class="lab-stats">
+    <div class="lab-stat warn"><b><%= hitung.pending %></b><small>Menunggu verifikasi</small></div>
+    <div class="lab-stat ok"><b><%= hitung.approved %></b><small>Sudah dijadwalkan</small></div>
+    <div class="lab-stat"><b><%= hitung.pekanIni %></b><small>Seminar 7 hari ke depan</small></div>
+    <div class="lab-stat <%= hitung.rejected ? 'bad' : '' %>"><b><%= hitung.rejected %></b><small>Ditolak</small></div>
+  </div>
 
-  <div class="table-responsive">
-    <table class="table seminar-table">
-      <thead>
-        <tr>
-          <th>No</th>
-          <th>NIM</th>
-          <th>Nama</th>
-          <th>Judul</th>
-          <th>Tanggal Pengajuan</th>
-          <th>Status</th>
-          <th>Aksi</th>
-        </tr>
-      </thead>
+  <div class="lab-toolbar">
+    <nav class="lab-tabs mb-0" aria-label="Filter status">
+      <% tabs.forEach(t => { %>
+        <a class="lab-tab <%= filterStatus === t[0] ? 'active' : '' %>" href="/admin/seminar?status=<%= t[0] %>"><%= t[1] %> <span class="n <%= (t[3] && t[2] > 0 && filterStatus !== t[0]) ? 'alert' : '' %>"><%= t[2] %></span></a>
+      <% }) %>
+    </nav>
+    <label class="lab-search ms-md-auto"><i class="bi bi-search"></i><input type="search" id="cari" placeholder="Cari nama, NIM, atau judul" aria-label="Cari seminar"></label>
+  </div>
+
+  <div class="lab-table-wrap"><div class="table-responsive">
+    <table class="lab-table" id="tabelSeminar">
+      <thead><tr><th>Mahasiswa</th><th>Judul seminar</th><th><%= filterStatus === 'approved' ? 'Jadwal seminar' : 'Diajukan' %></th><th>Status</th><th></th></tr></thead>
       <tbody>
-        <% if (seminarList.length === 0) { %>
-          <tr>
-            <td colspan="7" class="text-center py-5">
-              <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
-              <p class="text-muted">Belum ada permohonan seminar.</p>
-            </td>
-          </tr>
-        <% } %>
-        <% seminarList.forEach((item, index) => { %>
-          <tr>
-            <td class="text-center"><%= index + 1 %></td>
-            <td><%= item.mahasiswa.nim || '-' %></td>
-            <td><%= item.mahasiswa.nama %></td>
-            <td><%= item.judul %></td>
-            <td><%= new Date(item.createdAt).toLocaleDateString('id-ID') %></td>
-            <td>
-              <% if (item.status === 'pending') { %>
-                <span class="badge bg-warning text-dark">Pending</span>
-              <% } else if (item.status === 'approved') { %>
-                <span class="badge bg-success">Disetujui</span>
-              <% } else if (item.status === 'rejected') { %>
-                <span class="badge bg-danger">Ditolak</span>
+        <% seminarList.forEach(item => {
+             const st = pil[item.status] || ['mute', item.status];
+             const jd = item.jadwal || null;
+             const hariH = jd && jd.tanggal ? (jd.tanggal === hariIni ? 'Hari ini' : (jd.tanggal < hariIni ? 'Sudah lewat' : '')) : '';
+             const perlu = item.status === 'pending'; %>
+          <tr data-cari="<%= [item.mahasiswa.nama, item.mahasiswa.nim, item.judul].join(' ').toLowerCase() %>">
+            <td><div class="fw-semibold" style="color:var(--lab-ink)"><%= item.mahasiswa.nama %></div><span class="lab-code"><%= item.mahasiswa.nim || '-' %></span></td>
+            <td style="max-width:360px;"><%= item.judul || '-' %></td>
+            <td class="small">
+              <% if (jd && jd.tanggal) { %>
+                <div class="fw-semibold"><%= tglJadwal(jd.tanggal) %> <% if (hariH) { %><span class="pill <%= hariH === 'Hari ini' ? 'run' : 'mute' %>"><%= hariH %></span><% } %></div>
+                <div class="text-muted"><%= jd.waktu || '' %><% if (jd.tempat) { %> &middot; <%= jd.tempat %><% } %></div>
               <% } else { %>
-                <span class="badge bg-secondary"><%= item.status %></span>
+                <%= tglPendek(item.createdAt) %>
               <% } %>
             </td>
-            <td>
-              <a href="/admin/seminar/<%= item.id %>" class="btn btn-sm btn-outline-primary">
-                <i class="bi bi-eye"></i> Detail
-              </a>
-            </td>
+            <td><span class="pill <%= st[0] %>"><%= st[1] %></span></td>
+            <td class="text-nowrap"><a href="/admin/seminar/<%= item.id %>" class="btn btn-sm rounded-pill px-3 btn-<%= perlu ? 'primary' : 'outline-primary' %>"><%= perlu ? 'Verifikasi' : 'Detail' %></a></td>
           </tr>
         <% }) %>
+        <% if (seminarList.length === 0) { %>
+          <tr><td colspan="5"><div class="lab-empty"><i class="bi bi-inbox"></i>Tidak ada permohonan seminar pada kategori ini.</div></td></tr>
+        <% } %>
       </tbody>
     </table>
-  </div>
+  </div></div>
 </div>
-
+<script>
+  (function () {
+    var cari = document.getElementById('cari'), rows = document.querySelectorAll('#tabelSeminar tbody tr[data-cari]');
+    cari.addEventListener('input', function () {
+      var q = cari.value.trim().toLowerCase();
+      rows.forEach(function (r) { r.style.display = (!q || r.dataset.cari.indexOf(q) > -1) ? '' : 'none'; });
+    });
+  })();
+</script>
 <%- include('../partials/footer') %>

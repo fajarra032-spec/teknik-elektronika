@@ -9,6 +9,7 @@ const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { createNotification } = require('../../helpers/notificationHelper');
 const { pecahTanggal, tanggalPanjang } = require('../../helpers/penyelesaianStudiHelper');
+const { redirectPesan, pesanDariQuery, hariIni } = require('../../helpers/peminjamanAlatHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -65,26 +66,47 @@ async function kabari(userId, data) {
 
 router.get('/', async (req, res) => {
   try {
-    const { status } = req.query;
-    let query = db.collection('permohonanMagang').orderBy('createdAt', 'desc');
-    if (status) query = query.where('status', '==', status);
-    const snapshot = await query.get();
+    // Ambil semua permohonan sekali lalu saring di memori: tab status bisa
+    // menampilkan jumlah, dan tidak perlu composite index (where + orderBy).
+    const snapshot = await db.collection('permohonanMagang').orderBy('createdAt', 'desc').get();
 
-    const seminarList = [];
-    for (const doc of snapshot.docs) {
+    // Data mahasiswa diambil sekaligus (bukan satu per satu per baris)
+    const idMhs = [...new Set(snapshot.docs.map(d => d.data().userId).filter(Boolean))];
+    const profil = {};
+    if (idMhs.length) {
+      const docs = await db.getAll(...idMhs.map(id => db.collection('users').doc(id)));
+      docs.forEach(d => { if (d.exists) profil[d.id] = d.data(); });
+    }
+
+    const semua = snapshot.docs.map(doc => {
       const data = doc.data();
-      const mahasiswa = await getMahasiswa(data.userId);
-      seminarList.push({
-        id: doc.id,
-        ...data,
-        mahasiswa
-      });
+      return { id: doc.id, ...data, mahasiswa: profil[data.userId] || { nama: '-', nim: '-' } };
+    });
+
+    const hari = hariIni();
+    const batas = new Date(Date.now() + 7 * 864e5).toLocaleDateString('en-CA', { timeZone: 'Asia/Makassar' });
+    const hitung = {
+      pending: semua.filter(x => x.status === 'pending').length,
+      approved: semua.filter(x => x.status === 'approved').length,
+      rejected: semua.filter(x => x.status === 'rejected').length,
+      dibatalkan: semua.filter(x => x.status === 'dibatalkan').length,
+      semua: semua.length,
+      pekanIni: semua.filter(x => x.status === 'approved' && x.jadwal && x.jadwal.tanggal >= hari && x.jadwal.tanggal <= batas).length
+    };
+
+    // Tanpa ?status= : fokus ke yang perlu tindakan (pending) bila ada, selain itu semua
+    const valid = ['pending', 'approved', 'rejected', 'dibatalkan', 'semua'];
+    let filter = valid.includes(req.query.status) ? req.query.status : (hitung.pending > 0 ? 'pending' : 'semua');
+    let seminarList = filter === 'semua' ? semua : semua.filter(x => x.status === filter);
+    if (filter === 'approved') {
+      // Yang dijadwalkan: urut dari seminar terdekat
+      seminarList = seminarList.slice().sort((x, y) => String((x.jadwal || {}).tanggal || '9999').localeCompare(String((y.jadwal || {}).tanggal || '9999')));
     }
 
     res.render('admin/seminar_list', {
       title: 'Manajemen Seminar Magang',
-      seminarList,
-      filterStatus: status || ''
+      seminarList, hitung, filterStatus: filter, hariIni: hari,
+      ...pesanDariQuery(req)
     });
   } catch (error) {
     console.error('Error ambil seminar:', error);
@@ -113,7 +135,8 @@ router.get('/:id', async (req, res) => {
     res.render('admin/seminar_detail', {
       title: 'Detail Seminar',
       seminar,
-      mahasiswa
+      mahasiswa,
+      ...pesanDariQuery(req)
     });
   } catch (error) {
     console.error('Error detail seminar:', error);
@@ -131,11 +154,12 @@ router.get('/:id', async (req, res) => {
 router.post('/:id/approve', async (req, res) => {
   try {
     const { tanggal, waktu, tempat, penguji, catatan } = req.body;
+    const balik = `/admin/seminar/${req.params.id}`;
     if (!tanggal || !waktu || !tempat) {
-      return res.status(400).send('Tanggal, waktu, dan tempat wajib diisi');
+      return redirectPesan(res, balik, 'err', 'Tanggal, waktu, dan tempat wajib diisi.');
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) {
-      return res.status(400).send('Format tanggal tidak valid');
+      return redirectPesan(res, balik, 'err', 'Format tanggal tidak valid.');
     }
 
     const seminarRef = db.collection('permohonanMagang').doc(req.params.id);
@@ -148,7 +172,7 @@ router.post('/:id/approve', async (req, res) => {
     }
     const data = doc.data();
     if (data.status === 'dibatalkan') {
-      return res.status(400).send('Pengajuan ini sudah dibatalkan oleh mahasiswa');
+      return redirectPesan(res, balik, 'err', 'Pengajuan ini sudah dibatalkan oleh mahasiswa.');
     }
     const ubahJadwal = data.status === 'approved';
 
@@ -184,7 +208,7 @@ router.post('/:id/approve', async (req, res) => {
       link: '/mahasiswa/penyelesaian-studi'
     });
 
-    res.redirect(`/admin/seminar/${req.params.id}`);
+    redirectPesan(res, balik, 'ok', ubahJadwal ? 'Jadwal seminar diperbarui dan mahasiswa sudah diberi tahu.' : 'Seminar disetujui, jadwal masuk ke Jadwal Penting, dan mahasiswa sudah diberi tahu.');
   } catch (error) {
     console.error('Error approve seminar:', error);
     res.status(500).render('error', {
@@ -202,7 +226,7 @@ router.post('/:id/reject', async (req, res) => {
   try {
     const { alasan } = req.body;
     if (!alasan) {
-      return res.status(400).send('Alasan penolakan wajib diisi');
+      return redirectPesan(res, `/admin/seminar/${req.params.id}`, 'err', 'Alasan penolakan wajib diisi.');
     }
 
     const seminarRef = db.collection('permohonanMagang').doc(req.params.id);
@@ -240,7 +264,7 @@ router.post('/:id/reject', async (req, res) => {
       link: '/mahasiswa/penyelesaian-studi'
     });
 
-    res.redirect(`/admin/seminar/${req.params.id}`);
+    redirectPesan(res, `/admin/seminar/${req.params.id}`, 'ok', 'Seminar ditolak dan mahasiswa sudah diberi tahu.');
   } catch (error) {
     console.error('Error reject seminar:', error);
     res.status(500).render('error', {

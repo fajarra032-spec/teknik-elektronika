@@ -1,161 +1,137 @@
 <%- include('../partials/header') %>
-
+<link rel="stylesheet" href="/css/lab-ui.css?v=2">
 <style>
-  .detail-header {
-    background: linear-gradient(135deg, #2193b0, #6dd5ed);
-    border-radius: 1rem;
-    padding: 2rem;
-    color: white;
-    margin-bottom: 2rem;
-  }
-  .info-card {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
+  .jadwal-tiket { display: flex; border: 1px solid var(--lab-line); border-radius: var(--lab-radius); overflow: hidden; background: #fff; box-shadow: var(--lab-shadow); }
+  .jadwal-tiket .tgl { background: linear-gradient(160deg, var(--lab-ink), var(--lab-navy)); color: #fff; text-align: center; padding: 1rem 1.25rem; min-width: 104px; display: flex; flex-direction: column; justify-content: center; }
+  .jadwal-tiket .tgl b { font-size: 2.4rem; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .jadwal-tiket .tgl span { font-size: .8rem; opacity: .85; }
+  .jadwal-tiket .isi { padding: 1rem 1.25rem; flex: 1; }
+  @media (max-width: 480px) { .jadwal-tiket { flex-direction: column; } .jadwal-tiket .tgl { flex-direction: row; gap: .6rem; align-items: baseline; justify-content: flex-start; } }
+  .aksi-sticky { position: sticky; top: 84px; }
 </style>
-
-<div class="container-fluid mt-4">
-  <div class="detail-header d-flex justify-content-between align-items-center">
-    <div>
-      <h2><i class="bi bi-calendar-event me-2"></i>Detail Seminar</h2>
-    </div>
-    <a href="/admin/seminar" class="btn btn-light">
-      <i class="bi bi-arrow-left me-2"></i>Kembali
-    </a>
-  </div>
-
-  <!-- Info Mahasiswa -->
-  <div class="info-card">
-    <h5 class="fw-bold mb-3">Data Mahasiswa</h5>
-    <div class="row">
-      <div class="col-md-6">
-        <p><strong>NIM:</strong> <%= mahasiswa.nim || '-' %></p>
-        <p><strong>Nama:</strong> <%= mahasiswa.nama %></p>
+<%
+  const pil = { pending: ['wait', 'Menunggu verifikasi'], approved: ['ok', 'Dijadwalkan'], rejected: ['bad', 'Ditolak'], dibatalkan: ['mute', 'Dibatalkan mahasiswa'] };
+  const st = pil[seminar.status] || ['mute', seminar.status];
+  const waktu = (s) => s ? new Date(s).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
+  const tglPanjang = (s) => s ? new Date(String(s).slice(0, 10) + 'T00:00:00Z').toLocaleDateString('id-ID', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-';
+  const sudah = seminar.status === 'approved'; const jd = seminar.jadwal || {};
+  const bisaAksi = seminar.status === 'pending' || seminar.status === 'approved';
+  const tglUsul = seminar.tanggal ? tglPanjang(seminar.tanggal) : '-';
+  const wa = mahasiswa.noHp ? 'https://wa.me/' + String(mahasiswa.noHp).replace(/[^0-9]/g, '').replace(/^0/, '62') : '';
+%>
+<div class="container-fluid mt-4 mb-5" style="max-width: 1180px;">
+  <div class="lab-hero">
+    <a href="/admin/seminar" class="btn btn-sm btn-outline-light rounded-pill mb-3"><i class="bi bi-arrow-left"></i> Daftar seminar</a>
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div style="min-width:0;">
+        <h2><%= mahasiswa.nama %></h2>
+        <p class="lab-sub"><%= mahasiswa.nim || '-' %> &middot; <%= seminar.judul || 'Seminar magang' %></p>
       </div>
-      <div class="col-md-6">
-        <p><strong>Email:</strong> <%= mahasiswa.email || '-' %></p>
-        <p><strong>No. HP:</strong> <%= mahasiswa.noHp || '-' %></p>
-      </div>
+      <span class="pill <%= st[0] %> fs-6"><%= st[1] %></span>
     </div>
   </div>
 
-  <!-- Info Seminar -->
-  <div class="info-card">
-    <h5 class="fw-bold mb-3">Detail Permohonan</h5>
-    <table class="table table-borderless">
-      <tr><th style="width: 150px;">Judul</th><td><%= seminar.judul %></td></tr>
-      <% if (seminar.lokasiMagang && seminar.lokasiMagang.length) { %>
-        <tr><th>Lokasi Magang</th><td>
-          <% seminar.lokasiMagang.forEach(l => { if (l.perusahaan) { %><div>Magang <%= l.ke %>: <%= l.perusahaan %></div><% } }) %>
-        </td></tr>
-      <% } %>
-      <% if (seminar.pendampingLapangan) { %><tr><th>Pendamping Lapangan</th><td><%= seminar.pendampingLapangan %></td></tr><% } %>
-      <% if (seminar.laporan) { %>
-        <tr><th>Laporan Magang</th><td>
-          <% [1, 2, 3].forEach(ke => { %>
-            <span class="badge <%= seminar.laporan[ke] ? 'bg-success' : 'bg-warning text-dark' %> me-1">Laporan <%= ke %>: <%= seminar.laporan[ke] ? 'sudah' : 'belum' %></span>
-          <% }) %>
-        </td></tr>
-      <% } %>
-      <% if (typeof seminar.pembayaranLunas !== 'undefined') { %>
-        <tr><th>Bukti Pelunasan</th><td><%= seminar.pembayaranLunas ? 'Mahasiswa menyatakan sudah dari Bagian Keuangan' : 'Belum' %></td></tr>
-      <% } %>
-      <% if (seminar.catatanMahasiswa) { %><tr><th>Catatan Mahasiswa</th><td><%= seminar.catatanMahasiswa %></td></tr><% } %>
-      <tr><th>Tanggal Usulan</th><td><%= seminar.tanggal ? new Date(seminar.tanggal).toLocaleDateString('id-ID') : '-' %></td></tr>
-      <tr><th>Waktu</th><td><%= seminar.waktu || '-' %></td></tr>
-      <tr><th>Tempat</th><td><%= seminar.tempat || '-' %></td></tr>
-      <tr><th>Dosen Pembimbing (PA)</th><td><%= seminar.pembimbing || seminar.pembimbing1 || '-' %></td></tr>
-      <tr><th>Penguji</th><td><%= seminar.penguji || '-' %></td></tr>
-      <tr><th>Status</th><td>
-        <% if (seminar.status === 'pending') { %>
-          <span class="badge bg-warning text-dark">Pending</span>
-        <% } else if (seminar.status === 'approved') { %>
-          <span class="badge bg-success">Disetujui</span>
-        <% } else if (seminar.status === 'rejected') { %>
-          <span class="badge bg-danger">Ditolak</span>
-        <% } else { %>
-          <span class="badge bg-secondary"><%= seminar.status %></span>
-        <% } %>
-      </td></tr>
-      <% if (seminar.jadwal) { %>
-        <tr><th>Jadwal</th><td>
-          <%= seminar.jadwal.tanggal ? new Date(seminar.jadwal.tanggal).toLocaleDateString('id-ID') : '' %>,
-          <%= seminar.jadwal.waktu || '' %>, <%= seminar.jadwal.tempat || '' %>
-          <%= seminar.jadwal.penguji ? ', Penguji: ' + seminar.jadwal.penguji : '' %>
-        </td></tr>
-      <% } %>
-      <% if (seminar.alasanPenolakan) { %>
-        <tr><th>Alasan Penolakan</th><td class="text-danger"><%= seminar.alasanPenolakan %></td></tr>
-      <% } %>
-    </table>
-  </div>
+  <%- include('../partials/pesan_flash') %>
 
-  <!-- Riwayat -->
-  <% if (seminar.history && seminar.history.length > 0) { %>
-    <div class="info-card">
-      <h5 class="fw-bold mb-3">Riwayat</h5>
-      <ul class="list-group">
-        <% seminar.history.forEach(item => { %>
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            <%= item.catatan %>
-            <small class="text-muted"><%= new Date(item.timestamp).toLocaleString('id-ID') %></small>
-          </li>
-        <% }) %>
-      </ul>
+  <div class="lab-panel mb-3"><div class="lab-panel-body pb-3"><%- include('../partials/seminar_stepper', { status: seminar.status }) %></div></div>
+
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <% if (sudah && jd.tanggal) { %>
+        <% const dt = new Date(String(jd.tanggal).slice(0, 10) + 'T00:00:00Z'); %>
+        <div class="jadwal-tiket mb-3">
+          <div class="tgl"><b><%= dt.getUTCDate() %></b><span><%= dt.toLocaleDateString('id-ID', { timeZone: 'UTC', month: 'long', year: 'numeric' }) %></span></div>
+          <div class="isi">
+            <div class="fw-bold" style="color:var(--lab-ink)"><%= tglPanjang(jd.tanggal) %></div>
+            <div class="text-muted small mt-1"><i class="bi bi-clock me-1"></i><%= jd.waktu || '-' %></div>
+            <div class="text-muted small"><i class="bi bi-geo-alt me-1"></i><%= jd.tempat || '-' %></div>
+            <% if (jd.penguji) { %><div class="text-muted small"><i class="bi bi-person-badge me-1"></i>Penguji: <%= jd.penguji %></div><% } %>
+            <% if (jd.catatan) { %><div class="small mt-2"><%= jd.catatan %></div><% } %>
+          </div>
+        </div>
+      <% } %>
+
+      <div class="lab-panel mb-3"><div class="lab-panel-body">
+        <div class="lab-sec"><i class="bi bi-person"></i> Data mahasiswa</div>
+        <dl class="lab-dl">
+          <dt>NIM</dt><dd><%= mahasiswa.nim || '-' %></dd>
+          <dt>Nama</dt><dd><%= mahasiswa.nama %></dd>
+          <dt>Email</dt><dd><%= mahasiswa.email || '-' %></dd>
+          <dt>No. HP</dt><dd><%= mahasiswa.noHp || '-' %><% if (wa) { %> <a class="ms-2 small" target="_blank" rel="noopener" href="<%= wa %>"><i class="bi bi-whatsapp"></i> WhatsApp</a><% } %></dd>
+        </dl>
+      </div></div>
+
+      <div class="lab-panel mb-3"><div class="lab-panel-body">
+        <div class="lab-sec"><i class="bi bi-card-text"></i> Detail permohonan</div>
+        <dl class="lab-dl">
+          <dt>Judul</dt><dd><%= seminar.judul || '-' %></dd>
+          <% if (seminar.lokasiMagang && seminar.lokasiMagang.length) { %>
+            <dt>Lokasi magang</dt><dd><% seminar.lokasiMagang.forEach(l => { if (l.perusahaan) { %><div>Magang <%= l.ke %>: <%= l.perusahaan %></div><% } }) %></dd>
+          <% } %>
+          <% if (seminar.pendampingLapangan) { %><dt>Pendamping lapangan</dt><dd><%= seminar.pendampingLapangan %></dd><% } %>
+          <% if (seminar.laporan) { %>
+            <dt>Laporan magang</dt><dd><% [1, 2, 3].forEach(ke => { %><span class="pill <%= seminar.laporan[ke] ? 'ok' : 'wait' %> me-1">Laporan <%= ke %>: <%= seminar.laporan[ke] ? 'sudah' : 'belum' %></span><% }) %></dd>
+          <% } %>
+          <% if (typeof seminar.pembayaranLunas !== 'undefined') { %>
+            <dt>Bukti pelunasan</dt><dd><%= seminar.pembayaranLunas ? 'Mahasiswa menyatakan sudah dari Bagian Keuangan' : 'Belum' %></dd>
+          <% } %>
+          <% if (seminar.catatanMahasiswa) { %><dt>Catatan mahasiswa</dt><dd style="white-space:pre-line"><%= seminar.catatanMahasiswa %></dd><% } %>
+          <dt>Tanggal usulan</dt><dd><%= tglUsul %></dd>
+          <dt>Waktu usulan</dt><dd><%= seminar.waktu || '-' %></dd>
+          <dt>Tempat usulan</dt><dd><%= seminar.tempat || '-' %></dd>
+          <dt>Dosen pembimbing (PA)</dt><dd><%= seminar.pembimbing || seminar.pembimbing1 || '-' %></dd>
+          <dt>Penguji</dt><dd><%= seminar.penguji || '-' %></dd>
+          <% if (seminar.alasanPenolakan) { %><dt>Alasan penolakan</dt><dd class="text-danger"><%= seminar.alasanPenolakan %></dd><% } %>
+        </dl>
+      </div></div>
+
+      <% if (seminar.history && seminar.history.length > 0) { %>
+        <div class="lab-panel"><div class="lab-panel-body">
+          <div class="lab-sec"><i class="bi bi-clock-history"></i> Riwayat</div>
+          <ul class="lab-timeline">
+            <% seminar.history.slice().reverse().forEach(item => { %>
+              <li><div class="fw-semibold"><%= item.catatan %></div><div class="who"><%= waktu(item.timestamp) %></div></li>
+            <% }) %>
+          </ul>
+        </div></div>
+      <% } %>
     </div>
-  <% } %>
 
-  <!-- Form Aksi (pending: setujui/tolak; approved: ubah jadwal / batalkan) -->
-  <% if (seminar.status === 'pending' || seminar.status === 'approved') { %>
-  <% const sudah = seminar.status === 'approved'; const jd = seminar.jadwal || {}; %>
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <div class="info-card">
-          <h5 class="fw-bold mb-3"><%= sudah ? 'Ubah Jadwal Seminar' : 'Setujui & Tentukan Jadwal' %></h5>
-          <% if (!sudah) { %><p class="text-muted small">Jadwal yang Anda tetapkan otomatis masuk ke Jadwal Penting dan mahasiswa mendapat notifikasi.</p><% } %>
+    <% if (bisaAksi) { %>
+    <div class="col-lg-5">
+      <div class="aksi-sticky">
+        <div class="lab-panel mb-3"><div class="lab-panel-body lab-form">
+          <div class="lab-sec"><i class="bi bi-calendar-check"></i> <%= sudah ? 'Ubah jadwal seminar' : 'Setujui dan tetapkan jadwal' %></div>
+          <% if (!sudah) { %><p class="small text-muted">Jadwal yang Anda tetapkan otomatis masuk ke Jadwal Penting dan mahasiswa mendapat notifikasi.</p><% } %>
           <form method="POST" action="/admin/seminar/<%= seminar.id %>/approve">
-            <div class="mb-2">
-              <label>Tanggal</label>
-              <input type="date" name="tanggal" class="form-control" value="<%= jd.tanggal ? String(jd.tanggal).slice(0, 10) : '' %>" required>
+            <div class="row g-2">
+              <div class="col-12"><label class="form-label">Tanggal <span class="text-danger">*</span></label>
+                <input type="date" name="tanggal" class="form-control" value="<%= jd.tanggal ? String(jd.tanggal).slice(0, 10) : (seminar.tanggal ? String(seminar.tanggal).slice(0, 10) : '') %>" required></div>
+              <div class="col-12"><label class="form-label">Waktu <span class="text-danger">*</span></label>
+                <input type="text" name="waktu" class="form-control" placeholder="09:00 - 12:00" value="<%= jd.waktu || '' %>" required></div>
+              <div class="col-12"><label class="form-label">Tempat <span class="text-danger">*</span></label>
+                <input type="text" name="tempat" class="form-control" placeholder="Ruang Seminar" value="<%= jd.tempat || '' %>" required></div>
+              <div class="col-12"><label class="form-label">Penguji <span class="text-muted fw-normal">(opsional)</span></label>
+                <input type="text" name="penguji" class="form-control" value="<%= jd.penguji || '' %>"></div>
+              <div class="col-12"><label class="form-label">Catatan <span class="text-muted fw-normal">(opsional)</span></label>
+                <input type="text" name="catatan" class="form-control" value="<%= jd.catatan || '' %>"></div>
             </div>
-            <div class="mb-2">
-              <label>Waktu</label>
-              <input type="text" name="waktu" class="form-control" placeholder="09:00 - 12:00" value="<%= jd.waktu || '' %>" required>
-            </div>
-            <div class="mb-2">
-              <label>Tempat</label>
-              <input type="text" name="tempat" class="form-control" placeholder="Ruang Seminar" value="<%= jd.tempat || '' %>" required>
-            </div>
-            <div class="mb-2">
-              <label>Penguji (opsional)</label>
-              <input type="text" name="penguji" class="form-control" value="<%= jd.penguji || '' %>">
-            </div>
-            <div class="mb-2">
-              <label>Catatan (opsional)</label>
-              <input type="text" name="catatan" class="form-control" value="<%= jd.catatan || '' %>">
-            </div>
-            <button type="submit" class="btn btn-success"><%= sudah ? 'Simpan Jadwal' : 'Setujui' %></button>
+            <button type="submit" class="btn btn-success rounded-pill w-100 mt-3"><%= sudah ? 'Simpan jadwal' : 'Setujui seminar' %></button>
           </form>
-        </div>
-      </div>
-      <div class="col-md-6 mb-3">
-        <div class="info-card">
-          <h5 class="fw-bold mb-3"><%= sudah ? 'Batalkan Seminar' : 'Tolak Seminar' %></h5>
-          <% if (sudah) { %><p class="text-muted small">Agenda di Jadwal Penting ikut dihapus dan mahasiswa diberi tahu.</p><% } %>
-          <form method="POST" action="/admin/seminar/<%= seminar.id %>/reject">
-            <div class="mb-2">
-              <label>Alasan Penolakan</label>
-              <textarea name="alasan" class="form-control" rows="3" required></textarea>
-            </div>
-            <button type="submit" class="btn btn-danger"><%= sudah ? 'Batalkan' : 'Tolak' %></button>
+        </div></div>
+
+        <div class="lab-panel"><div class="lab-panel-body lab-form">
+          <div class="lab-sec"><i class="bi bi-x-octagon"></i> <%= sudah ? 'Batalkan seminar' : 'Tolak seminar' %></div>
+          <% if (sudah) { %><p class="small text-muted">Agenda di Jadwal Penting ikut dihapus dan mahasiswa diberi tahu.</p><% } %>
+          <form method="POST" action="/admin/seminar/<%= seminar.id %>/reject" onsubmit="return confirm('<%= sudah ? 'Batalkan seminar yang sudah dijadwalkan?' : 'Tolak permohonan seminar ini?' %>')">
+            <label class="form-label">Alasan <span class="text-danger">*</span></label>
+            <textarea name="alasan" class="form-control mb-3" rows="3" required placeholder="Alasan akan dikirim ke mahasiswa"></textarea>
+            <button type="submit" class="btn btn-outline-danger rounded-pill w-100"><%= sudah ? 'Batalkan seminar' : 'Tolak permohonan' %></button>
           </form>
-        </div>
+        </div></div>
       </div>
     </div>
-  <% } %>
+    <% } %>
+  </div>
 </div>
-
 <%- include('../partials/footer') %>
