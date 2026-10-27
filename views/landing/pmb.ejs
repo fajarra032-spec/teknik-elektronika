@@ -1,557 +1,676 @@
+<%
+  // ===== DATA PMB (ubah di sini saja bila ada perubahan) =====
+  const pmb = {
+    gelombang: 'Gelombang II',
+    tahunAkademik: '2027/2028',
+    biayaPendaftaran: 'Rp200.000',
+    kontak: {
+      nama: 'Fajar Ramadhan, S.Pd., M.T',
+      jabatan: 'Ketua Program Studi Teknik Elektronika',
+      tampil: '0852-4245-9746',
+      wa: '6285242459746',
+      tel: '+6285242459746'
+    },
+    instagram: [
+      { label: '@politeknikdewantara', url: 'https://www.instagram.com/politeknikdewantara' },
+      { label: '@pmbpoliteknikdewantara', url: 'https://www.instagram.com/pmbpoliteknikdewantara' }
+    ],
+    d3: [
+      { nama: 'Teknik Sipil', spp: 1200000, icon: 'bi-bricks' },
+      { nama: 'Mesin Otomotif', spp: 1200000, icon: 'bi-gear-wide-connected' },
+      { nama: 'Teknik Elektronika', spp: 1200000, icon: 'bi-cpu' }
+    ],
+    d4: [
+      { nama: 'Teknologi Rekayasa Multimedia', gelar: 'S.Tr.Kom', spp: 1200000, icon: 'bi-film' },
+      { nama: 'Teknologi Rekayasa Pangan', gelar: 'S.Tr.P', spp: 1200000, icon: 'bi-egg-fried' },
+      { nama: 'Arsitektur Bangunan Gedung', gelar: 'S.Tr.Ars', spp: 1200000, icon: 'bi-buildings' },
+      { nama: 'Teknologi Pertambangan (Metalurgi)', gelar: 'S.Tr.T', spp: 1800000, icon: 'bi-minecart-loaded' }
+    ]
+  };
+  const rp = n => 'Rp' + Number(n).toLocaleString('id-ID');
+%>
 <%- include('../partials/header-landing') %>
 
 <style>
-    /* ===== PMB PAGE STYLES (responsif) ===== */
-    .pmb-page-wrapper {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        padding: 2rem 0 4rem;
+    :root {
+        --pmb-navy: #061a3f;
+        --pmb-blue: #0b5ed7;
+        --pmb-sky: #38bdf8;
+        --pmb-gold: #fbbf24;
+        --pmb-ink: #0f172a;
+        --pmb-muted: #64748b;
     }
 
-    /* Hero Section */
+    .pmb-page { background: #f1f5f9; padding-bottom: 4rem; }
+
+    /* ===== HERO ===== */
     .pmb-hero {
-        background: linear-gradient(145deg, #0b5ed7, #0a58ca);
-        border-radius: var(--border-radius, 1.5rem);
-        padding: 3rem 1.5rem;
-        text-align: center;
-        color: white !important;
-        margin-bottom: 2rem;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
+        color: #fff;
+        padding: 4rem 0 6.5rem;
+        background:
+            radial-gradient(900px 400px at 85% 0%, rgba(56,189,248,.35), transparent 60%),
+            radial-gradient(700px 400px at 0% 100%, rgba(11,94,215,.55), transparent 60%),
+            linear-gradient(160deg, #061a3f 0%, #0a2e72 55%, #0b5ed7 100%);
     }
-    .pmb-hero::before {
+    .pmb-hero::after {
         content: '';
-        position: absolute;
-        top: -30%;
-        left: -30%;
-        width: 160%;
-        height: 160%;
-        background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
-        z-index: 1;
-        animation: slowRotate 20s infinite linear;
+        position: absolute; inset: 0;
+        background-image: radial-gradient(rgba(255,255,255,.12) 1px, transparent 1px);
+        background-size: 26px 26px;
+        mask-image: linear-gradient(to bottom, #000 0%, transparent 85%);
+        -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 85%);
+        pointer-events: none;
     }
-    @keyframes slowRotate {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+    .pmb-hero .container { position: relative; z-index: 2; }
+    .pmb-eyebrow {
+        display: inline-flex; align-items: center; gap: .5rem;
+        background: rgba(255,255,255,.12);
+        border: 1px solid rgba(255,255,255,.25);
+        backdrop-filter: blur(8px);
+        padding: .4rem 1rem; border-radius: 999px;
+        font-size: .85rem; font-weight: 600; letter-spacing: .04em;
     }
-    .pmb-hero-content {
-        position: relative;
-        z-index: 2;
+    .pmb-hero h1 {
+        font-weight: 800;
+        font-size: clamp(2rem, 6.5vw, 3.6rem);
+        line-height: 1.08;
+        margin: 1rem 0 .75rem;
+        letter-spacing: -.02em;
     }
-    .pmb-hero-content h1 {
-        font-size: clamp(1.6rem, 6vw, 2.5rem);
-    }
-    .pmb-hero-content p.lead {
-        font-size: clamp(1rem, 4vw, 1.4rem);
-    }
-
-    /* Gelombang Badge */
-    .gelombang-badge {
+    .pmb-hero h1 span { color: var(--pmb-sky); }
+    .pmb-gel {
         display: inline-block;
-        background: linear-gradient(145deg, #ffc107, #ffb300);
-        color: #1e293b;
-        font-size: clamp(1rem, 4vw, 1.5rem);
-        font-weight: 800;
-        padding: 0.5rem 1.5rem;
-        border-radius: 60px;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        margin-bottom: 1rem;
-    }
-    .gelombang-badge i {
-        margin-right: 0.5rem;
-        font-size: 1.2rem;
-        vertical-align: middle;
-    }
-
-    /* Countdown Box */
-    .countdown-box {
-        background: rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        border-radius: var(--border-radius, 1rem);
-        padding: 1rem;
-        text-align: center;
-        transition: all 0.3s;
-    }
-    .countdown-number {
-        font-size: clamp(1.2rem, 5vw, 2.5rem);
-        font-weight: 800;
-        color: #ffffff !important;
-        line-height: 1.2;
-    }
-    .countdown-box small {
-        font-size: clamp(0.6rem, 2vw, 0.8rem);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    /* Button Umum */
-    .btn-pmb {
-        background: linear-gradient(145deg, #ffffff, #f8fafc);
-        border: none;
-        border-radius: 50px;
-        padding: 0.7rem 1.5rem;
+        background: rgba(2, 10, 35, .55);
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: .9rem;
+        padding: .6rem 1.2rem;
         font-weight: 700;
-        color: #0a58ca;
-        transition: all 0.3s;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        font-size: clamp(1rem, 3.2vw, 1.35rem);
+        box-shadow: 0 10px 30px rgba(0,0,0,.25);
     }
-    .btn-pmb:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-        color: #084298;
+    .pmb-hero p.sub { max-width: 560px; color: rgba(255,255,255,.85); margin: 1.25rem 0 1.75rem; }
+    .btn-hero {
+        border-radius: 999px; font-weight: 700; padding: .8rem 1.6rem;
+        transition: transform .2s, box-shadow .2s;
+    }
+    .btn-hero:hover { transform: translateY(-3px); }
+    .btn-hero-main { background: var(--pmb-gold); color: #1e293b; border: 0; box-shadow: 0 10px 25px rgba(251,191,36,.35); }
+    .btn-hero-main:hover { color: #1e293b; box-shadow: 0 14px 30px rgba(251,191,36,.5); }
+    .btn-hero-ghost { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.4); }
+    .btn-hero-ghost:hover { background: rgba(255,255,255,.2); color: #fff; }
+
+    .hero-flyer {
+        position: relative; display: block; max-width: 340px; margin: 0 auto;
+        border-radius: 1.2rem; overflow: hidden;
+        box-shadow: 0 30px 60px -15px rgba(0,0,0,.55), 0 0 0 6px rgba(255,255,255,.12);
+        transform: rotate(2.5deg);
+        transition: transform .3s;
+        cursor: zoom-in;
+    }
+    .hero-flyer:hover { transform: rotate(0deg) scale(1.02); }
+    .hero-flyer img { width: 100%; display: block; }
+    .hero-flyer .zoom-tip {
+        position: absolute; right: .6rem; bottom: .6rem;
+        background: rgba(2,10,35,.75); color: #fff; font-size: .75rem;
+        padding: .25rem .6rem; border-radius: 999px;
     }
 
-    /* Section Wrapper */
-    .section-wrapper {
-        background: #ffffff;
-        border-radius: 1.2rem;
-        padding: 2rem;
-        box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.05);
-        margin-bottom: 2rem;
+    /* ===== STAT STRIP ===== */
+    .stat-strip { margin-top: -3.5rem; position: relative; z-index: 5; }
+    .stat-card {
+        background: #fff; border-radius: 1.1rem; padding: 1.1rem 1.25rem; height: 100%;
+        box-shadow: 0 15px 35px -12px rgba(15,23,42,.18);
+        display: flex; align-items: center; gap: .9rem;
     }
-    .section-title {
-        font-family: 'Montserrat', sans-serif;
-        font-weight: 800;
-        color: #0f172a;
-        margin-bottom: 1.5rem;
-        font-size: clamp(1.3rem, 5vw, 1.85rem);
-        position: relative;
-        display: inline-block;
+    .stat-card .ico {
+        flex: 0 0 48px; height: 48px; border-radius: 14px;
+        display: grid; place-items: center; font-size: 1.4rem; color: #fff;
+        background: linear-gradient(135deg, var(--pmb-blue), var(--pmb-sky));
     }
-    .section-title span {
-        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
+    .stat-card .ico.gold { background: linear-gradient(135deg, #f59e0b, var(--pmb-gold)); }
+    .stat-card .ico.green { background: linear-gradient(135deg, #059669, #34d399); }
+    .stat-card small { color: var(--pmb-muted); display: block; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; }
+    .stat-card strong { color: var(--pmb-ink); font-size: 1.15rem; }
+
+    /* ===== SECTION ===== */
+    .pmb-section { padding-top: 3.5rem; }
+    .sec-head { margin-bottom: 1.5rem; }
+    .sec-head .tag {
+        color: var(--pmb-blue); font-weight: 700; font-size: .8rem;
+        text-transform: uppercase; letter-spacing: .12em;
     }
-    .section-title:after {
-        content: '';
-        position: absolute;
-        bottom: -8px;
-        left: 0;
-        width: 50px;
-        height: 3px;
-        background: linear-gradient(90deg, #0d6efd, #0dcaf0);
-        border-radius: 3px;
+    .sec-head h2 { font-weight: 800; color: var(--pmb-ink); font-size: clamp(1.4rem, 4.5vw, 2rem); margin: .25rem 0 0; }
+    .sec-head p { color: var(--pmb-muted); margin: .4rem 0 0; }
+
+    /* ===== PRODI ===== */
+    .jenjang-label {
+        display: inline-flex; align-items: center; gap: .6rem;
+        background: linear-gradient(135deg, #0a2e72, #0b5ed7);
+        color: #fff; font-weight: 700; padding: .55rem 1.2rem;
+        border-radius: .8rem; margin-bottom: 1rem;
+        box-shadow: 0 8px 20px -6px rgba(11,94,215,.5);
+    }
+    .prodi-card {
+        position: relative; background: #fff; border-radius: 1.1rem;
+        padding: 1.25rem; height: 100%;
+        border: 1px solid #e2e8f0;
+        transition: transform .25s, box-shadow .25s, border-color .25s;
+        display: flex; flex-direction: column; gap: .35rem;
+    }
+    .prodi-card:hover { transform: translateY(-5px); box-shadow: 0 20px 35px -15px rgba(11,94,215,.35); border-color: #93c5fd; }
+    .prodi-card .p-ico {
+        width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center;
+        background: #e0f2fe; color: var(--pmb-blue); font-size: 1.35rem; margin-bottom: .4rem;
+    }
+    .prodi-card h3 { font-size: 1.02rem; font-weight: 700; color: var(--pmb-ink); margin: 0; }
+    .prodi-card .gelar { font-size: .8rem; color: var(--pmb-muted); }
+    .prodi-card .spp { margin-top: auto; padding-top: .8rem; border-top: 1px dashed #e2e8f0; }
+    .prodi-card .spp small { color: var(--pmb-muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; display: block; }
+    .prodi-card .spp b { font-size: 1.2rem; color: var(--pmb-blue); }
+    .prodi-card .spp i { color: var(--pmb-muted); font-style: normal; font-size: .8rem; }
+    .prodi-card.highlight { border-color: var(--pmb-gold); box-shadow: 0 0 0 3px rgba(251,191,36,.25); }
+    .prodi-card .ribbon {
+        position: absolute; top: .8rem; right: .8rem;
+        background: var(--pmb-gold); color: #1e293b; font-size: .68rem; font-weight: 800;
+        padding: .2rem .6rem; border-radius: 999px; letter-spacing: .03em;
     }
 
-    /* Table Biaya Responsif */
-    .table-pmb {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.9rem;
+    /* ===== BEASISWA BANNER ===== */
+    .beasiswa-banner {
+        border-radius: 1.3rem; color: #fff; padding: 1.75rem;
+        background: linear-gradient(135deg, #061a3f, #0b5ed7);
+        display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;
+        box-shadow: 0 20px 40px -15px rgba(6,26,63,.6);
     }
-    .table-pmb thead th {
-        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
-        color: white;
-        padding: 0.8rem;
-        font-weight: 600;
-        white-space: nowrap;
+    .beasiswa-banner .b-ico {
+        flex: 0 0 64px; height: 64px; border-radius: 18px; display: grid; place-items: center;
+        background: rgba(251,191,36,.18); color: var(--pmb-gold); font-size: 2rem;
     }
-    .table-pmb td, .table-pmb th {
-        padding: 0.8rem;
-        vertical-align: middle;
-        border-bottom: 1px solid #e2e8f0;
-    }
-    
-    /* Info Card */
+    .beasiswa-banner h3 { font-weight: 800; margin: 0 0 .25rem; font-size: 1.3rem; }
+    .beasiswa-banner p { margin: 0; color: rgba(255,255,255,.85); }
+    .beasiswa-banner .b-txt { flex: 1 1 260px; }
+
+    /* ===== PEMBAYARAN ===== */
     .info-card {
-        background: #ffffff;
-        border-radius: 1.2rem;
-        padding: 1.5rem;
-        text-align: center;
-        height: 100%;
-        border: 1px solid #eef2ff;
-        transition: all 0.3s;
+        background: #fff; border-radius: 1.1rem; padding: 1.4rem; height: 100%;
+        border: 1px solid #e2e8f0;
     }
-    .info-card i.main-icon {
-        font-size: 2.5rem;
-        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-        margin-bottom: 1rem;
-        display: inline-block;
+    .info-card .i-ico {
+        width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center;
+        font-size: 1.3rem; color: #fff; margin-bottom: .8rem;
+        background: linear-gradient(135deg, var(--pmb-blue), var(--pmb-sky));
     }
-    .info-card h4 {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 0.8rem;
-        color: #1e293b;
+    .info-card h4 { font-size: 1.05rem; font-weight: 700; color: var(--pmb-ink); }
+    .info-card p { color: #475569; font-size: .92rem; margin-bottom: .5rem; }
+    .big-price { font-size: 2rem; font-weight: 800; color: var(--pmb-blue); line-height: 1; }
+    .rek-item { padding: .6rem 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+    .rek-item:last-child { border-bottom: 0; }
+    .rek-item .bank { font-weight: 700; color: var(--pmb-ink); font-size: .9rem; }
+    .rek-item .no { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .92rem; color: #334155; }
+    .btn-copy {
+        border: 1px solid #cbd5e1; background: #fff; color: #475569; border-radius: 8px;
+        font-size: .75rem; padding: .2rem .55rem; transition: .2s;
     }
-    .info-card p {
-        font-size: 0.9rem;
-        margin-bottom: 0.5rem;
-        color: #475569;
-    }
+    .btn-copy:hover { background: var(--pmb-blue); color: #fff; border-color: var(--pmb-blue); }
+    .btn-copy.ok { background: #059669; color: #fff; border-color: #059669; }
 
-    /* Form styling */
-    .form-control, .form-select {
-        border-radius: 0.75rem;
-        padding: 0.7rem 1rem;
-        font-size: 0.95rem;
-        border: 1px solid #cbd5e1;
+    /* ===== LANGKAH ===== */
+    .step-card { background: #fff; border-radius: 1.1rem; padding: 1.25rem; height: 100%; border: 1px solid #e2e8f0; position: relative; }
+    .step-card .no {
+        width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+        background: var(--pmb-navy); color: #fff; font-weight: 800; margin-bottom: .7rem;
     }
-    .form-control:focus, .form-select:focus {
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
-        border-color: #0d6efd;
+    .step-card h5 { font-size: 1rem; font-weight: 700; color: var(--pmb-ink); }
+    .step-card p { font-size: .88rem; color: var(--pmb-muted); margin: 0; }
+
+    /* ===== KONTAK ===== */
+    .contact-card {
+        background: #fff; border-radius: 1.3rem; overflow: hidden;
+        box-shadow: 0 20px 40px -18px rgba(15,23,42,.25); border: 1px solid #e2e8f0;
     }
-    .input-group-text {
-        border-radius: 0.75rem 0 0 0.75rem;
-        background: #f8fafc;
-        border: 1px solid #cbd5e1;
-        color: #64748b;
+    .contact-card .c-main { padding: 1.75rem; }
+    .contact-avatar {
+        width: 72px; height: 72px; border-radius: 50%; flex: 0 0 72px;
+        display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 1.6rem;
+        background: linear-gradient(135deg, var(--pmb-navy), var(--pmb-blue));
+        box-shadow: 0 0 0 5px #dbeafe;
     }
-    .wa-link-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
+    .contact-card h4 { font-weight: 800; margin: 0; color: var(--pmb-ink); font-size: 1.2rem; }
+    .contact-card .role { color: var(--pmb-muted); font-size: .92rem; }
+    .btn-wa {
+        background: #25D366; color: #fff; border: 0; border-radius: 999px; font-weight: 700;
+        padding: .7rem 1.4rem; display: inline-flex; align-items: center; gap: .5rem; transition: .2s;
     }
+    .btn-wa:hover { background: #128C7E; color: #fff; transform: translateY(-2px); }
+    .btn-call {
+        background: #fff; color: var(--pmb-blue); border: 1px solid #bfdbfe; border-radius: 999px; font-weight: 700;
+        padding: .7rem 1.4rem; display: inline-flex; align-items: center; gap: .5rem; transition: .2s;
+    }
+    .btn-call:hover { background: #eff6ff; color: var(--pmb-blue); }
+    .contact-card .c-foot { background: #f8fafc; padding: 1rem 1.75rem; border-top: 1px solid #e2e8f0; font-size: .9rem; }
+    .contact-card .c-foot a { color: var(--pmb-blue); font-weight: 600; text-decoration: none; margin-right: 1.1rem; display: inline-block; }
+    .contact-card .c-foot a:hover { text-decoration: underline; }
+
+    /* ===== FORM ===== */
+    .form-shell {
+        background: #fff; border-radius: 1.3rem; padding: 2rem;
+        box-shadow: 0 20px 40px -18px rgba(15,23,42,.2); border: 1px solid #e2e8f0;
+    }
+    .form-control, .form-select { border-radius: .75rem; padding: .7rem 1rem; border: 1px solid #cbd5e1; }
+    .form-control:focus, .form-select:focus { box-shadow: 0 0 0 .25rem rgba(13,110,253,.15); border-color: #0d6efd; }
+    .input-group-text { border-radius: .75rem 0 0 .75rem; background: #f8fafc; border: 1px solid #cbd5e1; color: #64748b; }
+    .input-group > .form-control, .input-group > .form-select { border-radius: 0 .75rem .75rem 0; }
+    .wa-link-group { display: flex; flex-wrap: wrap; gap: .5rem; }
     .wa-link-group a {
-        background: #25D366;
-        color: white;
-        padding: 0.4rem 1rem;
-        border-radius: 50px;
-        font-size: 0.85rem;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-weight: 500;
-        transition: 0.2s;
+        background: #25D366; color: #fff; padding: .4rem 1rem; border-radius: 999px; font-size: .85rem;
+        text-decoration: none; display: inline-flex; align-items: center; gap: .4rem; font-weight: 600; transition: .2s;
     }
-    .wa-link-group a:hover {
-        background: #128C7E;
-        transform: translateY(-2px);
+    .wa-link-group a:hover { background: #128C7E; transform: translateY(-2px); }
+    .btn-submit {
+        background: linear-gradient(135deg, #0a2e72, #0b5ed7); color: #fff; border: 0; border-radius: 999px;
+        padding: .85rem 2.4rem; font-weight: 700; font-size: 1.05rem; transition: .2s;
+        box-shadow: 0 12px 25px -8px rgba(11,94,215,.6);
     }
-    .alert-success-custom {
-        background: #d1fae5;
-        border: 1px solid #a7f3d0;
-        color: #065f46;
-        border-radius: 1rem;
-        padding: 1.5rem;
+    .btn-submit:hover { transform: translateY(-3px); color: #fff; box-shadow: 0 16px 30px -8px rgba(11,94,215,.75); }
+    .biaya-note {
+        background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; border-radius: .9rem;
+        padding: .8rem 1rem; font-size: .9rem;
     }
 
-    /* ========== MEDIA QUERIES (RESPONSIVENESS) ========== */
-    @media (max-width: 768px) {
-        .pmb-hero {
-            padding: 2.5rem 1rem;
-        }
-        .section-wrapper {
-            padding: 1.5rem;
-        }
+    /* ===== FLOATING WA ===== */
+    .wa-float {
+        position: fixed; right: 18px; bottom: 18px; z-index: 1040;
+        background: #25D366; color: #fff; width: 58px; height: 58px; border-radius: 50%;
+        display: grid; place-items: center; font-size: 1.9rem; text-decoration: none;
+        box-shadow: 0 12px 28px rgba(37,211,102,.5); animation: pulseWa 2.4s infinite;
+    }
+    .wa-float:hover { color: #fff; background: #128C7E; }
+    @keyframes pulseWa {
+        0% { box-shadow: 0 0 0 0 rgba(37,211,102,.55), 0 12px 28px rgba(37,211,102,.5); }
+        70% { box-shadow: 0 0 0 16px rgba(37,211,102,0), 0 12px 28px rgba(37,211,102,.5); }
+        100% { box-shadow: 0 0 0 0 rgba(37,211,102,0), 0 12px 28px rgba(37,211,102,.5); }
     }
 
+    @media (max-width: 991px) {
+        .pmb-hero { padding: 3rem 0 6rem; text-align: center; }
+        .pmb-hero p.sub { margin-left: auto; margin-right: auto; }
+        .hero-flyer { margin-top: 2rem; max-width: 280px; }
+    }
     @media (max-width: 576px) {
-        .pmb-page-wrapper {
-            padding: 1rem 0 2rem;
-        }
-        .section-wrapper {
-            padding: 1.2rem;
-        }
-        
-        /* ===== PERBAIKAN TABEL MODE CARD UNTUK HP ===== */
-        .table-pmb thead {
-            display: none;
-        }
-        .table-pmb, .table-pmb tbody, .table-pmb tr, .table-pmb td {
-            display: block;
-            width: 100%;
-        }
-        .table-pmb tr {
-            margin-bottom: 1.5rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.8rem;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
-            background: #ffffff;
-        }
-        .table-pmb td {
-            display: flex;
-            flex-direction: column; /* Mengubah orientasi menjadi atas-bawah */
-            align-items: flex-start; /* Meratakan teks ke kiri */
-            text-align: left;
-            padding: 0.8rem 1.2rem;
-            border-bottom: 1px solid #f1f5f9;
-            gap: 0.3rem; /* Jarak antara label dan isi data */
-        }
-        .table-pmb td:last-child {
-            border-bottom: none;
-            background: #f8fafc; /* Sedikit beda warna untuk bagian total biaya */
-        }
-        .table-pmb td::before {
-            content: attr(data-label);
-            font-weight: 700;
-            color: #64748b;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            width: 100%;
-        }
-
-        /* Alert WA menyesuaikan susunan di HP */
-        .alert-success-custom {
-            flex-direction: column;
-            text-align: center;
-            padding: 1.2rem;
-        }
-        .alert-success-custom i {
-            margin-right: 0 !important;
-            margin-bottom: 0.8rem;
-        }
-
-        /* Tombol Form di HP menjadi Full Width */
-        .form-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-        }
-        .form-actions button {
-            width: 100%;
-            margin: 0 !important;
-        }
+        .form-shell { padding: 1.25rem; }
+        .contact-card .c-main { padding: 1.25rem; }
+        .btn-submit, .btn-reset { width: 100%; }
+        .rek-item { flex-wrap: wrap; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .wa-float { animation: none; }
+        .hero-flyer, .prodi-card, .btn-hero { transition: none; }
     }
 </style>
 
-<div class="pmb-page-wrapper">
+<div class="pmb-page">
+
+    <!-- ===== HERO ===== -->
+    <section class="pmb-hero">
+        <div class="container">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-7">
+                    <span class="pmb-eyebrow"><i class="bi bi-mortarboard-fill"></i> Politeknik Dewantara · Palopo</span>
+                    <h1>Penerimaan <span>Mahasiswa Baru</span></h1>
+                    <div class="pmb-gel"><%= pmb.gelombang %> · Tahun Akademik <%= pmb.tahunAkademik %></div>
+                    <p class="sub">Pilih 3 program Diploma Tiga atau 4 program Sarjana Terapan. Tersedia beasiswa bagi yang kurang mampu dan berprestasi.</p>
+                    <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-lg-start">
+                        <a href="#pendaftaran" class="btn btn-hero btn-hero-main">Daftar Sekarang <i class="bi bi-arrow-down-circle ms-1"></i></a>
+                        <a href="#program-studi" class="btn btn-hero btn-hero-ghost">Lihat Program Studi</a>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <a class="hero-flyer" href="/images/pmb-gelombang2-2027-2028.jpg" target="_blank" rel="noopener" aria-label="Lihat flyer PMB ukuran penuh">
+                        <img src="/images/pmb-gelombang2-2027-2028.jpg" alt="Flyer Penerimaan Mahasiswa Baru Gelombang II Tahun Akademik 2027/2028 Politeknik Dewantara">
+                        <span class="zoom-tip"><i class="bi bi-zoom-in"></i> Flyer</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <div class="container">
-        <div class="pmb-hero">
-            <div class="pmb-hero-content">
-                <h1 class="fw-bold mb-2"><i class="bi bi-mortarboard-fill me-2"></i> Penerimaan Mahasiswa Baru</h1>
-                <p class="lead mb-1">Politeknik Dewantara</p>
-                <p class="opacity-90 mb-3">Tahun Akademik 2026/2027</p>
-                <div class="gelombang-badge">
-                    <i class="bi bi-megaphone-fill"></i> Gelombang 4 – Juni 2026
-                </div>
-                <div class="row justify-content-center my-4">
-                    <div class="col-xl-5 col-lg-7 col-md-9 col-11">
-                        <div class="countdown-box">
-                            <div class="row g-0">
-                                <div class="col-3 border-end border-white border-opacity-20">
-                                    <div class="countdown-number" id="days">00</div>
-                                    <small>Hari</small>
-                                </div>
-                                <div class="col-3 border-end border-white border-opacity-20">
-                                    <div class="countdown-number" id="hours">00</div>
-                                    <small>Jam</small>
-                                </div>
-                                <div class="col-3 border-end border-white border-opacity-20">
-                                    <div class="countdown-number" id="minutes">00</div>
-                                    <small>Menit</small>
-                                </div>
-                                <div class="col-3">
-                                    <div class="countdown-number" id="seconds">00</div>
-                                    <small>Detik</small>
-                                </div>
-                            </div>
-                            <p class="mt-3 mb-0 small opacity-90"><i class="bi bi-exclamation-circle me-1"></i> Sisa waktu pendaftaran gelombang 4</p>
-                        </div>
-                    </div>
-                </div>
-                <a href="#pendaftaran" class="btn btn-light btn-lg rounded-pill px-4 fw-bold text-primary shadow-sm">Daftar Sekarang <i class="bi bi-arrow-down ms-2"></i></a>
-            </div>
-        </div>
 
-        <div class="section-wrapper">
-            <h2 class="section-title">Informasi <span>Biaya Awal Pendaftaran</span></h2>
-
-            <div class="table-responsive">
-                <table class="table-pmb">
-                    <thead>
-                        <tr>
-                            <th>Program Studi</th>
-                            <th>SPP / Semester</th>
-                            <th>Biaya Pendaftaran <br><small class="fw-normal">(50% SPP + 200rb)</small></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td data-label="Program Studi">Mesin Otomotif</td><td data-label="SPP Normal">Rp2.000.000</td><td data-label="Bayar Awal"><strong>Rp1.200.000</strong><br><small class="text-muted">(1.000.000 + 200.000)</small></td></tr>
-                        <tr><td data-label="Program Studi">Teknik Elektronika</td><td data-label="SPP Normal">Rp2.000.000</td><td data-label="Bayar Awal"><strong>Rp1.200.000</strong><br><small class="text-muted">(1.000.000 + 200.00<PASSWORD>)</small></td></tr>
-                        <tr><td data-label="Program Studi">Teknik Sipil</td><td data-label="SPP Normal">Rp2.000.000</td><td data-label="Bayar Awal"><strong>Rp1.2<PASSWORD>.<PASSWORD></strong><br><small class="text-muted">(1.<PASSWORD> + 2<PASSWORD>)</small></td></tr>
-                        <tr><td data-label="Program Studi">Multimedia</td><td data-label="SPP Normal">Rp2.000.000</td><td data-label="Bayar Awal"><strong>Rp1.200.000</strong><br><small class="text-muted">(1.000.000 + 200.000)</small></td></tr>
-                        <tr><td data-label="Program Studi">Teknologi Pangan</td><td data-label="SPP Normal">Rp2.000.000</td><td data-label="Bayar Awal"><strong>Rp1.200.000</strong><br><small class="text-muted">(1.000.000 + 200.000)</small></td></tr>
-                        <tr><td data-label="Program Studi">Arsitektur</td><td data-label="SPP Normal">Rp2.000.000</td><td data-label="Bayar Awal"><strong>Rp1.200.000</strong><br><small class="text-muted">(1.000.000 + 200.000)</small></td></tr>
-                        <tr><td data-label="Program Studi">Teknik Pertambangan</td><td data-label="SPP Normal">Rp2.500.000</td><td data-label="Bayar Awal"><strong>Rp1.450.000</strong><br><small class="text-muted">(1.250.000 + 200.000)</small></td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-        </div>
-
-        <h2 class="section-title">Informasi <span>Pembayaran</span></h2>
-        <div class="row g-3 mb-4">
+        <!-- ===== STAT STRIP ===== -->
+        <div class="row g-3 stat-strip">
             <div class="col-md-4">
-                <div class="info-card">
-                    <i class="bi bi-calculator-fill main-icon"></i>
-                    <h4>Biaya Pendaftaran</h4>
-                    <p><strong>Rp200.000</strong> + <strong>50% SPP</strong><br>Dibayarkan di awal sebagai tanda jadi.</p>
+                <div class="stat-card">
+                    <div class="ico"><i class="bi bi-journal-bookmark-fill"></i></div>
+                    <div><small>Program Studi</small><strong><%= pmb.d3.length + pmb.d4.length %> pilihan (D3 &amp; D4)</strong></div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="info-card" style="text-align: left;">
-                    <i class="bi bi-bank2 main-icon" style="display: block; text-align: center;"></i>
-                    <h4 class="text-center">Rekening Tujuan</h4>
-                    <div class="mt-3">
-                        <p class="mb-2"><i class="bi bi-bank me-2 text-primary"></i> <strong>BRI</strong> 2188-01-000423-30-9<br><span class="ms-4 text-muted small">a.n. Politeknik Dewantara</span></p>
-                        <p class="mb-2"><i class="bi bi-bank me-2 text-primary"></i> <strong>Bank Mandiri</strong> 170-00-1777177-9<br><span class="ms-4 text-muted small">a.n. Politeknik Dewantara</span></p>
-                        <p class="mb-0"><i class="bi bi-bank me-2 text-primary"></i> <strong>Bank Muamalat</strong> 802-002-4946<br><span class="ms-4 text-muted small">a.n. Politeknik Dewantara</span></p>
-                    </div>
+                <div class="stat-card">
+                    <div class="ico gold"><i class="bi bi-ticket-perforated-fill"></i></div>
+                    <div><small>Biaya Pendaftaran</small><strong><%= pmb.biayaPendaftaran %></strong></div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="info-card">
-                    <i class="bi bi-shield-check main-icon"></i>
-                    <h4>Setelah Transfer</h4>
-                    <p>Simpan dan unggah bukti transfer/pembayaran Setelah melakukan transfer, segera Konfirmasi di WA: 0852-4245-9746 (Fajar)</p>
+                <div class="stat-card">
+                    <div class="ico green"><i class="bi bi-award-fill"></i></div>
+                    <div><small>Beasiswa</small><strong>Kurang mampu &amp; berprestasi</strong></div>
                 </div>
             </div>
         </div>
 
+        <!-- ===== PROGRAM STUDI & SPP ===== -->
+        <section id="program-studi" class="pmb-section">
+            <div class="sec-head">
+                <div class="tag">Program Studi</div>
+                <h2>Pilih jalur kariermu</h2>
+                <p>Biaya SPP ditampilkan per semester sesuai ketentuan Gelombang II.</p>
+            </div>
 
-
-        <div id="pendaftaran" class="section-wrapper">
-            <h2 class="section-title">Formulir <span>Pendaftaran Online</span></h2>
-            <form action="/pmb/submit" method="POST" enctype="multipart/form-data">
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold text-secondary">Nama Lengkap <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-person"></i></span>
-                            <input type="text" name="nama" class="form-control" placeholder="Sesuai ijazah/KTP" required>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold text-secondary">Jenis Kelamin <span class="text-danger">*</span></label>
-                        <div class="d-flex gap-4 mt-2 px-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="jenis_kelamin" id="jk_l" value="Laki-laki" required>
-                                <label class="form-check-label" for="jk_l">Laki-laki</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="jenis_kelamin" id="jk_p" value="Perempuan" required>
-                                <label class="form-check-label" for="jk_p">Perempuan</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold text-secondary">Nomor Induk Siswa <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-                            <input type="text" name="nis" class="form-control" placeholder="NISN Sekolah asal" required>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold text-secondary">Asal Sekolah <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-building"></i></span>
-                            <input type="text" name="asal_sekolah" class="form-control" placeholder="Contoh: SMA Negeri 1..." required>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold text-secondary">Nomor WhatsApp <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-whatsapp"></i></span>
-                            <input type="tel" name="wa" class="form-control" placeholder="08xxxxxxxxxx" required>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold text-secondary">Pilihan Program Studi <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-book"></i></span>
-                            <select name="jurusan" class="form-select" required>
-                                <option value="">Pilih Program Studi</option>
-                                <option>Mesin Otomotif</option>
-                                <option>Teknik Elektronika</option>
-                                <option>Teknik Sipil</option>
-                                <option>Multimedia</option>
-                                <option>Teknologi Pangan</option>
-                                <option>Arsitektur</option>
-                                <option>Teknik Pertambangan</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold text-secondary">Jalur Pendaftaran <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-star"></i></span>
-                            <select name="jalur" id="jalur" class="form-select" required>
-                                <option value="Reguler">Jalur Reguler</option>
-                                <option value="Beasiswa">Jalur Beasiswa</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-12" id="grupBeasiswa" style="display: none;">
-                        <div class="p-3 bg-light rounded-3 border border-light-subtle">
-                            <label class="form-label fw-semibold text-secondary mb-2"><i class="bi bi-link-45deg"></i> Grup WhatsApp Beasiswa (Khusus Jalur Beasiswa)</label>
-                            <div class="wa-link-group">
-                                <a href="https://chat.whatsapp.com/BOi2ISglh2GHOwZpPSwgfy" target="_blank"><i class="bi bi-whatsapp"></i> KIP Kuliah</a>
-                                <a href="https://chat.whatsapp.com/DVGBvmco6rlFUU25Bj8Om4" target="_blank"><i class="bi bi-whatsapp"></i> Tahfidz</a>
-                                <a href="https://chat.whatsapp.com/I83I3L3ltEe7Cjvv55HnyR" target="_blank"><i class="bi bi-whatsapp"></i> Kredit Mahasiswa</a>
-                                <a href="https://chat.whatsapp.com/GoU9KVxSaYM3PpGsTsCnN1" target="_blank"><i class="bi bi-whatsapp"></i> Prestasi</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label fw-semibold text-secondary">Bukti Pembayaran <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-cloud-arrow-up"></i></span>
-                            <input type="file" name="bukti_pembayaran" class="form-control" accept="image/*,.pdf" required>
-                        </div>
-                        <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle"></i> Upload foto/scan bukti transfer biaya pendaftaran awal (Max 2MB)</small>
-                    </div>
-                    <div class="col-12 mt-4">
-                        <div class="form-check p-3 bg-light rounded border border-light-subtle">
-                            <input class="form-check-input ms-1" type="checkbox" id="agree" required>
-                            <label class="form-check-label small ms-2" for="agree" style="line-height: 1.5;">
-                                Saya menyatakan bahwa seluruh data yang saya isikan adalah benar dan dapat dipertanggungjawabkan sesuai ketentuan Politeknik Dewantara.
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-12 mt-4 form-actions text-center">
-                        <button type="submit" class="btn-pmb px-5 py-2 fs-5"><i class="bi bi-send-fill me-2"></i> Kirim Pendaftaran</button>
-                        <button type="reset" class="btn btn-outline-secondary px-4 py-2 ms-md-2 mt-3 mt-md-0 fw-semibold">Kosongkan</button>
+            <div class="jenjang-label"><i class="bi bi-diagram-3-fill"></i> Diploma Tiga (A.Md.T)</div>
+            <div class="row g-3 mb-4">
+                <% pmb.d3.forEach(function(p){ %>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="prodi-card <%= p.nama === 'Teknik Elektronika' ? 'highlight' : '' %>">
+                        <% if (p.nama === 'Teknik Elektronika') { %><span class="ribbon">Kaprodi: Fajar</span><% } %>
+                        <div class="p-ico"><i class="bi <%= p.icon %>"></i></div>
+                        <h3><%= p.nama %></h3>
+                        <span class="gelar">Gelar: A.Md.T</span>
+                        <div class="spp"><small>Biaya SPP</small><b><%= rp(p.spp) %></b> <i>/ semester</i></div>
                     </div>
                 </div>
-            </form>
-        </div>
+                <% }); %>
+            </div>
+
+            <div class="jenjang-label"><i class="bi bi-diagram-3-fill"></i> Sarjana Terapan</div>
+            <div class="row g-3">
+                <% pmb.d4.forEach(function(p){ %>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="prodi-card">
+                        <div class="p-ico"><i class="bi <%= p.icon %>"></i></div>
+                        <h3><%= p.nama %></h3>
+                        <span class="gelar">Gelar: <%= p.gelar %></span>
+                        <div class="spp"><small>Biaya SPP</small><b><%= rp(p.spp) %></b> <i>/ semester</i></div>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+        </section>
+
+        <!-- ===== BEASISWA ===== -->
+        <section class="pmb-section" style="padding-top:2.5rem;">
+            <div class="beasiswa-banner">
+                <div class="b-ico"><i class="bi bi-stars"></i></div>
+                <div class="b-txt">
+                    <h3>Tersedia Beasiswa Bagi yang Kurang Mampu dan Berprestasi</h3>
+                    <p>Pilih jalur <strong>Beasiswa</strong> pada formulir pendaftaran, lalu bergabung ke grup WhatsApp sesuai jenis beasiswa.</p>
+                </div>
+                <a href="#pendaftaran" class="btn btn-hero btn-hero-main">Daftar Jalur Beasiswa</a>
+            </div>
+        </section>
+
+        <!-- ===== PEMBAYARAN ===== -->
+        <section class="pmb-section">
+            <div class="sec-head">
+                <div class="tag">Pembayaran</div>
+                <h2>Biaya pendaftaran &amp; rekening tujuan</h2>
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="info-card">
+                        <div class="i-ico"><i class="bi bi-receipt-cutoff"></i></div>
+                        <h4>Biaya Pendaftaran</h4>
+                        <div class="big-price mb-2"><%= pmb.biayaPendaftaran %></div>
+                        <p>Dibayarkan sekali di awal. Biaya SPP per program studi tercantum pada bagian Program Studi di atas.</p>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="info-card">
+                        <div class="i-ico"><i class="bi bi-bank2"></i></div>
+                        <h4>Rekening Tujuan</h4>
+                        <div class="rek-item">
+                            <div><div class="bank">BRI</div><div class="no" data-no="2188-01-000423-30-9">2188-01-000423-30-9</div></div>
+                            <button type="button" class="btn-copy" data-copy="2188-01-000423-30-9"><i class="bi bi-clipboard"></i> Salin</button>
+                        </div>
+                        <div class="rek-item">
+                            <div><div class="bank">Bank Mandiri</div><div class="no">170-00-1777177-9</div></div>
+                            <button type="button" class="btn-copy" data-copy="170-00-1777177-9"><i class="bi bi-clipboard"></i> Salin</button>
+                        </div>
+                        <div class="rek-item">
+                            <div><div class="bank">Bank Muamalat</div><div class="no">802-002-4946</div></div>
+                            <button type="button" class="btn-copy" data-copy="802-002-4946"><i class="bi bi-clipboard"></i> Salin</button>
+                        </div>
+                        <p class="text-muted small mt-2 mb-0">Semua rekening a.n. <strong>Politeknik Dewantara</strong></p>
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                    <div class="info-card">
+                        <div class="i-ico"><i class="bi bi-shield-check"></i></div>
+                        <h4>Setelah Transfer</h4>
+                        <p>Simpan bukti transfer, unggah pada formulir, lalu konfirmasi melalui WhatsApp ke <strong><%= pmb.kontak.tampil %></strong> (<%= pmb.kontak.nama.split(',')[0] %>).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== LANGKAH ===== -->
+        <section class="pmb-section">
+            <div class="sec-head">
+                <div class="tag">Alur</div>
+                <h2>Daftar dalam 4 langkah</h2>
+            </div>
+            <div class="row g-3">
+                <div class="col-sm-6 col-lg-3"><div class="step-card"><div class="no">1</div><h5>Pilih program studi</h5><p>Tentukan jenjang dan prodi yang diminati.</p></div></div>
+                <div class="col-sm-6 col-lg-3"><div class="step-card"><div class="no">2</div><h5>Bayar pendaftaran</h5><p><%= pmb.biayaPendaftaran %> ke salah satu rekening resmi.</p></div></div>
+                <div class="col-sm-6 col-lg-3"><div class="step-card"><div class="no">3</div><h5>Isi formulir &amp; unggah bukti</h5><p>Lengkapi data diri dan unggah bukti transfer.</p></div></div>
+                <div class="col-sm-6 col-lg-3"><div class="step-card"><div class="no">4</div><h5>Konfirmasi WhatsApp</h5><p>Panitia memverifikasi data dan menghubungi Anda.</p></div></div>
+            </div>
+        </section>
+
+        <!-- ===== KONTAK ===== -->
+        <section id="kontak" class="pmb-section">
+            <div class="sec-head">
+                <div class="tag">Kontak</div>
+                <h2>Butuh informasi? Hubungi kami</h2>
+            </div>
+            <div class="contact-card">
+                <div class="c-main">
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <div class="contact-avatar" aria-hidden="true">FR</div>
+                        <div class="flex-grow-1">
+                            <h4><%= pmb.kontak.nama %></h4>
+                            <div class="role"><%= pmb.kontak.jabatan %></div>
+                            <div class="fw-semibold mt-1"><i class="bi bi-telephone-fill text-primary me-1"></i> <%= pmb.kontak.tampil %></div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a class="btn-wa" target="_blank" rel="noopener"
+                               href="https://wa.me/<%= pmb.kontak.wa %>?text=<%= encodeURIComponent('Assalamu\'alaikum Pak Fajar, saya ingin bertanya tentang PMB Politeknik Dewantara ' + pmb.gelombang + ' TA ' + pmb.tahunAkademik + '.') %>">
+                                <i class="bi bi-whatsapp"></i> Chat WhatsApp
+                            </a>
+                            <a class="btn-call" href="tel:<%= pmb.kontak.tel %>"><i class="bi bi-telephone"></i> Telepon</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="c-foot">
+                    <i class="bi bi-instagram me-1"></i> Ikuti kami:
+                    <% pmb.instagram.forEach(function(ig){ %>
+                        <a href="<%= ig.url %>" target="_blank" rel="noopener"><%= ig.label %></a>
+                    <% }); %>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== FORMULIR ===== -->
+        <section id="pendaftaran" class="pmb-section">
+            <div class="sec-head">
+                <div class="tag">Formulir</div>
+                <h2>Pendaftaran Online</h2>
+                <p><%= pmb.gelombang %> · Tahun Akademik <%= pmb.tahunAkademik %></p>
+            </div>
+            <div class="form-shell">
+                <div class="biaya-note mb-4">
+                    <i class="bi bi-info-circle-fill me-1"></i>
+                    Biaya pendaftaran <strong><%= pmb.biayaPendaftaran %></strong>. Transfer terlebih dahulu, lalu unggah bukti pembayaran pada formulir ini.
+                </div>
+                <form action="/pmb/submit" method="POST" enctype="multipart/form-data">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary" for="nama">Nama Lengkap <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" id="nama" name="nama" class="form-control" placeholder="Sesuai ijazah/KTP" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary">Jenis Kelamin <span class="text-danger">*</span></label>
+                            <div class="d-flex gap-4 mt-2 px-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="jenis_kelamin" id="jk_l" value="Laki-laki" required>
+                                    <label class="form-check-label" for="jk_l">Laki-laki</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="jenis_kelamin" id="jk_p" value="Perempuan" required>
+                                    <label class="form-check-label" for="jk_p">Perempuan</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary" for="nis">Nomor Induk Siswa <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+                                <input type="text" id="nis" name="nis" class="form-control" placeholder="NISN sekolah asal" inputmode="numeric" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary" for="asal_sekolah">Asal Sekolah <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-building"></i></span>
+                                <input type="text" id="asal_sekolah" name="asal_sekolah" class="form-control" placeholder="Contoh: SMA Negeri 1 Palopo" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary" for="wa">Nomor WhatsApp <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-whatsapp"></i></span>
+                                <input type="tel" id="wa" name="wa" class="form-control" placeholder="08xxxxxxxxxx" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary" for="jurusan">Pilihan Program Studi <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-book"></i></span>
+                                <select id="jurusan" name="jurusan" class="form-select" required>
+                                    <option value="">Pilih Program Studi</option>
+                                    <optgroup label="Diploma Tiga (A.Md.T)">
+                                        <% pmb.d3.forEach(function(p){ %><option value="D3 <%= p.nama %>">D3 <%= p.nama %></option><% }); %>
+                                    </optgroup>
+                                    <optgroup label="Sarjana Terapan">
+                                        <% pmb.d4.forEach(function(p){ %><option value="<%= p.nama %> (<%= p.gelar %>)"><%= p.nama %> (<%= p.gelar %>)</option><% }); %>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary" for="jalur">Jalur Pendaftaran <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-star"></i></span>
+                                <select name="jalur" id="jalur" class="form-select" required>
+                                    <option value="Reguler">Jalur Reguler</option>
+                                    <option value="Beasiswa">Jalur Beasiswa</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-12" id="grupBeasiswa" style="display: none;">
+                            <div class="p-3 bg-light rounded-3 border border-light-subtle">
+                                <label class="form-label fw-semibold text-secondary mb-2"><i class="bi bi-link-45deg"></i> Grup WhatsApp Beasiswa (khusus jalur beasiswa)</label>
+                                <div class="wa-link-group">
+                                    <a href="https://chat.whatsapp.com/BOi2ISglh2GHOwZpPSwgfy" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> KIP Kuliah</a>
+                                    <a href="https://chat.whatsapp.com/DVGBvmco6rlFUU25Bj8Om4" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Tahfidz</a>
+                                    <a href="https://chat.whatsapp.com/I83I3L3ltEe7Cjvv55HnyR" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Kredit Mahasiswa</a>
+                                    <a href="https://chat.whatsapp.com/GoU9KVxSaYM3PpGsTsCnN1" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Prestasi</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold text-secondary" for="bukti">Bukti Pembayaran <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-cloud-arrow-up"></i></span>
+                                <input type="file" id="bukti" name="bukti_pembayaran" class="form-control" accept="image/jpeg,image/png,.pdf" required>
+                            </div>
+                            <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle"></i> Foto/scan bukti transfer biaya pendaftaran (JPG, PNG, atau PDF, maks. 2MB)</small>
+                            <small class="text-danger d-none" id="fileErr"></small>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check p-3 bg-light rounded border border-light-subtle">
+                                <input class="form-check-input ms-1" type="checkbox" id="agree" required>
+                                <label class="form-check-label small ms-2" for="agree" style="line-height: 1.5;">
+                                    Saya menyatakan bahwa seluruh data yang saya isikan adalah benar dan dapat dipertanggungjawabkan sesuai ketentuan Politeknik Dewantara.
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-12 text-center">
+                            <button type="submit" class="btn-submit"><i class="bi bi-send-fill me-2"></i> Kirim Pendaftaran</button>
+                            <button type="reset" class="btn btn-outline-secondary btn-reset rounded-pill px-4 py-2 ms-md-2 mt-3 mt-md-0 fw-semibold">Kosongkan</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
     </div>
 </div>
 
-<script>
-    // Countdown Timer (target: 31 Mei 2026)
-    function updateCountdown() {
-        const targetDate = new Date(2026, 5, 31, 23, 59, 59);
-        const now = new Date();
-        const diff = targetDate - now;
-        if (diff <= 0) {
-            document.getElementById('days').innerText = '00';
-            document.getElementById('hours').innerText = '00';
-            document.getElementById('minutes').innerText = '00';
-            document.getElementById('seconds').innerText = '00';
-            return;
-        }
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (86400000)) / (3600000));
-        const minutes = Math.floor((diff % 3600000) / 60000);
-        const seconds = Math.floor((diff % 60000) / 1000);
-        document.getElementById('days').innerText = String(days).padStart(2, '0');
-        document.getElementById('hours').innerText = String(hours).padStart(2, '0');
-        document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
-        document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
-    }
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
+<a class="wa-float" target="_blank" rel="noopener" aria-label="Chat WhatsApp Panitia PMB"
+   href="https://wa.me/<%= pmb.kontak.wa %>?text=<%= encodeURIComponent('Assalamu\'alaikum, saya ingin bertanya tentang PMB Politeknik Dewantara.') %>">
+    <i class="bi bi-whatsapp"></i>
+</a>
 
+<script>
     // Toggle grup beasiswa
-    const jalurSelect = document.getElementById('jalur');
-    const grupDiv = document.getElementById('grupBeasiswa');
-    function toggleGrupBeasiswa() {
-        grupDiv.style.display = jalurSelect.value === 'Beasiswa' ? 'block' : 'none';
-    }
-    jalurSelect.addEventListener('change', toggleGrupBeasiswa);
-    toggleGrupBeasiswa();
+    (function () {
+        var jalur = document.getElementById('jalur');
+        var grup = document.getElementById('grupBeasiswa');
+        function toggle() { grup.style.display = jalur.value === 'Beasiswa' ? 'block' : 'none'; }
+        jalur.addEventListener('change', toggle);
+        toggle();
+    })();
+
+    // Validasi ukuran file di sisi klien (server membatasi 2MB)
+    (function () {
+        var input = document.getElementById('bukti');
+        var err = document.getElementById('fileErr');
+        input.addEventListener('change', function () {
+            var f = input.files && input.files[0];
+            if (f && f.size > 2 * 1024 * 1024) {
+                err.textContent = 'Ukuran file melebihi 2MB. Silakan kompres atau pilih file lain.';
+                err.classList.remove('d-none');
+                input.value = '';
+            } else {
+                err.classList.add('d-none');
+            }
+        });
+    })();
+
+    // Salin nomor rekening
+    document.querySelectorAll('.btn-copy').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var text = btn.getAttribute('data-copy');
+            var done = function () {
+                var old = btn.innerHTML;
+                btn.classList.add('ok');
+                btn.innerHTML = '<i class="bi bi-check2"></i> Tersalin';
+                setTimeout(function () { btn.classList.remove('ok'); btn.innerHTML = old; }, 1600);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done, function () {});
+            } else {
+                var t = document.createElement('textarea');
+                t.value = text; document.body.appendChild(t); t.select();
+                try { document.execCommand('copy'); done(); } catch (e) {}
+                document.body.removeChild(t);
+            }
+        });
+    });
 </script>
 
 <%- include('../partials/footer-landing') %>

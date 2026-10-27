@@ -88,7 +88,7 @@
                     <li><i class="bi bi-card-text me-2 text-primary"></i> <strong>NIS:</strong> <%= nis %></li>
                     <li><i class="bi bi-building me-2 text-primary"></i> <strong>Asal Sekolah:</strong> <%= asal_sekolah %></li>
                     <li><i class="bi bi-whatsapp me-2 text-primary"></i> <strong>WA:</strong> <%= wa %></li>
-                    <li><i class="bi bi-book me-2 text-primary"></i> <strong>Jurusan:</strong> <%= jurusan %></li>
+                    <li><i class="bi bi-book me-2 text-primary"></i> <strong>Program Studi:</strong> <%= jurusan %></li>
                     <li><i class="bi bi-star me-2 text-primary"></i> <strong>Jalur:</strong> <%= jalur %></li>
                 </ul>
 
@@ -98,10 +98,14 @@
                     Panitia PMB akan segera menghubungi Anda melalui WhatsApp untuk verifikasi data dan NIM.
                 </div>
 
-                <!-- TOMBOL KONFIRMASI WHATSAPP -->
+                <!-- KONTAK KONFIRMASI -->
                 <div class="text-center mt-4">
                     <p class="mb-2 fw-semibold">Silakan hubungi untuk konfirmasi pendaftaran:</p>
-                    <a href="https://wa.me/6285242459746" target="_blank" class="wa-confirm">
+                    <div class="mb-3">
+                        <div class="fw-bold">Fajar Ramadhan, S.Pd., M.T</div>
+                        <div class="text-muted small">Ketua Program Studi Teknik Elektronika</div>
+                    </div>
+                    <a href="https://wa.me/6285242459746?text=<%= encodeURIComponent('Assalamu\'alaikum Pak Fajar, saya ' + nama + ' sudah mendaftar PMB Politeknik Dewantara (' + jurusan + '). Mohon konfirmasi.') %>" target="_blank" rel="noopener" class="wa-confirm">
                         <i class="bi bi-whatsapp fs-5"></i> 0852-4245-9746
                     </a>
                     <p class="text-muted small mt-2">Setelah konfirmasi, data Anda akan segera diproses.</p>
