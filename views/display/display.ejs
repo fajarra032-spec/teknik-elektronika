@@ -310,6 +310,59 @@
     }
     .list-empty { color: rgba(255,255,255,0.4); font-size: 0.9rem; text-align: center; padding: 20px; }
 
+    /* ===== HALAMAN: PUSAT TINDAKAN ADMIN ===== */
+    .aksi-wrap { flex: 1; display: flex; gap: 20px; min-height: 0; }
+    .aksi-total {
+      flex: 0 0 26%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; gap: 10px; border-left: 4px solid #ffd966;
+    }
+    .aksi-total .at-num { font-family: 'Orbitron', sans-serif; font-size: 5.5rem; line-height: 1; color: #fff; }
+    .aksi-total .at-lbl { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1.5px; color: #ffd966; }
+    .aksi-total .at-sub { font-size: 0.8rem; opacity: 0.65; line-height: 1.4; }
+    .aksi-total .at-upd { font-size: 0.7rem; opacity: 0.45; margin-top: 8px; }
+    .aksi-total.ok .at-num { color: #4ade80; }
+    .aksi-total.warn .at-num { color: #fbbf24; }
+    .aksi-total.danger .at-num { color: #ff6b6b; }
+
+    .aksi-groups { flex: 1; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+    .aksi-group { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .aksi-group-title {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.55);
+      margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+    .aksi-grid { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; min-height: 0; }
+    .aksi-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.06), rgba(0,0,0,0.25));
+      border: 1px solid rgba(255,255,255,0.07); border-left-width: 5px; border-radius: 16px;
+      padding: 10px 18px; display: flex; align-items: center; gap: 16px; transition: all 0.4s ease;
+    }
+    .aksi-card i { font-size: 1.6rem; width: 34px; text-align: center; flex-shrink: 0; }
+    .aksi-card .ac-num { font-family: 'Orbitron', sans-serif; font-size: 2.2rem; line-height: 1; min-width: 62px; }
+    .aksi-card .ac-lbl { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1.25; opacity: 0.85; }
+    .aksi-card.ok { border-left-color: #4ade80; } .aksi-card.ok i, .aksi-card.ok .ac-num { color: #4ade80; }
+    .aksi-card.warn { border-left-color: #fbbf24; } .aksi-card.warn i, .aksi-card.warn .ac-num { color: #fbbf24; }
+    .aksi-card.danger { border-left-color: #ff6b6b; background: linear-gradient(145deg, rgba(255,107,107,0.14), rgba(0,0,0,0.25)); }
+    .aksi-card.danger i, .aksi-card.danger .ac-num { color: #ff6b6b; }
+    .aksi-card.na { border-left-color: #64748b; } .aksi-card.na i, .aksi-card.na .ac-num { color: #64748b; }
+
+    /* ===== HALAMAN: STATISTIK (diperkaya) ===== */
+    .stat-tiles.compact { flex: 0 0 auto; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 16px; }
+    .stat-tiles.compact .tile { padding: 16px 10px; }
+    .stat-tiles.compact .tile i { font-size: 1.5rem; margin-bottom: 6px; }
+    .stat-tiles.compact .tile .tile-num { font-size: 2rem; }
+    .stat-tiles.compact .tile .tile-lbl { font-size: 0.65rem; margin-top: 6px; }
+    .stat-split { flex: 1; display: flex; gap: 20px; min-height: 0; }
+    .stat-split .panel { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .bar-row .br-lbl { font-family: 'Orbitron', sans-serif; color: #ffd966; width: 64px; font-size: 0.9rem; flex-shrink: 0; }
+    .bar-row .br-bg { flex: 1; height: 16px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+    .bar-row .br-fill { height: 100%; background: linear-gradient(90deg, #ffd966, #ffb700); border-radius: 10px; }
+    .bar-row .br-val { width: 42px; text-align: right; font-weight: 600; }
+    .status-chips { display: flex; flex-wrap: wrap; gap: 12px; }
+    .status-chip { flex: 1 1 40%; background: rgba(255,255,255,0.05); border-radius: 14px; padding: 14px; text-align: center; }
+    .status-chip .sc-num { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; color: #fff; }
+    .status-chip .sc-lbl { font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; margin-top: 4px; }
+
     /* Footer */
     .footer-ticker {
       margin-top: 16px;
@@ -346,7 +399,7 @@
       </div>
     </div>
     <div class="center-title">
-      <h2>DASHBOARD INFORMASI PRODI</h2>
+      <h2>DASHBOARD ADMIN PRODI</h2>
     </div>
     <div class="clock-container">
       <div class="clock" id="liveClock">00:00:00</div>
@@ -354,18 +407,68 @@
   </header>
 
   <div class="page-indicator" id="pageIndicator">
+    <div class="pi-item" data-page="tindakan"><i class="fas fa-bell"></i> Tindakan</div>
     <div class="pi-item" data-page="magang"><i class="fas fa-images"></i> Magang</div>
-    <div class="pi-item" data-page="berita"><i class="fas fa-newspaper"></i> Berita</div>
+    <div class="pi-item" data-page="hariini"><i class="fas fa-calendar-day"></i> Hari Ini</div>
+    <div class="pi-item" data-page="referensi"><i class="fas fa-calendar-alt"></i> Agenda</div>
     <div class="pi-item" data-page="statistik"><i class="fas fa-chart-pie"></i> Statistik</div>
     <div class="pi-item" data-page="progress"><i class="fas fa-graduation-cap"></i> Progress MK</div>
-    <div class="pi-item" data-page="hariini"><i class="fas fa-calendar-day"></i> Hari Ini</div>
-    <div class="pi-item" data-page="referensi"><i class="fas fa-calendar-alt"></i> Referensi</div>
+    <div class="pi-item" data-page="berita"><i class="fas fa-newspaper"></i> Berita</div>
   </div>
 
   <div class="stage" id="stage">
 
-    <!-- ===== HALAMAN 1: DOKUMENTASI MAGANG ===== -->
-    <section class="page active" data-page="magang">
+    <!-- ===== HALAMAN: PUSAT TINDAKAN ADMIN ===== -->
+    <%
+      const aksiGroups = [
+        { judul: 'Akademik & Persuratan', icon: 'fa-graduation-cap', items: [
+          { key: 'krs', label: 'Persetujuan KRS', icon: 'fa-file-signature' },
+          { key: 'surat', label: 'Surat Mahasiswa', icon: 'fa-envelope-open-text' },
+          { key: 'suratDosen', label: 'Surat Dosen', icon: 'fa-envelope' }
+        ]},
+        { judul: 'Magang', icon: 'fa-briefcase', items: [
+          { key: 'logbook', label: 'Logbook Menunggu', icon: 'fa-book-open' },
+          { key: 'laporan', label: 'Laporan Magang', icon: 'fa-file-lines' },
+          { key: 'seminar', label: 'Pengajuan Seminar', icon: 'fa-person-chalkboard' }
+        ]},
+        { judul: 'Layanan Prodi', icon: 'fa-concierge-bell', items: [
+          { key: 'kunjungan', label: 'Kunjungan Industri', icon: 'fa-industry' },
+          { key: 'peminjaman', label: 'Peminjaman Alat Lab', icon: 'fa-screwdriver-wrench' },
+          { key: 'pmb', label: 'Pendaftar PMB', icon: 'fa-user-plus' }
+        ]}
+      ];
+      const aksiLevel = (n) => n === null || n === undefined ? 'na' : (n === 0 ? 'ok' : (n >= 10 ? 'danger' : 'warn'));
+    %>
+    <section class="page" data-page="tindakan">
+      <div class="page-title"><i class="fas fa-bell"></i> Pusat Tindakan Admin</div>
+      <div class="aksi-wrap">
+        <aside class="panel aksi-total <%= aksiLevel(antrian.total) %>" id="aksiTotal">
+          <div class="at-lbl">Menunggu Tindakan</div>
+          <div class="at-num" id="aksiTotalNum"><%= antrian.total %></div>
+          <div class="at-sub" id="aksiTotalSub"><%= antrian.total === 0 ? 'Semua beres. Tidak ada antrian.' : 'pekerjaan perlu diproses di panel admin' %></div>
+          <div class="at-upd">Diperbarui <span id="aksiUpd" data-ts="<%= antrian.diperbaruiPada %>">-</span></div>
+        </aside>
+        <div class="aksi-groups">
+          <% aksiGroups.forEach(function(g) { %>
+            <div class="aksi-group">
+              <div class="aksi-group-title"><i class="fas <%= g.icon %>"></i> <%= g.judul %></div>
+              <div class="aksi-grid">
+                <% g.items.forEach(function(it) { const n = antrian[it.key]; %>
+                  <div class="aksi-card <%= aksiLevel(n) %>" data-aksi="<%= it.key %>">
+                    <i class="fas <%= it.icon %>"></i>
+                    <div class="ac-num"><%= n === null || n === undefined ? '-' : n %></div>
+                    <div class="ac-lbl"><%= it.label %></div>
+                  </div>
+                <% }); %>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== HALAMAN: MONITORING MAGANG (foto acak & terbaru) ===== -->
+    <section class="page" data-page="magang">
       <div class="magang-row">
         <aside class="panel col-left" id="infoMahasiswa">
           <div class="info-group fade-up">
@@ -446,44 +549,38 @@
       </div>
     </section>
 
-    <!-- ===== HALAMAN 3: STATISTIK PROGRAM STUDI ===== -->
+    <!-- ===== HALAMAN: STATISTIK PROGRAM STUDI ===== -->
     <section class="page" data-page="statistik">
       <div class="page-title"><i class="fas fa-chart-pie"></i> Statistik Program Studi</div>
-      <div class="stat-tiles">
-        <div class="tile">
-          <i class="fas fa-user-graduate"></i>
-          <div class="tile-num"><%= jumlahMahasiswa || 0 %></div>
-          <div class="tile-lbl">Total Mahasiswa</div>
+      <div class="stat-tiles compact">
+        <div class="tile"><i class="fas fa-user-graduate"></i><div class="tile-num"><%= statusCount.Aktif %></div><div class="tile-lbl">Mahasiswa Aktif</div></div>
+        <div class="tile"><i class="fas fa-chalkboard-teacher"></i><div class="tile-num"><%= jumlahDosen || 0 %></div><div class="tile-lbl">Dosen</div></div>
+        <div class="tile"><i class="fas fa-book"></i><div class="tile-num"><%= jumlahMK || 0 %></div><div class="tile-lbl">Mata Kuliah</div></div>
+        <div class="tile"><i class="fas fa-briefcase"></i><div class="tile-num"><%= stats.totalMahasiswaMagangAktif %></div><div class="tile-lbl">Magang Aktif</div></div>
+        <div class="tile"><i class="fas fa-award"></i><div class="tile-num"><%= lulusTahunIni %></div><div class="tile-lbl">Lulus Yudisium <%= tahunIni %></div></div>
+      </div>
+      <div class="stat-split">
+        <div class="panel">
+          <div class="page-subtitle" style="font-size:0.9rem;font-weight:600;color:#ffd966;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;"><i class="fas fa-layer-group"></i> Mahasiswa Aktif per Angkatan</div>
+          <% const maxAng = Math.max.apply(null, perAngkatan.map(function(a){return a.jumlah;}).concat([1])); %>
+          <% if (perAngkatan.length > 0) { perAngkatan.forEach(function(a) { %>
+            <div class="bar-row">
+              <span class="br-lbl"><%= a.angkatan %></span>
+              <div class="br-bg"><div class="br-fill" style="width: <%= Math.round(a.jumlah / maxAng * 100) %>%;"></div></div>
+              <span class="br-val"><%= a.jumlah %></span>
+            </div>
+          <% }); } else { %><div class="list-empty">Belum ada data angkatan.</div><% } %>
         </div>
-        <div class="tile">
-          <i class="fas fa-chalkboard-teacher"></i>
-          <div class="tile-num"><%= jumlahDosen || 0 %></div>
-          <div class="tile-lbl">Total Dosen</div>
-        </div>
-        <div class="tile">
-          <i class="fas fa-book"></i>
-          <div class="tile-num"><%= jumlahMK || 0 %></div>
-          <div class="tile-lbl">Total Mata Kuliah</div>
-        </div>
-        <div class="tile">
-          <i class="fas fa-users"></i>
-          <div class="tile-num"><%= stats.totalMahasiswaMagangAktif %></div>
-          <div class="tile-lbl">Mahasiswa Magang Aktif</div>
-        </div>
-        <div class="tile">
-          <i class="fas fa-folder-open"></i>
-          <div class="tile-num"><%= stats.totalLogbook %></div>
-          <div class="tile-lbl">Total Logbook</div>
-        </div>
-        <div class="tile warn">
-          <i class="fas fa-hourglass-half"></i>
-          <div class="tile-num"><%= stats.logbookPending %></div>
-          <div class="tile-lbl">Logbook Pending</div>
-        </div>
-        <div class="tile">
-          <i class="fas fa-clipboard-check"></i>
-          <div class="tile-num"><%= stats.tugasAktif %></div>
-          <div class="tile-lbl">Tugas Perlu Dinilai</div>
+        <div class="panel">
+          <div class="page-subtitle" style="font-size:0.9rem;font-weight:600;color:#ffd966;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;"><i class="fas fa-users"></i> Status Mahasiswa &amp; Magang</div>
+          <div class="status-chips">
+            <div class="status-chip"><div class="sc-num"><%= statusCount.Aktif %></div><div class="sc-lbl">Aktif</div></div>
+            <div class="status-chip"><div class="sc-num"><%= statusCount.Cuti %></div><div class="sc-lbl">Cuti</div></div>
+            <div class="status-chip"><div class="sc-num"><%= statusCount.Lulus %></div><div class="sc-lbl">Lulus</div></div>
+            <div class="status-chip"><div class="sc-num"><%= statusCount.Keluar %></div><div class="sc-lbl">Keluar</div></div>
+            <div class="status-chip"><div class="sc-num"><%= stats.totalLogbook %></div><div class="sc-lbl">Total Logbook</div></div>
+            <div class="status-chip"><div class="sc-num"><%= stats.tugasAktif %></div><div class="sc-lbl">Tugas Perlu Dinilai</div></div>
+          </div>
         </div>
       </div>
     </section>
@@ -588,6 +685,12 @@
     <marquee scrollamount="6">
       <i class="fas fa-info-circle"></i> Sistem Monitoring Real-time Magang Program Studi Teknik Elektronika (D3) &bull;
       Akses Logbook Digital: elk-magang.polidewa.ac.id &bull;
+      <% if (antrian.total > 0) { %>
+        <strong>Menunggu tindakan: <%= antrian.total %></strong> (<%
+          const labelAntrian = { krs: 'KRS', surat: 'Surat Mhs', suratDosen: 'Surat Dosen', logbook: 'Logbook', laporan: 'Laporan Magang', seminar: 'Seminar', kunjungan: 'Kunjungan Industri', peminjaman: 'Peminjaman Alat', pmb: 'PMB' };
+          const ringkas = Object.keys(labelAntrian).filter(function(k){ return antrian[k] > 0; }).map(function(k){ return labelAntrian[k] + ' ' + antrian[k]; });
+        %><%= ringkas.join(', ') %>) &bull;
+      <% } else { %>Tidak ada antrian tindakan &bull;<% } %>
       <% if (beritaTerbaru && beritaTerbaru.length > 0) { %>
         <% beritaTerbaru.forEach(function(b) { %> Info: <%= b.judul %> &bull; <% }); %>
       <% } %>
@@ -674,8 +777,8 @@
   }
 
   // ================= ROTASI HALAMAN (seperti ganti channel) =================
-  const pageOrder = ['magang', 'berita', 'statistik', 'progress', 'hariini', 'referensi'];
-  const pageDurations = { magang: 24000, berita: 10000, statistik: 10000, progress: 10000, hariini: 12000, referensi: 12000 };
+  const pageOrder = ['tindakan', 'magang', 'hariini', 'referensi', 'statistik', 'progress', 'berita'];
+  const pageDurations = { tindakan: 14000, magang: 24000, hariini: 12000, referensi: 12000, statistik: 12000, progress: 9000, berita: 9000 };
   let pageCursor = 0;
   let pageTimer = null;
 
@@ -692,9 +795,38 @@
     pageTimer = setTimeout(nextPage, pageDurations[name] || 10000);
   }
 
+  // ================= ANTRIAN TINDAKAN: update angka tiap 1 menit tanpa reload =================
+  function aksiLevel(n) { return n === null || n === undefined ? 'na' : (n === 0 ? 'ok' : (n >= 10 ? 'danger' : 'warn')); }
+  function tampilWaktuUpdate(iso) {
+    const el = document.getElementById('aksiUpd');
+    if (!el) return;
+    const d = new Date(iso || el.dataset.ts);
+    el.innerText = isNaN(d) ? '-' : d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+  async function refreshAntrian() {
+    try {
+      const res = await fetch('/display/antrian.json', { cache: 'no-store' });
+      if (!res.ok) return;
+      const d = await res.json();
+      document.querySelectorAll('.aksi-card').forEach(card => {
+        const n = d[card.dataset.aksi];
+        card.className = 'aksi-card ' + aksiLevel(n);
+        card.querySelector('.ac-num').innerText = (n === null || n === undefined) ? '-' : n;
+      });
+      document.getElementById('aksiTotal').className = 'panel aksi-total ' + aksiLevel(d.total);
+      document.getElementById('aksiTotalNum').innerText = d.total;
+      document.getElementById('aksiTotalSub').innerText = d.total === 0 ? 'Semua beres. Tidak ada antrian.' : 'pekerjaan perlu diproses di panel admin';
+      tampilWaktuUpdate(d.diperbaruiPada);
+    } catch (e) { /* koneksi putus sesaat: pakai angka terakhir */ }
+  }
+
   window.onload = () => {
     if (slides.length > 0) updateDisplay(0);
+    // Layar TV menyala terus: muat ulang tiap 30 menit supaya foto terbaru & urutan acak ikut diperbarui
+    setTimeout(() => location.reload(), 30 * 60 * 1000);
     setInterval(rotateSlide, 8000);
+    tampilWaktuUpdate();
+    setInterval(refreshAntrian, 60 * 1000);
     setInterval(updateClock, 1000);
     updateClock();
 

@@ -91,45 +91,137 @@ async function getStatistikProdi() {
   }
 }
 
+// ============================================================================
+// ANTRIAN TINDAKAN ADMIN - jumlah pekerjaan yang menunggu diproses admin.
+// Hanya ANGKA (count() agregasi, tanpa membaca dokumen & tanpa data pribadi),
+// di-cache 60 detik. Nilai null = query gagal (ditampilkan "-" di layar).
+// ============================================================================
+async function hitungAman(query) {
+  try {
+    return (await query.count().get()).data().count;
+  } catch (e) {
+    console.error('Display: count gagal:', e.message);
+    return null;
+  }
+}
+
+async function getAntrianAdmin() {
+  const now = Date.now();
+  if (cache.antrian && now < cache.antrianExpiry) return cache.antrian;
+  const [krs, surat, suratDosen, logbook, laporan, seminar, kunjungan, peminjaman, pmb] = await Promise.all([
+    hitungAman(db.collection('krs').where('status', '==', 'pending')),
+    hitungAman(db.collection('surat').where('status', '==', 'pending')),
+    hitungAman(db.collection('surat_dosen').where('status', '==', 'pending')),
+    hitungAman(db.collection('logbookMagang').where('status', '==', 'pending')),
+    hitungAman(db.collection('laporanMagang').where('status', '==', 'submitted')),
+    hitungAman(db.collection('permohonanMagang').where('status', '==', 'pending')),
+    hitungAman(db.collection('kunjunganIndustri').where('status', '==', 'diajukan')),
+    hitungAman(db.collection('peminjamanAlat').where('status', 'in', ['diajukan', 'menunggu_verifikasi_kembali'])),
+    hitungAman(db.collection('pmb_pendaftaran').where('status', '==', 'pending'))
+  ]);
+  const data = { krs, surat, suratDosen, logbook, laporan, seminar, kunjungan, peminjaman, pmb };
+  data.total = Object.values(data).reduce((a, v) => a + (v || 0), 0);
+  data.diperbaruiPada = new Date().toISOString();
+  cache.antrian = data;
+  cache.antrianExpiry = now + 60 * 1000;
+  return data;
+}
+
+// Dipanggil layar TV tiap 1 menit supaya angka antrian selalu terbaru tanpa reload halaman
+router.get('/antrian.json', async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json(await getAntrianAdmin());
+  } catch (e) {
+    res.status(500).json({ error: 'gagal' });
+  }
+});
+
 router.get('/', async (req, res) => {
   try {
     // ========== DATA LOGBOOK MAGANG ==========
+    // Aturan: foto dari logbook approved TERBARU (urut tanggal desc langsung di query,
+    // bukan limit sembarang lalu di-sort), satu mahasiswa dulu satu foto terbarunya,
+    // urutan mahasiswa diacak tiap halaman dimuat. Sisa slide diisi foto lain.
+    const MAX_SLIDES = 15;
+    const POOL_LOGBOOK = 300;
+
     const logbookSnapshot = await db.collection('logbookMagang')
       .where('status', '==', 'approved')
-      .limit(30)
+      .orderBy('tanggal', 'desc')
+      .limit(POOL_LOGBOOK)
       .get();
 
-    let logs = logbookSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    logs.sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
+    const shuffle = (arr) => {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    };
 
-    const slides = [];
-    for (const data of logs) {
-      const imageUrls = data.imageUrls || [];
-      if (imageUrls.length === 0) continue;
-      const { nama, nim } = await getMahasiswaInfo(data.userId);
-      const { pembimbing } = await getPembimbingMahasiswa(data.userId);
-      const progress = await getProgressMagangHarian(data.userId, data.pdkId);
-      for (const rawUrl of imageUrls) {
-        let imageUrl = rawUrl;
-        if (imageUrl.includes('drive.google.com')) {
-          const match = imageUrl.match(/id=([^&]+)/);
-          if (match) imageUrl = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
-        }
-        slides.push({
-          imageUrl,
-          caption: data.kegiatan || 'Kegiatan magang',
-          mahasiswa: nama,
-          nim: nim,
-          tanggal: data.tanggal ? new Date(data.tanggal).toLocaleDateString('id-ID') : '-',
-          lokasi: data.lokasi || '',
-          perusahaan: data.perusahaan?.nama || '-',
-          pembimbing,
-          progressUploaded: progress.uploadedDays,
-          progressTotal: progress.totalDays,
-          progressPercent: progress.percentage
-        });
+    // userId -> [{data, url}] (terbaru dulu)
+    const fotoPerMahasiswa = new Map();
+    for (const doc of logbookSnapshot.docs) {
+      const data = { id: doc.id, ...doc.data() };
+      if (!data.userId) continue;
+      for (const url of (data.imageUrls || []).filter(Boolean)) {
+        if (!fotoPerMahasiswa.has(data.userId)) fotoPerMahasiswa.set(data.userId, []);
+        fotoPerMahasiswa.get(data.userId).push({ data, url });
       }
     }
+
+    // Tahap 1: foto terbaru tiap mahasiswa, mahasiswa diacak
+    const daftarMhs = shuffle(Array.from(fotoPerMahasiswa.values()));
+    const terpilih = daftarMhs.slice(0, MAX_SLIDES).map(list => list[0]);
+
+    // Tahap 2: kalau belum penuh, isi foto lain (terbaru dulu), lalu acak lagi
+    if (terpilih.length < MAX_SLIDES) {
+      const sisa = [];
+      for (const list of daftarMhs) sisa.push(...list.slice(1));
+      sisa.sort((a, b) => String(b.data.tanggal || '').localeCompare(String(a.data.tanggal || '')));
+      for (const item of sisa) {
+        if (terpilih.length >= MAX_SLIDES) break;
+        terpilih.push(item);
+      }
+      shuffle(terpilih);
+    }
+
+    const progressCache = new Map();
+    const slides = await Promise.all(terpilih.map(async ({ data, url }) => {
+      const [{ nama, nim }, { pembimbing }] = await Promise.all([
+        getMahasiswaInfo(data.userId),
+        getPembimbingMahasiswa(data.userId)
+      ]);
+
+      const progressKey = `${data.userId}_${data.pdkId}`;
+      if (!progressCache.has(progressKey)) {
+        progressCache.set(progressKey, (async () => {
+          try { return await getProgressMagangHarian(data.userId, data.pdkId); }
+          catch (e) { return { uploadedDays: 0, totalDays: 0, percentage: 0 }; }
+        })());
+      }
+      const progress = await progressCache.get(progressKey);
+
+      let imageUrl = url;
+      if (imageUrl.includes('drive.google.com')) {
+        const match = imageUrl.match(/id=([^&]+)/);
+        if (match) imageUrl = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+      }
+      return {
+        imageUrl,
+        caption: data.kegiatan || 'Kegiatan magang',
+        mahasiswa: nama,
+        nim: nim,
+        tanggal: data.tanggal ? new Date(data.tanggal).toLocaleDateString('id-ID') : '-',
+        lokasi: data.lokasi || '',
+        perusahaan: data.perusahaan?.nama || '-',
+        pembimbing,
+        progressUploaded: progress.uploadedDays,
+        progressTotal: progress.totalDays,
+        progressPercent: progress.percentage
+      };
+    }));
 
     if (slides.length === 0) {
       slides.push({
@@ -266,10 +358,37 @@ router.get('/', async (req, res) => {
       };
     });
 
+    // ========== ANTRIAN TINDAKAN & DISTRIBUSI MAHASISWA (untuk display admin) ==========
+    const antrian = await getAntrianAdmin();
+
+    const statusCount = { Aktif: 0, Cuti: 0, Keluar: 0, Lulus: 0 };
+    const perAngkatanMap = {};
+    const tahunIni = new Date().getFullYear();
+    let lulusTahunIni = 0;
+    mahasiswaList.forEach(m => {
+      const st = String(m.statusMahasiswa || 'Aktif').trim().toLowerCase();
+      const key = ['Cuti', 'Keluar', 'Lulus'].find(k => k.toLowerCase() === st) || 'Aktif';
+      statusCount[key] += 1;
+      if (key === 'Aktif') {
+        const ang = getAngkatanFromNim(m.nim);
+        if (ang) perAngkatanMap[ang] = (perAngkatanMap[ang] || 0) + 1;
+      }
+      if (key === 'Lulus' && Number(m.tahunYudisium) === tahunIni) lulusTahunIni += 1;
+    });
+    const perAngkatan = Object.entries(perAngkatanMap)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .slice(0, 6)
+      .map(([angkatan, jumlah]) => ({ angkatan, jumlah }));
+
     res.render('display/display', {
-      title: 'TV Prodi - Dashboard Informasi',
+      title: 'Display Admin - Teknik Elektronika',
       slides,
       stats,
+      antrian,
+      statusCount,
+      perAngkatan,
+      lulusTahunIni,
+      tahunIni,
       beritaTerbaru,
       jadwalPenting,
       jumlahMahasiswa,
