@@ -747,7 +747,7 @@ router.post('/mahasiswa/:userId/nilai-lapangan', async (req, res) => {
 router.get('/print-penilaian/:userId', async (req, res) => {
   try {
     const jenis = req.query.jenis === 'lapangan' ? 'lapangan' : 'dosen';
-    const data = await buildFormPenilaianData(req.params.userId, req.query.periodId, jenis);
+    const data = await buildFormPenilaianData(req.params.userId, req.query.periodId, jenis, req.query.kosong === '1');
     if (!data) return res.status(404).send('Data mahasiswa tidak ditemukan');
     res.render('magang/form_penilaian_print', data);
   } catch (error) {

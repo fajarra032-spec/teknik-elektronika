@@ -534,6 +534,13 @@
         </a>
       </div>
     <% } %>
+    <% if (selectedPeriod) { %>
+      <div class="mt-2 text-end">
+        <a href="/mahasiswa/magang/form-penilaian?jenis=lapangan&periodId=<%= selectedPeriod.id %>" class="print-btn" target="_blank">
+          <i class="bi bi-printer"></i> Cetak Form Penilaian Pendamping Lapangan
+        </a>
+      </div>
+    <% } %>
   </div>
 </div>
 

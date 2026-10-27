@@ -68,3 +68,13 @@ CATATAN
    node --check, semua EJS lolos kompilasi, helper nilai & 4 template cetak dirender
    dengan data tiruan (hasil dicek visual terhadap PDF).
  - File di root (magang1.js, landing.js, dst.) tidak dipakai app.js dan tidak disentuh.
+
+TAMBAHAN: CETAK FORM PENILAIAN (DOSEN & PENDAMPING LAPANGAN)
+ - Dosen  : tombol "Cetak Form Penilaian Magang" di /dosen/magang/:userId (form Dosen
+            Pembimbing & Pendamping Lapangan; terisi bila sudah dinilai, kosong bila belum).
+ - Admin  : tautan cetak + "form kosong" untuk kedua form di halaman logbook mahasiswa.
+ - Mahasiswa: tombol "Cetak Form Penilaian Pendamping Lapangan" di halaman Logbook
+            (/mahasiswa/magang/form-penilaian?jenis=lapangan&periodId=...). Selalu KOSONG,
+            identitas terisi otomatis, untuk dibawa ke IDUKA. Nilai tidak ditampilkan ke mahasiswa.
+ - Parameter &kosong=1 memaksa form kosong. File tambahan: routes/mahasiswa/magang.js,
+   views/mahasiswa/magang/logbook.ejs.

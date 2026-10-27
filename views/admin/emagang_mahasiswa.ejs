@@ -356,7 +356,9 @@
                 <div class="small text-muted">(logbook belum dikunci Dosen PA)</div>
               <% } %>
               <% if (nilaiMagangInfo.nilaiDosen !== null && nilaiMagangInfo.nilaiDosen !== undefined) { %>
-                <div class="mt-1"><a href="/admin/emagang/print-penilaian/<%= mahasiswa.id %>?periodId=<%= selectedPeriod.id %>&jenis=dosen" target="_blank" class="small"><i class="bi bi-printer"></i> Cetak form</a></div>
+                <div class="mt-1"><a href="/admin/emagang/print-penilaian/<%= mahasiswa.id %>?periodId=<%= selectedPeriod.id %>&jenis=dosen" target="_blank" class="small"><i class="bi bi-printer"></i> Cetak form</a> &middot; <a href="/admin/emagang/print-penilaian/<%= mahasiswa.id %>?periodId=<%= selectedPeriod.id %>&jenis=dosen&kosong=1" target="_blank" class="small">form kosong</a></div>
+              <% } else { %>
+                <div class="mt-1"><a href="/admin/emagang/print-penilaian/<%= mahasiswa.id %>?periodId=<%= selectedPeriod.id %>&jenis=dosen" target="_blank" class="small"><i class="bi bi-printer"></i> Cetak form kosong</a></div>
               <% } %>
             </div>
           </div>
@@ -364,7 +366,7 @@
             <div class="p-2 border rounded <%= nilaiMagangInfo.nilaiLapangan !== null ? 'bg-success-subtle' : 'bg-warning-subtle' %>">
               <small class="text-muted d-block">Penilaian Pendamping Lapangan (Admin)</small>
               <strong><%= nilaiMagangInfo.nilaiLapangan !== null ? nilaiMagangInfo.nilaiLapangan : 'Belum diisi' %></strong>
-              <div class="mt-1"><a href="/admin/emagang/print-penilaian/<%= mahasiswa.id %>?periodId=<%= selectedPeriod.id %>&jenis=lapangan" target="_blank" class="small"><i class="bi bi-printer"></i> Cetak form<%= nilaiMagangInfo.nilaiLapangan === null ? ' kosong (untuk diisi pendamping)' : '' %></a></div>
+              <div class="mt-1"><a href="/admin/emagang/print-penilaian/<%= mahasiswa.id %>?periodId=<%= selectedPeriod.id %>&jenis=lapangan" target="_blank" class="small"><i class="bi bi-printer"></i> Cetak form<%= nilaiMagangInfo.nilaiLapangan === null ? ' kosong (untuk diisi pendamping)' : '' %></a><% if (nilaiMagangInfo.nilaiLapangan !== null) { %> &middot; <a href="/admin/emagang/print-penilaian/<%= mahasiswa.id %>?periodId=<%= selectedPeriod.id %>&jenis=lapangan&kosong=1" target="_blank" class="small">form kosong</a><% } %></div>
             </div>
           </div>
         </div>

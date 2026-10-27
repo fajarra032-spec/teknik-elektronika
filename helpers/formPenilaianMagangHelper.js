@@ -30,9 +30,11 @@ function fmtTanggal(t) {
  * @param {string} mahasiswaId
  * @param {string} [periodId] kosong = periode pertama mahasiswa
  * @param {'dosen'|'lapangan'} jenis
+ * @param {boolean} [kosong] true = cetak form KOSONG (tanpa nilai) walau sudah dinilai,
+ *   mis. untuk mahasiswa yang membawa form ke pendamping lapangan
  * @returns {Promise<Object|null>} variabel untuk res.render('magang/form_penilaian_print'), null kalau mahasiswa tak ada
  */
-async function buildFormPenilaianData(mahasiswaId, periodId, jenis) {
+async function buildFormPenilaianData(mahasiswaId, periodId, jenis, kosong) {
   jenis = jenis === 'lapangan' ? 'lapangan' : 'dosen';
   const doc = await db.collection('users').doc(mahasiswaId).get();
   if (!doc.exists) return null;
@@ -48,7 +50,7 @@ async function buildFormPenilaianData(mahasiswaId, periodId, jenis) {
   }
 
   const daftarItem = jenis === 'lapangan' ? ITEM_PENDAMPING_LAPANGAN : ITEM_NILAI_DOSEN;
-  const nm = period ? await getNilaiMagang(mahasiswaId, period.pdkId) : null;
+  const nm = (period && !kosong) ? await getNilaiMagang(mahasiswaId, period.pdkId) : null;
 
   let items = {};
   let catatan = '';

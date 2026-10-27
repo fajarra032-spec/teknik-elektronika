@@ -763,6 +763,24 @@ router.get('/logbook-print', async (req, res) => {
 });
 
 // ============================================================================
+// CETAK FORM PENILAIAN MAGANG (KOSONG) - mahasiswa membawa form Pendamping
+// Lapangan ke IDUKA, atau form Dosen Pembimbing ke dosen. Selalu kosong
+// (nilai tidak ditampilkan ke mahasiswa); hanya identitas miliknya sendiri.
+// ============================================================================
+router.get('/form-penilaian', async (req, res) => {
+  try {
+    const jenis = req.query.jenis === 'dosen' ? 'dosen' : 'lapangan';
+    const data = await require('../../helpers/formPenilaianMagangHelper')
+      .buildFormPenilaianData(req.user.id, req.query.periodId, jenis, true);
+    if (!data) return res.status(404).send('Data mahasiswa tidak ditemukan');
+    res.render('magang/form_penilaian_print', data);
+  } catch (error) {
+    console.error('Error cetak form penilaian (mahasiswa):', error);
+    res.status(500).send('Gagal mencetak form penilaian');
+  }
+});
+
+// ============================================================================
 // ULASAN PERUSAHAAN
 // ============================================================================
 
