@@ -551,6 +551,43 @@
         }
     }
 
+    /* ===== YUDISIUM TAHUN INI - SELAMAT & SUKSES ===== */
+    .yudisium-banner {
+        background: linear-gradient(135deg, #6a3093, #a044ff);
+        color: #fff;
+        border-radius: var(--border-radius, 20px);
+        padding: 1.6rem 1.5rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    .yudisium-banner h3 { font-weight: 800; margin: 0 0 .25rem; }
+    .yudisium-banner p { margin: 0; opacity: .92; }
+    .yudisium-card {
+        background: var(--bg-card, #fff);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+        height: 100%;
+        text-align: center;
+    }
+    .yudisium-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-hover); }
+    .yudisium-card .yd-img {
+        aspect-ratio: 3 / 4;
+        background: #f1f5f9;
+        overflow: hidden;
+    }
+    .yudisium-card .yd-img img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    .yudisium-card .yd-body { padding: 1rem; }
+    .yudisium-card .yd-nama { font-weight: 700; font-size: 1rem; color: #1e293b; margin-bottom: .1rem; }
+    .yudisium-card .yd-nim { font-size: .8rem; color: #64748b; margin-bottom: .5rem; }
+    .yudisium-card .yd-ipk {
+        display: inline-block; background: #dcfce7; color: #15803d;
+        font-weight: 700; font-size: .85rem; padding: .15rem .8rem;
+        border-radius: 50px; margin-bottom: .35rem;
+    }
+    .yudisium-card .yd-lama { font-size: .8rem; color: #64748b; }
+
     .gallery-card:hover .gallery-img-wrapper img {
         transform: scale(1.08);
     }
@@ -1542,6 +1579,49 @@
             </div>
         </div>
     </section>
+    <!-- YUDISIUM TAHUN INI - SELAMAT & SUKSES -->
+    <% if (typeof yudisiumTahunIni !== 'undefined' && yudisiumTahunIni.length > 0) {
+        const fileIdYd = (url) => {
+            if (!url) return null;
+            let m = url.match(/[?&]id=([^&]+)/);
+            if (m) return m[1];
+            m = url.match(/\/d\/([^\/]+)/);
+            return m ? m[1] : null;
+        }; %>
+    <section id="yudisium-tahun-ini" class="section-wrapper">
+        <div class="yudisium-banner">
+            <h3><i class="bi bi-mortarboard-fill me-2"></i>Selamat dan Sukses!</h3>
+            <p>Wisudawan Yudisium <%= tahunYudisiumIni %> &mdash; <%= yudisiumTahunIniTotal %> mahasiswa dinyatakan lulus</p>
+        </div>
+        <div class="row g-4">
+            <% yudisiumTahunIni.forEach(m => {
+                const fid = fileIdYd(m.fotoUrl);
+                const src = fid ? `https://drive.google.com/thumbnail?id=${fid}&sz=w600` : m.fotoUrl; %>
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="yudisium-card">
+                        <div class="yd-img">
+                            <img src="<%= src %>" alt="<%= m.nama %>" loading="lazy"
+                                 onerror="this.onerror=null; this.src='<%= m.fotoUrl %>';">
+                        </div>
+                        <div class="yd-body">
+                            <div class="yd-nama"><%= m.nama %></div>
+                            <div class="yd-nim"><%= m.nim || '-' %></div>
+                            <% if (m.ipk) { %><span class="yd-ipk">IPK <%= m.ipk %></span><br><% } %>
+                            <% if (m.lamaStudi) { %>
+                                <span class="yd-lama"><i class="bi bi-hourglass-split"></i> Lama studi: <%= m.lamaStudi.label %></span>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+        <div class="text-center mt-4">
+            <a href="/yudisium/<%= tahunYudisiumIni %>" class="btn btn-outline-primary rounded-pill px-4">
+                Lihat Semua Wisudawan <%= tahunYudisiumIni %> <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+    </section>
+    <% } %>
     <!-- JADWAL PENTING -->
     <section id="seminar" class="section-wrapper">
         <h2 class="section-title">Jadwal <span>Penting</span></h2>

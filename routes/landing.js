@@ -247,75 +247,115 @@ router.get('/', async (req, res) => {
     }
 
     // ============ 9. DOKUMENTASI MAGANG UNTUK CAROUSEL ============
+    // Aturan tampilan:
+    // (1) hanya foto dari logbook yang sudah disetujui,
+    // (2) tahap 1: satu mahasiswa = satu slide (foto TERBARU miliknya), urutan
+    //     mahasiswa diacak - mahasiswa baru yang fotonya sedikit tetap kebagian,
+    // (3) tahap 2: kalau slide belum penuh, diisi foto lain dari mahasiswa yang
+    //     sama (terbaru dulu) agar carousel tidak sepi.
     let magangSlides = [];
     try {
+      const MAX_SLIDES = 12;
+      const POOL_LOGBOOK = 400; // cukup besar agar mahasiswa baru tidak tergeser yang rajin upload
+
       const logbookSnapshot = await db.collection('logbookMagang')
         .where('status', '==', 'approved')
         .orderBy('tanggal', 'desc')
-        .limit(20)
+        .limit(POOL_LOGBOOK)
         .get();
 
-      const logs = logbookSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const shuffle = (arr) => {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      };
 
-      const mahasiswaCache = new Map();
+      // Urut terbaru -> lama; kumpulkan semua foto per mahasiswa
+      const fotoPerMahasiswa = new Map(); // userId -> [{log, url}] (terbaru dulu)
+      for (const doc of logbookSnapshot.docs) {
+        const log = { id: doc.id, ...doc.data() };
+        if (!log.userId) continue;
+        for (const url of (log.imageUrls || []).filter(Boolean)) {
+          if (!fotoPerMahasiswa.has(log.userId)) fotoPerMahasiswa.set(log.userId, []);
+          fotoPerMahasiswa.get(log.userId).push({ log, url });
+        }
+      }
+
+      // Tahap 1: foto terbaru tiap mahasiswa, mahasiswa diacak
+      const daftar = shuffle(Array.from(fotoPerMahasiswa.values()));
+      const terpilih = daftar.slice(0, MAX_SLIDES).map(list => list[0]);
+
+      // Tahap 2: isi sisa slide dengan foto lain (terbaru dulu) dari mahasiswa yang ada
+      if (terpilih.length < MAX_SLIDES) {
+        const sisa = [];
+        for (const list of daftar) sisa.push(...list.slice(1));
+        sisa.sort((a, b) => String(b.log.tanggal || '').localeCompare(String(a.log.tanggal || '')));
+        for (const item of sisa) {
+          if (terpilih.length >= MAX_SLIDES) break;
+          terpilih.push(item);
+        }
+        shuffle(terpilih); // campur lagi supaya foto tambahan tidak berurutan per orang
+      }
+
+      const userCache = new Map();
       const perusahaanCache = new Map();
       const progressCache = new Map();
 
-      for (const log of logs) {
-        const imageUrls = log.imageUrls || [];
-        if (imageUrls.length === 0) continue;
-
-        let mahasiswaInfo = mahasiswaCache.get(log.userId);
-        if (!mahasiswaInfo) {
-          const userDoc = await db.collection('users').doc(log.userId).get();
-          mahasiswaInfo = {
-            nama: userDoc.exists ? userDoc.data().nama : 'Mahasiswa',
-            nim: userDoc.exists ? userDoc.data().nim : '-'
-          };
-          mahasiswaCache.set(log.userId, mahasiswaInfo);
+      const slidesBaru = await Promise.all(terpilih.map(async ({ log, url }) => {
+        if (!userCache.has(log.userId)) {
+          userCache.set(log.userId, (async () => {
+            try {
+              const userDoc = await db.collection('users').doc(log.userId).get();
+              if (userDoc.exists) return { nama: userDoc.data().nama || 'Mahasiswa', nim: userDoc.data().nim || '-' };
+            } catch (e) { /* default */ }
+            return { nama: 'Mahasiswa', nim: '-' };
+          })());
         }
+        const info = await userCache.get(log.userId);
 
         let perusahaan = log.perusahaan?.nama || '-';
         if (perusahaan === '-' && log.perusahaanId) {
-          if (perusahaanCache.has(log.perusahaanId)) {
-            perusahaan = perusahaanCache.get(log.perusahaanId);
-          } else {
-            try {
-              const perusahaanDoc = await db.collection('perusahaan').doc(log.perusahaanId).get();
-              perusahaan = perusahaanDoc.exists ? perusahaanDoc.data().nama : '-';
-              perusahaanCache.set(log.perusahaanId, perusahaan);
-            } catch (e) { perusahaan = '-'; }
+          if (!perusahaanCache.has(log.perusahaanId)) {
+            perusahaanCache.set(log.perusahaanId, (async () => {
+              try {
+                const pDoc = await db.collection('perusahaan').doc(log.perusahaanId).get();
+                return pDoc.exists ? (pDoc.data().nama || '-') : '-';
+              } catch (e) { return '-'; }
+            })());
           }
+          perusahaan = await perusahaanCache.get(log.perusahaanId);
         }
 
         const progressKey = `${log.userId}_${log.pdkId}`;
-        let progress = progressCache.get(progressKey);
-        if (!progress) {
-          progress = await getProgressMagangHarian(log.userId, log.pdkId);
-          progressCache.set(progressKey, progress);
+        if (!progressCache.has(progressKey)) {
+          progressCache.set(progressKey, (async () => {
+            try { return await getProgressMagangHarian(log.userId, log.pdkId); }
+            catch (e) { return { uploadedDays: 0, totalDays: 0, percentage: 0 }; }
+          })());
+        }
+        const progress = await progressCache.get(progressKey);
+
+        let imageUrl = url;
+        if (imageUrl.includes('drive.google.com')) {
+          const match = imageUrl.match(/id=([^&]+)/);
+          if (match) imageUrl = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
         }
 
-        for (const rawUrl of imageUrls) {
-          let imageUrl = rawUrl;
-          if (imageUrl.includes('drive.google.com')) {
-            const match = imageUrl.match(/id=([^&]+)/);
-            if (match) imageUrl = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
-          }
-          magangSlides.push({
-            imageUrl,
-            caption: log.kegiatan || 'Aktivitas magang',
-            mahasiswa: mahasiswaInfo.nama,
-            nim: mahasiswaInfo.nim,
-            tanggal: log.tanggal ? new Date(log.tanggal).toLocaleDateString('id-ID') : '-',
-            perusahaan: perusahaan,
-            progressUploaded: progress.uploadedDays,
-            progressTotal: progress.totalDays,
-            progressPercent: progress.percentage
-          });
-          if (magangSlides.length >= 12) break;
-        }
-        if (magangSlides.length >= 12) break;
-      }
+        return {
+          imageUrl,
+          caption: log.kegiatan || 'Aktivitas magang',
+          mahasiswa: info.nama,
+          nim: info.nim,
+          tanggal: log.tanggal ? new Date(log.tanggal).toLocaleDateString('id-ID') : '-',
+          perusahaan,
+          progressUploaded: progress.uploadedDays,
+          progressTotal: progress.totalDays,
+          progressPercent: progress.percentage
+        };
+      }));
+      magangSlides.push(...slidesBaru);
 
       if (magangSlides.length === 0) {
         magangSlides.push({
@@ -345,6 +385,53 @@ router.get('/', async (req, res) => {
       }];
     }
 
+    // ============ 9b. YUDISIUM TAHUN INI ("SELAMAT & SUKSES") ============
+    // Wisudawan tahun berjalan yang punya foto yudisium. Ditampilkan acak (maks 8),
+    // lengkap dengan IPK (dari transkrip) dan lama studi (dari NIM -> tanggal yudisium).
+    // Jika belum ada yang yudisium tahun ini, section disembunyikan di view.
+    const tahunYudisiumIni = new Date().getFullYear();
+    let yudisiumTahunIni = [];
+    let yudisiumTahunIniTotal = 0;
+    try {
+      const semuaMhs = await getAllMahasiswa(db);
+      const lulusTahunIni = semuaMhs.filter(m =>
+        m.statusMahasiswa === 'Lulus' &&
+        Number(m.tahunYudisium) === tahunYudisiumIni &&
+        m.fotoYudisiumUrl
+      );
+      yudisiumTahunIniTotal = semuaMhs.filter(m =>
+        m.statusMahasiswa === 'Lulus' && Number(m.tahunYudisium) === tahunYudisiumIni
+      ).length;
+
+      // acak (Fisher-Yates) lalu ambil 8
+      for (let i = lulusTahunIni.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [lulusTahunIni[i], lulusTahunIni[j]] = [lulusTahunIni[j], lulusTahunIni[i]];
+      }
+
+      yudisiumTahunIni = await Promise.all(lulusTahunIni.slice(0, 8).map(async m => {
+        const angkatan = getAngkatanFromNim(m.nim);
+        let ipk = null;
+        try {
+          const transkrip = await getTranskripMahasiswa(m.id, { nim: m.nim });
+          ipk = transkrip.ipk;
+        } catch (e) {
+          console.warn(`Gagal menghitung IPK yudisium ${m.id}:`, e.message);
+        }
+        return {
+          nama: m.nama,
+          nim: m.nim,
+          fotoUrl: m.fotoYudisiumUrl,
+          ipk,
+          lamaStudi: hitungLamaStudi(angkatan, m.tanggalYudisium),
+          tanggalYudisium: m.tanggalYudisium ? formatDate(m.tanggalYudisium) : ''
+        };
+      }));
+    } catch (err) {
+      console.warn('Gagal mengambil data yudisium tahun ini:', err.message);
+      yudisiumTahunIni = [];
+    }
+
     // ============ RENDER VIEW ============
     res.render('landing/index', {
       title: 'Teknik Elektronika - Politeknik Dewantara',
@@ -360,6 +447,9 @@ router.get('/', async (req, res) => {
       dosenList,
       lulusanKerja,
       magangSlides,
+      yudisiumTahunIni,
+      yudisiumTahunIniTotal,
+      tahunYudisiumIni,
       testimoniAlumni,
       videoKonten,
       angkatanTerbaru,
