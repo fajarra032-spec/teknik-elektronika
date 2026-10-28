@@ -32,7 +32,7 @@
   <div class="ttd-lembar">
     Dosen Pembimbing
     <div class="area"></div>
-    <% if (dosenPa) { %><strong style="text-decoration:underline;"><%= dosenPa.nama %></strong><% } else { %>…………………………………………<% } %><br>
+    <% if (dosenPa) { %><%= dosenPa.nama %><% } else { %>…………………………………………<% } %><br>
     NIDN. <%= dosenPa && dosenPa.nidn && dosenPa.nidn !== '-' ? dosenPa.nidn : '' %>
   </div>
 </div>

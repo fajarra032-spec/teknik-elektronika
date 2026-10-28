@@ -78,3 +78,9 @@ TAMBAHAN: CETAK FORM PENILAIAN (DOSEN & PENDAMPING LAPANGAN)
             identitas terisi otomatis, untuk dibawa ke IDUKA. Nilai tidak ditampilkan ke mahasiswa.
  - Parameter &kosong=1 memaksa form kosong. File tambahan: routes/mahasiswa/magang.js,
    views/mahasiswa/magang/logbook.ejs.
+
+PENYESUAIAN TAMPILAN CETAK (agar semirip PDF asli)
+ - Logo kop memakai logo asli dari PDF (tertanam di views/magang/_kop.ejs, tanpa URL luar).
+ - Judul kop Arial Narrow Bold biru (cadangan: Liberation Sans Narrow / Arial).
+ - Tinggi baris kartu kontrol, kotak catatan, dan area tanda tangan disesuaikan dengan PDF.
+ - Hasil di browser bisa sedikit berbeda dari PDF karena font; cetak dengan ukuran A4, skala 100%.

@@ -1,18 +1,20 @@
 <style>
   * { box-sizing: border-box; }
-  @page { size: A4; margin: 1.3cm 1.5cm; }
+  @page { size: A4; margin: 1.2cm 1.6cm; }
   body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; line-height: 1.25; margin: 0; color: #000; }
   .halaman { max-width: 21cm; margin: 0 auto; padding: 0 .2in; }
   .print-btn { margin: 10px 0; text-align: right; }
-  .kop { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-  .kop img { width: 62px; height: auto; flex-shrink: 0; }
-  .kop .nama { font-size: 26pt; font-weight: 700; color: #0070c0; line-height: 1; letter-spacing: -.5px; margin: 0; text-transform: uppercase; }
-  .kop .alamat { font-family: 'Times New Roman', serif; font-size: 8.5pt; margin: 3px 0 0; }
-  .judul { text-align: center; margin: 4px 0 10px; }
+  .kop { border-collapse: collapse; margin-bottom: 16px; }
+  .kop td { padding: 0; vertical-align: middle; }
+  .kop td.logo { width: 84px; }
+  .kop img { width: 74px; height: 74px; flex-shrink: 0; }
+  .kop .nama { font-family: 'Arial Narrow', 'Liberation Sans Narrow', 'Nimbus Sans Narrow', Arial, sans-serif; font-stretch: condensed; font-size: 30pt; font-weight: 700; color: #0070c0; line-height: 1; letter-spacing: -.3px; margin: 0; }
+  .kop .alamat { font-family: 'Times New Roman', Times, serif; font-size: 9pt; margin: 6px 0 0 4px; }
+  .judul { text-align: center; margin: 4px 0 14px; }
   .judul h4 { font-size: 11pt; font-weight: 700; margin: 0; text-transform: uppercase; }
   .judul .sub { font-size: 8pt; font-style: italic; }
   table.identitas { border-collapse: collapse; margin-bottom: 8px; font-size: 10pt; }
-  table.identitas td { padding: 1px 6px 1px 0; vertical-align: top; }
+  table.identitas td { padding: 1px 6px 1px 0; vertical-align: top; white-space: nowrap; }
   table.identitas td.sep { width: 12px; padding: 1px 4px; }
   .cetak-info { font-size: 7pt; color: #666; margin-top: 8px; }
   .kosong-tulis { display: inline-block; min-width: 180px; border-bottom: 1px dotted #000; }
