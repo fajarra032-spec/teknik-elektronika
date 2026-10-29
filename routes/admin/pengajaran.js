@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { getRencanaPertemuan, getInfoRencana } = require('../../data/rencanaPertemuanData');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -27,6 +28,82 @@ function hitungProgress(materi) {
   const terlaksana = materi.filter(m => m.status === 'selesai').length;
   const persentase = Math.round((terlaksana / total) * 100);
   return { total, terlaksana, persentase };
+}
+
+// ----------------------------------------------------------------------------
+// PEMANTAUAN KELENGKAPAN & REKOMENDASI RPS
+// ----------------------------------------------------------------------------
+const PLACEHOLDER_TOPIK = /^pertemuan\s*\d+$/i;
+function topikKosong(t) { return !t || PLACEHOLDER_TOPIK.test(String(t).trim()); }
+
+/**
+ * Analisis pemantauan satu MK.
+ * @param {object} mk            data MK (kode, materi, dosenIds)
+ * @param {Array}  absensiDocs   dokumen subcollection mataKuliah/{id}/absensi
+ */
+function analisisPantau(mk, absensiDocs) {
+  const materi = Array.isArray(mk.materi) ? mk.materi : [];
+  const rencana = getRencanaPertemuan(mk.kode) || [];
+  const info = getInfoRencana(mk.kode);
+  const absensiSet = new Set((absensiDocs || []).map(d => Number(d.data().pertemuan)));
+  const byNo = {};
+  materi.forEach(m => { byNo[m.pertemuan] = m; });
+  const hariIni = new Date(); hariIni.setHours(0, 0, 0, 0);
+
+  let topikTerisi = 0, terlambat = 0, selesaiTanpaAbsensi = 0, selesaiTanpaMateri = 0;
+  let rekomIni = null, ketemuIni = false;
+  for (let i = 1; i <= 16; i++) {
+    const m = byNo[i] || {};
+    if (!topikKosong(m.topik)) topikTerisi++;
+    if (m.status === 'selesai') {
+      if (!absensiSet.has(i)) selesaiTanpaAbsensi++;
+      if (!m.fileUrl) selesaiTanpaMateri++;
+    } else {
+      if (m.tanggal && new Date(m.tanggal) < hariIni) terlambat++;
+      if (!ketemuIni) {
+        ketemuIni = true;
+        const r = rencana.find(x => x.pertemuan === i);
+        rekomIni = r ? { pertemuan: i, topik: r.topik, jenis: r.jenis } : null;
+      }
+    }
+  }
+  return {
+    adaRencana: !!info,
+    sumberRencana: info ? info.sumber : null,
+    rekomIni,
+    topikTerisi,
+    terlambat,                 // sudah lewat tanggal tapi belum ditandai selesai
+    selesaiTanpaAbsensi,       // ditandai selesai tapi absensi belum diambil
+    selesaiTanpaMateri,        // informasi saja (materi pendukung bersifat opsional)
+    tanpaDosen: !(mk.dosenIds && mk.dosenIds.length),
+    perluPerhatian: terlambat > 0 || selesaiTanpaAbsensi > 0
+  };
+}
+
+/**
+ * Mengisi topik yang masih kosong / berisi "Pertemuan N" dengan topik dari RPS.
+ * Topik yang sudah diisi TIDAK ditimpa. MK draft (RPS belum disinkronkan) dilewati.
+ * @returns {{status:string, diisi:number, materi?:Array}}
+ */
+function isiTopikKosongDariRps(mk) {
+  const info = getInfoRencana(mk.kode);
+  const rencana = getRencanaPertemuan(mk.kode);
+  if (!info || !rencana) return { status: 'tanpa-rencana', diisi: 0 };
+  if (info.sumber !== 'rps') return { status: 'draft', diisi: 0 };
+  const materi = Array.isArray(mk.materi) ? mk.materi.map(m => ({ ...m })) : [];
+  let diisi = 0;
+  for (const r of rencana) {
+    const idx = materi.findIndex(m => m.pertemuan === r.pertemuan);
+    if (idx === -1) {
+      materi.push({ pertemuan: r.pertemuan, topik: r.topik, tanggal: null, catatan: '', status: 'belum' });
+      diisi++;
+    } else if (topikKosong(materi[idx].topik)) {
+      materi[idx].topik = r.topik;
+      diisi++;
+    }
+  }
+  materi.sort((a, b) => a.pertemuan - b.pertemuan);
+  return { status: diisi > 0 ? 'diisi' : 'lengkap', diisi, materi };
 }
 
 /**
@@ -70,6 +147,11 @@ router.get('/', async (req, res) => {
       const data = doc.data();
       const progress = hitungProgress(data.materi);
       const dosenNames = await getDosenNames(data.dosenIds);
+      let absensiDocs = [];
+      try {
+        absensiDocs = (await db.collection('mataKuliah').doc(doc.id).collection('absensi').get()).docs;
+      } catch (e) { console.error('Gagal baca absensi MK', doc.id, e.message); }
+      const pantau = analisisPantau(data, absensiDocs);
       mkList.push({
         id: doc.id,
         kode: data.kode,
@@ -79,9 +161,15 @@ router.get('/', async (req, res) => {
         dosen: dosenNames.join(', '),
         totalPertemuan: progress.total,
         terlaksana: progress.terlaksana,
-        persentase: progress.persentase
+        persentase: progress.persentase,
+        pantau
       });
     }
+    const ringkasPantau = {
+      perluPerhatian: mkList.filter(m => m.pantau.perluPerhatian).length,
+      topikBelumLengkap: mkList.filter(m => m.pantau.sumberRencana === 'rps' && m.pantau.topikTerisi < 16).length,
+      tanpaDosen: mkList.filter(m => m.pantau.tanpaDosen).length
+    };
 
     // Ambil daftar semester unik untuk dropdown filter
     const semesterSnapshot = await db.collection('mataKuliah').get();
@@ -94,6 +182,7 @@ router.get('/', async (req, res) => {
     res.render('admin/pengajaran_list', {
       title: 'Monitoring Pengajaran',
       mkList,
+      ringkasPantau,
       semesterList,
       selectedSemester: semester || ''
     });
@@ -106,6 +195,60 @@ router.get('/', async (req, res) => {
 // ============================================================================
 // DETAIL MATA KULIAH
 // ============================================================================
+
+/**
+ * POST /admin/pengajaran/sinkron-topik   body: { dryRun: true|false }
+ * Mengisi topik kosong SEMUA MK dari RPS (hardcoded di data/rencanaPertemuanData.js).
+ * Topik yang sudah diisi tidak ditimpa; MK draft dilewati. dryRun=true hanya menghitung.
+ */
+router.post('/sinkron-topik', async (req, res) => {
+  try {
+    const dryRun = !!(req.body && req.body.dryRun);
+    const snapshot = await db.collection('mataKuliah').get();
+    const ringkas = { mkDiperbarui: 0, topikDiisi: 0, mkSudahLengkap: 0, mkDraftDilewati: 0, mkTanpaRencana: 0, dryRun };
+    const updates = [];
+    snapshot.docs.forEach(doc => {
+      const h = isiTopikKosongDariRps({ id: doc.id, ...doc.data() });
+      if (h.status === 'diisi') {
+        ringkas.mkDiperbarui++;
+        ringkas.topikDiisi += h.diisi;
+        updates.push({ ref: doc.ref, materi: h.materi });
+      } else if (h.status === 'lengkap') ringkas.mkSudahLengkap++;
+      else if (h.status === 'draft') ringkas.mkDraftDilewati++;
+      else ringkas.mkTanpaRencana++;
+    });
+    if (!dryRun) {
+      const stamp = new Date().toISOString();
+      for (let i = 0; i < updates.length; i += 400) {
+        const batch = db.batch();
+        updates.slice(i, i + 400).forEach(u => batch.update(u.ref, { materi: u.materi, updatedAt: stamp }));
+        await batch.commit();
+      }
+    }
+    res.json({ ok: true, ...ringkas });
+  } catch (error) {
+    console.error('Error sinkron topik RPS:', error);
+    res.status(500).json({ ok: false, message: 'Gagal menyinkronkan topik dari RPS' });
+  }
+});
+
+/**
+ * POST /admin/pengajaran/:id/topik-rps
+ * Mengisi topik kosong satu MK dari RPS.
+ */
+router.post('/:id/topik-rps', async (req, res) => {
+  try {
+    const mkRef = db.collection('mataKuliah').doc(req.params.id);
+    const mkDoc = await mkRef.get();
+    if (!mkDoc.exists) return res.status(404).json({ ok: false, message: 'Mata kuliah tidak ditemukan' });
+    const h = isiTopikKosongDariRps({ id: mkDoc.id, ...mkDoc.data() });
+    if (h.status === 'diisi') await mkRef.update({ materi: h.materi, updatedAt: new Date().toISOString() });
+    res.json({ ok: true, status: h.status, diisi: h.diisi });
+  } catch (error) {
+    console.error('Error isi topik RPS:', error);
+    res.status(500).json({ ok: false, message: 'Gagal mengisi topik dari RPS' });
+  }
+});
 
 /**
  * GET /admin/pengajaran/:id
@@ -123,6 +266,13 @@ router.get('/:id', async (req, res, next) => {
 
     // Siapkan daftar pertemuan 1-16
     const materi = mk.materi || [];
+    const rencanaRps = getRencanaPertemuan(mk.kode) || [];
+    const infoRencana = getInfoRencana(mk.kode);
+    let absensiNomor = new Set();
+    try {
+      const absSnap = await db.collection('mataKuliah').doc(req.params.id).collection('absensi').get();
+      absensiNomor = new Set(absSnap.docs.map(d => Number(d.data().pertemuan)));
+    } catch (e) { console.error('Gagal baca absensi:', e.message); }
     const pertemuanList = [];
     for (let i = 1; i <= 16; i++) {
       const existing = materi.find(m => m.pertemuan === i) || {};
@@ -132,7 +282,9 @@ router.get('/:id', async (req, res, next) => {
         tanggal: existing.tanggal || null,
         status: existing.status || 'belum',
         catatan: existing.catatan || '',
-        materiUrl: existing.fileUrl || null
+        materiUrl: existing.fileUrl || null,
+        absensiDiambil: absensiNomor.has(i),
+        rekom: (() => { const r = rencanaRps.find(x => x.pertemuan === i); return r ? { topik: r.topik, kemampuan: r.kemampuan, jenis: r.jenis, sumber: r.sumber } : null; })()
       });
     }
 
@@ -175,7 +327,10 @@ router.get('/:id', async (req, res, next) => {
       dosenList,
       terlaksana,
       persentase,
-      tugasList
+      tugasList,
+      infoRencana,
+      jumlahTopikKosong: infoRencana && infoRencana.sumber === 'rps'
+        ? pertemuanList.filter(p => p.rekom && topikKosong(p.topik)).length : 0
     });
   } catch (error) {
     console.error('Error detail MK:', error);

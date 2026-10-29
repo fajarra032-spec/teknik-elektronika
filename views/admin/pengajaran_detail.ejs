@@ -6,6 +6,8 @@
   var pertemuanList = typeof pertemuanList !== 'undefined' ? pertemuanList : [];
   var tugasList = typeof tugasList !== 'undefined' ? tugasList : [];
   var terlaksana = typeof terlaksana !== 'undefined' ? terlaksana : 0;
+  var infoRencana = typeof infoRencana !== 'undefined' ? infoRencana : null;
+  var jumlahTopikKosong = typeof jumlahTopikKosong !== 'undefined' ? jumlahTopikKosong : 0;
   var persentase = typeof persentase !== 'undefined' ? persentase : 0;
   const stProg = persentase >= 100 ? 'done' : (persentase > 0 ? 'run' : 'none');
   const fmt = (v) => { if (!v) return '-'; const d = new Date(v); return isNaN(d) ? '-' : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }); };
@@ -195,7 +197,12 @@
   <div class="ea-panel2" style="margin-bottom:1rem">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
       <h2 style="margin:0">Rencana perkuliahan (16 pertemuan)</h2>
-      <button type="button" class="ea-btn ea-btn-edit" id="btnBulk"><i class="bi bi-check-all"></i> Tandai selesai massal</button>
+      <div class="d-flex flex-wrap gap-2">
+        <% if (jumlahTopikKosong > 0) { %>
+          <button type="button" class="ea-btn ea-btn-edit" id="btnTopikRps" title="Isi topik yang masih kosong dari RPS"><i class="bi bi-lightbulb"></i> Isi <%= jumlahTopikKosong %> topik kosong dari RPS</button>
+        <% } %>
+        <button type="button" class="ea-btn ea-btn-edit" id="btnBulk"><i class="bi bi-check-all"></i> Tandai selesai massal</button>
+      </div>
     </div>
     <div id="bulkPanel" hidden style="margin-top:.8rem">
       <div class="ea-info" style="margin-bottom:.4rem">Centang pertemuan yang <strong>sudah selesai</strong>. Pertemuan yang tidak dicentang akan ditandai belum selesai.</div>
@@ -221,12 +228,18 @@
         <div>
           <span class="ea-view ea-title"><%= p.topik %></span>
           <input type="text" class="ea-edit" data-f="topik" value="<%= p.topik %>" aria-label="Topik pertemuan <%= p.pertemuan %>">
+          <% if (p.rekom && p.rekom.topik !== p.topik) { %>
+            <div class="ea-meta ea-view" style="color:#1d4ed8"><span><i class="bi bi-lightbulb"></i> RPS: <%= p.rekom.topik %><% if (p.rekom.sumber === 'usulan') { %> (draft)<% } %></span></div>
+          <% } %>
         </div>
         <div>
           <span class="ea-view"><%= fmt(p.tanggal) %></span>
           <input type="date" class="ea-edit" data-f="tanggal" value="<%= nilaiTgl(p.tanggal) %>" aria-label="Tanggal pertemuan <%= p.pertemuan %>">
         </div>
-        <div><span class="ea-pill <%= selesai ? 'p-done' : 'p-warn' %>"><%= selesai ? 'Selesai' : 'Belum' %></span></div>
+        <div>
+          <span class="ea-pill <%= selesai ? 'p-done' : 'p-warn' %>"><%= selesai ? 'Selesai' : 'Belum' %></span>
+          <% if (selesai) { %><div class="ea-meta"><span class="ea-pill <%= p.absensiDiambil ? 'p-done' : 'p-warn' %>" title="Absensi pertemuan ini">Absensi <%= p.absensiDiambil ? 'ada' : 'belum' %></span></div><% } %>
+        </div>
         <div><% if (p.materiUrl) { %><a href="<%= p.materiUrl %>" target="_blank" rel="noopener" class="ea-link">Lihat</a><% } else { %><span class="text-muted">-</span><% } %></div>
         <div>
           <span class="ea-view" style="font-size:.86rem;color:var(--ea-muted)"><%= p.catatan || '-' %></span>
@@ -271,6 +284,17 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ completed: completed })
       }).then(function (res) { if (res.ok) location.reload(); else alert('Gagal memperbarui pertemuan.'); })
         .catch(function (err) { alert('Terjadi kesalahan: ' + err.message); });
+    });
+
+    // ---- Isi topik kosong dari RPS ----
+    var btnRps = document.getElementById('btnTopikRps');
+    if (btnRps) btnRps.addEventListener('click', function () {
+      if (!confirm('Isi topik yang masih kosong dari RPS? Topik yang sudah diisi tidak akan ditimpa.')) return;
+      btnRps.disabled = true;
+      fetch('/admin/pengajaran/' + MK_ID + '/topik-rps', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+        .then(function (r) { return r.json(); })
+        .then(function (h) { if (h.ok) location.reload(); else { alert(h.message || 'Gagal mengisi topik.'); btnRps.disabled = false; } })
+        .catch(function (e) { alert('Terjadi kesalahan: ' + e.message); btnRps.disabled = false; });
     });
 
     // ---- Edit satu pertemuan (topik, tanggal, catatan) ----

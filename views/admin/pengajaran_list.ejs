@@ -4,10 +4,12 @@
   var mkList = typeof mkList !== 'undefined' ? mkList : [];
   var semesterList = typeof semesterList !== 'undefined' ? semesterList : [];
   var selectedSemester = typeof selectedSemester !== 'undefined' ? selectedSemester : '';
+  var ringkasPantau = typeof ringkasPantau !== 'undefined' ? ringkasPantau : null;
   const status = (mk) => mk.persentase >= 100 ? 'done' : (mk.persentase > 0 ? 'run' : 'none');
   const nDone = mkList.filter(m => status(m) === 'done').length;
   const nRun = mkList.filter(m => status(m) === 'run').length;
   const nNone = mkList.length - nDone - nRun;
+  const nWarn = mkList.filter(m => m.pantau && m.pantau.perluPerhatian).length;
   const rata = mkList.length ? Math.round(mkList.reduce((n, m) => n + (m.persentase || 0), 0) / mkList.length) : 0;
   const qsExport = selectedSemester ? '?semester=' + encodeURIComponent(selectedSemester) : '';
 %>
@@ -149,6 +151,7 @@
     <div class="d-flex flex-wrap gap-2">
       <a href="/admin/pengajaran/rekap/semester" class="ea-btn ea-btn-edit"><i class="bi bi-calendar2-range"></i> Rekap semester</a>
       <a href="/admin/pengajaran/rekap/dosen" class="ea-btn ea-btn-edit"><i class="bi bi-person-badge"></i> Rekap dosen</a>
+      <button type="button" class="ea-btn ea-btn-edit" id="btnSinkron" title="Isi topik pertemuan yang masih kosong dari RPS"><i class="bi bi-arrow-repeat"></i> Isi topik dari RPS</button>
       <a href="/admin/pengajaran/export<%= qsExport %>" target="_blank" class="ea-btn ea-btn-primary"><i class="bi bi-printer"></i> Export / cetak</a>
     </div>
   </header>
@@ -156,6 +159,10 @@
   <div class="ea-info" role="note">
     Rata-rata progres <strong><%= rata %>%</strong> dari <strong><%= mkList.length %></strong> mata kuliah<%= selectedSemester ? ' (Semester ' + selectedSemester + ')' : '' %>:
     <%= nDone %> selesai, <%= nRun %> berjalan, <%= nNone %> belum mulai. Progres dihitung dari 16 pertemuan standar.
+    <% if (ringkasPantau) { %>
+      <br>Pemantauan: <strong><%= ringkasPantau.perluPerhatian %></strong> mata kuliah perlu perhatian (pertemuan lewat tanggal belum ditandai selesai, atau selesai tanpa absensi),
+      <strong><%= ringkasPantau.topikBelumLengkap %></strong> belum lengkap topiknya, <strong><%= ringkasPantau.tanpaDosen %></strong> belum punya dosen pengampu.
+    <% } %>
   </div>
 
   <form method="GET" action="/admin/pengajaran" class="ea-filters">
@@ -173,6 +180,7 @@
       <button type="button" data-s="run">Berjalan <small><%= nRun %></small></button>
       <button type="button" data-s="done">Selesai <small><%= nDone %></small></button>
       <button type="button" data-s="none">Belum mulai <small><%= nNone %></small></button>
+      <button type="button" data-s="warn">Perlu perhatian <small><%= nWarn %></small></button>
     </div>
     <% if (selectedSemester) { %><a href="/admin/pengajaran" class="ea-reset"><i class="bi bi-x-lg"></i> Reset</a><% } %>
   </form>
@@ -186,10 +194,20 @@
       <div class="ea-cols" aria-hidden="true"><div>Mata kuliah</div><div>SKS &amp; semester</div><div>Progres</div><div>Aksi</div></div>
       <div id="eaRows">
       <% mkList.forEach(mk => { const st = status(mk); %>
-        <article class="ea-row <%= st %>" data-s="<%= st %>" data-q="<%= ((mk.kode || '') + ' ' + (mk.nama || '') + ' ' + (mk.dosen || '')).toLowerCase() %>">
+        <article class="ea-row <%= st %>" data-s="<%= st %>" data-w="<%= (mk.pantau && mk.pantau.perluPerhatian) ? '1' : '0' %>" data-q="<%= ((mk.kode || '') + ' ' + (mk.nama || '') + ' ' + (mk.dosen || '')).toLowerCase() %>">
           <div>
             <span class="ea-kode"><%= mk.kode %></span><a class="ea-title" href="/admin/pengajaran/<%= mk.id %>"><%= mk.nama %></a>
             <div class="ea-meta"><i class="bi bi-people"></i> <%= mk.dosen || 'Belum ada dosen pengampu' %></div>
+            <% if (mk.pantau) { %>
+              <% if (mk.pantau.rekomIni) { %>
+                <div class="ea-meta" style="color:#1d4ed8"><span><i class="bi bi-lightbulb"></i> Pertemuan berikutnya #<%= mk.pantau.rekomIni.pertemuan %>: <%= mk.pantau.rekomIni.topik %><% if (mk.pantau.sumberRencana === 'usulan') { %> (draft)<% } %></span></div>
+              <% } %>
+              <div class="ea-meta" style="gap:.35rem">
+                <% if (mk.pantau.adaRencana) { %><span class="ea-pill <%= mk.pantau.topikTerisi >= 16 ? 'p-done' : 'p-run' %>" title="Pertemuan yang topiknya sudah diisi">Topik <%= mk.pantau.topikTerisi %>/16</span><% } %>
+                <% if (mk.pantau.terlambat > 0) { %><span class="ea-pill p-warn" title="Sudah lewat tanggal tapi belum ditandai selesai"><%= mk.pantau.terlambat %> terlambat ditandai</span><% } %>
+                <% if (mk.pantau.selesaiTanpaAbsensi > 0) { %><span class="ea-pill p-warn" title="Ditandai selesai tapi absensi belum diambil"><%= mk.pantau.selesaiTanpaAbsensi %> selesai tanpa absensi</span><% } %>
+              </div>
+            <% } %>
           </div>
           <div class="ea-num"><%= mk.sks %> SKS<small>Semester <%= mk.semester || '-' %></small></div>
           <div class="ea-prog" title="<%= mk.terlaksana %> dari <%= mk.totalPertemuan %> pertemuan terlaksana">
@@ -219,7 +237,8 @@
     function terapkan() {
       var kata = (cari.value || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
       var cocok = rows.filter(function (r) {
-        if (status && r.getAttribute('data-s') !== status) return false;
+        if (status === 'warn') { if (r.getAttribute('data-w') !== '1') return false; }
+        else if (status && r.getAttribute('data-s') !== status) return false;
         var q = r.getAttribute('data-q');
         return kata.every(function (k) { return q.indexOf(k) !== -1; });
       });
@@ -240,6 +259,31 @@
     }); });
     if (moreBtn) moreBtn.addEventListener('click', function () { limit += STEP; terapkan(); });
     terapkan();
+  })();
+
+  // ---- Isi topik kosong semua MK dari RPS (cek dulu, baru simpan) ----
+  (function () {
+    var btn = document.getElementById('btnSinkron');
+    if (!btn) return;
+    function kirim(dryRun) {
+      return fetch('/admin/pengajaran/sinkron-topik', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dryRun: dryRun })
+      }).then(function (r) { return r.json(); });
+    }
+    btn.addEventListener('click', function () {
+      btn.disabled = true;
+      kirim(true).then(function (h) {
+        if (!h.ok) throw new Error(h.message || 'gagal');
+        if (h.topikDiisi === 0) { alert('Semua topik sudah terisi. Tidak ada yang perlu disinkronkan.'); return null; }
+        var msg = 'Akan mengisi ' + h.topikDiisi + ' topik kosong di ' + h.mkDiperbarui + ' mata kuliah dari RPS.\n' +
+          'Topik yang sudah diisi tidak akan ditimpa.' +
+          (h.mkDraftDilewati ? '\n' + h.mkDraftDilewati + ' mata kuliah draft dilewati.' : '') + '\n\nLanjutkan?';
+        return confirm(msg) ? kirim(false) : null;
+      }).then(function (h) {
+        if (h && h.ok) { alert('Selesai. ' + h.topikDiisi + ' topik diisi di ' + h.mkDiperbarui + ' mata kuliah.'); location.reload(); }
+      }).catch(function (e) { alert('Terjadi kesalahan: ' + e.message); })
+        .then(function () { btn.disabled = false; });
+    });
   })();
 </script>
 

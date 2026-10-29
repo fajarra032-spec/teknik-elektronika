@@ -1,10 +1,10 @@
-# Update: Rekomendasi Pembahasan dan Alur Pertemuan (dari RPS)
+# Update: Rekomendasi Pembahasan, Alur Pertemuan, dan Pemantauan Admin (dari RPS)
 
 Folder ini meniru struktur root proyek. Salin isinya ke root proyek (folder yang
 berisi `routes/`, `views/`, `data/`), pilih "timpa/merge", lalu restart server.
 Tidak ada perubahan database dan tidak ada package baru.
 
-## Isi (9 file)
+## Isi (12 file)
 
 | File | Status | Fungsi |
 |---|---|---|
@@ -17,6 +17,9 @@ Tidak ada perubahan database dan tidak ada package baru.
 | `views/mahasiswa/elearning/partials/alur_pertemuan.ejs` | BARU | Garis waktu Alur Pertemuan 1-16 |
 | `views/mahasiswa/elearning/mk_detail.ejs` | diubah | Memasang alur di tab Ringkasan mahasiswa |
 | `views/mahasiswa/elearning/mk_pertemuan.ejs` | diubah | Menambah baris "Target" di tab Pertemuan |
+| `routes/admin/pengajaran.js` | diubah | Pemantauan kelengkapan + sinkron topik dari RPS |
+| `views/admin/pengajaran_list.ejs` | diubah | Penanda pemantauan, filter "Perlu perhatian", tombol sinkron |
+| `views/admin/pengajaran_detail.ejs` | diubah | Rekomendasi RPS per pertemuan, status absensi, tombol isi topik |
 
 ## Tampilan dosen
 
@@ -34,6 +37,31 @@ Tidak ada perubahan database dan tidak ada package baru.
   bersama pertemuan berikutnya, menampilkan target pembelajaran.
 - Tab Pertemuan (`/mahasiswa/elearning/mk/:id/pertemuan`): kolom Topik kini otomatis
   terisi dari RPS bila dosen belum mengisi, dan ada baris "Target".
+
+## Tampilan admin (Monitoring Pengajaran, `/admin/pengajaran`)
+
+Modul ini sudah ada (progres, rekap semester/dosen, ekspor). Yang ditambahkan:
+
+Daftar MK:
+- Tiap MK menampilkan "Pertemuan berikutnya #N: topik RPS", chip "Topik x/16",
+  "n terlambat ditandai" (sudah lewat tanggal tapi belum ditandai selesai) dan
+  "n selesai tanpa absensi".
+- Filter baru "Perlu perhatian" (terlambat ditandai atau selesai tanpa absensi).
+- Ringkasan di atas: jumlah MK perlu perhatian, MK belum lengkap topiknya, MK tanpa dosen.
+- Tombol "Isi topik dari RPS": mengisi topik kosong SEMUA MK sekaligus. Ada pratinjau
+  dan konfirmasi (jumlah topik dan MK) sebelum disimpan.
+
+Detail MK:
+- Di bawah topik tiap pertemuan tampil "RPS: ..." bila topik berbeda dari RPS.
+- Pertemuan selesai menampilkan status "Absensi ada/belum".
+- Tombol "Isi n topik kosong dari RPS" untuk satu MK.
+
+Aturan sinkron topik: hanya mengisi topik kosong atau berisi "Pertemuan N". Topik yang
+sudah diisi, tanggal, status, catatan, dan file materi tidak diubah. MK draft
+(PEK3209, PEK3210) dan MK tanpa RPS dilewati. Menjalankan ulang tidak mengubah apa pun.
+
+Setelah topik disinkronkan, dosen dan mahasiswa melihat topik resmi dari RPS tanpa
+bergantung pada rekomendasi.
 
 ## Aturan
 
