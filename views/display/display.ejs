@@ -804,6 +804,10 @@
     el.innerText = isNaN(d) ? '-' : d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
   }
   async function refreshAntrian() {
+    // Di luar jam kerja (WITA) tidak ada yang mengurus antrian: lewati polling supaya tidak makan kuota.
+    // Harus sama dengan JAM_KERJA_MULAI/SELESAI di routes/display.js
+    const jamWita = Number(new Date().toLocaleString('en-US', { hour: 'numeric', hour12: false, timeZone: 'Asia/Makassar' })) % 24;
+    if (jamWita < 7 || jamWita >= 17) return;
     try {
       const res = await fetch('/display/antrian.json', { cache: 'no-store' });
       if (!res.ok) return;
@@ -823,10 +827,10 @@
   window.onload = () => {
     if (slides.length > 0) updateDisplay(0);
     // Layar TV menyala terus: muat ulang tiap 30 menit supaya foto terbaru & urutan acak ikut diperbarui
-    setTimeout(() => location.reload(), 30 * 60 * 1000);
+    setTimeout(() => location.reload(), 60 * 60 * 1000);
     setInterval(rotateSlide, 8000);
     tampilWaktuUpdate();
-    setInterval(refreshAntrian, 60 * 1000);
+    setInterval(refreshAntrian, 20 * 60 * 1000);
     setInterval(updateClock, 1000);
     updateClock();
 
