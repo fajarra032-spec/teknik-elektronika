@@ -14,6 +14,7 @@ const { db } = require('../../config/firebaseAdmin');
 const { filterIdMahasiswaAktif } = require('../../helpers/statusMahasiswaHelper');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
+const { getRencanaPertemuan, getInfoRencana } = require('../../data/rencanaPertemuanData');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif } = require('../../helpers/nilaiHelper');
@@ -316,18 +317,34 @@ router.get('/:id', async (req, res) => {
     }
 
     const materiExisting = mk.materi || [];
+    // Rekomendasi pembahasan per pertemuan (hardcoded dari RPS: data/rencanaPertemuanData.js)
+    const rencanaRps = getRencanaPertemuan(mk.kode) || [];
+    const infoRencana = getInfoRencana(mk.kode);
     const pertemuanList = [];
     for (let i = 1; i <= 16; i++) {
       const existing = materiExisting.find(m => m.pertemuan === i) || {};
+      const rps = rencanaRps.find(r => r.pertemuan === i) || null;
       pertemuanList.push({
         pertemuan: i,
         topik: existing.topik || `Pertemuan ${i}`,
         tanggal: existing.tanggal || null,
         status: existing.status || 'belum',
         catatan: existing.catatan || '',
-        fileUrl: existing.fileUrl || null
+        fileUrl: existing.fileUrl || null,
+        rekom: rps ? {
+          topik: rps.topik,
+          kemampuan: rps.kemampuan,
+          metode: rps.metode,
+          bobot: rps.bobot,
+          jenis: rps.jenis,
+          sumber: rps.sumber
+        } : null
       });
     }
+    // "Pertemuan ini" = pertemuan pertama yang belum selesai; "berikutnya" = sesudahnya.
+    const idxIni = pertemuanList.findIndex(p => p.status !== 'selesai');
+    const pertemuanIni = idxIni >= 0 ? pertemuanList[idxIni] : null;
+    const pertemuanBerikut = idxIni >= 0 && idxIni + 1 < pertemuanList.length ? pertemuanList[idxIni + 1] : null;
 
     const terlaksana = pertemuanList.filter(p => p.status === 'selesai').length;
     const persentase = Math.round((terlaksana / 16) * 100);
@@ -377,6 +394,9 @@ router.get('/:id', async (req, res) => {
       mk,
       dosenList,
       pertemuanList,
+      infoRencana,
+      pertemuanIni,
+      pertemuanBerikut,
       terlaksana,
       persentase,
       mahasiswaList,

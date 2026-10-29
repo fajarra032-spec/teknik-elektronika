@@ -17,6 +17,7 @@ const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif, saveKomponenRubrik } = require('../../helpers/nilaiHelper');
 const { detectJenisPraktikum, getModulPraktikumList } = require('../../helpers/modulPraktikumHelper');
+const { getRencanaPertemuan, getInfoRencana } = require('../../data/rencanaPertemuanData');
 
 console.log('mk.js loaded');
 
@@ -544,19 +545,37 @@ router.get('/:id', async (req, res) => {
     }
 
     // ===== PERTEMUAN (dari materi MK) =====
+    // Rekomendasi topik per pertemuan diambil dari RPS (hardcoded di data/rencanaPertemuanData.js).
+    // Isian dosen TIDAK ditimpa: rekomendasi hanya ditampilkan sebagai saran.
     const materi = mk.materi || [];
+    const rencanaRps = getRencanaPertemuan(mk.kode) || [];
+    const infoRencana = getInfoRencana(mk.kode);
     const pertemuanList = [];
     for (let i = 1; i <= 16; i++) {
       const existing = materi.find(m => m.pertemuan === i) || {};
+      const rps = rencanaRps.find(r => r.pertemuan === i) || null;
       pertemuanList.push({
         pertemuan: i,
         topik: existing.topik || `Pertemuan ${i}`,
         tanggal: existing.tanggal || null,
         status: existing.status || 'belum',
         catatan: existing.catatan || '',
-        fileUrl: existing.fileUrl || null
+        fileUrl: existing.fileUrl || null,
+        rekom: rps ? {
+          topik: rps.topik,
+          kemampuan: rps.kemampuan,
+          metode: rps.metode,
+          bobot: rps.bobot,
+          jenis: rps.jenis,
+          sumber: rps.sumber
+        } : null
       });
     }
+    // Pertemuan yang direkomendasikan "pekan ini" = pertemuan pertama yang belum selesai;
+    // "berikutnya" = satu pertemuan sesudahnya. (Tidak butuh tanggal mulai kuliah.)
+    const idxIni = pertemuanList.findIndex(p => p.status !== 'selesai');
+    const pertemuanIni = idxIni >= 0 ? pertemuanList[idxIni] : null;
+    const pertemuanBerikut = idxIni >= 0 && idxIni + 1 < pertemuanList.length ? pertemuanList[idxIni + 1] : null;
 
     // Hitung progress perkuliahan
     const terlaksana = pertemuanList.filter(p => p.status === 'selesai').length;
@@ -616,6 +635,9 @@ router.get('/:id', async (req, res) => {
       mk,
       mahasiswaList,
       pertemuanList,
+      infoRencana,
+      pertemuanIni,
+      pertemuanBerikut,
       dosenList,
       terlaksana,
       persentase,
@@ -1003,7 +1025,7 @@ router.get('/:id/modul-template/:modulId/cetak', async (req, res) => {
     if (!modul) return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Modul tidak ditemukan.' });
     const nomorModul = modulList.findIndex(m => m.id === req.params.modulId) + 1;
 
-    res.render(modul.viewCetak || 'lkm_praktikum_print', {
+    res.render('lkm_praktikum_print', {
       title: `LKM - ${modul.judul}`,
       mk: akses.mk,
       modul,

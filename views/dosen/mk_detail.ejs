@@ -419,6 +419,58 @@
     </a>
   </div>
 
+  <!-- Rekomendasi Pembahasan (dari RPS) -->
+  <% if (pertemuanIni && pertemuanIni.rekom) { %>
+    <div class="info-card mb-4" style="border-left: 5px solid #f59e0b;">
+      <h5 class="mb-3"><i class="bi bi-lightbulb-fill" style="color:#f59e0b;"></i> Rekomendasi Pembahasan</h5>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="small text-muted text-uppercase fw-bold">Pekan ini &middot; Pertemuan #<%= pertemuanIni.pertemuan %></div>
+          <div class="fs-5 fw-bold mb-1">Sebaiknya bahas: <%= pertemuanIni.rekom.topik %></div>
+          <% if (pertemuanIni.rekom.jenis === 'ujian') { %>
+            <span class="badge bg-danger">Ujian</span>
+          <% } else if (pertemuanIni.rekom.jenis === 'praktik') { %>
+            <span class="badge bg-info text-dark">Praktik</span>
+          <% } else if (pertemuanIni.rekom.jenis === 'presentasi') { %>
+            <span class="badge bg-success">Presentasi</span>
+          <% } else { %>
+            <span class="badge bg-secondary">Teori / Diskusi</span>
+          <% } %>
+          <% if (pertemuanIni.rekom.metode && pertemuanIni.rekom.metode !== '-') { %>
+            <span class="badge bg-light text-dark border"><%= pertemuanIni.rekom.metode %></span>
+          <% } %>
+          <% if (pertemuanIni.rekom.bobot) { %>
+            <span class="badge bg-light text-dark border">Bobot <%= pertemuanIni.rekom.bobot %>%</span>
+          <% } %>
+          <% if (pertemuanIni.rekom.kemampuan && pertemuanIni.rekom.jenis !== 'ujian') { %>
+            <p class="mb-1 mt-2 small"><strong>Target mahasiswa:</strong> <%= pertemuanIni.rekom.kemampuan %></p>
+          <% } %>
+          <% if (pertemuanIni.rekom.sumber === 'usulan') { %>
+            <p class="small text-warning mb-1"><i class="bi bi-exclamation-triangle"></i> Draft, RPS mata kuliah ini belum disinkronkan.</p>
+          <% } %>
+          <button type="button" class="btn btn-sm btn-warning mt-2" onclick="pakaiRekomendasi(<%= pertemuanIni.pertemuan %>)">
+            <i class="bi bi-pencil-square"></i> Pakai sebagai topik pertemuan #<%= pertemuanIni.pertemuan %>
+          </button>
+        </div>
+        <div class="col-md-6">
+          <% if (pertemuanBerikut && pertemuanBerikut.rekom) { %>
+            <div class="small text-muted text-uppercase fw-bold">Pekan depan &middot; Pertemuan #<%= pertemuanBerikut.pertemuan %></div>
+            <div class="fs-6 fw-bold mb-1"><%= pertemuanBerikut.rekom.topik %></div>
+            <% if (pertemuanBerikut.rekom.kemampuan && pertemuanBerikut.rekom.jenis !== 'ujian') { %>
+              <p class="mb-0 small text-muted">Target: <%= pertemuanBerikut.rekom.kemampuan %></p>
+            <% } %>
+          <% } %>
+        </div>
+      </div>
+      <% if (infoRencana) { %>
+        <p class="small text-muted mt-3 mb-0">
+          Sumber: RPS <%= infoRencana.nama %><% if (infoRencana.waktu) { %> &middot; alokasi waktu tiap pertemuan: <%= infoRencana.waktu %><% } %>.
+          Pertemuan #<%= pertemuanIni.pertemuan %> adalah pertemuan pertama yang belum ditandai selesai.
+        </p>
+      <% } %>
+    </div>
+  <% } %>
+
   <!-- Tabel Pertemuan dengan Upload Materi -->
   <div class="info-card">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
@@ -448,11 +500,21 @@
           </thead>
           <tbody>
             <% pertemuanList.forEach(p => { %>
-              <tr class="<%= p.status === 'selesai' ? 'table-success' : '' %>">
+              <tr class="<%= p.status === 'selesai' ? 'table-success' : ((pertemuanIni && pertemuanIni.pertemuan === p.pertemuan) ? 'table-warning' : '') %>">
                 <td class="text-center fw-bold">#<%= p.pertemuan %></td>
                 <td>
                   <span class="topik-text-<%= p.pertemuan %>"><%= p.topik %></span>
                   <input type="text" class="form-control form-control-sm edit-input-<%= p.pertemuan %>" value="<%= p.topik %>" style="display: none;">
+                  <% if (pertemuanIni && pertemuanIni.pertemuan === p.pertemuan) { %>
+                    <span class="badge bg-warning text-dark ms-1">Pekan ini</span>
+                  <% } %>
+                  <% if (p.rekom && p.rekom.topik !== p.topik) { %>
+                    <div class="small text-primary mt-1 rekom-<%= p.pertemuan %>">
+                      <i class="bi bi-lightbulb"></i> Rekomendasi RPS:
+                      <span class="rekom-text-<%= p.pertemuan %>"><%= p.rekom.topik %></span><% if (p.rekom.sumber === 'usulan') { %> <em>(draft)</em><% } %>
+                      <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline" onclick="pakaiRekomendasi(<%= p.pertemuan %>)">Pakai</button>
+                    </div>
+                  <% } %>
                 </td>
                 <td>
                   <span class="tanggal-text-<%= p.pertemuan %>"><%= formatDate(p.tanggal) %></span>
@@ -518,6 +580,18 @@
 </div>
 
 <script>
+  // Isi kolom Topik dengan rekomendasi RPS (belum tersimpan sampai dosen menekan Simpan)
+  function pakaiRekomendasi(pertemuan) {
+    var el = document.querySelector('.rekom-text-' + pertemuan);
+    var teks = el ? el.textContent.trim() : '';
+    editPertemuan(pertemuan);
+    if (teks) {
+      document.querySelectorAll('.edit-input-' + pertemuan)[0].value = teks;
+    }
+    var baris = document.querySelector('.topik-text-' + pertemuan);
+    if (baris && baris.scrollIntoView) baris.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   function editPertemuan(pertemuan) {
     // Hide text
     document.querySelector(`.topik-text-${pertemuan}`).style.display = 'none';

@@ -10,6 +10,7 @@ const { verifyToken } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
+const { getRencanaPertemuan } = require('../../data/rencanaPertemuanData');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif, getHasilRubrikSatuMahasiswa } = require('../../helpers/nilaiHelper');
@@ -313,12 +314,20 @@ async function getPertemuanDenganKehadiran(mk, userId) {
     if (status) kehadiranPerPertemuan[data.pertemuan] = status;
   });
 
+  // Alur 16 pertemuan: topik dari dosen jika sudah diisi, kalau belum
+  // memakai rencana topik dari RPS (data/rencanaPertemuanData.js).
+  const rencanaRps = getRencanaPertemuan(mk.kode) || [];
   const pertemuanList = [];
   for (let i = 1; i <= 16; i++) {
     const existing = materi.find(m => m.pertemuan === i) || {};
+    const rps = rencanaRps.find(r => r.pertemuan === i) || null;
     pertemuanList.push({
       pertemuan: i,
-      topik: existing.topik || `Pertemuan ${i}`,
+      topik: existing.topik || (rps ? rps.topik : `Pertemuan ${i}`),
+      topikDariRps: !existing.topik && !!rps,
+      kemampuan: rps ? rps.kemampuan : '',
+      jenis: rps ? rps.jenis : 'materi',
+      sumberRps: rps ? rps.sumber : null,
       tanggal: existing.tanggal || null,
       status: existing.status || 'belum',
       fileUrl: existing.fileUrl || null,
@@ -391,7 +400,7 @@ router.get('/mk/:id', async (req, res) => {
     const persenProgress = Math.round((terlaksana / 16) * 100);
 
     // Kehadiran saya (ringkasan)
-    const { totalDiambilAbsensi, jumlahHadirSaya } = await getPertemuanDenganKehadiran(mk, req.user.id);
+    const { pertemuanList: alurPertemuan, totalDiambilAbsensi, jumlahHadirSaya } = await getPertemuanDenganKehadiran(mk, req.user.id);
     const persenHadirSaya = totalDiambilAbsensi > 0 ? Math.round((jumlahHadirSaya / totalDiambilAbsensi) * 100) : null;
 
     // Nilai saya (rincian rubrik)
@@ -411,7 +420,8 @@ router.get('/mk/:id', async (req, res) => {
       totalDiambilAbsensi,
       jumlahHadirSaya,
       persenHadirSaya,
-      hasilRubrikSaya
+      hasilRubrikSaya,
+      alurPertemuan
     });
   } catch (error) {
     console.error('Error ringkasan MK:', error);
@@ -614,7 +624,7 @@ router.get('/mk/:id/modul-template/:modulId/cetak', async (req, res) => {
     if (!modul) return res.status(404).send('Modul tidak ditemukan atau belum diaktifkan dosen');
     const nomorModul = modulList.findIndex(m => m.id === req.params.modulId) + 1;
 
-    res.render(modul.viewCetak || 'lkm_praktikum_print', {
+    res.render('lkm_praktikum_print', {
       title: `LKM - ${modul.judul}`,
       mk,
       modul,

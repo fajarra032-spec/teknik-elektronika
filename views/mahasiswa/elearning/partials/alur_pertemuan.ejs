@@ -1,0 +1,71 @@
+<%
+/**
+ * Partial: Alur Pertemuan 1-16 (tampilan mahasiswa)
+ * Locals: alurPertemuan = array 16 { pertemuan, topik, topikDariRps, kemampuan, jenis,
+ *                                    sumberRps, tanggal, status }
+ * "Pertemuan ini" = pertemuan pertama yang belum ditandai selesai dosen.
+ */
+  var _alur = (typeof alurPertemuan !== 'undefined' && Array.isArray(alurPertemuan)) ? alurPertemuan : [];
+  var _idxIni = _alur.findIndex(function (p) { return p.status !== 'selesai'; });
+  var _jenisLabel = { materi: 'Teori / Diskusi', praktik: 'Praktik', presentasi: 'Presentasi', ujian: 'Ujian' };
+  var _jenisWarna = { materi: '#e2e8f0|#475569', praktik: '#cffafe|#0e7490', presentasi: '#dcfce7|#166534', ujian: '#fee2e2|#b91c1c' };
+  var _draft = _alur.some(function (p) { return p.sumberRps === 'usulan'; });
+%>
+<% if (_alur.length > 0) { %>
+<style>
+  .alur-list { list-style: none; margin: 0; padding: 0; }
+  .alur-item { display: flex; gap: 0.75rem; padding: 0.5rem 0; position: relative; }
+  .alur-item:not(:last-child)::before {
+    content: ''; position: absolute; left: 15px; top: 2.5rem; bottom: -0.4rem; width: 2px; background: #e2e8f0;
+  }
+  .alur-dot {
+    flex: 0 0 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.8rem; background: #e2e8f0; color: #64748b; z-index: 1;
+  }
+  .alur-item.selesai .alur-dot { background: #16a34a; color: #fff; }
+  .alur-item.ini .alur-dot { background: #f59e0b; color: #fff; box-shadow: 0 0 0 4px rgba(245,158,11,0.2); }
+  .alur-body { flex: 1; min-width: 0; }
+  .alur-topik { font-weight: 600; font-size: 0.9rem; color: #1e293b; line-height: 1.35; }
+  .alur-item.selesai .alur-topik { color: #64748b; }
+  .alur-meta { font-size: 0.76rem; color: #64748b; margin-top: 0.15rem; display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+  .alur-badge { padding: 0.05rem 0.5rem; border-radius: 50px; font-size: 0.7rem; font-weight: 600; }
+  .alur-target { font-size: 0.78rem; color: #475569; margin-top: 0.25rem; }
+  .alur-item.ini .alur-topik { color: #92400e; }
+</style>
+
+<div class="info-card">
+  <h5><i class="bi bi-signpost-split"></i> Alur Pertemuan 1&ndash;16</h5>
+  <p class="text-muted small mb-2">
+    <% if (_idxIni >= 0) { %>
+      Sekarang di <strong>pertemuan <%= _alur[_idxIni].pertemuan %></strong>.
+      <% if (_idxIni + 1 < _alur.length) { %>Berikutnya: <strong><%= _alur[_idxIni + 1].topik %></strong>.<% } %>
+    <% } else { %>
+      Seluruh pertemuan sudah dilaksanakan.
+    <% } %>
+  </p>
+  <ol class="alur-list">
+    <% _alur.forEach(function (p, i) {
+         var kelas = p.status === 'selesai' ? 'selesai' : (i === _idxIni ? 'ini' : '');
+         var w = (_jenisWarna[p.jenis] || _jenisWarna.materi).split('|');
+    %>
+      <li class="alur-item <%= kelas %>">
+        <span class="alur-dot"><% if (p.status === 'selesai') { %><i class="bi bi-check-lg"></i><% } else { %><%= p.pertemuan %><% } %></span>
+        <div class="alur-body">
+          <div class="alur-topik"><%= p.topik %></div>
+          <div class="alur-meta">
+            <% if (p.sumberRps) { %><span class="alur-badge" style="background:<%= w[0] %>; color:<%= w[1] %>;"><%= _jenisLabel[p.jenis] || 'Teori / Diskusi' %></span><% } %>
+            <% if (i === _idxIni) { %><span class="alur-badge" style="background:#fef3c7; color:#92400e;">Pertemuan ini</span><% } %>
+            <% if (p.tanggal) { %><span><i class="bi bi-calendar3"></i> <%= new Date(p.tanggal).toLocaleDateString('id-ID') %></span><% } %>
+          </div>
+          <% if (p.kemampuan && p.jenis !== 'ujian' && (i === _idxIni || i === _idxIni + 1)) { %>
+            <div class="alur-target"><strong>Target:</strong> <%= p.kemampuan %></div>
+          <% } %>
+        </div>
+      </li>
+    <% }) %>
+  </ol>
+  <% if (_draft) { %>
+    <p class="small text-muted mb-0 mt-2"><i class="bi bi-info-circle"></i> Rencana topik mata kuliah ini masih sementara dan dapat berubah.</p>
+  <% } %>
+</div>
+<% } %>

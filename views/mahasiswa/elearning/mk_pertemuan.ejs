@@ -70,6 +70,9 @@
           <span class="nomor"><%= m.pertemuan %></span>
           <span class="topik"><%= m.topik %></span>
         </div>
+        <% if (m.kemampuan && m.jenis !== 'ujian') { %>
+          <div class="tanggal mb-1"><i class="bi bi-bullseye me-1"></i>Target: <%= m.kemampuan %></div>
+        <% } %>
         <div class="tanggal mb-1"><i class="bi bi-calendar3 me-1"></i><%= m.tanggal ? new Date(m.tanggal).toLocaleDateString('id-ID') : 'Tanggal belum diatur' %></div>
         <div class="badges">
           <span class="badge-status <%= m.status === 'selesai' ? 'badge-selesai' : 'badge-belum' %>">
@@ -108,7 +111,12 @@
           <% pertemuanList.forEach(m => { %>
             <tr>
               <td class="text-center"><%= m.pertemuan %></td>
-              <td><%= m.topik %></td>
+              <td>
+                <%= m.topik %>
+                <% if (m.kemampuan && m.jenis !== 'ujian') { %>
+                  <div class="text-muted" style="font-size:0.75rem;">Target: <%= m.kemampuan %></div>
+                <% } %>
+              </td>
               <td><%= m.tanggal ? new Date(m.tanggal).toLocaleDateString('id-ID') : '-' %></td>
               <td>
                 <span class="badge-status <%= m.status === 'selesai' ? 'badge-selesai' : 'badge-belum' %>">
