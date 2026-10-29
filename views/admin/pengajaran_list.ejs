@@ -5,6 +5,7 @@
   var semesterList = typeof semesterList !== 'undefined' ? semesterList : [];
   var selectedSemester = typeof selectedSemester !== 'undefined' ? selectedSemester : '';
   var ringkasPantau = typeof ringkasPantau !== 'undefined' ? ringkasPantau : null;
+  var semesterAktifInfo = typeof semesterAktifInfo !== 'undefined' ? semesterAktifInfo : null;
   const status = (mk) => mk.persentase >= 100 ? 'done' : (mk.persentase > 0 ? 'run' : 'none');
   const nDone = mkList.filter(m => status(m) === 'done').length;
   const nRun = mkList.filter(m => status(m) === 'run').length;
@@ -12,6 +13,10 @@
   const nWarn = mkList.filter(m => m.pantau && m.pantau.perluPerhatian).length;
   const rata = mkList.length ? Math.round(mkList.reduce((n, m) => n + (m.persentase || 0), 0) / mkList.length) : 0;
   const qsExport = selectedSemester ? '?semester=' + encodeURIComponent(selectedSemester) : '';
+  const daftarAktif = semesterAktifInfo && semesterAktifInfo.daftar.length ? ' (semester ' + semesterAktifInfo.daftar.join(', ') + ')' : '';
+  const labelFilter = selectedSemester === 'aktif'
+    ? ' (semester aktif ' + (semesterAktifInfo ? semesterAktifInfo.label : '') + ')'
+    : ((!selectedSemester || selectedSemester === 'semua') ? ' (semua semester)' : ' (Semester ' + selectedSemester + ')');
 %>
 
 <style>
@@ -157,7 +162,7 @@
   </header>
 
   <div class="ea-info" role="note">
-    Rata-rata progres <strong><%= rata %>%</strong> dari <strong><%= mkList.length %></strong> mata kuliah<%= selectedSemester ? ' (Semester ' + selectedSemester + ')' : '' %>:
+    Rata-rata progres <strong><%= rata %>%</strong> dari <strong><%= mkList.length %></strong> mata kuliah<%= labelFilter %>:
     <%= nDone %> selesai, <%= nRun %> berjalan, <%= nNone %> belum mulai. Progres dihitung dari 16 pertemuan standar.
     <% if (ringkasPantau) { %>
       <br>Pemantauan: <strong><%= ringkasPantau.perluPerhatian %></strong> mata kuliah perlu perhatian (pertemuan lewat tanggal belum ditandai selesai, atau selesai tanpa absensi),
@@ -172,7 +177,8 @@
       <input type="search" id="eaCari" placeholder="Cari kode, nama MK, atau dosen" autocomplete="off">
     </div>
     <select name="semester" aria-label="Semester" onchange="this.form.submit()">
-      <option value="">Semua semester</option>
+      <option value="aktif" <%= selectedSemester === 'aktif' ? 'selected' : '' %>>Semester aktif<%= semesterAktifInfo ? ' - ' + semesterAktifInfo.label : '' %><%= daftarAktif %></option>
+      <option value="semua" <%= selectedSemester === 'semua' ? 'selected' : '' %>>Semua semester</option>
       <% semesterList.forEach(s => { %><option value="<%= s %>" <%= String(s) === String(selectedSemester) ? 'selected' : '' %>>Semester <%= s %></option><% }) %>
     </select>
     <div class="ea-seg" role="group" aria-label="Status progres">
@@ -182,7 +188,7 @@
       <button type="button" data-s="none">Belum mulai <small><%= nNone %></small></button>
       <button type="button" data-s="warn">Perlu perhatian <small><%= nWarn %></small></button>
     </div>
-    <% if (selectedSemester) { %><a href="/admin/pengajaran" class="ea-reset"><i class="bi bi-x-lg"></i> Reset</a><% } %>
+    <% if (selectedSemester && selectedSemester !== 'aktif') { %><a href="/admin/pengajaran" class="ea-reset"><i class="bi bi-x-lg"></i> Reset</a><% } %>
   </form>
 
   <div class="ea-count" id="eaInfo" aria-live="polite">Menampilkan <strong><%= mkList.length %></strong> mata kuliah</div>

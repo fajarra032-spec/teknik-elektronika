@@ -56,6 +56,16 @@ Detail MK:
 - Pertemuan selesai menampilkan status "Absensi ada/belum".
 - Tombol "Isi n topik kosong dari RPS" untuk satu MK.
 
+Filter semester (daftar MK dan ekspor):
+- Pilihan baru "Semester aktif" dan menjadi tampilan awal. Semester aktif mengikuti aturan
+  aplikasi (`getCurrentAcademicSemester`): September-Februari = Ganjil (semester 1, 3, 5),
+  Maret-Agustus = Genap (semester 2, 4, 6). Berganti otomatis tanpa pengaturan.
+- Pilihan lain: "Semua semester" dan tiap semester satu per satu. Tautan lama
+  `?semester=3` tetap berfungsi; `?semester=` (kosong) tetap berarti semua semester.
+- Tombol Export / cetak ikut filter yang dipilih; judul cetak menyebut "Semester Aktif (Ganjil 2026/2027)".
+- Penyaringan dilakukan di server setelah data dibaca, jadi tidak butuh indeks Firestore baru.
+- Tombol "Isi topik dari RPS" (semua MK) tidak terpengaruh filter: tetap memproses semua MK.
+
 Aturan sinkron topik: hanya mengisi topik kosong atau berisi "Pertemuan N". Topik yang
 sudah diisi, tanggal, status, catatan, dan file materi tidak diubah. MK draft
 (PEK3209, PEK3210) dan MK tanpa RPS dilewati. Menjalankan ulang tidak mengubah apa pun.

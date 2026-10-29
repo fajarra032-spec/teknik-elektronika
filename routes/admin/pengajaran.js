@@ -9,6 +9,7 @@ const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getRencanaPertemuan, getInfoRencana } = require('../../data/rencanaPertemuanData');
+const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -28,6 +29,41 @@ function hitungProgress(materi) {
   const terlaksana = materi.filter(m => m.status === 'selesai').length;
   const persentase = Math.round((terlaksana / total) * 100);
   return { total, terlaksana, persentase };
+}
+
+// ----------------------------------------------------------------------------
+// FILTER SEMESTER (aktif / semua / angka)
+// ----------------------------------------------------------------------------
+/**
+ * Nilai query ?semester=
+ *   (tidak ada) atau 'aktif' -> semester aktif: Ganjil = semester 1,3,5 ; Genap = 2,4,6
+ *   '' atau 'semua'          -> semua semester
+ *   angka                    -> satu semester tertentu
+ * Periode Ganjil/Genap mengikuti aturan aplikasi (getCurrentAcademicSemester):
+ * September-Februari = Ganjil, Maret-Agustus = Genap.
+ */
+function parseFilterSemester(raw) {
+  const periode = getCurrentAcademicSemester();
+  const paritas = periode.semester === 'Ganjil' ? 1 : 0;
+  const angka = parseInt(raw, 10);
+  let mode = 'aktif';
+  if (raw === '' || raw === 'semua') mode = 'semua';
+  else if (raw !== undefined && raw !== 'aktif' && Number.isInteger(angka) && angka > 0) mode = 'angka';
+  const lolos = (sem) => {
+    const n = Number(sem);
+    if (mode === 'semua') return true;
+    if (mode === 'angka') return n === angka;
+    return Number.isInteger(n) && n > 0 && n % 2 === paritas;
+  };
+  return {
+    mode,
+    nilai: mode === 'angka' ? angka : null,
+    selected: mode === 'angka' ? String(angka) : mode,
+    jenis: periode.semester,
+    label: periode.label,
+    paritas,
+    lolos
+  };
 }
 
 // ----------------------------------------------------------------------------
@@ -134,16 +170,15 @@ async function getDosenNames(dosenIds) {
  */
 router.get('/', async (req, res) => {
   try {
-    const { semester } = req.query;
+    const filter = parseFilterSemester(req.query.semester);
 
-    let query = db.collection('mataKuliah').orderBy('semester', 'desc').orderBy('kode');
-    if (semester) {
-      query = query.where('semester', '==', parseInt(semester));
-    }
+    // Ambil semua MK lalu saring di memori (jumlah MK kecil; tidak butuh indeks Firestore baru)
+    const query = db.collection('mataKuliah').orderBy('semester', 'desc').orderBy('kode');
     const snapshot = await query.get();
+    const docsTerfilter = snapshot.docs.filter(d => filter.lolos(d.data().semester));
 
     const mkList = [];
-    for (const doc of snapshot.docs) {
+    for (const doc of docsTerfilter) {
       const data = doc.data();
       const progress = hitungProgress(data.materi);
       const dosenNames = await getDosenNames(data.dosenIds);
@@ -178,13 +213,19 @@ router.get('/', async (req, res) => {
       if (doc.data().semester) semesterSet.add(doc.data().semester);
     });
     const semesterList = Array.from(semesterSet).sort((a, b) => a - b);
+    const semesterAktifInfo = {
+      jenis: filter.jenis,
+      label: filter.label,
+      daftar: semesterList.filter(n => Number(n) % 2 === filter.paritas)
+    };
 
     res.render('admin/pengajaran_list', {
       title: 'Monitoring Pengajaran',
       mkList,
       ringkasPantau,
       semesterList,
-      selectedSemester: semester || ''
+      selectedSemester: filter.selected,
+      semesterAktifInfo
     });
   } catch (error) {
     console.error('Error mengambil data pengajaran:', error);
@@ -606,15 +647,12 @@ router.get('/rekap/dosen', async (req, res) => {
  */
 router.get('/export', async (req, res) => {
   try {
-    const { semester } = req.query;
-    let query = db.collection('mataKuliah').orderBy('semester').orderBy('kode');
-    if (semester) {
-      query = query.where('semester', '==', parseInt(semester));
-    }
-    const snapshot = await query.get();
+    const filter = parseFilterSemester(req.query.semester);
+    const snapshot = await db.collection('mataKuliah').orderBy('semester').orderBy('kode').get();
+    const docsTerfilter = snapshot.docs.filter(d => filter.lolos(d.data().semester));
 
     const exportData = [];
-    for (const doc of snapshot.docs) {
+    for (const doc of docsTerfilter) {
       const data = doc.data();
       const progress = hitungProgress(data.materi);
       const dosenNames = await getDosenNames(data.dosenIds);
@@ -631,7 +669,8 @@ router.get('/export', async (req, res) => {
       });
     }
 
-    const filterInfo = semester ? `Semester ${semester}` : 'Semua Semester';
+    const filterInfo = filter.mode === 'aktif' ? `Semester Aktif (${filter.label})`
+      : filter.mode === 'angka' ? `Semester ${filter.nilai}` : 'Semua Semester';
 
     res.render('admin/pengajaran_export', {
       title: 'Export Data Pengajaran',
