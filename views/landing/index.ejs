@@ -551,42 +551,154 @@
         }
     }
 
-    /* ===== YUDISIUM TAHUN INI - SELAMAT & SUKSES ===== */
-    .yudisium-banner {
-        background: linear-gradient(135deg, #6a3093, #a044ff);
+    /* ===== YUDISIUM TAHUN INI - SELAMAT & SUKSES =====
+       Panggung navy dengan aksen emas (warna wisuda). Satu elemen yang
+       jadi pusat perhatian: medali IPK emas di pojok foto wisudawan. */
+    .section-wrapper.yd-stage {
+        --yd-navy: #0a1f44;
+        --yd-navy-2: #12326b;
+        --yd-gold: #f2b84b;
+        --yd-gold-hover: #ffd072;
+        --yd-muted: #b9c6df;
+        background: var(--yd-navy);
+        border: 0;
+        padding: 2rem 1.75rem;
+    }
+    .yd-stage .yd-head {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.75rem;
+    }
+    .yd-stage .yd-head-icon {
+        flex: 0 0 auto;
+        width: 3.25rem;
+        height: 3.25rem;
+        border-radius: 50%;
+        border: 2px solid var(--yd-gold);
+        color: var(--yd-gold);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.45rem;
+    }
+    .yd-stage .yd-title {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: clamp(1.25rem, 3.4vw, 1.75rem);
+        line-height: 1.2;
         color: #fff;
-        border-radius: var(--border-radius, 20px);
-        padding: 1.6rem 1.5rem;
-        text-align: center;
-        margin-bottom: 1.5rem;
+        margin: 0;
+        text-wrap: balance;
     }
-    .yudisium-banner h3 { font-weight: 800; margin: 0 0 .25rem; }
-    .yudisium-banner p { margin: 0; opacity: .92; }
-    .yudisium-card {
-        background: var(--bg-card, #fff);
-        border-radius: 20px;
+    .yd-stage .yd-sub {
+        margin: .35rem 0 0;
+        color: var(--yd-muted);
+        font-size: .95rem;
+        max-width: 60ch;
+    }
+    .yd-stage .yd-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
+    .yd-stage .yd-card {
+        margin: 0;
+        position: relative;
+        width: calc((100% - 1rem) / 2);
+        border-radius: 1rem;
         overflow: hidden;
-        box-shadow: var(--shadow-sm);
-        transition: var(--transition);
-        height: 100%;
-        text-align: center;
+        background: var(--yd-navy-2);
     }
-    .yudisium-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-hover); }
-    .yudisium-card .yd-img {
+    @media (min-width: 768px) {
+        .yd-stage .yd-card { width: calc((100% - 2rem) / 3); }
+    }
+    @media (min-width: 992px) {
+        .yd-stage .yd-card { width: calc((100% - 3rem) / 4); }
+    }
+    .yd-stage .yd-photo {
         aspect-ratio: 3 / 4;
-        background: #f1f5f9;
         overflow: hidden;
     }
-    .yudisium-card .yd-img img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
-    .yudisium-card .yd-body { padding: 1rem; }
-    .yudisium-card .yd-nama { font-weight: 700; font-size: 1rem; color: #1e293b; margin-bottom: .1rem; }
-    .yudisium-card .yd-nim { font-size: .8rem; color: #64748b; margin-bottom: .5rem; }
-    .yudisium-card .yd-ipk {
-        display: inline-block; background: #dcfce7; color: #15803d;
-        font-weight: 700; font-size: .85rem; padding: .15rem .8rem;
-        border-radius: 50px; margin-bottom: .35rem;
+    .yd-stage .yd-photo img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top;
     }
-    .yudisium-card .yd-lama { font-size: .8rem; color: #64748b; }
+    .yd-stage .yd-ipk {
+        position: absolute;
+        top: .6rem;
+        right: .6rem;
+        width: 3.4rem;
+        height: 3.4rem;
+        border-radius: 50%;
+        background: var(--yd-gold);
+        color: var(--yd-navy);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        box-shadow: 0 0 0 3px rgba(10, 31, 68, .55), inset 0 0 0 2px rgba(255, 255, 255, .5);
+    }
+    .yd-stage .yd-ipk small { font-size: .58rem; font-weight: 700; }
+    .yd-stage .yd-ipk strong { font-size: .98rem; font-weight: 800; margin-top: .12rem; }
+    .yd-stage .yd-cap {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 3rem .85rem .85rem;
+        background: linear-gradient(to top, rgba(6, 17, 40, .94) 0%, rgba(6, 17, 40, .78) 45%, rgba(6, 17, 40, 0) 100%);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: .1rem;
+    }
+    .yd-stage .yd-nama {
+        font-weight: 700;
+        font-size: .95rem;
+        line-height: 1.25;
+        text-wrap: balance;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .yd-stage .yd-nim { font-size: .76rem; color: var(--yd-muted); }
+    .yd-stage .yd-lama { font-size: .74rem; color: var(--yd-gold); margin-top: .3rem; }
+    .yd-stage .yd-cta { text-align: center; margin-top: 1.75rem; }
+    .yd-stage .yd-cta a {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        background: var(--yd-gold);
+        color: var(--yd-navy);
+        font-weight: 700;
+        padding: .65rem 1.5rem;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: background-color .2s ease;
+    }
+    .yd-stage .yd-cta a:hover { background: var(--yd-gold-hover); color: var(--yd-navy); }
+    .yd-stage .yd-cta a:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+    @media (max-width: 575.98px) {
+        .section-wrapper.yd-stage { padding: 1.25rem 1rem; }
+        .yd-stage .yd-head { gap: .75rem; }
+        .yd-stage .yd-head-icon { width: 2.75rem; height: 2.75rem; font-size: 1.2rem; }
+        .yd-stage .yd-sub { font-size: .88rem; }
+        .yd-stage .yd-ipk { width: 3rem; height: 3rem; top: .45rem; right: .45rem; }
+        .yd-stage .yd-ipk strong { font-size: .88rem; }
+        .yd-stage .yd-nama { font-size: .85rem; }
+        .yd-stage .yd-cap { padding: 2.4rem .65rem .65rem; }
+        .yd-stage .yd-lama-pre { display: none; } /* di HP cukup "3 tahun 6 bulan" */
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .yd-stage .yd-cta a { transition: none; }
+    }
 
     .gallery-card:hover .gallery-img-wrapper img {
         transform: scale(1.08);
@@ -1587,37 +1699,45 @@
             if (m) return m[1];
             m = url.match(/\/d\/([^\/]+)/);
             return m ? m[1] : null;
+        };
+        const formatIpkYd = (v) => {
+            const n = Number(v);
+            return (v !== null && v !== undefined && v !== '' && !isNaN(n)) ? n.toFixed(2) : null;
         }; %>
-    <section id="yudisium-tahun-ini" class="section-wrapper">
-        <div class="yudisium-banner">
-            <h3><i class="bi bi-mortarboard-fill me-2"></i>Selamat dan Sukses!</h3>
-            <p>Wisudawan Yudisium <%= tahunYudisiumIni %> &mdash; <%= yudisiumTahunIniTotal %> mahasiswa dinyatakan lulus</p>
-        </div>
-        <div class="row g-4">
+    <section id="yudisium-tahun-ini" class="section-wrapper yd-stage" aria-labelledby="yd-judul">
+        <header class="yd-head">
+            <span class="yd-head-icon" aria-hidden="true"><i class="bi bi-mortarboard-fill"></i></span>
+            <div>
+                <h2 id="yd-judul" class="yd-title">Selamat kepada para wisudawan</h2>
+                <p class="yd-sub">Yudisium <%= tahunYudisiumIni %>: <%= yudisiumTahunIniTotal %> mahasiswa Teknik Elektronika dinyatakan lulus.</p>
+            </div>
+        </header>
+        <div class="yd-grid">
             <% yudisiumTahunIni.forEach(m => {
                 const fid = fileIdYd(m.fotoUrl);
-                const src = fid ? `https://drive.google.com/thumbnail?id=${fid}&sz=w600` : m.fotoUrl; %>
-                <div class="col-6 col-md-4 col-lg-3">
-                    <div class="yudisium-card">
-                        <div class="yd-img">
-                            <img src="<%= src %>" alt="<%= m.nama %>" loading="lazy"
-                                 onerror="this.onerror=null; this.src='<%= m.fotoUrl %>';">
-                        </div>
-                        <div class="yd-body">
-                            <div class="yd-nama"><%= m.nama %></div>
-                            <div class="yd-nim"><%= m.nim || '-' %></div>
-                            <% if (m.ipk) { %><span class="yd-ipk">IPK <%= m.ipk %></span><br><% } %>
-                            <% if (m.lamaStudi) { %>
-                                <span class="yd-lama"><i class="bi bi-hourglass-split"></i> Lama studi: <%= m.lamaStudi.label %></span>
-                            <% } %>
-                        </div>
+                const src = fid ? `https://drive.google.com/thumbnail?id=${fid}&sz=w600` : m.fotoUrl;
+                const ipkTxt = formatIpkYd(m.ipk); %>
+                <figure class="yd-card">
+                    <div class="yd-photo">
+                        <img src="<%= src %>" alt="Foto yudisium <%= m.nama %>" loading="lazy"
+                             onerror="this.onerror=null; this.src='<%= m.fotoUrl %>';">
                     </div>
-                </div>
+                    <% if (ipkTxt) { %>
+                    <div class="yd-ipk" title="Indeks Prestasi Kumulatif"><small>IPK</small><strong><%= ipkTxt %></strong></div>
+                    <% } %>
+                    <figcaption class="yd-cap">
+                        <span class="yd-nama" title="<%= m.nama %>"><%= m.nama %></span>
+                        <span class="yd-nim"><%= m.nim || '-' %></span>
+                        <% if (m.lamaStudi) { %>
+                        <span class="yd-lama"><i class="bi bi-hourglass-split" aria-hidden="true"></i> <span class="yd-lama-pre">Lama studi </span><%= m.lamaStudi.label %></span>
+                        <% } %>
+                    </figcaption>
+                </figure>
             <% }); %>
         </div>
-        <div class="text-center mt-4">
-            <a href="/yudisium/<%= tahunYudisiumIni %>" class="btn btn-outline-primary rounded-pill px-4">
-                Lihat Semua Wisudawan <%= tahunYudisiumIni %> <i class="bi bi-arrow-right ms-1"></i>
+        <div class="yd-cta">
+            <a href="/yudisium/<%= tahunYudisiumIni %>">
+                Lihat semua wisudawan <%= tahunYudisiumIni %> <i class="bi bi-arrow-right" aria-hidden="true"></i>
             </a>
         </div>
     </section>
