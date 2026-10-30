@@ -12,6 +12,7 @@ const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { filterIdMahasiswaAktif } = require('../../helpers/statusMahasiswaHelper');
+const { dosenCache } = require('../../helpers/cache');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const { getRencanaPertemuan, getInfoRencana } = require('../../data/rencanaPertemuanData');
@@ -63,13 +64,19 @@ function removeUndefined(obj) {
   return obj;
 }
 
+// Data dosen per ID lewat dosenCache bersama (10 menit, sama seperti di
+// elearning/pengajaran) - dulu get() satu per satu berurutan di setiap halaman.
+async function getDosenData(id) {
+  return dosenCache.getOrFetch(id, async () => {
+    const doc = await db.collection('dosen').doc(id).get();
+    return doc.exists ? doc.data() : null;
+  });
+}
+
 async function getDosenNames(dosenIds) {
   if (!dosenIds || dosenIds.length === 0) return '-';
-  const names = [];
-  for (const id of dosenIds) {
-    const dosenDoc = await db.collection('dosen').doc(id).get();
-    if (dosenDoc.exists) names.push(dosenDoc.data().nama);
-  }
+  const datas = await Promise.all(dosenIds.map(getDosenData));
+  const names = datas.filter(Boolean).map(d => d.nama);
   return names.join(', ') || '-';
 }
 
@@ -310,11 +317,9 @@ router.get('/:id', async (req, res) => {
       return res.status(403).render('error', { title: 'Akses Ditolak', message: 'Anda tidak memiliki akses ke mata kuliah ini' });
     }
 
-    const dosenList = [];
-    for (const dId of mk.dosenIds || []) {
-      const dDoc = await db.collection('dosen').doc(dId).get();
-      if (dDoc.exists) dosenList.push(dDoc.data().nama);
-    }
+    const dosenList = (await Promise.all((mk.dosenIds || []).map(getDosenData)))
+      .filter(Boolean)
+      .map(d => d.nama);
 
     const materiExisting = mk.materi || [];
     // Rekomendasi pembahasan per pertemuan (hardcoded dari RPS: data/rencanaPertemuanData.js)

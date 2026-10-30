@@ -9,7 +9,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const { filterIdMahasiswaAktif, filterEnrollmentDocsAktif } = require('../../helpers/statusMahasiswaHelper');
+const { filterIdMahasiswaAktif, filterEnrollmentDocsAktif, getJumlahMahasiswaAktifMk } = require('../../helpers/statusMahasiswaHelper');
 const {
   getPeriodeAktif,
   getHasilRubrikSemuaMahasiswa,
@@ -172,11 +172,7 @@ router.get('/', async (req, res) => {
     const mkList = await Promise.all(mkSnapshot.docs.map(async (doc) => {
       const mk = { id: doc.id, ...doc.data() };
       const [jumlahMahasiswa, namaDosen] = await Promise.all([
-        db.collection('enrollment')
-          .where('mkId', '==', doc.id)
-          .where('status', '==', 'active')
-          .get()
-          .then(async s => (await filterEnrollmentDocsAktif(db, s.docs)).length), // tanpa Cuti/Keluar
+        getJumlahMahasiswaAktifMk(db, doc.id, null), // tanpa Cuti/Keluar (cache 5 menit + count())
         getDosenNamaByIds(mk.dosenIds || [])
       ]);
       mk.jumlahMahasiswa = jumlahMahasiswa;

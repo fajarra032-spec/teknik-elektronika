@@ -135,27 +135,31 @@ app.post('/webhook', (req, res) => {
 });
 
 /**
- * Sitemap Generator - Statis + Dinamis dari Firebase dengan caching (6 jam)
+ * Sitemap Generator - Statis + Dinamis dari Firebase dengan caching (24 jam)
+ *
+ * Hemat kuota Firestore:
+ *  - cache 24 jam (konten berita/ELK jarang berubah tiap jam)
+ *  - hanya satu proses pembuatan pada satu waktu (request bersamaan menunggu
+ *    hasil yang sama, bukan masing-masing membaca ribuan dokumen)
+ *  - hasil yang TIDAK lengkap (ada query gagal) tidak disimpan penuh: dipakai
+ *    cache lama yang lengkap bila ada, dan baru dicoba lagi 5 menit kemudian
  */
 let sitemapCache = null;
 let sitemapCacheTime = 0;
-const CACHE_DURATION = 6 * 60 * 60 * 1000; // 6 jam
+let sitemapBuilding = null;
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 jam
+const RETRY_SITEMAP_GAGAL = 5 * 60 * 1000;  // 5 menit
 
-app.get('/sitemap.xml', async (req, res) => {
-  // Jika cache masih berlaku, kirim langsung
-  if (sitemapCache && (Date.now() - sitemapCacheTime) < CACHE_DURATION) {
-    return res.header('Content-Type', 'application/xml').send(sitemapCache);
-  }
-
+async function buildSitemapXml() {
   const baseUrl = 'https://elektronika.polidewa.ac.id';
   const today = new Date().toISOString().split('T')[0];
+  let lengkap = true; // jadi false kalau ada query yang gagal
 
   // URL Statis
   const staticUrls = [
     { url: '/', changefreq: 'daily', priority: 1.0 },
     { url: '/pmb', changefreq: 'daily', priority: 0.9 },
     { url: '/panduan', changefreq: 'monthly', priority: 0.7 },
-    { url: '/display', changefreq: 'weekly', priority: 0.6 },
     { url: '/ic3', changefreq: 'weekly', priority: 0.7 },
     { url: '/elk-library', changefreq: 'weekly', priority: 0.7 },
     { url: '/berita', changefreq: 'daily', priority: 0.8 },
@@ -170,120 +174,126 @@ app.get('/sitemap.xml', async (req, res) => {
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
-  // URL Statis
+  // URL Statis (tanpa <lastmod>: mengisi "hari ini" terus-menerus membuat
+  // Google menganggap tanggal itu tidak dapat dipercaya)
   staticUrls.forEach(item => {
     xml += '  <url>\n';
     xml += `    <loc>${baseUrl}${item.url}</loc>\n`;
-    xml += `    <lastmod>${today}</lastmod>\n`;
     xml += `    <changefreq>${item.changefreq}</changefreq>\n`;
     xml += `    <priority>${item.priority}</priority>\n`;
     xml += '  </url>\n';
   });
 
-  // ============================================
-  // URL DINAMIS DARI FIREBASE (Berita)
-  // ============================================
-  try {
-    const instances = getFirebaseInstances();
-    const db = instances.db;
+  const toDate = (raw) => {
+    if (!raw) return null;
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d.toISOString().split('T')[0];
+  };
 
-    if (!db) {
-      console.warn('⚠️ Firestore tidak tersedia, sitemap hanya berisi URL statis.');
+  const db = getFirebaseInstances().db;
+  if (!db) {
+    console.warn('⚠️ Firestore tidak tersedia, sitemap hanya berisi URL statis.');
+    lengkap = false;
+  } else {
+    // ============================================
+    // URL DINAMIS DARI FIREBASE (Berita)
+    // ============================================
+    // ============================================
+    // URL DINAMIS DARI FIREBASE (ELK Library)
+    // Hanya karya yang sudah "approved" yang layak
+    // muncul di sitemap & diindeks Google - termasuk
+    // laporan magang mahasiswa.
+    // ============================================
+    const elkCollections = [
+      { name: 'laporanMagang', changefreq: 'monthly', priority: 0.6 },
+      { name: 'penelitian', changefreq: 'monthly', priority: 0.5 },
+      { name: 'pengabdian', changefreq: 'monthly', priority: 0.5 },
+      { name: 'buku', changefreq: 'monthly', priority: 0.5 },
+    ];
+
+    // Semua query dijalankan paralel (jumlah read tetap, tapi lebih cepat)
+    const [beritaHasil, ...elkHasil] = await Promise.all([
+      db.collection('berita').orderBy('createdAt', 'desc').limit(1000).get()
+        .then(snap => ({ snap }))
+        .catch(err => { console.error('❌ Gagal ambil berita untuk sitemap:', err.message); return { err }; }),
+      ...elkCollections.map(col =>
+        db.collection(col.name).where('status', '==', 'approved').limit(1000).get()
+          .then(snap => ({ snap, col }))
+          .catch(err => { console.error(`❌ Gagal ambil koleksi '${col.name}' untuk sitemap:`, err.message); return { err, col }; })
+      )
+    ]);
+
+    if (beritaHasil.err) {
+      lengkap = false;
     } else {
-      const beritaSnapshot = await db.collection('berita')
-        .orderBy('createdAt', 'desc')
-        .limit(1000)
-        .get();
-
-      if (!beritaSnapshot.empty) {
-        beritaSnapshot.forEach(doc => {
-          const data = doc.data();
-          const slug = data.slug || doc.id;
-          let lastmod = today;
-
-          // createdAt/updatedAt adalah string ISO, bukan Firestore Timestamp
-          try {
-            if (data.updatedAt) {
-              const date = new Date(data.updatedAt);
-              if (!isNaN(date.getTime())) {
-                lastmod = date.toISOString().split('T')[0];
-              }
-            } else if (data.createdAt) {
-              const date = new Date(data.createdAt);
-              if (!isNaN(date.getTime())) {
-                lastmod = date.toISOString().split('T')[0];
-              }
-            }
-          } catch (e) {
-            console.warn('⚠️ Gagal parsing tanggal untuk berita:', slug);
-          }
-
-          xml += '  <url>\n';
-          xml += `    <loc>${baseUrl}/berita/${slug}</loc>\n`;
-          xml += `    <lastmod>${lastmod}</lastmod>\n`;
-          xml += '    <changefreq>weekly</changefreq>\n';
-          xml += '    <priority>0.8</priority>\n';
-          xml += '  </url>\n';
-        });
-      } else {
-        console.log('ℹ️ Tidak ada berita ditemukan di Firebase');
-      }
-
-      // ============================================
-      // URL DINAMIS DARI FIREBASE (ELK Library)
-      // Hanya karya yang sudah "approved" yang layak
-      // muncul di sitemap & diindeks Google - termasuk
-      // laporan magang mahasiswa.
-      // ============================================
-      const elkCollections = [
-        { name: 'laporanMagang', changefreq: 'monthly', priority: 0.6 },
-        { name: 'penelitian', changefreq: 'monthly', priority: 0.5 },
-        { name: 'pengabdian', changefreq: 'monthly', priority: 0.5 },
-        { name: 'buku', changefreq: 'monthly', priority: 0.5 },
-      ];
-
-      for (const col of elkCollections) {
-        try {
-          const snapshot = await db.collection(col.name)
-            .where('status', '==', 'approved')
-            .limit(1000)
-            .get();
-
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            let lastmod = today;
-            try {
-              const rawDate = data.approvedAt || data.updatedAt || data.createdAt;
-              if (rawDate) {
-                const date = new Date(rawDate);
-                if (!isNaN(date.getTime())) lastmod = date.toISOString().split('T')[0];
-              }
-            } catch (e) { /* pakai lastmod default */ }
-
-            xml += '  <url>\n';
-            xml += `    <loc>${baseUrl}/elk-library/${doc.id}</loc>\n`;
-            xml += `    <lastmod>${lastmod}</lastmod>\n`;
-            xml += `    <changefreq>${col.changefreq}</changefreq>\n`;
-            xml += `    <priority>${col.priority}</priority>\n`;
-            xml += '  </url>\n';
-          });
-        } catch (colError) {
-          console.error(`❌ Gagal ambil koleksi '${col.name}' untuk sitemap:`, colError.message);
-        }
-      }
+      beritaHasil.snap.forEach(doc => {
+        const data = doc.data();
+        const slug = data.slug || doc.id;
+        // createdAt/updatedAt adalah string ISO, bukan Firestore Timestamp
+        const lastmod = toDate(data.updatedAt) || toDate(data.createdAt) || today;
+        xml += '  <url>\n';
+        xml += `    <loc>${baseUrl}/berita/${slug}</loc>\n`;
+        xml += `    <lastmod>${lastmod}</lastmod>\n`;
+        xml += '    <changefreq>weekly</changefreq>\n';
+        xml += '    <priority>0.8</priority>\n';
+        xml += '  </url>\n';
+      });
     }
-  } catch (error) {
-    console.error('❌ Gagal ambil berita untuk sitemap:', error.message);
+
+    for (const hasil of elkHasil) {
+      if (hasil.err) { lengkap = false; continue; }
+      hasil.snap.forEach(doc => {
+        const data = doc.data();
+        const lastmod = toDate(data.approvedAt) || toDate(data.updatedAt) || toDate(data.createdAt) || today;
+        xml += '  <url>\n';
+        xml += `    <loc>${baseUrl}/elk-library/${doc.id}</loc>\n`;
+        xml += `    <lastmod>${lastmod}</lastmod>\n`;
+        xml += `    <changefreq>${hasil.col.changefreq}</changefreq>\n`;
+        xml += `    <priority>${hasil.col.priority}</priority>\n`;
+        xml += '  </url>\n';
+      });
+    }
   }
 
   xml += '</urlset>';
+  return { xml, lengkap };
+}
 
-  // Simpan cache
-  sitemapCache = xml;
-  sitemapCacheTime = Date.now();
-
+app.get('/sitemap.xml', async (req, res) => {
   res.header('Content-Type', 'application/xml');
-  res.send(xml);
+
+  // Cache masih berlaku -> kirim langsung (0 read)
+  if (sitemapCache && (Date.now() - sitemapCacheTime) < CACHE_DURATION) {
+    return res.send(sitemapCache);
+  }
+
+  try {
+    if (!sitemapBuilding) {
+      sitemapBuilding = buildSitemapXml().finally(() => { sitemapBuilding = null; });
+    }
+    const { xml, lengkap } = await sitemapBuilding;
+
+    if (lengkap) {
+      sitemapCache = xml;
+      sitemapCacheTime = Date.now();
+      return res.send(xml);
+    }
+
+    // Hasil tidak lengkap: jangan timpa cache lama yang lengkap. Coba lagi
+    // dalam 5 menit (bukan setiap request) supaya kegagalan Firestore tidak
+    // memicu pembacaan ulang terus-menerus.
+    if (sitemapCache) {
+      sitemapCacheTime = Date.now() - CACHE_DURATION + RETRY_SITEMAP_GAGAL;
+      return res.send(sitemapCache);
+    }
+    sitemapCache = xml;
+    sitemapCacheTime = Date.now() - CACHE_DURATION + RETRY_SITEMAP_GAGAL;
+    return res.send(xml);
+  } catch (error) {
+    console.error('❌ Gagal membuat sitemap:', error.message);
+    if (sitemapCache) return res.send(sitemapCache);
+    return res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><error>sitemap tidak tersedia</error>');
+  }
 });
 
 // ============================================================================
@@ -374,6 +384,26 @@ async function startServer() {
       }
       next();
     });
+
+    // Invalidasi cache halaman publik: setiap aksi tulis (POST/PUT/PATCH/DELETE)
+    // yang berhasil dari panel admin membersihkan cache beranda, daftar berita,
+    // aktivitas, lulusan, dosen, dan jumlah enrollment - supaya perubahan admin
+    // langsung terlihat, sementara kunjungan biasa (GET) tetap 0 read.
+    {
+      const { publicPageCache, enrollmentCountCache, dosenCache } = require('./helpers/cache');
+      app.use('/admin', (req, res, next) => {
+        if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
+          res.on('finish', () => {
+            if (res.statusCode < 500) {
+              publicPageCache.clear();
+              enrollmentCountCache.clear();
+              dosenCache.clear(); // nama/foto dosen yang diubah admin langsung terbaca
+            }
+          });
+        }
+        next();
+      });
+    }
 
     // ROUTES NOTIFIKASI & PESAN (semua role - mahasiswa/dosen/admin)
     app.use('/notifikasi', require('./routes/notifikasi'));
@@ -499,10 +529,6 @@ async function startServer() {
       else if (req.user.role === 'dosen') res.redirect('/dosen/dashboard');
       else res.redirect('/mahasiswa/dashboard');
     });
-
-    // Display (TV Kampus)
-    const displayRoutes = require('./routes/display');
-    app.use('/display', displayRoutes);
 
     // Health Check Endpoint
     app.get('/health', (req, res) => {

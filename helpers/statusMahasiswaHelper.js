@@ -18,7 +18,7 @@
 // di Firestore.
 // ============================================================================
 
-const { getAllMahasiswa } = require('./cache');
+const { getAllMahasiswa, enrollmentCountCache } = require('./cache');
 
 const STATUS_DIKECUALIKAN = ['Cuti', 'Keluar'];
 
@@ -64,7 +64,34 @@ async function filterEnrollmentDocsAktif(db, docs) {
   return arr.filter(d => !set.has(d.data().userId));
 }
 
+/**
+ * Jumlah mahasiswa AKTIF (status enrollment 'active', tanpa Cuti/Keluar) pada
+ * satu mata kuliah. Dipakai di halaman daftar MK dosen/admin.
+ *
+ * Hemat kuota: hasil di-cache 5 menit (dibersihkan saat admin menulis), dan
+ * kalau tidak ada mahasiswa Cuti/Keluar cukup count() = ~1 read. Dulu semua
+ * dokumen enrollment dibaca untuk setiap MK di setiap kunjungan halaman.
+ * @param {string} mkId
+ * @param {string|null} semester - null = tanpa filter semester
+ */
+async function getJumlahMahasiswaAktifMk(db, mkId, semester) {
+  const key = `${mkId}|${semester || '*'}`;
+  return enrollmentCountCache.getOrFetch(key, async () => {
+    let q = db.collection('enrollment').where('mkId', '==', mkId);
+    if (semester) q = q.where('semester', '==', semester);
+    q = q.where('status', '==', 'active');
+
+    const tidakIkut = await getIdTidakIkut(db);
+    if (tidakIkut.size === 0) {
+      return (await q.count().get()).data().count;
+    }
+    const snap = await q.get();
+    return snap.docs.filter(d => !tidakIkut.has(d.data().userId)).length;
+  });
+}
+
 module.exports = {
+  getJumlahMahasiswaAktifMk,
   STATUS_DIKECUALIKAN,
   isTidakIkutKegiatan,
   getIdTidakIkut,

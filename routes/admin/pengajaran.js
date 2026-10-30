@@ -10,6 +10,25 @@ const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getRencanaPertemuan, getInfoRencana } = require('../../data/rencanaPertemuanData');
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
+const { TTLCache, dosenCache } = require('../../helpers/cache');
+
+// Cache 3 menit untuk subkoleksi absensi per MK: halaman daftar ini dulu
+// membaca seluruh absensi (sampai 16 dokumen) SETIAP MK di SETIAP kunjungan.
+const absensiMkCache = new TTLCache(3 * 60 * 1000);
+async function getAbsensiDocsCached(mkId) {
+  return absensiMkCache.getOrFetch(mkId, async () => {
+    return (await db.collection('mataKuliah').doc(mkId).collection('absensi').get()).docs;
+  });
+}
+
+// Data dosen per ID lewat dosenCache bersama (10 menit) - dulu get() satu per
+// satu berurutan, tanpa cache, untuk setiap dosen di setiap MK.
+async function getDosenData(id) {
+  return dosenCache.getOrFetch(id, async () => {
+    const doc = await db.collection('dosen').doc(id).get();
+    return doc.exists ? doc.data() : null;
+  });
+}
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -147,16 +166,8 @@ function isiTopikKosongDariRps(mk) {
  */
 async function getDosenNames(dosenIds) {
   if (!dosenIds || !Array.isArray(dosenIds) || dosenIds.length === 0) return [];
-  const names = [];
-  for (const id of dosenIds) {
-    const doc = await db.collection('dosen').doc(id).get();
-    if (doc.exists) {
-      names.push(doc.data().nama);
-    } else {
-      names.push('Unknown');
-    }
-  }
-  return names;
+  const datas = await Promise.all(dosenIds.map(getDosenData));
+  return datas.map(d => (d ? d.nama : 'Unknown'));
 }
 
 // ============================================================================
@@ -177,6 +188,9 @@ router.get('/', async (req, res) => {
     const snapshot = await query.get();
     const docsTerfilter = snapshot.docs.filter(d => filter.lolos(d.data().semester));
 
+    // Prefetch paralel (hanya mempercepat; jumlah read sama, lalu di-cache)
+    await Promise.all(docsTerfilter.map(d => getAbsensiDocsCached(d.id).catch(() => null)));
+
     const mkList = [];
     for (const doc of docsTerfilter) {
       const data = doc.data();
@@ -184,7 +198,7 @@ router.get('/', async (req, res) => {
       const dosenNames = await getDosenNames(data.dosenIds);
       let absensiDocs = [];
       try {
-        absensiDocs = (await db.collection('mataKuliah').doc(doc.id).collection('absensi').get()).docs;
+        absensiDocs = await getAbsensiDocsCached(doc.id);
       } catch (e) { console.error('Gagal baca absensi MK', doc.id, e.message); }
       const pantau = analisisPantau(data, absensiDocs);
       mkList.push({
@@ -207,9 +221,10 @@ router.get('/', async (req, res) => {
     };
 
     // Ambil daftar semester unik untuk dropdown filter
-    const semesterSnapshot = await db.collection('mataKuliah').get();
+    // Memakai snapshot yang SUDAH dibaca di atas (dulu seluruh koleksi
+    // mataKuliah dibaca dua kali dalam satu kunjungan).
     const semesterSet = new Set();
-    semesterSnapshot.docs.forEach(doc => {
+    snapshot.docs.forEach(doc => {
       if (doc.data().semester) semesterSet.add(doc.data().semester);
     });
     const semesterList = Array.from(semesterSet).sort((a, b) => a - b);
@@ -336,12 +351,10 @@ router.get('/:id', async (req, res, next) => {
     // Dosen pengampu
     const dosenList = [];
     if (mk.dosenIds && mk.dosenIds.length > 0) {
-      for (const dId of mk.dosenIds) {
-        const dDoc = await db.collection('dosen').doc(dId).get();
-        if (dDoc.exists) {
-          dosenList.push({ id: dId, nama: dDoc.data().nama });
-        }
-      }
+      const dataDosen = await Promise.all(mk.dosenIds.map(getDosenData));
+      mk.dosenIds.forEach((dId, i) => {
+        if (dataDosen[i]) dosenList.push({ id: dId, nama: dataDosen[i].nama });
+      });
     }
 
     // Tugas terkait (opsional)

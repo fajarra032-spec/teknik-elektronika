@@ -52,8 +52,10 @@ function generateNoKupon() {
 
 // ====================== Hitung Kelompok (Round Robin) ======================
 async function getNextKelompok() {
-  const snapshot = await db.collection('servisan').get();
-  const count = snapshot.size;
+  // count() = ~1 read; dulu membaca SELURUH koleksi servisan hanya untuk
+  // mengambil jumlahnya, di setiap pengajuan baru.
+  const agg = await db.collection('servisan').count().get();
+  const count = agg.data().count;
   const JUMLAH_KELOMPOK = 4;
   const nextKelompok = (count % JUMLAH_KELOMPOK) + 1;
   return `Kelompok ${nextKelompok}`;

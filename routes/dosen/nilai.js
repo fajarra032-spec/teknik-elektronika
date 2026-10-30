@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const { filterIdMahasiswaAktif, filterEnrollmentDocsAktif } = require('../../helpers/statusMahasiswaHelper');
+const { filterIdMahasiswaAktif, filterEnrollmentDocsAktif, getJumlahMahasiswaAktifMk } = require('../../helpers/statusMahasiswaHelper');
 const { getNilaiByMkId, getTugasByMkId, getPeriodeAktif } = require('../../helpers/nilaiHelper');
 
 router.use(verifyToken);
@@ -45,12 +45,7 @@ router.get('/', async (req, res) => {
       
       // Filter semester juga - lihat catatan di routes/dosen/mk.js soal
       // kenapa ini wajib supaya mahasiswa periode lama tidak ikut kehitung.
-      const enrollmentSnapshot = await db.collection('enrollment')
-        .where('mkId', '==', doc.id)
-        .where('semester', '==', getPeriodeAktif())
-        .where('status', '==', 'active')
-        .get();
-      mk.jumlahMahasiswa = (await filterEnrollmentDocsAktif(db, enrollmentSnapshot.docs)).length;
+      mk.jumlahMahasiswa = await getJumlahMahasiswaAktifMk(db, doc.id, getPeriodeAktif());
       
       mkList.push(mk);
     }

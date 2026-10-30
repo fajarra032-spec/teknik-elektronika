@@ -82,20 +82,24 @@ async function createNotificationForUsers(db, userIds, data) {
 async function getNavbarSummary(db, userId) {
   if (!userId) return { unreadCount: 0, items: [] };
   return navbarNotifCache.getOrFetch(userId, async () => {
-    const snap = await db.collection(COLLECTION)
-      .where('userId', '==', userId)
-      .orderBy('createdAt', 'desc')
-      .limit(NAVBAR_LIMIT)
-      .get();
+    // Dua query berjalan paralel. Jumlah belum dibaca memakai count()
+    // (agregasi): dihitung sebagai ~1 read berapa pun jumlahnya, bukan
+    // membaca sampai 50 dokumen hanya untuk mengambil angkanya.
+    const [snap, unreadAgg] = await Promise.all([
+      db.collection(COLLECTION)
+        .where('userId', '==', userId)
+        .orderBy('createdAt', 'desc')
+        .limit(NAVBAR_LIMIT)
+        .get(),
+      db.collection(COLLECTION)
+        .where('userId', '==', userId)
+        .where('read', '==', false)
+        .count()
+        .get()
+    ]);
     const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    const unreadSnap = await db.collection(COLLECTION)
-      .where('userId', '==', userId)
-      .where('read', '==', false)
-      .limit(50) // cukup untuk badge "50+", tidak perlu hitung persis kalau sudah banyak
-      .get();
-
-    return { unreadCount: unreadSnap.size, items };
+    return { unreadCount: unreadAgg.data().count, items };
   });
 }
 

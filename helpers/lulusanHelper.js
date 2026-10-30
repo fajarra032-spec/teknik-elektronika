@@ -14,6 +14,7 @@
  */
 
 const { db } = require('../config/firebaseAdmin');
+const { publicPageCache } = require('./cache');
 
 /**
  * Normalisasi status pekerjaan ke satu set nilai baku, karena kedua koleksi
@@ -42,6 +43,15 @@ function normalisasiStatus(rawStatus) {
  * @returns {Promise<Array>}
  */
 async function getGabunganLulusan({ hanyaPublik = true } = {}) {
+  // Daftar publik sama untuk semua pengunjung (dan dipakai beranda + /lulusan
+  // + /lulusan/:id): di-cache 10 menit & dibersihkan otomatis saat admin
+  // menyimpan perubahan. Versi admin (hanyaPublik=false) selalu baca langsung.
+  if (!hanyaPublik) return bacaGabunganLulusan({ hanyaPublik });
+  const data = await publicPageCache.getOrFetch('lulusan:gabungan-publik', () => bacaGabunganLulusan({ hanyaPublik: true }));
+  return data.slice();
+}
+
+async function bacaGabunganLulusan({ hanyaPublik = true } = {}) {
   let tracerQuery = db.collection('tracerStudy');
   if (hanyaPublik) {
     tracerQuery = tracerQuery.where('isPublic', '==', true);

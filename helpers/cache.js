@@ -3,7 +3,7 @@
  * Cache in-memory sederhana dengan TTL (time-to-live), untuk mengurangi
  * pembacaan Firestore yang berulang-ulang pada data yang jarang berubah
  * (mis. data mata kuliah, daftar dosen). Pola ini sudah dipakai dengan baik
- * di routes/display.js — helper ini menyediakannya untuk dipakai bersama
+ * di halaman display (sudah dihapus) — helper ini menyediakannya untuk dipakai bersama
  * di seluruh aplikasi.
  *
  * PENTING: cache ini per-proses (in-memory). Jika aplikasi berjalan di lebih
@@ -19,6 +19,7 @@ class TTLCache {
   constructor(ttlMs = 5 * 60 * 1000) {
     this.ttlMs = ttlMs;
     this.store = new Map(); // key -> { value, expiresAt }
+    this.inflight = new Map(); // key -> Promise (pembacaan yang sedang berjalan)
   }
 
   get(key) {
@@ -52,9 +53,22 @@ class TTLCache {
   async getOrFetch(key, fetchFn) {
     const cached = this.get(key);
     if (cached !== undefined) return cached;
-    const value = await fetchFn();
-    this.set(key, value);
-    return value;
+    // Perlindungan request bersamaan: kalau ada beberapa request yang masuk
+    // saat cache kosong/kedaluwarsa, hanya SATU yang membaca Firestore dan
+    // yang lain menunggu hasil yang sama (sebelumnya semuanya membaca sendiri-
+    // sendiri, jadi lonjakan pengunjung = lonjakan read berlipat).
+    if (this.inflight.has(key)) return this.inflight.get(key);
+    const p = (async () => {
+      try {
+        const value = await fetchFn();
+        this.set(key, value);
+        return value;
+      } finally {
+        this.inflight.delete(key);
+      }
+    })();
+    this.inflight.set(key, p);
+    return p;
   }
 }
 
@@ -62,6 +76,22 @@ class TTLCache {
 const mataKuliahCache = new TTLCache(10 * 60 * 1000); // 10 menit
 const dosenCache = new TTLCache(10 * 60 * 1000);      // 10 menit
 const tugasAktifCache = new TTLCache(3 * 60 * 1000);  // 3 menit (lebih singkat karena lebih dinamis)
+
+// Cache halaman publik (beranda, daftar berita, aktivitas, lulusan, dosen).
+// Isinya sama untuk semua pengunjung, jadi tidak perlu dibaca ulang dari
+// Firestore tiap kunjungan. Dibersihkan otomatis setiap ada perubahan dari
+// panel admin (lihat middleware di app.js), dan tetap kedaluwarsa sendiri
+// dalam 10 menit sebagai pengaman.
+const publicPageCache = new TTLCache(10 * 60 * 1000);
+
+// Bagian beranda yang PALING mahal (pool 400 logbook, IPK lulusan) dan
+// tidak berubah gara-gara aksi admin - TTL lebih panjang (30 menit) dan
+// sengaja TIDAK ikut dibersihkan oleh perubahan admin.
+const berandaBerat = new TTLCache(30 * 60 * 1000);
+
+// Jumlah mahasiswa aktif per mata kuliah (halaman daftar MK dosen/admin).
+// Sebelumnya membaca semua dokumen enrollment tiap MK hanya untuk .length.
+const enrollmentCountCache = new TTLCache(5 * 60 * 1000);
 
 // Daftar mahasiswa (role='mahasiswa') dipakai di banyak tempat (landing page,
 // papan display, direktori pencarian) dan sebelumnya di-fetch ULANG dari
@@ -188,6 +218,9 @@ module.exports = {
   mataKuliahCache,
   dosenCache,
   tugasAktifCache,
+  publicPageCache,
+  berandaBerat,
+  enrollmentCountCache,
   mahasiswaCache,
   getAllMahasiswa,
   getAllMataKuliah,

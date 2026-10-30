@@ -10,7 +10,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const { filterIdMahasiswaAktif, filterEnrollmentDocsAktif } = require('../../helpers/statusMahasiswaHelper');
+const { filterIdMahasiswaAktif, filterEnrollmentDocsAktif, getJumlahMahasiswaAktifMk } = require('../../helpers/statusMahasiswaHelper');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
@@ -103,12 +103,8 @@ router.get('/', async (req, res) => {
         // (enrollment lama yang status-nya tidak pernah diubah dari
         // 'active') ikut kehitung terus selamanya, walau sekarang sudah
         // beda semester / sudah lanjut ke MK lain.
-        const enrollmentSnapshot = await db.collection('enrollment')
-          .where('mkId', '==', doc.id)
-          .where('semester', '==', getPeriodeAktif())
-          .where('status', '==', 'active')
-          .get();
-        jumlahMahasiswa = (await filterEnrollmentDocsAktif(db, enrollmentSnapshot.docs)).length; // tanpa Cuti/Keluar
+        // (di-cache 5 menit & pakai count() - lihat getJumlahMahasiswaAktifMk)
+        jumlahMahasiswa = await getJumlahMahasiswaAktifMk(db, doc.id, getPeriodeAktif()); // tanpa Cuti/Keluar
       } catch (err) {
         console.error(`Gagal hitung enrollment untuk MK ${doc.id}:`, err);
       }

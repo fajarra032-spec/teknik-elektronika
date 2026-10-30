@@ -9,7 +9,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const { filterIdMahasiswaAktif, filterEnrollmentDocsAktif } = require('../../helpers/statusMahasiswaHelper');
+const { filterIdMahasiswaAktif, filterEnrollmentDocsAktif, getJumlahMahasiswaAktifMk } = require('../../helpers/statusMahasiswaHelper');
 const {
   getPeriodeAktif,
   saveBobotRubrik,
@@ -152,12 +152,7 @@ router.get('/', async (req, res) => {
     const mkList = await Promise.all(mkSnapshot.docs.map(async (doc) => {
       const mk = { id: doc.id, ...doc.data() };
       try {
-        const countSnap = await db.collection('enrollment')
-          .where('mkId', '==', doc.id)
-          .where('semester', '==', periode)
-          .where('status', '==', 'active')
-          .get();
-        mk.jumlahMahasiswa = (await filterEnrollmentDocsAktif(db, countSnap.docs)).length; // tanpa Cuti/Keluar
+        mk.jumlahMahasiswa = await getJumlahMahasiswaAktifMk(db, doc.id, periode); // tanpa Cuti/Keluar
       } catch (err) {
         // Fallback kalau versi firebase-admin belum dukung count()
         const enrollmentSnapshot = await db.collection('enrollment')

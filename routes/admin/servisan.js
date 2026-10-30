@@ -46,10 +46,15 @@ router.get('/hapus/:id', async (req, res) => {
 router.get('/cetak', async (req, res) => {
   console.log('🟢 Route cetak dipanggil');
   try {
-    const snapshot = await db.collection('servisan').get();
-    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    console.log(`📦 Jumlah data: ${data.length}`);
-    res.json({ success: true, total: data.length, sample: data.slice(0, 3) });
+    // Hemat kuota: total lewat count(), contoh cukup 3 dokumen (dulu membaca semua)
+    const [agg, sampleSnap] = await Promise.all([
+      db.collection('servisan').count().get(),
+      db.collection('servisan').limit(3).get()
+    ]);
+    const total = agg.data().count;
+    const sample = sampleSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    console.log(`📦 Jumlah data: ${total}`);
+    res.json({ success: true, total, sample });
   } catch (err) {
     console.error('❌ Error:', err);
     res.status(500).json({ success: false, error: err.message });

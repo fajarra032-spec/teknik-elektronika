@@ -11,7 +11,7 @@ const path = require('path');
 const fs = require('fs');
 const { getProgressMagangHarian } = require('../helpers/magangHelper');
 const { getGabunganLulusan, normalisasiStatus } = require('../helpers/lulusanHelper');
-const { getAllMahasiswa } = require('../helpers/cache');
+const { getAllMahasiswa, publicPageCache, berandaBerat } = require('../helpers/cache');
 const { getAlatPublik } = require('../helpers/alatPublikHelper');
 const { notifikasiAdmin } = require('../helpers/peminjamanAlatHelper');
 const { invalidateAdminPending } = require('../helpers/adminBadgeHelper');
@@ -59,6 +59,12 @@ function hitungLamaStudi(angkatan, tanggalYudisium) {
 // ============================================================================
 router.get('/', async (req, res) => {
   try {
+    // HEMAT KUOTA: seluruh data beranda sama untuk semua pengunjung, jadi
+    // dihitung sekali lalu di-cache (publicPageCache, 10 menit, dibersihkan
+    // otomatis saat admin menyimpan perubahan). Dua bagian paling mahal
+    // (foto magang & IPK yudisium) punya cache sendiri yang lebih panjang
+    // (berandaBerat, 30 menit) - lihat bagian 9 dan 9b di bawah.
+    const dataBeranda = await publicPageCache.getOrFetch('beranda', async () => {
     // 1. Statistik prodi
     const statistikDoc = await db.collection('statistik').doc('data').get();
     const statistik = statistikDoc.exists ? statistikDoc.data() : {
@@ -253,6 +259,10 @@ router.get('/', async (req, res) => {
     //     mahasiswa diacak - mahasiswa baru yang fotonya sedikit tetap kebagian,
     // (3) tahap 2: kalau slide belum penuh, diisi foto lain dari mahasiswa yang
     //     sama (terbaru dulu) agar carousel tidak sepi.
+    // Cache 30 menit: membaca pool 400 logbook + dokumen user/perusahaan +
+    // progres per slide, dan dulu dijalankan di SETIAP kunjungan beranda.
+    // Urutan acak slide jadi tetap selama cache berlaku.
+    const magangSlides = await berandaBerat.getOrFetch('magang', async () => {
     let magangSlides = [];
     try {
       const MAX_SLIDES = 12;
@@ -383,15 +393,24 @@ router.get('/', async (req, res) => {
         progressTotal: 0,
         progressPercent: 0
       }];
+      magangSlides._gagal = true; // jangan disimpan di cache
     }
+    return magangSlides;
+    });
+    const magangGagal = !!magangSlides._gagal;
+    if (magangGagal) berandaBerat.delete('magang');
 
     // ============ 9b. YUDISIUM TAHUN INI ("SELAMAT & SUKSES") ============
     // Wisudawan tahun berjalan yang punya foto yudisium. Ditampilkan acak (maks 8),
     // lengkap dengan IPK (dari transkrip) dan lama studi (dari NIM -> tanggal yudisium).
     // Jika belum ada yang yudisium tahun ini, section disembunyikan di view.
     const tahunYudisiumIni = new Date().getFullYear();
+    // Cache 30 menit: menghitung IPK (transkrip lengkap) untuk 8 lulusan acak
+    // dulu dilakukan di SETIAP kunjungan beranda.
+    const dataYudisium = await berandaBerat.getOrFetch(`yudisium:${tahunYudisiumIni}`, async () => {
     let yudisiumTahunIni = [];
     let yudisiumTahunIniTotal = 0;
+    let gagal = false;
     try {
       const semuaMhs = await getAllMahasiswa(db);
       const lulusTahunIni = semuaMhs.filter(m =>
@@ -430,12 +449,15 @@ router.get('/', async (req, res) => {
     } catch (err) {
       console.warn('Gagal mengambil data yudisium tahun ini:', err.message);
       yudisiumTahunIni = [];
+      gagal = true; // jangan disimpan di cache
     }
+    return { yudisiumTahunIni, yudisiumTahunIniTotal, gagal };
+    });
+    const { yudisiumTahunIni, yudisiumTahunIniTotal, gagal: yudisiumGagal } = dataYudisium;
+    if (yudisiumGagal) berandaBerat.delete(`yudisium:${tahunYudisiumIni}`);
 
-    // ============ RENDER VIEW ============
-    res.render('landing/index', {
-      title: 'Teknik Elektronika - Politeknik Dewantara',
-      user: req.user || null,
+    // ============ SUSUN DATA BERANDA (di-cache) ============
+    return {
       statistik,
       jumlahDosen,
       berita,
@@ -454,6 +476,19 @@ router.get('/', async (req, res) => {
       videoKonten,
       angkatanTerbaru,
       mahasiswaBaru,
+      _gagal: magangGagal || yudisiumGagal
+    };
+    });
+
+    // Hasil yang sebagian gagal dimuat tidak boleh bertahan di cache
+    const { _gagal, ...isiBeranda } = dataBeranda;
+    if (_gagal) publicPageCache.delete('beranda');
+
+    // ============ RENDER VIEW ============
+    res.render('landing/index', {
+      title: 'Teknik Elektronika - Politeknik Dewantara',
+      user: req.user || null,
+      ...isiBeranda,
       formatDate
     });
   } catch (error) {
@@ -486,9 +521,12 @@ router.get('/cekmahasiswa', async (req, res) => {
 
     // Data Dosen - pastikan field nuptk ada (ambil dari nip jika tidak ada)
     let dosen = [];
-    const dosenSnapshot = await db.collection('dosen').get();
-    dosen = dosenSnapshot.docs.map(doc => {
-      const data = doc.data();
+    const dosenDocs = await publicPageCache.getOrFetch('dosen:semua', async () => {
+      const dosenSnapshot = await db.collection('dosen').get();
+      return dosenSnapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+    });
+    dosen = dosenDocs.map(doc => {
+      const data = doc.data;
       return {
         id: doc.id,
         nuptk: data.nuptk || data.nip || '-',   // <-- mapping nip ke nuptk
@@ -652,12 +690,16 @@ router.get('/cekdosen/:id', async (req, res) => {
 router.get('/aktivitas', async (req, res) => {
   try {
     const { kategori } = req.query;
-    let query = db.collection('aktivitas').orderBy('tanggal', 'desc');
-    if (kategori && kategori !== 'semua') {
-      query = query.where('kategori', '==', kategori);
-    }
-    const snapshot = await query.get();
-    const aktivitas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Satu cache untuk semua kategori; filter kategori dilakukan di memori
+    // (hasilnya identik dengan where('kategori','==',...) dan tidak membuat
+    // kunci cache baru untuk setiap nilai ?kategori= yang dikirim pengunjung).
+    const semuaAktivitas = await publicPageCache.getOrFetch('aktivitas:semua', async () => {
+      const snapshot = await db.collection('aktivitas').orderBy('tanggal', 'desc').get();
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    });
+    const aktivitas = (kategori && kategori !== 'semua')
+      ? semuaAktivitas.filter(a => a.kategori === kategori)
+      : semuaAktivitas.slice();
     res.render('landing/aktivitas/aktivitas', {
       title: 'Aktivitas Prodi',
       aktivitas,
@@ -693,8 +735,12 @@ router.get('/berita', async (req, res) => {
     const currentPage = parseInt(page) || 1;
     const PER_PAGE = 9;
 
-    const snapshot = await db.collection('berita').orderBy('tanggal', 'desc').get();
-    let allBerita = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Cache: dulu seluruh dokumen berita dibaca ulang di SETIAP kunjungan
+    // (termasuk tiap ganti halaman/pencarian). Paginasi & pencarian tetap di memori.
+    let allBerita = (await publicPageCache.getOrFetch('berita:semua', async () => {
+      const snapshot = await db.collection('berita').orderBy('tanggal', 'desc').get();
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    })).slice();
 
     if (search && search.trim() !== '') {
       const lowerSearch = search.toLowerCase();
