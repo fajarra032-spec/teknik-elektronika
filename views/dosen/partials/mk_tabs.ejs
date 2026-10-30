@@ -7,7 +7,7 @@
  *
  * Locals yang dibutuhkan:
  *   mk        - { id, kode, nama }
- *   activeTab - 'pertemuan' | 'tugas' | 'rubrik'
+ *   activeTab - 'pertemuan' | 'tugas' | 'rps' | 'rubrik' | 'modul'
  */
 %>
 <style>
@@ -55,6 +55,9 @@
   </a>
   <a href="/dosen/mk/<%= mk.id %>/tugas" class="mk-tab <%= activeTab === 'tugas' ? 'active' : '' %>">
     <i class="bi bi-file-earmark-text"></i> Tugas
+  </a>
+  <a href="/dosen/mk/<%= mk.id %>/rps" class="mk-tab <%= activeTab === 'rps' ? 'active' : '' %>">
+    <i class="bi bi-journal-text"></i> RPS
   </a>
   <a href="/dosen/rubrik/<%= mk.id %>" class="mk-tab <%= activeTab === 'rubrik' ? 'active' : '' %>">
     <i class="bi bi-clipboard-data"></i> Rubrik Penilaian

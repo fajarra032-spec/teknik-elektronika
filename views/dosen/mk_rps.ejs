@@ -1,0 +1,224 @@
+<%- include('../partials/header') %>
+
+<%
+  const fmtWaktu = (iso) => iso ? new Date(iso).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+  const baris = (arr) => (Array.isArray(arr) ? arr.join('\n') : '');
+%>
+
+<style>
+  :root { --primary-start: #1e3a8a; --primary-end: #3b82f6; --primary-light: rgba(30,58,138,0.1); --primary-dark: #0f2b5c; }
+  body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; }
+  .page-header { background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); border-radius: 1.5rem; padding: 1.8rem 2rem; color: white; margin-bottom: 1.5rem; box-shadow: 0 15px 30px rgba(30,58,138,0.25); }
+  .page-header h2 { font-weight: 700; margin-bottom: 0.3rem; }
+  .page-header p { margin: 0; opacity: 0.9; }
+  .page-header .btn-back { background: white; border: none; border-radius: 50px; padding: 0.5rem 1.4rem; font-weight: 600; color: var(--primary-start); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+  .info-card { background: white; border-radius: 1.2rem; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(30,58,138,0.08); margin-bottom: 1.5rem; }
+  .info-card h5 { font-weight: 700; color: #1e293b; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.5rem; }
+  .info-card .sub { color: #64748b; font-size: 0.85rem; margin-bottom: 1rem; }
+  .info-card label { font-weight: 600; font-size: 0.85rem; color: #334155; margin-bottom: 0.25rem; }
+  .info-card .form-control { border-radius: 0.6rem; font-size: 0.9rem; }
+  .btn-main { background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); border: none; color: white; font-weight: 600; padding: 0.6rem 1.4rem; border-radius: 50px; box-shadow: 0 8px 20px rgba(30,58,138,0.25); }
+  .btn-main:hover { color: white; opacity: .92; }
+  .btn-out { border: 1.5px solid var(--primary-start); color: var(--primary-start); background: white; font-weight: 600; padding: 0.55rem 1.3rem; border-radius: 50px; }
+  .btn-out:hover { background: var(--primary-light); color: var(--primary-start); }
+  .btn-danger-soft { background: #fee2e2; color: #b91c1c; border: none; font-weight: 600; padding: 0.55rem 1.3rem; border-radius: 50px; }
+  .badge-status { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 50px; font-size: 0.8rem; font-weight: 600; }
+  .badge-default { background: #fef3c7; color: #92400e; }
+  .badge-saved { background: #dcfce7; color: #166534; }
+  .tbl-pk-wrap { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 0.8rem; }
+  .tbl-pk { min-width: 1250px; margin: 0; }
+  .tbl-pk thead th { background: #f1f5f9; font-size: 0.8rem; color: #1e293b; padding: 0.6rem; border-bottom: 2px solid var(--primary-start); white-space: nowrap; }
+  .tbl-pk td { padding: 0.4rem; vertical-align: top; border-color: #e9ecef; }
+  .tbl-pk td.mg { text-align: center; font-weight: 700; color: var(--primary-dark); width: 46px; padding-top: 0.8rem; }
+  .tbl-pk textarea, .tbl-pk input { width: 100%; font-size: 0.82rem; border: 1px solid #dbe3ee; border-radius: 0.5rem; padding: 0.35rem 0.5rem; resize: vertical; }
+  .tbl-pk tr.ujian td { background: #fffbeb; }
+  .sticky-aksi { position: sticky; bottom: 0; background: rgba(248,250,252,.95); backdrop-filter: blur(6px); padding: 0.9rem 0; border-top: 1px solid #e2e8f0; z-index: 5; margin-top: 1rem; }
+  .kaprodi-box { display: flex; align-items: center; gap: 1rem; background: #f8fafc; border: 1px dashed #94a3b8; border-radius: 0.8rem; padding: 0.8rem 1rem; }
+  .kaprodi-box img { height: 70px; width: auto; mix-blend-mode: multiply; }
+</style>
+
+<div class="container mt-4 mb-5">
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+      <h2><i class="bi bi-journal-text me-2"></i>RPS</h2>
+      <p><%= mk.kode %> - <%= mk.nama %></p>
+    </div>
+    <a href="/dosen/mk/<%= mk.id %>" class="btn-back"><i class="bi bi-arrow-left"></i> Kembali</a>
+  </div>
+
+  <%- include('./partials/mk_tabs', { mk, activeTab: 'rps' }) %>
+  <%- include('../partials/pesan_flash') %>
+
+  <div class="info-card">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div>
+        <% if (sudahDisimpan) { %>
+          <span class="badge-status badge-saved"><i class="bi bi-check-circle-fill me-1"></i>Sudah disimpan</span>
+          <span class="text-muted small ms-2">Terakhir diubah <%= fmtWaktu(diubahPada) %><%= diubahOleh ? ' oleh ' + diubahOleh : '' %></span>
+        <% } else { %>
+          <span class="badge-status badge-default"><i class="bi bi-lightbulb-fill me-1"></i>Isi default</span>
+          <span class="text-muted small ms-2">Topik 16 pertemuan diambil dari RPS resmi<%= infoRencana && infoRencana.sumber === 'usulan' ? ' (DRAFT &ndash; cocokkan dulu dengan RPS)' : '' %>. Ubah sesuai kebutuhan lalu simpan.</span>
+        <% } %>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="/dosen/mk/<%= mk.id %>/rps/cetak" target="_blank" class="btn btn-out"><i class="bi bi-printer me-1"></i>Pratinjau &amp; Cetak</a>
+      </div>
+    </div>
+    <% if (infoRencana && infoRencana.catatan) { %>
+      <div class="alert alert-warning mt-3 mb-0 small"><%= infoRencana.catatan %></div>
+    <% } %>
+  </div>
+
+  <form method="POST" action="/dosen/mk/<%= mk.id %>/rps" id="formRps" autocomplete="off">
+
+    <!-- Identitas & otorisasi -->
+    <div class="info-card">
+      <h5><i class="bi bi-card-heading"></i> Identitas &amp; Otorisasi</h5>
+      <div class="sub">Kode, nama, SKS, dan semester mengikuti data mata kuliah. Kaprodi tercetak otomatis beserta tanda tangannya.</div>
+      <div class="row g-3">
+        <div class="col-md-3"><label>Mata Kuliah</label><input class="form-control" value="<%= mk.nama %>" disabled></div>
+        <div class="col-md-2"><label>Kode</label><input class="form-control" value="<%= mk.kode %>" disabled></div>
+        <div class="col-md-3"><label>Rumpun MK</label><input class="form-control" name="rumpun" value="<%= rps.rumpun %>" maxlength="100"></div>
+        <div class="col-md-1"><label>SKS</label><input class="form-control" value="<%= mk.sks %>" disabled></div>
+        <div class="col-md-1"><label>Smt</label><input class="form-control" value="<%= mk.semester %>" disabled></div>
+        <div class="col-md-2"><label>Tgl Penyusunan</label><input type="date" class="form-control" name="tglPenyusunan" value="<%= rps.tglPenyusunan %>"></div>
+        <div class="col-md-4"><label>Dosen Pengembang RPS</label><input class="form-control" name="dosenPengembang" value="<%= rps.dosenPengembang %>" maxlength="300"></div>
+        <div class="col-md-4"><label>Koordinator Rumpun MK</label><input class="form-control" name="koordinator" value="<%= rps.koordinator %>" maxlength="200"></div>
+        <div class="col-md-4">
+          <label>Kaprodi (otomatis)</label>
+          <input class="form-control" value="<%= kaprodi.nama %>" disabled>
+        </div>
+      </div>
+    </div>
+
+    <!-- Capaian -->
+    <div class="info-card">
+      <h5><i class="bi bi-bullseye"></i> Capaian Pembelajaran</h5>
+      <div class="sub">Satu butir per baris (ketik lengkap dengan kodenya, mis. &ldquo;CPL01 Menguasai ...&rdquo;).</div>
+      <div class="row g-3">
+        <div class="col-lg-6"><label>CPL &ndash; Capaian Pembelajaran Lulusan</label><textarea class="form-control" name="cpl" rows="7"><%= baris(rps.cpl) %></textarea></div>
+        <div class="col-lg-6"><label>CPMK &ndash; Capaian Pembelajaran Mata Kuliah</label><textarea class="form-control" name="cpmk" rows="7"><%= baris(rps.cpmk) %></textarea></div>
+      </div>
+    </div>
+
+    <!-- Deskripsi dll -->
+    <div class="info-card">
+      <h5><i class="bi bi-card-text"></i> Deskripsi &amp; Bahan Ajar</h5>
+      <div class="sub">Untuk daftar bernomor/berpoin, cukup satu butir per baris &ndash; nomor dan poin dibuat otomatis saat dicetak.</div>
+      <div class="row g-3">
+        <div class="col-12"><label>Deskripsi Singkat Mata Kuliah</label><textarea class="form-control" name="deskripsi" rows="4"><%= rps.deskripsi %></textarea></div>
+        <div class="col-lg-6"><label>Materi Pembelajaran / Pokok Bahasan</label><textarea class="form-control" name="materi" rows="7"><%= baris(rps.materi) %></textarea></div>
+        <div class="col-lg-6"><label>Referensi</label><textarea class="form-control" name="referensi" rows="7" placeholder="Penulis (tahun). Judul. Penerbit."><%= baris(rps.referensi) %></textarea></div>
+        <div class="col-lg-6"><label>Media Pembelajaran</label><textarea class="form-control" name="media" rows="5"><%= baris(rps.media) %></textarea></div>
+        <div class="col-lg-6">
+          <label>Team Teaching</label><textarea class="form-control mb-2" name="teamTeaching" rows="1"><%= rps.teamTeaching %></textarea>
+          <label>Asesmen</label><textarea class="form-control" name="assesmen" rows="2"><%= rps.assesmen %></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pelaksanaan perkuliahan -->
+    <div class="info-card">
+      <h5><i class="bi bi-calendar-week"></i> Pelaksanaan Perkuliahan (16 Pertemuan)</h5>
+      <div class="sub">Topik, metode, dan bobot terisi dari RPS resmi. Semua kolom bisa diubah. Pertemuan 8 (UTS) dan 16 (UAS) diberi warna.</div>
+      <div class="tbl-pk-wrap">
+        <table class="table tbl-pk">
+          <thead>
+            <tr><th>Mg</th><th style="min-width:230px">Sub-CPMK</th><th style="min-width:240px">Materi Ajar / Bahan Kajian</th><th style="min-width:170px">Metode Pembelajaran</th><th style="width:80px">Waktu (Jam)</th><th style="min-width:230px">Kriteria (Indikator) Penilaian</th><th style="width:90px">Bobot (%)</th></tr>
+          </thead>
+          <tbody>
+            <% rps.pertemuan.forEach(function(p) { %>
+            <tr class="<%= (p.ke === 8 || p.ke === 16) ? 'ujian' : '' %>">
+              <td class="mg"><%= p.ke %></td>
+              <td><textarea name="p<%= p.ke %>_subCpmk" rows="3"><%= p.subCpmk %></textarea></td>
+              <td><textarea name="p<%= p.ke %>_materi" rows="3"><%= p.materi %></textarea></td>
+              <td><textarea name="p<%= p.ke %>_metode" rows="3"><%= p.metode %></textarea></td>
+              <td><input name="p<%= p.ke %>_waktu" value="<%= p.waktu %>" maxlength="20" class="text-center"></td>
+              <td><textarea name="p<%= p.ke %>_indikator" rows="3"><%= p.indikator %></textarea></td>
+              <td><input name="p<%= p.ke %>_bobot" value="<%= p.bobot %>" maxlength="20" class="text-center"></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <div class="small text-muted mt-2">Total bobot per pertemuan: <strong id="totalBobotPk">0</strong>%</div>
+    </div>
+
+    <!-- Aspek penilaian -->
+    <div class="info-card">
+      <h5><i class="bi bi-percent"></i> Aspek Penilaian</h5>
+      <div class="sub">Komposisi nilai akhir. Tabel rentang nilai (A&ndash;E) bersifat baku dan tercetak otomatis.</div>
+      <div class="row g-3">
+        <% rps.aspek.forEach(function(a, i) { %>
+        <div class="col-md-6">
+          <div class="row g-2">
+            <div class="col-9"><input class="form-control" name="aspek_label_<%= i %>" value="<%= a.label %>" maxlength="120"></div>
+            <div class="col-3"><div class="input-group"><input class="form-control aspek-nilai" name="aspek_nilai_<%= i %>" value="<%= a.nilai %>" maxlength="10"><span class="input-group-text">%</span></div></div>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+      <div class="small mt-2" id="infoAspek">Total: <strong id="totalAspek">0</strong>%</div>
+    </div>
+
+    <!-- Tanda tangan -->
+    <div class="info-card">
+      <h5><i class="bi bi-pen"></i> Pengesahan &amp; Tanda Tangan</h5>
+      <div class="sub">Kolom Ketua Program Studi terisi otomatis lengkap dengan tanda tangan (sama dengan surat-surat di web ini).</div>
+      <div class="row g-3">
+        <div class="col-lg-4">
+          <label>Ketua Program Studi (otomatis)</label>
+          <div class="kaprodi-box">
+            <img src="<%= kaprodi.ttdUrl %>" alt="TTD Kaprodi" onerror="this.style.display='none'">
+            <div class="small"><strong><%= kaprodi.nama %></strong><br>NUPTK. <%= kaprodi.nuptk %></div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <label>Koordinator Rumpun MK</label>
+          <input class="form-control mb-2" name="koordinatorNama" value="<%= rps.koordinatorNama %>" placeholder="Nama" maxlength="200">
+          <input class="form-control" name="koordinatorNuptk" value="<%= rps.koordinatorNuptk %>" placeholder="NUPTK" maxlength="60">
+        </div>
+        <div class="col-lg-4">
+          <label>Dibuat Oleh: Dosen Pengampu MK</label>
+          <input class="form-control mb-2" name="dosenNama" value="<%= rps.dosenNama %>" placeholder="Nama" maxlength="200">
+          <input class="form-control mb-2" name="dosenNuptk" value="<%= rps.dosenNuptk %>" placeholder="NUPTK" maxlength="60">
+          <label>Tanggal pada tanda tangan</label>
+          <input type="date" class="form-control" name="tglTtd" value="<%= rps.tglTtd %>">
+        </div>
+      </div>
+    </div>
+
+    <div class="sticky-aksi d-flex flex-wrap gap-2 justify-content-between align-items-center">
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="submit" class="btn btn-main"><i class="bi bi-save me-1"></i>Simpan</button>
+        <button type="submit" name="aksi" value="cetak" class="btn btn-out"><i class="bi bi-printer me-1"></i>Simpan &amp; Cetak</button>
+      </div>
+      <% if (sudahDisimpan) { %>
+        <button type="submit" form="formReset" class="btn-danger-soft" onclick="return confirm('Kembalikan seluruh isi RPS ke default? Perubahan yang sudah Anda simpan akan hilang.')"><i class="bi bi-arrow-counterclockwise me-1"></i>Kembalikan ke Default</button>
+      <% } %>
+    </div>
+  </form>
+
+  <% if (sudahDisimpan) { %>
+    <form method="POST" action="/dosen/mk/<%= mk.id %>/rps/reset" id="formReset"></form>
+  <% } %>
+</div>
+
+<script>
+  (function () {
+    function angka(v) { var n = parseFloat(String(v).replace('%', '').replace(',', '.')); return isNaN(n) ? 0 : n; }
+    function hitung() {
+      var t = 0;
+      document.querySelectorAll('input[name$="_bobot"]').forEach(function (e) { t += angka(e.value); });
+      document.getElementById('totalBobotPk').textContent = Math.round(t * 100) / 100;
+      var a = 0;
+      document.querySelectorAll('.aspek-nilai').forEach(function (e) { a += angka(e.value); });
+      document.getElementById('totalAspek').textContent = Math.round(a * 100) / 100;
+      document.getElementById('infoAspek').className = 'small mt-2 ' + (Math.round(a) === 100 ? 'text-success' : 'text-danger');
+    }
+    document.getElementById('formRps').addEventListener('input', hitung);
+    hitung();
+  })();
+</script>
+
+<%- include('../partials/footer') %>

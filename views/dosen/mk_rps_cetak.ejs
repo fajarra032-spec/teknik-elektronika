@@ -1,0 +1,285 @@
+<%
+/**
+ * Halaman cetak RPS - meniru format dokumen RPS baku (DSI.docx):
+ * A4 landscape, margin 2,54 cm, Arial 10pt, header tabel biru #9CC3E5.
+ * Locals: mk, rps, sudahDisimpan, kaprodi, prodi, institusi, nilaiRentang, fmtTanggal
+ */
+const kosong = (v) => (v === undefined || v === null || String(v).trim() === '');
+const pct = (v) => { const s = String(v == null ? '' : v).trim(); return s === '' ? '' : (s.replace('%', '').trim() + '%'); };
+const tglPenyusunan = fmtTanggal(rps.tglPenyusunan);
+const tglTtd = fmtTanggal(rps.tglTtd) || tglPenyusunan;
+%>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RPS_<%= mk.kode %>_<%= mk.nama %></title>
+  <style>
+    @page { size: A4 landscape; margin: 2.54cm; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; line-height: 1.15; color: #000; background: #e5e7eb; }
+
+    /* ---------- layar saja ---------- */
+    .toolbar { position: sticky; top: 0; z-index: 10; background: #fff; border-bottom: 1px solid #cbd5e1; padding: 10px 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-family: system-ui, Arial, sans-serif; font-size: 14px; }
+    .toolbar a, .toolbar button { border: 0; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; text-decoration: none; font-size: 14px; }
+    .btn-print { background: #1e3a8a; color: #fff; }
+    .btn-lain { background: #e2e8f0; color: #1e293b; }
+    .toolbar .info { color: #92400e; background: #fef3c7; border-radius: 8px; padding: 6px 12px; font-size: 13px; }
+    .toolbar .hint { color: #64748b; font-size: 13px; }
+    .sheet { width: 29.7cm; margin: 16px auto; padding: 2.54cm; background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,.15); }
+
+    /* ---------- tabel umum ---------- */
+    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    td, th { border: 1px solid #000; padding: 1px 0.19cm; vertical-align: top; word-wrap: break-word; overflow-wrap: anywhere; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
+    .biru { background: #9CC3E5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .b { font-weight: bold; }
+    .c { text-align: center; }
+    .m { vertical-align: middle; }
+    .j { text-align: justify; }
+
+    /* ---------- tabel identitas ---------- */
+    .t-id td.judul { font-size: 12pt; font-weight: bold; vertical-align: middle; line-height: 1.35; padding-left: 0.19cm; }
+    .t-id td.logo { text-align: center; vertical-align: middle; padding: 0.15cm; }
+    .t-id td.logo img { width: 2.15cm; height: auto; }
+    .t-id td.val { font-weight: bold; text-align: center; vertical-align: middle; height: 0.95cm; }
+    .t-id td.lab { font-weight: bold; text-align: center; vertical-align: middle; }
+    .t-id td.kiri { font-weight: bold; vertical-align: top; }
+    .t-id td.kiri.tengah { vertical-align: middle; }
+    .t-id td.kosongKiri { border-top: none; border-bottom: none; }
+    .t-id tr.akhir td.kosongKiri { border-bottom: 1px solid #000; }
+    .t-id td.isi { text-align: justify; }
+    .li { display: flex; }
+    .li .n { flex: 0 0 0.78cm; }
+    .li .t { flex: 1; }
+    .li.rata { text-align: left; }
+    .it { font-style: italic; font-weight: bold; }
+
+    /* ---------- pelaksanaan perkuliahan ---------- */
+    h4.sec { font-size: 10pt; font-weight: bold; margin: 0 0 0.6cm; break-after: avoid; page-break-after: avoid; text-transform: uppercase; }
+    .pagebreak { break-before: page; page-break-before: always; }
+    .t-pk thead { display: table-header-group; }
+    .t-pk th { background: #9CC3E5; -webkit-print-color-adjust: exact; print-color-adjust: exact; text-align: center; vertical-align: middle; font-weight: bold; padding: 2px 0.1cm; }
+    .t-pk tr.nomor td { background: #9CC3E5; -webkit-print-color-adjust: exact; print-color-adjust: exact; text-align: center; padding: 0 0.1cm; }
+    .t-pk td { font-family: Calibri, Carlito, Arial, sans-serif; font-size: 10pt; line-height: 1.25; padding: 0.06cm 0.19cm; white-space: pre-line; }
+    .t-pk td.ke { vertical-align: middle; }
+    .t-pk td.sub { vertical-align: middle; }
+    .t-pk td.mat { vertical-align: top; }
+    .t-pk td.met, .t-pk td.wkt, .t-pk td.bbt { text-align: center; vertical-align: middle; }
+    .t-pk td.ind { vertical-align: top; padding-left: 0.5cm; }
+    .t-pk td.ujian { font-weight: bold; }
+
+    /* ---------- aspek penilaian ---------- */
+    .blok-nilai { break-inside: avoid; page-break-inside: avoid; }
+    .judul-b { font-weight: bold; margin: 0; }
+    .t-aspek { width: auto; margin-top: 0.1cm; }
+    .t-aspek td { border: none; padding: 0.12cm 0.19cm; width: auto; }
+    .t-aspek td.l { width: 6.4cm; }
+    .t-nilai { width: 13.6cm; margin-top: 0.15cm; }
+    .t-nilai th { background: #9CC3E5; -webkit-print-color-adjust: exact; print-color-adjust: exact; text-align: center; font-weight: bold; padding: 0 0.1cm; }
+    .t-nilai td { text-align: center; padding: 0 0.1cm; }
+
+    /* ---------- tanda tangan ---------- */
+    .t-ttd { margin-top: 1.1cm; break-inside: avoid; page-break-inside: avoid; }
+    .t-ttd td { padding: 0 0.19cm 0.05cm; vertical-align: top; }
+    .ttd-kepala { height: 3.6em; display: flex; flex-direction: column; justify-content: flex-end; line-height: 1.2; }
+    .ttd-area { position: relative; height: 2.3cm; }
+    .ttd-area img { position: absolute; left: -0.1cm; top: -0.35cm; height: 3.1cm; width: auto; mix-blend-mode: multiply; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .ttd-nama { line-height: 1.2; position: relative; }
+
+    @media print {
+      body { background: #fff; }
+      .toolbar { display: none !important; }
+      .sheet { width: auto; margin: 0; padding: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a class="btn-lain" href="/dosen/mk/<%= mk.id %>/rps">&larr; Kembali ke Edit RPS</a>
+  <button class="btn-print" onclick="window.print()">Cetak / Simpan PDF</button>
+  <span class="hint">Di jendela cetak pilih kertas A4, orientasi Landscape, margin Default/None, dan aktifkan "Background graphics".</span>
+  <% if (!sudahDisimpan) { %><span class="info">Pratinjau dari isi default &ndash; belum pernah disimpan. Buka tab RPS untuk melengkapi dan menyimpan.</span><% } %>
+</div>
+
+<div class="sheet">
+
+  <!-- ===================== IDENTITAS ===================== -->
+  <table class="t-id">
+    <colgroup>
+      <col style="width:20.6%"><col style="width:18.6%"><col style="width:13%"><col style="width:15.9%"><col style="width:12.5%"><col style="width:19.4%">
+    </colgroup>
+    <tr>
+      <td class="logo"><img src="/images/logo.png" alt="Logo Politeknik Dewantara"></td>
+      <td class="judul" colspan="5">RENCANA PEMBELAJARAN SEMESTER (RPS)<br>PROGRAM STUDI <%= prodi %><br><%= institusi %></td>
+    </tr>
+    <tr class="biru">
+      <td class="lab biru">Mata Kuliah</td><td class="lab biru">Kode</td><td class="lab biru">Rumpun MK</td>
+      <td class="lab biru">Bobot (Sks)</td><td class="lab biru">Semester</td><td class="lab biru">Tgl Penyusunan</td>
+    </tr>
+    <tr>
+      <td class="val"><%= mk.nama %></td><td class="val"><%= mk.kode %></td><td class="val"><%= rps.rumpun %></td>
+      <td class="val"><%= mk.sks %></td><td class="val"><%= mk.semester %></td><td class="val"><%= tglPenyusunan %></td>
+    </tr>
+    <tr>
+      <td class="lab biru" rowspan="2">Otorisasi</td>
+      <td class="lab">Dosen Pengembang RPS</td>
+      <td class="lab" colspan="2">Koordinator Rumpun MK</td>
+      <td class="lab" colspan="2">Kaprodi</td>
+    </tr>
+    <tr>
+      <td class="val"><%= rps.dosenPengembang %></td>
+      <td class="val" colspan="2"><%= rps.koordinator %></td>
+      <td class="val" colspan="2"><%= kaprodi.nama %></td>
+    </tr>
+
+    <!-- CPL -->
+    <tr>
+      <td class="kiri biru">Capaian Pembelajaran Lulusan</td>
+      <td class="b biru" colspan="5">CPL</td>
+    </tr>
+    <% const cplList = (rps.cpl && rps.cpl.length) ? rps.cpl : ['-']; cplList.forEach(function(x, i) { %>
+    <tr class="<%= i === cplList.length - 1 ? 'akhir' : '' %>">
+      <td class="kosongKiri"></td><td class="isi" colspan="5"><%= x %></td>
+    </tr>
+    <% }) %>
+
+    <!-- CPMK -->
+    <tr>
+      <td class="kiri biru">Capaian Pembelajaran Matakuliah</td>
+      <td class="b biru" colspan="5">CPMK</td>
+    </tr>
+    <% const cpmkList = (rps.cpmk && rps.cpmk.length) ? rps.cpmk : ['-']; cpmkList.forEach(function(x, i) { %>
+    <tr class="<%= i === cpmkList.length - 1 ? 'akhir' : '' %>">
+      <td class="kosongKiri"></td><td class="isi" colspan="5"><%= x %></td>
+    </tr>
+    <% }) %>
+
+    <!-- Deskripsi -->
+    <tr>
+      <td class="kiri biru">Deskripsi Singkat<br>Mata Kuliah</td>
+      <td class="isi" colspan="5"><%= kosong(rps.deskripsi) ? '-' : rps.deskripsi %></td>
+    </tr>
+
+    <!-- Materi -->
+    <tr>
+      <td class="kiri biru">Materi Pembelajaran/<br>Pokok Bahasan</td>
+      <td colspan="5">
+        <% if (rps.materi && rps.materi.length) { rps.materi.forEach(function(x, i) { %>
+          <div class="li"><span class="n"><%= i + 1 %>.</span><span class="t"><%= x %></span></div>
+        <% }) } else { %>-<% } %>
+      </td>
+    </tr>
+
+    <!-- Referensi -->
+    <tr>
+      <td class="kiri biru">Referensi</td>
+      <td colspan="5">
+        <% if (rps.referensi && rps.referensi.length) { rps.referensi.forEach(function(x, i) { %>
+          <div class="li"><span class="n"><%= i + 1 %>.</span><span class="t"><%= x %></span></div>
+        <% }) } else { %>-<% } %>
+      </td>
+    </tr>
+
+    <!-- Media -->
+    <tr>
+      <td class="kiri biru tengah">Media Pembelajaran</td>
+      <td colspan="5">
+        <% if (rps.media && rps.media.length) { rps.media.forEach(function(x) { %>
+          <div class="li"><span class="n">&bull;</span><span class="t"><%= x %></span></div>
+        <% }) } else { %>-<% } %>
+      </td>
+    </tr>
+
+    <!-- Team teaching -->
+    <tr>
+      <td class="it">Team Teaching</td>
+      <td colspan="5"><%= rps.teamTeaching %></td>
+    </tr>
+
+    <!-- Asesmen -->
+    <tr>
+      <td class="kiri biru tengah">Assesmen</td>
+      <td colspan="5"><%= kosong(rps.assesmen) ? '-' : rps.assesmen %></td>
+    </tr>
+  </table>
+
+  <!-- ===================== PELAKSANAAN PERKULIAHAN ===================== -->
+  <div class="pagebreak"></div>
+  <h4 class="sec">Pelaksanaan Perkuliahan</h4>
+
+  <table class="t-pk">
+    <colgroup>
+      <col style="width:5.6%"><col style="width:20.1%"><col style="width:16.9%"><col style="width:15.1%"><col style="width:11.7%"><col style="width:21.4%"><col style="width:9.2%">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>Mg<br>Ke-</th><th>Sub- CPMK</th><th>Materi Ajar/ Bahan Kajian</th><th>Metode Pembelajaran</th>
+        <th>Waktu (Jam)</th><th>Kriteria (Indikator) Penilaian</th><th>Bobot Penilaian (%)</th>
+      </tr>
+      <tr class="nomor"><td>(1)</td><td>(2)</td><td>(3)</td><td>(4)</td><td>(5)</td><td>(6)</td><td>(7)</td></tr>
+    </thead>
+    <tbody>
+      <% rps.pertemuan.forEach(function(p) { const ujian = (p.ke === 8 || p.ke === 16); %>
+      <tr>
+        <td class="ke"><%= p.ke %></td>
+        <td class="sub <%= ujian ? 'ujian' : '' %>"><%= p.subCpmk %></td>
+        <td class="mat"><%= p.materi %></td>
+        <td class="met"><%= p.metode %></td>
+        <td class="wkt"><%= p.waktu %></td>
+        <td class="ind"><%= p.indikator %></td>
+        <td class="bbt"><%= (p.bobot === '-' || kosong(p.bobot)) ? p.bobot : pct(p.bobot) %></td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <!-- ===================== ASPEK PENILAIAN ===================== -->
+  <div style="height:0.9cm"></div>
+  <div class="blok-nilai">
+    <h4 class="sec" style="margin-bottom:0.5cm">Aspek Penilaian</h4>
+    <p class="judul-b">Aspek yang dinilai dalam penentuan nilai akhir</p>
+    <table class="t-aspek">
+      <% rps.aspek.filter(function(a) { return !kosong(a.label); }).forEach(function(a) { %>
+      <tr><td class="l"><%= a.label %></td><td><%= pct(a.nilai) %></td></tr>
+      <% }) %>
+    </table>
+
+    <p class="judul-b" style="margin-top:0.9cm">Nilai dan rentang penilaian</p>
+    <table class="t-nilai">
+      <colgroup><col style="width:17.5%"><col style="width:14%"><col style="width:35%"><col style="width:33.5%"></colgroup>
+      <tr><th>Nilai</th><th>Skor</th><th>Rentang</th><th>Kategori</th></tr>
+      <% nilaiRentang.forEach(function(n) { %>
+      <tr><td><%= n.nilai %></td><td><%= n.skor %></td><td><%= n.rentang %></td><td><%= n.kategori %></td></tr>
+      <% }) %>
+    </table>
+  </div>
+
+  <!-- ===================== TANDA TANGAN ===================== -->
+  <table class="t-ttd">
+    <colgroup><col style="width:40.9%"><col style="width:28.9%"><col style="width:30.2%"></colgroup>
+    <tr>
+      <td>
+        <div class="ttd-kepala">Ketua Program Studi</div>
+        <div class="ttd-area"><img src="<%= kaprodi.ttdUrl %>" alt="Tanda Tangan Kaprodi"></div>
+        <div class="ttd-nama"><%= kaprodi.nama %><br>NUPTK. <%= kaprodi.nuptk %></div>
+      </td>
+      <td>
+        <div class="ttd-kepala">Koordinator Rumpun MK</div>
+        <div class="ttd-area"></div>
+        <div class="ttd-nama"><%= rps.koordinatorNama %><br><% if (rps.koordinatorNuptk) { %>NUPTK. <%= rps.koordinatorNuptk %><% } %></div>
+      </td>
+      <td>
+        <div class="ttd-kepala">Tanggal: <%= tglTtd %><br>Dibuat Oleh:<br>Dosen Pengampu MK</div>
+        <div class="ttd-area"></div>
+        <div class="ttd-nama"><%= rps.dosenNama %><br><% if (rps.dosenNuptk) { %>NUPTK. <%= rps.dosenNuptk %><% } %></div>
+      </td>
+    </tr>
+  </table>
+
+</div>
+</body>
+</html>

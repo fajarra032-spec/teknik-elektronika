@@ -18,6 +18,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif, saveKomponenRubrik } = require('../../helpers/nilaiHelper');
 const { detectJenisPraktikum, getModulPraktikumList } = require('../../helpers/modulPraktikumHelper');
 const { getRencanaPertemuan, getInfoRencana } = require('../../data/rencanaPertemuanData');
+const rpsHelper = require('../../helpers/rpsHelper');
 
 console.log('mk.js loaded');
 
@@ -686,6 +687,105 @@ router.get('/:id/tugas', async (req, res) => {
   } catch (error) {
     console.error('Error daftar tugas per MK:', error);
     res.status(500).render('error', { title: 'Error', message: 'Gagal memuat daftar tugas' });
+  }
+});
+
+// ============================================================================
+// RPS (khusus satu MK) - Rencana Pembelajaran Semester. Isi awal otomatis dari
+// data resmi (data/rencanaPertemuanData.js), dosen bebas mengubah semuanya,
+// lalu dicetak dengan format baku RPS (A4 landscape) lengkap TTD Kaprodi.
+// Disimpan di mataKuliah/{id}/rps/utama (satu dokumen per MK; dipakai bersama
+// seluruh dosen pengampu MK itu dan dibawa ke semester berikutnya).
+// ============================================================================
+
+async function muatRps(mkId, dosenLogin) {
+  const akses = await cekAksesMk(mkId, dosenLogin.id);
+  if (!akses.ok) return akses;
+  const mk = akses.mk;
+
+  let namaDosen = [];
+  if (mk.dosenIds && mk.dosenIds.length > 0) {
+    const docs = await db.getAll(...mk.dosenIds.map(d => db.collection('dosen').doc(d)));
+    namaDosen = docs.filter(d => d.exists).map(d => d.data().nama).filter(Boolean);
+  }
+  const snap = await db.collection('mataKuliah').doc(mkId).collection('rps').doc('utama').get();
+  const saved = snap.exists ? snap.data() : null;
+  const def = rpsHelper.buildDefaultRps(mk, namaDosen, dosenLogin);
+  return { ok: true, mk, saved, rps: rpsHelper.mergeRps(def, saved), infoRencana: getInfoRencana(mk.kode) };
+}
+
+router.get('/:id/rps', async (req, res) => {
+  try {
+    const d = await muatRps(req.params.id, req.dosen);
+    if (!d.ok) return res.status(d.status).render('error', { title: 'Error', message: d.message });
+    res.render('dosen/mk_rps', {
+      title: `RPS - ${d.mk.kode} ${d.mk.nama}`,
+      mk: d.mk,
+      rps: d.rps,
+      sudahDisimpan: !!d.saved,
+      diubahPada: d.saved ? d.saved.updatedAt : null,
+      diubahOleh: d.saved ? d.saved.updatedByNama : null,
+      infoRencana: d.infoRencana,
+      kaprodi: rpsHelper.KAPRODI,
+      ok: req.query.ok === 'simpan' ? 'RPS berhasil disimpan.' : (req.query.ok === 'reset' ? 'RPS dikembalikan ke isi default.' : ''),
+      err: ''
+    });
+  } catch (error) {
+    console.error('Error halaman RPS:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat RPS' });
+  }
+});
+
+router.post('/:id/rps', async (req, res) => {
+  try {
+    const akses = await cekAksesMk(req.params.id, req.dosen.id);
+    if (!akses.ok) return res.status(akses.status).send(akses.message);
+
+    const data = rpsHelper.parseRpsForm(req.body || {});
+    data.periode = getPeriodeAktif();
+    data.updatedAt = new Date().toISOString();
+    data.updatedBy = req.dosen.id;
+    data.updatedByNama = req.dosen.nama || '';
+    await db.collection('mataKuliah').doc(req.params.id).collection('rps').doc('utama').set(data);
+
+    if (req.body && req.body.aksi === 'cetak') return res.redirect(`/dosen/mk/${req.params.id}/rps/cetak`);
+    res.redirect(`/dosen/mk/${req.params.id}/rps?ok=simpan`);
+  } catch (error) {
+    console.error('Error simpan RPS:', error);
+    res.status(500).send('Gagal menyimpan RPS: ' + error.message);
+  }
+});
+
+router.post('/:id/rps/reset', async (req, res) => {
+  try {
+    const akses = await cekAksesMk(req.params.id, req.dosen.id);
+    if (!akses.ok) return res.status(akses.status).send(akses.message);
+    await db.collection('mataKuliah').doc(req.params.id).collection('rps').doc('utama').delete();
+    res.redirect(`/dosen/mk/${req.params.id}/rps?ok=reset`);
+  } catch (error) {
+    console.error('Error reset RPS:', error);
+    res.status(500).send('Gagal mengembalikan RPS: ' + error.message);
+  }
+});
+
+router.get('/:id/rps/cetak', async (req, res) => {
+  try {
+    const d = await muatRps(req.params.id, req.dosen);
+    if (!d.ok) return res.status(d.status).render('error', { title: 'Error', message: d.message });
+    res.render('dosen/mk_rps_cetak', {
+      title: `RPS ${d.mk.kode} - ${d.mk.nama}`,
+      mk: d.mk,
+      rps: d.rps,
+      sudahDisimpan: !!d.saved,
+      kaprodi: rpsHelper.KAPRODI,
+      prodi: rpsHelper.PRODI,
+      institusi: rpsHelper.INSTITUSI,
+      nilaiRentang: rpsHelper.NILAI_RENTANG,
+      fmtTanggal: rpsHelper.formatTanggalId
+    });
+  } catch (error) {
+    console.error('Error cetak RPS:', error);
+    res.status(500).render('error', { title: 'Error', message: 'Gagal memuat halaman cetak RPS' });
   }
 });
 
