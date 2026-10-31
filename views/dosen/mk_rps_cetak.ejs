@@ -63,12 +63,13 @@ const tglTtd = fmtTanggal(rps.tglTtd) || tglPenyusunan;
     .t-pk thead { display: table-header-group; }
     .t-pk th { background: #9CC3E5; -webkit-print-color-adjust: exact; print-color-adjust: exact; text-align: center; vertical-align: middle; font-weight: bold; padding: 2px 0.1cm; }
     .t-pk tr.nomor td { background: #9CC3E5; -webkit-print-color-adjust: exact; print-color-adjust: exact; text-align: center; padding: 0 0.1cm; }
-    .t-pk td { font-family: Calibri, Carlito, Arial, sans-serif; font-size: 10pt; line-height: 1.25; padding: 0.06cm 0.19cm; white-space: pre-line; }
+    .t-pk td { font-family: Calibri, Carlito, Arial, sans-serif; font-size: 10pt; line-height: 1.17; padding: 0.05cm 0.17cm; white-space: pre-line; }
     .t-pk td.ke { vertical-align: middle; }
     .t-pk td.sub { vertical-align: middle; }
     .t-pk td.mat { vertical-align: top; }
     .t-pk td.met, .t-pk td.wkt, .t-pk td.bbt { text-align: center; vertical-align: middle; }
-    .t-pk td.ind { vertical-align: top; padding-left: 0.5cm; }
+    .t-pk td.ind { vertical-align: top; padding-left: 0.4cm; }
+    .t-pk td.mat { text-indent: 0; }
     .t-pk td.ujian { font-weight: bold; }
 
     /* ---------- aspek penilaian ---------- */
@@ -213,7 +214,7 @@ const tglTtd = fmtTanggal(rps.tglTtd) || tglPenyusunan;
 
   <table class="t-pk">
     <colgroup>
-      <col style="width:5.6%"><col style="width:20.1%"><col style="width:16.9%"><col style="width:15.1%"><col style="width:11.7%"><col style="width:21.4%"><col style="width:9.2%">
+      <col style="width:5%"><col style="width:16%"><col style="width:35%"><col style="width:11%"><col style="width:7%"><col style="width:18%"><col style="width:8%">
     </colgroup>
     <thead>
       <tr>
@@ -227,7 +228,7 @@ const tglTtd = fmtTanggal(rps.tglTtd) || tglPenyusunan;
       <tr>
         <td class="ke"><%= p.ke %></td>
         <td class="sub <%= ujian ? 'ujian' : '' %>"><%= p.subCpmk %></td>
-        <td class="mat"><%= p.materi %></td>
+        <% const ml = String(p.materi || '').split('\n'); %><td class="mat"><% if (ml.length > 1) { %><b><%= ml[0] %></b><% ml.slice(1).forEach(function(l) { %><%= '\n' %><% if (l.indexOf('Kegiatan:') === 0) { %><i><%= l %></i><% } else { %><%= l %><% } }) %><% } else { %><%= p.materi %><% } %></td>
         <td class="met"><%= p.metode %></td>
         <td class="wkt"><%= p.waktu %></td>
         <td class="ind"><%= p.indikator %></td>

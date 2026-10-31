@@ -120,18 +120,18 @@
     <!-- Pelaksanaan perkuliahan -->
     <div class="info-card">
       <h5><i class="bi bi-calendar-week"></i> Pelaksanaan Perkuliahan (16 Pertemuan)</h5>
-      <div class="sub">Topik, metode, dan bobot terisi dari RPS resmi. Semua kolom bisa diubah. Pertemuan 8 (UTS) dan 16 (UAS) diberi warna.</div>
+      <div class="sub">Judul pertemuan, butir materi, Sub-CPMK, dan indikator sudah terisi rinci (metode dan bobot dari RPS resmi). Baris pertama kolom Materi dicetak tebal sebagai judul, tiap butir diawali &bull;, dan baris yang diawali &ldquo;Kegiatan:&rdquo; dicetak miring. Semua kolom bisa diubah. Pertemuan 8 (UTS) dan 16 (UAS) diberi warna.</div>
       <div class="tbl-pk-wrap">
         <table class="table tbl-pk">
           <thead>
-            <tr><th>Mg</th><th style="min-width:230px">Sub-CPMK</th><th style="min-width:240px">Materi Ajar / Bahan Kajian</th><th style="min-width:170px">Metode Pembelajaran</th><th style="width:80px">Waktu (Jam)</th><th style="min-width:230px">Kriteria (Indikator) Penilaian</th><th style="width:90px">Bobot (%)</th></tr>
+            <tr><th>Mg</th><th style="min-width:230px">Sub-CPMK</th><th style="min-width:300px">Materi Ajar / Bahan Kajian</th><th style="min-width:170px">Metode Pembelajaran</th><th style="width:80px">Waktu (Jam)</th><th style="min-width:230px">Kriteria (Indikator) Penilaian</th><th style="width:90px">Bobot (%)</th></tr>
           </thead>
           <tbody>
             <% rps.pertemuan.forEach(function(p) { %>
             <tr class="<%= (p.ke === 8 || p.ke === 16) ? 'ujian' : '' %>">
               <td class="mg"><%= p.ke %></td>
               <td><textarea name="p<%= p.ke %>_subCpmk" rows="3"><%= p.subCpmk %></textarea></td>
-              <td><textarea name="p<%= p.ke %>_materi" rows="3"><%= p.materi %></textarea></td>
+              <td><textarea name="p<%= p.ke %>_materi" rows="6"><%= p.materi %></textarea></td>
               <td><textarea name="p<%= p.ke %>_metode" rows="3"><%= p.metode %></textarea></td>
               <td><input name="p<%= p.ke %>_waktu" value="<%= p.waktu %>" maxlength="20" class="text-center"></td>
               <td><textarea name="p<%= p.ke %>_indikator" rows="3"><%= p.indikator %></textarea></td>

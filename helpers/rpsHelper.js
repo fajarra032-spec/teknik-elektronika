@@ -14,6 +14,7 @@
  */
 
 const { getRencanaPertemuan } = require('../data/rencanaPertemuanData');
+const { getDetailPertemuan } = require('../data/rpsDetail');
 
 // Identitas Kaprodi: SAMA dengan yang dipakai surat-surat lain di web ini
 // (routes/admin/sk.js -> KAPRODI, routes/admin/surat.js -> penandatangan,
@@ -78,6 +79,7 @@ function huruf1Kecil(s) {
  */
 function buildDefaultRps(mk, namaDosen, dosenLogin) {
   const rencana = getRencanaPertemuan(mk.kode) || [];
+  const detail = getDetailPertemuan(mk.kode) || {}; // rincian per pertemuan (judul, butir materi, Sub-CPMK, indikator)
   const sks = parseInt(mk.sks, 10) || 3;
 
   const pertemuan = [];
@@ -89,16 +91,26 @@ function buildDefaultRps(mk, namaDosen, dosenLogin) {
       subCpmk = i === 8 ? 'UJIAN TENGAH SEMESTER' : 'UJIAN AKHIR SEMESTER';
       materi = r.kemampuan || '';
       metode = 'Ujian';
+      indikator = i === 8 ? 'Ketercapaian Sub-CPMK pertemuan 1-7 (ketepatan dan kelengkapan jawaban)' : 'Ketercapaian seluruh Sub-CPMK semester (ketepatan, kelengkapan, dan sikap kerja)';
       bobot = '-';
     } else if (r) {
-      subCpmk = `Sub-CPMK${i}: ${r.kemampuan}`;
-      materi = r.topik;
-      metode = r.metode || '';
-      indikator = r.kemampuan ? `Ketepatan dalam ${huruf1Kecil(r.kemampuan)}` : '';
+      const dt = detail[i];
+      if (dt) {
+        subCpmk = `Sub-CPMK${i}: ${dt.sub}`;
+        materi = [dt.judul].concat(dt.poin.map(x => `\u2022 ${x}`), dt.keg ? [`Kegiatan: ${dt.keg}`] : []).join('\n');
+        indikator = dt.ind;
+        metode = r.metode || dt.metode || '';
+      } else {
+        subCpmk = `Sub-CPMK${i}: ${r.kemampuan}`;
+        materi = r.topik;
+        metode = r.metode || '';
+        indikator = r.kemampuan ? `Ketepatan dalam ${huruf1Kecil(r.kemampuan)}` : '';
+      }
       bobot = r.bobot != null ? `${r.bobot}%` : '';
     } else if (i === 8 || i === 16) {
       subCpmk = i === 8 ? 'UJIAN TENGAH SEMESTER' : 'UJIAN AKHIR SEMESTER';
       metode = 'Ujian';
+      indikator = i === 8 ? 'Ketercapaian Sub-CPMK pertemuan 1-7 (ketepatan dan kelengkapan jawaban)' : 'Ketercapaian seluruh Sub-CPMK semester (ketepatan, kelengkapan, dan sikap kerja)';
       bobot = '-';
     }
     pertemuan.push({
@@ -114,9 +126,11 @@ function buildDefaultRps(mk, namaDosen, dosenLogin) {
 
   // Pokok bahasan = topik unik sesuai urutan RPS (tanpa penanda "bagian x/y")
   const pokok = [];
+  const adaDetail = Object.keys(detail).length > 0;
   rencana.forEach(r => {
     if (r.jenis === 'ujian') return;
-    const t = r.topikRps || r.topik;
+    // pakai judul rinci tiap pertemuan bila ada, kalau tidak topik resmi
+    const t = (adaDetail && detail[r.pertemuan] && detail[r.pertemuan].judul) || r.topikRps || r.topik;
     if (t && !pokok.includes(t)) pokok.push(t);
   });
 
