@@ -9,13 +9,16 @@ const { db, admin } = require('../config/firebaseAdmin');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { getProgressMagangHarian } = require('../helpers/magangHelper');
 const { getGabunganLulusan, normalisasiStatus } = require('../helpers/lulusanHelper');
 const { getAllMahasiswa, publicPageCache, berandaBerat } = require('../helpers/cache');
 const { getAlatPublik } = require('../helpers/alatPublikHelper');
 const { notifikasiAdmin } = require('../helpers/peminjamanAlatHelper');
 const { invalidateAdminPending } = require('../helpers/adminBadgeHelper');
 const { getTranskripMahasiswa } = require('../helpers/nilaiHelper');
+
+// IPK lulusan di halaman publik (beranda & /yudisium/:tahun) tidak perlu real-time:
+// transkrip dihitung dari grades + enrollment, jadi di-cache 6 jam per mahasiswa.
+const CACHE_IPK_PUBLIK_MS = 6 * 60 * 60 * 1000;
 
 // ============================================================================
 // FUNGSI BANTU
@@ -253,152 +256,26 @@ router.get('/', async (req, res) => {
     }
 
     // ============ 9. DOKUMENTASI MAGANG UNTUK CAROUSEL ============
-    // Aturan tampilan:
-    // (1) hanya foto dari logbook yang sudah disetujui,
-    // (2) tahap 1: satu mahasiswa = satu slide (foto TERBARU miliknya), urutan
-    //     mahasiswa diacak - mahasiswa baru yang fotonya sedikit tetap kebagian,
-    // (3) tahap 2: kalau slide belum penuh, diisi foto lain dari mahasiswa yang
-    //     sama (terbaru dulu) agar carousel tidak sepi.
-    // Cache 30 menit: membaca pool 400 logbook + dokumen user/perusahaan +
-    // progres per slide, dan dulu dijalankan di SETIAP kunjungan beranda.
-    // Urutan acak slide jadi tetap selama cache berlaku.
-    const magangSlides = await berandaBerat.getOrFetch('magang', async () => {
-    let magangSlides = [];
+    // Memakai getSlides() dari routes/display.js: foto dari logbook approved
+    // terbaru (1 mahasiswa = 1 slide, acak), progres via count(), dan hasilnya
+    // disimpan di Firestore `displayCache/slides` (TTL 8 jam) + memori.
+    // Dulu beranda punya jalur sendiri: baca pool 400 logbook + progres per
+    // slide yang membaca SEMUA logbook approved mahasiswa (puluhan dokumen
+    // x 12 slide) setiap cache memori habis / server restart.
+    let magangSlides;
+    let magangGagal = false;
     try {
-      const MAX_SLIDES = 12;
-      const POOL_LOGBOOK = 400; // cukup besar agar mahasiswa baru tidak tergeser yang rajin upload
-
-      const logbookSnapshot = await db.collection('logbookMagang')
-        .where('status', '==', 'approved')
-        .orderBy('tanggal', 'desc')
-        .limit(POOL_LOGBOOK)
-        .get();
-
-      const shuffle = (arr) => {
-        for (let i = arr.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [arr[i], arr[j]] = [arr[j], arr[i]];
-        }
-        return arr;
-      };
-
-      // Urut terbaru -> lama; kumpulkan semua foto per mahasiswa
-      const fotoPerMahasiswa = new Map(); // userId -> [{log, url}] (terbaru dulu)
-      for (const doc of logbookSnapshot.docs) {
-        const log = { id: doc.id, ...doc.data() };
-        if (!log.userId) continue;
-        for (const url of (log.imageUrls || []).filter(Boolean)) {
-          if (!fotoPerMahasiswa.has(log.userId)) fotoPerMahasiswa.set(log.userId, []);
-          fotoPerMahasiswa.get(log.userId).push({ log, url });
-        }
-      }
-
-      // Tahap 1: foto terbaru tiap mahasiswa, mahasiswa diacak
-      const daftar = shuffle(Array.from(fotoPerMahasiswa.values()));
-      const terpilih = daftar.slice(0, MAX_SLIDES).map(list => list[0]);
-
-      // Tahap 2: isi sisa slide dengan foto lain (terbaru dulu) dari mahasiswa yang ada
-      if (terpilih.length < MAX_SLIDES) {
-        const sisa = [];
-        for (const list of daftar) sisa.push(...list.slice(1));
-        sisa.sort((a, b) => String(b.log.tanggal || '').localeCompare(String(a.log.tanggal || '')));
-        for (const item of sisa) {
-          if (terpilih.length >= MAX_SLIDES) break;
-          terpilih.push(item);
-        }
-        shuffle(terpilih); // campur lagi supaya foto tambahan tidak berurutan per orang
-      }
-
-      const userCache = new Map();
-      const perusahaanCache = new Map();
-      const progressCache = new Map();
-
-      const slidesBaru = await Promise.all(terpilih.map(async ({ log, url }) => {
-        if (!userCache.has(log.userId)) {
-          userCache.set(log.userId, (async () => {
-            try {
-              const userDoc = await db.collection('users').doc(log.userId).get();
-              if (userDoc.exists) return { nama: userDoc.data().nama || 'Mahasiswa', nim: userDoc.data().nim || '-' };
-            } catch (e) { /* default */ }
-            return { nama: 'Mahasiswa', nim: '-' };
-          })());
-        }
-        const info = await userCache.get(log.userId);
-
-        let perusahaan = log.perusahaan?.nama || '-';
-        if (perusahaan === '-' && log.perusahaanId) {
-          if (!perusahaanCache.has(log.perusahaanId)) {
-            perusahaanCache.set(log.perusahaanId, (async () => {
-              try {
-                const pDoc = await db.collection('perusahaan').doc(log.perusahaanId).get();
-                return pDoc.exists ? (pDoc.data().nama || '-') : '-';
-              } catch (e) { return '-'; }
-            })());
-          }
-          perusahaan = await perusahaanCache.get(log.perusahaanId);
-        }
-
-        const progressKey = `${log.userId}_${log.pdkId}`;
-        if (!progressCache.has(progressKey)) {
-          progressCache.set(progressKey, (async () => {
-            try { return await getProgressMagangHarian(log.userId, log.pdkId); }
-            catch (e) { return { uploadedDays: 0, totalDays: 0, percentage: 0 }; }
-          })());
-        }
-        const progress = await progressCache.get(progressKey);
-
-        let imageUrl = url;
-        if (imageUrl.includes('drive.google.com')) {
-          const match = imageUrl.match(/id=([^&]+)/);
-          if (match) imageUrl = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
-        }
-
-        return {
-          imageUrl,
-          caption: log.kegiatan || 'Aktivitas magang',
-          mahasiswa: info.nama,
-          nim: info.nim,
-          tanggal: log.tanggal ? new Date(log.tanggal).toLocaleDateString('id-ID') : '-',
-          perusahaan,
-          progressUploaded: progress.uploadedDays,
-          progressTotal: progress.totalDays,
-          progressPercent: progress.percentage
-        };
-      }));
-      magangSlides.push(...slidesBaru);
-
-      if (magangSlides.length === 0) {
-        magangSlides.push({
-          imageUrl: 'https://via.placeholder.com/1200x600?text=Belum+Ada+Dokumentasi+Magang',
-          caption: 'Belum ada foto magang yang disetujui',
-          mahasiswa: '-',
-          nim: '-',
-          tanggal: '-',
-          perusahaan: '-',
-          progressUploaded: 0,
-          progressTotal: 0,
-          progressPercent: 0
-        });
-      }
+      magangSlides = await require('./display').getSlides();
     } catch (err) {
       console.warn('Gagal mengambil dokumentasi magang:', err.message);
+      magangGagal = true;
       magangSlides = [{
         imageUrl: 'https://via.placeholder.com/1200x600?text=Error+Load+Data',
         caption: 'Gagal memuat data magang',
-        mahasiswa: '-',
-        nim: '-',
-        tanggal: '-',
-        perusahaan: '-',
-        progressUploaded: 0,
-        progressTotal: 0,
-        progressPercent: 0
+        mahasiswa: '-', nim: '-', tanggal: '-', perusahaan: '-',
+        progressUploaded: 0, progressTotal: 0, progressPercent: 0
       }];
-      magangSlides._gagal = true; // jangan disimpan di cache
     }
-    return magangSlides;
-    });
-    const magangGagal = !!magangSlides._gagal;
-    if (magangGagal) berandaBerat.delete('magang');
 
     // ============ 9b. YUDISIUM TAHUN INI ("SELAMAT & SUKSES") ============
     // Wisudawan tahun berjalan yang punya foto yudisium. Ditampilkan acak (maks 8),
@@ -432,7 +309,7 @@ router.get('/', async (req, res) => {
         const angkatan = getAngkatanFromNim(m.nim);
         let ipk = null;
         try {
-          const transkrip = await getTranskripMahasiswa(m.id, { nim: m.nim });
+          const transkrip = await getTranskripMahasiswa(m.id, { nim: m.nim, cacheMs: CACHE_IPK_PUBLIK_MS });
           ipk = transkrip.ipk;
         } catch (e) {
           console.warn(`Gagal menghitung IPK yudisium ${m.id}:`, e.message);
@@ -1025,7 +902,7 @@ router.get('/yudisium/:tahun', async (req, res) => {
     const wisudawanDenganIpk = await Promise.all(
       wisudawan.map(async m => {
         try {
-          const { ipk } = await getTranskripMahasiswa(m.id, { nim: m.nim });
+          const { ipk } = await getTranskripMahasiswa(m.id, { nim: m.nim, cacheMs: CACHE_IPK_PUBLIK_MS });
           const angkatan = getAngkatanFromNim(m.nim);
           const lamaStudi = hitungLamaStudi(angkatan, m.tanggalYudisium);
           return { ...m, ipk, angkatan, lamaStudi };

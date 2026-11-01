@@ -386,11 +386,23 @@ function nilaiKeHuruf(nilai) {
  * tampil dobel (kode lama + kode baru dari paket KRS kurikulum baru).
  *
  * @param {string} mahasiswaId - UID mahasiswa
- * @param {{nim?: string}} [opsi] - kirim `nim` kalau sudah diketahui pemanggil
+ * @param {{nim?: string, cacheMs?: number}} [opsi] - kirim `nim` kalau sudah diketahui pemanggil
  *   (mis. di dalam perulangan) supaya tidak perlu membaca dokumen mahasiswa lagi.
+ *   `cacheMs` (opsional): pakai hasil ber-cache di memori selama sekian ms. HANYA untuk
+ *   pemanggil publik yang tidak perlu data segar (IPK lulusan di beranda / halaman
+ *   yudisium). Halaman admin & mahasiswa tidak mengisinya -> selalu baca langsung.
  * @returns {Promise<{items: Array, totalSKS: number, ipk: string, perSemester: Array}>}
  */
+const transkripPublikCache = new Map(); // mahasiswaId -> { at, value }
+
 async function getTranskripMahasiswa(mahasiswaId, opsi = {}) {
+  if (opsi && opsi.cacheMs > 0) {
+    const hit = transkripPublikCache.get(mahasiswaId);
+    if (hit && Date.now() - hit.at < opsi.cacheMs) return hit.value;
+    const value = await getTranskripMahasiswa(mahasiswaId, { ...opsi, cacheMs: 0 });
+    transkripPublikCache.set(mahasiswaId, { at: Date.now(), value });
+    return value;
+  }
   // Digabung dari 2 sumber:
   // 1. 'grades'     - nilai akhir yang SUDAH dikunci admin (sumber huruf/indeks).
   // 2. 'enrollment' - matkul yang mahasiswa PROGRAM di KRS dan sudah disetujui

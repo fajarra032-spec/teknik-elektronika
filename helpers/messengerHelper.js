@@ -19,8 +19,19 @@ const { TTLCache, getUserProfileByUid, getAllMahasiswa } = require('./cache');
 const { createNotification } = require('./notificationHelper');
 
 const COLLECTION = 'chats';
-const NAVBAR_TTL_MS = 15 * 1000;
-const navbarPesanCache = new TTLCache(NAVBAR_TTL_MS);
+// TTL 60 dtk (dulu 15 dtk): navbar dibangun di SETIAP halaman yang dibuka user
+// login, jadi TTL pendek = baca ulang chat tiap berpindah halaman. Aman
+// dinaikkan karena cache langsung dihapus saat pesan dikirim / dibaca
+// (lihat invalidatePesan di bawah).
+const NAVBAR_TTL_MS = 60 * 1000;
+const navbarPesanCache = new TTLCache(NAVBAR_TTL_MS);       // inbox lengkap (getConversations)
+const navbarRingkasCache = new TTLCache(NAVBAR_TTL_MS);     // dropdown navbar (ringan)
+const NAVBAR_SCAN_LIMIT = 20; // pesan terbaru per arah yang dipindai untuk dropdown navbar
+
+function invalidatePesan(uid) {
+  navbarPesanCache.delete(uid);
+  navbarRingkasCache.delete(uid);
+}
 const adminListCache = new TTLCache(10 * 60 * 1000);
 const dosenContactCache = new TTLCache(10 * 60 * 1000);
 
@@ -84,8 +95,8 @@ async function sendMessage(db, sender, receiverId, message) {
     read: false
   };
   const ref = await db.collection(COLLECTION).add(doc);
-  navbarPesanCache.delete(sender.id);
-  navbarPesanCache.delete(receiverId);
+  invalidatePesan(sender.id);
+  invalidatePesan(receiverId);
 
   // Notifikasi otomatis untuk penerima - ini salah satu pemicu notifikasi
   // "otomatis dari sistem" yang terhubung langsung (lihat juga
@@ -135,7 +146,7 @@ async function markConversationRead(db, userId, partnerId) {
   const batch = db.batch();
   snap.docs.forEach(d => batch.update(d.ref, { read: true }));
   await batch.commit();
-  navbarPesanCache.delete(userId);
+  invalidatePesan(userId);
 }
 
 /**
@@ -193,11 +204,55 @@ async function getConversations(db, userId) {
   });
 }
 
-/** Ringkasan buat navbar (dropdown) - hanya beberapa percakapan teratas. */
+/**
+ * Ringkasan buat navbar (dropdown) - 5 percakapan teratas + total belum dibaca.
+ * VERSI RINGAN: dulu memanggil getConversations() yang membaca sampai 2 x 200
+ * dokumen chat di setiap halaman. Sekarang: 2 x 20 pesan terbaru (cukup untuk
+ * 5 percakapan teratas) + count() untuk total belum dibaca (~1 read, akurat
+ * berapa pun jumlahnya). Inbox lengkap tetap memakai getConversations().
+ */
 async function getNavbarSummary(db, userId) {
   if (!userId) return { unreadCount: 0, items: [] };
-  const { unreadCount, items } = await getConversations(db, userId);
-  return { unreadCount, items: items.slice(0, 5) };
+  return navbarRingkasCache.getOrFetch(userId, async () => {
+    const [sentSnap, recvSnap, unreadAgg] = await Promise.all([
+      db.collection(COLLECTION).where('senderId', '==', userId).orderBy('timestamp', 'desc').limit(NAVBAR_SCAN_LIMIT).get(),
+      db.collection(COLLECTION).where('receiverId', '==', userId).orderBy('timestamp', 'desc').limit(NAVBAR_SCAN_LIMIT).get(),
+      db.collection(COLLECTION).where('receiverId', '==', userId).where('read', '==', false).count().get()
+    ]);
+    const all = [
+      ...sentSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      ...recvSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+    ];
+
+    const byPartner = new Map();
+    for (const m of all) {
+      const partnerId = m.senderId === userId ? m.receiverId : m.senderId;
+      let entry = byPartner.get(partnerId);
+      if (!entry) {
+        entry = { partnerId, lastMessage: m, unreadCount: 0 };
+        byPartner.set(partnerId, entry);
+      } else if (m.timestamp > entry.lastMessage.timestamp) {
+        entry.lastMessage = m;
+      }
+      if (m.receiverId === userId && !m.read) entry.unreadCount += 1;
+    }
+
+    const top = Array.from(byPartner.values())
+      .sort((a, b) => (a.lastMessage.timestamp < b.lastMessage.timestamp ? 1 : -1))
+      .slice(0, 5);
+
+    const items = await Promise.all(top.map(async c => {
+      const profile = await getUserProfileByUid(db, c.partnerId);
+      return {
+        ...c,
+        partnerNama: profile ? (profile.nama || profile.email || 'Pengguna') : 'Pengguna',
+        partnerRole: profile ? profile.role : null,
+        partnerFoto: profile ? (profile.foto || null) : null
+      };
+    }));
+
+    return { unreadCount: unreadAgg.data().count, items };
+  });
 }
 
 module.exports = {

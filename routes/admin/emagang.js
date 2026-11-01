@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { getAllMahasiswa } = require('../../helpers/cache');
 const { filterEnrollmentDocsAktif } = require('../../helpers/statusMahasiswaHelper');
 const { invalidateProgressMagangHarian } = require('../../helpers/magangHelper');
 const { ITEM_PENDAMPING_LAPANGAN, daftarKategori, hitungRincian, getNilaiMagang, getNilaiDosenEfektif, savePenilaianPendampingLapangan, hitungNilaiAkhirMagang, kunciNilaiMagangKeGrades } = require('../../helpers/nilaiMagangHelper');
@@ -1006,8 +1007,11 @@ router.get('/print', async (req, res) => {
 
 router.get('/api/mahasiswa', async (req, res) => {
   try {
-    const snapshot = await db.collection('users').where('role', '==', 'mahasiswa').orderBy('nama').get();
-    res.json({ success: true, data: snapshot.docs.map(doc => ({ id: doc.id, nama: doc.data().nama, nim: doc.data().nim })) });
+    const semua = await getAllMahasiswa(db); // cache bersama, bukan scan ulang tiap panggilan
+    const data = semua
+      .map(m => ({ id: m.id, nama: m.nama, nim: m.nim }))
+      .sort((a, b) => String(a.nama || '').localeCompare(String(b.nama || '')));
+    res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

@@ -17,7 +17,9 @@
 
 const { TTLCache } = require('./cache');
 
-const NAVBAR_TTL_MS = 15 * 1000; // 15 detik
+// 60 detik (dulu 15): navbar dibangun di setiap halaman. Cache user dihapus
+// langsung saat notifikasi dibuat / dibaca, jadi angka tetap terasa real-time.
+const NAVBAR_TTL_MS = 60 * 1000;
 const navbarNotifCache = new TTLCache(NAVBAR_TTL_MS);
 
 const COLLECTION = 'notifications';

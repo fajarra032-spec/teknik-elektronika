@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const { mataKuliahCache } = require('../../helpers/cache');
+const { mataKuliahCache, getAllMahasiswa } = require('../../helpers/cache');
 const academicHelper = require('../../helpers/academicHelper');
 
 router.use(verifyToken);
@@ -29,9 +29,11 @@ async function getDosenList() {
  * `users`, SAMA seperti yang dipakai di /admin/mahasiswa, supaya konsisten.
  */
 async function getDistinctKelasMahasiswa() {
-  const snapshot = await db.collection('users').where('role', '==', 'mahasiswa').get();
+  // Pakai daftar mahasiswa ber-cache (10 menit, helpers/cache.js) - dulu scan
+  // seluruh role='mahasiswa' di SETIAP buka halaman form mata kuliah.
+  const semua = await getAllMahasiswa(db);
   const kelasSet = new Set();
-  snapshot.docs.forEach(doc => { if (doc.data().kelas) kelasSet.add(doc.data().kelas); });
+  semua.forEach(m => { if (m.kelas) kelasSet.add(m.kelas); });
   return Array.from(kelasSet).sort();
 }
 

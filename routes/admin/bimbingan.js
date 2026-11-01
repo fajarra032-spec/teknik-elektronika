@@ -17,6 +17,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { getAllMahasiswa } = require('../../helpers/cache');
 const skDistribusi = require('../../helpers/skDistribusiHelper');
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
 
@@ -77,8 +78,9 @@ const angkatanDariNim = (nim) => (nim && String(nim).length >= 2 ? '20' + String
 
 /** Ambil mahasiswa Aktif ber-Dosen PA + identitas dosen terbaru (NIDN/NUPTK) dari koleksi dosen. */
 async function ambilDataSk() {
-  const [mhsSnap, dosenSnap] = await Promise.all([
-    db.collection('users').where('role', '==', 'mahasiswa').get(),
+  // Daftar mahasiswa dari cache bersama (10 menit, di-invalidate saat admin ubah data)
+  const [mhsList, dosenSnap] = await Promise.all([
+    getAllMahasiswa(db),
     db.collection('dosen').get()
   ]);
 
@@ -93,8 +95,7 @@ async function ambilDataSk() {
     return fallbackNidn ? `NIDN. ${fallbackNidn}` : '';
   };
 
-  const semua = mhsSnap.docs
-    .map(doc => ({ id: doc.id, ...doc.data() }))
+  const semua = mhsList
     .filter(m => !m.statusMahasiswa || m.statusMahasiswa === 'Aktif');
 
   const punyaPa = semua

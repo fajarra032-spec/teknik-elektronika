@@ -473,4 +473,8 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Dipakai juga oleh beranda (routes/landing.js) supaya slide foto magang
+// hanya dibangun SATU kali (cache persisten 8 jam), bukan dua jalur berbeda.
+router.getSlides = getSlides;
+
 module.exports = router;
