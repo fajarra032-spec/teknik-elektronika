@@ -31,7 +31,12 @@
         </div>
         <div class="mb-3">
           <label for="kegiatan" class="form-label">Deskripsi Kegiatan <span class="text-danger">*</span></label>
-          <textarea class="form-control" id="kegiatan" name="kegiatan" rows="4" required><%= logbook.kegiatan || '' %></textarea>
+          <textarea class="form-control" id="kegiatan" name="kegiatan" rows="3" required maxlength="1000"><%= logbook.kegiatan || '' %></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="hasil" class="form-label">Hasil pekerjaan</label>
+          <textarea class="form-control" id="hasil" name="hasil" rows="2" maxlength="1000" placeholder="Contoh: Panel terpasang dan lolos uji tegangan"><%= logbook.hasil || '' %></textarea>
+          <div class="form-text">Ikut tercetak di kolom "Hasil pekerjaan" lembar logbook mingguan.</div>
         </div>
 
         <% if (logbook.imageUrls && logbook.imageUrls.length > 0) { %>

@@ -1,14 +1,22 @@
-PATCH FORMAT LOGBOOK MINGGUAN (1 lembar = 1 minggu)
-===================================================
-File (timpa di folder yang sama pada proyek):
-  helpers/logbookPrintHelper.js           TIMPA
-  views/mahasiswa/magang/print.ejs        TIMPA
+PATCH LOGBOOK MAGANG (cetak mingguan A4 + preview/PDF + form baru + daftar pekan ini)
+====================================================================================
+Timpa file berikut di proyek (struktur folder sama):
+  helpers/logbookPrintHelper.js                    TIMPA
+  helpers/logbookPdfHelper.js                      BARU  (preview + unduh PDF, dipakai 3 rute)
+  routes/mahasiswa/magang.js                       TIMPA (bila sudah Anda ubah sendiri, gabungkan manual)
+  routes/dosen/magang.js                           TIMPA (hanya 2 baris: import + panggilan cetak)
+  routes/admin/emagang.js                          TIMPA (hanya 2 baris: import + panggilan cetak)
+  views/mahasiswa/magang/print.ejs                 TIMPA
+  views/mahasiswa/magang/logbook.ejs               TIMPA
+  views/mahasiswa/magang/logbook_edit.ejs          TIMPA
+  views/mahasiswa/magang/_form_logbook_fields.ejs  BARU
 
-Cukup 2 file ini: cetak mahasiswa, dosen PA, dan admin semuanya memakai template yang sama.
-Tidak ada perubahan database. Restart server, lalu uji dari tombol cetak logbook.
+Tanpa perubahan database / indeks Firestore / package.json (puppeteer sudah ada). Restart server.
 
-Data opsional (bila belum ada, kolom/baris dicetak kosong untuk ditulis tangan):
-  - logbookMagang.hasil            -> kolom "Hasil pekerjaan" (cadangan: field keterangan)
-  - masukanLogbook tipe 'kompetensi' -> Ringkasan: kompetensi/keterampilan
-  - masukanLogbook tipe 'kendala'    -> Ringkasan: kendala dan penyelesaian
-  - masukanLogbook tipe 'pendamping' -> Catatan Pendamping Lapangan (sudah ada)
+CETAK
+- Tombol "Pratinjau & Cetak Logbook" membuka halaman pratinjau (seperti laporan EDOM):
+  toolbar Kembali | Unduh PDF | Cetak. Unduh PDF = berkas langsung dari server (?pdf=1).
+- 1 lembar = 1 minggu = tepat 1 halaman A4. Isi yang terlalu panjang DIPERKECIL OTOMATIS
+  (paksa muat), tidak pernah terpotong / jadi 2 halaman. Daftar Hadir juga dikunci 1 lembar.
+- Desain baru tanpa garis bawah isian: kartu identitas, tabel berwarna, kotak ringkasan.
+- Disarankan di server Linux: apt install fonts-crosextra-carlito (pengganti Calibri) agar huruf PDF sama dengan pratinjau Windows.

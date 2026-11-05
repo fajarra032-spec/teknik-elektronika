@@ -34,7 +34,10 @@ const {
   extractTahunAjaran,
   generateKodeValidasi,
   JAM_MASUK_DEFAULT,
-  buildLogbookPrintData
+  buildLogbookPrintData,
+  getRentangMinggu,
+  getMingguBulanKe,
+  todayWITA
 } = require('../../helpers/logbookPrintHelper');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
@@ -42,6 +45,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const crypto = require('crypto'); // <-- Tambahkan ini
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
+const { tampilkanCetakLogbook } = require('../../helpers/logbookPdfHelper');
 const { paginate } = require('../../helpers/pagination');
 const { logbookSemesterCache } = require('../../helpers/cache');
 const { admin } = require('../../config/firebaseAdmin');
@@ -385,6 +389,7 @@ router.get('/logbook/:id', async (req, res) => {
       kegiatan: data.kegiatan || '',
       lokasi: data.lokasi || '',
       durasi: data.durasi || '',
+      hasil: data.hasil || '',
       status: data.status || 'pending'
     });
   } catch (error) {
@@ -442,15 +447,35 @@ router.get('/logbook', async (req, res) => {
       }
     }
 
-    // ✅ OPTIMISASI KUOTA: paginasi berbasis cursor (startAfter), BUKAN
-    // ambil semua dokumen sekaligus. Default 10 entri/halaman, mahasiswa
-    // bisa klik "Tampilkan Semua" (?all=1) kalau memang butuh semuanya
-    // (misal sebelum cetak logbook).
+    // ✅ OPTIMISASI KUOTA: secara default HANYA memuat logbook PEKAN INI
+    // (rentang 7 hari dari tanggal mulai periode - sama dengan lembar cetak).
+    // Satu query berbatas rentang tanggal + limit, memakai indeks yang sama
+    // dengan query lama (userId, pdkId, tanggal desc), jadi tidak butuh indeks baru.
+    // Riwayat lengkap tetap bisa dibuka lewat ?semua=1 (10 per halaman, cursor)
+    // atau ?all=1 (semua, mis. sebelum cetak) - hanya saat diminta.
     let logbook = [];
     let pageInfo = null;
+    let minggu = null;
     const showAll = req.query.all === '1';
+    const modeRiwayat = showAll || req.query.semua === '1' || !!req.query.after || !!req.query.trail;
 
-    if (selectedPeriod) {
+    if (selectedPeriod && !modeRiwayat) {
+      minggu = getRentangMinggu({
+        tanggalMulai: selectedPeriod.tanggalMulai,
+        tanggalSelesai: selectedPeriod.tanggalSelesai,
+        mingguKe: req.query.minggu
+      });
+
+      const snap = await db.collection('logbookMagang')
+        .where('userId', '==', userId)
+        .where('pdkId', '==', selectedPeriod.pdkId)
+        .where('tanggal', '>=', minggu.awal)
+        .where('tanggal', '<=', minggu.akhir)
+        .orderBy('tanggal', 'desc')
+        .limit(50)
+        .get();
+      logbook = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } else if (selectedPeriod) {
       const baseQuery = db.collection('logbookMagang')
         .where('userId', '==', userId)
         .where('pdkId', '==', selectedPeriod.pdkId)
@@ -470,7 +495,7 @@ router.get('/logbook', async (req, res) => {
         logbook = result.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         const buildUrl = (params) => {
-          const usp = new URLSearchParams({ periodId: selectedPeriod.id, ...params });
+          const usp = new URLSearchParams({ periodId: selectedPeriod.id, semua: '1', ...params });
           return `/mahasiswa/magang/logbook?${usp.toString()}`;
         };
         pageInfo = {
@@ -484,6 +509,10 @@ router.get('/logbook', async (req, res) => {
         };
       }
     }
+
+    // Ringkasan kecil untuk header pekan (dihitung dari data yang SUDAH dimuat, tanpa query tambahan)
+    const totalJamMinggu = logbook.reduce((sum, it) => sum + (parseFloat(it.durasi) || 0), 0);
+    const tanggalTerisi = logbook.map(it => it.tanggal);
 
     const progress = selectedPeriod ? calculateProgress(
       totalLogbook,
@@ -505,7 +534,13 @@ router.get('/logbook', async (req, res) => {
       progress,
       pageInfo,
       showAll,
-      pageListUrl: selectedPeriod ? `/mahasiswa/magang/logbook?periodId=${selectedPeriod.id}` : '/mahasiswa/magang/logbook'
+      modeRiwayat,
+      minggu,
+      totalJamMinggu,
+      tanggalTerisi,
+      totalLogbook,
+      hariIni: todayWITA(),
+      pageListUrl: selectedPeriod ? `/mahasiswa/magang/logbook?periodId=${selectedPeriod.id}&semua=1` : '/mahasiswa/magang/logbook'
     });
   } catch (error) {
     console.error('Error:', error);
@@ -519,11 +554,24 @@ router.get('/logbook', async (req, res) => {
 
 router.post('/logbook', upload.array('images', 5), async (req, res) => {
   try {
-    const { tanggal, kegiatan, lokasi, durasi, semester, periodId } = req.body;
+    const { tanggal, semester, periodId } = req.body;
+    const kegiatan = (req.body.kegiatan || '').trim();
+    const hasil = (req.body.hasil || '').trim();
+    const lokasi = (req.body.lokasi || '').trim();
+    const durasi = req.body.durasi;
     const files = req.files || [];
 
     if (!tanggal || !kegiatan || !semester || !periodId) {
       return res.status(400).send('Data tidak lengkap. Periode magang wajib dipilih.');
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) {
+      return res.status(400).send('Format tanggal tidak valid.');
+    }
+    if (tanggal > todayWITA()) {
+      return res.status(400).send('Tanggal kegiatan tidak boleh melewati hari ini.');
+    }
+    if (durasi !== undefined && durasi !== '' && !(parseFloat(durasi) >= 0 && parseFloat(durasi) <= 24)) {
+      return res.status(400).send('Durasi harus antara 0 sampai 24 jam.');
     }
 
     const period = await getMagangPeriodById(periodId);
@@ -578,8 +626,10 @@ router.post('/logbook', upload.array('images', 5), async (req, res) => {
       userId: req.user.id,
       tanggal,
       kegiatan,
-      lokasi: lokasi || '',
+      hasil,
+      lokasi,
       durasi: durasi || '',
+      folderId,
       pdkId: period.pdkId,
       pdkKode: period.pdkKode,
       pdkNama: period.pdkNama,
@@ -594,7 +644,9 @@ router.post('/logbook', upload.array('images', 5), async (req, res) => {
 
     logbookSemesterCache.delete(req.user.id); // logbook baru -> cache daftar semester (dosen) bisa basi
 
-    res.redirect(`/mahasiswa/magang/logbook?periodId=${periodId}`);
+    // Arahkan ke minggu tempat entri ini berada, supaya langsung terlihat
+    const { mingguKe } = getMingguBulanKe(period.tanggalMulai, tanggal);
+    res.redirect(`/mahasiswa/magang/logbook?periodId=${periodId}&minggu=${mingguKe}`);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('Gagal menambah logbook: ' + error.message);
@@ -627,8 +679,22 @@ router.get('/logbook/:id/edit', async (req, res) => {
 
 router.post('/logbook/:id/edit', upload.array('images', 5), async (req, res) => {
   try {
-    const { tanggal, kegiatan, lokasi, durasi } = req.body;
+    const { tanggal, periodId, minggu } = req.body;
+    const kegiatan = (req.body.kegiatan || '').trim();
+    const hasil = (req.body.hasil || '').trim();
+    const lokasi = (req.body.lokasi || '').trim();
+    const durasi = req.body.durasi;
     const files = req.files || [];
+
+    if (!tanggal || !kegiatan || !/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) {
+      return res.status(400).send('Tanggal dan kegiatan wajib diisi.');
+    }
+    if (tanggal > todayWITA()) {
+      return res.status(400).send('Tanggal kegiatan tidak boleh melewati hari ini.');
+    }
+    if (durasi !== undefined && durasi !== '' && !(parseFloat(durasi) >= 0 && parseFloat(durasi) <= 24)) {
+      return res.status(400).send('Durasi harus antara 0 sampai 24 jam.');
+    }
 
     const docRef = db.collection('logbookMagang').doc(req.params.id);
     const doc = await docRef.get();
@@ -649,7 +715,8 @@ router.post('/logbook/:id/edit', upload.array('images', 5), async (req, res) => 
         .toBuffer();
 
       const fileName = `${req.user.nim}_${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-      const fileMetadata = { name: fileName, parents: [existingData.folderId] };
+      const folderIdEdit = existingData.folderId || await getDokumentasiMagangFolder(req.user.nim, req.user.nama, existingData.semester);
+      const fileMetadata = { name: fileName, parents: [folderIdEdit] };
       const media = { mimeType: 'image/jpeg', body: Readable.from(compressedBuffer) };
       const response = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
 
@@ -665,14 +732,15 @@ router.post('/logbook/:id/edit', upload.array('images', 5), async (req, res) => 
     await docRef.update({
       tanggal,
       kegiatan,
-      lokasi: lokasi || '',
+      hasil,
+      lokasi,
       durasi: durasi || '',
       imageUrls,
       imageFileIds,
       updatedAt: new Date().toISOString()
     });
 
-    res.redirect(`/mahasiswa/magang/logbook?periodId=${existingData.pdkId}`);
+    res.redirect(`/mahasiswa/magang/logbook?${periodId ? 'periodId=' + encodeURIComponent(periodId) : ''}${minggu ? '&minggu=' + encodeURIComponent(minggu) : ''}`);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('Gagal update logbook');
@@ -704,7 +772,8 @@ router.post('/logbook/:id/delete', async (req, res) => {
       }
     }
     await docRef.delete();
-    res.redirect(`/mahasiswa/magang/logbook?periodId=${data.pdkId}`);
+    const { periodId: pid, minggu: mg } = req.body || {};
+    res.redirect(`/mahasiswa/magang/logbook?${pid ? 'periodId=' + encodeURIComponent(pid) : ''}${mg ? '&minggu=' + encodeURIComponent(mg) : ''}`);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('Gagal hapus logbook');
@@ -755,7 +824,9 @@ router.get('/logbook-print', async (req, res) => {
     // Mahasiswa hanya boleh mencetak logbook miliknya sendiri
     const data = await buildLogbookPrintData(req.user.id, periodId);
     if (!data) return res.status(404).send('Data mahasiswa tidak ditemukan');
-    res.render('mahasiswa/magang/print', { ...data, user: req.user });
+    tampilkanCetakLogbook(req, res, { ...data, user: req.user }, {
+      urlKembali: periodId ? `/mahasiswa/magang/logbook?periodId=${encodeURIComponent(periodId)}` : '/mahasiswa/magang/logbook'
+    });
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('Gagal mencetak logbook');

@@ -1,0 +1,66 @@
+<%#
+  Partial isian logbook (dipakai modal Tambah & Edit di logbook.ejs).
+  Locals:
+    p        : prefix id elemen ('add' | 'edit')
+    hariIni  : YYYY-MM-DD (WITA)
+    mulai    : tanggal mulai periode (opsional, untuk atribut min)
+    withFoto : true = tampilkan input foto (hanya form Tambah)
+%>
+<div class="logbook-form">
+  <!-- 1. TANGGAL -->
+  <div class="mb-3">
+    <label for="<%= p %>Tanggal" class="form-label">Tanggal <span class="text-danger">*</span></label>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <input type="date" class="form-control form-control-date" id="<%= p %>Tanggal" name="tanggal" required
+             max="<%= hariIni %>" <% if (mulai) { %>min="<%= mulai %>"<% } %> <% if (p === 'add') { %>value="<%= hariIni %>"<% } %>>
+      <% if (p === 'add') { %>
+        <button type="button" class="chip" data-set-tanggal="0">Hari ini</button>
+        <button type="button" class="chip" data-set-tanggal="-1">Kemarin</button>
+      <% } %>
+    </div>
+    <div id="<%= p %>DupWarn" class="form-text text-warning d-none">
+      <i class="bi bi-exclamation-triangle"></i> Tanggal ini sudah ada entrinya. Gabungkan ke satu entri bila sama harinya.
+    </div>
+  </div>
+
+  <!-- 2. KEGIATAN -->
+  <div class="mb-3">
+    <label for="<%= p %>Kegiatan" class="form-label">Kegiatan / pekerjaan utama <span class="text-danger">*</span></label>
+    <textarea class="form-control" id="<%= p %>Kegiatan" name="kegiatan" rows="3" required maxlength="1000"
+              placeholder="Contoh: Memasang panel listrik 3 fasa di ruang produksi"></textarea>
+  </div>
+
+  <!-- 3. HASIL PEKERJAAN -->
+  <div class="mb-3">
+    <label for="<%= p %>Hasil" class="form-label">Hasil pekerjaan</label>
+    <textarea class="form-control" id="<%= p %>Hasil" name="hasil" rows="2" maxlength="1000"
+              placeholder="Contoh: Panel terpasang dan lolos uji tegangan"></textarea>
+    <div class="form-text">Ikut tercetak di kolom "Hasil pekerjaan" lembar logbook mingguan.</div>
+  </div>
+
+  <!-- 4. DURASI + LOKASI -->
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-sm-6">
+      <label for="<%= p %>Durasi" class="form-label">Durasi (jam)</label>
+      <input type="number" inputmode="decimal" class="form-control" id="<%= p %>Durasi" name="durasi" step="0.5" min="0" max="24" placeholder="0">
+      <div class="d-flex gap-2 mt-2 flex-wrap">
+        <button type="button" class="chip" data-set-durasi="4">4 jam</button>
+        <button type="button" class="chip" data-set-durasi="6">6 jam</button>
+        <button type="button" class="chip" data-set-durasi="8">8 jam</button>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6">
+      <label for="<%= p %>Lokasi" class="form-label">Lokasi</label>
+      <input type="text" class="form-control" id="<%= p %>Lokasi" name="lokasi" maxlength="150" placeholder="Nama tempat / ruang kerja">
+    </div>
+  </div>
+
+  <% if (withFoto) { %>
+  <!-- 5. FOTO (opsional) -->
+  <div class="mb-1">
+    <label for="<%= p %>Images" class="form-label">Foto dokumentasi <span class="text-muted fw-normal">(opsional, maks 5)</span></label>
+    <input type="file" class="form-control" id="<%= p %>Images" name="images" accept="image/*" multiple>
+    <div class="form-text" id="<%= p %>ImagesInfo">Foto dikompres otomatis saat diunggah.</div>
+  </div>
+  <% } %>
+</div>

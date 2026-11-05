@@ -2,113 +2,165 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Cetak Logbook - <%= mahasiswa.nama %></title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Cetak Logbook' %> - <%= mahasiswa.nama %></title>
   <style>
-    /* ===== RESET & BASE ===== */
+    /* =====================================================================
+       DASAR
+       Tanpa framework eksternal supaya hasil PDF (puppeteer) selalu sama
+       dengan tampilan layar/cetak, termasuk bila server tanpa internet.
+       ===================================================================== */
+    :root {
+      --brand: #0b66c3;
+      --brand-dark: #0a3d7a;
+      --gold: #f2b705;
+      --soft: #f2f7fd;
+      --soft-2: #f8fbff;
+      --line: #d3e0ef;
+      --ink: #172033;
+      --muted: #667085;
+      --pv: 1; /* skala pratinjau di layar kecil (diatur skrip) */
+    }
     * { box-sizing: border-box; }
-    @page { size: A4; margin: 1.2cm 1.8cm; }
+    @page { size: A4; margin: 0; }
+    html, body { margin: 0; padding: 0; }
     body {
-      font-family: Calibri, 'Segoe UI', Arial, Helvetica, sans-serif;
-      background: #fff;
-      color: #000;
-      font-size: 11pt;
+      font-family: Calibri, Carlito, 'Segoe UI', 'Liberation Sans', Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      font-size: 10.5pt;
       line-height: 1.35;
-      margin: 0;
-      padding: 0;
+      background: #e9edf3;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
       -webkit-font-smoothing: antialiased;
     }
-    .container-fluid {
-      max-width: 21cm; /* pratinjau di layar selebar kertas A4 */
-      margin: 0 auto;
-      padding: 0 0.6cm;
-    }
-    .print-btn { font-family: Arial, sans-serif; margin-bottom: 12px; }
+    .text-center { text-align: center; }
+    .fst-italic { font-style: italic; }
+    .text-muted { color: var(--muted); }
+    .fw-bold { font-weight: 700; }
+    .py-4 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+    .mb-0 { margin-bottom: 0; }
 
-    /* ===== LEMBAR LOGBOOK (1 LEMBAR = 1 MINGGU) ===== */
-    .lembar {
-      page-break-after: always;
-      padding-bottom: 6px;
+    /* =====================================================================
+       TOOLBAR PRATINJAU (tidak ikut tercetak / masuk PDF)
+       ===================================================================== */
+    .toolbar {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between;
+      padding: .65rem 1rem; background: #1b2a4a; color: #fff; font-size: 13px;
+      font-family: Arial, Helvetica, sans-serif;
     }
-    .lembar:last-of-type { page-break-after: auto; }
-    .lembar + .lembar { margin-top: 24px; }
+    .toolbar a, .toolbar button {
+      font: inherit; font-weight: 600; border: 0; border-radius: 8px; padding: .45rem .9rem;
+      cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: .4rem;
+    }
+    .toolbar .kembali { background: rgba(255,255,255,.14); color: #fff; }
+    .toolbar .pdf { background: #10b981; color: #fff; }
+    .toolbar .cetak { background: #fff; color: #1e3a8a; }
+    .toolbar .info { opacity: .85; font-size: 12px; flex: 1 1 260px; text-align: center; }
+    .toolbar .aksi { display: flex; gap: .5rem; }
+    .toolbar svg { width: 15px; height: 15px; fill: currentColor; }
 
-    /* ===== KOP ===== */
-    .kop-surat {
-      display: flex;
-      align-items: center;
-      margin-bottom: 12px;
+    /* =====================================================================
+       KERTAS A4
+       Setiap .sheet = tepat 1 halaman A4. Isi diukur oleh skrip di bawah;
+       bila meluber, isi diperkecil otomatis (paksa muat) - tidak pernah
+       terpotong dan tidak pernah menjadi 2 halaman.
+       ===================================================================== */
+    .preview {
+      display: flex; flex-direction: column; align-items: center; gap: 18px;
+      padding: 18px 0 40px; zoom: var(--pv);
     }
-    .logo-kop {
-      width: 62px;
-      height: auto;
-      margin-right: 14px;
-      flex-shrink: 0;
+    .sheet {
+      width: 210mm; height: 296.4mm; /* sedikit < 297mm agar tidak memicu halaman kosong */
+      padding: 11mm 14mm 9mm;
+      background: #fff; position: relative; overflow: hidden;
+      box-shadow: 0 6px 24px rgba(27,42,74,.18);
+      break-after: page; page-break-after: always;
     }
-    .teks-kop { flex: 1; font-family: Arial, Helvetica, sans-serif; line-height: 1.2; }
-    .teks-kop .nama-kampus {
-      font-size: 24pt;
-      font-weight: 700;
-      margin: 0;
-      color: #0070c0;
-      text-transform: uppercase;
-      letter-spacing: 0;
-    }
-    .teks-kop .alamat { font-size: 7.5pt; margin: 2px 0 0 0; color: #222; }
-
-    .judul-logbook { font-weight: 700; font-size: 11pt; margin: 0 0 8px 0; }
-
-    /* ===== IDENTITAS (isian bertitik) ===== */
-    .identitas { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-    .identitas td { padding: 3px 0; vertical-align: bottom; border: none; }
-    .identitas td.isi {
-      border-bottom: 1px dotted #000;
-      padding: 0 4px;
-      min-height: 1.2em;
+    .sheet:last-child { break-after: auto; page-break-after: auto; }
+    .sheet-inner {
+      transform-origin: top left;
+      display: flex; flex-direction: column;
+      width: 100%; height: 100%;
     }
 
-    /* ===== TABEL LOGBOOK MINGGUAN ===== */
-    .tabel-minggu {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 8px 0 14px 0;
-      table-layout: fixed;
-    }
-    .tabel-minggu th, .tabel-minggu td {
-      border: 1px solid #000;
-      padding: 3px 5px;
-      vertical-align: top;
-      font-size: 10pt;
-      word-wrap: break-word;
-      overflow-wrap: anywhere;
-    }
-    .tabel-minggu th { font-weight: 700; text-align: left; vertical-align: middle; }
-    .tabel-minggu th.c, .tabel-minggu td.c { text-align: center; }
-    .tabel-minggu tbody tr { height: 1.25cm; page-break-inside: avoid; }
-    .tabel-minggu tr.baris-total { height: 0.8cm; }
-    .tabel-minggu tr.baris-total td { vertical-align: middle; }
-    .tabel-minggu .tgl-kecil { display: block; font-size: 8pt; color: #333; }
-    .tabel-minggu .multi { white-space: pre-line; }
-    .tabel-minggu .multi + .multi { margin-top: 3px; }
+    /* =====================================================================
+       LEMBAR LOGBOOK MINGGUAN
+       ===================================================================== */
+    .kop { display: flex; align-items: center; gap: 12px; }
+    .kop img { width: 15mm; height: 15mm; object-fit: contain; flex: 0 0 auto; }
+    .kop .nama { margin: 0; font-family: Arial, Helvetica, sans-serif; font-weight: 800; font-size: 21pt; line-height: 1.1; letter-spacing: .2px; color: var(--brand); text-transform: uppercase; }
+    .kop .alamat { margin: 3px 0 0; font-family: Arial, Helvetica, sans-serif; font-size: 7.4pt; color: #475467; }
+    .kop-bar { height: 3px; border-radius: 3px; margin: 8px 0 10px; background: linear-gradient(90deg, var(--brand) 0%, var(--brand) 70%, var(--gold) 100%); }
 
-    /* ===== RINGKASAN MINGGUAN ===== */
-    .ringkasan-judul { margin: 0 0 4px 0; }
-    .ringkasan-list { margin: 0 0 8px 0; padding-left: 1.4em; }
-    .ringkasan-list li { margin-bottom: 6px; }
-    .garis {
-      border-bottom: 1px dotted #000;
-      min-height: 1.45em;
-      white-space: pre-wrap;
-      padding: 0 2px;
-    }
-    .label-garis { display: block; }
+    .judul { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .judul h1 { margin: 0; font-size: 14pt; letter-spacing: 1.2px; color: var(--brand-dark); font-weight: 800; }
+    .judul .minggu { background: var(--brand); color: #fff; font-weight: 700; font-size: 9.5pt; padding: 3px 12px; border-radius: 50px; }
 
-    /* ===== TANDA TANGAN ===== */
-    .blok-ttd { page-break-inside: avoid; margin-top: 12px; }
-    .area-ttd-mingguan { height: 56px; }
-    .garis-ttd { width: 8cm; border-bottom: 1px dotted #000; min-height: 1.2em; font-weight: 700; padding: 0 2px; }
+    .identitas {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px 14px;
+      background: var(--soft); border: 1px solid var(--line); border-radius: 9px;
+      padding: 8px 12px; margin-bottom: 10px;
+    }
+    .identitas .span2 { grid-column: span 2; }
+    .identitas .span3 { grid-column: span 3; }
+    .identitas .lbl { display: block; font-size: 7pt; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 700; }
+    .identitas .val { display: block; font-size: 10.5pt; font-weight: 700; min-height: 1.35em; overflow-wrap: anywhere; }
+
+    .tabel-bungkus { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+    table.minggu { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    table.minggu th {
+      background: var(--brand-dark); color: #fff; text-align: left; font-size: 9pt; letter-spacing: .3px;
+      padding: 6px 8px; border-right: 1px solid rgba(255,255,255,.18); vertical-align: middle;
+    }
+    table.minggu th:last-child, table.minggu td:last-child { border-right: 0; }
+    table.minggu th.c, table.minggu td.c { text-align: center; }
+    table.minggu td {
+      padding: 5px 8px; vertical-align: top; font-size: 9.6pt;
+      border-top: 1px solid var(--line); border-right: 1px solid var(--line);
+      overflow-wrap: anywhere; word-break: break-word;
+    }
+    table.minggu tbody tr.hari:nth-child(even) td { background: var(--soft-2); }
+    table.minggu tr.hari { height: 12.5mm; }
+    table.minggu td.hari-col { font-weight: 700; color: var(--brand-dark); }
+    table.minggu tr.akhir-pekan td.hari-col { color: #b45309; }
+    table.minggu .tgl { display: block; font-weight: 400; font-size: 7.8pt; color: var(--muted); margin-top: 1px; }
+    table.minggu .multi { white-space: pre-line; }
+    table.minggu .multi + .multi { margin-top: 3px; }
+    table.minggu td.durasi { vertical-align: middle; font-weight: 700; }
+    table.minggu tr.total td { background: var(--soft); font-weight: 800; color: var(--brand-dark); vertical-align: middle; padding: 6px 8px; }
+
+    .ringkasan { margin-top: 10px; }
+    .ringkasan h2 { margin: 0 0 6px; font-size: 10.5pt; color: var(--brand-dark); letter-spacing: .4px; }
+    .kotak-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kotak {
+      border: 1px solid var(--line); border-left: 4px solid var(--brand); border-radius: 8px;
+      background: #fff; padding: 6px 10px; min-height: 24mm;
+    }
+    .kotak.kendala { border-left-color: var(--gold); }
+    .kotak.catatan { grid-column: span 2; min-height: 17mm; border-left-color: #10b981; }
+    .kotak .jdl { font-size: 8.4pt; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 2px; }
+    .kotak .isi-teks { font-size: 10pt; white-space: pre-line; overflow-wrap: anywhere; }
+
+    /* Elemen konten tidak boleh menyusut (kalau menyusut, isi terpotong dan
+       skrip tidak tahu bahwa isinya meluber). Hanya .spacer yang lentur. */
+    .sheet-inner > * { flex-shrink: 0; }
+    .spacer { flex: 1 1 0; min-height: 0; flex-shrink: 1 !important; }
+
+    .blok-ttd { display: flex; justify-content: flex-end; margin-top: 10px; break-inside: avoid; }
+    .ttd { width: 74mm; font-size: 9.8pt; }
+    .ttd .tgl-isi { display: inline-block; min-width: 38mm; height: 1.5em; vertical-align: middle; background: var(--soft); border-radius: 5px; margin-left: 4px; }
+    .ttd .area { height: 17mm; }
+    .ttd .nama { font-weight: 800; min-height: 1.35em; }
+    .ttd .cap { font-size: 8.4pt; color: var(--muted); }
+
+    .footer-cetak {
+      margin-top: 8px; padding-top: 5px; border-top: 1px solid var(--line);
+      font-size: 7pt; color: #8a94a6; display: flex; justify-content: space-between; align-items: center;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .kode-validasi { font-size: 7.5pt; color: #98a2b3; }
 
     /* ===== DAFTAR HADIR ===== */
     .kehadiran-page {
@@ -201,49 +253,28 @@
       margin: 5px 0;
     }
 
-    /* ===== FOOTER ===== */
-    .footer-cetak {
-      font-size: 7pt;
-      color: #666;
-      margin: 14px 0 3px 0;
-      border-top: 1px solid #ddd;
-      padding-top: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .kode-validasi { font-size: 7.5pt; color: #999; }
-    .nama-ttd { font-weight: 700; text-decoration: underline; margin-bottom: 0; font-size: 9pt; }
-    .nip-ttd { margin-top: 0; font-size: 8pt; }
-    .area-ttd { height: 45px; margin: 6px 0; }
+    /* Penyesuaian Daftar Hadir agar menjadi 1 lembar A4 yang sama */
+    .sheet .kehadiran-page { break-before: auto; page-break-before: auto; padding-top: 0; font-size: 9pt; line-height: 1.3; display: flex; flex-direction: column; flex: 1 1 auto; }
+    .kehadiran-ttd .nama-ttd { font-weight: 700; text-decoration: underline; margin-bottom: 0; font-size: 9pt; }
+    .kehadiran-ttd .nip-ttd { margin-top: 0; font-size: 8pt; }
 
-    /* ===== PRINT STYLE ===== */
+    /* =====================================================================
+       CETAK / PDF
+       ===================================================================== */
     @media print {
-      body { margin: 0; background: #fff; }
-      .btn, .print-btn, .no-print { display: none !important; }
-      .container-fluid { padding: 0 !important; max-width: 100% !important; }
-      .lembar + .lembar { margin-top: 0; }
-      .table-kehadiran thead th {
-        background-color: #e9ecef !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      .table-kehadiran td.ttd-hadir {
-        background-color: #c8e6c9 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      .teks-kop .nama-kampus { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { background: #fff; }
+      .toolbar { display: none !important; }
+      .preview { display: block; padding: 0; gap: 0; zoom: 1 !important; }
+      .sheet { box-shadow: none; margin: 0; }
     }
-
-    @media screen and (max-width: 768px) {
-      .container-fluid { padding: 0 10px; }
-      .teks-kop .nama-kampus { font-size: 16pt; }
-      .garis-ttd { width: 100%; }
-    }
+    body.pdf-mode { background: #fff; }
+    body.pdf-mode .toolbar { display: none !important; }
+    body.pdf-mode .preview { display: block; padding: 0; gap: 0; zoom: 1 !important; }
+    body.pdf-mode .sheet { box-shadow: none; }
+    @media screen and (max-width: 640px) { .toolbar .info { display: none; } }
   </style>
 </head>
-<body>
+<body class="<%= (typeof pdfMode !== 'undefined' && pdfMode) ? 'pdf-mode' : '' %>">
 <%
   // ---------- Bantu tampilan ----------
   const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -267,155 +298,148 @@
 
   const namaTempat = (pdkInfo && pdkInfo.perusahaan && pdkInfo.perusahaan.nama) ? pdkInfo.perusahaan.nama : '';
   const namaPendamping = (pdkInfo && pdkInfo.perusahaan && pdkInfo.perusahaan.pembimbingLapangan) ? pdkInfo.perusahaan.pembimbingLapangan : '';
+  const LOGO_URL = 'https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png';
 
-  // Minggu tanpa entri tetap dicetak sebagai lembar kosong bila belum ada data sama sekali
+  // Belum ada data sama sekali -> tetap cetak 1 lembar kosong (bisa dipakai sebagai formulir)
   const HARI_KOSONG = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Ahad'].map(h => ({ hari: h, tanggal: null, entries: [], durasi: 0 }));
   const lembarList = (mingguGroups && mingguGroups.length > 0)
     ? mingguGroups
     : [{ mingguKe: '', bulanKe: '', periodeAwal: '', periodeAkhir: '', rows: HARI_KOSONG, totalDurasi: 0, entries: [] }];
+  const totalHadir = (kehadiranGroups && kehadiranGroups.length > 0) ? kehadiranGroups.length : 1;
 %>
-  <div class="container-fluid px-3 py-2">
-    <div class="text-end no-print">
-      <button onclick="window.print()" class="btn btn-primary btn-sm print-btn shadow-sm">
-        <i class="bi bi-printer-fill"></i> Cetak / PDF
-      </button>
-    </div>
 
-    <% lembarList.forEach((grup) => {
-         const mPendamping = masukanMap ? masukanMap[grup.mingguKe + '_pendamping'] : null;
-         const mKompetensi = masukanMap ? masukanMap[grup.mingguKe + '_kompetensi'] : null;
-         const mKendala    = masukanMap ? masukanMap[grup.mingguKe + '_kendala'] : null;
-    %>
-    <div class="lembar">
-      <div class="kop-surat">
-        <img src="https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png"
-             alt="Logo Politeknik Dewantara" class="logo-kop">
-        <div class="teks-kop">
-          <h2 class="nama-kampus">Politeknik Dewantara</h2>
-          <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7 Palopo, Sulawesi Selatan, Website: polidewa.ac.id</p>
+<% if (!(typeof pdfMode !== 'undefined' && pdfMode)) { %>
+<div class="toolbar">
+  <a class="kembali" href="<%= (typeof urlKembali !== 'undefined' && urlKembali) ? urlKembali : '#' %>" id="btnKembali">
+    <svg viewBox="0 0 16 16"><path d="M10 12.5 5.5 8 10 3.5l1 1L7.5 8l3.5 3.5z"/></svg> Kembali
+  </a>
+  <div class="info">
+    <strong>Pratinjau Logbook</strong> &middot; <%= lembarList.length %> lembar mingguan + <%= totalHadir %> daftar hadir &middot; setiap lembar otomatis pas A4
+  </div>
+  <div class="aksi">
+    <a class="pdf" href="<%= (typeof pdfUrl !== 'undefined' && pdfUrl) ? pdfUrl : '#' %>" id="btnPdf">
+      <svg viewBox="0 0 16 16"><path d="M8 11.5 4 7.5l1-1 2.3 2.3V2h1.4v6.8L11 6.5l1 1z"/><path d="M3 12h10v1.5H3z"/></svg> Unduh PDF
+    </a>
+    <button class="cetak" type="button" onclick="window.print()">
+      <svg viewBox="0 0 16 16"><path d="M4 2h8v3H4zM3 6h10a1.5 1.5 0 0 1 1.5 1.5V11H12v3H4v-3H1.5V7.5A1.5 1.5 0 0 1 3 6zm2.5 6.5h5v-3h-5z"/></svg> Cetak
+    </button>
+  </div>
+</div>
+<% } %>
+
+<div class="preview" id="preview">
+
+<% lembarList.forEach((grup) => {
+     const mPendamping = masukanMap ? masukanMap[grup.mingguKe + '_pendamping'] : null;
+     const mKompetensi = masukanMap ? masukanMap[grup.mingguKe + '_kompetensi'] : null;
+     const mKendala    = masukanMap ? masukanMap[grup.mingguKe + '_kendala'] : null;
+%>
+  <section class="sheet">
+    <div class="sheet-inner">
+
+      <div class="kop">
+        <img src="<%= LOGO_URL %>" alt="Logo Politeknik Dewantara">
+        <div>
+          <h2 class="nama">Politeknik Dewantara</h2>
+          <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7 Palopo, Sulawesi Selatan &middot; Website: polidewa.ac.id</p>
+        </div>
+      </div>
+      <div class="kop-bar"></div>
+
+      <div class="judul">
+        <h1>LOGBOOK MAGANG</h1>
+        <% if (grup.mingguKe) { %><span class="minggu">Minggu ke-<%= grup.mingguKe %></span><% } %>
+      </div>
+
+      <div class="identitas">
+        <div class="span2"><span class="lbl">Nama mahasiswa</span><span class="val"><%= mahasiswa.nama %></span></div>
+        <div><span class="lbl">NIM</span><span class="val"><%= mahasiswa.nim %></span></div>
+        <div class="span3"><span class="lbl">Nama tempat magang</span><span class="val"><%= namaTempat %></span></div>
+        <div><span class="lbl">Minggu ke</span><span class="val"><%= grup.mingguKe %></span></div>
+        <div><span class="lbl">Bulan</span><span class="val"><% if (grup.bulanKe) { %>ke-<%= grup.bulanKe %> (<%= namaBulan(grup.periodeAwal) %>)<% } %></span></div>
+        <div><span class="lbl">Periode</span><span class="val"><% if (grup.periodeAwal) { %><%= fmtTgl(grup.periodeAwal) %> s.d. <%= fmtTgl(grup.periodeAkhir) %><% } %></span></div>
+      </div>
+
+      <div class="tabel-bungkus">
+        <table class="minggu">
+          <colgroup><col style="width:15%"><col style="width:34%"><col style="width:36%"><col style="width:15%"></colgroup>
+          <thead>
+            <tr>
+              <th>Hari/Tanggal</th>
+              <th>Kegiatan atau pekerjaan utama</th>
+              <th>Hasil pekerjaan</th>
+              <th class="c">Durasi (jam)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% grup.rows.forEach((row) => { %>
+              <tr class="hari <%= (row.hari === 'Sabtu' || row.hari === 'Ahad') ? 'akhir-pekan' : '' %>">
+                <td class="hari-col"><%= row.hari %><% if (row.tanggal) { %><span class="tgl"><%= fmtTglPendek(row.tanggal) %></span><% } %></td>
+                <td>
+                  <% row.entries.forEach((e, i) => { %>
+                    <div class="multi"><%= row.entries.length > 1 ? (i + 1) + '. ' : '' %><%= e.kegiatan %></div>
+                  <% }) %>
+                </td>
+                <td>
+                  <%
+                    // "Hasil pekerjaan": kolom `hasil` bila ada, cadangan `keterangan`
+                    const hasilList = row.entries.map(e => e.hasil || e.keterangan || '');
+                  %>
+                  <% hasilList.forEach((h, i) => { if (!h) return; %>
+                    <div class="multi"><%= row.entries.length > 1 ? (i + 1) + '. ' : '' %><%= h %></div>
+                  <% }) %>
+                </td>
+                <td class="c durasi"><%= fmtJam(row.durasi) %></td>
+              </tr>
+            <% }) %>
+            <tr class="total">
+              <td colspan="3">Total</td>
+              <td class="c"><%= grup.totalDurasi ? fmtJam(grup.totalDurasi) : '...' %> jam</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ringkasan">
+        <h2>Ringkasan Mingguan</h2>
+        <div class="kotak-grid">
+          <div class="kotak">
+            <div class="jdl">Kompetensi/keterampilan yang dipelajari</div>
+            <div class="isi-teks"><%= (mKompetensi && mKompetensi.isi) ? mKompetensi.isi : '' %></div>
+          </div>
+          <div class="kotak kendala">
+            <div class="jdl">Kendala dan penyelesaian (jika ada)</div>
+            <div class="isi-teks"><%= (mKendala && mKendala.isi) ? mKendala.isi : '' %></div>
+          </div>
+          <div class="kotak catatan">
+            <div class="jdl">Catatan Pendamping Lapangan (jika ada)</div>
+            <div class="isi-teks"><%= (mPendamping && mPendamping.isi) ? mPendamping.isi : '' %></div>
+          </div>
         </div>
       </div>
 
-      <p class="judul-logbook">LOGBOOK MAGANG</p>
-
-      <table class="identitas">
-        <tr>
-          <td style="width:1%; white-space:nowrap;">Nama mahasiswa:&nbsp;</td>
-          <td class="isi"><%= mahasiswa.nama %></td>
-          <td style="width:1%; white-space:nowrap; padding-left:10px;">NIM:&nbsp;</td>
-          <td class="isi" style="width:32%;"><%= mahasiswa.nim %></td>
-        </tr>
-      </table>
-      <table class="identitas">
-        <tr>
-          <td style="width:1%; white-space:nowrap;">Nama Tempat Magang:&nbsp;</td>
-          <td class="isi"><%= namaTempat %></td>
-        </tr>
-      </table>
-      <table class="identitas">
-        <tr>
-          <td style="width:1%; white-space:nowrap;">Minggu ke:&nbsp;</td>
-          <td class="isi" style="width:12%; text-align:center;"><%= grup.mingguKe %></td>
-          <td style="width:1%; white-space:nowrap; padding-left:10px;">Bulan:&nbsp;</td>
-          <td class="isi" style="width:22%;"><% if (grup.bulanKe) { %>ke-<%= grup.bulanKe %> (<%= namaBulan(grup.periodeAwal) %>)<% } %></td>
-          <td style="width:1%; white-space:nowrap; padding-left:10px;">Periode:&nbsp;</td>
-          <td class="isi" style="width:18%; text-align:center;"><%= fmtTgl(grup.periodeAwal) %></td>
-          <td style="width:1%; white-space:nowrap; padding:0 6px;">s.d.</td>
-          <td class="isi" style="width:18%; text-align:center;"><%= fmtTgl(grup.periodeAkhir) %></td>
-        </tr>
-      </table>
-
-      <table class="tabel-minggu">
-        <colgroup>
-          <col style="width:15%"><col style="width:34%"><col style="width:36%"><col style="width:15%">
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Hari/Tanggal</th>
-            <th>Kegiatan atau pekerjaan utama</th>
-            <th>Hasil pekerjaan</th>
-            <th>Durasi (jam)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% grup.rows.forEach((row) => { %>
-            <tr>
-              <td>
-                <%= row.hari %>
-                <% if (row.tanggal) { %><span class="tgl-kecil"><%= fmtTglPendek(row.tanggal) %></span><% } %>
-              </td>
-              <td>
-                <% row.entries.forEach((e, i) => { %>
-                  <div class="multi"><%= row.entries.length > 1 ? (i + 1) + '. ' : '' %><%= e.kegiatan %></div>
-                <% }) %>
-              </td>
-              <td>
-                <%
-                  // "Hasil pekerjaan": pakai kolom `hasil` bila ada, kalau tidak pakai `keterangan`
-                  const hasilList = row.entries.map(e => e.hasil || e.keterangan || '');
-                  const adaHasil = hasilList.some(x => x);
-                %>
-                <% if (adaHasil) { hasilList.forEach((h, i) => { if (!h) return; %>
-                  <div class="multi"><%= row.entries.length > 1 ? (i + 1) + '. ' : '' %><%= h %></div>
-                <% }) } %>
-              </td>
-              <td class="c" style="vertical-align:middle;"><%= fmtJam(row.durasi) %></td>
-            </tr>
-          <% }) %>
-          <tr class="baris-total">
-            <td>Total</td>
-            <td></td>
-            <td></td>
-            <td class="c"><%= grup.totalDurasi ? fmtJam(grup.totalDurasi) : '...' %> jam</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <p class="ringkasan-judul">Ringkasan Mingguan</p>
-      <ul class="ringkasan-list">
-        <li>
-          Kompetensi/keterampilan yang dipelajari:
-          <% if (mKompetensi && mKompetensi.isi) { %>
-            <div class="garis"><%= mKompetensi.isi %></div>
-          <% } else { %>
-            <div class="garis">&nbsp;</div><div class="garis">&nbsp;</div><div class="garis">&nbsp;</div>
-          <% } %>
-        </li>
-        <li>
-          Kendala dan penyelesaian (jika ada):
-          <% if (mKendala && mKendala.isi) { %>
-            <div class="garis"><%= mKendala.isi %></div>
-          <% } else { %>
-            <div class="garis">&nbsp;</div><div class="garis">&nbsp;</div>
-          <% } %>
-        </li>
-      </ul>
-
-      <div>
-        Catatan Pendamping Lapangan (jika ada):
-        <% if (mPendamping && mPendamping.isi) { %>
-          <div class="garis"><%= mPendamping.isi %></div>
-        <% } else { %>
-          <div class="garis">&nbsp;</div><div class="garis">&nbsp;</div>
-        <% } %>
-      </div>
+      <div class="spacer"></div>
 
       <div class="blok-ttd">
-        <p style="margin:10px 0 0 0;">Tanggal: <span style="display:inline-block; min-width:7cm; border-bottom:1px dotted #000;">&nbsp;</span></p>
-        <div class="area-ttd-mingguan"></div>
-        <div class="garis-ttd"><%= namaPendamping %></div>
-        <div>Nama dan Tanda Tangan Pendamping Lapangan</div>
+        <div class="ttd">
+          <div>Tanggal:<span class="tgl-isi"></span></div>
+          <div class="area"></div>
+          <div class="nama"><%= namaPendamping %></div>
+          <div class="cap">Nama dan Tanda Tangan Pendamping Lapangan</div>
+        </div>
       </div>
 
       <div class="footer-cetak">
         <span>Dicetak dari Web Portal Elektronika Polidewa: <%= generatedAt %></span>
         <span class="kode-validasi"><%= kodeValidasi %></span>
       </div>
+
     </div>
-    <% }) %>
+  </section>
+<% }) %>
 
     <% if (!kehadiranGroups || kehadiranGroups.length === 0) { %>
-      <div class="kehadiran-page">
+      <section class="sheet"><div class="sheet-inner"><div class="kehadiran-page">
         <div class="kehadiran-kop">
           <h5>DAFTAR HADIR MAGANG MAHASISWA</h5>
           <p>PROGRAM STUDI TEKNIK ELEKTRONIKA (D3)</p>
@@ -424,10 +448,10 @@
         <p class="text-center fst-italic text-muted py-4">
           Belum ada entri logbook, sehingga Daftar Hadir belum dapat dibuat.
         </p>
-      </div>
+      </div></div></section>
     <% } else { %>
       <% kehadiranGroups.forEach((bulan) => { %>
-        <div class="kehadiran-page">
+        <section class="sheet"><div class="sheet-inner"><div class="kehadiran-page">
           <div class="kehadiran-kop">
             <h5>DAFTAR HADIR MAGANG MAHASISWA</h5>
             <p>PROGRAM STUDI TEKNIK ELEKTRONIKA (D3)</p>
@@ -506,11 +530,91 @@
 
           <div class="footer-cetak">
             <span>Logbook dicetak dari Web Portal Elektronika Polidewa: <%= generatedAt %></span>
-            <span class="kode-validasi">Kode Validasi</span>
+            <span class="kode-validasi"><%= kodeValidasi %></span>
           </div>
-        </div>
+        </div></div></section>
       <% }) %>
     <% } %>
 
-  </div> </body>
+
+</div>
+
+<script>
+  /* ======================================================================
+     PAKSA MUAT A4
+     Untuk tiap lembar: bila isi lebih tinggi dari area kertas, isi diperkecil
+     (transform: scale) sedikit demi sedikit sampai PAS. Bila ada ruang sisa,
+     baris hari pada tabel mingguan dilebarkan agar lembar terlihat penuh.
+     Dipanggil saat load, sebelum cetak, dan oleh generator PDF di server.
+     ====================================================================== */
+  function fitSheet(sheet) {
+    var inner = sheet.querySelector('.sheet-inner');
+    if (!inner) return;
+    var cs = getComputedStyle(sheet);
+    var W = sheet.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    var H = sheet.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    var rows = sheet.querySelectorAll('table.minggu tr.hari');
+
+    function set(s) {
+      inner.style.transform = s === 1 ? '' : 'scale(' + s + ')';
+      inner.style.width = (W / s) + 'px';
+      inner.style.height = (H / s) + 'px';
+    }
+    function meluber() { return inner.scrollHeight > inner.clientHeight + 1; }
+
+    // reset
+    rows.forEach(function (tr) { tr.style.height = ''; });
+    set(1);
+
+    var s = 1;
+    while (meluber() && s > 0.35) { s = Math.round((s - 0.02) * 100) / 100; set(s); }
+
+    // ruang sisa -> lebarkan baris hari (sisakan sedikit napas, batasi tinggi baris)
+    if (!meluber() && rows.length) {
+      var sp = inner.querySelector('.spacer');
+      var free = sp ? sp.clientHeight : 0;
+      if (free > 12) {
+        var tambah = Math.min((free * 0.8) / rows.length, 70 / s);
+        rows.forEach(function (tr) { tr.style.height = (tr.offsetHeight + tambah) + 'px'; });
+        if (meluber()) rows.forEach(function (tr) { tr.style.height = ''; });
+      }
+    }
+    sheet.setAttribute('data-skala', s);
+  }
+
+  function fitAllSheets() {
+    var pv = document.getElementById('preview');
+    var z = pv.style.zoom;
+    pv.style.zoom = 1; // ukur pada ukuran asli, bukan ukuran pratinjau
+    document.querySelectorAll('.sheet').forEach(fitSheet);
+    pv.style.zoom = z;
+  }
+
+  // Pratinjau muat di layar sempit (HP): perkecil tampilan kertas saja
+  function skalaPratinjau() {
+    var pv = document.getElementById('preview');
+    if (document.body.classList.contains('pdf-mode')) return;
+    var lebarKertas = 210 * 96 / 25.4; // px
+    var s = Math.min(1, (window.innerWidth - 16) / lebarKertas);
+    pv.style.zoom = s;
+  }
+
+  function mulai() { fitAllSheets(); skalaPratinjau(); }
+  if (document.readyState === 'complete') mulai(); else window.addEventListener('load', mulai);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(mulai);
+  window.addEventListener('resize', skalaPratinjau);
+  window.addEventListener('beforeprint', function () { document.getElementById('preview').style.zoom = 1; fitAllSheets(); });
+  window.addEventListener('afterprint', skalaPratinjau);
+
+  // Tombol Kembali: bila halaman dibuka di tab baru, tutup tab / kembali ke daftar
+  (function () {
+    var b = document.getElementById('btnKembali');
+    if (!b) return;
+    b.addEventListener('click', function (e) {
+      if (history.length > 1) { e.preventDefault(); history.back(); }
+      else if (b.getAttribute('href') === '#') { e.preventDefault(); window.close(); }
+    });
+  })();
+</script>
+</body>
 </html>

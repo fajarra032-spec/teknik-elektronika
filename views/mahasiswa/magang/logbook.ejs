@@ -355,6 +355,28 @@
     .panduan-icon { text-align: center; }
     .logbook-table thead th { white-space: nowrap; }
   }
+
+  /* ===== FORM LOGBOOK (relayout) ===== */
+  .chip {
+    border: 1px solid #cbd5e1; background: #f8fafc; color: #334155;
+    border-radius: 50px; padding: 0.25rem 0.8rem; font-size: 0.8rem; line-height: 1.4;
+    cursor: pointer; transition: var(--transition);
+  }
+  .chip:hover, .chip.active { background: var(--primary-light); border-color: var(--primary-start); color: var(--primary-start); }
+  .form-control-date { max-width: 190px; }
+  .logbook-form textarea { resize: vertical; }
+  .modal-footer .btn { min-width: 110px; }
+  /* ===== BAR NAVIGASI PEKAN ===== */
+  .week-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    background: var(--primary-light); border-radius: 1rem; padding: 0.7rem 1rem; margin-bottom: 1rem;
+  }
+  .week-bar .judul { font-weight: 700; color: var(--primary-dark); }
+  .kegiatan-cell { white-space: pre-line; min-width: 200px; }
+  .hasil-line { display: block; margin-top: 0.3rem; font-size: 0.85em; color: #475569; white-space: pre-line; }
+  .hasil-line .lbl { font-weight: 600; color: #0f766e; }
+  .hasil-kosong { display: block; margin-top: 0.3rem; font-size: 0.8em; color: #b45309; }
+  @media (max-width: 576px) { .week-bar { padding: 0.6rem; } .form-control-date { max-width: 100%; flex: 1 1 100%; } }
 </style>
 
 <div class="container mt-4">
@@ -412,8 +434,8 @@
     <div class="panduan-text">
       <strong>Informasi Pengisian Logbook:</strong>
       <ul>
-        <li>Logbook magang wajib diisi setiap hari magang.</li>
-        <li>Logbook harus mencantumkan kegiatan, lokasi, dan durasi magang.</li>
+        <li>Isi setiap hari magang: kegiatan, hasil pekerjaan, dan durasi.</li>
+        <li>Halaman ini hanya menampilkan logbook pekan ini; pekan lain dibuka dengan tombol panah.</li>
         <li>Logbook akan diverifikasi oleh Dosen PA (dosen pembimbing).</li>
       </ul>
     </div>
@@ -430,24 +452,62 @@
   <% } %>
 
   <!-- TABEL LOGBOOK -->
+  <%
+    const BLN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const fTgl = (iso) => { const q = String(iso || '').split('-'); return q.length === 3 ? parseInt(q[2],10) + ' ' + BLN[parseInt(q[1],10)-1] : ''; };
+    const fTglTh = (iso) => { const q = String(iso || '').split('-'); return q.length === 3 ? fTgl(iso) + ' ' + q[0] : ''; };
+    const HARI = ['Ahad','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    const namaHari = (iso) => { const d = new Date(String(iso).substring(0,10) + 'T00:00:00Z'); return isNaN(d) ? '' : HARI[d.getUTCDay()]; };
+    const fJam = (n) => String(Number(Number(n || 0).toFixed(2)));
+    const base = selectedPeriod ? '/mahasiswa/magang/logbook?periodId=' + selectedPeriod.id : '';
+    const mingguVal = minggu && minggu.mingguKe ? minggu.mingguKe : '';
+  %>
   <div class="table-container">
+
+    <% if (selectedPeriod && minggu) { %>
+      <div class="week-bar">
+        <% if (minggu.mingguKe) { %>
+          <a class="btn btn-sm btn-outline-secondary <%= minggu.adaSebelumnya ? '' : 'disabled' %>"
+             href="<%= minggu.adaSebelumnya ? base + '&minggu=' + (minggu.mingguKe - 1) : '#' %>" aria-label="Minggu sebelumnya">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        <% } else { %><span></span><% } %>
+        <div class="text-center">
+          <div class="judul">
+            <%= minggu.mingguKe ? 'Minggu ke-' + minggu.mingguKe : '7 hari terakhir' %>
+            <% if (minggu.adalahPekanIni) { %><span class="badge bg-success ms-1">Pekan ini</span><% } %>
+          </div>
+          <small class="text-muted"><%= fTgl(minggu.awal) %> – <%= fTglTh(minggu.akhir) %> · <%= logbook.length %> entri · <%= fJam(totalJamMinggu) %> jam</small>
+        </div>
+        <% if (minggu.mingguKe) { %>
+          <a class="btn btn-sm btn-outline-secondary <%= minggu.adaBerikutnya ? '' : 'disabled' %>"
+             href="<%= minggu.adaBerikutnya ? base + '&minggu=' + (minggu.mingguKe + 1) : '#' %>" aria-label="Minggu berikutnya">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        <% } else { %><span></span><% } %>
+      </div>
+    <% } else if (selectedPeriod && modeRiwayat) { %>
+      <div class="week-bar">
+        <div class="judul"><i class="bi bi-clock-history me-1"></i> Riwayat semua logbook</div>
+        <a class="btn btn-sm btn-outline-primary" href="<%= base %>"><i class="bi bi-calendar-week"></i> Kembali ke pekan ini</a>
+      </div>
+    <% } %>
+
     <div class="table-responsive">
       <table class="table logbook-table">
         <thead>
           <tr>
             <th>Tanggal</th>
-            <th>Kegiatan</th>
-            <th>Lokasi</th>
+            <th>Kegiatan &amp; Hasil</th>
             <th>Durasi</th>
-            <th>Semester</th>
-            <th>Dokumentasi</th>
+            <th>Foto</th>
             <th>Status</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
           <% if (!selectedPeriod) { %>
-            <tr><td colspan="8" class="text-center py-5">
+            <tr><td colspan="6" class="text-center py-5">
               <div class="empty-state">
                 <i class="bi bi-inbox"></i>
                 <h4>Pilih Periode Magang</h4>
@@ -455,11 +515,11 @@
               </div>
             </td></tr>
           <% } else if (logbook.length === 0) { %>
-            <tr><td colspan="8" class="text-center py-5">
+            <tr><td colspan="6" class="text-center py-5">
               <div class="empty-state">
                 <i class="bi bi-inbox"></i>
-                <h4>Belum Ada Catatan</h4>
-                <p>Mulai tambahkan logbook pertama Anda untuk periode <%= selectedPeriod.pdkNama %>.</p>
+                <h4><%= modeRiwayat ? 'Belum Ada Catatan' : 'Belum ada catatan di pekan ini' %></h4>
+                <p><%= modeRiwayat ? 'Mulai tambahkan logbook pertama Anda untuk periode ' + selectedPeriod.pdkNama + '.' : 'Catat kegiatan magang Anda hari ini.' %></p>
                 <% if (canSubmit) { %>
                   <button class="btn btn-gradient mt-3" data-bs-toggle="modal" data-bs-target="#addLogbookModal">
                     <i class="bi bi-plus-circle"></i> Tambah Logbook
@@ -470,19 +530,28 @@
           <% } else { %>
             <% logbook.forEach(item => { %>
               <tr>
-                <td><span class="fw-semibold"><%= new Date(item.tanggal).toLocaleDateString('id-ID') %></span></td>
-                <td><%= item.kegiatan && item.kegiatan.length > 50 ? item.kegiatan.substring(0,50)+'...' : (item.kegiatan || '-') %></td>
-                <td><%= item.lokasi || '-' %></td>
-                <td><%= item.durasi ? item.durasi + ' jam' : '-' %></td>
-                <td><small><%= item.semester || '-' %></small></td>
                 <td>
-                  <% if (item.imageUrls && item.imageUrls.length > 0) { 
+                  <span class="fw-semibold"><%= namaHari(item.tanggal) %></span><br>
+                  <small class="text-muted"><%= fTglTh(item.tanggal) %></small>
+                </td>
+                <td class="kegiatan-cell">
+                  <%= item.kegiatan || '-' %>
+                  <% if (item.hasil) { %>
+                    <span class="hasil-line"><span class="lbl">Hasil:</span> <%= item.hasil %></span>
+                  <% } else if (canSubmit && item.status === 'pending') { %>
+                    <span class="hasil-kosong"><i class="bi bi-info-circle"></i> Hasil pekerjaan belum diisi</span>
+                  <% } %>
+                  <% if (item.lokasi) { %><small class="d-block text-muted mt-1"><i class="bi bi-geo-alt"></i> <%= item.lokasi %></small><% } %>
+                </td>
+                <td><%= item.durasi ? item.durasi + ' jam' : '-' %></td>
+                <td>
+                  <% if (item.imageUrls && item.imageUrls.length > 0) {
                     const firstUrl = item.imageUrls[0];
                     const fileIdMatch = firstUrl.match(/[?&]id=([^&]+)/);
                     const fileId = fileIdMatch ? fileIdMatch[1] : (firstUrl.match(/\/d\/([^\/]+)/) || [])[1];
                     const thumbUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w100` : firstUrl;
                   %>
-                    <img src="<%= thumbUrl %>" class="gallery-thumb" onclick='lihatGambar(<%= JSON.stringify(item.imageUrls) %>)' alt="dokumentasi" onerror="this.onerror=null; this.src='<%= firstUrl %>';">
+                    <img src="<%= thumbUrl %>" loading="lazy" class="gallery-thumb" onclick='lihatGambar(<%= JSON.stringify(item.imageUrls) %>)' alt="dokumentasi" onerror="this.onerror=null; this.src='<%= firstUrl %>';">
                   <% } else { %>
                     <span class="text-muted">-</span>
                   <% } %>
@@ -510,6 +579,8 @@
                     <div class="d-flex gap-2">
                       <button class="btn btn-sm btn-warning btn-icon" onclick="editLogbook('<%= item.id %>')" title="Edit"><i class="bi bi-pencil"></i></button>
                       <form method="POST" action="/mahasiswa/magang/logbook/<%= item.id %>/delete" style="display:inline;" onsubmit="return confirm('Yakin ingin menghapus logbook ini?')">
+                        <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+                        <input type="hidden" name="minggu" value="<%= mingguVal %>">
                         <button type="submit" class="btn btn-sm btn-danger btn-icon" title="Hapus"><i class="bi bi-trash"></i></button>
                       </form>
                     </div>
@@ -526,11 +597,18 @@
 
     <%- include('../../partials/pagination', { pageInfo: typeof pageInfo !== 'undefined' ? pageInfo : null, showAll: typeof showAll !== 'undefined' ? showAll : false, pageListUrl: typeof pageListUrl !== 'undefined' ? pageListUrl : '?' }) %>
 
-    <!-- Tombol Cetak (hanya jika ada selectedPeriod dan ada logbook) -->
-    <% if (selectedPeriod && logbook.length > 0) { %>
+    <% if (selectedPeriod && !modeRiwayat && totalLogbook > 0) { %>
+      <div class="text-center mt-2">
+        <a href="<%= base %>&semua=1" class="small text-decoration-none">
+          <i class="bi bi-clock-history"></i> Lihat riwayat semua logbook (<%= totalLogbook %> entri)
+        </a>
+      </div>
+    <% } %>
+
+    <% if (selectedPeriod && totalLogbook > 0) { %>
       <div class="mt-4 text-end">
         <a href="/mahasiswa/magang/logbook-print?periodId=<%= selectedPeriod.id %>" class="print-btn" target="_blank">
-          <i class="bi bi-printer"></i> Cetak Logbook
+          <i class="bi bi-file-earmark-text"></i> Pratinjau &amp; Cetak Logbook
         </a>
       </div>
     <% } %>
@@ -546,46 +624,21 @@
 
 <!-- MODAL TAMBAH LOGBOOK -->
 <div class="modal fade" id="addLogbookModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Tambah Logbook - <%= selectedPeriod ? selectedPeriod.pdkNama : '' %></h5>
+        <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Tambah Logbook</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form method="POST" action="/mahasiswa/magang/logbook" enctype="multipart/form-data">
+      <form method="POST" action="/mahasiswa/magang/logbook" enctype="multipart/form-data" id="addForm">
         <div class="modal-body">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label for="tanggal" class="form-label">Tanggal Kegiatan <span class="text-danger">*</span></label>
-              <input type="date" class="form-control" id="tanggal" name="tanggal" required>
-            </div>
-            <div class="col-md-6">
-              <label for="semester" class="form-label">Semester</label>
-              <input type="text" class="form-control" id="semester" name="semester" value="<%= (selectedPeriod && selectedPeriod.semester) ? selectedPeriod.semester : getCurrentSemester() %>" readonly>
-            </div>
-            <div class="col-md-6">
-              <label for="lokasi" class="form-label">Lokasi</label>
-              <input type="text" class="form-control" id="lokasi" name="lokasi">
-            </div>
-            <div class="col-md-6">
-              <label for="durasi" class="form-label">Durasi (jam)</label>
-              <input type="number" class="form-control" id="durasi" name="durasi" step="0.5" min="0">
-            </div>
-            <div class="col-md-12">
-              <label for="kegiatan" class="form-label">Deskripsi Kegiatan <span class="text-danger">*</span></label>
-              <textarea class="form-control" id="kegiatan" name="kegiatan" rows="4" required></textarea>
-            </div>
-            <div class="col-md-12">
-              <label for="images" class="form-label">Dokumentasi (Maks 5 gambar)</label>
-              <input type="file" class="form-control" id="images" name="images" accept="image/*" multiple>
-              <small class="text-muted">Format JPG/PNG, masing-masing maks 2MB</small>
-            </div>
-            <input type="hidden" name="periodId" value="<%= selectedPeriod ? selectedPeriod.id : '' %>">
-          </div>
+          <%- include('_form_logbook_fields', { p: 'add', hariIni: hariIni, mulai: selectedPeriod ? selectedPeriod.tanggalMulai : '', withFoto: true }) %>
+          <input type="hidden" name="semester" value="<%= (selectedPeriod && selectedPeriod.semester) ? selectedPeriod.semester : getCurrentSemester() %>">
+          <input type="hidden" name="periodId" value="<%= selectedPeriod ? selectedPeriod.id : '' %>">
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-gradient">Simpan Logbook</button>
+          <button type="submit" class="btn btn-gradient" id="addSubmit">Simpan Logbook</button>
         </div>
       </form>
     </div>
@@ -594,7 +647,7 @@
 
 <!-- MODAL EDIT LOGBOOK -->
 <div class="modal fade" id="editLogbookModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Logbook</h5>
@@ -602,33 +655,13 @@
       </div>
       <form method="POST" action="" id="editForm" enctype="multipart/form-data">
         <div class="modal-body">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">Tanggal</label>
-              <input type="date" class="form-control" id="editTanggal" name="tanggal" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Semester</label>
-              <input type="text" class="form-control" id="editSemester" name="semester" readonly>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Lokasi</label>
-              <input type="text" class="form-control" id="editLokasi" name="lokasi">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Durasi (jam)</label>
-              <input type="number" class="form-control" id="editDurasi" name="durasi" step="0.5" min="0">
-            </div>
-            <div class="col-md-12">
-              <label class="form-label">Kegiatan</label>
-              <textarea class="form-control" id="editKegiatan" name="kegiatan" rows="4" required></textarea>
-            </div>
-            <input type="hidden" name="periodId" value="<%= selectedPeriod ? selectedPeriod.id : '' %>">
-          </div>
+          <%- include('_form_logbook_fields', { p: 'edit', hariIni: hariIni, mulai: selectedPeriod ? selectedPeriod.tanggalMulai : '', withFoto: false }) %>
+          <input type="hidden" name="periodId" value="<%= selectedPeriod ? selectedPeriod.id : '' %>">
+          <input type="hidden" name="minggu" value="<%= mingguVal %>">
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-gradient">Update Logbook</button>
+          <button type="submit" class="btn btn-gradient" id="editSubmit">Update Logbook</button>
         </div>
       </form>
     </div>
@@ -659,21 +692,104 @@
 </div>
 
 <script>
+  // Tanggal yang sudah terisi pada pekan yang sedang tampil (tanpa query tambahan)
+  const TANGGAL_TERISI = <%- JSON.stringify(typeof tanggalTerisi !== 'undefined' ? tanggalTerisi : []) %>;
+  const HARI_INI = '<%= typeof hariIni !== 'undefined' ? hariIni : '' %>';
+
+  function geserTanggal(iso, delta) {
+    const d = new Date(iso + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() + delta);
+    return d.toISOString().substring(0, 10);
+  }
+  function tandaiChip(group, attr, val) {
+    group.querySelectorAll('[' + attr + ']').forEach(c => c.classList.toggle('active', c.getAttribute(attr) === String(val)));
+  }
+  function cekDuplikat(prefix, kecualiTanggal) {
+    const el = document.getElementById(prefix + 'Tanggal');
+    const warn = document.getElementById(prefix + 'DupWarn');
+    if (!el || !warn) return;
+    const dup = el.value && el.value !== kecualiTanggal && TANGGAL_TERISI.includes(el.value);
+    warn.classList.toggle('d-none', !dup);
+  }
+  function pasangFormLogbook(prefix, root) {
+    const tgl = document.getElementById(prefix + 'Tanggal');
+    const dur = document.getElementById(prefix + 'Durasi');
+    root.querySelectorAll('[data-set-tanggal]').forEach(btn => btn.addEventListener('click', () => {
+      tgl.value = geserTanggal(HARI_INI, parseInt(btn.dataset.setTanggal, 10));
+      tandaiChip(root, 'data-set-tanggal', btn.dataset.setTanggal);
+      cekDuplikat(prefix);
+    }));
+    root.querySelectorAll('[data-set-durasi]').forEach(btn => btn.addEventListener('click', () => {
+      dur.value = btn.dataset.setDurasi;
+      tandaiChip(root, 'data-set-durasi', btn.dataset.setDurasi);
+    }));
+    if (dur) dur.addEventListener('input', () => tandaiChip(root, 'data-set-durasi', dur.value));
+    if (tgl) tgl.addEventListener('change', () => cekDuplikat(prefix, tgl.dataset.asal));
+  }
+
+  // Cegah klik ganda "Simpan" (penyebab entri dobel) + tampilkan proses
+  function kunciSubmit(formId, btnId, teks) {
+    const f = document.getElementById(formId);
+    if (!f) return;
+    f.addEventListener('submit', () => {
+      const b = document.getElementById(btnId);
+      b.disabled = true;
+      b.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + teks;
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const addModal = document.getElementById('addLogbookModal');
+    const editModal = document.getElementById('editLogbookModal');
+    if (addModal) pasangFormLogbook('add', addModal);
+    if (editModal) pasangFormLogbook('edit', editModal);
+    kunciSubmit('addForm', 'addSubmit', 'Menyimpan...');
+    kunciSubmit('editForm', 'editSubmit', 'Memperbarui...');
+
+    // Ingat lokasi & durasi terakhir (hemat ketikan); hanya di perangkat ini
+    if (addModal) {
+      try {
+        const lokasi = document.getElementById('addLokasi');
+        const durasi = document.getElementById('addDurasi');
+        if (lokasi && !lokasi.value) lokasi.value = localStorage.getItem('logbook_lokasi') || '';
+        if (durasi && !durasi.value) { durasi.value = localStorage.getItem('logbook_durasi') || ''; tandaiChip(addModal, 'data-set-durasi', durasi.value); }
+        tandaiChip(addModal, 'data-set-tanggal', '0');
+        document.getElementById('addForm').addEventListener('submit', () => {
+          try {
+            localStorage.setItem('logbook_lokasi', lokasi.value);
+            localStorage.setItem('logbook_durasi', durasi.value);
+          } catch (e) {}
+        });
+      } catch (e) {}
+      cekDuplikat('add');
+
+      const img = document.getElementById('addImages');
+      const info = document.getElementById('addImagesInfo');
+      if (img) img.addEventListener('change', () => {
+        if (img.files.length > 5) { alert('Maksimal 5 foto.'); img.value = ''; info.textContent = 'Foto dikompres otomatis saat diunggah.'; return; }
+        info.textContent = img.files.length ? img.files.length + ' foto dipilih' : 'Foto dikompres otomatis saat diunggah.';
+      });
+    }
+  });
+
   function editLogbook(id) {
     fetch(`/mahasiswa/magang/logbook/${id}`)
-      .then(res => res.json())
+      .then(res => { if (!res.ok) throw new Error('Data tidak ditemukan'); return res.json(); })
       .then(data => {
-        document.getElementById('editTanggal').value = data.tanggal ? data.tanggal.split('T')[0] : '';
-        document.getElementById('editSemester').value = data.semester || '';
+        const tgl = document.getElementById('editTanggal');
+        tgl.value = data.tanggal ? data.tanggal.split('T')[0] : '';
+        tgl.dataset.asal = tgl.value; // tanggalnya sendiri tidak dihitung duplikat
         document.getElementById('editKegiatan').value = data.kegiatan || '';
+        document.getElementById('editHasil').value = data.hasil || '';
         document.getElementById('editLokasi').value = data.lokasi || '';
         document.getElementById('editDurasi').value = data.durasi || '';
+        tandaiChip(document.getElementById('editLogbookModal'), 'data-set-durasi', data.durasi || '');
         document.getElementById('editForm').action = `/mahasiswa/magang/logbook/${id}/edit`;
+        cekDuplikat('edit', tgl.dataset.asal);
         new bootstrap.Modal(document.getElementById('editLogbookModal')).show();
       })
       .catch(err => alert('Gagal memuat data: ' + err.message));
   }
-
   function getFileId(url) {
     if (!url) return null;
     let match = url.match(/[?&]id=([^&]+)/);

@@ -118,6 +118,65 @@ function buildBarisMingguan(entries, windowStart) {
 }
 
 /**
+ * Tanggal hari ini (YYYY-MM-DD) menurut WITA (Asia/Makassar), bukan UTC server,
+ * supaya "pekan ini" tidak bergeser sehari saat mahasiswa mengisi pagi hari.
+ */
+function todayWITA() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Makassar' });
+}
+
+/**
+ * Menentukan rentang 7 hari (minggu ke-N) untuk tampilan "pekan ini" di halaman
+ * logbook mahasiswa. Pembagian minggu SAMA dengan cetak logbook (dihitung dari
+ * tanggal mulai periode), sehingga lembar cetak dan tampilan web selalu searah.
+ *
+ * @param {Object} opt - { tanggalMulai, tanggalSelesai, mingguKe (opsional, dari ?minggu=) }
+ * @param {string} [today] - YYYY-MM-DD (default: hari ini WITA)
+ * @returns {{mingguKe:number|null, awal:string, akhir:string, mingguSekarang:number|null,
+ *            totalMinggu:number|null, adalahPekanIni:boolean, adaSebelumnya:boolean, adaBerikutnya:boolean}}
+ */
+function getRentangMinggu(opt, today) {
+  today = today || todayWITA();
+  const t = parseTanggalUTC(today);
+  const mulai = opt && opt.tanggalMulai ? parseTanggalUTC(opt.tanggalMulai) : null;
+
+  // Periode tanpa tanggal mulai: pakai 7 hari terakhir (tanpa navigasi minggu)
+  if (!mulai) {
+    return {
+      mingguKe: null, awal: formatTanggalISO(addDaysUTC(t, -6)), akhir: today,
+      mingguSekarang: null, totalMinggu: null,
+      adalahPekanIni: true, adaSebelumnya: false, adaBerikutnya: false
+    };
+  }
+
+  const selesai = opt.tanggalSelesai ? parseTanggalUTC(opt.tanggalSelesai) : null;
+  const diff = Math.floor((t - mulai) / 86400000);
+  let sekarang = diff < 0 ? 1 : Math.floor(diff / 7) + 1;
+  let totalMinggu = null;
+  if (selesai && selesai >= mulai) {
+    const hari = Math.floor((selesai - mulai) / 86400000) + 1;
+    totalMinggu = Math.ceil(hari / 7);
+    if (sekarang > totalMinggu) sekarang = totalMinggu; // periode sudah lewat -> minggu terakhir
+  }
+
+  let n = parseInt(opt.mingguKe, 10);
+  if (isNaN(n) || n < 1) n = sekarang;
+  if (n > sekarang) n = sekarang; // tidak ada minggu di masa depan
+
+  const awal = addDaysUTC(mulai, (n - 1) * 7);
+  return {
+    mingguKe: n,
+    awal: formatTanggalISO(awal),
+    akhir: formatTanggalISO(addDaysUTC(awal, 6)),
+    mingguSekarang: sekarang,
+    totalMinggu,
+    adalahPekanIni: n === sekarang,
+    adaSebelumnya: n > 1,
+    adaBerikutnya: n < sekarang
+  };
+}
+
+/**
  * Mengelompokkan daftar logbook menjadi array grup per minggu,
  * masing-masing berisi entries, rentang tanggal, total durasi, mingguKe/bulanKe,
  * dan `rows` (7 baris Senin..Ahad) untuk lembar logbook mingguan.
@@ -374,6 +433,9 @@ async function buildLogbookPrintData(mahasiswaId, periodId) {
 
 module.exports = {
   buildLogbookPrintData,
+  getRentangMinggu,
+  getMingguBulanKe,
+  todayWITA,
   calculateProgress,
   groupLogbookByMinggu,
   groupKehadiranByBulan,

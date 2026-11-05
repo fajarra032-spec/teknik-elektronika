@@ -31,6 +31,7 @@ const {
 const { buildFormPenilaianData } = require('../../helpers/formPenilaianMagangHelper');
 const { buildKartuKontrolData } = require('../../helpers/kartuKontrolMagangHelper');
 const { buildLogbookPrintData } = require('../../helpers/logbookPrintHelper');
+const { tampilkanCetakLogbook } = require('../../helpers/logbookPdfHelper');
 const {
   ROLE_PEMBIMBING,
   isPembimbingMahasiswa,
@@ -772,7 +773,7 @@ router.get('/print/:userId', async (req, res) => {
     }
     const data = await buildLogbookPrintData(userId, periodId);
     if (!data) return res.status(404).send('Data mahasiswa tidak ditemukan');
-    res.render('mahasiswa/magang/print', { ...data, title: `Cetak Logbook - ${data.mahasiswa.nama}`, user: req.user });
+    tampilkanCetakLogbook(req, res, { ...data, title: `Cetak Logbook - ${data.mahasiswa.nama}`, user: req.user });
   } catch (error) {
     console.error('Error print logbook dosen:', error);
     res.status(500).send('Gagal mencetak logbook');
