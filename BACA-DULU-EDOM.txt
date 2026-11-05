@@ -1,0 +1,21 @@
+PEMBARUAN EDOM
+==============
+Ekstrak zip ini LANGSUNG ke ROOT proyek (C:\Users\ASUS\teknik-elektronika), pilih "Replace" jika ditanya.
+
+File:
+  scripts/cek-edom-aktif.js            BARU   cek periode & pertanyaan aktif (read-only)
+  scripts/ganti-pertanyaan-edom.js     BARU   ganti 15 pertanyaan rating + 2 teks
+  scripts/buat-periode-edom.js         BARU   buat periode baru, tutup yang lama
+  helpers/edomRekapHelper.js           BARU   perhitungan hasil EDOM
+  routes/admin/edom.js                 TIMPA  rekap, detail dosen, ekspor CSV
+  views/admin/edom/rekap.ejs           TIMPA  halaman rekap
+  views/admin/edom/rekap_dosen.ejs     BARU   halaman detail dosen
+
+URUTAN (dari root proyek)
+  1. node scripts/cek-edom-aktif.js
+  2. node scripts/ganti-pertanyaan-edom.js              <- dry-run
+     node scripts/ganti-pertanyaan-edom.js --confirm
+  3. node scripts/buat-periode-edom.js --mulai=2026-11-06 --selesai=2026-11-20             <- dry-run
+     node scripts/buat-periode-edom.js --mulai=2026-11-06 --selesai=2026-11-20 --confirm
+  4. node scripts/cek-edom-aktif.js
+  5. RESTART server, buka /admin/edom/rekap, Ctrl+F5.

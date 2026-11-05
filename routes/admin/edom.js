@@ -262,43 +262,85 @@ router.post('/questions/:id/delete', async (req, res) => {
 });
 
 // ==================== REKAP HASIL ====================
+const {
+  ambilKuisionerMap, ambilResponPeriode, hitungRekapPeriode, hitungDetailDosen
+} = require('../../helpers/edomRekapHelper');
+
+async function ambilPeriode() {
+  const snap = await db.collection('edom_periode').orderBy('tanggalMulai', 'desc').get();
+  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
 router.get('/rekap', async (req, res) => {
   try {
-    const { periodeId } = req.query;
-    const periodsSnap = await db.collection('edom_periode').orderBy('tanggalMulai', 'desc').get();
-    const periods = periodsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    let results = [];
+    const { periodeId, urut = 'nama' } = req.query;
+    const periods = await ambilPeriode();
+    let rekap = null;
     if (periodeId) {
-      const responSnap = await db.collection('edom_respon').where('periodeId', '==', periodeId).get();
-      const dosenMap = new Map();
-      for (const doc of responSnap.docs) {
-        const data = doc.data();
-        if (!dosenMap.has(data.dosenId)) {
-          dosenMap.set(data.dosenId, {
-            dosenId: data.dosenId,
-            dosenNama: data.dosenNama,
-            totalNilai: 0,
-            count: 0,
-            mkSet: new Set()
-          });
-        }
-        const entry = dosenMap.get(data.dosenId);
-        entry.totalNilai += data.nilaiRata;
-        entry.count++;
-        entry.mkSet.add(data.mkId);
-      }
-      results = Array.from(dosenMap.values()).map(r => ({
-        ...r,
-        average: r.count ? (r.totalNilai / r.count).toFixed(2) : 0,
-        jumlahMk: r.mkSet.size
-      }));
+      const [responList, kuisMap] = await Promise.all([ambilResponPeriode(periodeId), ambilKuisionerMap()]);
+      rekap = hitungRekapPeriode(responList, kuisMap);
+      if (urut === 'tertinggi') rekap.dosen.sort((a, b) => b.rata - a.rata);
+      else if (urut === 'terendah') rekap.dosen.sort((a, b) => a.rata - b.rata);
+      else rekap.dosen.sort((a, b) => a.dosenNama.localeCompare(b.dosenNama));
     }
     const message = getMessage(req);
-    res.render('admin/edom/rekap', { title: 'Rekap EDOM', periods, selectedPeriod: periodeId, results, message });
+    res.render('admin/edom/rekap', {
+      title: 'Rekap EDOM', periods, selectedPeriod: periodeId, selectedPeriodData: periods.find(p => p.id === periodeId) || null,
+      rekap, urut, message
+    });
   } catch (err) {
     console.error(err);
     setMessage(req, 'error', 'Gagal memuat rekap');
     res.redirect('/admin/edom');
+  }
+});
+
+// Detail hasil satu dosen (anonim: nama mahasiswa tidak ditampilkan)
+router.get('/rekap/:periodeId/dosen/:dosenId', async (req, res) => {
+  try {
+    const { periodeId, dosenId } = req.params;
+    const [responList, kuisMap, periodDoc] = await Promise.all([
+      ambilResponPeriode(periodeId), ambilKuisionerMap(), db.collection('edom_periode').doc(periodeId).get()
+    ]);
+    const detail = hitungDetailDosen(responList, kuisMap, dosenId);
+    if (!detail) {
+      setMessage(req, 'error', 'Belum ada respon untuk dosen ini pada periode tersebut');
+      return res.redirect(`/admin/edom/rekap?periodeId=${periodeId}`);
+    }
+    const message = getMessage(req);
+    res.render('admin/edom/rekap_dosen', {
+      title: `Hasil EDOM - ${detail.dosenNama}`, periodeId,
+      periode: periodDoc.exists ? { id: periodDoc.id, ...periodDoc.data() } : { id: periodeId, nama: periodeId, semester: '' },
+      detail, message
+    });
+  } catch (err) {
+    console.error(err);
+    setMessage(req, 'error', 'Gagal memuat detail hasil dosen');
+    res.redirect(`/admin/edom/rekap?periodeId=${req.params.periodeId}`);
+  }
+});
+
+// Ekspor CSV (dibuka di Excel): satu baris per dosen
+router.get('/rekap/:periodeId/export.csv', async (req, res) => {
+  try {
+    const { periodeId } = req.params;
+    const [responList, kuisMap] = await Promise.all([ambilResponPeriode(periodeId), ambilKuisionerMap()]);
+    const rekap = hitungRekapPeriode(responList, kuisMap);
+    rekap.dosen.sort((a, b) => a.dosenNama.localeCompare(b.dosenNama));
+    const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const kolom = ['No', 'Dosen', 'Jumlah MK', 'Jumlah Respon', 'Rata-rata', 'Predikat', ...rekap.indikatorAda];
+    const baris = rekap.dosen.map((d, i) => [
+      i + 1, d.dosenNama, d.jumlahMk, d.count, d.rataTeks.replace('.', ','), d.pred.label,
+      ...rekap.indikatorAda.map(n => { const x = d.indikator.find(k => k.nama === n); return x ? x.rata.toFixed(2).replace('.', ',') : ''; })
+    ]);
+    const csv = '\uFEFF' + [kolom, ...baris].map(r => r.map(esc).join(';')).join('\r\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="rekap_edom_${periodeId}.csv"`);
+    res.send(csv);
+  } catch (err) {
+    console.error(err);
+    setMessage(req, 'error', 'Gagal mengekspor rekap');
+    res.redirect(`/admin/edom/rekap?periodeId=${req.params.periodeId}`);
   }
 });
 

@@ -1,112 +1,35 @@
 <%- include('../../partials/header') %>
 
 <style>
-  :root {
-    --primary-start: #1e3a8a;
-    --primary-end: #3b82f6;
-  }
-  .page-header {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border-radius: 1.5rem;
-    padding: 1.8rem 2rem;
-    color: white;
-    margin-bottom: 2rem;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  }
-  .page-header h2 {
-    font-weight: 800;
-    font-size: 1.8rem;
-    margin-bottom: 0.5rem;
-  }
-  .page-header p {
-    opacity: 0.9;
-    margin-bottom: 0;
-  }
-  .filter-card {
-    background: white;
-    border-radius: 1rem;
-    padding: 1rem 1.2rem;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    border: 1px solid rgba(30,58,138,0.1);
-  }
-  .filter-card label {
-    font-weight: 600;
-    color: #1e293b;
-  }
-  .filter-card select {
-    border-radius: 2rem;
-    padding: 0.4rem 1rem;
-    min-width: 240px;
-  }
-  .btn-danger-custom {
-    background: #dc2626;
-    border: none;
-    border-radius: 60px;
-    padding: 0.4rem 1rem;
-    font-weight: 500;
-    transition: all 0.2s;
-    color: white;
-  }
-  .btn-danger-custom:hover {
-    background: #b91c1c;
-    transform: translateY(-2px);
-  }
-  .table-container {
-    background: white;
-    border-radius: 1.2rem;
-    overflow-x: auto;
-    border: 1px solid rgba(30,58,138,0.1);
-    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-  }
-  .table th {
-    background: #f8fafc;
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid #e2e8f0;
-    padding: 1rem;
-  }
-  .table td {
-    padding: 1rem;
-    vertical-align: middle;
-    border-bottom: 1px solid #f0f2f5;
-  }
-  .table tr:hover td {
-    background: #fefce8;
-  }
-  .rating-stars {
-    font-size: 0.9rem;
-    white-space: nowrap;
-  }
-  .empty-state {
-    text-align: center;
-    padding: 3rem;
-    background: #f8fafc;
-    border-radius: 1rem;
-    color: #6c757d;
-  }
-  .empty-state i {
-    font-size: 3rem;
-    color: #cbd5e1;
-    margin-bottom: 1rem;
-  }
-  @media (max-width: 768px) {
-    .page-header { padding: 1.2rem; }
-    .page-header h2 { font-size: 1.4rem; }
-    .table th, .table td { padding: 0.75rem; font-size: 0.85rem; }
-    .filter-card { flex-direction: column; align-items: stretch; }
-    .filter-card select { width: 100%; }
-  }
+  :root { --primary-start:#1e3a8a; --primary-end:#3b82f6; }
+  .page-header{background:linear-gradient(135deg,var(--primary-start),var(--primary-end));border-radius:1.5rem;padding:1.8rem 2rem;color:#fff;margin-bottom:1.5rem;box-shadow:0 10px 25px rgba(0,0,0,.1)}
+  .page-header h2{font-weight:800;font-size:1.8rem;margin-bottom:.5rem}
+  .page-header p{opacity:.9;margin-bottom:0}
+  .filter-card{background:#fff;border-radius:1rem;padding:1rem 1.2rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.03);border:1px solid rgba(30,58,138,.1)}
+  .filter-card label{font-weight:600;color:#1e293b;margin:0}
+  .filter-card select{border-radius:2rem;padding:.4rem 1rem;min-width:240px}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem;margin-bottom:1.5rem}
+  .stat-card{background:#fff;border-radius:1rem;padding:1.1rem 1.2rem;border:1px solid rgba(30,58,138,.1);box-shadow:0 2px 8px rgba(0,0,0,.04)}
+  .stat-card .lbl{font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;color:#64748b;font-weight:700}
+  .stat-card .val{font-size:1.9rem;font-weight:800;color:#1e293b;line-height:1.2}
+  .stat-card .sub{font-size:.85rem;color:#64748b}
+  .legend{background:#f8fafc;border:1px solid #e2e8f0;border-radius:1rem;padding:.8rem 1.1rem;margin-bottom:1.2rem;font-size:.85rem;color:#475569;display:flex;gap:.6rem 1.2rem;flex-wrap:wrap;align-items:center}
+  .dot{display:inline-block;width:.7rem;height:.7rem;border-radius:50%;margin-right:.3rem}
+  .table-container{background:#fff;border-radius:1.2rem;overflow-x:auto;border:1px solid rgba(30,58,138,.1);box-shadow:0 5px 20px rgba(0,0,0,.05)}
+  .table th{background:#f8fafc;font-weight:700;text-transform:uppercase;font-size:.75rem;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;padding:.9rem;white-space:nowrap}
+  .table td{padding:.9rem;vertical-align:middle;border-bottom:1px solid #f0f2f5}
+  .table tbody tr:hover td{background:#f0f7ff}
+  .skor{font-weight:800;font-size:1.05rem}
+  .bar{height:.5rem;background:#e2e8f0;border-radius:1rem;overflow:hidden;min-width:90px}
+  .bar>span{display:block;height:100%;border-radius:1rem}
+  .ind{font-size:.85rem;text-align:center;white-space:nowrap}
+  .empty-state{text-align:center;padding:3rem;background:#f8fafc;border-radius:1rem;color:#6c757d}
+  .empty-state i{font-size:3rem;color:#cbd5e1;display:block;margin-bottom:1rem}
+  @media(max-width:768px){.page-header{padding:1.2rem}.page-header h2{font-size:1.4rem}.filter-card{flex-direction:column;align-items:stretch}.filter-card select{width:100%}}
+  @media print{.filter-card,.no-print,.btn{display:none!important}.page-header{color:#000;background:none;box-shadow:none;padding:0}}
 </style>
 
 <div class="container mt-4">
-  <!-- Flash Message -->
   <% if (message) { %>
     <div class="alert alert-<%= message.type === 'success' ? 'success' : (message.type === 'error' ? 'danger' : 'info') %> alert-dismissible fade show" role="alert">
       <i class="bi bi-<%= message.type === 'success' ? 'check-circle-fill' : (message.type === 'error' ? 'exclamation-triangle-fill' : 'info-circle-fill') %> me-2"></i>
@@ -116,106 +39,109 @@
   <% } %>
 
   <div class="page-header">
-    <h2><i class="bi bi-bar-chart-steps me-2"></i>Rekap Hasil EDOM</h2>
-    <p>Rekapitulasi evaluasi dosen per periode</p>
+    <h2><i class="bi bi-bar-chart-steps me-2"></i>Hasil Evaluasi Dosen oleh Mahasiswa (EDOM)</h2>
+    <p><%= selectedPeriodData ? selectedPeriodData.nama + ' — ' + selectedPeriodData.semester : 'Pilih periode untuk melihat hasil evaluasi' %></p>
   </div>
 
-  <!-- Filter periode -->
-  <div class="filter-card">
-    <label for="periodeSelect"><i class="bi bi-calendar-week me-1"></i> Pilih Periode:</label>
-    <form method="GET" action="/admin/edom/rekap" id="periodeForm" style="flex:1; min-width: 200px;">
+  <div class="filter-card no-print">
+    <label for="periodeSelect"><i class="bi bi-calendar-week me-1"></i> Periode:</label>
+    <form method="GET" action="/admin/edom/rekap" style="flex:1;min-width:200px">
       <select name="periodeId" id="periodeSelect" class="form-select" onchange="this.form.submit()">
         <option value="">-- Pilih Periode --</option>
         <% periods.forEach(p => { %>
-          <option value="<%= p.id %>" <%= selectedPeriod === p.id ? 'selected' : '' %>><%= p.nama %> (<%= p.semester %>)</option>
+          <option value="<%= p.id %>" <%= selectedPeriod === p.id ? 'selected' : '' %>><%= p.nama %> (<%= p.semester %>)<%= p.status === 'active' ? ' • aktif' : '' %></option>
         <% }) %>
       </select>
     </form>
-    <% if (selectedPeriod && results && results.length > 0) { %>
-      <button class="btn-danger-custom" onclick="confirmDeleteAll('<%= selectedPeriod %>')">
-        <i class="bi bi-trash3 me-1"></i> Hapus Semua Respon Periode
-      </button>
+    <% if (rekap && rekap.dosen.length > 0) { %>
+      <a class="btn btn-success btn-sm rounded-pill" href="/admin/edom/rekap/<%= selectedPeriod %>/export.csv"><i class="bi bi-file-earmark-excel me-1"></i> Unduh Excel (CSV)</a>
+      <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="window.print()"><i class="bi bi-printer me-1"></i> Cetak</button>
+      <button class="btn btn-outline-danger btn-sm rounded-pill" onclick="hapusSemua('<%= selectedPeriod %>')"><i class="bi bi-trash3 me-1"></i> Hapus Semua Respon</button>
     <% } %>
   </div>
 
-  <% if (selectedPeriod) { %>
-    <% if (results && results.length > 0) { %>
-      <div class="table-container">
-        <table class="table mb-0">
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>Dosen</th>
-              <th>Jumlah MK Diampu</th>
-              <th>Jumlah Respon</th>
-              <th>Rata-rata Nilai</th>
-              <th>Rating</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% results.forEach((dosen, idx) => { 
-               let nilai = parseFloat(dosen.average);
-               let bintang = '';
-               let fullStars = Math.floor(nilai);
-               let halfStar = (nilai % 1) >= 0.5;
-               for (let i = 1; i <= 5; i++) {
-                 if (i <= fullStars) bintang += '<i class="bi bi-star-fill text-warning"></i>';
-                 else if (i === fullStars+1 && halfStar) bintang += '<i class="bi bi-star-half text-warning"></i>';
-                 else bintang += '<i class="bi bi-star text-muted"></i>';
-               }
-            %>
-              <tr>
-                <td class="text-center"><%= idx+1 %></td>
-                <td class="fw-semibold"><%= dosen.dosenNama %></td>
-                <td class="text-center"><%= dosen.jumlahMk %></td>
-                <td class="text-center"><%= dosen.count %></td>
-                <td class="text-center fw-bold"><%= dosen.average %></td>
-                <td class="rating-stars"><%- bintang %></td>
-                <td>
-                  <button class="btn btn-sm btn-outline-danger" onclick="confirmDeleteDosen('<%= selectedPeriod %>', '<%= dosen.dosenId %>', '<%= dosen.dosenNama.replace(/'/g, "\\'") %>')">
-                    <i class="bi bi-trash"></i> Hapus Respon Dosen
-                  </button>
-                </td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
-    <% } else { %>
-      <div class="empty-state">
-        <i class="bi bi-inbox"></i>
-        <p>Belum ada data respon untuk periode yang dipilih.</p>
-      </div>
-    <% } %>
-  <% } else { %>
-    <div class="empty-state">
-      <i class="bi bi-funnel"></i>
-      <p>Silakan pilih periode untuk melihat rekap hasil evaluasi.</p>
+  <% if (!selectedPeriod) { %>
+    <div class="empty-state"><i class="bi bi-funnel"></i><p>Silakan pilih periode untuk melihat hasil evaluasi.</p></div>
+  <% } else if (!rekap || rekap.dosen.length === 0) { %>
+    <div class="empty-state"><i class="bi bi-inbox"></i><p>Belum ada respon pada periode ini.</p></div>
+  <% } else { const r = rekap.ringkasan; %>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="lbl">Rata-rata Keseluruhan</div><div class="val" style="color:<%= r.pred.hex %>"><%= r.rataSemuaTeks %><span style="font-size:1rem;color:#94a3b8"> / 5</span></div><div class="sub"><%= r.pred.label %></div></div>
+      <div class="stat-card"><div class="lbl">Dosen Dievaluasi</div><div class="val"><%= r.jumlahDosen %></div><div class="sub">dosen</div></div>
+      <div class="stat-card"><div class="lbl">Mahasiswa Mengisi</div><div class="val"><%= r.jumlahMahasiswa %></div><div class="sub">mahasiswa</div></div>
+      <div class="stat-card"><div class="lbl">Total Evaluasi Masuk</div><div class="val"><%= r.jumlahRespon %></div><div class="sub">1 evaluasi = 1 mahasiswa untuk 1 mata kuliah</div></div>
     </div>
+
+    <div class="legend">
+      <strong>Skala 1–5:</strong>
+      <span><span class="dot" style="background:#16a34a"></span>4,50–5,00 Sangat Baik</span>
+      <span><span class="dot" style="background:#2563eb"></span>3,50–4,49 Baik</span>
+      <span><span class="dot" style="background:#d97706"></span>2,50–3,49 Cukup</span>
+      <span><span class="dot" style="background:#dc2626"></span>di bawah 2,50 Kurang</span>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 align-items-center mb-3 no-print">
+      <input type="search" id="cari" class="form-control rounded-pill" style="max-width:280px" placeholder="Cari nama dosen...">
+      <div class="btn-group btn-group-sm" role="group">
+        <a class="btn btn-outline-primary <%= urut === 'nama' ? 'active' : '' %>" href="?periodeId=<%= selectedPeriod %>&urut=nama">A–Z</a>
+        <a class="btn btn-outline-primary <%= urut === 'tertinggi' ? 'active' : '' %>" href="?periodeId=<%= selectedPeriod %>&urut=tertinggi">Nilai Tertinggi</a>
+        <a class="btn btn-outline-primary <%= urut === 'terendah' ? 'active' : '' %>" href="?periodeId=<%= selectedPeriod %>&urut=terendah">Nilai Terendah</a>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="table mb-0" id="tabelRekap">
+        <thead>
+          <tr>
+            <th>No</th><th>Dosen</th><th class="text-center">MK</th><th class="text-center">Evaluasi</th>
+            <th style="min-width:170px">Nilai Akhir</th><th>Predikat</th>
+            <% rekap.indikatorAda.forEach(n => { %><th class="text-center"><%= n %></th><% }) %>
+            <th class="no-print">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% rekap.dosen.forEach((d, i) => { %>
+            <tr data-nama="<%= d.dosenNama.toLowerCase() %>">
+              <td class="text-center"><%= i + 1 %></td>
+              <td class="fw-semibold"><a href="/admin/edom/rekap/<%= selectedPeriod %>/dosen/<%= d.dosenId %>" class="text-decoration-none"><%= d.dosenNama %></a></td>
+              <td class="text-center"><%= d.jumlahMk %></td>
+              <td class="text-center"><%= d.count %></td>
+              <td>
+                <div class="skor" style="color:<%= d.pred.hex %>"><%= d.rataTeks %></div>
+                <div class="bar"><span style="width:<%= Math.min(100, d.rata / 5 * 100) %>%;background:<%= d.pred.hex %>"></span></div>
+              </td>
+              <td><span class="badge text-bg-<%= d.pred.warna %>"><%= d.pred.label %></span></td>
+              <% rekap.indikatorAda.forEach(n => { const x = d.indikator.find(k => k.nama === n); %>
+                <td class="ind"><%= x ? x.rata.toFixed(2) : '-' %></td>
+              <% }) %>
+              <td class="no-print text-nowrap">
+                <a class="btn btn-sm btn-primary rounded-pill" href="/admin/edom/rekap/<%= selectedPeriod %>/dosen/<%= d.dosenId %>"><i class="bi bi-eye"></i> Detail</a>
+                <button class="btn btn-sm btn-outline-danger rounded-pill btn-hapus-dosen" data-periode="<%= selectedPeriod %>" data-dosen="<%= d.dosenId %>" data-nama="<%= d.dosenNama %>"><i class="bi bi-trash"></i></button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-muted small mt-2">Nilai akhir = rata-rata dari semua evaluasi mahasiswa untuk dosen tersebut. Kolom indikator = rata-rata jawaban pada kelompok pertanyaan itu. Klik nama dosen untuk melihat rincian per pertanyaan, per mata kuliah, dan umpan balik tertulis.</p>
   <% } %>
 </div>
 
 <script>
-  function confirmDeleteAll(periodeId) {
-    if (confirm('⚠️ PERINGATAN: Semua respon evaluasi untuk periode ini akan dihapus permanen. Tindakan ini tidak dapat dibatalkan. Lanjutkan?')) {
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `/admin/edom/rekap/${periodeId}/delete-all`;
-      document.body.appendChild(form);
-      form.submit();
-    }
+  function kirim(url) { const f = document.createElement('form'); f.method = 'POST'; f.action = url; document.body.appendChild(f); f.submit(); }
+  function hapusSemua(pid) {
+    if (confirm('PERINGATAN: Semua respon evaluasi periode ini dihapus permanen dan tidak bisa dikembalikan. Lanjutkan?')) kirim('/admin/edom/rekap/' + pid + '/delete-all');
   }
-
-  function confirmDeleteDosen(periodeId, dosenId, dosenNama) {
-    if (confirm(`Hapus semua respon untuk dosen "${dosenNama}" pada periode ini? Data tidak dapat dikembalikan.`)) {
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `/admin/edom/rekap/${periodeId}/delete-dosen/${dosenId}`;
-      document.body.appendChild(form);
-      form.submit();
-    }
-  }
+  document.querySelectorAll('.btn-hapus-dosen').forEach(b => b.addEventListener('click', () => {
+    if (confirm('Hapus semua respon untuk dosen "' + b.dataset.nama + '" pada periode ini? Data tidak bisa dikembalikan.'))
+      kirim('/admin/edom/rekap/' + b.dataset.periode + '/delete-dosen/' + b.dataset.dosen);
+  }));
+  const cari = document.getElementById('cari');
+  if (cari) cari.addEventListener('input', () => {
+    const q = cari.value.trim().toLowerCase();
+    document.querySelectorAll('#tabelRekap tbody tr').forEach(tr => { tr.style.display = tr.dataset.nama.includes(q) ? '' : 'none'; });
+  });
 </script>
 
 <%- include('../../partials/footer') %>

@@ -1,0 +1,140 @@
+<%- include('../../partials/header') %>
+
+<style>
+  :root { --primary-start:#1e3a8a; --primary-end:#3b82f6; }
+  .page-header{background:linear-gradient(135deg,var(--primary-start),var(--primary-end));border-radius:1.5rem;padding:1.8rem 2rem;color:#fff;margin-bottom:1.5rem;box-shadow:0 10px 25px rgba(0,0,0,.1)}
+  .page-header h2{font-weight:800;font-size:1.7rem;margin-bottom:.4rem}
+  .page-header p{opacity:.9;margin-bottom:0}
+  .kartu{background:#fff;border-radius:1.2rem;padding:1.3rem 1.5rem;margin-bottom:1.3rem;border:1px solid rgba(30,58,138,.1);box-shadow:0 4px 14px rgba(0,0,0,.05)}
+  .kartu h5{font-weight:800;color:#1e293b;margin-bottom:1rem}
+  .skor-besar{font-size:3.2rem;font-weight:800;line-height:1}
+  .bar{height:.7rem;background:#e2e8f0;border-radius:1rem;overflow:hidden}
+  .bar>span{display:block;height:100%;border-radius:1rem}
+  .ind-box{border:1px solid #e2e8f0;border-radius:1rem;padding:.9rem 1rem;height:100%}
+  .ind-box .nm{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b}
+  .ind-box .nl{font-size:1.7rem;font-weight:800}
+  .p-row{padding:.8rem 0;border-bottom:1px solid #f1f5f9}
+  .p-row:last-child{border-bottom:none}
+  .p-teks{color:#1e293b;font-weight:500}
+  .chip{font-size:.72rem;background:#eff6ff;color:#1d4ed8;border-radius:1rem;padding:.1rem .6rem;margin-left:.4rem;font-weight:600}
+  .dist{display:flex;gap:.25rem;font-size:.72rem;color:#64748b;margin-top:.3rem}
+  .dist span{background:#f1f5f9;border-radius:.4rem;padding:.05rem .45rem}
+  .fb{background:#f8fafc;border-left:4px solid #3b82f6;border-radius:.6rem;padding:.7rem 1rem;margin-bottom:.6rem}
+  .fb small{color:#94a3b8}
+  .fb-merah{border-left-color:#dc2626}
+  @media(max-width:768px){.page-header{padding:1.2rem}.skor-besar{font-size:2.4rem}}
+  @media print{.no-print,.btn{display:none!important}.page-header{color:#000;background:none;box-shadow:none;padding:0}.kartu{box-shadow:none;break-inside:avoid}}
+</style>
+
+<div class="container mt-4">
+  <% if (message) { %>
+    <div class="alert alert-<%= message.type === 'success' ? 'success' : (message.type === 'error' ? 'danger' : 'info') %> alert-dismissible fade show" role="alert">
+      <%= message.text %><button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% } %>
+
+  <div class="d-flex gap-2 mb-3 no-print">
+    <a href="/admin/edom/rekap?periodeId=<%= periodeId %>" class="btn btn-outline-secondary btn-sm rounded-pill"><i class="bi bi-arrow-left me-1"></i> Kembali ke Rekap</a>
+    <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="window.print()"><i class="bi bi-printer me-1"></i> Cetak</button>
+  </div>
+
+  <div class="page-header">
+    <h2><i class="bi bi-person-badge me-2"></i><%= detail.dosenNama %></h2>
+    <p><%= periode.nama %><%= periode.semester ? ' — ' + periode.semester : '' %></p>
+  </div>
+
+  <!-- Ringkasan -->
+  <div class="kartu">
+    <div class="row align-items-center g-3">
+      <div class="col-md-4 text-center">
+        <div class="skor-besar" style="color:<%= detail.pred.hex %>"><%= detail.rataTeks %></div>
+        <div class="text-muted">dari 5,00</div>
+        <span class="badge text-bg-<%= detail.pred.warna %> mt-2 fs-6"><%= detail.pred.label %></span>
+      </div>
+      <div class="col-md-8">
+        <div class="bar mb-2"><span style="width:<%= Math.min(100, detail.rata / 5 * 100) %>%;background:<%= detail.pred.hex %>"></span></div>
+        <div class="text-muted">Berdasarkan <strong><%= detail.count %></strong> evaluasi dari mahasiswa pada <strong><%= detail.mk.length %></strong> mata kuliah.</div>
+        <% if (detail.count < 5) { %>
+          <div class="small text-warning mt-2"><i class="bi bi-exclamation-triangle me-1"></i>Jumlah evaluasi masih sedikit (&lt; 5), nilai belum tentu mewakili seluruh kelas.</div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Per indikator -->
+  <% if (detail.indikator.length > 0) { %>
+  <div class="kartu">
+    <h5><i class="bi bi-grid-3x3-gap me-2"></i>Nilai per Indikator</h5>
+    <div class="row g-3">
+      <% detail.indikator.forEach(i => { %>
+        <div class="col-6 col-md-3">
+          <div class="ind-box">
+            <div class="nm"><%= i.nama %></div>
+            <div class="nl" style="color:<%= i.pred.hex %>"><%= i.rataTeks %></div>
+            <div class="bar mt-1"><span style="width:<%= Math.min(100, i.rata / 5 * 100) %>%;background:<%= i.pred.hex %>"></span></div>
+            <div class="small text-muted mt-1"><%= i.pred.label %></div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Per mata kuliah -->
+  <div class="kartu">
+    <h5><i class="bi bi-journal-text me-2"></i>Nilai per Mata Kuliah</h5>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>Mata Kuliah</th><th class="text-center">Evaluasi</th><th style="min-width:180px">Nilai</th><th>Predikat</th></tr></thead>
+        <tbody>
+          <% detail.mk.forEach(m => { %>
+            <tr>
+              <td><strong><%= m.mkNama %></strong><% if (m.mkKode) { %> <span class="text-muted small">(<%= m.mkKode %>)</span><% } %></td>
+              <td class="text-center"><%= m.count %></td>
+              <td>
+                <span class="fw-bold" style="color:<%= m.pred.hex %>"><%= m.rataTeks %></span>
+                <div class="bar mt-1"><span style="width:<%= Math.min(100, m.rata / 5 * 100) %>%;background:<%= m.pred.hex %>"></span></div>
+              </td>
+              <td><span class="badge text-bg-<%= m.pred.warna %>"><%= m.pred.label %></span></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Per pertanyaan -->
+  <div class="kartu">
+    <h5><i class="bi bi-list-check me-2"></i>Nilai per Pertanyaan</h5>
+    <% detail.pertanyaan.forEach((p, idx) => { %>
+      <div class="p-row">
+        <div class="d-flex justify-content-between gap-3">
+          <div class="p-teks"><%= idx + 1 %>. <%= p.pertanyaan %><% if (p.indikator) { %><span class="chip"><%= p.indikator %></span><% } %></div>
+          <div class="fw-bold text-nowrap" style="color:<%= p.pred.hex %>"><%= p.rataTeks %></div>
+        </div>
+        <div class="bar mt-2"><span style="width:<%= Math.min(100, p.rata / 5 * 100) %>%;background:<%= p.pred.hex %>"></span></div>
+        <div class="dist" title="Jumlah mahasiswa yang memilih skor 1 sampai 5">
+          <% p.dist.forEach((n, k) => { %><span>skor <%= k + 1 %>: <%= n %></span><% }) %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+
+  <!-- Umpan balik teks -->
+  <% if (detail.teks.length > 0) { %>
+  <div class="kartu">
+    <h5><i class="bi bi-chat-quote me-2"></i>Umpan Balik Mahasiswa <span class="text-muted fw-normal fs-6">(anonim)</span></h5>
+    <% detail.teks.forEach(t => { const negatif = /negatif|perbaikan|kurang/i.test(t.pertanyaan); %>
+      <h6 class="fw-bold mt-3"><%= t.pertanyaan %> <span class="text-muted fw-normal">(<%= t.jawaban.length %> jawaban)</span></h6>
+      <% t.jawaban.forEach(j => { %>
+        <div class="fb <%= negatif ? 'fb-merah' : '' %>">
+          <%= j.teks %>
+          <% if (j.mk) { %><br><small><i class="bi bi-journal me-1"></i><%= j.mk %></small><% } %>
+        </div>
+      <% }) %>
+    <% }) %>
+  </div>
+  <% } %>
+</div>
+
+<%- include('../../partials/footer') %>
