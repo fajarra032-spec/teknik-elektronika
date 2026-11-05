@@ -30,7 +30,10 @@ const {
 } = require('../../helpers/nilaiMagangHelper');
 const { buildFormPenilaianData } = require('../../helpers/formPenilaianMagangHelper');
 const { buildKartuKontrolData } = require('../../helpers/kartuKontrolMagangHelper');
-const { buildLogbookPrintData } = require('../../helpers/logbookPrintHelper');
+const { buildLogbookPrintData, groupLogbookByMinggu, getRentangMinggu } = require('../../helpers/logbookPrintHelper');
+const {
+  getKonsultasiByPeriod, mingguDisetujui, setujuiMinggu, cabutPersetujuanMinggu, normalisasiNoWa
+} = require('../../helpers/konsultasiLogbookHelper');
 const { tampilkanCetakLogbook } = require('../../helpers/logbookPdfHelper');
 const {
   ROLE_PEMBIMBING,
@@ -396,6 +399,47 @@ router.get('/:userId', async (req, res) => {
     // relevan kalau ada periode magang yang dipilih.
     const nilaiMagang = selectedPeriod ? await getNilaiMagang(userId, selectedPeriod.pdkId) : null;
 
+    // Persetujuan logbook PER MINGGU (konsultasi via WA + catatan dosen)
+    let mingguList = [];
+    if (selectedPeriod && selectedPeriod.tanggalMulai) {
+      try {
+        const [semuaSnap, konsultasiMap] = await Promise.all([
+          db.collection('logbookMagang')
+            .where('userId', '==', userId)
+            .where('pdkId', '==', selectedPeriod.pdkId)
+            .orderBy('tanggal', 'asc')
+            .get(),
+          getKonsultasiByPeriod(selectedPeriod.id)
+        ]);
+        const semuaLogbook = semuaSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const grup = groupLogbookByMinggu(semuaLogbook, selectedPeriod.tanggalMulai);
+        const rentang = getRentangMinggu({ tanggalMulai: selectedPeriod.tanggalMulai, tanggalSelesai: selectedPeriod.tanggalSelesai });
+        const sampai = rentang.mingguSekarang || 1;
+        const maxData = grup.reduce((m, g) => Math.max(m, g.mingguKe), 0);
+        for (let n = Math.max(sampai, maxData); n >= 1; n--) {
+          const g = grup.find(x => x.mingguKe === n);
+          const k = konsultasiMap[n] || null;
+          const awalMs = new Date(selectedPeriod.tanggalMulai + 'T00:00:00Z').getTime() + (n - 1) * 7 * 86400000;
+          const awal = g ? g.periodeAwal : new Date(awalMs).toISOString().substring(0, 10);
+          const akhir = g ? g.periodeAkhir : new Date(awalMs + 6 * 86400000).toISOString().substring(0, 10);
+          const entries = g ? g.entries : [];
+          mingguList.push({
+            mingguKe: n, awal, akhir,
+            awalFmt: formatDate(awal), akhirFmt: formatDate(akhir),
+            jumlahEntri: entries.length,
+            totalJam: g ? g.totalDurasi : 0,
+            pending: entries.filter(e => e.status === 'pending').length,
+            disetujui: mingguDisetujui(k, entries),
+            konsultasi: k && k.status === 'approved' ? k : null
+          });
+        }
+      } catch (err) {
+        console.error('Error bangun daftar minggu logbook:', err);
+        mingguList = [];
+      }
+    }
+    const noWaMahasiswa = mahasiswa.noHp && mahasiswa.noHp !== '-' ? mahasiswa.noHp : '';
+
     res.render('dosen/magang_detail', {
       title: `ELK Magang - ${mahasiswa.nama}`,
       mahasiswa,
@@ -416,6 +460,9 @@ router.get('/:userId', async (req, res) => {
       KATEGORI_NILAI_DOSEN: daftarKategori(ITEM_NILAI_DOSEN),
       laporanList,
       adaLaporanYangAcc,
+      mingguList,
+      noWaMahasiswa,
+      noWaLink: normalisasiNoWa(noWaMahasiswa),
       user: req.user,
       pageInfo,
       showAll,
@@ -647,6 +694,79 @@ router.post('/logbook/:id/reject', async (req, res) => {
   } catch (error) {
     console.error('Error reject logbook:', error);
     req.session.error = 'Gagal menolak logbook';
+    res.redirect('back');
+  }
+});
+
+// ============================================================================
+// SETUJUI / CABUT LOGBOOK PER MINGGU KE-N (konsultasi via WA + catatan dosen)
+// ============================================================================
+async function siapkanMinggu(req, res) {
+  const { userId, mingguKe } = req.params;
+  const n = parseInt(mingguKe, 10);
+  const periodId = req.body.periodId;
+  const kembali = `/dosen/magang/${userId}${periodId ? `?periodId=${encodeURIComponent(periodId)}` : ''}`;
+
+  if (!(await canApprove(req.dosen.id, userId))) {
+    req.session.error = 'Hanya Dosen Pembimbing (Dosen PA) mahasiswa ini yang dapat menyetujui logbook';
+    res.redirect(kembali); return null;
+  }
+  const periods = await getActiveMagangPeriods(userId);
+  const period = periods.find(p => p.id === periodId);
+  if (!period || !period.tanggalMulai || !(n >= 1)) {
+    req.session.error = 'Periode magang / minggu tidak valid';
+    res.redirect(kembali); return null;
+  }
+  if (!(await isMagangPeriodActive(userId, period.pdkId))) {
+    req.session.error = 'Periode magang sudah berakhir, tidak dapat mengubah persetujuan logbook';
+    res.redirect(kembali); return null;
+  }
+  const awalMs = new Date(period.tanggalMulai + 'T00:00:00Z').getTime() + (n - 1) * 7 * 86400000;
+  return {
+    userId, n, period, kembali,
+    awal: new Date(awalMs).toISOString().substring(0, 10),
+    akhir: new Date(awalMs + 6 * 86400000).toISOString().substring(0, 10)
+  };
+}
+
+router.post('/:userId/minggu/:mingguKe/setujui', async (req, res) => {
+  try {
+    const ctx = await siapkanMinggu(req, res);
+    if (!ctx) return;
+    if (req.body.sudahKonsultasi !== 'on') {
+      req.session.error = 'Centang dulu "Mahasiswa sudah konsultasi via WhatsApp" sebelum menyetujui minggu ini';
+      return res.redirect(ctx.kembali);
+    }
+    const jumlah = await setujuiMinggu({
+      periodId: ctx.period.id, pdkId: ctx.period.pdkId, mahasiswaId: ctx.userId, mingguKe: ctx.n,
+      awal: ctx.awal, akhir: ctx.akhir,
+      noWa: req.body.noWa, tanggalKonsultasi: req.body.tanggalKonsultasi, catatan: String(req.body.catatan || '').slice(0, 1500),
+      dosen: { id: req.dosen.id, nama: req.dosen.nama }
+    });
+    invalidateProgressMagangHarian(ctx.userId, ctx.period.pdkId);
+    req.session.success = `Logbook minggu ke-${ctx.n} disetujui (${jumlah} entri pending ikut disetujui)`;
+    res.redirect(ctx.kembali);
+  } catch (error) {
+    console.error('Error setujui logbook per minggu ke-N:', error);
+    req.session.error = 'Gagal menyetujui logbook minggu ini';
+    res.redirect('back');
+  }
+});
+
+router.post('/:userId/minggu/:mingguKe/batal', async (req, res) => {
+  try {
+    const ctx = await siapkanMinggu(req, res);
+    if (!ctx) return;
+    await cabutPersetujuanMinggu({
+      periodId: ctx.period.id, pdkId: ctx.period.pdkId, mahasiswaId: ctx.userId, mingguKe: ctx.n,
+      awal: ctx.awal, akhir: ctx.akhir, dosen: { id: req.dosen.id, nama: req.dosen.nama }
+    });
+    invalidateProgressMagangHarian(ctx.userId, ctx.period.pdkId);
+    req.session.success = `Persetujuan minggu ke-${ctx.n} dicabut (lembar kembali berwatermark "Belum Konsultasi")`;
+    res.redirect(ctx.kembali);
+  } catch (error) {
+    console.error('Error cabut persetujuan minggu:', error);
+    req.session.error = 'Gagal mencabut persetujuan minggu ini';
     res.redirect('back');
   }
 });

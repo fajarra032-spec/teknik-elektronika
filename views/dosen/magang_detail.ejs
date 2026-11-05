@@ -891,6 +891,101 @@
     </div>
   <% } %>
 
+  <!-- Persetujuan Logbook PER MINGGU (konsultasi via WA + catatan dosen) -->
+  <% if (isPembimbing && selectedPeriod && typeof mingguList !== 'undefined' && mingguList.length > 0) { %>
+    <style>
+      .minggu-card { background:#fff; border:1px solid var(--gray-border, #e5e7eb); border-radius:1.25rem; box-shadow:0 10px 30px rgba(0,0,0,.05); padding:1.1rem 1.25rem; margin-bottom:1.25rem; }
+      .minggu-card h5 { font-weight:800; margin:0 0 .15rem; }
+      .minggu-card .sub { color:#667085; font-size:.85rem; margin-bottom:.8rem; }
+      .minggu-item { border:1px solid #e5e7eb; border-radius:.9rem; margin-bottom:.55rem; background:#fff; }
+      .minggu-item > summary { list-style:none; cursor:pointer; display:flex; flex-wrap:wrap; align-items:center; gap:.5rem .9rem; padding:.7rem .95rem; }
+      .minggu-item > summary::-webkit-details-marker { display:none; }
+      .minggu-item[open] > summary { border-bottom:1px solid #eef2f7; }
+      .minggu-item .no { font-weight:800; color:#0a3d7a; min-width:5.2rem; }
+      .minggu-item .rentang { color:#475467; font-size:.88rem; flex:1 1 180px; }
+      .minggu-item .info { color:#667085; font-size:.82rem; }
+      .badge-mg { font-size:.75rem; font-weight:700; border-radius:50px; padding:.2rem .7rem; }
+      .badge-mg.ok { background:#d1fae5; color:#047857; }
+      .badge-mg.no { background:#fee2e2; color:#b91c1c; }
+      .minggu-body { padding:.9rem 1rem 1rem; }
+      .minggu-body .wa-link { font-size:.85rem; }
+    </style>
+    <div class="minggu-card">
+      <h5><i class="bi bi-calendar-check"></i> Persetujuan Logbook per Minggu</h5>
+      <div class="sub">
+        Setujui satu minggu setelah mahasiswa konsultasi lewat WhatsApp. Lembar logbook minggu yang belum disetujui
+        tercetak dengan watermark &ldquo;Belum Konsultasi&rdquo;.
+      </div>
+
+      <% mingguList.forEach((m, idx) => { %>
+        <details class="minggu-item" <%= (!m.disetujui && m.jumlahEntri > 0 && idx === 0) ? 'open' : '' %>>
+          <summary>
+            <span class="no">Minggu ke-<%= m.mingguKe %></span>
+            <span class="rentang"><%= m.awalFmt %> &ndash; <%= m.akhirFmt %></span>
+            <span class="info"><%= m.jumlahEntri %> entri &middot; <%= m.totalJam %> jam<% if (m.pending) { %> &middot; <%= m.pending %> pending<% } %></span>
+            <% if (m.disetujui) { %>
+              <span class="badge-mg ok"><i class="bi bi-check-circle-fill"></i> Sudah konsultasi &middot; disetujui</span>
+            <% } else { %>
+              <span class="badge-mg no"><i class="bi bi-hourglass-split"></i> Belum konsultasi</span>
+            <% } %>
+          </summary>
+
+          <div class="minggu-body">
+            <% if (m.disetujui && m.konsultasi) { %>
+              <p class="mb-2" style="font-size:.88rem;">
+                <b>Konsultasi via WA</b>
+                <% if (m.konsultasi.noWa) { %>(<%= m.konsultasi.noWa %>)<% } %>
+                <% if (m.konsultasi.tanggalKonsultasi) { %>&middot; <%= m.konsultasi.tanggalKonsultasi %><% } %>
+              </p>
+              <% if (m.konsultasi.catatan) { %>
+                <div class="p-2 mb-2" style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:.5rem;white-space:pre-line;font-size:.9rem;"><%= m.konsultasi.catatan %></div>
+              <% } %>
+            <% } %>
+
+            <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/minggu/<%= m.mingguKe %>/setujui">
+              <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+              <div class="row g-2 mb-2">
+                <div class="col-md-5">
+                  <label class="form-label fw-semibold mb-1" style="font-size:.85rem;">No. WhatsApp mahasiswa</label>
+                  <input type="text" name="noWa" class="form-control" placeholder="08xxxxxxxxxx"
+                         value="<%= (m.konsultasi && m.konsultasi.noWa) ? m.konsultasi.noWa : (typeof noWaMahasiswa !== 'undefined' ? noWaMahasiswa : '') %>">
+                  <% if (typeof noWaLink !== 'undefined' && noWaLink) { %>
+                    <a class="wa-link" href="https://wa.me/<%= noWaLink %>" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Buka chat WhatsApp</a>
+                  <% } %>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label fw-semibold mb-1" style="font-size:.85rem;">Tanggal konsultasi</label>
+                  <input type="date" name="tanggalKonsultasi" class="form-control"
+                         value="<%= (m.konsultasi && m.konsultasi.tanggalKonsultasi) ? m.konsultasi.tanggalKonsultasi : '' %>">
+                </div>
+              </div>
+              <div class="mb-2">
+                <label class="form-label fw-semibold mb-1" style="font-size:.85rem;">Catatan Dosen Pembimbing (opsional, tampil di lembar logbook &amp; lembar konsultasi)</label>
+                <textarea name="catatan" rows="3" maxlength="1500" class="form-control"
+                          placeholder="Ketik catatan/arahan untuk mahasiswa pada minggu ini..."><%= (m.konsultasi && m.konsultasi.catatan) ? m.konsultasi.catatan : '' %></textarea>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="sudahKonsultasi" id="konsul<%= m.mingguKe %>" <%= m.disetujui ? 'checked' : '' %>>
+                <label class="form-check-label" for="konsul<%= m.mingguKe %>">Mahasiswa sudah konsultasi via WhatsApp</label>
+              </div>
+              <button type="submit" class="btn btn-success btn-sm"
+                      onclick="return confirm('Setujui logbook minggu ke-<%= m.mingguKe %>? Semua entri pending minggu ini ikut disetujui.')">
+                <i class="bi bi-check2-all"></i> <%= m.disetujui ? 'Simpan perubahan' : 'Setujui Minggu Ini' %>
+              </button>
+            </form>
+            <% if (m.disetujui) { %>
+              <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/minggu/<%= m.mingguKe %>/batal" class="mt-2"
+                    onsubmit="return confirm('Cabut persetujuan minggu ke-<%= m.mingguKe %>? Entri minggu ini kembali pending dan lembar berwatermark.');">
+                <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-x-circle"></i> Cabut persetujuan</button>
+              </form>
+            <% } %>
+          </div>
+        </details>
+      <% }) %>
+    </div>
+  <% } %>
+
   <!-- Filter Semester -->
   <div class="filter-card">
     <form method="GET" class="row g-3 align-items-end">

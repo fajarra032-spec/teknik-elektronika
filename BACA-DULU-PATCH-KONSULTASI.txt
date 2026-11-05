@@ -1,0 +1,24 @@
+PATCH: PERSETUJUAN LOGBOOK PER MINGGU + WATERMARK "BELUM KONSULTASI" + LEMBAR KONSULTASI
+=========================================================================================
+Timpa file berikut (struktur folder sama), lalu restart server:
+  helpers/konsultasiLogbookHelper.js     BARU
+  helpers/logbookPrintHelper.js          TIMPA
+  routes/dosen/magang.js                 TIMPA
+  views/dosen/magang_detail.ejs          TIMPA
+  views/mahasiswa/magang/print.ejs       TIMPA
+
+Tanpa perubahan package.json / indeks Firestore. Koleksi baru otomatis dibuat: `konsultasiLogbook`
+(id dokumen = periodId_mingguKe).
+
+TAMPILAN DOSEN (ELK Magang > detail mahasiswa)
+- Kartu "Persetujuan Logbook per Minggu": satu baris per minggu (terbaru di atas).
+- Tiap minggu: No. WhatsApp mahasiswa (terisi dari profil, bisa diubah, ada tombol buka chat wa.me),
+  tanggal konsultasi, kotak catatan yang diketik dosen, centang "sudah konsultasi via WhatsApp",
+  tombol "Setujui Minggu Ini" (semua entri pending minggu itu ikut disetujui) dan "Cabut persetujuan".
+
+CETAK LOGBOOK (mahasiswa/dosen/admin memakai template yang sama)
+- Lembar mingguan yang BELUM konsultasi/disetujui diberi watermark merah miring "BELUM KONSULTASI".
+  Minggu dianggap disetujui bila ada persetujuan mingguan, atau semua entri minggu itu sudah approved.
+- Tiap lembar mingguan ada kotak "Catatan Dosen Pembimbing" + info konsultasi via WA (no. WA, tanggal).
+- Setelah Lembar Pengesahan (halaman kesimpulan) ditambah "Lembar Konsultasi Bimbingan Magang":
+  tabel semua minggu (periode, status, tanggal/no. WA, catatan dosen) + tanda tangan dosen pembimbing.

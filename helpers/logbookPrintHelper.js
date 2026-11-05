@@ -14,6 +14,7 @@ const { db } = require('../config/firebaseAdmin');
 const { getCurrentAcademicSemester } = require('./academicHelper');
 const { getPembimbingMahasiswa: getPembimbingDosenPa } = require('./pembimbingHelper');
 const { getMagangPeriodById, getMagangPeriodsByMahasiswa } = require('../models/magangPeriodModel');
+const { getKonsultasiByPeriod, mingguDisetujui } = require('./konsultasiLogbookHelper');
 
 // ============================================================================
 // FUNGSI BANTU PROGRES
@@ -576,6 +577,30 @@ async function buildLogbookPrintData(mahasiswaId, periodId) {
     : null;
   const ringkasan = buildRingkasanAnalitik(logbook, period, mingguGroups, kehadiranGroups, masukanMap);
 
+  // Konsultasi & persetujuan per minggu (watermark "Belum Konsultasi" + lembar konsultasi)
+  const konsultasiMap = period ? await getKonsultasiByPeriod(period.id) : {};
+  mingguGroups.forEach((g) => {
+    g.konsultasi = konsultasiMap[g.mingguKe] || null;
+    g.disetujui = mingguDisetujui(g.konsultasi, g.entries);
+  });
+  const rekapKonsultasi = (ringkasan.perMinggu || []).map((m) => {
+    const g = mingguGroups.find((x) => x.mingguKe === m.minggu);
+    const k = konsultasiMap[m.minggu] || null;
+    const disetujui = g ? g.disetujui : !!(k && k.status === 'approved');
+    const mulai = period && period.tanggalMulai ? parseTanggalUTC(period.tanggalMulai) : null;
+    const awal = mulai ? formatTanggalISO(addDaysUTC(mulai, (m.minggu - 1) * 7)) : '';
+    const akhir = mulai ? formatTanggalISO(addDaysUTC(mulai, (m.minggu - 1) * 7 + 6)) : '';
+    return {
+      minggu: m.minggu, awal, akhir, jam: m.jam, hari: m.hari,
+      disetujui,
+      adaLogbook: !!g,
+      tanggalKonsultasi: k && k.tanggalKonsultasi ? k.tanggalKonsultasi : '',
+      noWa: k && k.noWa ? k.noWa : '',
+      catatan: k && k.catatan ? k.catatan : '',
+      dosenNama: k && k.dosenNama ? k.dosenNama : ''
+    };
+  });
+
   return {
     title: 'Cetak Logbook',
     mahasiswa,
@@ -594,7 +619,9 @@ async function buildLogbookPrintData(mahasiswaId, periodId) {
     kodeValidasi: generateKodeValidasi(mahasiswaId),
     pdkInfo: period,
     progress,
-    ringkasan
+    ringkasan,
+    konsultasiMap,
+    rekapKonsultasi
   };
 }
 

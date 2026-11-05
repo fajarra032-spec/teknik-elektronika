@@ -240,6 +240,31 @@
     /* =====================================================================
        CETAK / PDF
        ===================================================================== */
+
+    /* ===== WATERMARK "BELUM KONSULTASI" (lembar mingguan yang belum disetujui dosen) ===== */
+    .watermark {
+      position: absolute; left: 0; right: 0; top: 50%; z-index: 20; pointer-events: none;
+      transform: translateY(-50%) rotate(-30deg); text-align: center;
+      font-family: Arial, Helvetica, sans-serif; font-weight: 900; font-size: 60pt; letter-spacing: 4px;
+      color: rgba(200, 30, 30, .17); white-space: nowrap; text-transform: uppercase;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .watermark small { display: block; font-size: 15pt; letter-spacing: 2px; font-weight: 700; margin-top: 4px; color: rgba(200, 30, 30, .22); }
+    .kotak.dosen { grid-column: span 2; min-height: 17mm; border-left-color: #7c3aed; }
+    .kotak .meta-konsul { font-size: 8pt; color: var(--muted); margin-top: 3px; }
+    .stempel-ok { display: inline-block; font-size: 7.8pt; font-weight: 800; color: #047857; background: #d1fae5; border-radius: 50px; padding: 1px 9px; margin-left: 6px; letter-spacing: .3px; }
+    .stempel-no { display: inline-block; font-size: 7.8pt; font-weight: 800; color: #b91c1c; background: #fee2e2; border-radius: 50px; padding: 1px 9px; margin-left: 6px; letter-spacing: .3px; }
+
+    /* ===== LEMBAR KONSULTASI (halaman kesimpulan) ===== */
+    table.konsul { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    table.konsul th { background: var(--brand-dark); color: #fff; font-size: 8.6pt; padding: 5px 6px; text-align: left; border-right: 1px solid rgba(255,255,255,.18); }
+    table.konsul td { font-size: 8.8pt; padding: 4px 6px; vertical-align: top; border-top: 1px solid var(--line); border-right: 1px solid var(--line); overflow-wrap: anywhere; }
+    table.konsul th:last-child, table.konsul td:last-child { border-right: 0; }
+    table.konsul tbody tr:nth-child(even) td { background: var(--soft-2); }
+    table.konsul td.c, table.konsul th.c { text-align: center; }
+    table.konsul td.belum { color: #b91c1c; font-weight: 700; }
+    table.konsul td.sudah { color: #047857; font-weight: 700; }
+
     @media print {
       body { background: #fff; }
       .toolbar { display: none !important; }
@@ -294,7 +319,7 @@
     <svg viewBox="0 0 16 16"><path d="M10 12.5 5.5 8 10 3.5l1 1L7.5 8l3.5 3.5z"/></svg> Kembali
   </a>
   <div class="info">
-    <strong>Pratinjau Logbook</strong> &middot; <%= lembarList.length %> lembar mingguan<% if (totalHalFoto) { %> + <%= totalHalFoto %> hal. dokumentasi<% } %> + <%= totalHadir %> daftar hadir + lembar pengesahan &middot; setiap lembar otomatis pas A4
+    <strong>Pratinjau Logbook</strong> &middot; <%= lembarList.length %> lembar mingguan<% if (totalHalFoto) { %> + <%= totalHalFoto %> hal. dokumentasi<% } %> + <%= totalHadir %> daftar hadir + lembar pengesahan + lembar konsultasi &middot; setiap lembar otomatis pas A4
   </div>
   <div class="aksi">
     <a class="pdf" href="<%= (typeof pdfUrl !== 'undefined' && pdfUrl) ? pdfUrl : '#' %>" id="btnPdf">
@@ -315,6 +340,7 @@
      const mKendala    = masukanMap ? masukanMap[grup.mingguKe + '_kendala'] : null;
 %>
   <section class="sheet">
+    <% if (grup.mingguKe && !grup.disetujui) { %><div class="watermark">Belum Konsultasi<small>Menunggu persetujuan Dosen Pembimbing</small></div><% } %>
     <div class="sheet-inner">
 
       <div class="kop">
@@ -395,6 +421,17 @@
             <div class="jdl">Catatan Pendamping Lapangan (jika ada)</div>
             <div class="isi-teks"><%= (mPendamping && mPendamping.isi) ? mPendamping.isi : '' %></div>
           </div>
+          <% if (grup.mingguKe) { const kk = grup.konsultasi; %>
+          <div class="kotak dosen">
+            <div class="jdl">Catatan Dosen Pembimbing
+              <% if (grup.disetujui) { %><span class="stempel-ok">SUDAH KONSULTASI &middot; DISETUJUI</span><% } else { %><span class="stempel-no">BELUM KONSULTASI</span><% } %>
+            </div>
+            <div class="isi-teks"><%= (kk && kk.catatan) ? kk.catatan : '' %></div>
+            <% if (kk && kk.status === 'approved') { %>
+              <div class="meta-konsul">Konsultasi via WhatsApp<% if (kk.noWa) { %> (<%= kk.noWa %>)<% } %><% if (kk.tanggalKonsultasi) { %> &middot; <%= fmtTgl(kk.tanggalKonsultasi) %><% } %><% if (kk.dosenNama) { %> &middot; <%= kk.dosenNama %><% } %></div>
+            <% } %>
+          </div>
+          <% } %>
         </div>
       </div>
 
@@ -692,6 +729,88 @@
         </div>
         <div class="ttd">
           <div>&nbsp;</div>
+          <div>Dosen Pembimbing</div>
+          <div class="area"></div>
+          <div class="nama"><%= namaDosen || '( ____________________ )' %></div>
+          <% if (idDosen) { %><div class="cap">NIDN/NUPTK: <%= idDosen %></div><% } %>
+        </div>
+      </div>
+
+      <div class="footer-cetak">
+        <span>Dicetak dari Web Portal Elektronika Polidewa: <%= generatedAt %></span>
+        <span class="kode-validasi"><%= kodeValidasi %></span>
+      </div>
+    </div></section>
+
+    <%# ===== LEMBAR KONSULTASI BIMBINGAN (bagian halaman kesimpulan) ===== %>
+    <%
+      const rekapK = (typeof rekapKonsultasi !== 'undefined' && rekapKonsultasi) ? rekapKonsultasi : [];
+      const jmlSudahK = rekapK.filter(r => r.disetujui).length;
+      const noWaMhs = (mahasiswa && mahasiswa.noHp) ? mahasiswa.noHp : '';
+    %>
+    <section class="sheet"><div class="sheet-inner">
+
+      <div class="kop">
+        <img src="<%= LOGO_URL %>" alt="Logo Politeknik Dewantara">
+        <div>
+          <h2 class="nama">Politeknik Dewantara</h2>
+          <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7 Palopo, Sulawesi Selatan &middot; Website: polidewa.ac.id</p>
+        </div>
+      </div>
+      <div class="kop-bar"></div>
+
+      <div class="judul">
+        <h1>LEMBAR KONSULTASI BIMBINGAN MAGANG</h1>
+        <span class="minggu"><%= jmlSudahK %>/<%= rekapK.length %> minggu</span>
+      </div>
+
+      <div class="identitas">
+        <div class="span2"><span class="lbl">Nama mahasiswa</span><span class="val"><%= mahasiswa.nama %></span></div>
+        <div><span class="lbl">NIM</span><span class="val"><%= mahasiswa.nim %></span></div>
+        <div class="span2"><span class="lbl">Dosen Pembimbing</span><span class="val"><%= namaDosen || '-' %></span></div>
+        <div><span class="lbl">No. WA mahasiswa</span><span class="val"><%= noWaMhs || '-' %></span></div>
+      </div>
+
+      <div class="tabel-bungkus">
+        <table class="konsul">
+          <colgroup><col style="width:8%"><col style="width:20%"><col style="width:15%"><col style="width:17%"><col style="width:40%"></colgroup>
+          <thead>
+            <tr>
+              <th class="c">Minggu</th>
+              <th>Periode</th>
+              <th>Status</th>
+              <th>Konsultasi (via WA)</th>
+              <th>Catatan Dosen Pembimbing</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (rekapK.length === 0) { %>
+              <tr><td colspan="5" class="c" style="padding:14px;">Belum ada data minggu logbook.</td></tr>
+            <% } %>
+            <% rekapK.forEach((r) => { %>
+              <tr>
+                <td class="c"><b><%= r.minggu %></b></td>
+                <td><%= r.awal ? fmtTglPendek(r.awal) + ' - ' + fmtTglPendek(r.akhir) : '' %></td>
+                <td class="<%= r.disetujui ? 'sudah' : 'belum' %>"><%= r.disetujui ? 'Disetujui' : (r.adaLogbook ? 'Belum konsultasi' : 'Belum ada logbook') %></td>
+                <td><%= r.tanggalKonsultasi ? fmtTgl(r.tanggalKonsultasi) : '' %><% if (r.noWa) { %><br><span style="color:#667085;"><%= r.noWa %></span><% } %></td>
+                <td class="multi"><%= r.catatan %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="narasi" style="margin-top:10px;font-size:9pt;">
+        Konsultasi dilakukan melalui WhatsApp antara mahasiswa dan Dosen Pembimbing; setiap minggu yang telah
+        dikonsultasikan dicatat dan disetujui oleh Dosen Pembimbing melalui portal. Lembar logbook mingguan yang
+        belum dikonsultasikan diberi tanda air &ldquo;Belum Konsultasi&rdquo;.
+      </p>
+
+      <div class="spacer"></div>
+
+      <div class="blok-ttd2">
+        <div class="ttd" style="grid-column:2;">
+          <div>Palopo, <%= tglCetakPanjang %></div>
           <div>Dosen Pembimbing</div>
           <div class="area"></div>
           <div class="nama"><%= namaDosen || '( ____________________ )' %></div>
