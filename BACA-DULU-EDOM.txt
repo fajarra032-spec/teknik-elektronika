@@ -10,6 +10,7 @@ File:
   routes/admin/edom.js                 TIMPA  rekap, detail dosen, ekspor CSV
   views/admin/edom/rekap.ejs           TIMPA  halaman rekap admin: 1 tampilan (matriks dosen x pernyataan)
   views/admin/edom/rekap_dosen.ejs     BARU   halaman detail dosen
+  views/admin/edom/rekap_cetak.ejs     BARU   halaman CETAK resmi (A4 landscape, kop surat, tanpa navbar)
   views/mahasiswa/edom/form.ejs        TIMPA  form pengisian mahasiswa, 1 tampilan (tabel skala 1-5)
 
 URUTAN (dari root proyek)

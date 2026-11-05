@@ -322,6 +322,35 @@ router.get('/rekap/:periodeId/dosen/:dosenId', async (req, res) => {
   }
 });
 
+// Halaman cetak resmi (A4 landscape, tanpa navbar/footer web)
+router.get('/rekap/:periodeId/cetak', async (req, res) => {
+  try {
+    const { periodeId } = req.params;
+    const { urut = 'nama' } = req.query;
+    const [responList, kuisMap, periodDoc] = await Promise.all([
+      ambilResponPeriode(periodeId), ambilKuisionerMap(), db.collection('edom_periode').doc(periodeId).get()
+    ]);
+    if (!periodDoc.exists || responList.length === 0) {
+      setMessage(req, 'error', 'Belum ada data untuk dicetak pada periode ini');
+      return res.redirect(`/admin/edom/rekap?periodeId=${periodeId}`);
+    }
+    const rekap = hitungRekapPeriode(responList, kuisMap);
+    if (urut === 'tertinggi') rekap.dosen.sort((a, b) => b.rata - a.rata);
+    else if (urut === 'terendah') rekap.dosen.sort((a, b) => a.rata - b.rata);
+    else rekap.dosen.sort((a, b) => a.dosenNama.localeCompare(b.dosenNama));
+    const tanggalCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    res.render('admin/edom/rekap_cetak', {
+      title: 'Rekap EDOM - ' + (periodDoc.data().nama || periodeId),
+      periode: { id: periodDoc.id, ...periodDoc.data() }, rekap, tanggalCetak,
+      urlKembali: `/admin/edom/rekap?periodeId=${periodeId}&urut=${urut}`
+    });
+  } catch (err) {
+    console.error(err);
+    setMessage(req, 'error', 'Gagal memuat halaman cetak');
+    res.redirect(`/admin/edom/rekap?periodeId=${req.params.periodeId}`);
+  }
+});
+
 // Ekspor CSV (dibuka di Excel): satu baris per dosen
 router.get('/rekap/:periodeId/export.csv', async (req, res) => {
   try {
