@@ -283,6 +283,114 @@ function groupLogbookByMinggu(logbook, tanggalMulai) {
 }
 
 // ============================================================================
+// LEMBAR PENGESAHAN: DURASI MAGANG & RINGKASAN ANALITIK
+// ============================================================================
+
+/** Tambah n bulan kalender ke tanggal UTC (hari dipotong ke akhir bulan bila perlu). */
+function addMonthsUTC(d, n) {
+  const y = d.getUTCFullYear();
+  const m = d.getUTCMonth() + n;
+  const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(y, m, Math.min(d.getUTCDate(), last)));
+}
+
+/**
+ * Lama magang dalam bulan + hari kalender (kedua tanggal dihitung penuh).
+ * Contoh: 05 Okt s.d. 14 Des => { bulan: 2, hari: 10, totalHari: 71 }.
+ */
+function hitungDurasiPeriode(mulaiStr, selesaiStr) {
+  const a = mulaiStr ? parseTanggalUTC(mulaiStr) : null;
+  const b = selesaiStr ? parseTanggalUTC(selesaiStr) : null;
+  if (!a || !b || b < a) return null;
+  const batas = addDaysUTC(b, 1); // tanggal selesai ikut dihitung
+  let bulan = (batas.getUTCFullYear() - a.getUTCFullYear()) * 12 + (batas.getUTCMonth() - a.getUTCMonth());
+  while (bulan > 0 && addMonthsUTC(a, bulan) > batas) bulan--;
+  const hari = Math.round((batas - addMonthsUTC(a, bulan)) / 86400000);
+  const totalHari = Math.round((batas - a) / 86400000);
+  let teks = [];
+  if (bulan) teks.push(`${bulan} bulan`);
+  if (hari || !bulan) teks.push(`${hari} hari`);
+  return { bulan, hari, totalHari, teks: teks.join(' '), awal: formatTanggalISO(a), akhir: formatTanggalISO(b) };
+}
+
+function hitungHariKerja(awal, akhir) { // Senin-Jumat
+  let n = 0;
+  for (let d = awal; d <= akhir; d = addDaysUTC(d, 1)) {
+    const w = d.getUTCDay();
+    if (w >= 1 && w <= 5) n++;
+  }
+  return n;
+}
+
+/**
+ * Ringkasan analitik untuk Lembar Pengesahan Logbook.
+ * Lama magang = tanggal mulai s.d. selesai periode; bila tidak ada, dipakai
+ * entri logbook pertama s.d. terakhir.
+ */
+function buildRingkasanAnalitik(logbook, period, mingguGroups, kehadiranGroups, masukanMap) {
+  const tanggalUnik = Array.from(new Set(logbook.map((l) => String(l.tanggal).substring(0, 10)))).sort();
+  const hariHadir = tanggalUnik.length;
+  const totalJam = logbook.reduce((n, l) => n + (parseFloat(l.durasi) || 0), 0);
+  const rataJamHari = hariHadir ? totalJam / hariHadir : 0;
+
+  const mulai = (period && period.tanggalMulai) || tanggalUnik[0] || null;
+  const selesai = (period && period.tanggalSelesai) || tanggalUnik[tanggalUnik.length - 1] || null;
+  const durasi = hitungDurasiPeriode(mulai, selesai);
+
+  // tingkat kehadiran terhadap hari kerja (Sen-Jum) sampai hari ini / akhir periode
+  let hariKerja = 0, persenHadir = null;
+  if (durasi) {
+    const hariIni = parseTanggalUTC(todayWITA());
+    const akhirHitung = parseTanggalUTC(durasi.akhir) < hariIni ? parseTanggalUTC(durasi.akhir) : hariIni;
+    const awal = parseTanggalUTC(durasi.awal);
+    if (akhirHitung >= awal) hariKerja = hitungHariKerja(awal, akhirHitung);
+    if (hariKerja > 0) persenHadir = Math.min(100, Math.round((hariHadir / hariKerja) * 100));
+  }
+
+  // jam per minggu (termasuk minggu kosong sampai akhir periode)
+  const jamMap = {};
+  const hariMap = {};
+  (mingguGroups || []).forEach((g) => {
+    jamMap[g.mingguKe] = g.totalDurasi;
+    hariMap[g.mingguKe] = new Set(g.entries.map((e) => String(e.tanggal).substring(0, 10))).size;
+  });
+  let totalMinggu = 0;
+  if (durasi) totalMinggu = Math.ceil(durasi.totalHari / 7);
+  const maksMingguData = Object.keys(jamMap).reduce((m, k) => Math.max(m, parseInt(k, 10)), 0);
+  totalMinggu = Math.max(totalMinggu, maksMingguData);
+  const perMinggu = [];
+  for (let i = 1; i <= totalMinggu; i++) perMinggu.push({ minggu: i, jam: jamMap[i] || 0, hari: hariMap[i] || 0 });
+  const mingguTerisi = perMinggu.filter((m) => m.jam > 0 || m.hari > 0).length;
+  const mingguTersibuk = perMinggu.reduce((b, m) => (m.jam > (b ? b.jam : 0) ? m : b), null);
+
+  const perBulan = (kehadiranGroups || []).map((b) => ({
+    label: b.monthLabel,
+    hari: Object.keys(b.entriesByTanggal).length,
+    jam: Object.values(b.entriesByTanggal).reduce((n, e) => n + e.totalDurasi, 0)
+  }));
+  const bulanTerbanyak = perBulan.reduce((b, m) => (m.hari > (b ? b.hari : 0) ? m : b), null);
+
+  // hadir beruntun terpanjang (hari kalender berturut-turut)
+  let beruntun = 0, run = 0, prev = null;
+  tanggalUnik.forEach((t) => {
+    const d = parseTanggalUTC(t);
+    run = prev && Math.round((d - prev) / 86400000) === 1 ? run + 1 : 1;
+    beruntun = Math.max(beruntun, run);
+    prev = d;
+  });
+
+  const jumlahFoto = logbook.reduce((n, l) => n + (Array.isArray(l.imageUrls) ? l.imageUrls.length : 0), 0);
+  const disetujui = logbook.filter((l) => l.status === 'approved').length;
+  const mingguCatatanPendamping = Object.keys(masukanMap || {}).filter((k) => /_pendamping$/.test(k) && masukanMap[k] && masukanMap[k].isi && String(masukanMap[k].isi).trim()).length;
+
+  return {
+    durasi, mulai, selesai, hariHadir, totalJam, rataJamHari, hariKerja, persenHadir,
+    totalMinggu, mingguTerisi, perMinggu, mingguTersibuk, perBulan, bulanTerbanyak,
+    beruntun, jumlahFoto, totalEntri: logbook.length, disetujui, mingguCatatanPendamping
+  };
+}
+
+// ============================================================================
 // FUNGSI BANTU DAFTAR HADIR MAGANG (Lampiran Formulir Daftar Hadir Magang)
 // ============================================================================
 
@@ -459,6 +567,7 @@ async function buildLogbookPrintData(mahasiswaId, periodId) {
   const progress = period
     ? calculateProgress(logbook.length, period.tanggalMulai, period.tanggalSelesai, 120)
     : null;
+  const ringkasan = buildRingkasanAnalitik(logbook, period, mingguGroups, kehadiranGroups, masukanMap);
 
   return {
     title: 'Cetak Logbook',
@@ -477,7 +586,8 @@ async function buildLogbookPrintData(mahasiswaId, periodId) {
     pembimbing,
     kodeValidasi: generateKodeValidasi(mahasiswaId),
     pdkInfo: period,
-    progress
+    progress,
+    ringkasan
   };
 }
 
@@ -489,6 +599,8 @@ module.exports = {
   calculateProgress,
   groupLogbookByMinggu,
   kumpulkanFoto,
+  hitungDurasiPeriode,
+  buildRingkasanAnalitik,
   groupKehadiranByBulan,
   getMasukanByPeriod,
   extractTahunAjaran,

@@ -20,3 +20,21 @@ CARA KERJA
   Disimpan di field baru `imageCaptions` (array sejajar dengan `imageUrls`).
 - Caption kosong / foto lama -> otomatis memakai uraian kegiatan entri tsb.
 - Tiap foto menampilkan nomor, hari & tanggal, dan caption (maks 3 baris).
+
+TAMBAHAN: DAFTAR HADIR BARU + LEMBAR PENGESAHAN (timpa ulang 2 file ini bila sudah menimpa yang lama)
+  helpers/logbookPrintHelper.js   TIMPA (hitungDurasiPeriode + buildRingkasanAnalitik, dikirim ke template sebagai `ringkasan`)
+  views/mahasiswa/magang/print.ejs TIMPA
+
+DAFTAR HADIR
+- 1 lembar per bulan, desain baru (kop, identitas, 4 kotak ringkas bulan itu, tabel berwarna).
+- Kolom TTD per baris DIHAPUS. Tanda tangan Pendamping Lapangan hanya 1x di bagian bawah lembar.
+- Kolom: No, Hari, Tanggal, Jam datang, Jam pulang, Durasi, Keterangan (Hadir / Akhir pekan).
+
+LEMBAR PENGESAHAN LOGBOOK (halaman terakhir, setelah semua daftar hadir)
+- Lama magang dalam bulan + hari, mis. "2 bulan 10 hari" (tanggal mulai s.d. selesai periode,
+  kedua tanggal dihitung; bila periode tak punya tanggal -> entri logbook pertama s.d. terakhir).
+- Narasi otomatis, 8 kotak analitik (hari hadir, total jam, tingkat kehadiran terhadap hari kerja Sen-Jum,
+  minggu terlaporkan, entri & yang disetujui dosen, jumlah foto, hadir beruntun terpanjang,
+  minggu bercatatan pendamping), grafik jam per minggu, grafik kehadiran per bulan, dan
+  ringkasan wawasan (minggu terpadat, bulan terbanyak, ketertiban pengisian, persetujuan dosen).
+- Tanda tangan: Pendamping Lapangan dan Dosen Pembimbing (nama + NIDN/NUPTK dari data Dosen PA).

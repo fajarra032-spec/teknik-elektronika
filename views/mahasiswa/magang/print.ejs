@@ -174,101 +174,68 @@
       display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
     .identitas.ringkas { grid-template-columns: 2fr 1fr 1.4fr; }
 
-    /* ===== DAFTAR HADIR ===== */
-    .kehadiran-page {
-      page-break-before: always;
-      padding-top: 6px;
-      font-size: 9pt;      /* ukuran asli Daftar Hadir, tidak ikut font lembar mingguan */
-      line-height: 1.3;
+    /* ===== DAFTAR HADIR (per bulan, tanpa kolom ttd) ===== */
+    .hadir-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-bottom: 8px; }
+    .hadir-strip .k { border: 1px solid var(--line); border-radius: 8px; background: var(--soft-2); padding: 4px 10px; }
+    .hadir-strip .k b { display: block; font-size: 13pt; color: var(--brand-dark); line-height: 1.15; }
+    .hadir-strip .k span { font-size: 7pt; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 700; }
+    .tabel-hadir-bungkus { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+    table.hadir { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    table.hadir th {
+      background: var(--brand-dark); color: #fff; font-size: 8pt; letter-spacing: .3px; text-align: center;
+      padding: 4px 6px; border-right: 1px solid rgba(255,255,255,.18);
     }
-    .kehadiran-kop {
-      text-align: center;
-      margin-bottom: 8px;
+    table.hadir th:last-child, table.hadir td:last-child { border-right: 0; }
+    table.hadir td {
+      text-align: center; font-size: 8.4pt; padding: 1.6px 6px; line-height: 1.25;
+      border-top: 1px solid var(--line); border-right: 1px solid var(--line);
     }
-    .kehadiran-kop h5 {
-      font-size: 11pt;
-      font-weight: 700;
-      margin-bottom: 2px;
-      text-decoration: underline;
-    }
-    .kehadiran-kop p {
-      font-size: 9.5pt;
-      font-weight: bold;
-      margin-bottom: 2px;
-    }
-    .kehadiran-info {
-      font-size: 8.5pt;
-      margin-bottom: 6px;
-      border-collapse: collapse;
-      width: 100%;
-    }
-    .kehadiran-info td {
-      padding: 1px 6px 1px 0;
-      border: none;
-    }
-    .kehadiran-info td:first-child {
-      font-weight: 700;
-      width: 18%;
-    }
-    .kehadiran-info td:nth-child(2) {
-      width: 2%;
-    }
+    table.hadir td.kiri { text-align: left; }
+    table.hadir tr.ada td { background: #fff; }
+    table.hadir tr.kosong td { color: #b0b8c6; background: var(--soft-2); }
+    table.hadir tr.libur td { background: #fff8e6; color: #b45309; }
+    table.hadir tr.libur.ada td { background: #fff3d1; color: var(--ink); }
+    table.hadir .hdr { display: inline-block; background: #dcfce7; color: #166534; font-weight: 700; font-size: 7.4pt; padding: 0 8px; border-radius: 50px; }
+    table.hadir tr.total td { background: var(--soft); font-weight: 800; color: var(--brand-dark); padding: 4px 6px; }
+    .catatan-hadir { margin: 5px 2px 0; font-size: 7.4pt; color: var(--muted); }
 
-    .table-kehadiran {
-      font-size: 8pt;
-      border-collapse: collapse;
-      width: 100%;
-      border: 1px solid #000;
+    /* ===== LEMBAR PENGESAHAN ===== */
+    .hero-durasi {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 9px;
+      background: linear-gradient(120deg, var(--brand-dark), var(--brand)); color: #fff; border-radius: 11px; padding: 10px 16px;
     }
-    .table-kehadiran th,
-    .table-kehadiran td {
-      border: 1px solid #000;
-      text-align: center;
-      vertical-align: middle;
-      padding: 2px 3px;
-    }
-    .table-kehadiran thead th {
-      background-color: #e9ecef;
-      font-weight: 700;
-      font-size: 7.5pt;
-    }
-    .table-kehadiran td.hari-tanggal {
-      text-align: left;
-      padding-left: 8px;
-    }
-    .table-kehadiran .baris-kosong {
-      color: #bbb;
-    }
-    /* Kolom TTD hijau jika hadir */
-    .table-kehadiran td.ttd-hadir {
-      background-color: #c8e6c9 !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    .table-kehadiran td.ttd-kosong {
-      background-color: transparent;
-    }
-    
-    /* Wrapper untuk membuat posisi kanan bawah tapi rata kiri teksnya */
-    .kehadiran-ttd-wrapper {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 16px;
-    }
-    .kehadiran-ttd {
-      text-align: left;
-      font-size: 8.5pt;
-      width: 230px;
-    }
-    .kehadiran-ttd .area-ttd-kecil {
-      height: 42px;
-      margin: 5px 0;
-    }
-
-    /* Penyesuaian Daftar Hadir agar menjadi 1 lembar A4 yang sama */
-    .sheet .kehadiran-page { break-before: auto; page-break-before: auto; padding-top: 0; font-size: 9pt; line-height: 1.3; display: flex; flex-direction: column; flex: 1 1 auto; }
-    .kehadiran-ttd .nama-ttd { font-weight: 700; text-decoration: underline; margin-bottom: 0; font-size: 9pt; }
-    .kehadiran-ttd .nip-ttd { margin-top: 0; font-size: 8pt; }
+    .hero-durasi .besar { font-size: 24pt; font-weight: 800; line-height: 1.05; letter-spacing: .3px; white-space: nowrap; }
+    .hero-durasi .kecil { font-size: 9pt; opacity: .92; line-height: 1.4; }
+    .hero-durasi .lbl { font-size: 7.4pt; text-transform: uppercase; letter-spacing: .8px; opacity: .8; font-weight: 700; }
+    .narasi { font-size: 9.8pt; line-height: 1.5; text-align: justify; margin: 0 0 9px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-bottom: 7px; }
+    .kpi { border: 1px solid var(--line); border-top: 3px solid var(--brand); border-radius: 8px; background: #fff; padding: 5px 9px; }
+    .kpi:nth-child(4n+2) { border-top-color: #10b981; }
+    .kpi:nth-child(4n+3) { border-top-color: var(--gold); }
+    .kpi:nth-child(4n+4) { border-top-color: #8b5cf6; }
+    .kpi b { display: block; font-size: 14pt; color: var(--brand-dark); line-height: 1.15; }
+    .kpi span { font-size: 7pt; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); font-weight: 700; }
+    .kpi small { display: block; font-size: 7.4pt; color: var(--muted); }
+    .chart-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 8px; margin: 2px 0 8px; }
+    .chart-box { border: 1px solid var(--line); border-radius: 9px; padding: 6px 10px 7px; }
+    .chart-box h3 { margin: 0 0 5px; font-size: 8.6pt; color: var(--brand-dark); text-transform: uppercase; letter-spacing: .4px; }
+    .vbar { display: flex; align-items: flex-end; gap: 3px; height: 30mm; border-bottom: 1px solid var(--line); }
+    .vbar .col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; }
+    .vbar .col i { display: block; width: 100%; max-width: 15px; background: var(--brand); border-radius: 3px 3px 0 0; min-height: 1px; }
+    .vbar .col i.nol { background: var(--line); }
+    .vbar .col em { font-style: normal; font-size: 5.8pt; color: var(--muted); margin-bottom: 1px; }
+    .vlabel { display: flex; gap: 3px; margin-top: 2px; }
+    .vlabel span { flex: 1 1 0; text-align: center; font-size: 6.2pt; color: var(--muted); min-width: 0; }
+    .hbar { margin-bottom: 5px; }
+    .hbar .row1 { display: flex; justify-content: space-between; font-size: 8pt; margin-bottom: 1px; }
+    .hbar .trek { height: 8px; background: var(--soft); border-radius: 50px; overflow: hidden; }
+    .hbar .isi { height: 100%; background: linear-gradient(90deg, #10b981, #34d399); border-radius: 50px; }
+    .wawasan { margin: 0 0 8px; padding: 6px 10px 6px 12px; border-left: 4px solid var(--gold); background: #fffbeb; border-radius: 0 8px 8px 0; font-size: 9pt; line-height: 1.45; }
+    .wawasan b { color: var(--brand-dark); }
+    .pengesahan-teks { font-size: 9.6pt; text-align: justify; margin: 0 0 4px; }
+    .blok-ttd2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12mm; margin-top: 6px; break-inside: avoid; }
+    .blok-ttd2 .ttd { width: auto; }
+    .blok-ttd2 .area { height: 20mm; }
 
     /* =====================================================================
        CETAK / PDF
@@ -327,7 +294,7 @@
     <svg viewBox="0 0 16 16"><path d="M10 12.5 5.5 8 10 3.5l1 1L7.5 8l3.5 3.5z"/></svg> Kembali
   </a>
   <div class="info">
-    <strong>Pratinjau Logbook</strong> &middot; <%= lembarList.length %> lembar mingguan<% if (totalHalFoto) { %> + <%= totalHalFoto %> hal. dokumentasi<% } %> + <%= totalHadir %> daftar hadir &middot; setiap lembar otomatis pas A4
+    <strong>Pratinjau Logbook</strong> &middot; <%= lembarList.length %> lembar mingguan<% if (totalHalFoto) { %> + <%= totalHalFoto %> hal. dokumentasi<% } %> + <%= totalHadir %> daftar hadir + lembar pengesahan &middot; setiap lembar otomatis pas A4
   </div>
   <div class="aksi">
     <a class="pdf" href="<%= (typeof pdfUrl !== 'undefined' && pdfUrl) ? pdfUrl : '#' %>" id="btnPdf">
@@ -505,104 +472,238 @@
   <% }) %>
 <% }) %>
 
+    <%# ===== DAFTAR HADIR: satu lembar per bulan, tanpa kolom ttd per baris ===== %>
+    <%
+      const rg = ringkasan || {};
+      const NAMA_HARI = ['Minggu','Senin','Selasa','Rabu','Kamis',"Jum'at",'Sabtu'];
+      const fmtDesimal = (n) => String(Number(Number(n || 0).toFixed(1))).replace('.', ',');
+      const tglCetakPanjang = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+      const namaDosen = (pembimbing && pembimbing.pembimbing) ? pembimbing.pembimbing.nama : '';
+      const idDosen = (pembimbing && pembimbing.pembimbing) ? (pembimbing.pembimbing.nidn || pembimbing.pembimbing.nuptk || '') : '';
+    %>
     <% if (!kehadiranGroups || kehadiranGroups.length === 0) { %>
-      <section class="sheet"><div class="sheet-inner"><div class="kehadiran-page">
-        <div class="kehadiran-kop">
-          <h5>DAFTAR HADIR MAGANG MAHASISWA</h5>
-          <p>PROGRAM STUDI TEKNIK ELEKTRONIKA (D3)</p>
-          <p>TAHUN AKADEMIK <%= tahunAjaran %></p>
+      <section class="sheet"><div class="sheet-inner">
+        <div class="kop">
+          <img src="<%= LOGO_URL %>" alt="Logo Politeknik Dewantara">
+          <div><h2 class="nama">Politeknik Dewantara</h2>
+          <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7 Palopo, Sulawesi Selatan &middot; Website: polidewa.ac.id</p></div>
         </div>
-        <p class="text-center fst-italic text-muted py-4">
-          Belum ada entri logbook, sehingga Daftar Hadir belum dapat dibuat.
-        </p>
-      </div></div></section>
+        <div class="kop-bar"></div>
+        <div class="judul"><h1>DAFTAR HADIR MAGANG</h1></div>
+        <p class="text-center fst-italic text-muted py-4">Belum ada entri logbook, sehingga Daftar Hadir belum dapat dibuat.</p>
+      </div></section>
     <% } else { %>
-      <% kehadiranGroups.forEach((bulan) => { %>
-        <section class="sheet"><div class="sheet-inner"><div class="kehadiran-page">
-          <div class="kehadiran-kop">
-            <h5>DAFTAR HADIR MAGANG MAHASISWA</h5>
-            <p>PROGRAM STUDI TEKNIK ELEKTRONIKA (D3)</p>
-            <p>TAHUN AKADEMIK <%= tahunAjaran %> &mdash; <%= bulan.monthLabel.toUpperCase() %></p>
+      <% kehadiranGroups.forEach((bulan) => {
+           const jumlahHadir = Object.keys(bulan.entriesByTanggal).length;
+           const jamBulan = Object.values(bulan.entriesByTanggal).reduce((n, e) => n + e.totalDurasi, 0);
+           let hariKerjaBulan = 0;
+           for (let t = 1; t <= bulan.daysInMonth; t++) { const w = new Date(bulan.year, bulan.month - 1, t).getDay(); if (w >= 1 && w <= 5) hariKerjaBulan++; }
+      %>
+        <section class="sheet"><div class="sheet-inner">
+
+          <div class="kop">
+            <img src="<%= LOGO_URL %>" alt="Logo Politeknik Dewantara">
+            <div>
+              <h2 class="nama">Politeknik Dewantara</h2>
+              <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7 Palopo, Sulawesi Selatan &middot; Website: polidewa.ac.id</p>
+            </div>
+          </div>
+          <div class="kop-bar"></div>
+
+          <div class="judul">
+            <h1>DAFTAR HADIR MAGANG</h1>
+            <span class="minggu"><%= bulan.monthLabel %></span>
           </div>
 
-          <table class="kehadiran-info">
-            <tr><td>Nama Mahasiswa</td><td>:</td><td><%= mahasiswa.nama %></td></tr>
-            <tr><td>NIM</td><td>:</td><td><%= mahasiswa.nim %></td></tr>
-            <tr><td>Tempat Magang</td><td>:</td>
-              <td><%= (pdkInfo && pdkInfo.perusahaan && pdkInfo.perusahaan.nama) ? pdkInfo.perusahaan.nama : '-' %></td>
-            </tr>
-          </table>
+          <div class="identitas">
+            <div class="span2"><span class="lbl">Nama mahasiswa</span><span class="val"><%= mahasiswa.nama %></span></div>
+            <div><span class="lbl">NIM</span><span class="val"><%= mahasiswa.nim %></span></div>
+            <div class="span2"><span class="lbl">Tempat magang</span><span class="val"><%= namaTempat || '-' %></span></div>
+            <div><span class="lbl">Tahun akademik</span><span class="val"><%= tahunAjaran %></span></div>
+          </div>
 
-          <table class="table-kehadiran">
-            <thead>
-              <tr>
-                <th rowspan="2" width="5%">No.</th>
-                <th rowspan="2" width="18%">Hari/Tanggal</th>
-                <th colspan="2">Datang</th>
-                <th colspan="2">Pulang</th>
-                <th rowspan="2" width="17%">Keterangan</th>
-              </tr>
-              <tr>
-                <th width="12%">Jam</th>
-                <th width="10%">Ttd</th>
-                <th width="12%">Jam</th>
-                <th width="10%">Ttd</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% for (let tgl = 1; tgl <= bulan.daysInMonth; tgl++) {
-                   const hadir = bulan.entriesByTanggal[tgl];
-                   const tanggalObj = new Date(bulan.year, bulan.month - 1, tgl);
-                   const namaHari = ['Minggu','Senin','Selasa','Rabu','Kamis',"Jum'at",'Sabtu'][tanggalObj.getDay()];
-              %>
-                <tr>
-                  <td><%= tgl %>.</td>
-                  <td class="hari-tanggal"><%= namaHari %>, <%= String(tgl).padStart(2,'0') %>-<%= String(bulan.month).padStart(2,'0') %>-<%= bulan.year %></td>
-                  <% if (hadir) { %>
-                    <td><%= hadir.jamDatang %></td>
-                    <td class="ttd-hadir"></td>   <td><%= hadir.jamPulang %></td>
-                    <td class="ttd-hadir"></td>   <td><%= hadir.keterangan %></td>
-                  <% } else { %>
-                    <td class="baris-kosong">-</td>
-                    <td class="ttd-kosong"></td>
-                    <td class="baris-kosong">-</td>
-                    <td class="ttd-kosong"></td>
-                    <td></td>
-                  <% } %>
-                </tr>
-              <% } %>
-              <tr class="fw-bold">
-                <td colspan="2">Jumlah Kehadiran</td>
-                <td colspan="4"><%= Object.keys(bulan.entriesByTanggal).length %> Hari</td>
-                <td></td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="hadir-strip">
+            <div class="k"><b><%= jumlahHadir %> hari</b><span>Hadir bulan ini</span></div>
+            <div class="k"><b><%= fmtDesimal(jamBulan) %> jam</b><span>Total jam</span></div>
+            <div class="k"><b><%= jumlahHadir ? fmtDesimal(jamBulan / jumlahHadir) : '0' %> jam</b><span>Rata-rata per hari</span></div>
+            <div class="k"><b><%= hariKerjaBulan ? Math.min(100, Math.round(jumlahHadir / hariKerjaBulan * 100)) : 0 %>%</b><span>Dari <%= hariKerjaBulan %> hari kerja</span></div>
+          </div>
 
-          <div class="kehadiran-ttd-wrapper">
-            <div class="kehadiran-ttd">
-              <p class="mb-0">Palopo, <%= new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) %></p>
-              <p>Pendamping Lapangan</p>
-              <div class="area-ttd-kecil"></div>
-              <% if (pdkInfo && pdkInfo.perusahaan && pdkInfo.perusahaan.pembimbingLapangan) { %>
-                <p class="nama-ttd"><%= pdkInfo.perusahaan.pembimbingLapangan %></p>
-                <% if (pdkInfo.perusahaan.jabatanPembimbingLapangan) { %>
-                  <p class="nip-ttd"><%= pdkInfo.perusahaan.jabatanPembimbingLapangan %></p>
+          <div class="tabel-hadir-bungkus">
+            <table class="hadir">
+              <colgroup><col style="width:7%"><col style="width:13%"><col style="width:17%"><col style="width:15%"><col style="width:15%"><col style="width:13%"><col style="width:20%"></colgroup>
+              <thead>
+                <tr><th>No.</th><th>Hari</th><th>Tanggal</th><th>Jam datang</th><th>Jam pulang</th><th>Durasi</th><th>Keterangan</th></tr>
+              </thead>
+              <tbody>
+                <% for (let tgl = 1; tgl <= bulan.daysInMonth; tgl++) {
+                     const hadir = bulan.entriesByTanggal[tgl];
+                     const w = new Date(bulan.year, bulan.month - 1, tgl).getDay();
+                     const libur = (w === 0 || w === 6);
+                %>
+                  <tr class="<%= hadir ? 'ada' : 'kosong' %> <%= libur ? 'libur' : '' %>">
+                    <td><%= tgl %></td>
+                    <td class="kiri"><%= NAMA_HARI[w] %></td>
+                    <td><%= String(tgl).padStart(2,'0') %>-<%= String(bulan.month).padStart(2,'0') %>-<%= bulan.year %></td>
+                    <% if (hadir) { %>
+                      <td><%= hadir.jamDatang %></td>
+                      <td><%= hadir.jamPulang %></td>
+                      <td><%= fmtDesimal(hadir.totalDurasi) %> jam</td>
+                      <td><span class="hdr">Hadir</span></td>
+                    <% } else { %>
+                      <td>&ndash;</td><td>&ndash;</td><td>&ndash;</td>
+                      <td><%= libur ? 'Akhir pekan' : '' %></td>
+                    <% } %>
+                  </tr>
                 <% } %>
-              <% } else { %>
-                <p class="nama-ttd">( ____________________ )</p>
-              <% } %>
+                <tr class="total">
+                  <td colspan="3" style="text-align:left;">Jumlah kehadiran</td>
+                  <td colspan="2"><%= jumlahHadir %> hari</td>
+                  <td><%= fmtDesimal(jamBulan) %> jam</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="catatan-hadir">Jam datang &amp; pulang terisi otomatis dari logbook (jam datang standar <%= jamMasuk %>; jam pulang = jam datang + durasi kegiatan hari itu).</div>
+
+          <div class="spacer"></div>
+
+          <div class="blok-ttd">
+            <div class="ttd">
+              <div>Palopo, <%= tglCetakPanjang %></div>
+              <div>Pendamping Lapangan</div>
+              <div class="area"></div>
+              <div class="nama"><%= namaPendamping || '( ____________________ )' %></div>
+              <% if (pdkInfo && pdkInfo.perusahaan && pdkInfo.perusahaan.jabatanPembimbingLapangan) { %><div class="cap"><%= pdkInfo.perusahaan.jabatanPembimbingLapangan %></div><% } %>
             </div>
           </div>
 
           <div class="footer-cetak">
-            <span>Logbook dicetak dari Web Portal Elektronika Polidewa: <%= generatedAt %></span>
+            <span>Dicetak dari Web Portal Elektronika Polidewa: <%= generatedAt %></span>
             <span class="kode-validasi"><%= kodeValidasi %></span>
           </div>
-        </div></div></section>
+        </div></section>
       <% }) %>
     <% } %>
 
+    <%# ===== LEMBAR PENGESAHAN LOGBOOK (setelah seluruh daftar hadir) ===== %>
+    <% const maksJam = Math.max(1, ...((rg.perMinggu || []).map(m => m.jam))); %>
+    <section class="sheet"><div class="sheet-inner">
+
+      <div class="kop">
+        <img src="<%= LOGO_URL %>" alt="Logo Politeknik Dewantara">
+        <div>
+          <h2 class="nama">Politeknik Dewantara</h2>
+          <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7 Palopo, Sulawesi Selatan &middot; Website: polidewa.ac.id</p>
+        </div>
+      </div>
+      <div class="kop-bar"></div>
+
+      <div class="judul">
+        <h1>LEMBAR PENGESAHAN LOGBOOK MAGANG</h1>
+      </div>
+
+      <div class="identitas">
+        <div class="span2"><span class="lbl">Nama mahasiswa</span><span class="val"><%= mahasiswa.nama %></span></div>
+        <div><span class="lbl">NIM</span><span class="val"><%= mahasiswa.nim %></span></div>
+        <div class="span2"><span class="lbl">Nama tempat magang</span><span class="val"><%= namaTempat || '-' %></span></div>
+        <div><span class="lbl">Program studi</span><span class="val"><%= typeof prodi !== 'undefined' ? prodi : '' %></span></div>
+      </div>
+
+      <div class="hero-durasi">
+        <div>
+          <div class="lbl">Lama magang</div>
+          <div class="besar"><%= rg.durasi ? rg.durasi.teks : '-' %></div>
+        </div>
+        <div class="kecil">
+          <% if (rg.durasi) { %>
+            <%= fmtTgl(rg.durasi.awal) %> s.d. <%= fmtTgl(rg.durasi.akhir) %><br>
+            <%= rg.durasi.totalHari %> hari kalender &middot; hadir <b><%= rg.hariHadir %> hari</b> &middot; <b><%= fmtDesimal(rg.totalJam) %> jam</b> kerja
+          <% } else { %>
+            Tanggal periode magang belum tersedia.
+          <% } %>
+        </div>
+      </div>
+
+      <p class="narasi">
+        Berdasarkan rekap logbook, mahasiswa tersebut telah melaksanakan magang
+        <% if (rg.durasi) { %>selama <b><%= rg.durasi.teks %></b> (<%= fmtTgl(rg.durasi.awal) %> s.d. <%= fmtTgl(rg.durasi.akhir) %>)<% } %>
+        dengan kehadiran <b><%= rg.hariHadir %> hari</b> dan total <b><%= fmtDesimal(rg.totalJam) %> jam</b> kegiatan<% if (rg.persenHadir !== null) { %>,
+        atau tingkat kehadiran sekitar <b><%= rg.persenHadir %>%</b> dari <%= rg.hariKerja %> hari kerja<% } %>.
+        Logbook ini telah diperiksa dan dinyatakan sah sebagai bukti pelaksanaan kegiatan magang.
+      </p>
+
+      <div class="kpi-grid">
+        <div class="kpi"><span>Hari hadir</span><b><%= rg.hariHadir %></b><small>dari <%= rg.hariKerja || '-' %> hari kerja</small></div>
+        <div class="kpi"><span>Total jam</span><b><%= fmtDesimal(rg.totalJam) %></b><small>rata-rata <%= fmtDesimal(rg.rataJamHari) %> jam/hari</small></div>
+        <div class="kpi"><span>Tingkat kehadiran</span><b><%= rg.persenHadir !== null ? rg.persenHadir + '%' : '-' %></b><small>terhadap hari kerja</small></div>
+        <div class="kpi"><span>Minggu terlaporkan</span><b><%= rg.mingguTerisi %>/<%= rg.totalMinggu %></b><small>minggu berisi logbook</small></div>
+        <div class="kpi"><span>Entri logbook</span><b><%= rg.totalEntri %></b><small><%= rg.disetujui %> disetujui dosen</small></div>
+        <div class="kpi"><span>Foto dokumentasi</span><b><%= rg.jumlahFoto %></b><small>terlampir per minggu</small></div>
+        <div class="kpi"><span>Hadir beruntun</span><b><%= rg.beruntun %> hari</b><small>rekor terpanjang</small></div>
+        <div class="kpi"><span>Catatan pendamping</span><b><%= rg.mingguCatatanPendamping %></b><small>minggu bercatatan</small></div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="chart-box">
+          <h3>Jam kerja per minggu</h3>
+          <% if (rg.perMinggu && rg.perMinggu.length) { %>
+            <div class="vbar">
+              <% rg.perMinggu.forEach((m) => { %>
+                <div class="col"><% if (m.jam) { %><em><%= fmtDesimal(m.jam) %></em><% } %><i class="<%= m.jam ? '' : 'nol' %>" style="height: <%= m.jam ? Math.max(4, Math.round(m.jam / maksJam * 88)) : 2 %>%"></i></div>
+              <% }) %>
+            </div>
+            <div class="vlabel"><% rg.perMinggu.forEach((m) => { %><span><%= m.minggu %></span><% }) %></div>
+            <div class="text-muted" style="font-size:6.6pt;margin-top:2px;">Sumbu bawah = minggu ke-; angka di atas batang = jam.</div>
+          <% } else { %>
+            <div class="text-muted fst-italic" style="font-size:9pt;">Belum ada data.</div>
+          <% } %>
+        </div>
+        <div class="chart-box">
+          <h3>Kehadiran per bulan</h3>
+          <% (rg.perBulan || []).forEach((b) => { const pct = Math.min(100, Math.round(b.hari / 23 * 100)); %>
+            <div class="hbar">
+              <div class="row1"><span><%= b.label %></span><span><b><%= b.hari %></b> hari &middot; <%= fmtDesimal(b.jam) %> jam</span></div>
+              <div class="trek"><div class="isi" style="width: <%= pct %>%"></div></div>
+            </div>
+          <% }) %>
+          <% if (!rg.perBulan || !rg.perBulan.length) { %><div class="text-muted fst-italic" style="font-size:9pt;">Belum ada data.</div><% } %>
+        </div>
+      </div>
+
+      <div class="wawasan">
+        <b>Ringkasan analitik.</b>
+        <% if (rg.mingguTersibuk && rg.mingguTersibuk.jam) { %>Minggu paling padat: <b>minggu ke-<%= rg.mingguTersibuk.minggu %></b> (<%= fmtDesimal(rg.mingguTersibuk.jam) %> jam, <%= rg.mingguTersibuk.hari %> hari). <% } %>
+        <% if (rg.bulanTerbanyak) { %>Kehadiran terbanyak pada <b><%= rg.bulanTerbanyak.label %></b> (<%= rg.bulanTerbanyak.hari %> hari). <% } %>
+        <% if (rg.totalMinggu) { %>Ketertiban pengisian logbook: <b><%= Math.round(rg.mingguTerisi / rg.totalMinggu * 100) %>%</b> minggu terisi. <% } %>
+        <% if (rg.totalEntri) { %>Persetujuan dosen: <b><%= Math.round(rg.disetujui / rg.totalEntri * 100) %>%</b> entri (<%= rg.disetujui %> dari <%= rg.totalEntri %>).<% } %>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="blok-ttd2">
+        <div class="ttd">
+          <div>Palopo, <%= tglCetakPanjang %></div>
+          <div>Pendamping Lapangan</div>
+          <div class="area"></div>
+          <div class="nama"><%= namaPendamping || '( ____________________ )' %></div>
+          <% if (pdkInfo && pdkInfo.perusahaan && pdkInfo.perusahaan.jabatanPembimbingLapangan) { %><div class="cap"><%= pdkInfo.perusahaan.jabatanPembimbingLapangan %></div><% } %>
+        </div>
+        <div class="ttd">
+          <div>&nbsp;</div>
+          <div>Dosen Pembimbing</div>
+          <div class="area"></div>
+          <div class="nama"><%= namaDosen || '( ____________________ )' %></div>
+          <% if (idDosen) { %><div class="cap">NIDN/NUPTK: <%= idDosen %></div><% } %>
+        </div>
+      </div>
+
+      <div class="footer-cetak">
+        <span>Dicetak dari Web Portal Elektronika Polidewa: <%= generatedAt %></span>
+        <span class="kode-validasi"><%= kodeValidasi %></span>
+      </div>
+    </div></section>
 
 </div>
 
