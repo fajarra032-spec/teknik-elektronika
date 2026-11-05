@@ -30,3 +30,10 @@ TAMBAHAN (halaman mahasiswa /mahasiswa/magang)
 - Kartu baru "Konsultasi Logbook Mingguan": status tiap minggu (sudah/belum konsultasi), catatan dosen,
   peringatan jumlah minggu yang belum konsultasi, dan tombol WhatsApp ke Dosen PA (dari field `kontak` dosen).
 - Teks panduan langkah 3-6 diperbarui (konsultasi mingguan, Form Penilaian Dosen Pembimbing).
+
+RELAYOUT HALAMAN DOSEN (/dosen/magang/:userId) - views/dosen/magang_detail.ejs
+- Hero ringkas: foto, identitas, tombol WhatsApp (wa.me), Print, Kembali.
+- Strip KPI: total/pending/disetujui/ditolak, minggu disetujui, laporan di-ACC, status kunci logbook.
+- 4 tab (ingat tab terakhir setelah submit; buka ?after/?semester langsung ke Logbook Harian):
+  Persetujuan Mingguan | Logbook Harian | Laporan | Penilaian & Cetak (kunci logbook, form penilaian, cetak, kartu kontrol).
+- Seluruh form, rute, dan skrip lama tetap sama; hanya dipindah ke tab.

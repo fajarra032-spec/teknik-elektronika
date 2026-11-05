@@ -539,6 +539,44 @@
     .btn-approve, .btn-reject { padding: 0.2rem 0.8rem; font-size: 0.7rem; }
     .btn-print, .btn-back { padding: 0.4rem 1rem; font-size: 0.8rem; }
   }
+
+  /* ===== RELAYOUT: hero + KPI + tab ===== */
+  .hero { background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); border-radius: 1.25rem; padding: 1.1rem 1.4rem; color: #fff; margin-bottom: 1rem; box-shadow: 0 12px 26px rgba(30,58,138,.22); display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: center; justify-content: space-between; }
+  .hero .who { display: flex; align-items: center; gap: 1rem; min-width: 0; }
+  .hero .avatar-large, .hero .avatar-circle-large { width: 64px; height: 64px; font-size: 1.9rem; flex: 0 0 auto; border-width: 3px; }
+  .hero h2 { font-size: 1.35rem; margin: 0 0 .2rem; }
+  .hero .meta { font-size: .85rem; opacity: .92; display: flex; flex-wrap: wrap; gap: .15rem 1rem; }
+  .hero .meta span { white-space: nowrap; }
+  .hero .peran { display: inline-flex; align-items: center; gap: .35rem; margin-top: .45rem; background: rgba(255,255,255,.18); border-radius: 50px; padding: .15rem .75rem; font-size: .75rem; font-weight: 600; }
+  .hero .aksi { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .hero .aksi a { text-decoration: none; display: inline-flex; align-items: center; gap: .4rem; padding: .45rem 1rem; border-radius: 50px; font-size: .85rem; font-weight: 600; background: rgba(255,255,255,.18); color: #fff; border: 1px solid rgba(255,255,255,.35); transition: background .2s; }
+  .hero .aksi a:hover { background: rgba(255,255,255,.32); }
+  .hero .aksi a.wa { background: #25d366; border-color: #25d366; }
+  .hero .aksi a.print { background: #fff; color: var(--primary-start); border-color: #fff; }
+
+  .pdk-stats { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .6rem; margin-bottom: 1rem; }
+  .pdk-stats .stat-card { padding: .6rem .8rem; }
+  .info-period { margin-bottom: 1rem; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: .65rem; margin-bottom: 1.1rem; }
+  .kpi { background: #fff; border: 1px solid var(--gray-border); border-radius: 1rem; padding: .7rem .9rem; box-shadow: 0 4px 12px rgba(0,0,0,.04); }
+  .kpi .v { font-size: 1.45rem; font-weight: 800; line-height: 1.1; color: var(--primary-dark); }
+  .kpi .l { font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; color: #64748b; font-weight: 700; }
+  .kpi.warn .v { color: #b45309; } .kpi.ok .v { color: #047857; } .kpi.bad .v { color: #b91c1c; }
+
+  .tabs-x { display: flex; gap: .4rem; overflow-x: auto; padding: .35rem; margin-bottom: 1.1rem; background: #fff; border: 1px solid var(--gray-border); border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,.04); position: sticky; top: 64px; z-index: 50; scrollbar-width: none; }
+  .tabs-x::-webkit-scrollbar { display: none; }
+  .tabs-x button { flex: 1 0 auto; border: 0; background: transparent; padding: .6rem 1rem; border-radius: .75rem; font-weight: 700; font-size: .88rem; color: #475569; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; cursor: pointer; transition: background .2s, color .2s; }
+  .tabs-x button:hover { background: #f1f5f9; }
+  .tabs-x button.aktif { background: var(--primary-start); color: #fff; box-shadow: 0 6px 14px rgba(30,58,138,.25); }
+  .tabs-x .cnt { font-size: .7rem; font-weight: 800; border-radius: 50px; padding: .05rem .5rem; background: #e2e8f0; color: #334155; }
+  .tabs-x .cnt.warn { background: #fee2e2; color: #b91c1c; }
+  .tabs-x button.aktif .cnt { background: rgba(255,255,255,.25); color: #fff; }
+  .tab-pane-x { display: none; }
+  .tab-pane-x.aktif { display: block; }
+  .tab-pane-x .filter-card { margin-top: 0; }
+  .pane-note { background: #fff; border: 1px dashed #cbd5e1; border-radius: 1rem; padding: 1.4rem; text-align: center; color: #64748b; }
+  @media (max-width: 576px) { .hero { padding: 1rem; } .hero .aksi { width: 100%; } .hero .aksi a { flex: 1 1 auto; justify-content: center; } .tabs-x { top: 56px; } }
 </style>
 
 <div class="container mt-4">
@@ -557,60 +595,43 @@
     </div>
   <% } %>
 
-  <!-- Profile Card Mahasiswa -->
-  <div class="profile-card">
-    <div class="d-flex align-items-center flex-wrap">
-      <div class="flex-shrink-0 me-4 mb-2 mb-sm-0">
-        <% 
-          const fotoUrl = mahasiswa.foto ? getImageUrl(mahasiswa.foto, 200) : null;
-          if (fotoUrl) { 
-        %>
-          <img src="<%= fotoUrl %>" alt="foto <%= mahasiswa.nama %>" class="avatar-large" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(mahasiswa.nama) %>&background=1e3a8a&color=fff&size=80';">
-        <% } else { %>
-          <div class="avatar-circle-large">
-            <%= (mahasiswa.nama || '?').charAt(0).toUpperCase() %>
-          </div>
-        <% } %>
-      </div>
-      <div>
-        <h2 class="fw-bold"><%= mahasiswa.nama %></h2>
-        <p><i class="bi bi-qr-code"></i> NIM: <%= mahasiswa.nim %></p>
-        <p><i class="bi bi-envelope"></i> <%= mahasiswa.email %></p>
-        <p class="mb-0"><i class="bi bi-telephone"></i> <%= mahasiswa.noHp || '-' %></p>
-      </div>
-    </div>
-  </div>
+  <%
+    // ===== Ringkasan untuk KPI & tab =====
+    const _st = selectedPeriod
+      ? (pdkStats.find(x => x.id === selectedPeriod.id) || { totalLogbook: 0, pendingCount: 0, approvedCount: 0, rejectedCount: 0 })
+      : { totalLogbook: pdkStats.reduce((a, x) => a + (x.totalLogbook || 0), 0), pendingCount: pdkStats.reduce((a, x) => a + (x.pendingCount || 0), 0), approvedCount: pdkStats.reduce((a, x) => a + (x.approvedCount || 0), 0), rejectedCount: pdkStats.reduce((a, x) => a + (x.rejectedCount || 0), 0) };
+    const _mgList = (typeof mingguList !== 'undefined' && mingguList) ? mingguList : [];
+    const _mgOk = _mgList.filter(m => m.disetujui).length;
+    const _mgBelum = _mgList.filter(m => !m.disetujui && m.jumlahEntri > 0).length;
+    const _lapAcc = laporanList.filter(l => l.status === 'approved').length;
+    const _dikunci = !!(nilaiMagang && nilaiMagang.logbookDikunci);
+    const _waUrl = (typeof noWaLink !== 'undefined' && noWaLink) ? 'https://wa.me/' + noWaLink : '';
+    const _printUrl = '/dosen/magang/print/' + mahasiswa.id + (selectedPeriod ? '?periodId=' + selectedPeriod.id : '');
+  %>
 
-  <!-- Role Badge: Dosen PA = satu-satunya pembimbing -->
-  <% if (isPembimbing) { %>
-    <div class="role-badge role-pembimbing">
-      <i class="bi bi-star-fill"></i> Anda adalah Dosen Pembimbing (Dosen PA) mahasiswa ini - Anda dapat menyetujui/menolak/mengunci logbook, meninjau &amp; meng-ACC laporan, serta mengisi Form Penilaian Dosen Pembimbing
-    </div>
-  <% } %>
-
-  <!-- Header dengan judul dan tombol -->
-  <div class="page-header">
-    <h4>
-      <i class="bi bi-journal-bookmark-fill" style="color: var(--primary-start);"></i> ELK Magang
-    </h4>
-    <div class="btn-group">
-      <% if (isPembimbing) { %>
-        <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/setujui-minggu" style="display:inline;"
-              onsubmit="return confirm('Setujui SEMUA logbook pending mahasiswa ini dalam 7 hari terakhir<%= selectedPeriod ? ` untuk periode ${selectedPeriod.pdkKode}` : '' %> sekaligus? Catatan otomatis: \'Mahasiswa telah konsultasi dan logbook disetujui\'.');">
-          <% if (selectedPeriod) { %>
-            <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
-          <% } %>
-          <button type="submit" class="btn-approve-minggu">
-            <i class="bi bi-check2-all"></i> Setujui 1 Minggu
-          </button>
-        </form>
+  <!-- Hero: identitas mahasiswa + aksi cepat -->
+  <div class="hero">
+    <div class="who">
+      <% const fotoUrl = mahasiswa.foto ? getImageUrl(mahasiswa.foto, 200) : null; %>
+      <% if (fotoUrl) { %>
+        <img src="<%= fotoUrl %>" alt="foto <%= mahasiswa.nama %>" class="avatar-large" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(mahasiswa.nama || '?') %>&background=ffffff&color=1e3a8a&size=128'">
+      <% } else { %>
+        <div class="avatar-circle-large"><%= (mahasiswa.nama || '?').charAt(0).toUpperCase() %></div>
       <% } %>
-      <a href="/dosen/magang/print/<%= mahasiswa.id %><%= selectedPeriod ? `?periodId=${selectedPeriod.id}` : '' %>" class="btn-print" target="_blank">
-        <i class="bi bi-printer"></i> Print
-      </a>
-      <a href="/dosen/magang" class="btn-back">
-        <i class="bi bi-arrow-left"></i> Kembali
-      </a>
+      <div style="min-width:0;">
+        <h2 class="fw-bold"><%= mahasiswa.nama %></h2>
+        <div class="meta">
+          <span><i class="bi bi-qr-code"></i> <%= mahasiswa.nim %></span>
+          <span><i class="bi bi-envelope"></i> <%= mahasiswa.email %></span>
+          <span><i class="bi bi-telephone"></i> <%= mahasiswa.noHp || '-' %></span>
+        </div>
+        <% if (isPembimbing) { %><div class="peran"><i class="bi bi-star-fill"></i> Anda Dosen Pembimbing (Dosen PA) mahasiswa ini</div><% } %>
+      </div>
+    </div>
+    <div class="aksi">
+      <% if (_waUrl) { %><a class="wa" href="<%= _waUrl %>" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> WhatsApp</a><% } %>
+      <a class="print" href="<%= _printUrl %>" target="_blank"><i class="bi bi-printer"></i> Print</a>
+      <a href="/dosen/magang"><i class="bi bi-arrow-left"></i> Kembali</a>
     </div>
   </div>
 
@@ -679,38 +700,285 @@
     </div>
   <% } %>
 
-  <!-- Panel Kunci Logbook (Dosen Pembimbing/PA) - prasyarat Form Penilaian Dosen Pembimbing -->
-  <% if (isPembimbing && selectedPeriod) { %>
-    <div class="nilai-logbook-card">
-      <% if (!nilaiMagang || !nilaiMagang.logbookDikunci) { %>
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <div>
-            <strong><i class="bi bi-lock"></i> Kunci Logbook untuk Penilaian</strong>
-            <p class="mb-0 small text-muted">Setelah semua logbook periode ini selesai ditinjau, kunci (bersama ACC laporan) supaya Form Penilaian Dosen Pembimbing bisa diisi. <strong>Ini beda dari "Kunci Periode"</strong> di halaman Kelola Magang - itu cuma menghentikan mahasiswa isi logbook harian, tidak ada hubungannya dengan penilaian.</p>
-          </div>
-          <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/kunci-logbook"
-                onsubmit="return confirm('Kunci logbook periode ini? Setelah dikunci dan laporan di-ACC, form penilaian bisa diisi.');">
-            <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
-            <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
-            <button type="submit" class="btn btn-warning btn-sm"><i class="bi bi-lock-fill"></i> Kunci Logbook untuk Penilaian</button>
-          </form>
-        </div>
-      <% } else { %>
-        <div class="mb-3">
-          <strong class="text-success"><i class="bi bi-check-circle"></i> Logbook Sudah Dikunci</strong>
-          <p class="mb-0 small text-muted">Terkunci oleh Anda pada <%= new Date(nilaiMagang.logbookDikunciAt).toLocaleDateString('id-ID') %>.</p>
-        </div>
+  <!-- KPI ringkas -->
+  <div class="kpi-grid">
+    <div class="kpi"><div class="v"><%= _st.totalLogbook || (_st.pendingCount + _st.approvedCount + _st.rejectedCount) %></div><div class="l">Total logbook</div></div>
+    <div class="kpi warn"><div class="v"><%= _st.pendingCount %></div><div class="l">Pending</div></div>
+    <div class="kpi ok"><div class="v"><%= _st.approvedCount %></div><div class="l">Disetujui</div></div>
+    <div class="kpi bad"><div class="v"><%= _st.rejectedCount %></div><div class="l">Ditolak</div></div>
+    <% if (selectedPeriod && _mgList.length) { %>
+      <div class="kpi <%= _mgBelum ? 'warn' : 'ok' %>"><div class="v"><%= _mgOk %>/<%= _mgList.length %></div><div class="l">Minggu disetujui</div></div>
+    <% } %>
+    <div class="kpi <%= _lapAcc ? 'ok' : '' %>"><div class="v"><%= _lapAcc %>/<%= laporanList.length %></div><div class="l">Laporan di-ACC</div></div>
+    <div class="kpi <%= _dikunci ? 'ok' : '' %>"><div class="v" style="font-size:1.05rem;padding-top:.3rem;"><i class="bi bi-<%= _dikunci ? 'lock-fill' : 'unlock' %>"></i> <%= _dikunci ? 'Dikunci' : 'Terbuka' %></div><div class="l">Status logbook</div></div>
+  </div>
 
-        <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/buka-kunci-logbook" class="mt-2"
-              onsubmit="return confirm('Buka kunci logbook lagi? Penilaian yang sudah ada tidak akan hilang.');">
-          <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
-          <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
-          <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-unlock"></i> Buka Kunci Logbook</button>
+  <!-- Tab -->
+  <nav class="tabs-x" id="tabsX">
+    <% if (isPembimbing) { %>
+      <button type="button" data-tab="mingguan"><i class="bi bi-calendar-check"></i> Persetujuan Mingguan <% if (_mgBelum) { %><span class="cnt warn"><%= _mgBelum %></span><% } %></button>
+    <% } %>
+    <button type="button" data-tab="harian"><i class="bi bi-list-check"></i> Logbook Harian <% if (_st.pendingCount) { %><span class="cnt"><%= _st.pendingCount %></span><% } %></button>
+    <% if (isPembimbing) { %>
+      <button type="button" data-tab="laporan"><i class="bi bi-file-earmark-check"></i> Laporan <span class="cnt"><%= laporanList.length %></span></button>
+      <button type="button" data-tab="penilaian"><i class="bi bi-pencil-square"></i> Penilaian &amp; Cetak</button>
+    <% } %>
+  </nav>
+
+  <section class="tab-pane-x" data-pane="mingguan">
+    <% if (isPembimbing) { %>
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+        <span class="small text-muted">Pintasan: setujui sekaligus semua logbook pending 7 hari terakhir.</span>
+        <div class="btn-group">
+      <% if (isPembimbing) { %>
+        <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/setujui-minggu" style="display:inline;"
+              onsubmit="return confirm('Setujui SEMUA logbook pending mahasiswa ini dalam 7 hari terakhir<%= selectedPeriod ? ` untuk periode ${selectedPeriod.pdkKode}` : '' %> sekaligus? Catatan otomatis: \'Mahasiswa telah konsultasi dan logbook disetujui\'.');">
+          <% if (selectedPeriod) { %>
+            <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+          <% } %>
+          <button type="submit" class="btn-approve-minggu">
+            <i class="bi bi-check2-all"></i> Setujui 1 Minggu
+          </button>
         </form>
       <% } %>
+        </div>
+      </div>
+    <% } %>
+  <!-- Persetujuan Logbook PER MINGGU (konsultasi via WA + catatan dosen) -->
+  <% if (isPembimbing && selectedPeriod && typeof mingguList !== 'undefined' && mingguList.length > 0) { %>
+    <style>
+      .minggu-card { background:#fff; border:1px solid var(--gray-border, #e5e7eb); border-radius:1.25rem; box-shadow:0 10px 30px rgba(0,0,0,.05); padding:1.1rem 1.25rem; margin-bottom:1.25rem; }
+      .minggu-card h5 { font-weight:800; margin:0 0 .15rem; }
+      .minggu-card .sub { color:#667085; font-size:.85rem; margin-bottom:.8rem; }
+      .minggu-item { border:1px solid #e5e7eb; border-radius:.9rem; margin-bottom:.55rem; background:#fff; }
+      .minggu-item > summary { list-style:none; cursor:pointer; display:flex; flex-wrap:wrap; align-items:center; gap:.5rem .9rem; padding:.7rem .95rem; }
+      .minggu-item > summary::-webkit-details-marker { display:none; }
+      .minggu-item[open] > summary { border-bottom:1px solid #eef2f7; }
+      .minggu-item .no { font-weight:800; color:#0a3d7a; min-width:5.2rem; }
+      .minggu-item .rentang { color:#475467; font-size:.88rem; flex:1 1 180px; }
+      .minggu-item .info { color:#667085; font-size:.82rem; }
+      .badge-mg { font-size:.75rem; font-weight:700; border-radius:50px; padding:.2rem .7rem; }
+      .badge-mg.ok { background:#d1fae5; color:#047857; }
+      .badge-mg.no { background:#fee2e2; color:#b91c1c; }
+      .minggu-body { padding:.9rem 1rem 1rem; }
+      .minggu-body .wa-link { font-size:.85rem; }
+    </style>
+    <div class="minggu-card">
+      <h5><i class="bi bi-calendar-check"></i> Persetujuan Logbook per Minggu</h5>
+      <div class="sub">
+        Setujui satu minggu setelah mahasiswa konsultasi lewat WhatsApp. Lembar logbook minggu yang belum disetujui
+        tercetak dengan watermark &ldquo;Belum Konsultasi&rdquo;.
+      </div>
+
+      <% mingguList.forEach((m, idx) => { %>
+        <details class="minggu-item" <%= (!m.disetujui && m.jumlahEntri > 0 && idx === 0) ? 'open' : '' %>>
+          <summary>
+            <span class="no">Minggu ke-<%= m.mingguKe %></span>
+            <span class="rentang"><%= m.awalFmt %> &ndash; <%= m.akhirFmt %></span>
+            <span class="info"><%= m.jumlahEntri %> entri &middot; <%= m.totalJam %> jam<% if (m.pending) { %> &middot; <%= m.pending %> pending<% } %></span>
+            <% if (m.disetujui) { %>
+              <span class="badge-mg ok"><i class="bi bi-check-circle-fill"></i> Sudah konsultasi &middot; disetujui</span>
+            <% } else { %>
+              <span class="badge-mg no"><i class="bi bi-hourglass-split"></i> Belum konsultasi</span>
+            <% } %>
+          </summary>
+
+          <div class="minggu-body">
+            <% if (m.disetujui && m.konsultasi) { %>
+              <p class="mb-2" style="font-size:.88rem;">
+                <b>Konsultasi via WA</b>
+                <% if (m.konsultasi.noWa) { %>(<%= m.konsultasi.noWa %>)<% } %>
+                <% if (m.konsultasi.tanggalKonsultasi) { %>&middot; <%= m.konsultasi.tanggalKonsultasi %><% } %>
+              </p>
+              <% if (m.konsultasi.catatan) { %>
+                <div class="p-2 mb-2" style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:.5rem;white-space:pre-line;font-size:.9rem;"><%= m.konsultasi.catatan %></div>
+              <% } %>
+            <% } %>
+
+            <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/minggu/<%= m.mingguKe %>/setujui">
+              <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+              <div class="row g-2 mb-2">
+                <div class="col-md-5">
+                  <label class="form-label fw-semibold mb-1" style="font-size:.85rem;">No. WhatsApp mahasiswa</label>
+                  <input type="text" name="noWa" class="form-control" placeholder="08xxxxxxxxxx"
+                         value="<%= (m.konsultasi && m.konsultasi.noWa) ? m.konsultasi.noWa : (typeof noWaMahasiswa !== 'undefined' ? noWaMahasiswa : '') %>">
+                  <% if (typeof noWaLink !== 'undefined' && noWaLink) { %>
+                    <a class="wa-link" href="https://wa.me/<%= noWaLink %>" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Buka chat WhatsApp</a>
+                  <% } %>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label fw-semibold mb-1" style="font-size:.85rem;">Tanggal konsultasi</label>
+                  <input type="date" name="tanggalKonsultasi" class="form-control"
+                         value="<%= (m.konsultasi && m.konsultasi.tanggalKonsultasi) ? m.konsultasi.tanggalKonsultasi : '' %>">
+                </div>
+              </div>
+              <div class="mb-2">
+                <label class="form-label fw-semibold mb-1" style="font-size:.85rem;">Catatan Dosen Pembimbing (opsional, tampil di lembar logbook &amp; lembar konsultasi)</label>
+                <textarea name="catatan" rows="3" maxlength="1500" class="form-control"
+                          placeholder="Ketik catatan/arahan untuk mahasiswa pada minggu ini..."><%= (m.konsultasi && m.konsultasi.catatan) ? m.konsultasi.catatan : '' %></textarea>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="sudahKonsultasi" id="konsul<%= m.mingguKe %>" <%= m.disetujui ? 'checked' : '' %>>
+                <label class="form-check-label" for="konsul<%= m.mingguKe %>">Mahasiswa sudah konsultasi via WhatsApp</label>
+              </div>
+              <button type="submit" class="btn btn-success btn-sm"
+                      onclick="return confirm('Setujui logbook minggu ke-<%= m.mingguKe %>? Semua entri pending minggu ini ikut disetujui.')">
+                <i class="bi bi-check2-all"></i> <%= m.disetujui ? 'Simpan perubahan' : 'Setujui Minggu Ini' %>
+              </button>
+            </form>
+            <% if (m.disetujui) { %>
+              <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/minggu/<%= m.mingguKe %>/batal" class="mt-2"
+                    onsubmit="return confirm('Cabut persetujuan minggu ke-<%= m.mingguKe %>? Entri minggu ini kembali pending dan lembar berwatermark.');">
+                <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-x-circle"></i> Cabut persetujuan</button>
+              </form>
+            <% } %>
+          </div>
+        </details>
+      <% }) %>
     </div>
   <% } %>
 
+    <% if (!(isPembimbing && selectedPeriod && _mgList.length > 0)) { %>
+      <div class="pane-note"><i class="bi bi-calendar-x fs-3 d-block mb-1"></i>
+        <%= selectedPeriod ? 'Belum ada minggu logbook pada periode ini.' : 'Pilih satu periode magang di atas untuk menyetujui logbook per minggu.' %>
+      </div>
+    <% } %>
+  </section>
+
+  <section class="tab-pane-x" data-pane="harian">
+  <!-- Filter Semester -->
+  <div class="filter-card">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label fw-semibold"><i class="bi bi-funnel"></i> Filter Semester</label>
+        <select name="semester" class="form-select" onchange="this.form.submit()">
+          <option value="">Semua Semester</option>
+          <% if (semesterList && semesterList.length > 0) { %>
+            <% semesterList.forEach(s => { %>
+              <option value="<%= s %>" <%= selectedSemester === s ? 'selected' : '' %>><%= s %></option>
+            <% }) %>
+          <% } %>
+        </select>
+      </div>
+      <% if (selectedPeriod) { %>
+        <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+      <% } %>
+    </form>
+  </div>
+
+  <!-- Tabel Logbook -->
+  <div class="table-container">
+    <div class="table-responsive">
+      <table class="table logbook-table">
+        <thead>
+          <tr>
+            <th style="text-align: center;">No</th>
+            <th>Tanggal</th>
+            <th>Kegiatan</th>
+            <th style="text-align: center;">Durasi</th>
+            <th>Lokasi</th>
+            <th>Semester</th>
+            <th style="text-align: center;">Gambar</th>
+            <th style="text-align: center;">Status</th>
+            <% if (isPembimbing) { %>
+              <th style="text-align: center;">Aksi</th>
+            <% } %>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (logbookList.length === 0) { %>
+            <tr>
+              <td colspan="<%= isPembimbing ? 9 : 8 %>" class="text-center py-5">
+                <div class="empty-state">
+                  <i class="bi bi-inbox"></i>
+                  <p>Belum ada logbook untuk periode ini.</p>
+                </div>
+              </td>
+            </tr>
+          <% } else { %>
+            <% logbookList.forEach((item, index) => { %>
+              <tr>
+                <td style="text-align: center; font-weight: 600;"><%= index + 1 %></td>
+                <td><%= item.tanggalFormatted %></td>
+                <td style="max-width: 300px;"><%= item.kegiatan %></td>
+                <td style="text-align: center;"><%= item.durasi ? item.durasi + ' jam' : '-' %></td>
+                <td><%= item.lokasi || '-' %></td>
+                <td><%= item.semester || '-' %></td>
+                <td style="text-align: center;">
+                  <% if (item.imageUrls && item.imageUrls.length > 0) { 
+                    const firstUrl = item.imageUrls[0];
+                    const fileId = getFileId(firstUrl);
+                    const thumbUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w100` : firstUrl;
+                    const directUrl = fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : firstUrl;
+                  %>
+                    <img src="<%= thumbUrl %>" 
+                         class="thumbnail" 
+                         alt="dokumentasi"
+                         onclick='lihatGambar(<%= JSON.stringify(item.imageUrls) %>)'
+                         onerror="this.onerror=null; this.src='<%= directUrl %>';">
+                  <% } else { %>
+                    <span class="text-muted">-</span>
+                  <% } %>
+                </td>
+                <td style="text-align: center;">
+                  <% if (item.status === 'approved') { %>
+                    <span class="badge-status badge-approved">
+                      <i class="bi bi-check-circle"></i> Disetujui
+                    </span>
+                    <% if (item.approvedByNama) { %>
+                      <br><small class="text-muted">oleh: <%= item.approvedByNama %></small>
+                    <% } %>
+                    <% if (item.catatan) { %>
+                      <br><small class="text-muted"><i class="bi bi-chat-left-text"></i> <%= item.catatan %></small>
+                    <% } %>
+                  <% } else if (item.status === 'rejected') { %>
+                    <span class="badge-status badge-rejected">
+                      <i class="bi bi-x-circle"></i> Ditolak
+                    </span>
+                    <% if (item.rejectionReason) { %>
+                      <br><small class="text-muted">Alasan: <%= item.rejectionReason %></small>
+                    <% } %>
+                    <% if (item.rejectedByNama) { %>
+                      <br><small class="text-muted">oleh: <%= item.rejectedByNama %></small>
+                    <% } %>
+                  <% } else { %>
+                    <span class="badge-status badge-pending">
+                      <i class="bi bi-hourglass-split"></i> Pending
+                    </span>
+                  <% } %>
+                </td>
+                <% if (isPembimbing) { %>
+                  <td style="text-align: center;">
+                    <% if (item.status === 'pending') { %>
+                      <div class="d-flex gap-2 justify-content-center">
+                        <form method="POST" action="/dosen/magang/logbook/<%= item.id %>/approve" style="display: inline;">
+                          <button type="submit" class="btn-approve" onclick="return confirm('Setujui logbook ini?')">
+                            <i class="bi bi-check-circle"></i> Setujui
+                          </button>
+                        </form>
+                        <button type="button" class="btn-reject" data-bs-toggle="modal" data-bs-target="#rejectModal" 
+                                data-logbook-id="<%= item.id %>" 
+                                data-logbook-title="<%= item.kegiatan.substring(0, 50) %>">
+                          <i class="bi bi-x-circle"></i> Tolak
+                        </button>
+                      </div>
+                    <% } else { %>
+                      <span class="text-muted">-</span>
+                    <% } %>
+                  </td>
+                <% } %>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+    <%- include('../partials/pagination', { pageInfo: typeof pageInfo !== 'undefined' ? pageInfo : null, showAll: typeof showAll !== 'undefined' ? showAll : false, pageListUrl: typeof pageListUrl !== 'undefined' ? pageListUrl : '?' }) %>
+  </div>
+  </section>
+
+  <section class="tab-pane-x" data-pane="laporan">
   <!-- Panel Laporan Magang & Form Penilaian Dosen Pembimbing (Dosen PA) -->
   <% if (isPembimbing) { %>
     <div class="nilai-logbook-card mb-3">
@@ -753,7 +1021,45 @@
         <% }) %>
       <% } %>
 
-      <hr>
+    </div>
+  <% } %>
+  </section>
+
+  <section class="tab-pane-x" data-pane="penilaian">
+  <!-- Panel Kunci Logbook (Dosen Pembimbing/PA) - prasyarat Form Penilaian Dosen Pembimbing -->
+  <% if (isPembimbing && selectedPeriod) { %>
+    <div class="nilai-logbook-card">
+      <% if (!nilaiMagang || !nilaiMagang.logbookDikunci) { %>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <strong><i class="bi bi-lock"></i> Kunci Logbook untuk Penilaian</strong>
+            <p class="mb-0 small text-muted">Setelah semua logbook periode ini selesai ditinjau, kunci (bersama ACC laporan) supaya Form Penilaian Dosen Pembimbing bisa diisi. <strong>Ini beda dari "Kunci Periode"</strong> di halaman Kelola Magang - itu cuma menghentikan mahasiswa isi logbook harian, tidak ada hubungannya dengan penilaian.</p>
+          </div>
+          <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/kunci-logbook"
+                onsubmit="return confirm('Kunci logbook periode ini? Setelah dikunci dan laporan di-ACC, form penilaian bisa diisi.');">
+            <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
+            <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+            <button type="submit" class="btn btn-warning btn-sm"><i class="bi bi-lock-fill"></i> Kunci Logbook untuk Penilaian</button>
+          </form>
+        </div>
+      <% } else { %>
+        <div class="mb-3">
+          <strong class="text-success"><i class="bi bi-check-circle"></i> Logbook Sudah Dikunci</strong>
+          <p class="mb-0 small text-muted">Terkunci oleh Anda pada <%= new Date(nilaiMagang.logbookDikunciAt).toLocaleDateString('id-ID') %>.</p>
+        </div>
+
+        <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/buka-kunci-logbook" class="mt-2"
+              onsubmit="return confirm('Buka kunci logbook lagi? Penilaian yang sudah ada tidak akan hilang.');">
+          <input type="hidden" name="pdkId" value="<%= selectedPeriod.pdkId %>">
+          <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+          <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-unlock"></i> Buka Kunci Logbook</button>
+        </form>
+      <% } %>
+    </div>
+  <% } %>
+
+  <% if (isPembimbing) { %>
+    <div class="nilai-logbook-card mb-3">
       <h6 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> Form Penilaian Dosen Pembimbing</h6>
       <p class="text-muted small mb-2">
         Format baru: <strong>18 indikator</strong> (Laporan 8, Kepribadian 7, Pengetahuan 3). Tiap indikator diisi angka 0-100;
@@ -891,230 +1197,36 @@
     </div>
   <% } %>
 
-  <!-- Persetujuan Logbook PER MINGGU (konsultasi via WA + catatan dosen) -->
-  <% if (isPembimbing && selectedPeriod && typeof mingguList !== 'undefined' && mingguList.length > 0) { %>
-    <style>
-      .minggu-card { background:#fff; border:1px solid var(--gray-border, #e5e7eb); border-radius:1.25rem; box-shadow:0 10px 30px rgba(0,0,0,.05); padding:1.1rem 1.25rem; margin-bottom:1.25rem; }
-      .minggu-card h5 { font-weight:800; margin:0 0 .15rem; }
-      .minggu-card .sub { color:#667085; font-size:.85rem; margin-bottom:.8rem; }
-      .minggu-item { border:1px solid #e5e7eb; border-radius:.9rem; margin-bottom:.55rem; background:#fff; }
-      .minggu-item > summary { list-style:none; cursor:pointer; display:flex; flex-wrap:wrap; align-items:center; gap:.5rem .9rem; padding:.7rem .95rem; }
-      .minggu-item > summary::-webkit-details-marker { display:none; }
-      .minggu-item[open] > summary { border-bottom:1px solid #eef2f7; }
-      .minggu-item .no { font-weight:800; color:#0a3d7a; min-width:5.2rem; }
-      .minggu-item .rentang { color:#475467; font-size:.88rem; flex:1 1 180px; }
-      .minggu-item .info { color:#667085; font-size:.82rem; }
-      .badge-mg { font-size:.75rem; font-weight:700; border-radius:50px; padding:.2rem .7rem; }
-      .badge-mg.ok { background:#d1fae5; color:#047857; }
-      .badge-mg.no { background:#fee2e2; color:#b91c1c; }
-      .minggu-body { padding:.9rem 1rem 1rem; }
-      .minggu-body .wa-link { font-size:.85rem; }
-    </style>
-    <div class="minggu-card">
-      <h5><i class="bi bi-calendar-check"></i> Persetujuan Logbook per Minggu</h5>
-      <div class="sub">
-        Setujui satu minggu setelah mahasiswa konsultasi lewat WhatsApp. Lembar logbook minggu yang belum disetujui
-        tercetak dengan watermark &ldquo;Belum Konsultasi&rdquo;.
-      </div>
+  </section>
 
-      <% mingguList.forEach((m, idx) => { %>
-        <details class="minggu-item" <%= (!m.disetujui && m.jumlahEntri > 0 && idx === 0) ? 'open' : '' %>>
-          <summary>
-            <span class="no">Minggu ke-<%= m.mingguKe %></span>
-            <span class="rentang"><%= m.awalFmt %> &ndash; <%= m.akhirFmt %></span>
-            <span class="info"><%= m.jumlahEntri %> entri &middot; <%= m.totalJam %> jam<% if (m.pending) { %> &middot; <%= m.pending %> pending<% } %></span>
-            <% if (m.disetujui) { %>
-              <span class="badge-mg ok"><i class="bi bi-check-circle-fill"></i> Sudah konsultasi &middot; disetujui</span>
-            <% } else { %>
-              <span class="badge-mg no"><i class="bi bi-hourglass-split"></i> Belum konsultasi</span>
-            <% } %>
-          </summary>
+  <script>
+    // Tab halaman ELK Magang dosen (tanpa dependensi; ingat tab terakhir setelah submit/redirect)
+    (function () {
+      var nav = document.getElementById('tabsX');
+      if (!nav) return;
+      var btns = nav.querySelectorAll('button[data-tab]');
+      var panes = document.querySelectorAll('.tab-pane-x');
+      var KEY = 'magangTab:<%= mahasiswa.id %>';
+      function tersedia(n) { return nav.querySelector('button[data-tab="' + n + '"]') !== null; }
+      function buka(n, simpan) {
+        if (!tersedia(n)) n = btns[0].getAttribute('data-tab');
+        btns.forEach(function (b) { b.classList.toggle('aktif', b.getAttribute('data-tab') === n); });
+        panes.forEach(function (p) { p.classList.toggle('aktif', p.getAttribute('data-pane') === n); });
+        if (simpan) { try { sessionStorage.setItem(KEY, n); } catch (e) {} }
+        if (history.replaceState) history.replaceState(null, '', '#' + n);
+      }
+      btns.forEach(function (b) { b.addEventListener('click', function () { buka(b.getAttribute('data-tab'), true); }); });
+      var q = new URLSearchParams(location.search);
+      var awal = location.hash.replace('#', '');
+      if (!tersedia(awal)) {
+        awal = (q.has('after') || q.has('trail') || q.has('all') || q.has('semester')) ? 'harian' : '';
+        if (!awal) { try { awal = sessionStorage.getItem(KEY) || ''; } catch (e) {} }
+      }
+      if (!tersedia(awal)) awal = tersedia('mingguan') ? 'mingguan' : 'harian';
+      buka(awal, false);
+    })();
+  </script>
 
-          <div class="minggu-body">
-            <% if (m.disetujui && m.konsultasi) { %>
-              <p class="mb-2" style="font-size:.88rem;">
-                <b>Konsultasi via WA</b>
-                <% if (m.konsultasi.noWa) { %>(<%= m.konsultasi.noWa %>)<% } %>
-                <% if (m.konsultasi.tanggalKonsultasi) { %>&middot; <%= m.konsultasi.tanggalKonsultasi %><% } %>
-              </p>
-              <% if (m.konsultasi.catatan) { %>
-                <div class="p-2 mb-2" style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:.5rem;white-space:pre-line;font-size:.9rem;"><%= m.konsultasi.catatan %></div>
-              <% } %>
-            <% } %>
-
-            <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/minggu/<%= m.mingguKe %>/setujui">
-              <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
-              <div class="row g-2 mb-2">
-                <div class="col-md-5">
-                  <label class="form-label fw-semibold mb-1" style="font-size:.85rem;">No. WhatsApp mahasiswa</label>
-                  <input type="text" name="noWa" class="form-control" placeholder="08xxxxxxxxxx"
-                         value="<%= (m.konsultasi && m.konsultasi.noWa) ? m.konsultasi.noWa : (typeof noWaMahasiswa !== 'undefined' ? noWaMahasiswa : '') %>">
-                  <% if (typeof noWaLink !== 'undefined' && noWaLink) { %>
-                    <a class="wa-link" href="https://wa.me/<%= noWaLink %>" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Buka chat WhatsApp</a>
-                  <% } %>
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label fw-semibold mb-1" style="font-size:.85rem;">Tanggal konsultasi</label>
-                  <input type="date" name="tanggalKonsultasi" class="form-control"
-                         value="<%= (m.konsultasi && m.konsultasi.tanggalKonsultasi) ? m.konsultasi.tanggalKonsultasi : '' %>">
-                </div>
-              </div>
-              <div class="mb-2">
-                <label class="form-label fw-semibold mb-1" style="font-size:.85rem;">Catatan Dosen Pembimbing (opsional, tampil di lembar logbook &amp; lembar konsultasi)</label>
-                <textarea name="catatan" rows="3" maxlength="1500" class="form-control"
-                          placeholder="Ketik catatan/arahan untuk mahasiswa pada minggu ini..."><%= (m.konsultasi && m.konsultasi.catatan) ? m.konsultasi.catatan : '' %></textarea>
-              </div>
-              <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" name="sudahKonsultasi" id="konsul<%= m.mingguKe %>" <%= m.disetujui ? 'checked' : '' %>>
-                <label class="form-check-label" for="konsul<%= m.mingguKe %>">Mahasiswa sudah konsultasi via WhatsApp</label>
-              </div>
-              <button type="submit" class="btn btn-success btn-sm"
-                      onclick="return confirm('Setujui logbook minggu ke-<%= m.mingguKe %>? Semua entri pending minggu ini ikut disetujui.')">
-                <i class="bi bi-check2-all"></i> <%= m.disetujui ? 'Simpan perubahan' : 'Setujui Minggu Ini' %>
-              </button>
-            </form>
-            <% if (m.disetujui) { %>
-              <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/minggu/<%= m.mingguKe %>/batal" class="mt-2"
-                    onsubmit="return confirm('Cabut persetujuan minggu ke-<%= m.mingguKe %>? Entri minggu ini kembali pending dan lembar berwatermark.');">
-                <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
-                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-x-circle"></i> Cabut persetujuan</button>
-              </form>
-            <% } %>
-          </div>
-        </details>
-      <% }) %>
-    </div>
-  <% } %>
-
-  <!-- Filter Semester -->
-  <div class="filter-card">
-    <form method="GET" class="row g-3 align-items-end">
-      <div class="col-md-4">
-        <label class="form-label fw-semibold"><i class="bi bi-funnel"></i> Filter Semester</label>
-        <select name="semester" class="form-select" onchange="this.form.submit()">
-          <option value="">Semua Semester</option>
-          <% if (semesterList && semesterList.length > 0) { %>
-            <% semesterList.forEach(s => { %>
-              <option value="<%= s %>" <%= selectedSemester === s ? 'selected' : '' %>><%= s %></option>
-            <% }) %>
-          <% } %>
-        </select>
-      </div>
-      <% if (selectedPeriod) { %>
-        <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
-      <% } %>
-    </form>
-  </div>
-
-  <!-- Tabel Logbook -->
-  <div class="table-container">
-    <div class="table-responsive">
-      <table class="table logbook-table">
-        <thead>
-          <tr>
-            <th style="text-align: center;">No</th>
-            <th>Tanggal</th>
-            <th>Kegiatan</th>
-            <th style="text-align: center;">Durasi</th>
-            <th>Lokasi</th>
-            <th>Semester</th>
-            <th style="text-align: center;">Gambar</th>
-            <th style="text-align: center;">Status</th>
-            <% if (isPembimbing) { %>
-              <th style="text-align: center;">Aksi</th>
-            <% } %>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (logbookList.length === 0) { %>
-            <tr>
-              <td colspan="<%= isPembimbing ? 9 : 8 %>" class="text-center py-5">
-                <div class="empty-state">
-                  <i class="bi bi-inbox"></i>
-                  <p>Belum ada logbook untuk periode ini.</p>
-                </div>
-              </td>
-            </tr>
-          <% } else { %>
-            <% logbookList.forEach((item, index) => { %>
-              <tr>
-                <td style="text-align: center; font-weight: 600;"><%= index + 1 %></td>
-                <td><%= item.tanggalFormatted %></td>
-                <td style="max-width: 300px;"><%= item.kegiatan %></td>
-                <td style="text-align: center;"><%= item.durasi ? item.durasi + ' jam' : '-' %></td>
-                <td><%= item.lokasi || '-' %></td>
-                <td><%= item.semester || '-' %></td>
-                <td style="text-align: center;">
-                  <% if (item.imageUrls && item.imageUrls.length > 0) { 
-                    const firstUrl = item.imageUrls[0];
-                    const fileId = getFileId(firstUrl);
-                    const thumbUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w100` : firstUrl;
-                    const directUrl = fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : firstUrl;
-                  %>
-                    <img src="<%= thumbUrl %>" 
-                         class="thumbnail" 
-                         alt="dokumentasi"
-                         onclick='lihatGambar(<%= JSON.stringify(item.imageUrls) %>)'
-                         onerror="this.onerror=null; this.src='<%= directUrl %>';">
-                  <% } else { %>
-                    <span class="text-muted">-</span>
-                  <% } %>
-                </td>
-                <td style="text-align: center;">
-                  <% if (item.status === 'approved') { %>
-                    <span class="badge-status badge-approved">
-                      <i class="bi bi-check-circle"></i> Disetujui
-                    </span>
-                    <% if (item.approvedByNama) { %>
-                      <br><small class="text-muted">oleh: <%= item.approvedByNama %></small>
-                    <% } %>
-                    <% if (item.catatan) { %>
-                      <br><small class="text-muted"><i class="bi bi-chat-left-text"></i> <%= item.catatan %></small>
-                    <% } %>
-                  <% } else if (item.status === 'rejected') { %>
-                    <span class="badge-status badge-rejected">
-                      <i class="bi bi-x-circle"></i> Ditolak
-                    </span>
-                    <% if (item.rejectionReason) { %>
-                      <br><small class="text-muted">Alasan: <%= item.rejectionReason %></small>
-                    <% } %>
-                    <% if (item.rejectedByNama) { %>
-                      <br><small class="text-muted">oleh: <%= item.rejectedByNama %></small>
-                    <% } %>
-                  <% } else { %>
-                    <span class="badge-status badge-pending">
-                      <i class="bi bi-hourglass-split"></i> Pending
-                    </span>
-                  <% } %>
-                </td>
-                <% if (isPembimbing) { %>
-                  <td style="text-align: center;">
-                    <% if (item.status === 'pending') { %>
-                      <div class="d-flex gap-2 justify-content-center">
-                        <form method="POST" action="/dosen/magang/logbook/<%= item.id %>/approve" style="display: inline;">
-                          <button type="submit" class="btn-approve" onclick="return confirm('Setujui logbook ini?')">
-                            <i class="bi bi-check-circle"></i> Setujui
-                          </button>
-                        </form>
-                        <button type="button" class="btn-reject" data-bs-toggle="modal" data-bs-target="#rejectModal" 
-                                data-logbook-id="<%= item.id %>" 
-                                data-logbook-title="<%= item.kegiatan.substring(0, 50) %>">
-                          <i class="bi bi-x-circle"></i> Tolak
-                        </button>
-                      </div>
-                    <% } else { %>
-                      <span class="text-muted">-</span>
-                    <% } %>
-                  </td>
-                <% } %>
-              </tr>
-            <% }) %>
-          <% } %>
-        </tbody>
-      </table>
-    </div>
-    <%- include('../partials/pagination', { pageInfo: typeof pageInfo !== 'undefined' ? pageInfo : null, showAll: typeof showAll !== 'undefined' ? showAll : false, pageListUrl: typeof pageListUrl !== 'undefined' ? pageListUrl : '?' }) %>
-  </div>
 </div>
 
 <!-- Modal Reject -->
