@@ -196,6 +196,7 @@
 
           <h6><i class="bi bi-list-ol"></i> Langkah Kerja</h6>
           <ol><% m.langkahKerja.forEach(l => { %><li><%= l %></li><% }) %></ol>
+          <%- include('../partials/lkm_khusus', { m }) %>
 
           <h6><i class="bi bi-journal-check"></i> Tugas / Isi Laporan</h6>
           <ul><% m.tugasLaporan.forEach(t => { %><li><%= t %></li><% }) %></ul>

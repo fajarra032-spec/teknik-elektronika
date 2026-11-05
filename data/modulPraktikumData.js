@@ -361,6 +361,261 @@ module.exports = {
       estimasiWaktu: '2 x 50 menit'
     },
     {
+      id: 'mk-06',
+      judul: 'Praktikum Seven Segment dan LCD 16x2 I2C',
+      pertemuanSaran: 7,
+      tujuan: [
+        'Merangkai seven segment 1 digit common cathode pada Arduino Uno dengan resistor pembatas arus',
+        'Menampilkan angka 0-9 pada seven segment menggunakan array pola segmen',
+        'Mencari alamat I2C modul LCD 16x2 dengan program I2C scanner',
+        'Menampilkan teks dan angka pada LCD 16x2 I2C menggunakan library LiquidCrystal_I2C',
+        'Menampilkan angka yang sama pada seven segment dan LCD secara bersamaan'
+      ],
+      alatBahan: [
+        'Arduino Uno + kabel USB; laptop dengan Arduino IDE',
+        'Seven segment 1 digit common cathode (mis. 5161AS)',
+        'Resistor 220 ohm x 7',
+        'LCD 16x2 dengan modul I2C (PCF8574) di bagian belakang',
+        'Breadboard, kabel jumper male-male dan male-female',
+        'Library LiquidCrystal_I2C (Arduino IDE: Sketch > Include Library > Manage Libraries)'
+      ],
+      k3: 'Lepas kabel USB setiap kali mengubah rangkaian. Pastikan VCC dan GND modul LCD tidak terbalik. Jangan menyambung segmen seven segment langsung ke pin Arduino tanpa resistor.',
+      dasarTeori: 'Seven segment terdiri dari 7 LED yang diberi nama a, b, c, d, e, f, g (ditambah titik dp). Pada tipe common cathode semua katoda disatukan ke GND sehingga sebuah segmen menyala bila pinnya diberi HIGH; pada tipe common anode logikanya terbalik (pin COM ke 5V, segmen menyala bila diberi LOW). LCD 16x2 menampilkan 16 karakter pada 2 baris (driver HD44780) dan aslinya memakai jalur paralel dengan banyak kabel. Modul I2C (PCF8574) di belakang LCD mengubahnya menjadi komunikasi serial sehingga hanya perlu 4 kabel: GND, VCC, SDA, dan SCL (pada Arduino Uno SDA = A4 dan SCL = A5). Setiap perangkat I2C memiliki alamat; untuk modul LCD biasanya 0x27 atau 0x3F. Potensiometer kecil pada modul mengatur kontras layar.',
+      tabelReferensi: [
+        {
+          judul: 'Pola segmen angka 0-9 (common cathode, 1 = menyala)',
+          kolom: ['Angka', 'a', 'b', 'c', 'd', 'e', 'f', 'g'],
+          baris: [
+            ['0', '1', '1', '1', '1', '1', '1', '0'],
+            ['1', '0', '1', '1', '0', '0', '0', '0'],
+            ['2', '1', '1', '0', '1', '1', '0', '1'],
+            ['3', '1', '1', '1', '1', '0', '0', '1'],
+            ['4', '0', '1', '1', '0', '0', '1', '1'],
+            ['5', '1', '0', '1', '1', '0', '1', '1'],
+            ['6', '1', '0', '1', '1', '1', '1', '1'],
+            ['7', '1', '1', '1', '0', '0', '0', '0'],
+            ['8', '1', '1', '1', '1', '1', '1', '1'],
+            ['9', '1', '1', '1', '1', '0', '1', '1']
+          ]
+        },
+        {
+          judul: 'Rangkaian seven segment ke Arduino Uno (kaki mengacu pada 5161AS; cek komponen yang dipakai bila berbeda)',
+          kolom: ['Segmen', 'Kaki seven segment', 'Pin Arduino', 'Resistor'],
+          baris: [
+            ['a', '7', 'D2', '220 ohm'],
+            ['b', '6', 'D3', '220 ohm'],
+            ['c', '4', 'D4', '220 ohm'],
+            ['d', '2', 'D5', '220 ohm'],
+            ['e', '1', 'D6', '220 ohm'],
+            ['f', '9', 'D7', '220 ohm'],
+            ['g', '10', 'D8', '220 ohm'],
+            ['COM', '3 dan 8 (salah satu)', 'GND', '-'],
+            ['dp', '5', 'tidak dipakai', '-']
+          ]
+        },
+        {
+          judul: 'Rangkaian modul LCD I2C ke Arduino Uno',
+          kolom: ['Pin modul I2C', 'Pin Arduino Uno'],
+          baris: [
+            ['GND', 'GND'],
+            ['VCC', '5V'],
+            ['SDA', 'A4'],
+            ['SCL', 'A5']
+          ]
+        }
+      ],
+      langkahKerja: [
+        '[Seven Segment] Rangkai seven segment sesuai tabel rangkaian. Periksa resistor dan kaki COM sebelum Arduino disambung ke USB',
+        '[Seven Segment] Upload Program 1, amati angka yang tampil, lalu isi Tabel A pada Data Hasil Pengamatan',
+        '[Seven Segment] Ubah nilai delay menjadi 300 ms dan 2000 ms, amati perubahannya',
+        '[LCD] Lepas USB, sambungkan modul LCD (GND, VCC, SDA ke A4, SCL ke A5), lalu pasang library LiquidCrystal_I2C lewat Library Manager',
+        '[LCD] Upload Program 2 (I2C scanner), buka Serial Monitor 9600, dan catat alamat yang terdeteksi pada Tabel B1',
+        '[LCD] Upload Program 3 dengan alamat sesuai hasil scanner; ganti teks Nama dan NIM dengan data sendiri. Bila tulisan belum terlihat, putar potensiometer kontras di belakang modul',
+        '[LCD] Lakukan percobaan perintah LCD (setCursor, clear, noBacklight) dan catat hasilnya pada Tabel B2',
+        '[Integrasi] Upload Program 4 agar seven segment dan LCD menampilkan angka yang sama, lalu isi Tabel C'
+      ],
+      program: [
+        {
+          judul: 'Program 1 - Seven segment menghitung 0-9',
+          kode: `const int segPin[7] = {2, 3, 4, 5, 6, 7, 8};   // a b c d e f g
+
+const byte pola[10][7] = {
+  {1,1,1,1,1,1,0},  // 0
+  {0,1,1,0,0,0,0},  // 1
+  {1,1,0,1,1,0,1},  // 2
+  {1,1,1,1,0,0,1},  // 3
+  {0,1,1,0,0,1,1},  // 4
+  {1,0,1,1,0,1,1},  // 5
+  {1,0,1,1,1,1,1},  // 6
+  {1,1,1,0,0,0,0},  // 7
+  {1,1,1,1,1,1,1},  // 8
+  {1,1,1,1,0,1,1}   // 9
+};
+
+void tampil(int angka) {
+  for (int i = 0; i < 7; i++) {
+    digitalWrite(segPin[i], pola[angka][i]);
+  }
+}
+
+void setup() {
+  for (int i = 0; i < 7; i++) {
+    pinMode(segPin[i], OUTPUT);
+  }
+}
+
+void loop() {
+  for (int n = 0; n <= 9; n++) {
+    tampil(n);
+    delay(1000);
+  }
+}
+
+// Common anode: sambungkan COM ke 5V dan ubah baris digitalWrite menjadi
+// digitalWrite(segPin[i], !pola[angka][i]);`
+        },
+        {
+          judul: 'Program 2 - I2C scanner (mencari alamat LCD)',
+          kode: `#include <Wire.h>
+
+void setup() {
+  Serial.begin(9600);
+  Wire.begin();
+  Serial.println("Mencari perangkat I2C...");
+  for (byte alamat = 1; alamat < 127; alamat++) {
+    Wire.beginTransmission(alamat);
+    if (Wire.endTransmission() == 0) {
+      Serial.print("Ditemukan di alamat 0x");
+      Serial.println(alamat, HEX);
+    }
+  }
+  Serial.println("Selesai.");
+}
+
+void loop() {
+}`
+        },
+        {
+          judul: 'Program 3 - Menampilkan teks pada LCD 16x2',
+          kode: `#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);   // ganti 0x27 sesuai hasil scanner
+
+void setup() {
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);      // kolom 0, baris 0
+  lcd.print("Nama: Budi");
+  lcd.setCursor(0, 1);      // kolom 0, baris 1
+  lcd.print("NIM : 12345678");
+}
+
+void loop() {
+}`
+        },
+        {
+          judul: 'Program 4 - Seven segment dan LCD bersamaan',
+          kode: `#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);   // sesuaikan alamat
+
+const int segPin[7] = {2, 3, 4, 5, 6, 7, 8};   // a b c d e f g
+
+const byte pola[10][7] = {
+  {1,1,1,1,1,1,0}, {0,1,1,0,0,0,0}, {1,1,0,1,1,0,1}, {1,1,1,1,0,0,1},
+  {0,1,1,0,0,1,1}, {1,0,1,1,0,1,1}, {1,0,1,1,1,1,1}, {1,1,1,0,0,0,0},
+  {1,1,1,1,1,1,1}, {1,1,1,1,0,1,1}
+};
+
+void tampil(int angka) {
+  for (int i = 0; i < 7; i++) {
+    digitalWrite(segPin[i], pola[angka][i]);
+  }
+}
+
+void setup() {
+  for (int i = 0; i < 7; i++) {
+    pinMode(segPin[i], OUTPUT);
+  }
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("Penghitung 0-9");
+}
+
+void loop() {
+  for (int n = 0; n <= 9; n++) {
+    tampil(n);
+    lcd.setCursor(0, 1);
+    lcd.print("Angka: ");
+    lcd.print(n);
+    delay(1000);
+  }
+}`
+        }
+      ],
+      pemecahanMasalah: [
+        { gejala: 'LCD menyala tetapi tidak ada tulisan / hanya kotak putih', penyebab: 'Kontras belum pas', solusi: 'Putar potensiometer kecil di modul I2C perlahan' },
+        { gejala: 'Scanner menemukan alamat, tetapi LCD kosong', penyebab: 'Alamat di program berbeda dengan hasil scanner', solusi: 'Samakan alamat (mis. 0x27 atau 0x3F)' },
+        { gejala: 'Scanner tidak menemukan perangkat', penyebab: 'SDA/SCL tertukar atau kabel longgar', solusi: 'Periksa SDA ke A4, SCL ke A5, serta VCC dan GND' },
+        { gejala: 'Error: LiquidCrystal_I2C.h: No such file', penyebab: 'Library belum terpasang', solusi: 'Pasang lewat Library Manager' },
+        { gejala: 'Ada segmen yang tidak menyala atau angka salah', penyebab: 'Kaki atau resistor salah/longgar', solusi: 'Cek ulang tabel rangkaian segmen' },
+        { gejala: 'Segmen menyala kebalikan dari yang diharapkan', penyebab: 'Seven segment bertipe common anode', solusi: 'COM ke 5V dan balik logika dengan !pola' }
+      ],
+      tabelData: [
+        {
+          judul: 'Tabel A - Seven segment (Program 1)',
+          kolom: ['No', 'Angka di program', 'Segmen yang menyala (a-g)', 'Tampilan benar? (Ya/Tidak)'],
+          lebar: [8, 20, 44, 28],
+          baris: Array.from({ length: 10 }, (_, i) => [String(i + 1), String(i), '', ''])
+        },
+        {
+          judul: 'Tabel B1 - Hasil I2C scanner (Program 2)',
+          kolom: ['Parameter', 'Hasil'],
+          lebar: [50, 50],
+          baris: [
+            ['Alamat I2C yang terdeteksi (0x..)', ''],
+            ['Jumlah perangkat I2C terdeteksi', ''],
+            ['Alamat yang dipakai pada Program 3', '']
+          ]
+        },
+        {
+          judul: 'Tabel B2 - Percobaan perintah LCD',
+          kolom: ['Perintah / perubahan', 'Tampilan pada LCD', 'Keterangan'],
+          lebar: [42, 30, 28],
+          baris: [
+            ['lcd.setCursor(0, 0) lalu print teks', '', ''],
+            ['lcd.setCursor(0, 1) lalu print teks', '', ''],
+            ['lcd.setCursor(10, 0) lalu print teks', '', ''],
+            ['lcd.clear()', '', ''],
+            ['lcd.noBacklight()', '', ''],
+            ['Potensiometer kontras diputar penuh ke kiri / kanan', '', '']
+          ]
+        },
+        {
+          judul: 'Tabel C - Integrasi (Program 4)',
+          kolom: ['Pengamatan', 'Hasil', 'Keterangan'],
+          lebar: [34, 33, 33],
+          baris: [
+            ['Angka seven segment = angka pada LCD?', '', ''],
+            ['Teks baris 1 LCD', '', ''],
+            ['Masalah yang ditemui', '', '']
+          ]
+        }
+      ],
+      tugasLaporan: [
+        'Mengapa setiap segmen seven segment perlu resistor? Hitung arus tiap segmen bila tegangan pin 5 V, tegangan LED sekitar 2 V, dan R = 220 ohm',
+        'Apa yang harus diubah pada rangkaian dan program bila seven segment yang dipakai bertipe common anode?',
+        'Mengapa LCD 16x2 dengan modul I2C hanya membutuhkan 4 kabel? Jelaskan fungsi SDA dan SCL',
+        'Apa yang terjadi bila alamat I2C pada program tidak sama dengan alamat sebenarnya? Bagaimana cara menemukan alamat yang benar?',
+        'Bila program diubah menghitung mundur dari 15 sampai 0, pada LCD akan muncul "Angka: 90" saat berpindah dari 10 ke 9. Jelaskan penyebabnya dan cara mengatasinya',
+        'Tugas pengembangan: modifikasi Program 4 agar menghitung mundur 9 sampai 0, lalu tampilkan tulisan "SELESAI" pada baris 1 LCD saat angka mencapai 0. Lampirkan listing program'
+      ],
+      estimasiWaktu: '3 x 50 menit'
+    },
+    {
       id: 'mk-04',
       judul: 'Interrupt dan Timer',
       pertemuanSaran: 8,
@@ -390,57 +645,196 @@ module.exports = {
     },
     {
       id: 'mk-05',
-      judul: 'Komunikasi Serial (UART)',
+      judul: 'Praktikum Serial Input sebagai Kontrol (UART)',
       pertemuanSaran: 10,
       tujuan: [
-        'Memahami prinsip komunikasi serial asinkron (UART)',
-        'Mengirim dan menerima data antara mikrokontroler dan komputer via Serial Monitor',
-        'Membuat protokol data sederhana untuk mengirim pembacaan sensor'
+        'Menjelaskan prinsip komunikasi UART: TX, RX, baud rate, serta start bit dan stop bit',
+        'Mengirim data dari Arduino ke komputer menggunakan Serial.print dan Serial.println',
+        'Menerima perintah karakter dari Serial Monitor untuk mengontrol tiga LED',
+        'Mengirim data sensor cahaya (LDR) secara berkala dengan format yang jelas',
+        'Menguji pengaruh baud rate yang tidak sama terhadap data yang diterima'
       ],
       alatBahan: [
-        'Board mikrokontroler, kabel USB',
-        'Sensor sederhana (mis. sensor suhu/LDR) untuk data yang dikirim'
+        'Arduino Uno + kabel USB; laptop dengan Arduino IDE dan Serial Monitor',
+        'LED merah, kuning, hijau (masing-masing 1)',
+        'Resistor 220 ohm x 3 (untuk LED) dan resistor 10 kohm x 1 (untuk LDR)',
+        'LDR (sensor cahaya) x 1',
+        'Breadboard dan kabel jumper'
       ],
-      dasarTeori: 'UART (Universal Asynchronous Receiver-Transmitter) adalah protokol komunikasi serial yang mengirim data bit demi bit tanpa sinyal clock bersama, menggunakan kesepakatan baud rate antar perangkat. UART umum dipakai untuk debugging maupun pertukaran data antara mikrokontroler dan komputer atau modul lain.',
+      k3: 'Lepas kabel USB saat merangkai. Periksa polaritas LED (kaki panjang = anoda ke resistor). Jangan menyambungkan 5V langsung ke GND.',
+      dasarTeori: 'UART (Universal Asynchronous Receiver-Transmitter) mengirim data bit demi bit tanpa sinyal clock bersama. Kedua perangkat harus menyepakati baud rate yang sama (mis. 9600 bit per detik). Format yang umum adalah 8N1: 1 start bit, 8 bit data, tanpa paritas, dan 1 stop bit, sehingga satu karakter memakai 10 bit. Arduino Uno memiliki satu UART pada pin D0 (RX) dan D1 (TX) yang juga terhubung ke USB, sehingga D0 dan D1 jangan dipakai untuk komponen lain saat memakai Serial Monitor. Bila dua perangkat disambung langsung, TX perangkat pertama dihubungkan ke RX perangkat kedua dan sebaliknya (disilang). Pada program, Serial.available() memberi tahu ada berapa byte yang menunggu dibaca dan Serial.read() mengambil satu karakter sebagai kode ASCII; tombol Enter menghasilkan karakter newline.',
+      tabelReferensi: [
+        {
+          judul: 'Daftar perintah yang dipakai pada praktikum',
+          kolom: ['Perintah', 'Fungsi', 'Balasan Arduino'],
+          baris: [
+            ['R / r', 'LED merah ON / OFF', 'LED merah ON / LED merah OFF'],
+            ['K / k', 'LED kuning ON / OFF', 'LED kuning ON / LED kuning OFF'],
+            ['H / h', 'LED hijau ON / OFF', 'LED hijau ON / LED hijau OFF'],
+            ['S', 'Kirim nilai sensor LDR sekali', 'LDR=nilai'],
+            ['lainnya', 'Tidak dikenal', 'Perintah tidak dikenal: x']
+          ]
+        },
+        {
+          judul: 'Rangkaian',
+          kolom: ['Komponen', 'Pin Arduino', 'Keterangan'],
+          baris: [
+            ['LED merah (via 220 ohm)', 'D8', 'Katoda ke GND'],
+            ['LED kuning (via 220 ohm)', 'D9', 'Katoda ke GND'],
+            ['LED hijau (via 220 ohm)', 'D10', 'Katoda ke GND'],
+            ['LDR + resistor 10 kohm', 'A0', '5V - LDR - A0 - 10 kohm - GND']
+          ]
+        }
+      ],
       langkahKerja: [
-        'Inisialisasi komunikasi serial pada baud rate tertentu',
-        'Kirim data teks sederhana dari mikrokontroler ke Serial Monitor',
-        'Baca data yang dikirim dari komputer ke mikrokontroler dan proses sesuai perintah (mis. nyalakan/matikan LED)',
-        'Baca data sensor dan kirimkan secara berkala melalui UART dengan format data yang jelas',
-        'Uji keandalan komunikasi pada beberapa nilai baud rate'
+        '[A - Kirim data] Upload Program 1, buka Serial Monitor (Tools > Serial Monitor) dengan baud rate 9600, lalu catat tampilannya pada Tabel A',
+        '[A - Kirim data] Ganti Serial.println menjadi Serial.print pada baris kedua dalam loop, upload ulang, dan amati perbedaannya',
+        '[B - Kontrol LED] Rangkai tiga LED sesuai tabel rangkaian, lalu upload Program 2. Atur baud rate 9600 dan line ending "Newline"',
+        '[B - Kontrol LED] Kirim perintah satu per satu sesuai Tabel B, lalu catat balasan dan kondisi LED. Kirim juga huruf lain (mis. X)',
+        '[C - Sensor] Rangkai LDR dengan resistor 10 kohm ke A0, upload Program 3, dan catat nilai LDR pada tiga kondisi cahaya di Tabel C',
+        '[D - Baud rate] Ubah Serial.begin(9600) pada Program 3 menjadi 115200, upload, lalu atur baud rate Serial Monitor sesuai kombinasi pada Tabel D dan catat tampilannya'
+      ],
+      program: [
+        {
+          judul: 'Program 1 - Mengirim teks ke Serial Monitor',
+          kode: `void setup() {
+  Serial.begin(9600);
+  Serial.println("Halo, ini Arduino");
+}
+
+void loop() {
+  Serial.print("Detik ke-");
+  Serial.println(millis() / 1000);
+  delay(1000);
+}`
+        },
+        {
+          judul: 'Program 2 - Kontrol LED lewat Serial Monitor',
+          kode: `const int ledMerah = 8;
+const int ledKuning = 9;
+const int ledHijau = 10;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(ledMerah, OUTPUT);
+  pinMode(ledKuning, OUTPUT);
+  pinMode(ledHijau, OUTPUT);
+  Serial.println("Perintah: R/r K/k H/h S");
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    char perintah = Serial.read();
+
+    switch (perintah) {
+      case 'R':
+        digitalWrite(ledMerah, HIGH);
+        Serial.println("LED merah ON");
+        break;
+      case 'r':
+        digitalWrite(ledMerah, LOW);
+        Serial.println("LED merah OFF");
+        break;
+      case 'K':
+        digitalWrite(ledKuning, HIGH);
+        Serial.println("LED kuning ON");
+        break;
+      case 'k':
+        digitalWrite(ledKuning, LOW);
+        Serial.println("LED kuning OFF");
+        break;
+      case 'H':
+        digitalWrite(ledHijau, HIGH);
+        Serial.println("LED hijau ON");
+        break;
+      case 'h':
+        digitalWrite(ledHijau, LOW);
+        Serial.println("LED hijau OFF");
+        break;
+      case 'S':
+        Serial.print("LDR=");
+        Serial.println(analogRead(A0));
+        break;
+      case '\\n':
+      case '\\r':
+        break;               // abaikan tombol Enter
+      default:
+        Serial.print("Perintah tidak dikenal: ");
+        Serial.println(perintah);
+    }
+  }
+}`
+        },
+        {
+          judul: 'Program 3 - Kirim nilai LDR tiap 0,5 detik',
+          kode: `void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  int nilai = analogRead(A0);
+  Serial.print("LDR=");
+  Serial.println(nilai);
+  delay(500);
+}`
+        }
+      ],
+      pemecahanMasalah: [
+        { gejala: 'Muncul karakter acak atau kotak di Serial Monitor', penyebab: 'Baud rate program dan Serial Monitor berbeda', solusi: 'Samakan baud rate' },
+        { gejala: 'Upload gagal / port sibuk', penyebab: 'Serial Monitor masih terbuka atau ada kabel di D0/D1', solusi: 'Tutup Serial Monitor dan cabut kabel dari D0/D1' },
+        { gejala: 'Perintah dikirim tetapi tidak ada balasan', penyebab: 'Tombol Send belum ditekan atau port salah', solusi: 'Periksa Tools > Port dan tekan Send / Enter' },
+        { gejala: 'Nilai LDR selalu 0 atau 1023', penyebab: 'Pembagi tegangan LDR salah rangkai', solusi: 'Cek 5V - LDR - A0 - 10 kohm - GND' },
+        { gejala: 'LED tidak menyala padahal balasan benar', penyebab: 'Polaritas LED terbalik atau pin salah', solusi: 'Balik kaki LED dan cek pin D8-D10' }
+      ],
+      tabelData: [
+        {
+          judul: 'Tabel A - Pengiriman data (Program 1)',
+          kolom: ['No', 'Pengamatan', 'Hasil'],
+          lebar: [8, 40, 52],
+          baris: [
+            ['1', 'Teks pembuka yang tampil', ''],
+            ['2', 'Isi tiga baris pertama setelah teks pembuka', ''],
+            ['3', 'Perbedaan tampilan antara print dan println', '']
+          ]
+        },
+        {
+          judul: 'Tabel B - Perintah kontrol LED (Program 2)',
+          kolom: ['No', 'Perintah dikirim', 'Balasan di Serial Monitor', 'Kondisi LED (M / K / H)'],
+          lebar: [8, 20, 40, 32],
+          baris: [
+            ['1', 'R', '', ''], ['2', 'K', '', ''], ['3', 'H', '', ''], ['4', 'r', '', ''],
+            ['5', 'k', '', ''], ['6', 'h', '', ''], ['7', 'S', '', ''], ['8', 'X', '', '']
+          ]
+        },
+        {
+          judul: 'Tabel C - Nilai sensor LDR (Program 3)',
+          kolom: ['No', 'Kondisi cahaya', 'Nilai analogRead (terendah - tertinggi)'],
+          lebar: [8, 40, 52],
+          baris: [
+            ['1', 'Ruangan normal', ''],
+            ['2', 'Sensor ditutup tangan', ''],
+            ['3', 'Disinari senter HP', '']
+          ]
+        },
+        {
+          judul: 'Tabel D - Pengujian baud rate',
+          kolom: ['No', 'Baud rate program', 'Baud rate Serial Monitor', 'Tampilan yang muncul'],
+          lebar: [8, 23, 23, 46],
+          baris: [
+            ['1', '9600', '9600', ''],
+            ['2', '9600', '115200', ''],
+            ['3', '115200', '115200', ''],
+            ['4', '115200', '9600', '']
+          ]
+        }
       ],
       tugasLaporan: [
-        'Listing program pengirim dan penerima data',
-        'Contoh tampilan data pada Serial Monitor',
-        'Analisis pengaruh baud rate terhadap keandalan komunikasi'
-      ],
-      estimasiWaktu: '2 x 50 menit'
-    },
-    {
-      id: 'mk-06',
-      judul: 'Komunikasi I2C/SPI dan Modul Tampilan (LCD/OLED)',
-      pertemuanSaran: 12,
-      tujuan: [
-        'Memahami prinsip komunikasi I2C dan/atau SPI antar perangkat',
-        'Menghubungkan dan memprogram modul LCD/OLED sebagai tampilan output',
-        'Menampilkan data sensor atau status sistem pada modul display'
-      ],
-      alatBahan: [
-        'Board mikrokontroler, modul LCD I2C 16x2 atau OLED SPI/I2C',
-        'Sensor tambahan (opsional) untuk data yang ditampilkan'
-      ],
-      dasarTeori: 'I2C dan SPI adalah protokol komunikasi serial sinkron yang memungkinkan satu mikrokontroler berkomunikasi dengan satu atau beberapa perangkat (sensor, display) menggunakan jalur data yang lebih sedikit dibanding komunikasi paralel. Modul LCD/OLED umumnya menggunakan salah satu dari kedua protokol ini untuk menerima data yang akan ditampilkan.',
-      langkahKerja: [
-        'Hubungkan modul LCD/OLED ke pin I2C/SPI mikrokontroler sesuai datasheet',
-        'Instal pustaka (library) yang sesuai dan uji tampilan teks dasar',
-        'Tampilkan data statis (nama, NIM, judul modul) pada layar',
-        'Tampilkan data dinamis dari sensor atau input pengguna secara real-time',
-        'Uji kestabilan tampilan pada pembaruan data yang cepat'
-      ],
-      tugasLaporan: [
-        'Listing program dan penjelasan konfigurasi komunikasi (alamat I2C/pin SPI)',
-        'Foto/dokumentasi tampilan hasil pengujian',
-        'Kesimpulan dan kendala yang dihadapi saat interfacing'
+        'Jelaskan fungsi pin TX dan RX. Mengapa TX satu perangkat harus disambung ke RX perangkat lain?',
+        'Sebutkan isi satu frame UART format 8N1. Hitung lama pengiriman satu karakter pada 9600 baud',
+        'Mengapa muncul karakter acak ketika baud rate program dan Serial Monitor tidak sama?',
+        'Apa fungsi Serial.available() sebelum Serial.read()? Apa yang terjadi bila Serial.available() dihilangkan?',
+        'Mengapa pin D0 dan D1 sebaiknya tidak dipakai untuk LED saat memakai Serial Monitor?',
+        'Tugas pengembangan: tambahkan perintah "A" untuk menyalakan ketiga LED sekaligus dan "M" untuk mematikan ketiganya, dengan balasan yang sesuai. Lampirkan listing program'
       ],
       estimasiWaktu: '2 x 50 menit'
     },
