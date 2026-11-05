@@ -8,7 +8,13 @@
   if (typeof canSubmit === 'undefined') canSubmit = false;
   if (typeof selectedPeriodId === 'undefined') selectedPeriodId = null;
   if (typeof pembimbing === 'undefined') pembimbing = null;
-  
+  if (typeof progress === 'undefined') progress = null;
+  if (typeof minggu === 'undefined') minggu = null;
+  if (typeof modeRiwayat === 'undefined') modeRiwayat = false;
+  if (typeof totalLogbook === 'undefined') totalLogbook = 0;
+  if (typeof totalJamMinggu === 'undefined') totalJamMinggu = 0;
+  if (typeof tanggalTerisi === 'undefined') tanggalTerisi = [];
+
   // Helper function untuk mendapatkan semester saat ini (fallback)
   const getCurrentSemester = () => {
     const now = new Date();
@@ -17,610 +23,450 @@
     const semester = month >= 8 ? 'Ganjil' : 'Genap';
     return `${semester} ${year}/${year + 1}`;
   };
+
+  // ---------- Bantu tampilan ----------
+  const BLN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const fTgl = (iso) => { const q = String(iso || '').split('-'); return q.length === 3 ? parseInt(q[2],10) + ' ' + BLN[parseInt(q[1],10)-1] : ''; };
+  const fTglTh = (iso) => { const q = String(iso || '').split('-'); return q.length === 3 ? fTgl(iso) + ' ' + q[0] : ''; };
+  const HARI = ['Ahad','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const HARI_PENDEK = ['Ahd','Sen','Sel','Rab','Kam','Jum','Sab'];
+  const dUTC = (iso) => new Date(String(iso).substring(0,10) + 'T00:00:00Z');
+  const namaHari = (iso) => { const d = dUTC(iso); return isNaN(d) ? '' : HARI[d.getUTCDay()]; };
+  const fJam = (n) => String(Number(Number(n || 0).toFixed(2)));
+  const base = selectedPeriod ? '/mahasiswa/magang/logbook?periodId=' + selectedPeriod.id : '';
+  const mingguVal = minggu && minggu.mingguKe ? minggu.mingguKe : '';
+  const namaTempatMagang = (selectedPeriod && selectedPeriod.perusahaan && selectedPeriod.perusahaan.nama) ? selectedPeriod.perusahaan.nama : '';
+  const fotoId = (u) => { const m = String(u || '').match(/[?&]id=([^&]+)/); return m ? m[1] : ((String(u || '').match(/\/d\/([^\/]+)/) || [])[1] || null); };
+
+  // Jam per tanggal (untuk strip hari)
+  const jamPerTanggal = {};
+  logbook.forEach((it) => { const k = String(it.tanggal).substring(0,10); jamPerTanggal[k] = (jamPerTanggal[k] || 0) + (parseFloat(it.durasi) || 0); });
+  const hariStrip = [];
+  if (minggu && minggu.awal) {
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(dUTC(minggu.awal).getTime() + i * 86400000);
+      const iso = d.toISOString().substring(0, 10);
+      hariStrip.push({ iso, hari: HARI_PENDEK[d.getUTCDay()], tgl: d.getUTCDate(), jam: jamPerTanggal[iso] || 0,
+        terisi: jamPerTanggal[iso] !== undefined, hariIni: iso === hariIni, depan: iso > hariIni,
+        akhirPekan: d.getUTCDay() === 0 || d.getUTCDay() === 6 });
+    }
+  }
+  const pctProgress = progress ? progress.percentage : 0;
 %>
 
 <style>
-  /* ===== VARIABEL DARI LANDING + GAYA ASLI ===== */
+  /* ===== VARIABEL ===== */
   :root {
-    /* Tambahan dari landing */
-    --primary: #0d6efd;
-    --primary-dark: #0b5ed7;
-    --secondary: #0dcaf0;
-    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
-    --shadow-sm: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
-    --shadow-hover: 0 1rem 2rem rgba(13, 110, 253, 0.12);
-    --transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-    
-    /* Variabel asli */
     --primary-start: #1e3a8a;
     --primary-end: #3b82f6;
-    --primary-light: rgba(30,58,138,0.1);
+    --primary-light: rgba(30,58,138,0.08);
     --primary-dark: #0f2b5c;
-    --warning-bg: #fef3c7;
-    --warning-text: #92400e;
-    --success-bg: #d1fae5;
-    --success-text: #065f46;
-    --danger-bg: #fee2e2;
-    --danger-text: #991b1b;
+    --warning-bg: #fef3c7; --warning-text: #92400e;
+    --success-bg: #d1fae5; --success-text: #065f46;
+    --danger-bg: #fee2e2; --danger-text: #991b1b;
+    --ink: #0f172a; --muted: #64748b; --line: #e2e8f0; --card: #ffffff;
+    --shadow-sm: 0 1px 2px rgba(15,23,42,.05), 0 4px 14px rgba(15,23,42,.05);
+    --shadow-hover: 0 10px 24px rgba(30,58,138,.14);
+    --transition: all .2s ease;
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   }
+  html { font-size: clamp(14px, 1vw + 10px, 16px); }
+  body { font-family: var(--font-sans); background: #f4f7fb; color: var(--ink); }
+  .lb-wrap { max-width: 980px; padding-bottom: 5.5rem; }
 
-  /* ===== BASE FLUID FONT (SAMA PERSIS DENGAN LANDING) ===== */
-  html {
-    font-size: clamp(14px, 1vw + 10px, 16px);
-  }
-
-  body {
-    font-family: var(--font-sans);
-    background-color: #f8fafc;
-  }
-
-  /* ===== HEADER ===== */
-  .magang-header {
+  /* ===== HERO ===== */
+  .lb-hero {
+    position: relative; overflow: hidden; color: #fff; border-radius: 1.25rem;
     background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border-radius: 1.5rem;
-    padding: clamp(1.2rem, 4vw, 2rem);
-    color: white;
-    margin-bottom: 2rem;
-    box-shadow: 0 15px 30px rgba(30,58,138,0.25);
-    position: relative;
-    overflow: hidden;
+    padding: clamp(1rem, 3.5vw, 1.6rem) clamp(1rem, 4vw, 1.8rem); margin-bottom: 1rem;
+    display: flex; flex-wrap: wrap; gap: .9rem; align-items: center; justify-content: space-between;
+    box-shadow: 0 14px 28px rgba(30,58,138,.22);
   }
-  .magang-header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 300px;
-    height: 300px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 50%;
-    transform: rotate(25deg);
-  }
-  .magang-header h2 {
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    position: relative;
-    z-index: 1;
-    font-size: clamp(1.4rem, 5vw, 2.2rem);
-  }
-  .magang-header p {
-    margin-bottom: 0;
-    opacity: 0.9;
-    position: relative;
-    z-index: 1;
-    font-size: clamp(0.85rem, 3vw, 1.1rem);
-  }
-  .magang-header .btn-light {
-    border-radius: 50px;
-    padding: clamp(0.4rem, 2vw, 0.6rem) clamp(1rem, 4vw, 1.5rem);
-    font-weight: 500;
-    background: white;
-    color: var(--primary-start);
-    border: none;
-    box-shadow: var(--shadow-sm);
-    transition: var(--transition);
-    font-size: clamp(0.8rem, 2.5vw, 0.95rem);
-  }
-  .magang-header .btn-light:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-hover);
-  }
+  .lb-hero::after { content: ''; position: absolute; right: -60px; top: -90px; width: 240px; height: 240px; border-radius: 50%; background: rgba(255,255,255,.10); }
+  .lb-hero > * { position: relative; z-index: 1; }
+  .lb-eyebrow { font-size: .72rem; letter-spacing: 1.2px; text-transform: uppercase; opacity: .8; font-weight: 700; }
+  .lb-hero h1 { margin: .15rem 0 .25rem; font-weight: 800; font-size: clamp(1.25rem, 4.2vw, 1.8rem); line-height: 1.2; }
+  .lb-meta { display: flex; flex-wrap: wrap; gap: .35rem .9rem; font-size: clamp(.78rem, 2.4vw, .9rem); opacity: .95; }
+  .lb-meta span { display: inline-flex; align-items: center; gap: .35rem; }
+  .btn-hero { background: #fff; color: var(--primary-start); border: 0; border-radius: 50px; font-weight: 700; padding: .6rem 1.3rem; box-shadow: var(--shadow-sm); transition: var(--transition); }
+  .btn-hero:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); color: var(--primary-dark); }
 
-  /* ===== TAB PDK ===== */
-  .pdk-tabs {
-    margin-bottom: 1.5rem;
-    background: white;
-    border-radius: 1rem;
-    padding: clamp(0.3rem, 2vw, 0.5rem);
-    box-shadow: var(--shadow-sm);
-  }
-  .nav-tabs {
-    border-bottom: none;
-    gap: clamp(0.3rem, 2vw, 0.5rem);
-    flex-wrap: wrap;
-  }
-  .nav-tabs .nav-link {
-    border: none;
-    border-radius: 2rem;
-    padding: clamp(0.4rem, 2vw, 0.6rem) clamp(1rem, 3vw, 1.5rem);
-    color: #6c757d;
-    font-weight: 500;
-    transition: var(--transition);
-    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
-  }
-  .nav-tabs .nav-link:hover {
-    background: var(--primary-light);
-    color: var(--primary-start);
-  }
-  .nav-tabs .nav-link.active {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    color: white;
-    box-shadow: 0 5px 15px rgba(30,58,138,0.3);
-  }
-  .badge-tab {
-    margin-left: 0.5rem;
-    font-size: clamp(0.6rem, 2vw, 0.7rem);
-    padding: clamp(0.1rem, 1vw, 0.2rem) clamp(0.3rem, 1.5vw, 0.5rem);
-    border-radius: 50px;
-  }
+  /* ===== TAB PERIODE ===== */
+  .lb-tabs { display: flex; gap: .45rem; overflow-x: auto; padding: .15rem .1rem .6rem; margin-bottom: .4rem; scrollbar-width: thin; }
+  .lb-tab { flex: 0 0 auto; display: inline-flex; align-items: center; gap: .45rem; text-decoration: none; background: var(--card); color: #475569; border: 1px solid var(--line); border-radius: 50px; padding: .4rem .95rem; font-size: .85rem; font-weight: 600; transition: var(--transition); white-space: nowrap; }
+  .lb-tab:hover { border-color: var(--primary-end); color: var(--primary-start); }
+  .lb-tab.active { background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); color: #fff; border-color: transparent; box-shadow: 0 6px 14px rgba(30,58,138,.25); }
+  .lb-tab .badge-tab { font-size: .62rem; padding: .15rem .45rem; border-radius: 50px; }
 
-  /* ===== PANDUAN CARD ===== */
-  .panduan-card {
-    background: white;
-    border-left: 4px solid var(--primary-start);
-    border-radius: 1.2rem;
-    padding: clamp(1rem, 3vw, 1.2rem) clamp(1rem, 4vw, 1.5rem);
-    margin-bottom: 2rem;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.03);
-    display: flex;
-    align-items: flex-start;
-    gap: clamp(0.8rem, 3vw, 1rem);
-  }
-  .panduan-icon { 
-    font-size: clamp(1.5rem, 5vw, 2rem); 
-    color: var(--primary-start); 
-    flex-shrink: 0; 
-  }
-  .panduan-text strong { 
-    color: var(--primary-dark); 
-    display: block; 
-    margin-bottom: 0.3rem; 
-    font-size: clamp(0.9rem, 2.5vw, 1rem);
-  }
-  .panduan-text ul { 
-    margin-bottom: 0; 
-    padding-left: 1.2rem; 
-  }
-  .panduan-text li { 
-    margin-bottom: 0.3rem; 
-    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
-  }
+  /* ===== KARTU RINGKASAN ===== */
+  .lb-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; margin-bottom: 1rem; }
+  .lb-stat { background: var(--card); border-radius: 1rem; padding: .8rem .95rem; box-shadow: var(--shadow-sm); border-top: 3px solid var(--primary-end); min-width: 0; }
+  .lb-stat:nth-child(2) { border-top-color: #10b981; }
+  .lb-stat:nth-child(3) { border-top-color: #f59e0b; }
+  .lb-stat:nth-child(4) { border-top-color: #8b5cf6; }
+  .lb-stat .lbl { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 700; }
+  .lb-stat .val { font-size: 1.45rem; font-weight: 800; color: var(--primary-dark); line-height: 1.2; }
+  .lb-stat .val small { font-size: .8rem; font-weight: 600; color: var(--muted); }
+  .lb-stat .sub { font-size: .74rem; color: var(--muted); }
+  .lb-bar { height: 6px; background: #e8eef7; border-radius: 50px; overflow: hidden; margin-top: .35rem; }
+  .lb-bar i { display: block; height: 100%; background: linear-gradient(90deg, #8b5cf6, #3b82f6); border-radius: 50px; }
 
-  /* ===== INFO PEMBIMBING ===== */
-  .info-pembimbing {
-    background: #f8fafc;
-    border-radius: 1rem;
-    padding: clamp(0.8rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem);
-    margin-bottom: 1.5rem;
-    border: 1px solid #e2e8f0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: clamp(1rem, 3vw, 2rem);
-  }
-  .info-pembimbing-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
-  }
-  .info-pembimbing-item i {
-    color: var(--primary-start);
-    font-size: clamp(1rem, 3vw, 1.2rem);
-  }
+  /* ===== PANEL PEKAN ===== */
+  .lb-panel { background: var(--card); border-radius: 1.25rem; box-shadow: var(--shadow-sm); padding: clamp(.8rem, 3vw, 1.25rem); margin-bottom: 1rem; }
+  .lb-weeknav { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: .8rem; }
+  .lb-weeknav .judul { font-weight: 800; color: var(--primary-dark); font-size: 1.05rem; text-align: center; }
+  .lb-weeknav small { display: block; color: var(--muted); font-size: .78rem; text-align: center; }
+  .lb-navbtn { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); background: #fff; color: var(--primary-start); text-decoration: none; transition: var(--transition); flex: 0 0 auto; }
+  .lb-navbtn:hover { background: var(--primary-light); }
+  .lb-navbtn.disabled { opacity: .35; pointer-events: none; }
+  .lb-riwayat-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: .8rem; }
+  .lb-riwayat-bar .judul { font-weight: 800; color: var(--primary-dark); }
 
-  /* ===== TABEL ===== */
-  .table-container {
-    background: white;
-    border-radius: 1.5rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    padding: clamp(1rem, 4vw, 1.5rem);
-    margin-bottom: 2rem;
-  }
-  .logbook-table thead th {
-    background: linear-gradient(135deg, var(--primary-light), rgba(59,130,246,0.1));
-    color: var(--primary-dark);
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: clamp(0.7rem, 2vw, 0.85rem);
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid var(--primary-start);
-    padding: clamp(0.7rem, 2.5vw, 1rem) clamp(0.5rem, 2vw, 0.75rem);
-  }
-  .logbook-table tbody tr {
-    transition: var(--transition);
-  }
-  .logbook-table tbody tr:hover {
-    background-color: var(--primary-light);
-    transform: scale(1.01);
-    box-shadow: 0 5px 15px rgba(30,58,138,0.1);
-  }
-  .logbook-table td {
-    padding: clamp(0.7rem, 2.5vw, 1rem) clamp(0.5rem, 2vw, 0.75rem);
-    vertical-align: middle;
-    border-bottom: 1px solid #e9ecef;
-    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
-  }
+  /* strip 7 hari */
+  .lb-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: .4rem; margin-bottom: 1rem; }
+  .lb-day { display: flex; flex-direction: column; align-items: center; gap: .05rem; padding: .45rem .2rem; border-radius: .8rem; border: 1px dashed #cbd5e1; background: #f8fafc; color: #475569; text-decoration: none; font-size: .72rem; line-height: 1.2; cursor: pointer; transition: var(--transition); min-width: 0; font-family: inherit; }
+  .lb-day b { font-size: 1.05rem; color: var(--ink); }
+  .lb-day em { font-style: normal; font-size: .66rem; font-weight: 700; }
+  .lb-day:hover:not(.depan) { border-color: var(--primary-end); background: #fff; transform: translateY(-2px); }
+  .lb-day.terisi { border: 1px solid #a7f3d0; background: #ecfdf5; color: #065f46; }
+  .lb-day.terisi em { color: #047857; }
+  .lb-day.kosong em { color: #94a3b8; }
+  .lb-day.akhir-pekan:not(.terisi) b { color: #b45309; }
+  .lb-day.hari-ini { box-shadow: 0 0 0 2px var(--primary-end); }
+  .lb-day.depan { opacity: .45; cursor: default; }
 
-  /* ===== BADGE STATUS ===== */
-  .badge-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: clamp(0.3rem, 1.5vw, 0.4rem) clamp(0.6rem, 2vw, 1rem);
-    border-radius: 50px;
-    font-weight: 500;
-    font-size: clamp(0.7rem, 2vw, 0.85rem);
-  }
-  .badge-pending { background: var(--warning-bg); color: var(--warning-text); border: 1px solid #ffeeba; }
-  .badge-approved { background: var(--success-bg); color: var(--success-text); border: 1px solid #c3e6cb; }
-  .badge-rejected { background: var(--danger-bg); color: var(--danger-text); border: 1px solid #f5c6cb; }
+  /* ===== KARTU ENTRI ===== */
+  .lb-list { display: flex; flex-direction: column; gap: .75rem; }
+  .lb-entry { display: flex; gap: .9rem; padding: .9rem; border: 1px solid var(--line); border-left: 4px solid #f59e0b; border-radius: 1rem; background: #fff; transition: var(--transition); scroll-margin-top: 80px; }
+  .lb-entry:hover { box-shadow: var(--shadow-hover); }
+  .lb-entry.approved { border-left-color: #10b981; }
+  .lb-entry.rejected { border-left-color: #ef4444; }
+  .lb-date { flex: 0 0 auto; width: 58px; text-align: center; background: var(--primary-light); border-radius: .8rem; padding: .4rem .2rem; align-self: flex-start; }
+  .lb-date .h { display: block; font-size: .66rem; text-transform: uppercase; letter-spacing: .5px; font-weight: 800; color: var(--primary-start); }
+  .lb-date b { display: block; font-size: 1.5rem; line-height: 1.1; color: var(--primary-dark); }
+  .lb-date .b { display: block; font-size: .7rem; color: var(--muted); font-weight: 600; }
+  .lb-body { flex: 1 1 auto; min-width: 0; }
+  .lb-top { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .5rem; margin-bottom: .35rem; }
+  .lb-pill { display: inline-flex; align-items: center; gap: .3rem; font-size: .74rem; font-weight: 700; padding: .12rem .6rem; border-radius: 50px; background: #eef2ff; color: #3730a3; }
+  .lb-pill.lok { background: #f1f5f9; color: #475569; font-weight: 600; }
+  .badge-status { display: inline-flex; align-items: center; gap: .35rem; padding: .12rem .65rem; border-radius: 50px; font-weight: 700; font-size: .74rem; }
+  .badge-pending { background: var(--warning-bg); color: var(--warning-text); }
+  .badge-approved { background: var(--success-bg); color: var(--success-text); }
+  .badge-rejected { background: var(--danger-bg); color: var(--danger-text); }
+  .lb-kegiatan { margin: 0; white-space: pre-line; overflow-wrap: anywhere; font-size: .95rem; }
+  .lb-hasil { margin-top: .4rem; padding: .4rem .65rem; background: #f0fdfa; border-radius: .6rem; font-size: .86rem; color: #134e4a; white-space: pre-line; overflow-wrap: anywhere; }
+  .lb-hasil b { color: #0f766e; }
+  .lb-hasil-kosong { margin-top: .4rem; font-size: .8rem; color: #b45309; }
+  .lb-fotos { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+  .lb-foto { position: relative; width: 56px; height: 56px; border-radius: .6rem; overflow: hidden; border: 2px solid transparent; cursor: pointer; background: #e2e8f0; padding: 0; transition: var(--transition); }
+  .lb-foto:hover { border-color: var(--primary-end); transform: scale(1.05); }
+  .lb-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .lb-foto .lebih { position: absolute; inset: 0; background: rgba(15,23,42,.6); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: .95rem; }
+  .lb-info { margin-top: .5rem; font-size: .78rem; color: var(--muted); display: flex; flex-direction: column; gap: .15rem; }
+  .lb-aksi { flex: 0 0 auto; display: flex; flex-direction: column; gap: .4rem; }
+  .lb-aksi form { margin: 0; }
+  .btn-ico { width: 34px; height: 34px; border-radius: 50%; border: 0; display: inline-flex; align-items: center; justify-content: center; color: #fff; transition: var(--transition); }
+  .btn-ico.edit { background: #f59e0b; } .btn-ico.hapus { background: #ef4444; }
+  .btn-ico:hover { transform: translateY(-2px); filter: brightness(1.05); }
 
-  /* ===== TOMBOL ===== */
-  .btn-gradient {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border: none;
-    color: white;
-    font-weight: 500;
-    padding: clamp(0.4rem, 2vw, 0.6rem) clamp(1rem, 3vw, 1.5rem);
-    border-radius: 50px;
-    transition: var(--transition);
-    box-shadow: 0 5px 15px rgba(30,58,138,0.2);
-    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
-  }
-  .btn-gradient:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); color: white; }
-  .btn-outline-gradient {
-    background: transparent;
-    border: 2px solid var(--primary-start);
-    color: var(--primary-start);
-    font-weight: 500;
-    padding: clamp(0.4rem, 2vw, 0.5rem) clamp(1rem, 3vw, 1.5rem);
-    border-radius: 50px;
-    transition: var(--transition);
-    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
-  }
-  .btn-outline-gradient:hover {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border-color: transparent;
-    color: white;
-    transform: translateY(-3px);
-  }
-  .btn-icon { display: inline-flex; align-items: center; gap: 0.5rem; }
-  .btn-sm { padding: clamp(0.2rem, 1.5vw, 0.3rem) clamp(0.5rem, 2vw, 0.8rem); font-size: clamp(0.7rem, 2vw, 0.8rem); }
+  /* ===== KOSONG ===== */
+  .lb-empty { text-align: center; padding: clamp(1.5rem, 7vw, 3rem) 1rem; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 1.2rem; }
+  .lb-empty i { font-size: clamp(2.4rem, 9vw, 3.6rem); color: #94a3b8; }
+  .lb-empty h4 { font-weight: 700; color: #334155; font-size: 1.1rem; margin: .4rem 0 .2rem; }
+  .lb-empty p { color: var(--muted); margin-bottom: 0; }
 
-  /* ===== GALLERY THUMBNAIL ===== */
-  .gallery-thumb {
-    width: clamp(45px, 10vw, 60px);
-    height: clamp(45px, 10vw, 60px);
-    object-fit: cover;
-    border-radius: 10px;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: var(--transition);
-  }
-  .gallery-thumb:hover { border-color: var(--primary-start); transform: scale(1.05); }
+  /* ===== TOMBOL & AKSI ===== */
+  .btn-gradient { background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); border: none; color: #fff; font-weight: 600; padding: .55rem 1.3rem; border-radius: 50px; transition: var(--transition); box-shadow: 0 5px 14px rgba(30,58,138,.22); }
+  .btn-gradient:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); color: #fff; }
+  .lb-tools { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; padding-top: .9rem; border-top: 1px solid var(--line); }
+  .print-btn { background: #10b981; border-radius: 50px; padding: .5rem 1.2rem; font-weight: 600; color: #fff; text-decoration: none; display: inline-flex; align-items: center; gap: .5rem; transition: var(--transition); font-size: .88rem; }
+  .print-btn:hover { background: #059669; transform: translateY(-2px); color: #fff; }
+  .print-btn.alt { background: #fff; color: var(--primary-start); border: 1px solid #cbd5e1; }
+  .print-btn.alt:hover { background: var(--primary-light); color: var(--primary-start); }
+  .lb-link { font-size: .85rem; text-decoration: none; color: var(--primary-start); font-weight: 600; }
 
-  /* ===== MODAL ===== */
+  /* ===== PANDUAN (lipat) ===== */
+  .lb-guide { background: var(--card); border-radius: 1rem; box-shadow: var(--shadow-sm); margin-bottom: 1rem; }
+  .lb-guide summary { cursor: pointer; list-style: none; padding: .75rem 1rem; font-weight: 700; color: var(--primary-dark); display: flex; align-items: center; gap: .5rem; font-size: .9rem; }
+  .lb-guide summary::-webkit-details-marker { display: none; }
+  .lb-guide summary::after { content: '\F282'; font-family: 'bootstrap-icons'; margin-left: auto; transition: var(--transition); }
+  .lb-guide[open] summary::after { transform: rotate(180deg); }
+  .lb-guide ul { margin: 0; padding: 0 1.2rem 1rem 2.2rem; font-size: .86rem; color: #475569; }
+  .lb-guide li { margin-bottom: .3rem; }
+
+  /* ===== FAB (HP) ===== */
+  .lb-fab { position: fixed; right: 1rem; bottom: 1rem; z-index: 1030; width: 56px; height: 56px; border-radius: 50%; border: 0; color: #fff; font-size: 1.6rem; display: none; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); box-shadow: 0 10px 24px rgba(30,58,138,.4); }
+
+  /* ===== MODAL / FORM ===== */
   .modal-content { border: none; border-radius: clamp(1rem, 4vw, 1.5rem); overflow: hidden; }
-  .modal-header {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    color: white;
-    border-bottom: none;
-    padding: clamp(1rem, 3vw, 1.5rem);
-  }
-  .modal-header .btn-close { background: rgba(255,255,255,0.8); opacity: 0.8; transition: var(--transition); }
+  .modal-header { background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); color: #fff; border-bottom: none; padding: clamp(1rem, 3vw, 1.4rem); }
+  .modal-header .btn-close { background-color: rgba(255,255,255,.85); opacity: .85; transition: var(--transition); }
   .modal-header .btn-close:hover { opacity: 1; transform: rotate(90deg); }
-  .modal-body { padding: clamp(1rem, 4vw, 2rem); }
-  .form-label { font-weight: 600; color: #2c3e50; margin-bottom: 0.5rem; font-size: clamp(0.8rem, 2.5vw, 0.9rem); }
-  .form-control, .form-select { border-radius: 1rem; border: 1px solid #dee2e6; padding: clamp(0.5rem, 2vw, 0.6rem) clamp(0.8rem, 2.5vw, 1rem); font-size: clamp(0.85rem, 2.5vw, 1rem); }
-  .form-control:focus, .form-select:focus { border-color: var(--primary-start); box-shadow: 0 0 0 0.25rem rgba(30,58,138,0.25); }
-
-  /* ===== LIGHTBOX ===== */
-  .lightbox-modal .modal-body { padding: 0; background: #000; }
-  .lightbox-modal .carousel-item img { max-height: 80vh; object-fit: contain; width: 100%; }
-  .lightbox-modal .carousel-control-prev, .lightbox-modal .carousel-control-next {
-    background: rgba(0,0,0,0.3);
-    width: clamp(35px, 8vw, 50px);
-    height: clamp(35px, 8vw, 50px);
-    border-radius: 50%;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-
-  /* ===== EMPTY STATE ===== */
-  .empty-state { padding: clamp(1.5rem, 8vw, 4rem) clamp(1rem, 5vw, 2rem); text-align: center; background: #f8f9fa; border-radius: 1.5rem; margin: 2rem 0; }
-  .empty-state i { font-size: clamp(2.5rem, 10vw, 4rem); color: #adb5bd; margin-bottom: 1rem; }
-  .empty-state h4 { font-weight: 600; color: #495057; font-size: clamp(1rem, 4vw, 1.2rem); }
-  .print-btn {
-    background: #10b981;
-    border-radius: 50px;
-    padding: clamp(0.4rem, 2vw, 0.6rem) clamp(1rem, 4vw, 1.8rem);
-    font-weight: 500;
-    color: white;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: var(--transition);
-    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
-  }
-  .print-btn:hover { background: #059669; transform: translateY(-3px); color: white; }
-
-  /* ===== RESPONSIVE LENGKAP (SESUAI LANDING) ===== */
-  @media (max-width: 768px) {
-    .gallery-thumb { width: 50px; height: 50px; }
-    .info-pembimbing { flex-direction: column; gap: 0.8rem; }
-  }
-  @media (max-width: 576px) {
-    .table-container { padding: 1rem; }
-    .logbook-table thead th { font-size: 0.7rem; padding: 0.5rem; }
-    .logbook-table td { font-size: 0.75rem; padding: 0.5rem; }
-    .nav-tabs .nav-link { padding: 0.3rem 0.8rem; font-size: 0.75rem; }
-    .badge-tab { font-size: 0.6rem; }
-  }
-  @media (max-width: 400px) {
-    .magang-header h2 { font-size: 1.2rem; }
-    .magang-header p { font-size: 0.8rem; }
-    .panduan-card { flex-direction: column; }
-    .panduan-icon { text-align: center; }
-    .logbook-table thead th { white-space: nowrap; }
-  }
-
-  /* ===== FORM LOGBOOK (relayout) ===== */
-  .chip {
-    border: 1px solid #cbd5e1; background: #f8fafc; color: #334155;
-    border-radius: 50px; padding: 0.25rem 0.8rem; font-size: 0.8rem; line-height: 1.4;
-    cursor: pointer; transition: var(--transition);
-  }
+  .modal-body { padding: clamp(1rem, 4vw, 1.8rem); }
+  .form-label { font-weight: 600; color: #2c3e50; margin-bottom: .4rem; font-size: .9rem; }
+  .form-control, .form-select { border-radius: 1rem; border: 1px solid #dee2e6; padding: .55rem .9rem; }
+  .form-control:focus, .form-select:focus { border-color: var(--primary-start); box-shadow: 0 0 0 .25rem rgba(30,58,138,.2); }
+  .chip { border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; border-radius: 50px; padding: .25rem .8rem; font-size: .8rem; line-height: 1.4; cursor: pointer; transition: var(--transition); }
   .chip:hover, .chip.active { background: var(--primary-light); border-color: var(--primary-start); color: var(--primary-start); }
   .form-control-date { max-width: 190px; }
   .logbook-form textarea { resize: vertical; }
   .modal-footer .btn { min-width: 110px; }
-  /* ===== BAR NAVIGASI PEKAN ===== */
-  .week-bar {
-    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
-    background: var(--primary-light); border-radius: 1rem; padding: 0.7rem 1rem; margin-bottom: 1rem;
+  .lightbox-modal .modal-body { padding: 0; background: #000; }
+  .lightbox-modal .carousel-item img { max-height: 76vh; object-fit: contain; width: 100%; }
+  .lightbox-modal .carousel-caption { position: static; background: #0b1220; color: #e2e8f0; padding: .7rem 1rem; text-align: left; font-size: .9rem; }
+  .lightbox-modal .carousel-control-prev, .lightbox-modal .carousel-control-next { background: rgba(0,0,0,.3); width: 44px; height: 44px; border-radius: 50%; top: 40%; transform: translateY(-50%); margin: 0 .5rem; }
+
+  /* ===== RESPONSIF ===== */
+  @media (max-width: 768px) {
+    .lb-stats { grid-template-columns: repeat(2, 1fr); }
+    .lb-hero .btn-hero { display: none; }
+    .lb-fab { display: inline-flex; }
   }
-  .week-bar .judul { font-weight: 700; color: var(--primary-dark); }
-  .kegiatan-cell { white-space: pre-line; min-width: 200px; }
-  .hasil-line { display: block; margin-top: 0.3rem; font-size: 0.85em; color: #475569; white-space: pre-line; }
-  .hasil-line .lbl { font-weight: 600; color: #0f766e; }
-  .hasil-kosong { display: block; margin-top: 0.3rem; font-size: 0.8em; color: #b45309; }
-  @media (max-width: 576px) { .week-bar { padding: 0.6rem; } .form-control-date { max-width: 100%; flex: 1 1 100%; } }
+  @media (max-width: 576px) {
+    .lb-entry { flex-wrap: wrap; padding: .75rem; gap: .65rem; }
+    .lb-date { width: 50px; }
+    .lb-body { flex: 1 1 calc(100% - 66px); }
+    .lb-aksi { flex-direction: row; width: 100%; justify-content: flex-end; border-top: 1px solid var(--line); padding-top: .55rem; }
+    .lb-day { padding: .35rem .1rem; font-size: .64rem; }
+    .lb-day b { font-size: .95rem; }
+    .lb-day em { font-size: .58rem; }
+    .form-control-date { max-width: 100%; flex: 1 1 100%; }
+  }
 </style>
 
-<div class="container mt-4">
-  <!-- HEADER -->
-  <div class="magang-header d-flex flex-wrap justify-content-between align-items-center">
+<div class="container lb-wrap mt-4">
+
+  <!-- HERO -->
+  <header class="lb-hero">
     <div>
-      <h2><i class="bi bi-journal-bookmark-fill me-2"></i>Logbook Magang</h2>
-      <p class="mb-0">Catat kegiatan harian magang Anda dan pantau status verifikasi</p>
+      <div class="lb-eyebrow"><i class="bi bi-journal-bookmark-fill me-1"></i> Logbook Magang</div>
+      <h1><%= selectedPeriod ? (selectedPeriod.pdkNama || 'Logbook Magang') : 'Logbook Magang' %></h1>
+      <div class="lb-meta">
+        <% if (namaTempatMagang) { %><span><i class="bi bi-building"></i> <%= namaTempatMagang %></span><% } %>
+        <% if (selectedPeriod && selectedPeriod.tanggalMulai) { %><span><i class="bi bi-calendar-range"></i> <%= fTglTh(selectedPeriod.tanggalMulai) %><%= selectedPeriod.tanggalSelesai ? ' – ' + fTglTh(selectedPeriod.tanggalSelesai) : '' %></span><% } %>
+        <% if (pembimbing && pembimbing.pembimbing) { %><span><i class="bi bi-person-badge"></i> Dosen PA: <%= pembimbing.pembimbing.nama %></span><% } %>
+      </div>
     </div>
     <% if (canSubmit && selectedPeriod) { %>
-      <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addLogbookModal">
+      <button class="btn btn-hero" data-bs-toggle="modal" data-bs-target="#addLogbookModal">
         <i class="bi bi-plus-circle me-2"></i>Tambah Logbook
       </button>
     <% } %>
-  </div>
+  </header>
 
-  <!-- TAB PDK (Periode Magang) -->
+  <!-- TAB PERIODE -->
   <% if (pdkList && pdkList.length > 0) { %>
-    <div class="pdk-tabs">
-      <ul class="nav nav-tabs">
-        <% pdkList.forEach(pdk => { %>
-          <li class="nav-item">
-            <a class="nav-link <%= selectedPeriodId === pdk.id ? 'active' : '' %>" 
-               href="/mahasiswa/magang/logbook?periodId=<%= pdk.id %>">
-              <%= pdk.pdkKode %> - <%= pdk.pdkNama %>
-              <% if (pdk.status === 'active') { %>
-                <span class="badge bg-success badge-tab">Aktif</span>
-              <% } else if (pdk.status === 'completed') { %>
-                <span class="badge bg-secondary badge-tab">Arsip</span>
-              <% } else { %>
-                <span class="badge bg-info badge-tab">Locked</span>
-              <% } %>
-            </a>
-          </li>
-        <% }) %>
-      </ul>
-    </div>
+    <nav class="lb-tabs" aria-label="Periode magang">
+      <% pdkList.forEach(pdk => { %>
+        <a class="lb-tab <%= selectedPeriodId === pdk.id ? 'active' : '' %>" href="/mahasiswa/magang/logbook?periodId=<%= pdk.id %>">
+          <%= pdk.pdkKode %> - <%= pdk.pdkNama %>
+          <% if (pdk.status === 'active') { %><span class="badge bg-success badge-tab">Aktif</span>
+          <% } else if (pdk.status === 'completed') { %><span class="badge bg-secondary badge-tab">Arsip</span>
+          <% } else { %><span class="badge bg-info badge-tab">Locked</span><% } %>
+        </a>
+      <% }) %>
+    </nav>
   <% } else { %>
     <div class="alert alert-info mb-4">
       <i class="bi bi-info-circle me-2"></i> Belum ada periode magang. Silakan mulai magang dari halaman dashboard.
     </div>
   <% } %>
 
-  <!-- ALERT STATUS (jika tidak bisa submit) -->
+  <!-- ALERT STATUS -->
   <% if (!canSubmit && selectedPeriod) { %>
-    <div class="alert alert-warning mb-4">
+    <div class="alert alert-warning mb-3">
       <i class="bi bi-exclamation-triangle me-2"></i>
       <strong>Perhatian:</strong> Periode magang ini sudah selesai (status <strong><%= selectedPeriod.status %></strong>). Logbook hanya dapat dilihat, tidak dapat ditambah/diedit/dihapus.
     </div>
   <% } %>
 
-  <!-- PANDUAN -->
-  <div class="panduan-card">
-    <div class="panduan-icon"><i class="bi bi-info-circle-fill"></i></div>
-    <div class="panduan-text">
-      <strong>Informasi Pengisian Logbook:</strong>
-      <ul>
-        <li>Isi setiap hari magang: kegiatan, hasil pekerjaan, dan durasi.</li>
-        <li>Halaman ini hanya menampilkan logbook pekan ini; pekan lain dibuka dengan tombol panah.</li>
-        <li>Logbook akan diverifikasi oleh Dosen PA (dosen pembimbing).</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- INFORMASI PEMBIMBING (tambahan) -->
-  <% if (pembimbing && pembimbing.pembimbing) { %>
-    <div class="info-pembimbing">
-      <div class="info-pembimbing-item">
-        <i class="bi bi-person-badge"></i>
-        <strong>Dosen Pembimbing (Dosen PA):</strong> <%= pembimbing.pembimbing.nama %>
+  <!-- RINGKASAN -->
+  <% if (selectedPeriod) { %>
+    <section class="lb-stats">
+      <div class="lb-stat">
+        <div class="lbl">Minggu</div>
+        <div class="val"><%= minggu && minggu.mingguKe ? minggu.mingguKe : '-' %><% if (minggu && minggu.totalMinggu) { %> <small>/ <%= minggu.totalMinggu %></small><% } %></div>
+        <div class="sub"><%= minggu && minggu.adalahPekanIni ? 'Pekan ini' : (modeRiwayat ? 'Mode riwayat' : 'Pekan lalu') %></div>
       </div>
-    </div>
+      <div class="lb-stat">
+        <div class="lbl">Jam pekan ini</div>
+        <div class="val"><%= fJam(totalJamMinggu) %> <small>jam</small></div>
+        <div class="sub"><%= modeRiwayat ? 'dari entri tampil' : 'minggu yang ditampilkan' %></div>
+      </div>
+      <div class="lb-stat">
+        <div class="lbl">Entri</div>
+        <div class="val"><%= logbook.length %> <small>tampil</small></div>
+        <div class="sub"><%= totalLogbook %> entri sepanjang periode</div>
+      </div>
+      <div class="lb-stat">
+        <div class="lbl">Progres periode</div>
+        <div class="val"><%= pctProgress %><small>%</small></div>
+        <div class="lb-bar"><i style="width: <%= pctProgress %>%"></i></div>
+      </div>
+    </section>
   <% } %>
 
-  <!-- TABEL LOGBOOK -->
-  <%
-    const BLN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-    const fTgl = (iso) => { const q = String(iso || '').split('-'); return q.length === 3 ? parseInt(q[2],10) + ' ' + BLN[parseInt(q[1],10)-1] : ''; };
-    const fTglTh = (iso) => { const q = String(iso || '').split('-'); return q.length === 3 ? fTgl(iso) + ' ' + q[0] : ''; };
-    const HARI = ['Ahad','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-    const namaHari = (iso) => { const d = new Date(String(iso).substring(0,10) + 'T00:00:00Z'); return isNaN(d) ? '' : HARI[d.getUTCDay()]; };
-    const fJam = (n) => String(Number(Number(n || 0).toFixed(2)));
-    const base = selectedPeriod ? '/mahasiswa/magang/logbook?periodId=' + selectedPeriod.id : '';
-    const mingguVal = minggu && minggu.mingguKe ? minggu.mingguKe : '';
-  %>
-  <div class="table-container">
+  <!-- PANEL LOGBOOK -->
+  <section class="lb-panel">
 
     <% if (selectedPeriod && minggu) { %>
-      <div class="week-bar">
+      <div class="lb-weeknav">
         <% if (minggu.mingguKe) { %>
-          <a class="btn btn-sm btn-outline-secondary <%= minggu.adaSebelumnya ? '' : 'disabled' %>"
-             href="<%= minggu.adaSebelumnya ? base + '&minggu=' + (minggu.mingguKe - 1) : '#' %>" aria-label="Minggu sebelumnya">
-            <i class="bi bi-chevron-left"></i>
-          </a>
+          <a class="lb-navbtn <%= minggu.adaSebelumnya ? '' : 'disabled' %>" href="<%= minggu.adaSebelumnya ? base + '&minggu=' + (minggu.mingguKe - 1) : '#' %>" aria-label="Minggu sebelumnya"><i class="bi bi-chevron-left"></i></a>
         <% } else { %><span></span><% } %>
-        <div class="text-center">
+        <div>
           <div class="judul">
             <%= minggu.mingguKe ? 'Minggu ke-' + minggu.mingguKe : '7 hari terakhir' %>
-            <% if (minggu.adalahPekanIni) { %><span class="badge bg-success ms-1">Pekan ini</span><% } %>
+            <% if (minggu.adalahPekanIni) { %><span class="badge bg-success ms-1" style="font-size:.65rem;">Pekan ini</span><% } %>
           </div>
-          <small class="text-muted"><%= fTgl(minggu.awal) %> – <%= fTglTh(minggu.akhir) %> · <%= logbook.length %> entri · <%= fJam(totalJamMinggu) %> jam</small>
+          <small><%= fTgl(minggu.awal) %> – <%= fTglTh(minggu.akhir) %></small>
         </div>
         <% if (minggu.mingguKe) { %>
-          <a class="btn btn-sm btn-outline-secondary <%= minggu.adaBerikutnya ? '' : 'disabled' %>"
-             href="<%= minggu.adaBerikutnya ? base + '&minggu=' + (minggu.mingguKe + 1) : '#' %>" aria-label="Minggu berikutnya">
-            <i class="bi bi-chevron-right"></i>
-          </a>
+          <a class="lb-navbtn <%= minggu.adaBerikutnya ? '' : 'disabled' %>" href="<%= minggu.adaBerikutnya ? base + '&minggu=' + (minggu.mingguKe + 1) : '#' %>" aria-label="Minggu berikutnya"><i class="bi bi-chevron-right"></i></a>
         <% } else { %><span></span><% } %>
       </div>
+
+      <!-- strip 7 hari: ketuk hari untuk mengisi / melihat entri -->
+      <div class="lb-strip">
+        <% hariStrip.forEach((h) => {
+             const kelas = 'lb-day ' + (h.terisi ? 'terisi' : 'kosong') + (h.hariIni ? ' hari-ini' : '') + (h.depan ? ' depan' : '') + (h.akhirPekan ? ' akhir-pekan' : '');
+        %>
+          <% if (h.terisi) { %>
+            <a class="<%= kelas %>" href="#e-<%= h.iso %>" title="<%= fTglTh(h.iso) %> · <%= fJam(h.jam) %> jam"><span><%= h.hari %></span><b><%= h.tgl %></b><em><%= fJam(h.jam) %>j</em></a>
+          <% } else if (canSubmit && !h.depan) { %>
+            <button type="button" class="<%= kelas %>" onclick="tambahPadaTanggal('<%= h.iso %>')" title="Isi logbook <%= fTglTh(h.iso) %>"><span><%= h.hari %></span><b><%= h.tgl %></b><em>+ isi</em></button>
+          <% } else { %>
+            <span class="<%= kelas %>"><span><%= h.hari %></span><b><%= h.tgl %></b><em>–</em></span>
+          <% } %>
+        <% }) %>
+      </div>
     <% } else if (selectedPeriod && modeRiwayat) { %>
-      <div class="week-bar">
+      <div class="lb-riwayat-bar">
         <div class="judul"><i class="bi bi-clock-history me-1"></i> Riwayat semua logbook</div>
-        <a class="btn btn-sm btn-outline-primary" href="<%= base %>"><i class="bi bi-calendar-week"></i> Kembali ke pekan ini</a>
+        <a class="btn btn-sm btn-outline-primary rounded-pill" href="<%= base %>"><i class="bi bi-calendar-week"></i> Kembali ke pekan ini</a>
       </div>
     <% } %>
 
-    <div class="table-responsive">
-      <table class="table logbook-table">
-        <thead>
-          <tr>
-            <th>Tanggal</th>
-            <th>Kegiatan &amp; Hasil</th>
-            <th>Durasi</th>
-            <th>Foto</th>
-            <th>Status</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (!selectedPeriod) { %>
-            <tr><td colspan="6" class="text-center py-5">
-              <div class="empty-state">
-                <i class="bi bi-inbox"></i>
-                <h4>Pilih Periode Magang</h4>
-                <p>Silakan pilih periode magang dari tab di atas untuk melihat logbook.</p>
-              </div>
-            </td></tr>
-          <% } else if (logbook.length === 0) { %>
-            <tr><td colspan="6" class="text-center py-5">
-              <div class="empty-state">
-                <i class="bi bi-inbox"></i>
-                <h4><%= modeRiwayat ? 'Belum Ada Catatan' : 'Belum ada catatan di pekan ini' %></h4>
-                <p><%= modeRiwayat ? 'Mulai tambahkan logbook pertama Anda untuk periode ' + selectedPeriod.pdkNama + '.' : 'Catat kegiatan magang Anda hari ini.' %></p>
-                <% if (canSubmit) { %>
-                  <button class="btn btn-gradient mt-3" data-bs-toggle="modal" data-bs-target="#addLogbookModal">
-                    <i class="bi bi-plus-circle"></i> Tambah Logbook
-                  </button>
+    <% if (!selectedPeriod) { %>
+      <div class="lb-empty"><i class="bi bi-inbox"></i><h4>Pilih Periode Magang</h4><p>Silakan pilih periode magang dari tab di atas untuk melihat logbook.</p></div>
+    <% } else if (logbook.length === 0) { %>
+      <div class="lb-empty">
+        <i class="bi bi-journal-plus"></i>
+        <h4><%= modeRiwayat ? 'Belum Ada Catatan' : 'Belum ada catatan di pekan ini' %></h4>
+        <p><%= modeRiwayat ? 'Mulai tambahkan logbook pertama Anda untuk periode ' + selectedPeriod.pdkNama + '.' : 'Catat kegiatan magang Anda, atau ketuk salah satu hari di atas.' %></p>
+        <% if (canSubmit) { %>
+          <button class="btn btn-gradient mt-3" data-bs-toggle="modal" data-bs-target="#addLogbookModal"><i class="bi bi-plus-circle me-1"></i> Tambah Logbook</button>
+        <% } %>
+      </div>
+    <% } else { %>
+      <div class="lb-list">
+        <% const sudahAnchor = {};
+           logbook.forEach(item => {
+             const tglKey = String(item.tanggal).substring(0, 10);
+             const q = tglKey.split('-');
+             const idAnchor = sudahAnchor[tglKey] ? '' : 'e-' + tglKey;
+             sudahAnchor[tglKey] = true;
+             const urls = Array.isArray(item.imageUrls) ? item.imageUrls : [];
+             const caps = urls.map((u, i) => (item.imageCaptions && item.imageCaptions[i]) || item.kegiatan || '');
+        %>
+          <article class="lb-entry <%= item.status === 'approved' ? 'approved' : (item.status === 'rejected' ? 'rejected' : '') %>" <% if (idAnchor) { %>id="<%= idAnchor %>"<% } %>>
+            <div class="lb-date">
+              <span class="h"><%= namaHari(item.tanggal).substring(0, 3) %></span>
+              <b><%= parseInt(q[2], 10) %></b>
+              <span class="b"><%= BLN[parseInt(q[1], 10) - 1] %> <%= String(q[0]).slice(2) %></span>
+            </div>
+
+            <div class="lb-body">
+              <div class="lb-top">
+                <span class="lb-pill"><i class="bi bi-clock"></i> <%= item.durasi ? fJam(item.durasi) + ' jam' : '– jam' %></span>
+                <% if (item.lokasi) { %><span class="lb-pill lok"><i class="bi bi-geo-alt"></i> <%= item.lokasi %></span><% } %>
+                <% if (item.status === 'pending') { %>
+                  <span class="badge-status badge-pending"><i class="bi bi-hourglass-split"></i> Menunggu</span>
+                <% } else if (item.status === 'approved') { %>
+                  <span class="badge-status badge-approved"><i class="bi bi-check-circle"></i> Disetujui</span>
+                <% } else if (item.status === 'rejected') { %>
+                  <span class="badge-status badge-rejected"><i class="bi bi-x-circle"></i> Ditolak</span>
                 <% } %>
               </div>
-            </td></tr>
-          <% } else { %>
-            <% logbook.forEach(item => { %>
-              <tr>
-                <td>
-                  <span class="fw-semibold"><%= namaHari(item.tanggal) %></span><br>
-                  <small class="text-muted"><%= fTglTh(item.tanggal) %></small>
-                </td>
-                <td class="kegiatan-cell">
-                  <%= item.kegiatan || '-' %>
-                  <% if (item.hasil) { %>
-                    <span class="hasil-line"><span class="lbl">Hasil:</span> <%= item.hasil %></span>
-                  <% } else if (canSubmit && item.status === 'pending') { %>
-                    <span class="hasil-kosong"><i class="bi bi-info-circle"></i> Hasil pekerjaan belum diisi</span>
-                  <% } %>
-                  <% if (item.lokasi) { %><small class="d-block text-muted mt-1"><i class="bi bi-geo-alt"></i> <%= item.lokasi %></small><% } %>
-                </td>
-                <td><%= item.durasi ? item.durasi + ' jam' : '-' %></td>
-                <td>
-                  <% if (item.imageUrls && item.imageUrls.length > 0) {
-                    const firstUrl = item.imageUrls[0];
-                    const fileIdMatch = firstUrl.match(/[?&]id=([^&]+)/);
-                    const fileId = fileIdMatch ? fileIdMatch[1] : (firstUrl.match(/\/d\/([^\/]+)/) || [])[1];
-                    const thumbUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w100` : firstUrl;
+
+              <p class="lb-kegiatan"><%= item.kegiatan || '-' %></p>
+              <% if (item.hasil) { %>
+                <div class="lb-hasil"><b>Hasil:</b> <%= item.hasil %></div>
+              <% } else if (canSubmit && item.status === 'pending') { %>
+                <div class="lb-hasil-kosong"><i class="bi bi-info-circle"></i> Hasil pekerjaan belum diisi</div>
+              <% } %>
+
+              <% if (urls.length > 0) { const tampil = urls.slice(0, 4); %>
+                <div class="lb-fotos">
+                  <% tampil.forEach((u, i) => {
+                       const fid = fotoId(u);
+                       const thumb = fid ? 'https://drive.google.com/thumbnail?id=' + fid + '&sz=w160' : u;
                   %>
-                    <img src="<%= thumbUrl %>" loading="lazy" class="gallery-thumb" onclick='lihatGambar(<%= JSON.stringify(item.imageUrls) %>)' alt="dokumentasi" onerror="this.onerror=null; this.src='<%= firstUrl %>';">
-                  <% } else { %>
-                    <span class="text-muted">-</span>
-                  <% } %>
-                </td>
-                <td>
-                  <% if (item.status === 'pending') { %>
-                    <span class="badge-status badge-pending"><i class="bi bi-hourglass-split"></i> Menunggu</span>
-                  <% } else if (item.status === 'approved') { %>
-                    <span class="badge-status badge-approved"><i class="bi bi-check-circle"></i> Disetujui</span>
-                    <% if (item.approvedByNama) { %>
-                      <div class="small text-muted mt-1">Oleh: <%= item.approvedByNama %></div>
-                    <% } %>
-                    <% if (item.catatan) { %>
-                      <div class="small text-muted mt-1"><i class="bi bi-chat-left-text"></i> <%= item.catatan %></div>
-                    <% } %>
-                  <% } else if (item.status === 'rejected') { %>
-                    <span class="badge-status badge-rejected"><i class="bi bi-x-circle"></i> Ditolak</span>
-                    <% if (item.rejectedByNama) { %>
-                      <div class="small text-muted mt-1">Oleh: <%= item.rejectedByNama %></div>
-                    <% } %>
-                  <% } %>
-                </td>
-                <td>
-                  <% if (canSubmit && item.status === 'pending') { %>
-                    <div class="d-flex gap-2">
-                      <button class="btn btn-sm btn-warning btn-icon" onclick="editLogbook('<%= item.id %>')" title="Edit"><i class="bi bi-pencil"></i></button>
-                      <form method="POST" action="/mahasiswa/magang/logbook/<%= item.id %>/delete" style="display:inline;" onsubmit="return confirm('Yakin ingin menghapus logbook ini?')">
-                        <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
-                        <input type="hidden" name="minggu" value="<%= mingguVal %>">
-                        <button type="submit" class="btn btn-sm btn-danger btn-icon" title="Hapus"><i class="bi bi-trash"></i></button>
-                      </form>
-                    </div>
-                  <% } else { %>
-                    <span class="text-muted">-</span>
-                  <% } %>
-                </td>
-              </tr>
-            <% }) %>
-          <% } %>
-        </tbody>
-      </table>
-    </div>
+                    <button type="button" class="lb-foto" onclick='lihatGambar(<%= JSON.stringify(urls) %>, <%= JSON.stringify(caps) %>, <%= i %>)' aria-label="Lihat foto <%= i + 1 %>">
+                      <img src="<%= thumb %>" loading="lazy" alt="Dokumentasi <%= i + 1 %>" onerror="this.onerror=null; this.src='<%= u %>';">
+                      <% if (i === 3 && urls.length > 4) { %><span class="lebih">+<%= urls.length - 4 %></span><% } %>
+                    </button>
+                  <% }) %>
+                </div>
+              <% } %>
+
+              <% if ((item.status === 'approved' && (item.approvedByNama || item.catatan)) || (item.status === 'rejected' && item.rejectedByNama)) { %>
+                <div class="lb-info">
+                  <% if (item.status === 'approved' && item.approvedByNama) { %><span><i class="bi bi-person-check"></i> Disetujui oleh <%= item.approvedByNama %></span><% } %>
+                  <% if (item.status === 'rejected' && item.rejectedByNama) { %><span><i class="bi bi-person-x"></i> Ditolak oleh <%= item.rejectedByNama %></span><% } %>
+                  <% if (item.catatan) { %><span><i class="bi bi-chat-left-text"></i> <%= item.catatan %></span><% } %>
+                </div>
+              <% } %>
+            </div>
+
+            <% if (canSubmit && item.status === 'pending') { %>
+              <div class="lb-aksi">
+                <button type="button" class="btn-ico edit" onclick="editLogbook('<%= item.id %>')" title="Edit" aria-label="Edit"><i class="bi bi-pencil"></i></button>
+                <form method="POST" action="/mahasiswa/magang/logbook/<%= item.id %>/delete" onsubmit="return confirm('Yakin ingin menghapus logbook ini?')">
+                  <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
+                  <input type="hidden" name="minggu" value="<%= mingguVal %>">
+                  <button type="submit" class="btn-ico hapus" title="Hapus" aria-label="Hapus"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            <% } %>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
 
     <%- include('../../partials/pagination', { pageInfo: typeof pageInfo !== 'undefined' ? pageInfo : null, showAll: typeof showAll !== 'undefined' ? showAll : false, pageListUrl: typeof pageListUrl !== 'undefined' ? pageListUrl : '?' }) %>
 
     <% if (selectedPeriod && !modeRiwayat && totalLogbook > 0) { %>
-      <div class="text-center mt-2">
-        <a href="<%= base %>&semua=1" class="small text-decoration-none">
-          <i class="bi bi-clock-history"></i> Lihat riwayat semua logbook (<%= totalLogbook %> entri)
-        </a>
+      <div class="text-center mt-3">
+        <a href="<%= base %>&semua=1" class="lb-link"><i class="bi bi-clock-history"></i> Lihat riwayat semua logbook (<%= totalLogbook %> entri)</a>
       </div>
     <% } %>
 
-    <% if (selectedPeriod && totalLogbook > 0) { %>
-      <div class="mt-4 text-end">
-        <a href="/mahasiswa/magang/logbook-print?periodId=<%= selectedPeriod.id %>" class="print-btn" target="_blank">
-          <i class="bi bi-file-earmark-text"></i> Pratinjau &amp; Cetak Logbook
-        </a>
-      </div>
-    <% } %>
     <% if (selectedPeriod) { %>
-      <div class="mt-2 text-end">
-        <a href="/mahasiswa/magang/form-penilaian?jenis=lapangan&periodId=<%= selectedPeriod.id %>" class="print-btn" target="_blank">
-          <i class="bi bi-printer"></i> Cetak Form Penilaian Pendamping Lapangan
-        </a>
+      <div class="lb-tools">
+        <% if (totalLogbook > 0) { %>
+          <a href="/mahasiswa/magang/logbook-print?periodId=<%= selectedPeriod.id %>" class="print-btn" target="_blank"><i class="bi bi-file-earmark-text"></i> Pratinjau &amp; Cetak Logbook</a>
+        <% } %>
+        <a href="/mahasiswa/magang/form-penilaian?jenis=lapangan&periodId=<%= selectedPeriod.id %>" class="print-btn alt" target="_blank"><i class="bi bi-printer"></i> Form Penilaian Pendamping Lapangan</a>
       </div>
     <% } %>
-  </div>
+  </section>
+
+  <!-- PANDUAN (lipat) -->
+  <details class="lb-guide">
+    <summary><i class="bi bi-info-circle-fill"></i> Informasi pengisian logbook</summary>
+    <ul>
+      <li>Isi setiap hari magang: kegiatan, hasil pekerjaan, dan durasi. Ketuk hari pada strip pekan untuk mengisi cepat.</li>
+      <li>Halaman ini menampilkan logbook satu pekan; pekan lain dibuka dengan tombol panah.</li>
+      <li>Foto dokumentasi boleh diberi caption; foto yang sama tidak diunggah dua kali.</li>
+      <li>Logbook diverifikasi oleh Dosen PA (dosen pembimbing).</li>
+    </ul>
+  </details>
 </div>
+
+<% if (canSubmit && selectedPeriod) { %>
+  <button type="button" class="lb-fab" data-bs-toggle="modal" data-bs-target="#addLogbookModal" aria-label="Tambah logbook"><i class="bi bi-plus-lg"></i></button>
+<% } %>
 
 <!-- MODAL TAMBAH LOGBOOK -->
 <div class="modal fade" id="addLogbookModal" tabindex="-1">
@@ -835,22 +681,37 @@
     return null;
   }
 
-  function lihatGambar(imageUrls) {
+  function lihatGambar(imageUrls, captions, mulaiDari) {
     const inner = document.getElementById('galleryCarouselInner');
     inner.innerHTML = '';
     if (!imageUrls || imageUrls.length === 0) return;
+    const esc = (t) => String(t || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const awal = Math.min(Math.max(parseInt(mulaiDari, 10) || 0, 0), imageUrls.length - 1);
     imageUrls.forEach((url, idx) => {
       const fileId = getFileId(url);
       const thumbUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w800` : url;
       const directUrl = fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : url;
-      const active = idx === 0 ? ' active' : '';
+      const active = idx === awal ? ' active' : '';
+      const cap = captions && captions[idx] ? `<div class="carousel-caption"><strong>Foto ${idx + 1}/${imageUrls.length}</strong> &middot; ${esc(captions[idx])}</div>` : '';
       inner.innerHTML += `
         <div class="carousel-item${active}">
           <img src="${thumbUrl}" class="d-block w-100" alt="Dokumentasi" onerror="this.onerror=null; this.src='${directUrl}';">
+          ${cap}
         </div>
       `;
     });
     new bootstrap.Modal(document.getElementById('galleryModal')).show();
+  }
+
+  // Ketuk hari pada strip pekan -> buka form Tambah dengan tanggal terisi
+  function tambahPadaTanggal(iso) {
+    const modalEl = document.getElementById('addLogbookModal');
+    const tgl = document.getElementById('addTanggal');
+    if (!modalEl || !tgl) return;
+    tgl.value = iso;
+    tandaiChip(modalEl, 'data-set-tanggal', iso === HARI_INI ? '0' : (iso === geserTanggal(HARI_INI, -1) ? '-1' : ''));
+    cekDuplikat('add');
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
   }
 </script>
 

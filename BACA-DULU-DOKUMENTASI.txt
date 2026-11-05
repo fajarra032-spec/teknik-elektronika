@@ -51,3 +51,13 @@ TAMBAHAN: DETEKSI FOTO KEMBAR
   Tidak perlu indeks. Menghapus entri logbook ikut menghapus sidiknya, jadi foto boleh diunggah lagi.
 - Cetak: foto yang sama hanya tampil sekali di seluruh Dokumentasi Mingguan (kemunculan pertama).
   Foto lama (diunggah sebelum patch ini, belum punya sidik) hanya bisa dikenali bila ID berkas Drive-nya sama.
+
+TAMBAHAN: RELAYOUT HALAMAN LOGBOOK MAHASISWA
+  views/mahasiswa/magang/logbook.ejs   TIMPA (hanya file ini; route tidak berubah, tanpa query baru)
+- Hero ringkas: nama periode, tempat magang, rentang tanggal, Dosen PA + tombol Tambah (di HP jadi tombol bulat melayang).
+- Tab periode jadi pill yang bisa digeser; 4 kartu ringkasan (minggu, jam, entri, progres periode).
+- Strip 7 hari pada tiap pekan: hari terisi berwarna hijau + jam; hari kosong "+ isi" -> membuka form dengan tanggal terisi;
+  hari terisi -> loncat ke entrinya; hari mendatang dinonaktifkan.
+- Tabel diganti kartu entri (garis warna menurut status: menunggu/disetujui/ditolak), foto berupa thumbnail (+N), mudah dibaca di HP.
+- Galeri foto menampilkan caption tiap foto dan langsung membuka foto yang diketuk.
+- Panduan jadi lipat (collapsible). Semua ID modal/form/JS lama dipertahankan.
