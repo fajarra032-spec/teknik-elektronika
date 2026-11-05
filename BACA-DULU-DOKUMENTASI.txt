@@ -1,0 +1,22 @@
+PATCH DOKUMENTASI MINGGUAN (halaman foto + caption setelah lembar logbook tiap minggu)
+=====================================================================================
+Timpa file berikut (struktur folder sama; file-file ini turunan dari patch logbook sebelumnya):
+  helpers/logbookPrintHelper.js                    TIMPA
+  helpers/logbookPdfHelper.js                      TIMPA (menunggu foto selesai dimuat sebelum buat PDF)
+  routes/mahasiswa/magang.js                       TIMPA (bila sudah Anda ubah sendiri, gabungkan manual: fungsi normalisasiCaption + 2 rute logbook)
+  views/mahasiswa/magang/print.ejs                 TIMPA
+  views/mahasiswa/magang/logbook.ejs               TIMPA
+  views/mahasiswa/magang/logbook_edit.ejs          TIMPA
+  views/mahasiswa/magang/_form_logbook_fields.ejs  TIMPA
+
+Tanpa perubahan database/indeks/package.json. Data lama tetap jalan. Restart server.
+
+CARA KERJA
+- Tiap minggu yang punya foto -> otomatis ada halaman "DOKUMENTASI MINGGUAN" tepat setelah
+  lembar logbook minggu itu. Grid 2 kolom x 3 baris = 6 foto per halaman; lebih dari 6 foto
+  -> halaman lanjutan (1/2, 2/2). Minggu tanpa foto tidak dibuatkan halaman.
+- Caption per foto diisi di form Tambah Logbook (kolom caption muncul setelah foto dipilih)
+  dan di halaman Edit (caption foto lama bisa diubah, foto baru bisa diberi caption).
+  Disimpan di field baru `imageCaptions` (array sejajar dengan `imageUrls`).
+- Caption kosong / foto lama -> otomatis memakai uraian kegiatan entri tsb.
+- Tiap foto menampilkan nomor, hari & tanggal, dan caption (maks 3 baris).

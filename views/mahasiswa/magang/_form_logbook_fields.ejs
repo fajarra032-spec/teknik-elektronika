@@ -61,6 +61,8 @@
     <label for="<%= p %>Images" class="form-label">Foto dokumentasi <span class="text-muted fw-normal">(opsional, maks 5)</span></label>
     <input type="file" class="form-control" id="<%= p %>Images" name="images" accept="image/*" multiple>
     <div class="form-text" id="<%= p %>ImagesInfo">Foto dikompres otomatis saat diunggah.</div>
+    <!-- Caption per foto: muncul otomatis setelah foto dipilih; tercetak di halaman Dokumentasi Mingguan -->
+    <div id="<%= p %>Captions" class="d-flex flex-column gap-2 mt-2"></div>
   </div>
   <% } %>
 </div>

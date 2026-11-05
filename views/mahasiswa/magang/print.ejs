@@ -162,6 +162,18 @@
     }
     .kode-validasi { font-size: 7.5pt; color: #98a2b3; }
 
+    /* ===== DOKUMENTASI MINGGUAN (halaman foto setelah lembar logbook) ===== */
+    .foto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; margin-top: 2px; }
+    .foto-item { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: #fff; break-inside: avoid; }
+    .foto-item .foto-img { height: 50mm; background: var(--soft); display: flex; align-items: center; justify-content: center; }
+    .foto-item .foto-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .foto-item .foto-cap { padding: 5px 8px 6px; border-top: 1px solid var(--line); min-height: 15mm; }
+    .foto-item .foto-no { display: inline-block; background: var(--brand); color: #fff; font-weight: 700; font-size: 7.5pt; padding: 1px 7px; border-radius: 50px; margin-right: 5px; }
+    .foto-item .foto-tgl { font-size: 7.8pt; font-weight: 700; color: var(--brand-dark); }
+    .foto-item .foto-teks { margin-top: 2px; font-size: 9pt; line-height: 1.3; overflow-wrap: anywhere;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .identitas.ringkas { grid-template-columns: 2fr 1fr 1.4fr; }
+
     /* ===== DAFTAR HADIR ===== */
     .kehadiran-page {
       page-break-before: always;
@@ -306,6 +318,7 @@
     ? mingguGroups
     : [{ mingguKe: '', bulanKe: '', periodeAwal: '', periodeAkhir: '', rows: HARI_KOSONG, totalDurasi: 0, entries: [] }];
   const totalHadir = (kehadiranGroups && kehadiranGroups.length > 0) ? kehadiranGroups.length : 1;
+  const totalHalFoto = lembarList.reduce((n, g) => n + ((g.halamanFoto && g.halamanFoto.length) || 0), 0);
 %>
 
 <% if (!(typeof pdfMode !== 'undefined' && pdfMode)) { %>
@@ -314,7 +327,7 @@
     <svg viewBox="0 0 16 16"><path d="M10 12.5 5.5 8 10 3.5l1 1L7.5 8l3.5 3.5z"/></svg> Kembali
   </a>
   <div class="info">
-    <strong>Pratinjau Logbook</strong> &middot; <%= lembarList.length %> lembar mingguan + <%= totalHadir %> daftar hadir &middot; setiap lembar otomatis pas A4
+    <strong>Pratinjau Logbook</strong> &middot; <%= lembarList.length %> lembar mingguan<% if (totalHalFoto) { %> + <%= totalHalFoto %> hal. dokumentasi<% } %> + <%= totalHadir %> daftar hadir &middot; setiap lembar otomatis pas A4
   </div>
   <div class="aksi">
     <a class="pdf" href="<%= (typeof pdfUrl !== 'undefined' && pdfUrl) ? pdfUrl : '#' %>" id="btnPdf">
@@ -436,6 +449,60 @@
 
     </div>
   </section>
+
+  <%# ===== DOKUMENTASI MINGGUAN: halaman khusus tepat setelah lembar logbook minggu ini ===== %>
+  <% const halFoto = grup.halamanFoto || [];
+     let noFoto = 0;
+     halFoto.forEach((hal, hi) => { %>
+  <section class="sheet">
+    <div class="sheet-inner">
+
+      <div class="kop">
+        <img src="<%= LOGO_URL %>" alt="Logo Politeknik Dewantara">
+        <div>
+          <h2 class="nama">Politeknik Dewantara</h2>
+          <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7 Palopo, Sulawesi Selatan &middot; Website: polidewa.ac.id</p>
+        </div>
+      </div>
+      <div class="kop-bar"></div>
+
+      <div class="judul">
+        <h1>DOKUMENTASI MINGGUAN</h1>
+        <span class="minggu">Minggu ke-<%= grup.mingguKe %><%= halFoto.length > 1 ? ' (' + (hi + 1) + '/' + halFoto.length + ')' : '' %></span>
+      </div>
+
+      <div class="identitas ringkas">
+        <div><span class="lbl">Nama mahasiswa</span><span class="val"><%= mahasiswa.nama %></span></div>
+        <div><span class="lbl">NIM</span><span class="val"><%= mahasiswa.nim %></span></div>
+        <div><span class="lbl">Periode</span><span class="val"><% if (grup.periodeAwal) { %><%= fmtTgl(grup.periodeAwal) %> s.d. <%= fmtTgl(grup.periodeAkhir) %><% } %></span></div>
+        <div class="span3"><span class="lbl">Nama tempat magang</span><span class="val"><%= namaTempat %></span></div>
+      </div>
+
+      <div class="foto-grid">
+        <% hal.forEach((f) => { noFoto = (hi * 6) + hal.indexOf(f) + 1; %>
+          <div class="foto-item">
+            <div class="foto-img">
+              <img src="<%= f.url %>" data-fb="<%= f.urlCadangan %>" alt="Dokumentasi <%= noFoto %>" referrerpolicy="no-referrer"
+                   onerror="if (this.dataset.fb &amp;&amp; this.src !== this.dataset.fb) { this.src = this.dataset.fb; }">
+            </div>
+            <div class="foto-cap">
+              <span class="foto-no">Foto <%= noFoto %></span><span class="foto-tgl"><%= f.hari %><% if (f.tanggal) { %>, <%= fmtTglPendek(f.tanggal) %><% } %></span>
+              <div class="foto-teks"><%= f.caption %></div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="footer-cetak">
+        <span>Dicetak dari Web Portal Elektronika Polidewa: <%= generatedAt %></span>
+        <span class="kode-validasi"><%= kodeValidasi %></span>
+      </div>
+
+    </div>
+  </section>
+  <% }) %>
 <% }) %>
 
     <% if (!kehadiranGroups || kehadiranGroups.length === 0) { %>

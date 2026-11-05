@@ -54,6 +54,11 @@ async function htmlKePdf(html) {
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'load', timeout: 45000 });
+    // tunggu foto dokumentasi (Google Drive) selesai dimuat, maks 20 detik
+    await page.evaluate(() => Promise.race([
+      Promise.all(Array.from(document.images).map((im) => (im.complete ? null : new Promise((r) => { im.onload = im.onerror = r; })))),
+      new Promise((r) => setTimeout(r, 20000))
+    ]));
     await page.emulateMediaType('print');
     await page.evaluate(() => (document.fonts && document.fonts.ready) ? document.fonts.ready.then(() => true) : true);
     // jalankan ulang "paksa muat A4" pada kondisi media cetak

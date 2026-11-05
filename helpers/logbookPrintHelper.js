@@ -117,6 +117,54 @@ function buildBarisMingguan(entries, windowStart) {
   return rows.map(({ dow, ...rest }) => rest);
 }
 
+// ============================================================================
+// DOKUMENTASI MINGGUAN (halaman foto setelah lembar logbook tiap minggu)
+// ============================================================================
+
+const FOTO_PER_HALAMAN = 6; // 2 kolom x 3 baris per halaman A4
+const HARI_NAMA = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+/** ID berkas Google Drive dari URL (uc?export=view&id=... atau /d/ID/...). */
+function getDriveFileId(url) {
+  if (!url) return null;
+  let m = String(url).match(/[?&]id=([^&]+)/);
+  if (m) return m[1];
+  m = String(url).match(/\/d\/([^\/]+)/);
+  return m ? m[1] : null;
+}
+
+/**
+ * Mengumpulkan semua foto entri logbook dalam satu minggu, berurutan menurut
+ * tanggal. Caption = caption yang diisi mahasiswa (imageCaptions[i]); bila
+ * kosong dipakai uraian kegiatan pada entri tsb.
+ */
+function kumpulkanFoto(entries) {
+  const fotos = [];
+  entries.forEach((e) => {
+    const urls = Array.isArray(e.imageUrls) ? e.imageUrls : [];
+    const caps = Array.isArray(e.imageCaptions) ? e.imageCaptions : [];
+    const d = parseTanggalUTC(e.tanggal);
+    urls.forEach((url, i) => {
+      if (!url) return;
+      const id = getDriveFileId(url);
+      fotos.push({
+        url: id ? `https://drive.google.com/thumbnail?id=${id}&sz=w1000` : url,
+        urlCadangan: url,
+        caption: (caps[i] && String(caps[i]).trim()) || String(e.kegiatan || '').trim(),
+        tanggal: d ? formatTanggalISO(d) : '',
+        hari: d ? HARI_NAMA[d.getUTCDay()] : ''
+      });
+    });
+  });
+  return fotos;
+}
+
+function bagiHalaman(arr, ukuran) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += ukuran) out.push(arr.slice(i, i + ukuran));
+  return out;
+}
+
 /**
  * Tanggal hari ini (YYYY-MM-DD) menurut WITA (Asia/Makassar), bukan UTC server,
  * supaya "pekan ini" tidak bergeser sehari saat mahasiswa mengisi pagi hari.
@@ -228,6 +276,8 @@ function groupLogbookByMinggu(logbook, tanggalMulai) {
         g.periodeAkhir = g.tanggalAkhir;
       }
       g.rows = buildBarisMingguan(g.entries, windowStart);
+      g.fotos = kumpulkanFoto(g.entries);
+      g.halamanFoto = bagiHalaman(g.fotos, FOTO_PER_HALAMAN);
       return g;
     });
 }
@@ -438,6 +488,7 @@ module.exports = {
   todayWITA,
   calculateProgress,
   groupLogbookByMinggu,
+  kumpulkanFoto,
   groupKehadiranByBulan,
   getMasukanByPeriod,
   extractTahunAjaran,

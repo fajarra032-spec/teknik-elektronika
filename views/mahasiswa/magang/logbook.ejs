@@ -765,9 +765,27 @@
 
       const img = document.getElementById('addImages');
       const info = document.getElementById('addImagesInfo');
+      const capBox = document.getElementById('addCaptions');
       if (img) img.addEventListener('change', () => {
-        if (img.files.length > 5) { alert('Maksimal 5 foto.'); img.value = ''; info.textContent = 'Foto dikompres otomatis saat diunggah.'; return; }
+        if (img.files.length > 5) { alert('Maksimal 5 foto.'); img.value = ''; info.textContent = 'Foto dikompres otomatis saat diunggah.'; if (capBox) capBox.innerHTML = ''; return; }
         info.textContent = img.files.length ? img.files.length + ' foto dipilih' : 'Foto dikompres otomatis saat diunggah.';
+        // Satu kolom caption per foto (urutannya sama dengan urutan foto)
+        if (capBox) {
+          capBox.innerHTML = '';
+          Array.from(img.files).forEach((f, i) => {
+            const row = document.createElement('div');
+            row.className = 'd-flex gap-2 align-items-center';
+            const th = document.createElement('img');
+            th.src = URL.createObjectURL(f);
+            th.style.cssText = 'width:44px;height:44px;object-fit:cover;border-radius:8px;flex:0 0 auto;';
+            th.onload = () => URL.revokeObjectURL(th.src);
+            const inp = document.createElement('input');
+            inp.type = 'text'; inp.name = 'captions'; inp.maxLength = 200;
+            inp.className = 'form-control form-control-sm';
+            inp.placeholder = 'Caption foto ' + (i + 1) + ' (kosong = pakai uraian kegiatan)';
+            row.appendChild(th); row.appendChild(inp); capBox.appendChild(row);
+          });
+        }
       });
     }
   });

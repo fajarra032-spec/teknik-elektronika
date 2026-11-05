@@ -58,6 +58,12 @@ const {
 
 const upload = multer({ storage: multer.memoryStorage() });
 
+/** Caption foto (multipart: field `captions` berulang) -> array sepanjang n, maks 200 huruf. */
+function normalisasiCaption(raw, n) {
+  const arr = Array.isArray(raw) ? raw : (raw === undefined || raw === null ? [] : [raw]);
+  return Array.from({ length: n }, (_, i) => String(arr[i] || '').trim().substring(0, 200));
+}
+
 // ============================================================================
 // KONSTANTA FOLDER UTAMA (Data WEB)
 // ============================================================================
@@ -601,6 +607,7 @@ router.post('/logbook', upload.array('images', 5), async (req, res) => {
 
     const imageUrls = [];
     const imageFileIds = [];
+    const imageCaptions = normalisasiCaption(req.body.captions, files.length);
 
     for (const file of files) {
       const compressedBuffer = await sharp(file.buffer)
@@ -636,6 +643,7 @@ router.post('/logbook', upload.array('images', 5), async (req, res) => {
       semester,
       imageUrls,
       imageFileIds,
+      imageCaptions,
       status: 'pending',
       createdAt: new Date().toISOString(),
       pembimbingId: pembimbing.pembimbing.id,
@@ -707,6 +715,12 @@ router.post('/logbook/:id/edit', upload.array('images', 5), async (req, res) => 
     const existingData = doc.data();
     const imageUrls = [...(existingData.imageUrls || [])];
     const imageFileIds = [...(existingData.imageFileIds || [])];
+    // Caption foto lama (bisa diubah dari halaman edit) + caption foto baru
+    const jumlahLama = imageUrls.length;
+    const imageCaptions = normalisasiCaption(
+      req.body.captionsLama !== undefined ? req.body.captionsLama : (existingData.imageCaptions || []),
+      jumlahLama
+    ).concat(normalisasiCaption(req.body.captions, files.length));
 
     for (const file of files) {
       const compressedBuffer = await sharp(file.buffer)
@@ -737,6 +751,7 @@ router.post('/logbook/:id/edit', upload.array('images', 5), async (req, res) => 
       durasi: durasi || '',
       imageUrls,
       imageFileIds,
+      imageCaptions,
       updatedAt: new Date().toISOString()
     });
 
