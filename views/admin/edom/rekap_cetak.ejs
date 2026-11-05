@@ -55,10 +55,14 @@
     table.ket td.c { text-align: center; white-space: nowrap; }
     table.ket tr { break-inside: avoid; }
 
-    .ttd-wrap { display: flex; justify-content: flex-end; margin-top: 16px; break-inside: avoid; }
-    .tanda-tangan { width: 78mm; font-size: 9.5pt; line-height: 1.45; }
-    .tanda-tangan .ruang { height: 54px; }
-    .tanda-tangan .nama { font-weight: bold; text-decoration: underline; }
+    /* Tanda tangan Kaprodi (sama dengan SK/KHS/transkrip) */
+    .ttd-wrap { display: flex; justify-content: flex-end; margin-top: 14px; padding-top: 40px; break-inside: avoid; page-break-inside: avoid; }
+    .tanda-tangan { width: 82mm; text-align: left; font-size: 9.5pt; }
+    .tanda-tangan .info-ttd { margin: 0; position: relative; z-index: 1; line-height: 1.45; }
+    .area-ttd { position: relative; height: 42px; }
+    .img-ttd { position: absolute; top: -46px; left: -15px; height: 130px; width: auto; z-index: 10; mix-blend-mode: multiply; }
+    .nama-ttd { font-weight: bold; text-decoration: underline; margin: 0; position: relative; z-index: 1; letter-spacing: .3px; }
+    .nip-ttd { margin: 2px 0 0; }
     .catatan { font-size: 7.8pt; color: #444; margin-top: 6px; }
 
     @media print {
@@ -159,11 +163,13 @@
 
   <div class="ttd-wrap">
     <div class="tanda-tangan">
-      <div>Palopo, <%= tanggalCetak %></div>
-      <div>Ketua Program Studi Teknik Elektronika</div>
-      <div class="ruang"></div>
-      <div class="nama">( ................................................ )</div>
-      <div>NIDN. ........................................</div>
+      <p class="info-ttd">
+        <%= kota %>, <%= tanggalCetak %><br>
+        <%= kaprodi.jabatan %>,
+      </p>
+      <div class="area-ttd"><img src="/images/ttd.png" alt="Tanda Tangan Kaprodi" class="img-ttd"></div>
+      <p class="nama-ttd"><%= kaprodi.nama %></p>
+      <p class="nip-ttd">NUPTK. <%= kaprodi.nuptk %></p>
     </div>
   </div>
 </div>

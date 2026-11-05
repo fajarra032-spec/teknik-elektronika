@@ -322,6 +322,10 @@ router.get('/rekap/:periodeId/dosen/:dosenId', async (req, res) => {
   }
 });
 
+// Penandatangan: sama dengan SK / KHS / transkrip (tanda tangan: /images/ttd.png)
+const KAPRODI = { nama: 'Fajar Ramadhan, S.Pd., M.T.', nuptk: '8559777678130153', jabatan: 'Ketua Program Studi Teknik Elektronika' };
+const KOTA_CETAK = 'Palopo';
+
 // Halaman cetak resmi (A4 landscape, tanpa navbar/footer web)
 router.get('/rekap/:periodeId/cetak', async (req, res) => {
   try {
@@ -341,7 +345,7 @@ router.get('/rekap/:periodeId/cetak', async (req, res) => {
     const tanggalCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
     res.render('admin/edom/rekap_cetak', {
       title: 'Rekap EDOM - ' + (periodDoc.data().nama || periodeId),
-      periode: { id: periodDoc.id, ...periodDoc.data() }, rekap, tanggalCetak,
+      periode: { id: periodDoc.id, ...periodDoc.data() }, rekap, tanggalCetak, kaprodi: KAPRODI, kota: KOTA_CETAK,
       urlKembali: `/admin/edom/rekap?periodeId=${periodeId}&urut=${urut}`
     });
   } catch (err) {
