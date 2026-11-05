@@ -26,6 +26,7 @@ const router = express.Router();
 const { verifyToken } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getPembimbingMahasiswa: getPembimbingDosenPa } = require('../../helpers/pembimbingHelper');
+const { getKonsultasiByPeriod, mingguDisetujui, normalisasiNoWa } = require('../../helpers/konsultasiLogbookHelper');
 const {
   calculateProgress,
   groupLogbookByMinggu,
@@ -345,10 +346,52 @@ router.get('/', async (req, res) => {
       availablePdks = await getActivePdkList(userId);
     }
 
+    // Status konsultasi & persetujuan logbook per minggu (periode aktif)
+    let mingguStatus = [];
+    if (activePeriod && activePeriod.tanggalMulai) {
+      try {
+        const [snap, konsMap] = await Promise.all([
+          db.collection('logbookMagang')
+            .where('userId', '==', userId)
+            .where('pdkId', '==', activePeriod.pdkId)
+            .orderBy('tanggal', 'asc')
+            .get(),
+          getKonsultasiByPeriod(activePeriod.id)
+        ]);
+        const logs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const grup = groupLogbookByMinggu(logs, activePeriod.tanggalMulai);
+        const rentang = getRentangMinggu({ tanggalMulai: activePeriod.tanggalMulai, tanggalSelesai: activePeriod.tanggalSelesai });
+        const sampai = Math.max(rentang.mingguSekarang || 1, grup.reduce((m, g) => Math.max(m, g.mingguKe), 0));
+        const mulaiMs = new Date(activePeriod.tanggalMulai + 'T00:00:00Z').getTime();
+        for (let n = sampai; n >= 1; n--) {
+          const g = grup.find(x => x.mingguKe === n);
+          const k = konsMap[n] || null;
+          const entries = g ? g.entries : [];
+          mingguStatus.push({
+            mingguKe: n,
+            awal: new Date(mulaiMs + (n - 1) * 7 * 86400000).toISOString().substring(0, 10),
+            akhir: new Date(mulaiMs + ((n - 1) * 7 + 6) * 86400000).toISOString().substring(0, 10),
+            jumlahEntri: entries.length,
+            totalJam: g ? g.totalDurasi : 0,
+            disetujui: mingguDisetujui(k, entries),
+            catatan: k && k.status === 'approved' ? (k.catatan || '') : '',
+            tanggalKonsultasi: k && k.status === 'approved' ? (k.tanggalKonsultasi || '') : '',
+            pekanIni: n === rentang.mingguSekarang
+          });
+        }
+      } catch (err) {
+        console.error('Error status konsultasi mingguan:', err);
+        mingguStatus = [];
+      }
+    }
+    const dosenWaLink = pembimbing && pembimbing.kontak ? normalisasiNoWa(pembimbing.kontak) : '';
+
     res.render('mahasiswa/magang/index', {
       title: 'ELK-Magang',
       user: req.user,
       pembimbing,
+      mingguStatus,
+      dosenWaLink,
       activePeriod,
       completedPeriods,
       upcomingPeriods,

@@ -22,3 +22,11 @@ CETAK LOGBOOK (mahasiswa/dosen/admin memakai template yang sama)
 - Tiap lembar mingguan ada kotak "Catatan Dosen Pembimbing" + info konsultasi via WA (no. WA, tanggal).
 - Setelah Lembar Pengesahan (halaman kesimpulan) ditambah "Lembar Konsultasi Bimbingan Magang":
   tabel semua minggu (periode, status, tanggal/no. WA, catatan dosen) + tanda tangan dosen pembimbing.
+
+TAMBAHAN (halaman mahasiswa /mahasiswa/magang)
+  helpers/pembimbingHelper.js            TIMPA (hanya menambah field `kontak` dosen)
+  routes/mahasiswa/magang.js             TIMPA (route '/' + status konsultasi mingguan)
+  views/mahasiswa/magang/index.ejs       TIMPA
+- Kartu baru "Konsultasi Logbook Mingguan": status tiap minggu (sudah/belum konsultasi), catatan dosen,
+  peringatan jumlah minggu yang belum konsultasi, dan tombol WhatsApp ke Dosen PA (dari field `kontak` dosen).
+- Teks panduan langkah 3-6 diperbarui (konsultasi mingguan, Form Penilaian Dosen Pembimbing).

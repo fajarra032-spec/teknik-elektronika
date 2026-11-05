@@ -7,6 +7,8 @@
   if (typeof upcomingPeriods === 'undefined') upcomingPeriods = [];
   if (typeof availablePdks === 'undefined') availablePdks = [];
   if (typeof pembimbing === 'undefined') pembimbing = null;
+  if (typeof mingguStatus === 'undefined') mingguStatus = [];
+  if (typeof dosenWaLink === 'undefined') dosenWaLink = '';
   
   // Helper untuk format tanggal
   const formatTanggal = (dateString) => {
@@ -621,6 +623,61 @@
     </div>
   </div>
 
+  <!-- ========== STATUS KONSULTASI LOGBOOK PER MINGGU ========== -->
+  <% if (activePeriod && mingguStatus.length > 0) {
+       const belumKonsul = mingguStatus.filter(m => !m.disetujui && m.jumlahEntri > 0);
+  %>
+    <div class="section-title">
+      <i class="bi bi-chat-dots-fill text-primary"></i>
+      <span>Konsultasi Logbook Mingguan</span>
+    </div>
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+      <% if (belumKonsul.length > 0) { %>
+        <div class="alert-warning-custom mb-3">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <strong><%= belumKonsul.length %> minggu belum konsultasi.</strong>
+          Lembar logbook minggu tersebut akan tercetak dengan watermark &ldquo;Belum Konsultasi&rdquo; sampai Dosen Pembimbing menyetujuinya.
+          Silakan konsultasi via WhatsApp.
+          <% if (dosenWaLink) { %>
+            <a href="https://wa.me/<%= dosenWaLink %>?text=<%= encodeURIComponent('Assalamualaikum Bapak/Ibu, saya ' + ((user && user.nama) || '') + ' ingin konsultasi logbook magang minggu ke-' + belumKonsul[0].mingguKe + '.') %>"
+               target="_blank" rel="noopener" class="btn btn-success btn-sm ms-1 mt-1">
+              <i class="bi bi-whatsapp"></i> Hubungi <%= (pembimbing && pembimbing.pembimbing && pembimbing.pembimbing.nama) ? pembimbing.pembimbing.nama : 'Dosen Pembimbing' %>
+            </a>
+          <% } %>
+        </div>
+      <% } else { %>
+        <div class="alert alert-success py-2 mb-3"><i class="bi bi-check-circle-fill me-2"></i>Semua minggu yang berisi logbook sudah dikonsultasikan dan disetujui.</div>
+      <% } %>
+
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr><th>Minggu</th><th>Periode</th><th class="text-center">Entri / Jam</th><th>Status</th><th>Catatan Dosen Pembimbing</th></tr>
+          </thead>
+          <tbody>
+            <% mingguStatus.forEach(m => { %>
+              <tr>
+                <td class="fw-bold">Ke-<%= m.mingguKe %><% if (m.pekanIni) { %> <span class="badge bg-primary">pekan ini</span><% } %></td>
+                <td class="small"><%= formatTanggal(m.awal) %> &ndash; <%= formatTanggal(m.akhir) %></td>
+                <td class="text-center small"><%= m.jumlahEntri %> / <%= m.totalJam %> jam</td>
+                <td>
+                  <% if (m.disetujui) { %>
+                    <span class="badge bg-success">Sudah konsultasi &middot; disetujui</span>
+                  <% } else if (m.jumlahEntri === 0) { %>
+                    <span class="badge bg-secondary">Belum ada logbook</span>
+                  <% } else { %>
+                    <span class="badge bg-danger">Belum konsultasi</span>
+                  <% } %>
+                </td>
+                <td class="small" style="white-space:pre-line;"><%= m.catatan || '-' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% } %>
+
   <!-- ========== RIWAYAT MAGANG SELESAI ========== -->
   <% if (completedPeriods && completedPeriods.length > 0) { %>
     <div class="mt-5">
@@ -754,7 +811,7 @@
             <span class="badge bg-success text-white">Harian</span>
           </div>
           <h6 class="fw-bold">Isi Logbook Harian</h6>
-          <p class="small text-muted mb-0">Selama periode aktif, isi logbook setiap hari kerja. Progress = hari diisi / total hari.</p>
+          <p class="small text-muted mb-0">Selama periode aktif, isi logbook setiap hari kerja. Setiap minggu, konsultasikan logbook ke Dosen PA via WhatsApp; lembar mingguan yang belum disetujui dosen tercetak dengan watermark &ldquo;Belum Konsultasi&rdquo;.</p>
         </div>
       </div>
       <!-- Step 4 -->
@@ -765,7 +822,7 @@
             <span class="badge bg-secondary text-white">Dosen PA</span>
           </div>
           <h6 class="fw-bold">Logbook Dikunci untuk Dinilai</h6>
-          <p class="small text-muted mb-0">Submit logbook harian berhenti otomatis begitu lewat tanggal selesai (kecuali diperpanjang dosen). Selanjutnya Dosen PA <strong>secara manual</strong> mengunci logbook periode ini supaya form Nilai Logbook bisa diisi.</p>
+          <p class="small text-muted mb-0">Submit logbook harian berhenti otomatis begitu lewat tanggal selesai (kecuali diperpanjang dosen). Selanjutnya Dosen PA <strong>secara manual</strong> mengunci logbook periode ini supaya Form Penilaian Dosen Pembimbing bisa diisi.</p>
         </div>
       </div>
       <!-- Step 5 -->
@@ -775,8 +832,8 @@
             <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: clamp(32px, 8vw, 40px); height: clamp(32px, 8vw, 40px);">5</div>
             <span class="badge bg-warning text-dark">Nilai</span>
           </div>
-          <h6 class="fw-bold">Nilai Logbook oleh Dosen PA</h6>
-          <p class="small text-muted mb-0">Dosen PA memberi Nilai Logbook & Sikap. Ini tidak menghalangi upload laporan - mahasiswa bisa upload laporan kapan saja, tidak perlu menunggu langkah ini.</p>
+          <h6 class="fw-bold">Penilaian oleh Dosen PA</h6>
+          <p class="small text-muted mb-0">Setelah laporan di-ACC dan logbook dikunci, Dosen PA mengisi Form Penilaian Dosen Pembimbing. Ini tidak menghalangi upload laporan - mahasiswa bisa upload laporan kapan saja.</p>
         </div>
       </div>
       <!-- Step 6 -->
@@ -787,7 +844,7 @@
             <span class="badge bg-danger text-white">Revisi</span>
           </div>
           <h6 class="fw-bold">Upload Laporan & Revisi</h6>
-          <p class="small text-muted mb-0">Unggah laporan PDF, Dosen PA bisa ACC/Reject + komentar. Mahasiswa perbaiki hingga disetujui. Setelah minimal 1 laporan di-ACC, Dosen PA mengisi Nilai Laporan.</p>
+          <p class="small text-muted mb-0">Unggah laporan PDF, Dosen PA bisa ACC/Reject + komentar. Mahasiswa perbaiki hingga disetujui. Setelah minimal 1 laporan di-ACC, Dosen PA dapat mengisi Form Penilaian.</p>
         </div>
       </div>
       <!-- Step 7 -->

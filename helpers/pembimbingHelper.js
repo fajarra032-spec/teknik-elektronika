@@ -40,6 +40,7 @@ async function getPembimbingMahasiswa(mahasiswa) {
     let nama = data.dosenPaNama || '';
     let nidn = data.dosenPaNidn || '';
     let nuptk = '';
+    let kontak = '';
     // Nama/NIDN terbaru diambil dari dokumen dosen (denormalisasi di users bisa basi)
     const dosenDoc = await db.collection('dosen').doc(data.dosenPaId).get();
     if (dosenDoc.exists) {
@@ -47,12 +48,14 @@ async function getPembimbingMahasiswa(mahasiswa) {
       nama = d.nama || nama;
       nidn = d.nidn || nidn;
       nuptk = d.nuptk || d.nip || d.nidn || '';
+      kontak = d.kontak || d.noHp || '';
     }
     return {
       id: data.dosenPaId,
       nama: nama || '-',
       nidn: nidn || '-',
-      nuptk: nuptk || nidn || '-'
+      nuptk: nuptk || nidn || '-',
+      kontak: kontak || ''
     };
   } catch (error) {
     console.error('Error getPembimbingMahasiswa:', error);
