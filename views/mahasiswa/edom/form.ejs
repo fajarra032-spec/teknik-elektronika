@@ -1,268 +1,179 @@
 <%- include('../../partials/header') %>
 
 <style>
-  :root {
-    --primary-start: #1e3a8a;
-    --primary-end: #3b82f6;
-  }
-  .form-container {
-    max-width: 900px;
-    margin: 0 auto;
-  }
-  .question-card {
-    background: white;
-    border-radius: 1rem;
-    padding: 1.2rem;
-    margin-bottom: 1rem;
-    border: 1px solid #e2e8f0;
-    transition: 0.2s;
-  }
-  .question-card:hover {
-    border-color: var(--primary-start);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-  }
-  .rating-scale {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-top: 0.5rem;
-  }
-  .rating-option {
-    text-align: center;
-    min-width: 50px;
-  }
-  .rating-option input {
-    display: block;
-    margin: 0 auto;
-  }
-  .btn-submit {
-    background: linear-gradient(105deg, var(--primary-start), var(--primary-end));
-    border: none;
-    border-radius: 60px;
-    padding: 0.6rem 2rem;
-    font-weight: 600;
-  }
-  .required-field::after {
-    content: " *";
-    color: red;
-  }
-  .dosen-select {
-    background: #f8fafc;
-    border-radius: 1rem;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    border: 1px solid #e2e8f0;
-  }
-  .dosen-select select:focus {
-    border-color: var(--primary-start);
-    box-shadow: 0 0 0 0.2rem rgba(30,58,138,0.25);
-  }
-  /* Info anonim */
-  .info-anonim {
-    background: #fef9e3;
-    border-left: 5px solid #eab308;
-    border-radius: 1rem;
-    padding: 0.8rem 1rem;
-    margin-bottom: 1rem;
-    font-size: 0.85rem;
-    color: #854d0e;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .info-anonim i {
-    font-size: 1.2rem;
-  }
-  /* Panduan skala */
-  .scale-guide {
-    background: #eef2ff;
-    border-radius: 1rem;
-    padding: 0.8rem 1rem;
-    margin-bottom: 1.5rem;
-    font-size: 0.85rem;
-    color: #1e3a8a;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-  }
-  .scale-guide-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-  }
-  .scale-number {
-    font-weight: 800;
-    background: white;
-    width: 28px;
-    height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 60px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  }
-  @media (max-width: 576px) {
-    .info-anonim {
-      font-size: 0.75rem;
-      padding: 0.6rem;
-    }
-    .scale-guide {
-      font-size: 0.7rem;
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    .rating-option {
-      min-width: 40px;
-    }
+  :root { --primary-start:#1e3a8a; --primary-end:#3b82f6; }
+  .edm-wrap{max-width:980px;margin:0 auto}
+  .edm-head{background:linear-gradient(135deg,var(--primary-start),var(--primary-end));color:#fff;border-radius:1.2rem;padding:1.3rem 1.5rem;margin-bottom:1rem;box-shadow:0 8px 22px rgba(30,58,138,.18)}
+  .edm-head h4{font-weight:800;margin:0 0 .25rem;font-size:1.35rem}
+  .edm-head p{margin:0;opacity:.92;font-size:.9rem}
+  .edm-info{background:#fef9e3;border-left:5px solid #eab308;border-radius:.9rem;padding:.7rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#854d0e;display:flex;gap:.6rem;align-items:flex-start}
+  .edm-info i{font-size:1.15rem;line-height:1.2}
+  .edm-guide{background:#eef2ff;border-radius:.9rem;padding:.7rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#1e3a8a;display:flex;flex-wrap:wrap;gap:.4rem 1rem;align-items:center}
+  .edm-guide b.n{display:inline-flex;width:1.5rem;height:1.5rem;border-radius:50%;background:#fff;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.12);margin-right:.3rem}
+  .edm-dosen{background:#fff;border:1px solid #e2e8f0;border-radius:.9rem;padding:.9rem 1rem;margin-bottom:1rem}
+  .edm-card{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;overflow:hidden;margin-bottom:1rem}
+  .edm-group{background:#1e3a8a;color:#fff;font-weight:700;font-size:.82rem;letter-spacing:.6px;text-transform:uppercase;padding:.5rem 1rem}
+  .edm-row{display:grid;grid-template-columns:1fr auto;gap:.5rem 1rem;align-items:center;padding:.65rem 1rem;border-bottom:1px solid #f1f5f9;border-left:4px solid transparent;transition:background .15s}
+  .edm-row:last-child{border-bottom:none}
+  .edm-row:hover{background:#f8fbff}
+  .edm-row.done{border-left-color:#16a34a}
+  .edm-row.missing{border-left-color:#dc2626;background:#fef2f2}
+  .edm-q{display:flex;gap:.6rem;align-items:flex-start;color:#1e293b;font-weight:500}
+  .edm-no{flex:none;min-width:1.6rem;height:1.6rem;border-radius:50%;background:#e0e7ff;color:#1e3a8a;font-size:.78rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+  .edm-opts{display:flex;gap:.45rem}
+  .edm-opt{position:relative;margin:0;cursor:pointer}
+  .edm-opt input{position:absolute;opacity:0;inset:0;width:100%;height:100%;cursor:pointer;margin:0}
+  .edm-dot{display:inline-flex;width:2.6rem;height:2.6rem;border-radius:50%;border:2px solid #cbd5e1;background:#fff;color:#64748b;font-weight:700;align-items:center;justify-content:center;transition:all .12s}
+  .edm-opt:hover .edm-dot{border-color:#3b82f6;color:#1e3a8a}
+  .edm-opt input:checked + .edm-dot{background:linear-gradient(135deg,var(--primary-start),var(--primary-end));border-color:transparent;color:#fff;transform:scale(1.08);box-shadow:0 3px 8px rgba(30,58,138,.3)}
+  .edm-opt input:focus-visible + .edm-dot{outline:3px solid #93c5fd;outline-offset:2px}
+  .edm-text{padding:1rem}
+  .edm-text label{font-weight:700;color:#1e293b;margin-bottom:.4rem;display:block}
+  .edm-bar{position:sticky;bottom:0;z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-top:1px solid #e2e8f0;border-radius:1rem 1rem 0 0;padding:.7rem 1rem;display:flex;gap:1rem;align-items:center;justify-content:space-between;box-shadow:0 -6px 18px rgba(0,0,0,.06);margin-top:1rem}
+  .edm-prog{flex:1;min-width:0}
+  .edm-prog .t{font-size:.82rem;color:#475569;margin-bottom:.25rem;font-weight:600}
+  .edm-prog .b{height:.5rem;background:#e2e8f0;border-radius:1rem;overflow:hidden}
+  .edm-prog .b span{display:block;height:100%;width:0;background:linear-gradient(90deg,#3b82f6,#16a34a);border-radius:1rem;transition:width .2s}
+  .btn-submit{background:linear-gradient(105deg,var(--primary-start),var(--primary-end));border:none;border-radius:60px;padding:.6rem 1.8rem;font-weight:700;color:#fff;white-space:nowrap}
+  .btn-submit:hover{color:#fff;filter:brightness(1.08)}
+  @media(max-width:640px){
+    .edm-row{grid-template-columns:1fr}
+    .edm-opts{justify-content:space-between;padding-left:2.2rem}
+    .edm-dot{width:2.5rem;height:2.5rem}
+    .edm-head{padding:1rem}
+    .edm-bar{flex-wrap:wrap}
+    .btn-submit{width:100%}
   }
 </style>
 
-<div class="container mt-4 form-container">
+<div class="container mt-4 edm-wrap">
   <% if (typeof message !== 'undefined' && message) { %>
     <div class="alert alert-<%= message.type === 'success' ? 'success' : (message.type === 'error' ? 'danger' : 'info') %> alert-dismissible fade show">
-      <%= message.text %>
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      <%= message.text %><button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   <% } %>
 
-  <div class="card shadow-sm border-0 rounded-4">
-    <div class="card-header bg-white py-3 border-0">
-      <h4 class="mb-0"><i class="bi bi-pencil-square me-2 text-primary"></i>Evaluasi Dosen: <%= mk.kode %> - <%= mk.nama %></h4>
-      <p class="text-muted mt-2">Periode: <%= activePeriod.nama %> (sampai <%= activePeriod.tanggalSelesai %>)</p>
-    </div>
-    <div class="card-body">
-      <!-- PENGINGAT ANONIM & KEJUJURAN -->
-      <div class="info-anonim">
-        <i class="bi bi-shield-lock-fill"></i>
-        <span><strong>Identitas Anda dirahasiakan.</strong> Jawablah dengan jujur dan sesuai pengalaman selama mengikuti perkuliahan. Penilaian ini sangat membantu meningkatkan kualitas pembelajaran di Program Studi Elektronika.</span>
-      </div>
+  <%
+    const ratingQuestions = questions.filter(q => q.tipe === 'rating');
+    const textQuestions = questions.filter(q => q.tipe === 'text');
+    const skala = ratingQuestions.length ? (ratingQuestions[0].skala || 5) : 5;
+    const labelSkala = { 1: 'Sangat Tidak Sesuai', 2: 'Tidak Sesuai', 3: 'Kurang Sesuai', 4: 'Sesuai', 5: 'Sangat Sesuai' };
+  %>
 
-      <!-- PANDUAN SKALA 1-5 -->
-      <div class="scale-guide">
-        <span><i class="bi bi-info-circle-fill"></i> <strong>Panduan Skala:</strong></span>
-        <span class="scale-guide-item"><span class="scale-number">1</span> Sangat Buruk</span>
-        <span class="scale-guide-item"><span class="scale-number">2</span> Kurang</span>
-        <span class="scale-guide-item"><span class="scale-number">3</span> Cukup</span>
-        <span class="scale-guide-item"><span class="scale-number">4</span> Baik</span>
-        <span class="scale-guide-item"><span class="scale-number">5</span> Sangat Baik</span>
-      </div>
-
-      <form method="POST" action="/mahasiswa/edom/mk/<%= mkId %>" id="edomForm" onsubmit="return validateForm()">
-        <!-- Dropdown Pilih Dosen -->
-        <div class="dosen-select">
-          <label class="form-label fw-bold">Pilih Dosen yang Akan Dievaluasi <span class="text-danger">*</span></label>
-          <select name="dosenId" class="form-select" required>
-            <option value="">-- Pilih Dosen --</option>
-            <% dosenList.forEach(dosen => { %>
-              <option value="<%= dosen.id %>"><%= dosen.nama %></option>
-            <% }) %>
-          </select>
-          <small class="text-muted">Jika mata kuliah diampu lebih dari satu dosen, pilih dosen yang akan dievaluasi.</small>
-        </div>
-
-        <!-- Pertanyaan Rating -->
-        <% const ratingQuestions = questions.filter(q => q.tipe === 'rating'); %>
-        <% const textQuestions = questions.filter(q => q.tipe === 'text'); %>
-        
-        <% if (ratingQuestions.length) { %>
-          <div class="mb-2">
-            <h5 class="fw-semibold"><i class="bi bi-star-fill me-1"></i> Penilaian Skala</h5>
-          </div>
-          <% ratingQuestions.forEach((q, idx) => { %>
-            <div class="question-card">
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <h6 class="fw-bold"><%= idx+1 %>. <%= q.pertanyaan %></h6>
-                  <small class="text-muted">Skala 1 - <%= q.skala || 5 %></small>
-                </div>
-                <% if (q.bobot) { %>
-                  <span class="badge bg-secondary">Bobot: <%= q.bobot %></span>
-                <% } %>
-              </div>
-              <div class="rating-scale mt-2">
-                <% for (let i = 1; i <= (q.skala || 5); i++) { %>
-                  <label class="rating-option">
-                    <input type="radio" name="nilai_<%= q.id %>" value="<%= i %>" required> 
-                    <span><%= i %></span>
-                  </label>
-                <% } %>
-              </div>
-            </div>
-          <% }) %>
-        <% } %>
-
-        <!-- Pertanyaan Teks (di bagian akhir) -->
-        <% if (textQuestions.length) { %>
-          <div class="mt-4 mb-2">
-            <hr>
-            <h5 class="text-muted"><i class="bi bi-chat-text-fill me-1"></i> Jawaban Teks</h5>
-            <small class="text-muted">Isikan jawaban sesuai dengan pertanyaan di bawah ini (wajib diisi)</small>
-          </div>
-          <% textQuestions.forEach((q, idx) => { %>
-            <div class="question-card">
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <h6 class="fw-bold"><%= (ratingQuestions.length + idx + 1) %>. <%= q.pertanyaan %></h6>
-                  <small class="text-danger required-field">Wajib diisi</small>
-                </div>
-              </div>
-              <div class="mt-2">
-                <textarea name="jawaban_teks_<%= q.id %>" class="form-control" rows="3" required placeholder="Tulis jawaban Anda di sini..."></textarea>
-              </div>
-            </div>
-          <% }) %>
-        <% } %>
-
-        <div class="d-flex justify-content-between mt-4">
-          <a href="/mahasiswa/edom" class="btn btn-outline-secondary rounded-pill px-4">Batal</a>
-          <button type="submit" class="btn btn-submit text-white px-5">Kirim Evaluasi</button>
-        </div>
-      </form>
-    </div>
+  <div class="edm-head">
+    <h4><i class="bi bi-pencil-square me-2"></i>Evaluasi Dosen: <%= mk.kode %> - <%= mk.nama %></h4>
+    <p>Periode: <%= activePeriod.nama %> (sampai <%= activePeriod.tanggalSelesai %>)</p>
   </div>
+
+  <div class="edm-info">
+    <i class="bi bi-shield-lock-fill"></i>
+    <span><strong>Identitas Anda dirahasiakan.</strong> Isilah sesuai dosen yang mengajar Anda, dengan jujur sesuai pengalaman selama perkuliahan.</span>
+  </div>
+
+  <div class="edm-guide">
+    <span><i class="bi bi-info-circle-fill"></i> <strong>Skala:</strong></span>
+    <% for (let i = 1; i <= skala; i++) { %>
+      <span><b class="n"><%= i %></b><%= labelSkala[i] || '' %></span>
+    <% } %>
+  </div>
+
+  <form method="POST" action="/mahasiswa/edom/mk/<%= mkId %>" id="edomForm" novalidate>
+    <div class="edm-dosen">
+      <label class="form-label fw-bold mb-1">Dosen yang dievaluasi <span class="text-danger">*</span></label>
+      <select name="dosenId" id="dosenId" class="form-select" required>
+        <% if (dosenList.length !== 1) { %><option value="">-- Pilih Dosen --</option><% } %>
+        <% dosenList.forEach(d => { %>
+          <option value="<%= d.id %>" <%= dosenList.length === 1 ? 'selected' : '' %>><%= d.nama %></option>
+        <% }) %>
+      </select>
+      <% if (dosenList.length > 1) { %><small class="text-muted">Mata kuliah ini diampu lebih dari satu dosen, pilih dosen yang akan dievaluasi.</small><% } %>
+    </div>
+
+    <% if (ratingQuestions.length) { let no = 0; let grupSebelumnya = null; %>
+      <div class="edm-card">
+        <% ratingQuestions.forEach(q => { no++;
+             const grup = q.indikator || null;
+             if (grup && grup !== grupSebelumnya) { grupSebelumnya = grup; %>
+          <div class="edm-group"><%= grup %></div>
+        <% } %>
+          <div class="edm-row" data-row="<%= q.id %>">
+            <div class="edm-q"><span class="edm-no"><%= no %></span><span><%= q.pertanyaan %></span></div>
+            <div class="edm-opts" role="radiogroup" aria-label="Nilai untuk pernyataan <%= no %>">
+              <% for (let i = 1; i <= skala; i++) { %>
+                <label class="edm-opt" title="<%= i %> - <%= labelSkala[i] || '' %>">
+                  <input type="radio" name="nilai_<%= q.id %>" value="<%= i %>">
+                  <span class="edm-dot"><%= i %></span>
+                </label>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <% if (textQuestions.length) { %>
+      <div class="edm-card">
+        <div class="edm-group">Umpan Balik Mahasiswa</div>
+        <div class="edm-text row g-3">
+          <% textQuestions.forEach(q => { %>
+            <div class="col-md-6">
+              <label for="t_<%= q.id %>"><%= q.pertanyaan %> <span class="text-danger">*</span></label>
+              <textarea id="t_<%= q.id %>" name="jawaban_teks_<%= q.id %>" class="form-control" rows="4" placeholder="Tulis jawaban Anda di sini..."></textarea>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="edm-bar">
+      <div class="edm-prog">
+        <div class="t"><span id="terisi">0</span> dari <span id="total"><%= ratingQuestions.length %></span> pernyataan terisi</div>
+        <div class="b"><span id="progBar"></span></div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="/mahasiswa/edom" class="btn btn-outline-secondary rounded-pill px-4">Batal</a>
+        <button type="submit" class="btn btn-submit px-4">Kirim Evaluasi</button>
+      </div>
+    </div>
+  </form>
 </div>
 
 <script>
-  function validateForm() {
-    // Validasi dropdown dosen
-    const dosenSelect = document.querySelector('select[name="dosenId"]');
-    if (!dosenSelect.value) {
-      alert('Silakan pilih dosen yang akan dievaluasi.');
-      dosenSelect.focus();
-      return false;
+  (function () {
+    const form = document.getElementById('edomForm');
+    const rows = Array.from(document.querySelectorAll('.edm-row'));
+    const total = rows.length;
+
+    function terisi(row) { return !!row.querySelector('input[type=radio]:checked'); }
+    function perbarui() {
+      let n = 0;
+      rows.forEach(r => { const ok = terisi(r); r.classList.toggle('done', ok); if (ok) { n++; r.classList.remove('missing'); } });
+      document.getElementById('terisi').textContent = n;
+      document.getElementById('progBar').style.width = (total ? n / total * 100 : 0) + '%';
     }
-    
-    // Validasi semua radio rating harus terisi
-    const radioGroups = {};
-    const allRadios = document.querySelectorAll('input[type="radio"]');
-    if (allRadios.length > 0) {
-      allRadios.forEach(radio => {
-        const name = radio.name;
-        if (!radioGroups[name]) radioGroups[name] = false;
-        if (radio.checked) radioGroups[name] = true;
-      });
-      for (let name in radioGroups) {
-        if (!radioGroups[name]) {
-          alert('Harap pilih skala untuk semua pertanyaan rating.');
-          return false;
-        }
+    form.addEventListener('change', perbarui);
+    perbarui();
+
+    form.addEventListener('submit', function (e) {
+      const dosen = document.getElementById('dosenId');
+      if (!dosen.value) { e.preventDefault(); alert('Silakan pilih dosen yang akan dievaluasi.'); dosen.focus(); return; }
+
+      const kosong = rows.filter(r => !terisi(r));
+      rows.forEach(r => r.classList.toggle('missing', kosong.includes(r)));
+      if (kosong.length) {
+        e.preventDefault();
+        kosong[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        alert('Masih ada ' + kosong.length + ' pernyataan yang belum dinilai (ditandai merah).');
+        return;
       }
-    }
-    
-    // Validasi textarea teks wajib diisi
-    const textareas = document.querySelectorAll('textarea[required]');
-    for (let ta of textareas) {
-      if (!ta.value.trim()) {
-        alert('Harap isi semua jawaban teks (pertanyaan dengan tanda *).');
-        ta.focus();
-        return false;
-      }
-    }
-    
-    return confirm('Pastikan semua penilaian sudah sesuai. Kirim evaluasi?');
-  }
+
+      const tas = Array.from(form.querySelectorAll('textarea'));
+      const tKosong = tas.find(t => !t.value.trim());
+      if (tKosong) { e.preventDefault(); alert('Harap isi semua jawaban umpan balik (bertanda *).'); tKosong.focus(); return; }
+
+      if (!confirm('Pastikan semua penilaian sudah sesuai. Kirim evaluasi?')) e.preventDefault();
+    });
+  })();
 </script>
 
 <%- include('../../partials/footer') %>
