@@ -38,3 +38,16 @@ LEMBAR PENGESAHAN LOGBOOK (halaman terakhir, setelah semua daftar hadir)
   minggu bercatatan pendamping), grafik jam per minggu, grafik kehadiran per bulan, dan
   ringkasan wawasan (minggu terpadat, bulan terbanyak, ketertiban pengisian, persetujuan dosen).
 - Tanda tangan: Pendamping Lapangan dan Dosen Pembimbing (nama + NIDN/NUPTK dari data Dosen PA).
+
+TAMBAHAN: DETEKSI FOTO KEMBAR
+  helpers/fotoDuplikatHelper.js    BARU
+  helpers/logbookPrintHelper.js    TIMPA
+  routes/mahasiswa/magang.js       TIMPA (import helper + loop unggah foto di rute tambah & edit + hapus)
+  views/mahasiswa/magang/logbook.ejs TIMPA (banner pemberitahuan)
+- Saat unggah, tiap foto diberi sidik (dHash 64-bit; tahan kompres ulang/ubah ukuran/kirim ulang WA).
+  Foto yang sama dengan yang sudah ada (di kiriman itu sendiri atau entri mana pun milik mahasiswa itu)
+  TIDAK diunggah ke Drive; mahasiswa diberi tahu "N foto tidak diunggah karena sama".
+- Sidik disimpan di koleksi baru Firestore `fotoLogbookHash` (ID dokumen `userId_hash`, cukup 1 get()/foto).
+  Tidak perlu indeks. Menghapus entri logbook ikut menghapus sidiknya, jadi foto boleh diunggah lagi.
+- Cetak: foto yang sama hanya tampil sekali di seluruh Dokumentasi Mingguan (kemunculan pertama).
+  Foto lama (diunggah sebelum patch ini, belum punya sidik) hanya bisa dikenali bila ID berkas Drive-nya sama.

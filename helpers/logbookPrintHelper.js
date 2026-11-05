@@ -138,8 +138,9 @@ function getDriveFileId(url) {
  * tanggal. Caption = caption yang diisi mahasiswa (imageCaptions[i]); bila
  * kosong dipakai uraian kegiatan pada entri tsb.
  */
-function kumpulkanFoto(entries) {
+function kumpulkanFoto(entries, sudahTampil) {
   const fotos = [];
+  const seen = sudahTampil || new Set(); // dipakai bersama antar minggu: foto sama hanya tampil sekali
   entries.forEach((e) => {
     const urls = Array.isArray(e.imageUrls) ? e.imageUrls : [];
     const caps = Array.isArray(e.imageCaptions) ? e.imageCaptions : [];
@@ -147,6 +148,11 @@ function kumpulkanFoto(entries) {
     urls.forEach((url, i) => {
       if (!url) return;
       const id = getDriveFileId(url);
+      // Kunci kesamaan: sidik foto (imageHashes) bila ada, cadangan ID berkas Drive
+      const hashes = Array.isArray(e.imageHashes) ? e.imageHashes : [];
+      const kunci = hashes[i] || id || url;
+      if (seen.has(kunci)) return;
+      seen.add(kunci);
       fotos.push({
         url: id ? `https://drive.google.com/thumbnail?id=${id}&sz=w1000` : url,
         urlCadangan: url,
@@ -262,6 +268,7 @@ function groupLogbookByMinggu(logbook, tanggalMulai) {
   });
 
   const mulai = tanggalMulai ? parseTanggalUTC(tanggalMulai) : null;
+  const fotoSudahTampil = new Set();
 
   return Object.values(groups)
     .sort((a, b) => a.mingguKe - b.mingguKe)
@@ -276,7 +283,7 @@ function groupLogbookByMinggu(logbook, tanggalMulai) {
         g.periodeAkhir = g.tanggalAkhir;
       }
       g.rows = buildBarisMingguan(g.entries, windowStart);
-      g.fotos = kumpulkanFoto(g.entries);
+      g.fotos = kumpulkanFoto(g.entries, fotoSudahTampil);
       g.halamanFoto = bagiHalaman(g.fotos, FOTO_PER_HALAMAN);
       return g;
     });

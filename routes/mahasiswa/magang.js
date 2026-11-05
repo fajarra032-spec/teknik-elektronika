@@ -43,6 +43,7 @@ const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
 const sharp = require('sharp');
+const { hashFoto, sudahAda, catatHash, hapusHash } = require('../../helpers/fotoDuplikatHelper');
 const crypto = require('crypto'); // <-- Tambahkan ini
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
 const { tampilkanCetakLogbook } = require('../../helpers/logbookPdfHelper');
@@ -607,9 +608,23 @@ router.post('/logbook', upload.array('images', 5), async (req, res) => {
 
     const imageUrls = [];
     const imageFileIds = [];
-    const imageCaptions = normalisasiCaption(req.body.captions, files.length);
+    const imageHashes = [];
+    const imageCaptions = [];
+    const captionsMasuk = normalisasiCaption(req.body.captions, files.length);
+    const hashBatch = new Set();
+    let jumlahDuplikat = 0;
 
-    for (const file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      // Foto yang sama (di kiriman ini maupun yang pernah diunggah) dilewati
+      let hash = null;
+      try { hash = await hashFoto(file.buffer); } catch (e) { console.warn('Hash foto gagal:', e.message); }
+      if (hash) {
+        if (hashBatch.has(hash) || await sudahAda(req.user.id, hash)) { jumlahDuplikat++; continue; }
+        hashBatch.add(hash);
+      }
+
       const compressedBuffer = await sharp(file.buffer)
         .resize({ width: 800, withoutEnlargement: true })
         .jpeg({ quality: 80 })
@@ -627,9 +642,11 @@ router.post('/logbook', upload.array('images', 5), async (req, res) => {
 
       imageUrls.push(`https://drive.google.com/uc?export=view&id=${response.data.id}`);
       imageFileIds.push(response.data.id);
+      imageHashes.push(hash || '');
+      imageCaptions.push(captionsMasuk[i]);
     }
 
-    await db.collection('logbookMagang').add({
+    const entriRef = await db.collection('logbookMagang').add({
       userId: req.user.id,
       tanggal,
       kegiatan,
@@ -643,18 +660,20 @@ router.post('/logbook', upload.array('images', 5), async (req, res) => {
       semester,
       imageUrls,
       imageFileIds,
+      imageHashes,
       imageCaptions,
       status: 'pending',
       createdAt: new Date().toISOString(),
       pembimbingId: pembimbing.pembimbing.id,
       pembimbingNama: pembimbing.pembimbing.nama
     });
+    await catatHash(req.user.id, entriRef.id, imageHashes.map((h, i) => h && ({ hash: h, fileId: imageFileIds[i] })).filter(Boolean));
 
     logbookSemesterCache.delete(req.user.id); // logbook baru -> cache daftar semester (dosen) bisa basi
 
     // Arahkan ke minggu tempat entri ini berada, supaya langsung terlihat
     const { mingguKe } = getMingguBulanKe(period.tanggalMulai, tanggal);
-    res.redirect(`/mahasiswa/magang/logbook?periodId=${periodId}&minggu=${mingguKe}`);
+    res.redirect(`/mahasiswa/magang/logbook?periodId=${periodId}&minggu=${mingguKe}${jumlahDuplikat ? '&dup=' + jumlahDuplikat : ''}`);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('Gagal menambah logbook: ' + error.message);
@@ -717,12 +736,27 @@ router.post('/logbook/:id/edit', upload.array('images', 5), async (req, res) => 
     const imageFileIds = [...(existingData.imageFileIds || [])];
     // Caption foto lama (bisa diubah dari halaman edit) + caption foto baru
     const jumlahLama = imageUrls.length;
-    const imageCaptions = normalisasiCaption(
+    const captionLama = normalisasiCaption(
       req.body.captionsLama !== undefined ? req.body.captionsLama : (existingData.imageCaptions || []),
       jumlahLama
-    ).concat(normalisasiCaption(req.body.captions, files.length));
+    );
+    const imageHashes = Array.from({ length: jumlahLama }, (_, i) => (existingData.imageHashes || [])[i] || '');
+    const captionsMasuk = normalisasiCaption(req.body.captions, files.length);
+    const imageCaptions = [...captionLama];
+    const hashBatch = new Set(imageHashes.filter(Boolean));
+    const hashBaru = [];
+    let jumlahDuplikat = 0;
 
-    for (const file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      let hash = null;
+      try { hash = await hashFoto(file.buffer); } catch (e) { console.warn('Hash foto gagal:', e.message); }
+      if (hash) {
+        if (hashBatch.has(hash) || await sudahAda(req.user.id, hash)) { jumlahDuplikat++; continue; }
+        hashBatch.add(hash);
+      }
+
       const compressedBuffer = await sharp(file.buffer)
         .resize({ width: 800, withoutEnlargement: true })
         .jpeg({ quality: 80 })
@@ -741,6 +775,9 @@ router.post('/logbook/:id/edit', upload.array('images', 5), async (req, res) => 
 
       imageUrls.push(`https://drive.google.com/uc?export=view&id=${response.data.id}`);
       imageFileIds.push(response.data.id);
+      imageHashes.push(hash || '');
+      imageCaptions.push(captionsMasuk[i]);
+      if (hash) hashBaru.push({ hash, fileId: response.data.id });
     }
 
     await docRef.update({
@@ -751,11 +788,13 @@ router.post('/logbook/:id/edit', upload.array('images', 5), async (req, res) => 
       durasi: durasi || '',
       imageUrls,
       imageFileIds,
+      imageHashes,
       imageCaptions,
       updatedAt: new Date().toISOString()
     });
+    await catatHash(req.user.id, req.params.id, hashBaru);
 
-    res.redirect(`/mahasiswa/magang/logbook?${periodId ? 'periodId=' + encodeURIComponent(periodId) : ''}${minggu ? '&minggu=' + encodeURIComponent(minggu) : ''}`);
+    res.redirect(`/mahasiswa/magang/logbook?${periodId ? 'periodId=' + encodeURIComponent(periodId) : ''}${minggu ? '&minggu=' + encodeURIComponent(minggu) : ''}${jumlahDuplikat ? '&dup=' + jumlahDuplikat : ''}`);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('Gagal update logbook');
@@ -787,6 +826,7 @@ router.post('/logbook/:id/delete', async (req, res) => {
       }
     }
     await docRef.delete();
+    try { await hapusHash(req.user.id, (data.imageHashes || []).filter(Boolean)); } catch (e) { console.error('Gagal hapus sidik foto:', e.message); }
     const { periodId: pid, minggu: mg } = req.body || {};
     res.redirect(`/mahasiswa/magang/logbook?${pid ? 'periodId=' + encodeURIComponent(pid) : ''}${mg ? '&minggu=' + encodeURIComponent(mg) : ''}`);
   } catch (error) {

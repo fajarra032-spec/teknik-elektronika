@@ -738,6 +738,24 @@
     });
   }
 
+  // Pemberitahuan foto kembar yang tidak ikut diunggah (?dup=N dari server)
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const u = new URL(location.href);
+      const n = parseInt(u.searchParams.get('dup'), 10);
+      if (n > 0) {
+        const box = document.querySelector('.container');
+        const el = document.createElement('div');
+        el.className = 'alert alert-warning alert-dismissible fade show';
+        el.innerHTML = '<i class="bi bi-exclamation-triangle"></i> ' + n + ' foto tidak diunggah karena sama dengan foto yang sudah ada.' +
+          '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        if (box) box.insertBefore(el, box.firstChild);
+        u.searchParams.delete('dup');
+        history.replaceState(null, '', u.pathname + u.search);
+      }
+    } catch (e) {}
+  });
+
   document.addEventListener('DOMContentLoaded', () => {
     const addModal = document.getElementById('addLogbookModal');
     const editModal = document.getElementById('editLogbookModal');
