@@ -63,9 +63,64 @@ function getMingguBulanKe(tanggalMulai, tanggalEntry) {
   return { mingguKe, bulanKe };
 }
 
+// Urutan baris pada lembar logbook mingguan (format Politeknik Dewantara):
+// Senin s.d. Ahad. Angka = hasil getUTCDay() (0 = Minggu/Ahad).
+const HARI_LEMBAR = [
+  { nama: 'Senin', dow: 1 },
+  { nama: 'Selasa', dow: 2 },
+  { nama: 'Rabu', dow: 3 },
+  { nama: 'Kamis', dow: 4 },
+  { nama: 'Jumat', dow: 5 },
+  { nama: 'Sabtu', dow: 6 },
+  { nama: 'Ahad', dow: 0 }
+];
+
+// Tanggal 'YYYY-MM-DD' <-> Date UTC (menghindari pergeseran zona waktu).
+function parseTanggalUTC(str) {
+  const d = new Date(String(str).substring(0, 10) + 'T00:00:00Z');
+  return isNaN(d) ? null : d;
+}
+function formatTanggalISO(d) {
+  return d.toISOString().substring(0, 10);
+}
+function addDaysUTC(d, n) {
+  return new Date(d.getTime() + n * 86400000);
+}
+
+/**
+ * Membangun 7 baris (Senin..Ahad) untuk satu lembar logbook mingguan.
+ * Tiap baris: { hari, tanggal (YYYY-MM-DD | null), entries[], durasi }.
+ * Tanggal baris kosong diisi dari jendela 7 hari minggu tsb bila
+ * tanggal mulai periode diketahui.
+ */
+function buildBarisMingguan(entries, windowStart) {
+  const rows = HARI_LEMBAR.map((h) => ({ hari: h.nama, dow: h.dow, tanggal: null, entries: [], durasi: 0 }));
+
+  if (windowStart) {
+    for (let i = 0; i < 7; i++) {
+      const d = addDaysUTC(windowStart, i);
+      const row = rows.find((r) => r.dow === d.getUTCDay());
+      if (row) row.tanggal = formatTanggalISO(d);
+    }
+  }
+
+  entries.forEach((item) => {
+    const d = parseTanggalUTC(item.tanggal);
+    if (!d) return;
+    const row = rows.find((r) => r.dow === d.getUTCDay());
+    if (!row) return;
+    if (!row.tanggal) row.tanggal = formatTanggalISO(d);
+    row.entries.push(item);
+    row.durasi += parseFloat(item.durasi) || 0;
+  });
+
+  return rows.map(({ dow, ...rest }) => rest);
+}
+
 /**
  * Mengelompokkan daftar logbook menjadi array grup per minggu,
- * masing-masing berisi entries, rentang tanggal, total durasi, dan mingguKe/bulanKe.
+ * masing-masing berisi entries, rentang tanggal, total durasi, mingguKe/bulanKe,
+ * dan `rows` (7 baris Senin..Ahad) untuk lembar logbook mingguan.
  * @param {Array} logbook - daftar logbook (sudah terurut ascending berdasarkan tanggal disarankan)
  * @param {string} tanggalMulai - tanggal mulai periode magang
  * @returns {Array} groups terurut berdasarkan mingguKe
@@ -99,7 +154,23 @@ function groupLogbookByMinggu(logbook, tanggalMulai) {
     }
   });
 
-  return Object.values(groups).sort((a, b) => a.mingguKe - b.mingguKe);
+  const mulai = tanggalMulai ? parseTanggalUTC(tanggalMulai) : null;
+
+  return Object.values(groups)
+    .sort((a, b) => a.mingguKe - b.mingguKe)
+    .map((g) => {
+      // Jendela 7 hari minggu ini (mingguKe dihitung dari tanggal mulai periode)
+      const windowStart = mulai ? addDaysUTC(mulai, (g.mingguKe - 1) * 7) : null;
+      if (windowStart) {
+        g.periodeAwal = formatTanggalISO(windowStart);
+        g.periodeAkhir = formatTanggalISO(addDaysUTC(windowStart, 6));
+      } else {
+        g.periodeAwal = g.tanggalAwal;
+        g.periodeAkhir = g.tanggalAkhir;
+      }
+      g.rows = buildBarisMingguan(g.entries, windowStart);
+      return g;
+    });
 }
 
 // ============================================================================
