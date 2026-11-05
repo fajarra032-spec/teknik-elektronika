@@ -2,129 +2,178 @@
 
 <style>
   :root { --primary-start:#1e3a8a; --primary-end:#3b82f6; }
-  .page-header{background:linear-gradient(135deg,var(--primary-start),var(--primary-end));border-radius:1.5rem;padding:1.8rem 2rem;color:#fff;margin-bottom:1.5rem;box-shadow:0 10px 25px rgba(0,0,0,.1)}
-  .page-header h2{font-weight:800;font-size:1.8rem;margin-bottom:.5rem}
+  .page-header{background:linear-gradient(135deg,var(--primary-start),var(--primary-end));border-radius:1.5rem;padding:1.6rem 2rem;color:#fff;margin-bottom:1.2rem;box-shadow:0 10px 25px rgba(0,0,0,.1)}
+  .page-header h2{font-weight:800;font-size:1.7rem;margin-bottom:.4rem}
   .page-header p{opacity:.9;margin-bottom:0}
-  .filter-card{background:#fff;border-radius:1rem;padding:1rem 1.2rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.03);border:1px solid rgba(30,58,138,.1)}
+  .filter-card{background:#fff;border-radius:1rem;padding:.9rem 1.1rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.03);border:1px solid rgba(30,58,138,.1)}
   .filter-card label{font-weight:600;color:#1e293b;margin:0}
   .filter-card select{border-radius:2rem;padding:.4rem 1rem;min-width:240px}
-  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem;margin-bottom:1.5rem}
-  .stat-card{background:#fff;border-radius:1rem;padding:1.1rem 1.2rem;border:1px solid rgba(30,58,138,.1);box-shadow:0 2px 8px rgba(0,0,0,.04)}
-  .stat-card .lbl{font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;color:#64748b;font-weight:700}
-  .stat-card .val{font-size:1.9rem;font-weight:800;color:#1e293b;line-height:1.2}
-  .stat-card .sub{font-size:.85rem;color:#64748b}
-  .legend{background:#f8fafc;border:1px solid #e2e8f0;border-radius:1rem;padding:.8rem 1.1rem;margin-bottom:1.2rem;font-size:.85rem;color:#475569;display:flex;gap:.6rem 1.2rem;flex-wrap:wrap;align-items:center}
-  .dot{display:inline-block;width:.7rem;height:.7rem;border-radius:50%;margin-right:.3rem}
-  .table-container{background:#fff;border-radius:1.2rem;overflow-x:auto;border:1px solid rgba(30,58,138,.1);box-shadow:0 5px 20px rgba(0,0,0,.05)}
-  .table th{background:#f8fafc;font-weight:700;text-transform:uppercase;font-size:.75rem;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;padding:.9rem;white-space:nowrap}
-  .table td{padding:.9rem;vertical-align:middle;border-bottom:1px solid #f0f2f5}
-  .table tbody tr:hover td{background:#f0f7ff}
-  .skor{font-weight:800;font-size:1.05rem}
-  .bar{height:.5rem;background:#e2e8f0;border-radius:1rem;overflow:hidden;min-width:90px}
-  .bar>span{display:block;height:100%;border-radius:1rem}
-  .ind{font-size:.85rem;text-align:center;white-space:nowrap}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem;margin-bottom:1.2rem}
+  .stat-card{background:#fff;border-radius:1rem;padding:.9rem 1.1rem;border:1px solid rgba(30,58,138,.1);box-shadow:0 2px 8px rgba(0,0,0,.04)}
+  .stat-card .lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:#64748b;font-weight:700}
+  .stat-card .val{font-size:1.7rem;font-weight:800;color:#1e293b;line-height:1.2}
+  .stat-card .sub{font-size:.8rem;color:#64748b}
+  .legend{background:#f8fafc;border:1px solid #e2e8f0;border-radius:1rem;padding:.6rem 1rem;margin-bottom:1rem;font-size:.82rem;color:#475569;display:flex;gap:.4rem 1.1rem;flex-wrap:wrap;align-items:center}
+  .sw{display:inline-block;width:.9rem;height:.9rem;border-radius:.25rem;margin-right:.3rem;vertical-align:-2px;border:1px solid rgba(0,0,0,.08)}
+  .sec-title{font-weight:800;color:#1e293b;font-size:1.1rem;margin:1.6rem 0 .7rem}
+  .wrap{background:#fff;border-radius:1.1rem;overflow-x:auto;border:1px solid rgba(30,58,138,.1);box-shadow:0 5px 20px rgba(0,0,0,.05)}
+  table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:.85rem}
+  table.mx th,table.mx td{padding:.5rem .55rem;border-bottom:1px solid #eef2f7;border-right:1px solid #f3f5f9;text-align:center;white-space:nowrap}
+  table.mx thead th{background:#f8fafc;font-weight:700;color:#334155;position:sticky;top:0;z-index:2}
+  table.mx thead tr.grp th{background:#1e3a8a;color:#fff;font-size:.72rem;letter-spacing:.5px;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.2)}
+  table.mx .nm{text-align:left;position:sticky;left:0;background:#fff;z-index:1;min-width:210px;max-width:260px;white-space:normal;font-weight:600;border-right:2px solid #e2e8f0}
+  table.mx thead .nm{z-index:3;background:#f8fafc}
+  table.mx thead tr.grp .nm{background:#1e3a8a}
+  table.mx tbody tr:hover td{filter:brightness(.97)}
+  table.mx tbody tr:hover .nm{background:#f0f7ff}
+  .cell{font-weight:700;min-width:2.9rem}
+  .fin{font-weight:800;font-size:.95rem;min-width:4.2rem}
+  tr.rata td{background:#f8fafc;font-weight:800;border-top:2px solid #cbd5e1}
+  tr.rata .nm{background:#f8fafc}
+  table.ket{width:100%;font-size:.88rem}
+  table.ket th{background:#facc15;color:#1e293b;text-align:center;padding:.55rem .7rem;border:1px solid #e2e8f0}
+  table.ket td{padding:.5rem .7rem;border:1px solid #e2e8f0}
+  table.ket td.c{text-align:center;white-space:nowrap}
   .empty-state{text-align:center;padding:3rem;background:#f8fafc;border-radius:1rem;color:#6c757d}
   .empty-state i{font-size:3rem;color:#cbd5e1;display:block;margin-bottom:1rem}
-  @media(max-width:768px){.page-header{padding:1.2rem}.page-header h2{font-size:1.4rem}.filter-card{flex-direction:column;align-items:stretch}.filter-card select{width:100%}}
-  @media print{.filter-card,.no-print,.btn{display:none!important}.page-header{color:#000;background:none;box-shadow:none;padding:0}}
+  @media(max-width:768px){.page-header{padding:1.1rem}.page-header h2{font-size:1.35rem}.filter-card{flex-direction:column;align-items:stretch}.filter-card select{width:100%}}
+  @media print{@page{size:landscape;margin:10mm}.filter-card,.no-print,.btn{display:none!important}.page-header{color:#000;background:none;box-shadow:none;padding:0}table.mx .nm{position:static}}
 </style>
 
-<div class="container mt-4">
+<div class="container-fluid px-lg-4 mt-4">
   <% if (message) { %>
     <div class="alert alert-<%= message.type === 'success' ? 'success' : (message.type === 'error' ? 'danger' : 'info') %> alert-dismissible fade show" role="alert">
-      <i class="bi bi-<%= message.type === 'success' ? 'check-circle-fill' : (message.type === 'error' ? 'exclamation-triangle-fill' : 'info-circle-fill') %> me-2"></i>
-      <%= message.text %>
+      <i class="bi bi-<%= message.type === 'success' ? 'check-circle-fill' : (message.type === 'error' ? 'exclamation-triangle-fill' : 'info-circle-fill') %> me-2"></i><%= message.text %>
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   <% } %>
 
   <div class="page-header">
     <h2><i class="bi bi-bar-chart-steps me-2"></i>Hasil Evaluasi Dosen oleh Mahasiswa (EDOM)</h2>
-    <p><%= selectedPeriodData ? selectedPeriodData.nama + ' — ' + selectedPeriodData.semester : 'Pilih periode untuk melihat hasil evaluasi' %></p>
+    <p><%= selectedPeriodData ? selectedPeriodData.nama + ' — ' + selectedPeriodData.semester : 'Belum ada periode EDOM' %></p>
   </div>
 
   <div class="filter-card no-print">
     <label for="periodeSelect"><i class="bi bi-calendar-week me-1"></i> Periode:</label>
     <form method="GET" action="/admin/edom/rekap" style="flex:1;min-width:200px">
       <select name="periodeId" id="periodeSelect" class="form-select" onchange="this.form.submit()">
-        <option value="">-- Pilih Periode --</option>
         <% periods.forEach(p => { %>
           <option value="<%= p.id %>" <%= selectedPeriod === p.id ? 'selected' : '' %>><%= p.nama %> (<%= p.semester %>)<%= p.status === 'active' ? ' • aktif' : '' %></option>
         <% }) %>
       </select>
     </form>
     <% if (rekap && rekap.dosen.length > 0) { %>
-      <a class="btn btn-success btn-sm rounded-pill" href="/admin/edom/rekap/<%= selectedPeriod %>/export.csv"><i class="bi bi-file-earmark-excel me-1"></i> Unduh Excel (CSV)</a>
+      <a class="btn btn-success btn-sm rounded-pill" href="/admin/edom/rekap/<%= selectedPeriod %>/export.csv"><i class="bi bi-file-earmark-excel me-1"></i> Unduh Excel</a>
       <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="window.print()"><i class="bi bi-printer me-1"></i> Cetak</button>
       <button class="btn btn-outline-danger btn-sm rounded-pill" onclick="hapusSemua('<%= selectedPeriod %>')"><i class="bi bi-trash3 me-1"></i> Hapus Semua Respon</button>
     <% } %>
   </div>
 
   <% if (!selectedPeriod) { %>
-    <div class="empty-state"><i class="bi bi-funnel"></i><p>Silakan pilih periode untuk melihat hasil evaluasi.</p></div>
+    <div class="empty-state"><i class="bi bi-calendar-x"></i><p>Belum ada periode EDOM. Buat periode lebih dulu di menu Kelola Periode.</p></div>
   <% } else if (!rekap || rekap.dosen.length === 0) { %>
     <div class="empty-state"><i class="bi bi-inbox"></i><p>Belum ada respon pada periode ini.</p></div>
   <% } else { const r = rekap.ringkasan; %>
 
+    <!-- RINGKASAN -->
     <div class="stat-grid">
-      <div class="stat-card"><div class="lbl">Rata-rata Keseluruhan</div><div class="val" style="color:<%= r.pred.hex %>"><%= r.rataSemuaTeks %><span style="font-size:1rem;color:#94a3b8"> / 5</span></div><div class="sub"><%= r.pred.label %></div></div>
+      <div class="stat-card"><div class="lbl">Rata-rata Keseluruhan</div><div class="val" style="color:<%= r.pred.hex %>"><%= r.rataSemuaTeks %><span style="font-size:.95rem;color:#94a3b8"> / 5</span></div><div class="sub"><%= r.pred.label %></div></div>
       <div class="stat-card"><div class="lbl">Dosen Dievaluasi</div><div class="val"><%= r.jumlahDosen %></div><div class="sub">dosen</div></div>
       <div class="stat-card"><div class="lbl">Mahasiswa Mengisi</div><div class="val"><%= r.jumlahMahasiswa %></div><div class="sub">mahasiswa</div></div>
-      <div class="stat-card"><div class="lbl">Total Evaluasi Masuk</div><div class="val"><%= r.jumlahRespon %></div><div class="sub">1 evaluasi = 1 mahasiswa untuk 1 mata kuliah</div></div>
+      <div class="stat-card"><div class="lbl">Total Evaluasi</div><div class="val"><%= r.jumlahRespon %></div><div class="sub">1 mahasiswa × 1 mata kuliah</div></div>
+      <% rekap.indikatorSemua.forEach(i => { %>
+        <div class="stat-card"><div class="lbl"><%= i.nama %></div><div class="val" style="color:<%= i.pred.hex %>"><%= i.rataTeks %></div><div class="sub"><%= i.pred.label %></div></div>
+      <% }) %>
     </div>
 
     <div class="legend">
-      <strong>Skala 1–5:</strong>
-      <span><span class="dot" style="background:#16a34a"></span>4,50–5,00 Sangat Baik</span>
-      <span><span class="dot" style="background:#2563eb"></span>3,50–4,49 Baik</span>
-      <span><span class="dot" style="background:#d97706"></span>2,50–3,49 Cukup</span>
-      <span><span class="dot" style="background:#dc2626"></span>di bawah 2,50 Kurang</span>
+      <strong>Warna nilai (skala 1–5):</strong>
+      <span><span class="sw" style="background:#dcfce7"></span>4,50–5,00 Sangat Baik</span>
+      <span><span class="sw" style="background:#dbeafe"></span>3,50–4,49 Baik</span>
+      <span><span class="sw" style="background:#fef3c7"></span>2,50–3,49 Cukup</span>
+      <span><span class="sw" style="background:#fee2e2"></span>&lt; 2,50 Kurang</span>
     </div>
 
-    <div class="d-flex flex-wrap gap-2 align-items-center mb-3 no-print">
-      <input type="search" id="cari" class="form-control rounded-pill" style="max-width:280px" placeholder="Cari nama dosen...">
-      <div class="btn-group btn-group-sm" role="group">
+    <!-- ALAT -->
+    <div class="d-flex flex-wrap gap-2 align-items-center mb-2 no-print">
+      <input type="search" id="cari" class="form-control rounded-pill" style="max-width:260px" placeholder="Cari nama dosen...">
+      <div class="btn-group btn-group-sm">
         <a class="btn btn-outline-primary <%= urut === 'nama' ? 'active' : '' %>" href="?periodeId=<%= selectedPeriod %>&urut=nama">A–Z</a>
         <a class="btn btn-outline-primary <%= urut === 'tertinggi' ? 'active' : '' %>" href="?periodeId=<%= selectedPeriod %>&urut=tertinggi">Nilai Tertinggi</a>
         <a class="btn btn-outline-primary <%= urut === 'terendah' ? 'active' : '' %>" href="?periodeId=<%= selectedPeriod %>&urut=terendah">Nilai Terendah</a>
       </div>
+      <span class="text-muted small ms-auto">P1–P<%= rekap.pertanyaan.length %> = nomor pernyataan (lihat tabel keterangan di bawah). Arahkan kursor ke judul kolom untuk melihat isinya.</span>
     </div>
 
-    <div class="table-container">
-      <table class="table mb-0" id="tabelRekap">
+    <!-- MATRIKS UTAMA: DOSEN x PERNYATAAN -->
+    <div class="wrap">
+      <table class="mx" id="tabelRekap">
         <thead>
+          <tr class="grp">
+            <th class="nm" rowspan="2">Dosen</th>
+            <th rowspan="2">Evaluasi</th>
+            <% rekap.kelompok.forEach(k => { %><th colspan="<%= k.jumlah %>"><%= k.nama %></th><% }) %>
+            <% if (rekap.indikatorAda.length > 1) { %><th colspan="<%= rekap.indikatorAda.length %>">Rata-rata Indikator</th><% } %>
+            <th rowspan="2">Nilai Akhir</th>
+            <th rowspan="2">Predikat</th>
+            <th rowspan="2" class="no-print">Aksi</th>
+          </tr>
           <tr>
-            <th>No</th><th>Dosen</th><th class="text-center">MK</th><th class="text-center">Evaluasi</th>
-            <th style="min-width:170px">Nilai Akhir</th><th>Predikat</th>
-            <% rekap.indikatorAda.forEach(n => { %><th class="text-center"><%= n %></th><% }) %>
-            <th class="no-print">Aksi</th>
+            <% rekap.pertanyaan.forEach(p => { %><th title="P<%= p.no %>: <%= p.pertanyaan %>">P<%= p.no %></th><% }) %>
+            <% if (rekap.indikatorAda.length > 1) { rekap.indikatorAda.forEach(n => { %><th><%= n.substring(0, 5) %>.</th><% }) } %>
           </tr>
         </thead>
         <tbody>
           <% rekap.dosen.forEach((d, i) => { %>
             <tr data-nama="<%= d.dosenNama.toLowerCase() %>">
-              <td class="text-center"><%= i + 1 %></td>
-              <td class="fw-semibold"><a href="/admin/edom/rekap/<%= selectedPeriod %>/dosen/<%= d.dosenId %>" class="text-decoration-none"><%= d.dosenNama %></a></td>
-              <td class="text-center"><%= d.jumlahMk %></td>
-              <td class="text-center"><%= d.count %></td>
-              <td>
-                <div class="skor" style="color:<%= d.pred.hex %>"><%= d.rataTeks %></div>
-                <div class="bar"><span style="width:<%= Math.min(100, d.rata / 5 * 100) %>%;background:<%= d.pred.hex %>"></span></div>
-              </td>
-              <td><span class="badge text-bg-<%= d.pred.warna %>"><%= d.pred.label %></span></td>
-              <% rekap.indikatorAda.forEach(n => { const x = d.indikator.find(k => k.nama === n); %>
-                <td class="ind"><%= x ? x.rata.toFixed(2) : '-' %></td>
+              <td class="nm"><%= i + 1 %>. <a href="/admin/edom/rekap/<%= selectedPeriod %>/dosen/<%= d.dosenId %>" class="text-decoration-none"><%= d.dosenNama %></a><div class="text-muted fw-normal" style="font-size:.72rem"><%= d.jumlahMk %> mata kuliah</div></td>
+              <td><%= d.count %></td>
+              <% d.nilai.forEach((v, k) => { %>
+                <% if (v) { %><td class="cell" style="background:<%= v.pred.bg %>;color:<%= v.pred.fg %>" title="P<%= rekap.pertanyaan[k].no %>: <%= rekap.pertanyaan[k].pertanyaan %>"><%= v.teks %></td>
+                <% } else { %><td class="text-muted">-</td><% } %>
               <% }) %>
-              <td class="no-print text-nowrap">
+              <% if (rekap.indikatorAda.length > 1) { rekap.indikatorAda.forEach(n => { const x = d.indikator.find(k => k.nama === n); %>
+                <% if (x) { const pp = x.pred || null; %><td class="cell" style="background:#f8fafc"><%= x.rata.toFixed(2) %></td><% } else { %><td class="text-muted">-</td><% } %>
+              <% }) } %>
+              <td class="fin" style="background:<%= d.pred.bg %>;color:<%= d.pred.fg %>"><%= d.rataTeks %></td>
+              <td><span class="badge text-bg-<%= d.pred.warna %>"><%= d.pred.label %></span></td>
+              <td class="no-print">
                 <a class="btn btn-sm btn-primary rounded-pill" href="/admin/edom/rekap/<%= selectedPeriod %>/dosen/<%= d.dosenId %>"><i class="bi bi-eye"></i> Detail</a>
                 <button class="btn btn-sm btn-outline-danger rounded-pill btn-hapus-dosen" data-periode="<%= selectedPeriod %>" data-dosen="<%= d.dosenId %>" data-nama="<%= d.dosenNama %>"><i class="bi bi-trash"></i></button>
               </td>
             </tr>
           <% }) %>
+          <tr class="rata">
+            <td class="nm">Rata-rata semua dosen</td>
+            <td><%= r.jumlahRespon %></td>
+            <% rekap.pertanyaan.forEach(p => { %><td style="background:<%= p.pred.bg %>;color:<%= p.pred.fg %>"><%= p.rataTeks %></td><% }) %>
+            <% if (rekap.indikatorAda.length > 1) { rekap.indikatorAda.forEach(n => { const x = rekap.indikatorSemua.find(k => k.nama === n); %><td><%= x ? x.rataTeks : '-' %></td><% }) } %>
+            <td style="background:<%= r.pred.bg %>;color:<%= r.pred.fg %>"><%= r.rataSemuaTeks %></td>
+            <td><span class="badge text-bg-<%= r.pred.warna %>"><%= r.pred.label %></span></td>
+            <td class="no-print"></td>
+          </tr>
         </tbody>
       </table>
     </div>
-    <p class="text-muted small mt-2">Nilai akhir = rata-rata dari semua evaluasi mahasiswa untuk dosen tersebut. Kolom indikator = rata-rata jawaban pada kelompok pertanyaan itu. Klik nama dosen untuk melihat rincian per pertanyaan, per mata kuliah, dan umpan balik tertulis.</p>
+
+    <!-- KETERANGAN PERNYATAAN -->
+    <div class="sec-title"><i class="bi bi-list-ol me-2"></i>Keterangan Pernyataan EDOM</div>
+    <div class="wrap">
+      <table class="ket">
+        <thead><tr><th style="width:60px">No.</th><th>Pernyataan EDOM</th><th style="width:130px">Indikator</th><th style="width:110px">Rata-rata</th></tr></thead>
+        <tbody>
+          <% rekap.pertanyaan.forEach(p => { %>
+            <tr>
+              <td class="c">P<%= p.no %></td>
+              <td><%= p.pertanyaan %></td>
+              <td class="c"><%= p.indikator || '-' %></td>
+              <td class="c fw-bold" style="background:<%= p.pred.bg %>;color:<%= p.pred.fg %>"><%= p.rataTeks %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-muted small mt-2 mb-4">Nilai akhir = rata-rata seluruh evaluasi mahasiswa untuk dosen tersebut. Klik nama dosen atau tombol Detail untuk melihat nilai per mata kuliah dan umpan balik tertulis (anonim).</p>
   <% } %>
 </div>
 
@@ -140,7 +189,7 @@
   const cari = document.getElementById('cari');
   if (cari) cari.addEventListener('input', () => {
     const q = cari.value.trim().toLowerCase();
-    document.querySelectorAll('#tabelRekap tbody tr').forEach(tr => { tr.style.display = tr.dataset.nama.includes(q) ? '' : 'none'; });
+    document.querySelectorAll('#tabelRekap tbody tr[data-nama]').forEach(tr => { tr.style.display = tr.dataset.nama.includes(q) ? '' : 'none'; });
   });
 </script>
 

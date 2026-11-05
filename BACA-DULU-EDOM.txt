@@ -8,7 +8,7 @@ File:
   scripts/buat-periode-edom.js         BARU   buat periode baru, tutup yang lama
   helpers/edomRekapHelper.js           BARU   perhitungan hasil EDOM
   routes/admin/edom.js                 TIMPA  rekap, detail dosen, ekspor CSV
-  views/admin/edom/rekap.ejs           TIMPA  halaman rekap
+  views/admin/edom/rekap.ejs           TIMPA  halaman rekap admin: 1 tampilan (matriks dosen x pernyataan)
   views/admin/edom/rekap_dosen.ejs     BARU   halaman detail dosen
   views/mahasiswa/edom/form.ejs        TIMPA  form pengisian mahasiswa, 1 tampilan (tabel skala 1-5)
 

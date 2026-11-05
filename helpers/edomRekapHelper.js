@@ -8,11 +8,11 @@ const INDIKATOR_URUT = ['Kepribadian', 'Pedagogik', 'Profesional', 'Sosial'];
 /** Predikat + warna dari rata-rata skala 1-5 */
 function predikat(nilai) {
   const n = Number(nilai) || 0;
-  if (n >= 4.5) return { label: 'Sangat Baik', warna: 'success', hex: '#16a34a' };
-  if (n >= 3.5) return { label: 'Baik', warna: 'primary', hex: '#2563eb' };
-  if (n >= 2.5) return { label: 'Cukup', warna: 'warning', hex: '#d97706' };
-  if (n > 0) return { label: 'Kurang', warna: 'danger', hex: '#dc2626' };
-  return { label: '-', warna: 'secondary', hex: '#94a3b8' };
+  if (n >= 4.5) return { label: 'Sangat Baik', warna: 'success', hex: '#16a34a', bg: '#dcfce7', fg: '#166534' };
+  if (n >= 3.5) return { label: 'Baik', warna: 'primary', hex: '#2563eb', bg: '#dbeafe', fg: '#1e40af' };
+  if (n >= 2.5) return { label: 'Cukup', warna: 'warning', hex: '#d97706', bg: '#fef3c7', fg: '#92400e' };
+  if (n > 0) return { label: 'Kurang', warna: 'danger', hex: '#dc2626', bg: '#fee2e2', fg: '#991b1b' };
+  return { label: '-', warna: 'secondary', hex: '#94a3b8', bg: '#f1f5f9', fg: '#94a3b8' };
 }
 
 const rata = (sum, n) => (n > 0 ? sum / n : 0);
@@ -52,33 +52,62 @@ function urutkanIndikator(obj) {
   return nama.map(n => ({ nama: n, rata: rata(obj[n].sum, obj[n].count), count: obj[n].count }));
 }
 
-/** Rekap seluruh dosen pada satu periode */
+/** Rekap seluruh dosen pada satu periode (termasuk matriks dosen x pernyataan) */
 function hitungRekapPeriode(responList, kuisMap) {
   const dosenMap = new Map();
   const mahasiswa = new Set();
+  const pertMap = new Map();      // key pertanyaan -> { pertanyaan, indikator, urutan, sum, count }
+  const indikatorSemua = {};
   let totalSemua = 0;
+  let muncul = 0;
 
   for (const r of responList) {
     if (r.mahasiswaId) mahasiswa.add(r.mahasiswaId);
     const nilai = Number(r.nilaiRata) || 0;
     totalSemua += nilai;
     if (!dosenMap.has(r.dosenId)) {
-      dosenMap.set(r.dosenId, { dosenId: r.dosenId, dosenNama: r.dosenNama || '(tanpa nama)', total: 0, count: 0, mk: new Set(), indikator: {} });
+      dosenMap.set(r.dosenId, { dosenId: r.dosenId, dosenNama: r.dosenNama || '(tanpa nama)', total: 0, count: 0, mk: new Set(), indikator: {}, pert: {} });
     }
     const e = dosenMap.get(r.dosenId);
     e.total += nilai; e.count++; e.mk.add(r.mkId);
     (r.jawaban || []).forEach(j => {
       if (j.tipe === 'rating' && typeof j.nilai === 'number') {
-        tambahIndikator(e.indikator, (kuisMap.get(j.pertanyaanId) || {}).indikator, j.nilai);
+        const meta = kuisMap.get(j.pertanyaanId) || {};
+        const key = j.pertanyaanId || j.pertanyaan;
+        tambahIndikator(e.indikator, meta.indikator, j.nilai);
+        tambahIndikator(indikatorSemua, meta.indikator, j.nilai);
+        if (!pertMap.has(key)) pertMap.set(key, { key, pertanyaan: j.pertanyaan || meta.pertanyaan, indikator: meta.indikator || null, urutan: meta.urutan || (1000 + muncul++), sum: 0, count: 0 });
+        const p = pertMap.get(key); p.sum += j.nilai; p.count++;
+        if (!e.pert[key]) e.pert[key] = { sum: 0, count: 0 };
+        e.pert[key].sum += j.nilai; e.pert[key].count++;
       }
     });
   }
+
+  const pertanyaan = Array.from(pertMap.values()).sort((a, b) => a.urutan - b.urutan).map((p, i) => {
+    const rt = rata(p.sum, p.count);
+    return { key: p.key, no: i + 1, pertanyaan: p.pertanyaan, indikator: p.indikator, rata: rt, rataTeks: f2(rt), pred: predikat(rt), count: p.count };
+  });
+
+  // kelompok indikator berurutan untuk header tabel (colspan)
+  const kelompok = [];
+  pertanyaan.forEach(p => {
+    const nama = p.indikator || 'Lainnya';
+    const last = kelompok[kelompok.length - 1];
+    if (last && last.nama === nama) last.jumlah++; else kelompok.push({ nama, jumlah: 1 });
+  });
 
   const dosen = Array.from(dosenMap.values()).map(e => {
     const rt = rata(e.total, e.count);
     return {
       dosenId: e.dosenId, dosenNama: e.dosenNama, count: e.count, jumlahMk: e.mk.size,
       rata: rt, rataTeks: f2(rt), pred: predikat(rt), indikator: urutkanIndikator(e.indikator),
+      nilai: pertanyaan.map(p => {
+        const x = e.pert[p.key];
+        if (!x) return null;
+        const v = rata(x.sum, x.count);
+        return { rata: v, teks: f2(v), pred: predikat(v) };
+      }),
     };
   });
 
@@ -87,7 +116,8 @@ function hitungRekapPeriode(responList, kuisMap) {
 
   const rataSemua = rata(totalSemua, responList.length);
   return {
-    dosen, indikatorAda,
+    dosen, indikatorAda, pertanyaan, kelompok,
+    indikatorSemua: urutkanIndikator(indikatorSemua).map(i => ({ ...i, rataTeks: f2(i.rata), pred: predikat(i.rata) })),
     ringkasan: {
       jumlahRespon: responList.length, jumlahMahasiswa: mahasiswa.size, jumlahDosen: dosen.length,
       rataSemua, rataSemuaTeks: f2(rataSemua), pred: predikat(rataSemua),

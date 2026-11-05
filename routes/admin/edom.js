@@ -273,8 +273,10 @@ async function ambilPeriode() {
 
 router.get('/rekap', async (req, res) => {
   try {
-    const { periodeId, urut = 'nama' } = req.query;
+    const { urut = 'nama' } = req.query;
     const periods = await ambilPeriode();
+    // Saat pertama masuk: otomatis tampilkan periode aktif (atau periode terbaru)
+    const periodeId = req.query.periodeId || ((periods.find(p => p.status === 'active') || periods[0] || {}).id);
     let rekap = null;
     if (periodeId) {
       const [responList, kuisMap] = await Promise.all([ambilResponPeriode(periodeId), ambilKuisionerMap()]);
@@ -328,10 +330,11 @@ router.get('/rekap/:periodeId/export.csv', async (req, res) => {
     const rekap = hitungRekapPeriode(responList, kuisMap);
     rekap.dosen.sort((a, b) => a.dosenNama.localeCompare(b.dosenNama));
     const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const kolom = ['No', 'Dosen', 'Jumlah MK', 'Jumlah Respon', 'Rata-rata', 'Predikat', ...rekap.indikatorAda];
+    const kolom = ['No', 'Dosen', 'Jumlah MK', 'Jumlah Respon', 'Rata-rata', 'Predikat', ...rekap.indikatorAda, ...rekap.pertanyaan.map(p => 'P' + p.no)];
     const baris = rekap.dosen.map((d, i) => [
       i + 1, d.dosenNama, d.jumlahMk, d.count, d.rataTeks.replace('.', ','), d.pred.label,
-      ...rekap.indikatorAda.map(n => { const x = d.indikator.find(k => k.nama === n); return x ? x.rata.toFixed(2).replace('.', ',') : ''; })
+      ...rekap.indikatorAda.map(n => { const x = d.indikator.find(k => k.nama === n); return x ? x.rata.toFixed(2).replace('.', ',') : ''; }),
+      ...d.nilai.map(v => v ? v.teks.replace('.', ',') : '')
     ]);
     const csv = '\uFEFF' + [kolom, ...baris].map(r => r.map(esc).join(';')).join('\r\n');
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
