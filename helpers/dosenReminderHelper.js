@@ -18,6 +18,7 @@
 const { TTLCache, getAllMataKuliah } = require('./cache');
 const { parseJadwalText } = require('./jadwalHelper');
 const { createNotification } = require('./notificationHelper');
+const { getRingkasanPendingDosen } = require('./logbookNotifHelper');
 
 // Sekali dicek, tidak dicek ulang selama 4 jam per dosen - cukup untuk
 // "terasa harian" tanpa membebani Firestore di setiap request.
@@ -107,6 +108,20 @@ async function ingatkanTugasBelumDinilai(db, user, tanggal) {
   });
 }
 
+/** 3. Logbook mahasiswa bimbingan yang menunggu persetujuan (satu notifikasi per hari). */
+async function ingatkanLogbookMenunggu(db, user, tanggal) {
+  const dosenId = user.dosenId;
+  if (!dosenId) return;
+  const r = await getRingkasanPendingDosen(db, dosenId);
+  if (!r.jumlahMahasiswa) return;
+  await buatJikaBelumAda(db, `logbook-pending-${dosenId}-${tanggal}`, user.id, {
+    type: 'logbook-menunggu',
+    title: `${r.jumlahMahasiswa} mahasiswa menunggu persetujuan logbook`,
+    message: `${r.jumlahEntri} entri logbook belum Anda setujui. Buka sekarang untuk meninjau.`,
+    link: r.linkBuka
+  });
+}
+
 /**
  * Dipanggil dari middleware global (app.js) - lihat catatan performa di
  * bagian atas file ini soal cache 4 jam supaya aman dipanggil per request.
@@ -119,7 +134,8 @@ async function cekPengingatDosen(db, user) {
     try {
       await Promise.all([
         ingatkanJadwalMengajar(db, user, tanggal),
-        ingatkanTugasBelumDinilai(db, user, tanggal)
+        ingatkanTugasBelumDinilai(db, user, tanggal),
+        ingatkanLogbookMenunggu(db, user, tanggal)
       ]);
     } catch (error) {
       console.error('Gagal membuat pengingat otomatis dosen:', error);

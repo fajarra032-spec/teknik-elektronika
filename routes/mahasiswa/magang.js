@@ -28,6 +28,7 @@ const { db } = require('../../config/firebaseAdmin');
 const { getPembimbingMahasiswa: getPembimbingDosenPa } = require('../../helpers/pembimbingHelper');
 const { getKonsultasiByPeriod, mingguDisetujui, normalisasiNoWa } = require('../../helpers/konsultasiLogbookHelper');
 const { getNamaPerusahaanMagang, formatJudulLaporan, buildJudulLaporan, namaFileDariJudul } = require('../../helpers/laporanJudulHelper');
+const { logbookHariIniTerisi } = require('../../helpers/logbookNotifHelper');
 const {
   calculateProgress,
   groupLogbookByMinggu,
@@ -717,6 +718,7 @@ router.post('/logbook', upload.array('images', 5), async (req, res) => {
 
     // Arahkan ke minggu tempat entri ini berada, supaya langsung terlihat
     const { mingguKe } = getMingguBulanKe(period.tanggalMulai, tanggal);
+    logbookHariIniTerisi(db, req.user.id);   // banner/notifikasi "belum isi logbook" hilang
     res.redirect(`/mahasiswa/magang/logbook?periodId=${periodId}&minggu=${mingguKe}${jumlahDuplikat ? '&dup=' + jumlahDuplikat : ''}`);
   } catch (error) {
     console.error('Error:', error);
@@ -838,6 +840,7 @@ router.post('/logbook/:id/edit', upload.array('images', 5), async (req, res) => 
     });
     await catatHash(req.user.id, req.params.id, hashBaru);
 
+    logbookHariIniTerisi(db, req.user.id);   // banner/notifikasi "belum isi logbook" hilang
     res.redirect(`/mahasiswa/magang/logbook?${periodId ? 'periodId=' + encodeURIComponent(periodId) : ''}${minggu ? '&minggu=' + encodeURIComponent(minggu) : ''}${jumlahDuplikat ? '&dup=' + jumlahDuplikat : ''}`);
   } catch (error) {
     console.error('Error:', error);

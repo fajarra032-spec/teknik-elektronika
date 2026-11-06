@@ -1,0 +1,24 @@
+<%# Banner dosen PA: logbook mahasiswa menunggu persetujuan (data dari res.locals.navDosenMagang) %>
+<% if (typeof navDosenMagang !== 'undefined' && navDosenMagang && navDosenMagang.jumlahMahasiswa > 0) { %>
+  <style>
+    .notif-dosen-logbook { display:flex; flex-wrap:wrap; align-items:center; gap:.6rem 1rem; background:linear-gradient(135deg,#eff6ff,#dbeafe); border:1px solid #93c5fd; border-left:6px solid #2563eb; border-radius:1rem; padding:.85rem 1.1rem; margin-bottom:1rem; box-shadow:0 6px 16px rgba(37,99,235,.12); }
+    .notif-dosen-logbook .ikon { font-size:1.6rem; color:#1d4ed8; line-height:1; position:relative; }
+    .notif-dosen-logbook .ikon .jml { position:absolute; top:-8px; right:-12px; background:#dc2626; color:#fff; font-size:.68rem; font-weight:800; border-radius:50px; padding:.05rem .4rem; }
+    .notif-dosen-logbook .teks { flex:1 1 260px; min-width:0; color:#1e3a8a; }
+    .notif-dosen-logbook .teks strong { display:block; font-size:1rem; }
+    .notif-dosen-logbook .teks span { font-size:.85rem; opacity:.9; }
+    .notif-dosen-logbook a.btn-buka { background:#2563eb; color:#fff; font-weight:700; border-radius:50px; padding:.45rem 1.2rem; text-decoration:none; font-size:.88rem; white-space:nowrap; }
+    .notif-dosen-logbook a.btn-buka:hover { background:#1d4ed8; }
+  </style>
+  <div class="notif-dosen-logbook" role="alert">
+    <span class="ikon"><i class="bi bi-journal-check"></i><span class="jml"><%= navDosenMagang.jumlahMahasiswa %></span></span>
+    <div class="teks">
+      <strong><%= navDosenMagang.jumlahMahasiswa %> mahasiswa menunggu persetujuan logbook</strong>
+      <span>
+        <%= navDosenMagang.jumlahEntri %> entri belum disetujui:
+        <%= navDosenMagang.daftar.slice(0, 3).map(function (m) { return m.nama + ' (' + m.pending + ')'; }).join(', ') %><%= navDosenMagang.daftar.length > 3 ? ', dan ' + (navDosenMagang.daftar.length - 3) + ' lainnya' : '' %>
+      </span>
+    </div>
+    <a class="btn-buka" href="<%= navDosenMagang.linkBuka %>"><i class="bi bi-box-arrow-up-right me-1"></i> Buka sekarang</a>
+  </div>
+<% } %>

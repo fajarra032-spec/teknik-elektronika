@@ -45,6 +45,14 @@ const {
 router.use(verifyToken);
 router.use(isDosen);
 
+// Setelah aksi tulis (setujui/cabut logbook, dll.) ringkasan badge "menunggu persetujuan" dihitung ulang
+router.use((req, res, next) => {
+  if (req.method === 'POST') {
+    res.on('finish', () => { try { require('../../helpers/logbookNotifHelper').invalidateRingkasanDosen(req.dosen && req.dosen.id); } catch (e) { /* abaikan */ } });
+  }
+  next();
+});
+
 // ============================================================================
 // FUNGSI BANTU (SAMA PERSIS DENGAN ASLINYA)
 // ============================================================================

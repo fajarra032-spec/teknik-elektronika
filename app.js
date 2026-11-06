@@ -355,6 +355,7 @@ async function startServer() {
     const { getNavbarSummary: getNavbarNotifSummary } = require('./helpers/notificationHelper');
     const { getNavbarSummary: getNavbarPesanSummary } = require('./helpers/messengerHelper');
     const { cekPengingatDosen } = require('./helpers/dosenReminderHelper');
+    const logbookNotif = require('./helpers/logbookNotifHelper');
     app.use(async (req, res, next) => {
       if (req.user && req.user.id) {
         try {
@@ -363,6 +364,18 @@ async function startServer() {
           // di-cache 4 jam per dosen di dalam helper-nya sendiri.
           if (req.user.role === 'dosen') {
             await cekPengingatDosen(db, req.user);
+          }
+
+          // Notifikasi logbook magang: mahasiswa (belum isi hari ini) & dosen PA (menunggu persetujuan)
+          try {
+            if (req.user.role === 'mahasiswa') {
+              await logbookNotif.cekPengingatMahasiswa(db, req.user);
+              res.locals.navMhsLogbook = await logbookNotif.cekLogbookHariIni(db, req.user.id);
+            } else if (req.user.role === 'dosen' && req.user.dosenId) {
+              res.locals.navDosenMagang = await logbookNotif.getRingkasanPendingDosen(db, req.user.dosenId);
+            }
+          } catch (e) {
+            console.error('Gagal memuat notifikasi logbook:', e.message);
           }
 
           const [navNotifikasi, navPesan] = await Promise.all([

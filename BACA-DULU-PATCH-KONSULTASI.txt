@@ -87,3 +87,25 @@ JUDUL LENGKAP DI TAMPILAN DOSEN ("Laporan Magang 1 di <perusahaan>")
   views/dosen/laporan_detail.ejs       TIMPA
 - Tab Laporan, halaman Review Laporan, dan detail laporan dosen kini selalu menampilkan judul lengkap dengan nama
   perusahaan, termasuk laporan lama yang belum punya field `judul` atau yang diunggah sebelum perusahaan diisi.
+
+NOTIFIKASI LOGBOOK (mahasiswa belum isi hari ini | dosen ada logbook menunggu persetujuan)
+  helpers/logbookNotifHelper.js            BARU
+  views/partials/notif_logbook_mahasiswa.ejs   BARU (banner)
+  views/partials/notif_logbook_dosen.ejs       BARU (banner)
+  app.js                                   TIMPA (middleware: isi res.locals.navMhsLogbook / navDosenMagang)
+  helpers/dosenReminderHelper.js           TIMPA (notifikasi lonceng dosen "N mahasiswa menunggu persetujuan logbook")
+  routes/dosen/magang.js                   TIMPA (hitung ulang badge setelah aksi POST)
+  routes/mahasiswa/magang.js               TIMPA (banner hilang begitu logbook disimpan)
+  views/partials/header.ejs                TIMPA (badge navbar + menu EMagang dosen)
+  views/mahasiswa/magang/index.ejs, logbook.ejs, views/mahasiswa/dashboard.ejs   TIMPA (banner)
+  views/dosen/dashboard.ejs, views/dosen/magang_list.ejs                          TIMPA (banner)
+
+MAHASISWA
+- Banner oranye "Anda belum mengisi logbook hari ini" + tombol "Isi logbook sekarang" (halaman EMagang, Logbook, Dashboard).
+- Badge "!" di menu EMagang. Hanya hari kerja (Senin-Jumat), periode magang aktif, dan belum ada entri tanggal hari ini (WITA).
+- Notifikasi lonceng muncul mulai pukul 15.00 WITA (sekali per hari), otomatis ditandai dibaca saat logbook disimpan.
+DOSEN PA
+- Banner biru "N mahasiswa menunggu persetujuan logbook" + nama mahasiswa + tombol "Buka sekarang"
+  (1 mahasiswa => langsung ke tab Persetujuan Mingguan; lebih dari 1 => daftar Monitoring Magang).
+- Badge merah jumlah mahasiswa di menu EMagang (baru, sebelumnya dosen tidak punya menu ini di navbar) + notifikasi lonceng harian.
+- Hanya menghitung logbook pending dari periode magang yang sedang aktif. Hasil di-cache 2 menit (dosen) / 10 menit (mahasiswa).

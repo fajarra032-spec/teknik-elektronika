@@ -348,11 +348,12 @@
                             <li class="nav-item"><a class="nav-link" href="/mahasiswa/dashboard"><i class="bi bi-speedometer2"></i><span class="nav-label">Dashboard</span></a></li>
                             <li class="nav-item"><a class="nav-link" href="/mahasiswa/akademik"><i class="bi bi-journal-bookmark-fill"></i><span class="nav-label">Akademik</span></a></li>
                             <li class="nav-item"><a class="nav-link" href="/mahasiswa/elearning"><i class="bi bi-laptop"></i><span class="nav-label">ELearning</span></a></li>
-                            <li class="nav-item"><a class="nav-link" href="/mahasiswa/magang"><i class="bi bi-briefcase"></i><span class="nav-label">EMagang</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="/mahasiswa/magang"><i class="bi bi-briefcase"></i><span class="nav-label">EMagang</span><% if (typeof navMhsLogbook !== 'undefined' && navMhsLogbook && navMhsLogbook.perluDiisi) { %><span class="badge bg-warning text-dark rounded-pill ms-1" title="Anda belum mengisi logbook hari ini">!</span><% } %></a></li>
                         <% } else if (user.role === 'dosen') { %>
                             <li class="nav-item"><a class="nav-link" href="/dosen/dashboard"><i class="bi bi-speedometer2"></i><span class="nav-label">Dashboard</span></a></li>
                             <li class="nav-item"><a class="nav-link" href="/dosen/mk"><i class="bi bi-book"></i><span class="nav-label">MK</span></a></li>
                             <li class="nav-item"><a class="nav-link" href="/dosen/mahasiswa"><i class="bi bi-people"></i><span class="nav-label">Mahasiswa</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="/dosen/magang"><i class="bi bi-briefcase"></i><span class="nav-label">EMagang</span><% if (typeof navDosenMagang !== 'undefined' && navDosenMagang && navDosenMagang.jumlahMahasiswa > 0) { %><span class="badge bg-danger rounded-pill ms-1" title="<%= navDosenMagang.jumlahMahasiswa %> mahasiswa menunggu persetujuan logbook"><%= navDosenMagang.jumlahMahasiswa > 9 ? '9+' : navDosenMagang.jumlahMahasiswa %></span><% } %></a></li>
                         <% } else if (user.role === 'admin') { %>
                             <li class="nav-item"><a class="nav-link" href="/admin/dashboard"><i class="bi bi-speedometer2"></i><span class="nav-label">Dashboard</span></a></li>
                             <li class="nav-item"><a class="nav-link" href="/admin/users"><i class="bi bi-people"></i><span class="nav-label">Pengguna</span></a></li>
