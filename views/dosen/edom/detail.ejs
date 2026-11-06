@@ -1,274 +1,109 @@
 <%- include('../../partials/header') %>
 
 <style>
-  :root {
-    --primary-start: #1e3a8a;
-    --primary-end: #3b82f6;
-    --primary-light: rgba(30,58,138,0.08);
-    --card-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.02);
-  }
-
-  .page-header {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border-radius: 1.5rem;
-    padding: 1.8rem 2rem;
-    color: white;
-    margin-bottom: 2rem;
-    box-shadow: 0 20px 35px -10px rgba(30,58,138,0.3);
-    position: relative;
-    overflow: hidden;
-  }
-  .page-header h2 {
-    font-weight: 800;
-    font-size: 1.7rem;
-    margin-bottom: 0.25rem;
-  }
-  .page-header p {
-    font-size: 0.95rem;
-    opacity: 0.9;
-    margin-bottom: 0;
-  }
-
-  .detail-card {
-    background: white;
-    border-radius: 1.2rem;
-    box-shadow: var(--card-shadow);
-    border: 1px solid rgba(30,58,138,0.1);
-    margin-bottom: 2rem;
-    overflow: hidden;
-  }
-  .detail-card .card-header {
-    background: #f8fafc;
-    border-bottom: 2px solid #e2e8f0;
-    padding: 1rem 1.5rem;
-  }
-  .detail-card .card-header h4 {
-    font-weight: 700;
-    margin: 0;
-    color: #0f172a;
-  }
-  .detail-card .card-body {
-    padding: 1.5rem;
-  }
-
-  .summary-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-    background: #f8fafc;
-    border-radius: 1rem;
-    padding: 1rem;
-    margin-bottom: 2rem;
-  }
-  .stats-item {
-    flex: 1;
-    text-align: center;
-  }
-  .stats-number {
-    font-size: 2rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    line-height: 1.2;
-  }
-  .stats-label {
-    font-size: 0.8rem;
-    color: #64748b;
-  }
-  .star-rating-large {
-    font-size: 1rem;
-    color: #ffc107;
-    letter-spacing: 2px;
-  }
-
-  .pertanyaan-item {
-    background: #f8fafc;
-    border-radius: 1rem;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-left: 4px solid var(--primary-start);
-  }
-  .pertanyaan-text {
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
-  .rating-value {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--primary-start);
-  }
-  .btn-back {
-    border: 1.5px solid var(--primary-start);
-    color: var(--primary-start);
-    background: transparent;
-    border-radius: 60px;
-    padding: 0.5rem 1.5rem;
-    transition: all 0.2s;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .btn-back:hover {
-    background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-    border-color: transparent;
-    color: white;
-  }
-  .badge-tipe {
-    font-size: 0.7rem;
-    background: #e2e8f0;
-    color: #334155;
-    border-radius: 60px;
-    padding: 0.2rem 0.6rem;
-    margin-left: 0.5rem;
-  }
-  .jawaban-list {
-    margin-top: 0.5rem;
-    padding-left: 1.2rem;
-  }
-  .jawaban-list li {
-    margin-bottom: 0.5rem;
-    word-break: break-word;
-  }
-
-  @media (max-width: 768px) {
-    .page-header { padding: 1.2rem; }
-    .page-header h2 { font-size: 1.4rem; }
-    .summary-stats { flex-direction: column; gap: 0.8rem; }
-    .stats-number { font-size: 1.6rem; }
-  }
+  :root { --primary-start:#1e3a8a; --primary-end:#3b82f6; }
+  .page-header{background:linear-gradient(135deg,var(--primary-start),var(--primary-end));border-radius:1.5rem;padding:1.8rem 2rem;color:#fff;margin-bottom:1.5rem;box-shadow:0 10px 25px rgba(0,0,0,.1)}
+  .page-header h2{font-weight:800;font-size:1.6rem;margin-bottom:.4rem}
+  .page-header p{opacity:.9;margin-bottom:0}
+  .kartu{background:#fff;border-radius:1.2rem;padding:1.3rem 1.5rem;margin-bottom:1.3rem;border:1px solid rgba(30,58,138,.1);box-shadow:0 4px 14px rgba(0,0,0,.05)}
+  .kartu h5{font-weight:800;color:#1e293b;margin-bottom:1rem}
+  .skor-besar{font-size:3.2rem;font-weight:800;line-height:1}
+  .bar{height:.7rem;background:#e2e8f0;border-radius:1rem;overflow:hidden}
+  .bar>span{display:block;height:100%;border-radius:1rem}
+  .ind-box{border:1px solid #e2e8f0;border-radius:1rem;padding:.9rem 1rem;height:100%}
+  .ind-box .nm{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b}
+  .ind-box .nl{font-size:1.7rem;font-weight:800}
+  .p-row{padding:.85rem 0;border-bottom:1px solid #f1f5f9}
+  .p-row:last-child{border-bottom:none}
+  .p-teks{color:#1e293b;font-weight:500}
+  .chip{font-size:.72rem;background:#eff6ff;color:#1d4ed8;border-radius:1rem;padding:.1rem .6rem;margin-left:.4rem;font-weight:600}
+  .dist{display:flex;flex-wrap:wrap;gap:.25rem;font-size:.72rem;color:#64748b;margin-top:.35rem}
+  .dist span{background:#f1f5f9;border-radius:.4rem;padding:.05rem .45rem}
+  .fb{background:#f8fafc;border-left:4px solid #3b82f6;border-radius:.6rem;padding:.7rem 1rem;margin-bottom:.6rem;word-break:break-word}
+  .fb-merah{border-left-color:#dc2626}
+  @media(max-width:768px){.page-header{padding:1.2rem}.page-header h2{font-size:1.3rem}.skor-besar{font-size:2.4rem}}
 </style>
 
 <div class="container mt-4">
-  <div class="page-header d-flex justify-content-between align-items-center">
-    <div>
-      <h2><i class="bi bi-bar-chart-steps me-2"></i> Detail Evaluasi</h2>
-      <p><%= mkNama %> (<%= mkKode %>) - Periode: <%= periodeNama %></p>
-    </div>
-    <a href="/dosen/edom" class="btn-back">
-      <i class="bi bi-arrow-left"></i> Kembali
-    </a>
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <a href="/dosen/edom?periode=<%= periode.id %>" class="btn btn-outline-secondary btn-sm rounded-pill"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+    <a href="/dosen/edom/print?mkId=<%= mkId %>&periode=<%= periode.id %>" target="_blank" class="btn btn-primary btn-sm rounded-pill"><i class="bi bi-printer me-1"></i>Cetak Laporan</a>
+  </div>
+
+  <div class="page-header">
+    <h2><i class="bi bi-journal-text me-2"></i><%= mkNama %></h2>
+    <p><%= mkKode ? mkKode + ' — ' : '' %><%= periode.nama %><%= periode.semester ? ' — Semester ' + periode.semester : '' %></p>
   </div>
 
   <!-- Ringkasan -->
-  <div class="summary-stats">
-    <div class="stats-item">
-      <% const safeRata = (typeof rataNilai === 'number' && !isNaN(rataNilai)) ? rataNilai : 0; %>
-      <div class="stats-number"><%= safeRata.toFixed(2) %></div>
-      <div class="stats-label">Rata-rata Nilai</div>
-      <div class="star-rating-large mt-1">
-        <% 
-          let fullStars = Math.floor(safeRata);
-          let halfStar = (safeRata % 1) >= 0.5;
-          for (let i = 1; i <= 5; i++) {
-            if (i <= fullStars) { %>
-              <i class="bi bi-star-fill"></i>
-            <% } else if (i === fullStars+1 && halfStar) { %>
-              <i class="bi bi-star-half"></i>
-            <% } else { %>
-              <i class="bi bi-star"></i>
-            <% }
-          }
-        %>
+  <div class="kartu">
+    <div class="row align-items-center g-3">
+      <div class="col-md-4 text-center">
+        <div class="skor-besar" style="color:<%= detail.pred.hex %>"><%= detail.rataTeks %></div>
+        <div class="text-muted">dari 5,00</div>
+        <span class="badge text-bg-<%= detail.pred.warna %> mt-2 fs-6"><%= detail.pred.label %></span>
+      </div>
+      <div class="col-md-8">
+        <div class="bar mb-2"><span style="width:<%= Math.min(100, detail.rata / 5 * 100) %>%;background:<%= detail.pred.hex %>"></span></div>
+        <div class="text-muted">Berdasarkan <strong><%= detail.count %></strong> evaluasi mahasiswa pada <strong><%= detail.pertanyaan.length %></strong> pernyataan skala.</div>
+        <% if (detail.count < 5) { %>
+          <div class="small text-warning mt-2"><i class="bi bi-exclamation-triangle me-1"></i>Jumlah evaluasi masih sedikit (&lt; 5), nilai belum tentu mewakili seluruh kelas.</div>
+        <% } %>
       </div>
     </div>
-    <div class="stats-item">
-      <div class="stats-number"><%= typeof totalResponden === 'number' ? totalResponden : 0 %></div>
-      <div class="stats-label">Jumlah Responden</div>
-    </div>
-    <div class="stats-item">
-      <div class="stats-number"><%= typeof jumlahPertanyaan === 'number' ? jumlahPertanyaan : 0 %></div>
-      <div class="stats-label">Pertanyaan Dinilai</div>
-    </div>
   </div>
 
-  <!-- Daftar Pertanyaan Rating (skala) tanpa komentar -->
-  <div class="detail-card">
-    <div class="card-header">
-      <h4><i class="bi bi-question-circle me-2"></i> Rekap Per Pertanyaan (Skala)</h4>
-    </div>
-    <div class="card-body">
-      <% if (pertanyaanList && pertanyaanList.length) { 
-        const ratingQuestions = pertanyaanList.filter(q => q.tipe === 'rating');
-        if (ratingQuestions.length) { %>
-          <% ratingQuestions.forEach((q, idx) => { %>
-            <div class="pertanyaan-item">
-              <div class="pertanyaan-text">
-                <%= idx+1 %>. <%= q.pertanyaan %>
-                <span class="badge-tipe">Skala</span>
-              </div>
-              <% const safeRataQ = (typeof q.rataNilai === 'number' && !isNaN(q.rataNilai)) ? q.rataNilai : 0; %>
-              <div class="d-flex justify-content-between align-items-center mt-2">
-                <span class="rating-value"><%= safeRataQ.toFixed(2) %> / 5.00</span>
-                <span class="star-rating">
-                  <% 
-                    let starFull = Math.floor(safeRataQ);
-                    let starHalf = (safeRataQ % 1) >= 0.5;
-                    for (let i = 1; i <= 5; i++) {
-                      if (i <= starFull) { %>
-                        <i class="bi bi-star-fill"></i>
-                      <% } else if (i === starFull+1 && starHalf) { %>
-                        <i class="bi bi-star-half"></i>
-                      <% } else { %>
-                        <i class="bi bi-star"></i>
-                      <% }
-                    }
-                  %>
-                </span>
-              </div>
-            </div>
-          <% }) %>
-        <% } else { %>
-          <p class="text-muted">Tidak ada pertanyaan skala.</p>
-        <% } %>
-      <% } else { %>
-        <p class="text-muted">Belum ada data pertanyaan.</p>
-      <% } %>
+  <!-- Per indikator -->
+  <% if (detail.indikator.length > 0) { %>
+  <div class="kartu">
+    <h5><i class="bi bi-grid-3x3-gap me-2"></i>Nilai per Indikator</h5>
+    <div class="row g-3">
+      <% detail.indikator.forEach(i => { %>
+        <div class="col-6 col-md-3">
+          <div class="ind-box">
+            <div class="nm"><%= i.nama %></div>
+            <div class="nl" style="color:<%= i.pred.hex %>"><%= i.rataTeks %></div>
+            <div class="bar mt-1"><span style="width:<%= Math.min(100, i.rata / 5 * 100) %>%;background:<%= i.pred.hex %>"></span></div>
+            <div class="small text-muted mt-1"><%= i.pred.label %></div>
+          </div>
+        </div>
+      <% }) %>
     </div>
   </div>
+  <% } %>
 
-  <!-- Tampilkan semua pertanyaan teks beserta jawabannya -->
-  <div class="detail-card">
-    <div class="card-header">
-      <h4><i class="bi bi-chat-dots-fill me-2"></i> Jawaban Teks per Pertanyaan</h4>
-    </div>
-    <div class="card-body">
-      <% if (pertanyaanList && pertanyaanList.length) { 
-        const textQuestions = pertanyaanList.filter(q => q.tipe === 'text');
-        if (textQuestions.length) { %>
-          <% textQuestions.forEach((q, idx) => { %>
-            <div class="pertanyaan-item">
-              <div class="pertanyaan-text">
-                <%= idx+1 %>. <%= q.pertanyaan %>
-                <span class="badge-tipe">Teks</span>
-              </div>
-              <% if (q.jawabanTeksList && q.jawabanTeksList.length) { %>
-                <ul class="jawaban-list">
-                  <% q.jawabanTeksList.forEach(teks => { %>
-                    <li><i class="bi bi-person-circle me-2 text-primary"></i> <%= teks %></li>
-                  <% }) %>
-                </ul>
-              <% } else { %>
-                <p class="text-muted mt-2 mb-0">Tidak ada jawaban untuk pertanyaan ini.</p>
-              <% } %>
-            </div>
-          <% }) %>
-        <% } else { %>
-          <p class="text-muted">Tidak ada pertanyaan teks.</p>
-        <% } %>
-      <% } else { %>
-        <p class="text-muted">Belum ada data pertanyaan.</p>
-      <% } %>
-    </div>
+  <!-- Per pernyataan -->
+  <div class="kartu">
+    <h5><i class="bi bi-list-check me-2"></i>Nilai per Pernyataan</h5>
+    <% if (detail.pertanyaan.length === 0) { %>
+      <p class="text-muted mb-0">Tidak ada pernyataan skala.</p>
+    <% } %>
+    <% detail.pertanyaan.forEach((p, idx) => { %>
+      <div class="p-row">
+        <div class="d-flex justify-content-between gap-3">
+          <div class="p-teks"><%= idx + 1 %>. <%= p.pertanyaan %><% if (p.indikator) { %><span class="chip"><%= p.indikator %></span><% } %></div>
+          <div class="fw-bold text-nowrap" style="color:<%= p.pred.hex %>"><%= p.rataTeks %></div>
+        </div>
+        <div class="bar mt-2"><span style="width:<%= Math.min(100, p.rata / 5 * 100) %>%;background:<%= p.pred.hex %>"></span></div>
+        <div class="dist" title="Jumlah mahasiswa yang memilih skor 1 sampai 5">
+          <% p.dist.forEach((n, k) => { %><span>skor <%= k + 1 %>: <%= n %></span><% }) %>
+        </div>
+      </div>
+    <% }) %>
   </div>
 
-  <!-- Tombol cetak -->
-  <div class="text-end mt-4">
-    <a href="/dosen/edom/print?mkId=<%= mkId %>&periode=<%= periodeId %>" class="btn btn-primary" target="_blank">
-      <i class="bi bi-printer me-1"></i> Cetak Laporan
-    </a>
+  <!-- Umpan balik teks -->
+  <div class="kartu">
+    <h5><i class="bi bi-chat-quote me-2"></i>Umpan Balik Mahasiswa <span class="text-muted fw-normal fs-6">(anonim)</span></h5>
+    <% if (detail.teks.length === 0) { %>
+      <p class="text-muted mb-0">Belum ada jawaban teks dari mahasiswa.</p>
+    <% } %>
+    <% detail.teks.forEach(t => { const negatif = /negatif|perbaikan|kurang/i.test(t.pertanyaan); %>
+      <h6 class="fw-bold mt-3"><%= t.pertanyaan %> <span class="text-muted fw-normal">(<%= t.jawaban.length %> jawaban)</span></h6>
+      <% t.jawaban.forEach(j => { %>
+        <div class="fb <%= negatif ? 'fb-merah' : '' %>"><%= j.teks %></div>
+      <% }) %>
+    <% }) %>
   </div>
 </div>
 

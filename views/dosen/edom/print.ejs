@@ -3,340 +3,181 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cetak Hasil EDOM - <%= mkNama %></title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <title><%= title %></title>
   <style>
-    @page {
-      size: A4;
-      margin: 1.5cm;
-    }
+    @page { size: A4; margin: 12mm 14mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #e9edf3; font-family: Arial, Helvetica, sans-serif; color: #000; font-size: 10pt; line-height: 1.35; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      color: #000;
-      background-color: #fff;
-      font-size: 10pt;
-      line-height: 1.4;
-    }
+    .toolbar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between; padding: .65rem 1rem; background: #1b2a4a; color: #fff; font-size: 13px; }
+    .toolbar a, .toolbar button { font: inherit; font-weight: 600; border: 0; border-radius: 8px; padding: .45rem .9rem; cursor: pointer; text-decoration: none; }
+    .toolbar .kembali { background: rgba(255,255,255,.14); color: #fff; }
+    .toolbar .cetak { background: #fff; color: #1e3a8a; }
+    .toolbar small { opacity: .8; }
 
-    .print-btn-container {
-      margin-bottom: 20px;
-      border-bottom: 1px solid #dee2e6;
-      padding-bottom: 15px;
-    }
+    .kertas { width: 210mm; margin: 14px auto; padding: 12mm 14mm; background: #fff; box-shadow: 0 6px 24px rgba(27,42,74,.18); }
 
-    .kop-surat {
-      display: flex;
-      align-items: center;
-      margin-bottom: 20px;
-      border-bottom: 3px double #000;
-      padding-bottom: 10px;
-    }
+    .kop-surat { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 3px double #000; }
+    .logo-kop { width: 66px; height: auto; flex: 0 0 auto; }
+    .teks-kop { flex: 1; line-height: 1.28; padding-left: 4px; }
+    .teks-kop .nama-kampus { font-size: 16pt; font-weight: bold; margin: 0 0 3px; color: #2b4d8f; letter-spacing: .5px; text-transform: uppercase; }
+    .teks-kop .alamat, .teks-kop .kontak { font-size: 8.5pt; margin: 0; color: #333; }
+    .garis-kop { display: none; }
 
-    .logo-kop {
-      width: 90px;
-      height: auto;
-      margin-right: 20px;
-    }
+    .judul { text-align: center; margin: 10px 0 12px; }
+    .judul h1 { font-size: 12.5pt; margin: 0 0 2px; letter-spacing: .3px; }
+    .judul p { margin: 0; font-size: 10pt; }
 
-    .teks-kop {
-      flex: 1;
-    }
+    .identitas { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9.5pt; }
+    .identitas td { padding: 2px 0; vertical-align: top; }
+    .identitas td.l { width: 105px; font-weight: 700; }
+    .identitas td.t { width: 12px; }
 
-    .teks-kop .nama-kampus {
-      font-size: 27pt;
-      font-weight: bold;
-      margin: 0;
-      color: #3b60a3;
-      text-transform: uppercase;
-    }
+    .ringkas { display: flex; gap: 8px; margin-bottom: 10px; }
+    .ringkas .box { flex: 1; border: 1px solid #000; padding: 5px 8px; text-align: center; }
+    .ringkas .box b { display: block; font-size: 15pt; line-height: 1.15; }
+    .ringkas .box span { font-size: 8pt; text-transform: uppercase; letter-spacing: .4px; color: #333; }
 
-    .teks-kop .alamat, 
-    .teks-kop .kontak {
-      font-size: 13pt;
-      margin: 0;
-      color: #333;
-    }
+    h2.sub { font-size: 10.5pt; margin: 12px 0 5px; break-after: avoid; }
+    table { width: 100%; border-collapse: collapse; }
+    table.tb { font-size: 9pt; }
+    table.tb th, table.tb td { border: 1px solid #000; padding: 3px 6px; }
+    table.tb thead th { background: #1e3a8a; color: #fff; text-align: center; font-weight: 700; }
+    table.tb thead { display: table-header-group; }
+    table.tb tr { break-inside: avoid; page-break-inside: avoid; }
+    table.tb td.c { text-align: center; white-space: nowrap; }
+    table.tb tr.grup td { background: #e5e7eb; font-weight: 700; font-size: 8.5pt; text-transform: uppercase; letter-spacing: .3px; }
+    table.tb tr.rata td { background: #f3f4f6; font-weight: 700; border-top: 2px solid #000; }
 
-    .judul-dokumen {
-      text-align: center;
-      font-size: 13pt;
-      font-weight: bold;
-      margin-top: 20px;
-    }
+    .legend { font-size: 8pt; margin: 4px 0 6px; display: flex; gap: 4px 14px; flex-wrap: wrap; }
+    .sw { display: inline-block; width: 9px; height: 9px; border: 1px solid #555; margin-right: 3px; vertical-align: -1px; }
 
-    .sub-judul {
-      text-align: center;
-      font-size: 10pt;
-      margin-bottom: 25px;
-    }
+    .teks-blok { break-inside: avoid; margin-bottom: 8px; }
+    .teks-blok .q { font-weight: 700; font-size: 9.5pt; margin-bottom: 3px; }
+    .teks-blok ul { margin: 0; padding-left: 18px; }
+    .teks-blok li { font-size: 9.5pt; margin-bottom: 2px; }
+    .kosong { font-size: 9pt; color: #555; font-style: italic; }
 
-    .info-container {
-      width: 100%;
-      margin-bottom: 15px;
-    }
+    .catatan { font-size: 8pt; color: #444; margin-top: 6px; }
 
-    .info-table {
-      width: 100%;
-      border: none;
-    }
-
-    .info-table td {
-      padding: 3px 0;
-      vertical-align: top;
-    }
-
-    .info-label {
-      font-weight: bold;
-      width: 150px;
-    }
-
-    .titik-dua {
-      width: 15px;
-    }
-
-    /* Table Pertanyaan Rating */
-    .table-pertanyaan {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 20px 0;
-    }
-
-    .table-pertanyaan th, 
-    .table-pertanyaan td {
-      border: 1px solid #000;
-      padding: 8px;
-    }
-
-    .table-pertanyaan th {
-      background-color: #f2f2f2 !important;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    .rating-stars {
-      color: #f39c12;
-      text-align: center;
-    }
-
-    /* Bagian Pertanyaan Teks */
-    .text-answers-section {
-      margin-top: 30px;
-      page-break-before: avoid;
-    }
-    .text-answers-section h4 {
-      font-size: 11pt;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-    .text-question-card {
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
-      padding: 10px;
-      background: #fafafa;
-      border-radius: 5px;
-    }
-    .text-question-title {
-      font-weight: bold;
-      margin-bottom: 8px;
-      font-size: 10pt;
-    }
-    .jawaban-list {
-      margin-left: 20px;
-      padding-left: 0;
-      list-style-type: none;
-    }
-    .jawaban-list li {
-      margin-bottom: 6px;
-      font-style: italic;
-      border-bottom: 1px dashed #ddd;
-      padding-bottom: 4px;
-    }
-
-    /* Tanda Tangan */
-    .tanda-tangan-container {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 50px;
-      page-break-inside: avoid;
-    }
-
-    .kolom-tanda {
-      width: 30%;
-      text-align: left;
-    }
-
-    .area-ttd {
-      height: 80px;
-    }
-
-    .nama-ttd {
-      font-weight: bold;
-      text-decoration: underline;
-      margin-bottom: 0;
-    }
+    .ttd-baris { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; break-inside: avoid; page-break-inside: avoid; }
+    .ttd { width: 31%; font-size: 9.5pt; }
+    .ttd p { margin: 0; }
+    .ttd .ruang { height: 62px; }
+    .ttd .nm { font-weight: 700; text-decoration: underline; text-transform: uppercase; }
 
     @media print {
-      .print-btn-container {
-        display: none !important;
-      }
-      body {
-        margin: 0;
-      }
-      .table-pertanyaan th {
-        background-color: #f2f2f2 !important;
-        -webkit-print-color-adjust: exact;
-      }
-      .text-question-card {
-        break-inside: avoid;
-      }
+      body { background: #fff; }
+      .toolbar { display: none !important; }
+      .kertas { width: auto; margin: 0; padding: 0; box-shadow: none; }
     }
   </style>
 </head>
 <body>
 
-<div class="container-fluid px-4 py-3">
-  
-  <div class="d-flex justify-content-between align-items-center print-btn-container">
-    <a href="/dosen/edom/detail?mkId=<%= mkId %>&periode=<%= periodeId %>" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-arrow-left"></i> Kembali
-    </a>
-    <button onclick="window.print()" class="btn btn-primary btn-sm shadow-sm">
-      <i class="bi bi-printer-fill"></i> Cetak Laporan
-    </button>
+<div class="toolbar">
+  <a class="kembali" href="<%= urlKembali %>">&larr; Kembali</a>
+  <small>Di dialog cetak pilih &ldquo;Simpan sebagai PDF&rdquo; bila ingin berkas digital.</small>
+  <button class="cetak" type="button" onclick="window.print()">Cetak</button>
+</div>
+
+<div class="kertas">
+  <%- include('../../partials/kop_surat') %>
+
+  <div class="judul">
+    <h1>LAPORAN HASIL EVALUASI DOSEN OLEH MAHASISWA (EDOM)</h1>
+    <p>Periode Akademik: <%= periode.nama %><%= periode.semester ? ' — Semester ' + periode.semester : '' %></p>
   </div>
 
-  <div class="kop-surat">
-    <img src="https://polidewa.ac.id/wp-content/uploads/2025/11/Desain-tanpa-judul-1.png" 
-         alt="Logo Politeknik Dewantara" class="logo-kop">
-    <div class="teks-kop">
-      <h2 class="nama-kampus">POLITEKNIK DEWANTARA</h2>
-      <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7, Kota Palopo. Sulawesi Selatan</p>
-      <p class="kontak">E-mail: elektronika@polidewa.ac.id | Website: elektronika.polidewa.ac.id</p>
-    </div>
+  <table class="identitas">
+    <tr><td class="l">Dosen</td><td class="t">:</td><td><%= dosenNama %></td></tr>
+    <tr><td class="l">Mata Kuliah</td><td class="t">:</td><td><%= mkKode ? mkKode + ' - ' : '' %><%= mkNama %></td></tr>
+  </table>
+
+  <div class="ringkas">
+    <div class="box"><b><%= detail.rataTeks %></b><span>Nilai Akhir (skala 5)</span></div>
+    <div class="box"><b><%= detail.pred.label %></b><span>Predikat</span></div>
+    <div class="box"><b><%= detail.count %></b><span>Responden</span></div>
   </div>
 
-  <div class="judul-dokumen">LAPORAN HASIL EVALUASI DOSEN OLEH MAHASISWA (EDOM)</div>
-  <div class="sub-judul">Periode Akademik: <%= periodeNama %></div>
-
-  <div class="info-container">
-    <table class="info-table">
-      <tr>
-        <td class="info-label">Mata Kuliah</td>
-        <td class="titik-dua">:</td>
-        <td><%= mkKode %> - <%= mkNama %></td>
-        <td class="info-label">Dosen Pengampu</td>
-        <td class="titik-dua">:</td>
-        <td><%= dosenNama %></td>
-      </tr>
-      <tr>
-        <td class="info-label">Rata-rata Nilai</td>
-        <td class="titik-dua">:</td>
-        <td><strong><%= (typeof rataNilai === 'number' && !isNaN(rataNilai)) ? rataNilai.toFixed(2) : '0.00' %> / 5.00</strong></td>
-        <td class="info-label">Total Responden</td>
-        <td class="titik-dua">:</td>
-        <td><%= typeof totalResponden === 'number' ? totalResponden : 0 %> Mahasiswa</td>
-      </tr>
+  <% if (detail.indikator.length > 1) { %>
+    <h2 class="sub">Nilai per Indikator</h2>
+    <table class="tb">
+      <thead><tr><th>Indikator</th><th style="width:80px">Nilai</th><th style="width:100px">Predikat</th></tr></thead>
+      <tbody>
+        <% detail.indikator.forEach(i => { %>
+          <tr><td><%= i.nama %></td><td class="c" style="background:<%= i.pred.bg %>"><b><%= i.rataTeks %></b></td><td class="c"><%= i.pred.label %></td></tr>
+        <% }) %>
+      </tbody>
     </table>
-  </div>
+  <% } %>
 
-  <!-- Tabel untuk pertanyaan rating -->
-  <table class="table-pertanyaan">
+  <h2 class="sub">Nilai per Pernyataan</h2>
+  <table class="tb">
     <thead>
-      <tr>
-        <th width="5%">No</th>
-        <th>Komponen Penilaian (Pertanyaan)</th>
-        <th width="15%">Skor</th>
-        <th width="20%">Rating</th>
-      </tr>
+      <tr><th style="width:30px">No</th><th>Pernyataan</th><th style="width:60px">Nilai</th><th style="width:90px">Predikat</th></tr>
     </thead>
     <tbody>
-      <% 
-        // Filter pertanyaan rating
-        const ratingQuestions = (pertanyaanList || []).filter(q => q.tipe === 'rating');
-        if (ratingQuestions.length) {
-          ratingQuestions.forEach((q, idx) => { 
-            const safeRata = (typeof q.rataNilai === 'number' && !isNaN(q.rataNilai)) ? q.rataNilai : 0;
-      %>
-          <tr>
-            <td class="text-center"><%= idx + 1 %></td>
-            <td><%= q.pertanyaan %></td>
-            <td class="text-center"><%= safeRata.toFixed(2) %></td>
-            <td class="rating-stars">
-              <% 
-                let starFull = Math.floor(safeRata);
-                let starHalf = (safeRata % 1) >= 0.5;
-                for (let i = 1; i <= 5; i++) { 
-                  if (i <= starFull) { %>
-                    <i class="bi bi-star-fill"></i>
-                  <% } else if (i === starFull + 1 && starHalf) { %>
-                    <i class="bi bi-star-half"></i>
-                  <% } else { %>
-                    <i class="bi bi-star"></i>
-                  <% } 
-                } 
-              %>
-            </td>
-          </tr>
-      <%     });
-        } else { %>
-          <tr><td colspan="4" class="text-center">Tidak ada pertanyaan skala.</td></tr>
+      <% if (detail.pertanyaan.length === 0) { %>
+        <tr><td colspan="4" class="c">Tidak ada pernyataan skala.</td></tr>
       <% } %>
+      <% let grupSekarang = null; detail.pertanyaan.forEach((p, idx) => {
+           const g = p.indikator || 'Lainnya';
+           if (detail.indikator.length > 1 && g !== grupSekarang) { grupSekarang = g; %>
+        <tr class="grup"><td colspan="4"><%= g %></td></tr>
+      <%   } %>
+        <tr>
+          <td class="c"><%= idx + 1 %></td>
+          <td><%= p.pertanyaan %></td>
+          <td class="c" style="background:<%= p.pred.bg %>"><b><%= p.rataTeks %></b></td>
+          <td class="c"><%= p.pred.label %></td>
+        </tr>
+      <% }) %>
+      <tr class="rata"><td colspan="2" style="text-align:right">Nilai akhir</td><td class="c"><%= detail.rataTeks %></td><td class="c"><%= detail.pred.label %></td></tr>
     </tbody>
   </table>
 
-  <!-- Bagian untuk pertanyaan teks (jawaban terbuka) -->
-  <div class="text-answers-section">
-    <h4>Jawaban / Komentar (Pertanyaan Teks)</h4>
-    <%
-      const textQuestions = (pertanyaanList || []).filter(q => q.tipe === 'text');
-      if (textQuestions.length) {
-        textQuestions.forEach((q, idx) => {
-    %>
-        <div class="text-question-card">
-          <div class="text-question-title"><%= idx+1 %>. <%= q.pertanyaan %></div>
-          <% if (q.jawabanTeksList && q.jawabanTeksList.length) { %>
-            <ul class="jawaban-list">
-              <% q.jawabanTeksList.forEach(teks => { %>
-                <li><i class="bi bi-person-circle me-2"></i> <%= teks %></li>
-              <% }) %>
-            </ul>
-          <% } else { %>
-            <p class="text-muted mb-0">Tidak ada jawaban untuk pertanyaan ini.</p>
-          <% } %>
-        </div>
-    <%
-        });
-      } else {
-    %>
-        <p class="text-muted">Tidak ada pertanyaan teks.</p>
-    <% } %>
+  <div class="legend">
+    <strong>Skala 1–5:</strong>
+    <span><span class="sw" style="background:#dcfce7"></span>4,50–5,00 Sangat Baik</span>
+    <span><span class="sw" style="background:#dbeafe"></span>3,50–4,49 Baik</span>
+    <span><span class="sw" style="background:#fef3c7"></span>2,50–3,49 Cukup</span>
+    <span><span class="sw" style="background:#fee2e2"></span>&lt; 2,50 Kurang</span>
   </div>
 
-  <div class="tanda-tangan-container">
-    <div class="kolom-tanda">
-      <p>Mengetahui,<br>Ketua Program Studi</p>
-      <div class="area-ttd"></div>
-      <p class="nama-ttd">FAJAR RAMADHAN, S.Pd., M.T</p>
-      <p>NIDN. 8559777678130153</p>
+  <h2 class="sub">Umpan Balik Mahasiswa (anonim)</h2>
+  <% if (detail.teks.length === 0) { %>
+    <p class="kosong">Tidak ada jawaban teks dari mahasiswa.</p>
+  <% } %>
+  <% detail.teks.forEach(t => { %>
+    <div class="teks-blok">
+      <div class="q"><%= t.pertanyaan %></div>
+      <ul><% t.jawaban.forEach(j => { %><li><%= j.teks %></li><% }) %></ul>
     </div>
+  <% }) %>
 
-    <div class="kolom-tanda">
+  <p class="catatan">Nilai akhir = rata-rata seluruh evaluasi mahasiswa untuk mata kuliah ini. Dicetak pada <%= tanggalCetak %>.</p>
+
+  <div class="ttd-baris">
+    <div class="ttd">
+      <p>Mengetahui,<br><%= kaprodi.jabatan %></p>
+      <div class="ruang"></div>
+      <p class="nm"><%= kaprodi.nama %></p>
+      <p>NIDN. <%= kaprodi.nidn %></p>
+    </div>
+    <div class="ttd">
       <p>Dosen yang Dinilai<br>&nbsp;</p>
-      <div class="area-ttd"></div>
-      <p class="nama-ttd text-uppercase"><%= dosenNama %></p>
-      <p>NIDN/NIP. <%= dosenNip || '-' %></p>
+      <div class="ruang"></div>
+      <p class="nm"><%= dosenNama %></p>
+      <p>NIDN/NIP. <%= dosenNip %></p>
     </div>
-
-    <div class="kolom-tanda">
-      <p>Palopo, <%= new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %><br>Wakil Direktur 1,</p>
-      <div class="area-ttd"></div>
-      <p class="nama-ttd">ANDI RISNAWATI RAMLI, S.T., M.T</p>
-      <p>NIDN.0931108203</p>
+    <div class="ttd">
+      <p><%= kota %>, <%= tanggalCetak %><br><%= wadir.jabatan %>,</p>
+      <div class="ruang"></div>
+      <p class="nm"><%= wadir.nama %></p>
+      <p>NIDN. <%= wadir.nidn %></p>
     </div>
   </div>
-
 </div>
 
 </body>

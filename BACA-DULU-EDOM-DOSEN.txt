@@ -1,0 +1,18 @@
+RELAYOUT EDOM DOSEN
+===================
+Ekstrak LANGSUNG ke ROOT proyek (struktur folder sama), pilih "Replace".
+
+File:
+  routes/dosen/edom.js          TIMPA  pakai helpers/edomRekapHelper.js yang sama dengan admin
+  views/dosen/edom/index.ejs    TIMPA  ringkasan periode + nilai per indikator + kartu per mata kuliah
+  views/dosen/edom/detail.ejs   TIMPA  skor, indikator, nilai per pernyataan (+ sebaran skor 1-5), umpan balik anonim
+  views/dosen/edom/print.ejs    TIMPA  cetak A4 portrait: kop surat, tabel per indikator, 3 tanda tangan
+
+Syarat: helpers/edomRekapHelper.js dari pembaruan EDOM admin sudah terpasang.
+Tanpa perubahan database / indeks Firestore / package.json. Restart server, Ctrl+F5.
+
+Catatan
+- URL tidak berubah (/dosen/edom, /detail?mkId&periode, /print?mkId&periode).
+- Dosen hanya melihat respon miliknya sendiri (query dosenId dari login). Jawaban tetap anonim.
+- Kartu mata kuliah kini menampilkan jumlah komentar, bukan isi komentar; isi lengkap ada di halaman Detail.
+- Penandatangan di halaman cetak (Kaprodi & Wakil Direktur 1) ada di konstanta KAPRODI / WADIR di routes/dosen/edom.js.
