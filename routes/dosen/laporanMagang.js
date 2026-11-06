@@ -5,6 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
+const { terapkanJudulLaporan } = require('../../helpers/laporanJudulHelper');
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 
@@ -87,6 +88,7 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       .get();
 
     const laporanList = laporanSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    await terapkanJudulLaporan(laporanList, req.params.userId);
 
     res.render('dosen/laporan_detail', {
       title: `Laporan - ${mahasiswa.nama}`,

@@ -42,11 +42,11 @@
         <% if (type === 'laporan') { %>
           <div class="mb-3">
             <label class="form-label fw-bold">Judul Publik</label>
-            <input type="text" name="judulPublik" class="form-control" value="<%= item.judulPublik || '' %>" required>
+            <input type="text" name="judulPublik" class="form-control" value="<%= item.judulPublik || (typeof judulOtomatis !== 'undefined' ? judulOtomatis : '') %>" required>
           </div>
           <div class="mb-3">
             <label class="form-label fw-bold">Abstrak</label>
-            <textarea name="abstrak" class="form-control" rows="4" required><%= item.abstrak || '' %></textarea>
+            <textarea name="abstrak" class="form-control" rows="4" required><%= item.abstrak || (typeof abstrakOtomatis !== 'undefined' ? abstrakOtomatis : '') %></textarea>
           </div>
           <div class="mb-3">
             <label class="form-label">Pembimbing</label>

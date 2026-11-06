@@ -34,6 +34,7 @@ const { buildLogbookPrintData, groupLogbookByMinggu, getRentangMinggu } = requir
 const {
   getKonsultasiByPeriod, mingguDisetujui, setujuiMinggu, cabutPersetujuanMinggu, normalisasiNoWa
 } = require('../../helpers/konsultasiLogbookHelper');
+const { terapkanJudulLaporan } = require('../../helpers/laporanJudulHelper');
 const { tampilkanCetakLogbook } = require('../../helpers/logbookPdfHelper');
 const {
   ROLE_PEMBIMBING,
@@ -385,6 +386,7 @@ router.get('/:userId', async (req, res) => {
     });
 
     const laporanList = laporanSnapshot ? laporanSnapshot.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+    await terapkanJudulLaporan(laporanList, userId);   // "Laporan Magang N di <perusahaan>"
     const adaLaporanYangAcc = laporanList.some(l => l.status === 'approved');
     // semesterList sudah didapat dari getSemesterListLogbook() di atas (cached)
     

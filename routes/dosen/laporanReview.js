@@ -17,7 +17,7 @@ const {
   getNilaiMagang,
   getNilaiDosenEfektif
 } = require('../../helpers/nilaiMagangHelper');
-const { getNamaPerusahaanMagang, formatJudulLaporan } = require('../../helpers/laporanJudulHelper');
+const { getNamaPerusahaanMagang, formatJudulLaporan, terapkanJudulLaporan } = require('../../helpers/laporanJudulHelper');
 const {
   isPembimbingMahasiswa,
   getMahasiswaBimbinganPa
@@ -106,6 +106,7 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       .orderBy('laporanKe', 'asc')
       .get();
     const laporanList = laporanSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    await terapkanJudulLaporan(laporanList, req.params.userId);
     const adaYangAcc = laporanList.some(l => l.status === 'approved');
 
     const pdkList = await getActivePdkWithPeriod(userId);

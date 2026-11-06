@@ -6,6 +6,7 @@ const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
+const { isiJudulOtomatis, lengkapiDataPublikasiLaporan, getNamaPerusahaanMagang, formatJudulLaporan, buatAbstrakLaporan } = require('../../helpers/laporanJudulHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -92,7 +93,7 @@ function normalisasi(key, d) {
   const base = { id: d.id, _type: key, status: STATUS_VALID.includes(d.status) ? d.status : 'pending', createdAt: d.createdAt || null, fileUrl: d.fileUrl || '' };
   switch (key) {
     case 'laporan':
-      return { ...base, judul: d.judulPublik || d.judul || ('Laporan magang ' + (d.nama || '')).trim(), penulis: d.nama || '-', penulisSub: d.nim || '', tahun: d.tahun || '', info: d.pembimbing ? 'Pembimbing: ' + d.pembimbing : '' };
+      return { ...base, userId: d.userId || '', laporanKe: d.laporanKe || '', _judulAuto: !(d.judulPublik || d.judul), judul: d.judulPublik || d.judul || '', penulis: d.nama || '-', penulisSub: d.nim || '', tahun: d.tahun || '', info: d.pembimbing ? 'Pembimbing: ' + d.pembimbing : '' };
     case 'artikel':
       return { ...base, judul: d.judul || '(Tanpa judul)', penulis: gabung(d.penulis) || gabung(d.authors) || '-', penulisSub: '', tahun: d.publicationYear || d.tahun || '', info: (d.metadata && d.metadata.jurnal) || '' };
     case 'penelitian':
@@ -130,6 +131,8 @@ router.get('/', async (req, res) => {
     if (status !== 'all') items = items.filter(it => it.status === status);
     const rank = it => (it.status === 'pending' ? 0 : 1);
     items.sort((a, b) => rank(a) - rank(b) || tsMs(b.createdAt) - tsMs(a.createdAt));
+    // Laporan magang yang belum punya judul (pending/lama): judul dibuat otomatis "Laporan Magang N di <perusahaan>"
+    await isiJudulOtomatis(items);
 
     res.render('admin/elkLibrary_list', {
       title: 'ELK Library',
@@ -147,6 +150,13 @@ router.get('/', async (req, res) => {
 // Laporan
 router.post('/laporan/:id/approve', async (req, res) => {
   try {
+    // Judul/abstrak/pembimbing/tahun yang kosong dilengkapi otomatis agar tampil rapi di ELK Library
+    const refLap = db.collection('laporanMagang').doc(req.params.id);
+    const snapLap = await refLap.get();
+    if (snapLap.exists) {
+      const lengkap = await lengkapiDataPublikasiLaporan(snapLap.data());
+      if (Object.keys(lengkap).length) await refLap.update(lengkap);
+    }
     await updateStatus('laporanMagang', req.params.id, 'approved', req.user.id);
     res.redirect('/admin/elk-library?type=laporan&status=pending');
   } catch (err) { res.status(500).send(err.message); }
@@ -203,7 +213,13 @@ router.get('/laporan/:id/edit', async (req, res) => {
   try {
     const doc = await db.collection('laporanMagang').doc(req.params.id).get();
     if (!doc.exists) return res.status(404).send('Laporan tidak ditemukan');
-    res.render('admin/elkLibrary_edit', { title: 'Edit Laporan', item: { id: doc.id, ...doc.data() }, type: 'laporan' });
+    const dataLap = { id: doc.id, ...doc.data() };
+    const perusahaan = await getNamaPerusahaanMagang(dataLap.userId);
+    res.render('admin/elkLibrary_edit', {
+      title: 'Edit Laporan', item: dataLap, type: 'laporan',
+      judulOtomatis: dataLap.judulPublik || dataLap.judul || formatJudulLaporan(dataLap.laporanKe, perusahaan),
+      abstrakOtomatis: dataLap.abstrak || buatAbstrakLaporan(dataLap, perusahaan)
+    });
   } catch (err) { res.status(500).send(err.message); }
 });
 router.post('/laporan/:id/edit', async (req, res) => {

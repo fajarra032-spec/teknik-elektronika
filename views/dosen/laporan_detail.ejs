@@ -171,7 +171,7 @@
     const laporan = laporanList.find(l => l.laporanKe === i);
   %>
     <div class="laporan-card">
-      <h5>Laporan Magang <%= i %></h5>
+      <h5><%= (laporan && laporan.judul) ? laporan.judul : ('Laporan Magang ' + i) %></h5>
       <% if (laporan) { %>
         <p><strong>File:</strong> 
           <a href="<%= laporan.fileUrl %>" target="_blank" class="btn-download">

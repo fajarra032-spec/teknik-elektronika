@@ -68,3 +68,22 @@ TAB LAPORAN DOSEN: TINJAU PDF + ACC OTOMATIS KE ELK LIBRARY
 - Perbaikan bug: status "revisi" dari dosen sebelumnya tidak dikenali halaman mahasiswa (hanya 'rejected'),
   sehingga mahasiswa tidak bisa upload ulang. Sekarang 'revisi' tampil "Perlu Revisi" + catatan dosen + tombol Upload Ulang.
 - Admin tetap bisa menyunting/menyetujui lewat panel admin seperti sebelumnya.
+
+ADMIN ELK LIBRARY: JUDUL OTOMATIS UNTUK LAPORAN PENDING
+  helpers/laporanJudulHelper.js        TIMPA (tambah fungsi isiJudulOtomatis, lengkapiDataPublikasiLaporan)
+  routes/admin/elkLibrary.js           TIMPA
+  views/admin/elkLibrary_edit.ejs      TIMPA
+- Daftar admin /admin/elk-library: laporan magang yang belum punya judul (pending / data lama) otomatis
+  tampil "Laporan Magang {N} di {perusahaan}" (bukan lagi "Laporan magang <nama>").
+- Tombol Setujui pada laporan: judul publik, abstrak, pembimbing, dan tahun yang masih kosong dilengkapi otomatis
+  (yang sudah terisi tidak ditimpa).
+- Halaman Edit laporan: kolom Judul Publik & Abstrak terisi otomatis bila kosong (tetap bisa disunting).
+
+JUDUL LENGKAP DI TAMPILAN DOSEN ("Laporan Magang 1 di <perusahaan>")
+  helpers/laporanJudulHelper.js        TIMPA (fungsi terapkanJudulLaporan)
+  routes/dosen/magang.js               TIMPA
+  routes/dosen/laporanReview.js        TIMPA
+  routes/dosen/laporanMagang.js        TIMPA
+  views/dosen/laporan_detail.ejs       TIMPA
+- Tab Laporan, halaman Review Laporan, dan detail laporan dosen kini selalu menampilkan judul lengkap dengan nama
+  perusahaan, termasuk laporan lama yang belum punya field `judul` atau yang diunggah sebelum perusahaan diisi.
