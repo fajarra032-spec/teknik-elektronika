@@ -27,6 +27,7 @@ const { verifyToken } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getPembimbingMahasiswa: getPembimbingDosenPa } = require('../../helpers/pembimbingHelper');
 const { getKonsultasiByPeriod, mingguDisetujui, normalisasiNoWa } = require('../../helpers/konsultasiLogbookHelper');
+const { getNamaPerusahaanMagang, formatJudulLaporan, buildJudulLaporan, namaFileDariJudul } = require('../../helpers/laporanJudulHelper');
 const {
   calculateProgress,
   groupLogbookByMinggu,
@@ -1101,10 +1102,16 @@ router.get('/laporan', async (req, res) => {
       data: doc.exists ? doc.data() : null
     }));
 
+    // Judul otomatis: "Laporan Magang {ke} di {perusahaan}"
+    const namaPerusahaan = await getNamaPerusahaanMagang(userId);
+    const judulMap = {};
+    [1, 2, 3].forEach(i => { judulMap[i] = formatJudulLaporan(i, namaPerusahaan); });
+
     res.render('mahasiswa/magang/laporan', {
       title: 'Laporan Magang',
       user: req.user,
       laporanList,
+      judulMap,
       pembimbing
     });
   } catch (error) {
@@ -1132,7 +1139,9 @@ router.post('/laporan/upload', upload.single('file'), async (req, res) => {
     const currentSemester = getCurrentAcademicSemester().label;
     const folderId = await getLaporanMagangFolder(nim, nama, currentSemester);
 
-    const fileName = `Laporan_${laporanKe}_${Date.now()}.pdf`;
+    // Judul & nama file otomatis, mis. "Laporan Magang 1 di PT PLN"
+    const judul = await buildJudulLaporan(userId, laporanKe);
+    const fileName = namaFileDariJudul(judul);
     const fileMetadata = { name: fileName, parents: [folderId] };
     const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
     const response = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
@@ -1150,6 +1159,7 @@ router.post('/laporan/upload', upload.single('file'), async (req, res) => {
       nim,
       nama: req.user.nama,
       laporanKe: parseInt(laporanKe),
+      judul,
       fileUrl,
       fileId: response.data.id,
       fileName,

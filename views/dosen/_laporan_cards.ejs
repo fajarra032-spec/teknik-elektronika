@@ -1,0 +1,128 @@
+<%
+  // Partial: kartu tinjauan laporan magang untuk Dosen PA
+  // Variabel: laporanList (array dokumen laporanMagang), mahasiswa
+  const _lapList = (typeof laporanList !== 'undefined' && laporanList) ? laporanList : [];
+  const _driveId = (l) => {
+    if (l.fileId) return l.fileId;
+    const m = String(l.fileUrl || '').match(/[?&]id=([\w-]+)|\/d\/([\w-]+)/);
+    return m ? (m[1] || m[2]) : '';
+  };
+%>
+<style>
+  .lap-card { border: 1px solid #e5e7eb; border-radius: 1rem; padding: 1rem 1.1rem; margin-bottom: .8rem; background: #fff; }
+  .lap-card.acc { border-color: #86efac; background: #f0fdf4; }
+  .lap-card .judul { font-weight: 800; color: #0f2b5c; }
+  .lap-meta { font-size: .8rem; color: #64748b; display: flex; flex-wrap: wrap; gap: .2rem 1rem; margin-top: .25rem; }
+  .lap-aksi { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+  .lap-form { margin-top: .75rem; padding-top: .75rem; border-top: 1px dashed #d1d5db; }
+  .lap-form summary { cursor: pointer; font-size: .82rem; color: #1e3a8a; font-weight: 600; }
+  .lap-pdf-frame { width: 100%; height: 75vh; border: 0; border-radius: .5rem; background: #f1f5f9; }
+</style>
+
+<% if (_lapList.length === 0) { %>
+  <div class="text-center text-muted py-4"><i class="bi bi-file-earmark-x fs-2 d-block mb-1"></i>Mahasiswa ini belum mengunggah laporan.</div>
+<% } %>
+
+<% _lapList.forEach(l => {
+     const did = _driveId(l);
+     const prev = did ? ('https://drive.google.com/file/d/' + did + '/preview') : '';
+     const judulL = l.judul || ('Laporan Magang ' + l.laporanKe);
+     const acc = l.status === 'approved';
+     const revisi = (l.status === 'revisi' || l.status === 'rejected');
+%>
+  <div class="lap-card <%= acc ? 'acc' : '' %>">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div style="min-width:0;">
+        <div class="judul"><i class="bi bi-file-earmark-pdf text-danger"></i> <%= judulL %></div>
+        <div class="lap-meta">
+          <% if (l.uploadedAt) { %><span><i class="bi bi-calendar3"></i> Diunggah <%= new Date(l.uploadedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %></span><% } %>
+          <% if (l.fileSize) { %><span><i class="bi bi-database"></i> <%= (l.fileSize / 1024 / 1024).toFixed(2) %> MB</span><% } %>
+          <% if (l.semester) { %><span><i class="bi bi-mortarboard"></i> <%= l.semester %></span><% } %>
+        </div>
+        <% if (l.catatanPembimbing || l.catatanPembimbing1) { %>
+          <div class="small text-muted mt-1"><i class="bi bi-chat-left-text"></i> Catatan Anda: <%= l.catatanPembimbing || l.catatanPembimbing1 %></div>
+        <% } %>
+      </div>
+      <span class="badge <%= acc ? 'bg-success' : (revisi ? 'bg-danger' : 'bg-warning text-dark') %>">
+        <%= acc ? 'Di-ACC' : (revisi ? 'Perlu Revisi' : 'Menunggu Tinjauan') %>
+      </span>
+    </div>
+
+    <div class="lap-aksi">
+      <% if (prev) { %>
+        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalPdfLaporan"
+                data-pdf="<%= prev %>" data-judul="<%= judulL %>" data-buka="<%= l.fileUrl || prev %>">
+          <i class="bi bi-eye"></i> Tinjau PDF
+        </button>
+        <a class="btn btn-outline-secondary btn-sm" href="https://drive.google.com/file/d/<%= did %>/view" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> Buka di tab baru</a>
+      <% } else { %>
+        <span class="small text-danger"><i class="bi bi-exclamation-triangle"></i> File PDF tidak ditemukan.</span>
+      <% } %>
+      <% if (acc) { %>
+        <a class="btn btn-outline-success btn-sm" href="/elk-library/<%= l.id %>" target="_blank" rel="noopener"><i class="bi bi-journal-bookmark"></i> Lihat di ELK Library</a>
+      <% } %>
+    </div>
+
+    <% if (!acc) { %>
+      <form method="POST" action="/dosen/laporan-review/<%= l.id %>/status" class="lap-form">
+        <input type="hidden" name="status" value="approved">
+        <div class="mb-2">
+          <input type="text" name="catatan" class="form-control form-control-sm" placeholder="Catatan untuk mahasiswa (opsional)...">
+        </div>
+        <details class="mb-2">
+          <summary>Abstrak untuk ELK Library (opsional, otomatis dibuat bila kosong)</summary>
+          <textarea name="abstrak" rows="3" maxlength="3000" class="form-control form-control-sm mt-2" placeholder="Ringkasan isi laporan..."><%= l.abstrak || '' %></textarea>
+        </details>
+        <button type="submit" class="btn btn-success btn-sm"
+                onclick="return confirm('ACC laporan ini? Laporan akan OTOMATIS tampil di ELK Library (publik).');">
+          <i class="bi bi-check-circle"></i> ACC &amp; Tampilkan di ELK Library
+        </button>
+        <div class="small text-muted mt-1">Judul publik: <em><%= judulL %></em> &middot; Pembimbing: Anda</div>
+      </form>
+      <form method="POST" action="/dosen/laporan-review/<%= l.id %>/status" class="lap-form d-flex gap-2 flex-wrap align-items-end">
+        <input type="hidden" name="status" value="revisi">
+        <div class="flex-grow-1" style="min-width:200px;">
+          <input type="text" name="catatan" class="form-control form-control-sm" placeholder="Alasan revisi / yang perlu diperbaiki..." required>
+        </div>
+        <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-arrow-counterclockwise"></i> Minta Revisi</button>
+      </form>
+    <% } else { %>
+      <form method="POST" action="/dosen/laporan-review/<%= l.id %>/status" class="lap-form d-flex gap-2 flex-wrap align-items-end"
+            onsubmit="return confirm('Tarik ACC? Laporan akan hilang dari ELK Library dan mahasiswa diminta merevisi.');">
+        <input type="hidden" name="status" value="revisi">
+        <div class="flex-grow-1" style="min-width:200px;">
+          <input type="text" name="catatan" class="form-control form-control-sm" placeholder="Alasan menarik ACC..." required>
+        </div>
+        <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-x-circle"></i> Tarik ACC</button>
+      </form>
+    <% } %>
+  </div>
+<% }) %>
+
+<!-- Modal tinjau PDF (tanpa download) -->
+<div class="modal fade" id="modalPdfLaporan" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title fw-bold" id="modalPdfJudul">Tinjau Laporan</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-2">
+        <iframe id="modalPdfFrame" class="lap-pdf-frame" title="Pratinjau laporan PDF" loading="lazy" allow="autoplay"></iframe>
+        <div class="small text-muted text-center mt-2">Jika PDF tidak tampil, gunakan tombol &ldquo;Buka di tab baru&rdquo;.</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  (function () {
+    var modal = document.getElementById('modalPdfLaporan');
+    if (!modal) return;
+    modal.addEventListener('show.bs.modal', function (ev) {
+      var b = ev.relatedTarget; if (!b) return;
+      document.getElementById('modalPdfJudul').textContent = b.getAttribute('data-judul') || 'Tinjau Laporan';
+      document.getElementById('modalPdfFrame').src = b.getAttribute('data-pdf');
+    });
+    modal.addEventListener('hidden.bs.modal', function () { document.getElementById('modalPdfFrame').src = 'about:blank'; });
+  })();
+</script>

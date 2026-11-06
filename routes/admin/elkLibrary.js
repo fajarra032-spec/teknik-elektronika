@@ -92,7 +92,7 @@ function normalisasi(key, d) {
   const base = { id: d.id, _type: key, status: STATUS_VALID.includes(d.status) ? d.status : 'pending', createdAt: d.createdAt || null, fileUrl: d.fileUrl || '' };
   switch (key) {
     case 'laporan':
-      return { ...base, judul: d.judulPublik || ('Laporan magang ' + (d.nama || '')).trim(), penulis: d.nama || '-', penulisSub: d.nim || '', tahun: d.tahun || '', info: d.pembimbing ? 'Pembimbing: ' + d.pembimbing : '' };
+      return { ...base, judul: d.judulPublik || d.judul || ('Laporan magang ' + (d.nama || '')).trim(), penulis: d.nama || '-', penulisSub: d.nim || '', tahun: d.tahun || '', info: d.pembimbing ? 'Pembimbing: ' + d.pembimbing : '' };
     case 'artikel':
       return { ...base, judul: d.judul || '(Tanpa judul)', penulis: gabung(d.penulis) || gabung(d.authors) || '-', penulisSub: '', tahun: d.publicationYear || d.tahun || '', info: (d.metadata && d.metadata.jurnal) || '' };
     case 'penelitian':

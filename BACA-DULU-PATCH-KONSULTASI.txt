@@ -37,3 +37,34 @@ RELAYOUT HALAMAN DOSEN (/dosen/magang/:userId) - views/dosen/magang_detail.ejs
 - 4 tab (ingat tab terakhir setelah submit; buka ?after/?semester langsung ke Logbook Harian):
   Persetujuan Mingguan | Logbook Harian | Laporan | Penilaian & Cetak (kunci logbook, form penilaian, cetak, kartu kontrol).
 - Seluruh form, rute, dan skrip lama tetap sama; hanya dipindah ke tab.
+
+JUDUL LAPORAN MAGANG OTOMATIS  ("Laporan Magang 1 di PT PLN")
+  helpers/laporanJudulHelper.js                    BARU
+  routes/mahasiswa/magang.js                       TIMPA (upload + halaman laporan)
+  views/mahasiswa/magang/laporan.ejs               TIMPA
+  views/dosen/magang_detail.ejs                    TIMPA
+  views/dosen/laporan_review_detail.ejs            TIMPA
+  views/admin/laporanMagang_approve.ejs            TIMPA
+  views/admin/elkLibrary_laporan_approve.ejs       TIMPA
+  routes/admin/elkLibrary.js                       TIMPA
+- Saat upload: judul = "Laporan Magang {1/2/3} di {nama perusahaan}", disimpan di field `judul`
+  dan dipakai sebagai nama file PDF di Google Drive. Perusahaan diambil dari periode magang terbaru mahasiswa
+  (isi nama perusahaan pada periode magang). Jika belum ada perusahaan: "Laporan Magang 1".
+- Judul tampil di halaman mahasiswa, tinjauan dosen, dan terisi otomatis di kolom "Judul Publik" saat admin
+  menyetujui ke ELK Library (masih bisa diedit).
+- Laporan lama (tanpa field `judul`) tetap jalan: mahasiswa melihat judul otomatis dari perusahaan saat ini,
+  dosen melihat "Laporan Magang N".
+
+TAB LAPORAN DOSEN: TINJAU PDF + ACC OTOMATIS KE ELK LIBRARY
+  views/dosen/_laporan_cards.ejs            BARU (dipakai tab Laporan & halaman /dosen/laporan-review)
+  views/dosen/magang_detail.ejs             TIMPA
+  views/dosen/laporan_review_detail.ejs     TIMPA
+  routes/dosen/laporanReview.js             TIMPA
+  views/mahasiswa/magang/laporan.ejs        TIMPA (lanjutan dari patch judul otomatis)
+- Tombol "Tinjau PDF": PDF tampil di modal (Google Drive preview) tanpa download; ada juga "Buka di tab baru".
+- "ACC & Tampilkan di ELK Library": judul publik = judul otomatis, pembimbing = dosen, tahun = tahun ini,
+  abstrak = ketikan dosen (opsional) atau dibuat otomatis. Laporan langsung muncul di /elk-library.
+- "Tarik ACC" (wajib alasan): laporan hilang dari ELK Library dan mahasiswa diminta revisi.
+- Perbaikan bug: status "revisi" dari dosen sebelumnya tidak dikenali halaman mahasiswa (hanya 'rejected'),
+  sehingga mahasiswa tidak bisa upload ulang. Sekarang 'revisi' tampil "Perlu Revisi" + catatan dosen + tombol Upload Ulang.
+- Admin tetap bisa menyunting/menyetujui lewat panel admin seperti sebelumnya.

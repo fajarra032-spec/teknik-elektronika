@@ -983,43 +983,9 @@
   <% if (isPembimbing) { %>
     <div class="nilai-logbook-card mb-3">
       <h6 class="fw-bold mb-1"><i class="bi bi-file-earmark-check"></i> Laporan Magang</h6>
-      <p class="text-muted small mb-3">Tinjau laporan yang diunggah mahasiswa, ACC atau minta revisi. Setelah minimal satu laporan di-ACC dan logbook dikunci, isi Form Penilaian Dosen Pembimbing di bawah.</p>
+      <p class="text-muted small mb-3">Tinjau PDF langsung di sini (tanpa download), lalu ACC atau minta revisi. Laporan yang di-ACC otomatis tampil di ELK Library. Setelah minimal satu laporan di-ACC dan logbook dikunci, isi Form Penilaian Dosen Pembimbing di bawah.</p>
 
-      <% if (!laporanList || laporanList.length === 0) { %>
-        <div class="text-center text-muted py-3">Mahasiswa ini belum mengunggah laporan.</div>
-      <% } else { %>
-        <% laporanList.forEach(l => { %>
-          <div class="border rounded-3 p-3 mb-2">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-              <div>
-                <strong>Laporan ke-<%= l.laporanKe %></strong><% if (l.judulPublik) { %>: <%= l.judulPublik %><% } %>
-                <% if (l.catatanPembimbing || l.catatanPembimbing1) { %>
-                  <div class="small text-muted mt-1"><i class="bi bi-chat-left-text"></i> Catatan Anda: <%= l.catatanPembimbing || l.catatanPembimbing1 %></div>
-                <% } %>
-              </div>
-              <span class="badge <%= l.status === 'approved' ? 'bg-success' : (l.status === 'revisi' ? 'bg-danger' : 'bg-warning text-dark') %>">
-                <%= l.status === 'approved' ? 'Di-ACC' : (l.status === 'revisi' ? 'Perlu Revisi' : 'Menunggu Tinjauan') %>
-              </span>
-            </div>
-            <% if (l.status !== 'approved') { %>
-              <form method="POST" action="/dosen/laporan-review/<%= l.id %>/status" class="mt-2 d-flex gap-2 flex-wrap align-items-end">
-                <div class="flex-grow-1" style="min-width:200px;">
-                  <input type="text" name="catatan" class="form-control form-control-sm" placeholder="Catatan untuk mahasiswa (opsional)...">
-                </div>
-                <input type="hidden" name="status" value="approved">
-                <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-circle"></i> ACC</button>
-              </form>
-              <form method="POST" action="/dosen/laporan-review/<%= l.id %>/status" class="mt-2 d-flex gap-2 flex-wrap align-items-end">
-                <div class="flex-grow-1" style="min-width:200px;">
-                  <input type="text" name="catatan" class="form-control form-control-sm" placeholder="Alasan revisi...">
-                </div>
-                <input type="hidden" name="status" value="revisi">
-                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-arrow-counterclockwise"></i> Minta Revisi</button>
-              </form>
-            <% } %>
-          </div>
-        <% }) %>
-      <% } %>
+      <%- include('_laporan_cards', { laporanList: laporanList, mahasiswa: mahasiswa }) %>
 
     </div>
   <% } %>

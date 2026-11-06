@@ -46,7 +46,7 @@
             <form method="POST" action="/admin/laporan-magang/<%= laporan.id %>/approve">
                 <div class="mb-3">
                     <label for="judulPublik" class="form-label fw-bold">Judul Publik <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="judulPublik" name="judulPublik" required>
+                    <input type="text" class="form-control" id="judulPublik" name="judulPublik" value="<%= laporan.judulPublik || laporan.judul || ('Laporan Magang ' + laporan.laporanKe) %>" required>
                     <small class="text-muted">Judul yang akan ditampilkan di ELK Library</small>
                 </div>
                 <div class="mb-3">

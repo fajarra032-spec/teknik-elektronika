@@ -17,6 +17,7 @@ const {
   getNilaiMagang,
   getNilaiDosenEfektif
 } = require('../../helpers/nilaiMagangHelper');
+const { getNamaPerusahaanMagang, formatJudulLaporan } = require('../../helpers/laporanJudulHelper');
 const {
   isPembimbingMahasiswa,
   getMahasiswaBimbinganPa
@@ -143,21 +144,38 @@ router.post('/:laporanId/status', async (req, res) => {
     const { isBimbingan } = await isPembimbingMahasiswa(req.dosen.id, userId);
     if (!isBimbingan) return res.status(403).send('Anda bukan Dosen Pembimbing (Dosen PA) mahasiswa ini.');
 
+    if (!['approved', 'revisi'].includes(status)) return res.status(400).send('Status tidak valid');
+    const d = doc.data();
+
     const updateData = {
       status,
       catatanPembimbing: catatan || '',
       updatedAt: new Date().toISOString()
     };
     if (status === 'approved') {
+      // ACC dosen => otomatis tampil di ELK Library (koleksi laporanMagang status 'approved')
+      const perusahaan = await getNamaPerusahaanMagang(userId);
+      const judulPublik = d.judulPublik || d.judul || formatJudulLaporan(d.laporanKe, perusahaan);
+      const abstrakInput = String(req.body.abstrak || '').trim().slice(0, 3000);
       updateData.approvedAt = new Date().toISOString();
       updateData.approvedBy = req.dosen.id;
+      updateData.judul = d.judul || judulPublik;
+      updateData.judulPublik = judulPublik;
+      updateData.abstrak = abstrakInput || d.abstrak ||
+        `Laporan magang ${d.nama || ''}${d.nim ? ' (NIM ' + d.nim + ')' : ''}${perusahaan ? ' di ' + perusahaan : ''}, Program Studi Teknik Elektronika Politeknik Dewantara.`;
+      updateData.pembimbing = req.dosen.nama || d.pembimbingNama || '';
+      updateData.tahun = d.tahun || new Date().getFullYear();
+      updateData.publishedToLibrary = true;
     } else {
       updateData.approvedAt = null;
+      updateData.publishedToLibrary = false;   // ditarik dari ELK Library
     }
 
     await docRef.update(updateData);
-    req.session.success = status === 'approved' ? 'Laporan berhasil di-ACC.' : 'Laporan ditolak, menunggu revisi mahasiswa.';
-    res.redirect(`/dosen/magang/${userId}`);
+    req.session.success = status === 'approved'
+      ? 'Laporan di-ACC dan otomatis tampil di ELK Library.'
+      : 'Laporan dikembalikan ke mahasiswa untuk revisi (ditarik dari ELK Library bila sebelumnya sudah tampil).';
+    res.redirect(`/dosen/magang/${userId}#laporan`);
   } catch (error) {
     console.error('Error update status laporan:', error);
     res.status(500).send('Gagal memperbarui status laporan: ' + error.message);

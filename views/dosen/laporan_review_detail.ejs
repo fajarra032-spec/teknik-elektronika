@@ -33,46 +33,7 @@
   <% } %>
 
   <h5 class="fw-bold mb-3">Daftar Laporan</h5>
-  <% if (laporanList.length === 0) { %>
-    <div class="card-laporan text-center text-muted py-4">Mahasiswa ini belum submit laporan.</div>
-  <% } %>
-  <% laporanList.forEach(l => { %>
-    <div class="card-laporan">
-      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-        <div>
-          <h6 class="fw-bold mb-1">Laporan ke-<%= l.laporanKe %><% if (l.judulPublik) { %>: <%= l.judulPublik %><% } %></h6>
-          <% if (l.abstrak) { %><p class="text-muted small mb-1"><%= l.abstrak.substring(0, 200) %><%= l.abstrak.length > 200 ? '...' : '' %></p><% } %>
-          <% if (l.catatanPembimbing || l.catatanPembimbing1) { %>
-            <div class="small text-muted"><i class="bi bi-chat-left-text"></i> Catatan Anda: <%= l.catatanPembimbing || l.catatanPembimbing1 %></div>
-          <% } %>
-        </div>
-        <span class="badge-status badge-<%= l.status === 'approved' ? 'approved' : (l.status === 'revisi' ? 'revisi' : 'submitted') %>">
-          <%= l.status === 'approved' ? 'Di-ACC' : (l.status === 'revisi' ? 'Perlu Revisi' : 'Menunggu Tinjauan') %>
-        </span>
-      </div>
-
-      <% if (l.status !== 'approved') { %>
-        <form method="POST" action="/dosen/laporan-review/<%= l.id %>/status" class="mt-3 d-flex gap-2 flex-wrap align-items-end">
-          <div class="flex-grow-1" style="min-width:220px;">
-            <label class="form-label small fw-semibold mb-1">Catatan (opsional)</label>
-            <input type="text" name="catatan" class="form-control form-control-sm" placeholder="Catatan untuk mahasiswa...">
-          </div>
-          <input type="hidden" name="status" value="approved">
-          <button type="submit" class="btn btn-success btn-sm" onclick="this.form.status.value='approved';">
-            <i class="bi bi-check-circle"></i> ACC Laporan Ini
-          </button>
-        </form>
-        <form method="POST" action="/dosen/laporan-review/<%= l.id %>/status" class="mt-2 d-flex gap-2 flex-wrap align-items-end">
-          <div class="flex-grow-1" style="min-width:220px;">
-            <label class="form-label small fw-semibold mb-1">Alasan revisi</label>
-            <input type="text" name="catatan" class="form-control form-control-sm" placeholder="Apa yang perlu diperbaiki...">
-          </div>
-          <input type="hidden" name="status" value="revisi">
-          <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-arrow-counterclockwise"></i> Minta Revisi</button>
-        </form>
-      <% } %>
-    </div>
-  <% }) %>
+  <%- include('_laporan_cards', { laporanList: laporanList, mahasiswa: mahasiswa }) %>
 
   <% if (pdkList.length > 0) { %>
     <% if (adaYangAcc) { %>
