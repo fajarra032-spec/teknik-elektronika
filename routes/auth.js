@@ -61,6 +61,9 @@ router.post('/login', async (req, res) => {
       sameSite: 'lax'
     });
 
+    // Tandai agar pop up ringkasan notifikasi muncul sekali setelah login (lihat views/partials/popup_login.ejs)
+    req.session.popupNotif = true;
+
     // 5. Redirect ke dashboard (nanti akan diarahkan oleh middleware)
     res.redirect('/dashboard');
   } catch (error) {

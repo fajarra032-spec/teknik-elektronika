@@ -1,0 +1,81 @@
+<%#
+  Pop up ringkasan notifikasi yang muncul SEKALI setelah login.
+  Pemicu: req.session.popupNotif = true (diset di routes/auth.js saat login berhasil).
+  Dikonsumsi di sini: flag dimatikan begitu halaman penuh dirender, sehingga tidak muncul lagi di halaman berikutnya.
+  Isi berasal dari res.locals yang disiapkan app.js: navMhsLogbook, navDosenMagang, navNotifikasi, navAdminPending.
+%>
+<%
+  var _popup = (typeof session !== 'undefined' && session && session.popupNotif === true);
+  if (_popup) { session.popupNotif = false; }   // sekali saja
+
+  var _pItems = [];
+  var user = (typeof popupUser !== 'undefined') ? popupUser : null;
+  if (_popup && user) {
+    if (typeof navMhsLogbook !== 'undefined' && navMhsLogbook && navMhsLogbook.perluDiisi) {
+      _pItems.push({ ikon: 'exclamation-triangle-fill', warna: '#ea580c', judul: 'Anda belum mengisi logbook hari ini',
+        isi: navMhsLogbook.tanggalPanjang, link: navMhsLogbook.link, tombol: 'Isi logbook sekarang' });
+    }
+    if (typeof navDosenMagang !== 'undefined' && navDosenMagang && navDosenMagang.jumlahMahasiswa > 0) {
+      _pItems.push({ ikon: 'journal-check', warna: '#2563eb', judul: navDosenMagang.jumlahMahasiswa + ' mahasiswa menunggu persetujuan logbook',
+        isi: navDosenMagang.jumlahEntri + ' entri: ' + navDosenMagang.daftar.slice(0, 3).map(function (m) { return m.nama + ' (' + m.pending + ')'; }).join(', ') + (navDosenMagang.daftar.length > 3 ? ', dan ' + (navDosenMagang.daftar.length - 3) + ' lainnya' : ''),
+        link: navDosenMagang.linkBuka, tombol: 'Buka sekarang' });
+    }
+    if (user.role === 'admin' && typeof navAdminPending !== 'undefined' && navAdminPending && navAdminPending.total > 0) {
+      _pItems.push({ ikon: 'clipboard-check', warna: '#7c3aed', judul: navAdminPending.total + ' pekerjaan menunggu tindakan admin',
+        isi: 'Kunjungan industri, peminjaman alat, seminar magang, atau pendaftar PMB.', link: '/admin/dashboard', tombol: 'Lihat' });
+    }
+    if (typeof navNotifikasi !== 'undefined' && navNotifikasi && navNotifikasi.items) {
+      var _lain = navNotifikasi.items.filter(function (n) { return !n.read && n.type !== 'logbook-hari-ini' && n.type !== 'logbook-menunggu'; }).slice(0, 3);
+      _lain.forEach(function (n) {
+        _pItems.push({ ikon: 'bell-fill', warna: '#0d9488', judul: n.title || 'Notifikasi baru', isi: n.message || '', link: n.link || '/notifikasi', tombol: 'Buka' });
+      });
+    }
+  }
+%>
+<% if (_popup && _pItems.length > 0) { %>
+  <style>
+    .popup-login .modal-content { border: 0; border-radius: 1.2rem; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+    .popup-login .modal-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: #fff; border: 0; padding: 1rem 1.3rem; }
+    .popup-login .modal-header .btn-close { filter: invert(1); opacity: .85; }
+    .popup-login .pl-item { display: flex; gap: .85rem; align-items: flex-start; padding: .8rem .9rem; border: 1px solid #e5e7eb; border-radius: .9rem; margin-bottom: .6rem; background: #fff; }
+    .popup-login .pl-ikon { font-size: 1.5rem; line-height: 1; flex: 0 0 auto; margin-top: .15rem; }
+    .popup-login .pl-judul { font-weight: 800; color: #0f2b5c; }
+    .popup-login .pl-isi { font-size: .84rem; color: #64748b; overflow-wrap: anywhere; }
+    .popup-login .pl-aksi { margin-left: auto; align-self: center; flex: 0 0 auto; }
+  </style>
+  <div class="modal fade popup-login" id="popupLoginModal" tabindex="-1" aria-labelledby="popupLoginJudul" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title fw-bold" id="popupLoginJudul"><i class="bi bi-bell-fill me-2"></i>Halo, <%= user.nama || 'Pengguna' %>!</h5>
+            <div class="small opacity-75">Ada <%= _pItems.length %> hal yang perlu perhatian Anda</div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+        <div class="modal-body">
+          <% _pItems.forEach(function (it) { %>
+            <div class="pl-item">
+              <i class="bi bi-<%= it.ikon %> pl-ikon" style="color:<%= it.warna %>;"></i>
+              <div style="min-width:0;">
+                <div class="pl-judul"><%= it.judul %></div>
+                <% if (it.isi) { %><div class="pl-isi"><%= it.isi %></div><% } %>
+              </div>
+              <a class="btn btn-sm pl-aksi" style="background:<%= it.warna %>;color:#fff;border-radius:50px;white-space:nowrap;" href="<%= it.link %>"><%= it.tombol %></a>
+            </div>
+          <% }) %>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <a href="/notifikasi" class="btn btn-link btn-sm me-auto">Semua notifikasi</a>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Nanti saja</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    window.addEventListener('load', function () {
+      var el = document.getElementById('popupLoginModal');
+      if (el && window.bootstrap && bootstrap.Modal) { new bootstrap.Modal(el).show(); }
+    });
+  </script>
+<% } %>

@@ -366,6 +366,7 @@ async function startServer() {
             await cekPengingatDosen(db, req.user);
           }
 
+          res.locals.popupUser = req.user;   // dipakai pop up login (views/partials/popup_login.ejs)
           // Notifikasi logbook magang: mahasiswa (belum isi hari ini) & dosen PA (menunggu persetujuan)
           try {
             if (req.user.role === 'mahasiswa') {

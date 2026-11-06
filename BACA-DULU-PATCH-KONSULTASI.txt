@@ -109,3 +109,13 @@ DOSEN PA
   (1 mahasiswa => langsung ke tab Persetujuan Mingguan; lebih dari 1 => daftar Monitoring Magang).
 - Badge merah jumlah mahasiswa di menu EMagang (baru, sebelumnya dosen tidak punya menu ini di navbar) + notifikasi lonceng harian.
 - Hanya menghitung logbook pending dari periode magang yang sedang aktif. Hasil di-cache 2 menit (dosen) / 10 menit (mahasiswa).
+
+POP UP NOTIFIKASI SAAT LOGIN
+  views/partials/popup_login.ejs     BARU
+  views/partials/footer.ejs          TIMPA (include popup_login setelah bootstrap.bundle)
+  routes/auth.js                     TIMPA (set req.session.popupNotif = true saat login berhasil)
+  app.js                             TIMPA (versi terbaru; menambah res.locals.popupUser)
+- Muncul SEKALI setelah login (modal Bootstrap di halaman pertama yang dirender), tidak muncul lagi di halaman berikutnya.
+- Isi: mahasiswa belum isi logbook hari ini | dosen N mahasiswa menunggu persetujuan logbook (tombol "Buka sekarang") |
+  admin: pekerjaan menunggu tindakan | notifikasi lonceng lain yang belum dibaca (maks 3). Jika tidak ada isi, pop up tidak tampil.
+- Tombol: aksi per item, "Semua notifikasi", dan "Nanti saja".
