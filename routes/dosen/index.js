@@ -10,6 +10,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const nilaiNotif = require('../../helpers/nilaiNotifHelper');
 const { filterIdMahasiswaAktif } = require('../../helpers/statusMahasiswaHelper');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
@@ -452,6 +453,7 @@ router.post('/pengumpulan/nilai', async (req, res) => {
     // nilai & rubrik tidak pernah "kehilangan" nilai tugas ini di kemudian hari.
     await saveNilai(mahasiswaId, tugas.mkId, tugasId, tugas.judul, nilai, tugas.periode, komentar || '');
 
+    nilaiNotif.nilaiTugas(db, { mahasiswaId, tugasId, judul: tugas.judul, mkId: tugas.mkId, nilai, komentar, oleh: req.dosen.nama });
     console.log(`✅ Nilai ${nilai} untuk ${mahasiswaId} pada tugas ${tugasId} berhasil disimpan di kedua collection`);
 
     // Redirect kembali ke halaman detail tugas
@@ -492,6 +494,7 @@ router.post('/tugas/nilai-langsung', async (req, res) => {
     // biasa, dan sudah anti-duplikat (lihat komentar di saveNilai()).
     await saveNilai(mahasiswaId, tugas.mkId, tugasId, tugas.judul, nilai, tugas.periode, komentar || '');
 
+    nilaiNotif.nilaiTugas(db, { mahasiswaId, tugasId, judul: tugas.judul, mkId: tugas.mkId, nilai, komentar, oleh: req.dosen.nama });
     console.log(`✅ Nilai langsung ${nilai} untuk ${mahasiswaId} pada tugas ${tugasId} (tanpa pengumpulan) berhasil disimpan`);
 
     res.redirect(`/dosen/tugas/${tugasId}`);

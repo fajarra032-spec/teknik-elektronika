@@ -161,8 +161,8 @@ router.post('/input', async (req, res) => {
       const namaMk = mkDoc.exists ? (mkDoc.data().nama || mkDoc.data().kode || 'mata kuliah') : 'mata kuliah';
       await createNotification(db, mahasiswaId, {
         type: 'nilai',
-        title: `Nilai ${judulTugas} sudah diinput`,
-        message: `Nilai untuk ${namaMk} sudah diperbarui oleh dosen.`,
+        title: `Tugas “${judulTugas}” sudah dinilai 📝`,
+        message: `${namaMk} · Nilaimu: ${nilai}. Cek rinciannya di halaman nilai ya.`,
         link: `/mahasiswa/akademik`
       });
     } catch (notifError) {

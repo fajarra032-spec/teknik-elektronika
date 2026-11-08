@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const nilaiNotif = require('../../helpers/nilaiNotifHelper');
 const { filterIdMahasiswaAktif, filterEnrollmentDocsAktif, getJumlahMahasiswaAktifMk } = require('../../helpers/statusMahasiswaHelper');
 const {
   getPeriodeAktif,
@@ -277,6 +278,7 @@ router.post('/:mkId/kunci/:mahasiswaId', async (req, res) => {
       semester: periode
     });
 
+    nilaiNotif.nilaiAkhir(db, { mahasiswaId, kodeMk: hasil.mk.kode, namaMk: hasil.mk.nama, nilai: item.hasil.nilaiAkhir, semester: periode });
     res.json({ success: true, nilaiAkhir: item.hasil.nilaiAkhir, huruf: item.hasil.huruf });
   } catch (error) {
     console.error('Error kunci nilai akhir dari rubrik:', error);
@@ -310,6 +312,7 @@ router.post('/:mkId/kunci-semua', async (req, res) => {
     }));
 
     const { count } = await saveGradeFinalBulk(hasil.mk.kode, periode, items);
+    nilaiNotif.nilaiAkhirBanyak(db, { items, kodeMk: hasil.mk.kode, namaMk: hasil.mk.nama, semester: periode });
 
     res.json({
       success: true,

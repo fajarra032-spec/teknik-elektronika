@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const nilaiNotif = require('../../helpers/nilaiNotifHelper');
 const { filterIdMahasiswaAktif } = require('../../helpers/statusMahasiswaHelper');
 const { saveGradeFinal, deleteGradeFinal, getTranskripMahasiswa, getPeriodeAktif, getHasilRubrikSemuaMahasiswa, getHasilRubrikSatuMahasiswa, getRincianTugasByMkId, saveKomponenRubrik, saveNilai, TIPE_RUBRIK_KOMPONEN } = require('../../helpers/nilaiHelper');
 const { getAllMataKuliah, getAllMahasiswa } = require('../../helpers/cache');
@@ -429,6 +430,7 @@ router.post('/', async (req, res) => {
   const { userId, kodeMk, namaMk, sks, nilai, semester } = req.body;
   try {
     const { isNew } = await saveGradeFinal({ userId, kodeMk, namaMk, sks, nilai, semester });
+    nilaiNotif.nilaiAkhir(db, { mahasiswaId: userId, kodeMk, namaMk, nilai, semester });
     res.redirect(`/admin/nilai/mahasiswa/${userId}/tambah?success=${isNew ? 'ditambahkan' : 'diperbarui'}`);
   } catch (error) {
     console.error('Error menyimpan nilai akhir:', error);

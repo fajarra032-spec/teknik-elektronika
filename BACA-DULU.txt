@@ -52,3 +52,19 @@ Halaman ini sengaja publik agar perpustakaan ELK & dokumen publik tetap bisa dil
 Tidak diubah (memang berkas data, tidak punya tampilan): ekspor Excel/CSV (PMB, tagihan, EDOM, nilai, laporan awal
 semester, dll.) dan unduhan Word (.docx) SK PA / Penyelesaian Studi. Halaman cetak HTML (logbook, KHS, transkrip,
 EDOM, SK, dll.) sudah berupa halaman pratinjau dan hanya mencetak bila tombol Cetak diklik.
+
+
+D. NOTIFIKASI NILAI UNTUK MAHASISWA (baru)
+  helpers/nilaiNotifHelper.js        BARU
+  routes/dosen/index.js              TIMPA  tugas dinilai (/pengumpulan/nilai & /tugas/nilai-langsung)
+  routes/dosen/mk.js                 TIMPA  LKM praktikum diperiksa
+  routes/dosen/nilai.js              TIMPA  kalimat notifikasi lama dirapikan (ditambah nilainya)
+  routes/admin/rubrik.js             TIMPA  kunci nilai akhir (satu mahasiswa & "Kunci Semua")
+  routes/admin/nilai.js              TIMPA  input nilai akhir manual oleh admin
+  (routes/admin/emagang.js - nilai akhir magang - sudah termasuk di bagian B)
+
+  Setiap file rute hanya bertambah 1 baris require + 1-3 baris nilaiNotif.xxx(...) (tanpa await).
+  Nilai akhir memakai ID deterministik: menekan "Kunci semua" berulang tidak menggandakan notifikasi;
+  notifikasi baru dikirim lagi hanya bila nilainya berubah.
+  TIDAK dinotifikasi (sengaja, karena auto-simpan saat mengetik = bisa puluhan notifikasi): nilai tugas manual
+  di halaman Rincian Tugas dan komponen rubrik (kehadiran/sikap/keaktifan/kuis/UTS/UAS).
