@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 2, subLkm: 'Input/Output Digital: Saklar, Debouncing, LED/Relay', nilaiNo: 2 }) %>
+
+<div class="sect-title">A. Rangkaian Input dan Output</div>
+<div class="dua-kolom">
+  <div>
+    <div class="sub-title" style="margin-top:0;">Gambar skema rangkaian yang dibuat</div>
+    <div class="kotak-gambar" style="height:115px;"></div>
+  </div>
+  <div>
+    <table class="tt">
+      <caption>Penggunaan pin</caption>
+      <thead><tr><th>Komponen</th><th>Pin</th><th>Mode</th></tr></thead>
+      <tbody>
+        <% ['Push button','LED / relay','Resistor pull','Pin cadangan'].forEach(k => { %><tr><td style="text-align:left;"><%= k %></td><td class="k"></td><td></td></tr><% }) %>
+      </tbody>
+    </table>
+    <p class="catatan-kecil">Kolom Mode: INPUT, INPUT_PULLUP, atau OUTPUT.</p>
+  </div>
+</div>
+
+<div class="sect-title">B. Logika Pembacaan Tombol</div>
+<table class="tt">
+  <thead><tr><th rowspan="2">Kondisi tombol</th><th colspan="2">Pull-up</th><th colspan="2">Pull-down</th></tr>
+  <tr><th>Level pin (HIGH/LOW)</th><th>Nilai digitalRead</th><th>Level pin (HIGH/LOW)</th><th>Nilai digitalRead</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Tidak ditekan</strong></td><td class="k"></td><td></td><td></td><td></td></tr>
+    <tr><td><strong>Ditekan</strong></td><td class="k"></td><td></td><td></td><td></td></tr>
+  </tbody>
+</table>
+
+<div class="sect-title">C. Pengamatan Bouncing</div>
+<p class="catatan-kecil">Tekan tombol sekali dengan mantap per percobaan. Catat hitungan pada Serial Monitor.</p>
+<table class="tt">
+  <thead><tr><th style="width:8%;">Penekanan ke</th><th style="width:22%;">Hitungan terbaca tanpa debounce</th><th style="width:22%;">Hitungan terbaca dengan debounce</th><th style="width:16%;">Status LED / relay</th><th>Catatan</th></tr></thead>
+  <tbody>
+    <% for (let i = 1; i <= 8; i++) { %><tr><td><%= i %></td><td class="k" style="height:20px;"></td><td></td><td></td><td></td></tr><% } %>
+  </tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">D. Sketsa Sinyal Bouncing</div>
+<p class="catatan-kecil">Gambarkan bentuk sinyal pin tombol saat ditekan (garis HIGH di atas, LOW di bawah) tanpa debounce dan dengan debounce.</p>
+<div class="dua-kolom">
+  <div><div class="judul-kecil">Tanpa debounce</div><div class="grid-kertas" style="height:120px;"><span class="sb-y">HIGH</span><span class="sb-x">waktu</span></div></div>
+  <div><div class="judul-kecil">Dengan debounce</div><div class="grid-kertas" style="height:120px;"><span class="sb-y">HIGH</span><span class="sb-x">waktu</span></div></div>
+</div>
+
+<div class="sect-title">E. Uji Waktu Debounce</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:24%;">Waktu debounce (ms)</th><th style="width:26%;">Hitungan salah dari 10 penekanan</th><th>Stabil? (Ya / Tidak)</th></tr></thead>
+  <tbody>
+    <% ['0','5','20','50','200'].forEach(w => { %><tr><td class="tengah t30"><%= w %></td><td></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">F. Pertanyaan Analisis</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Mengapa kontak saklar mekanis dapat menimbulkan bouncing?</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Bandingkan cara kerja pull-up dan pull-down pada percobaan Anda.</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">3. Berapa waktu debounce paling pas menurut data Tabel E? Mengapa terlalu besar juga kurang baik?</div><%- g(3) %></div>
+
+<div class="sect-title">G. Kesimpulan</div>
+<%- g(4) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

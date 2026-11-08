@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%
+  const seg = [[6,2,22,4],[28,6,4,20],[28,30,4,20],[6,50,22,4],[2,30,4,20],[2,6,4,20],[6,26,22,4]];
+  const lbl = [['a',17,1],['b',35,17],['c',35,45],['d',17,61],['e',-3,45],['f',-3,17],['g',17,24.5]];
+  const svg7 = () => '<svg width="58" height="96" viewBox="-7 -5 46 68">' + seg.map(s => `<rect x="${s[0]}" y="${s[1]}" width="${s[2]}" height="${s[3]}" fill="#fff" stroke="#000" stroke-width="0.8"/>`).join('') + lbl.map(l => `<text x="${l[1]}" y="${l[2]}" font-size="6" font-family="Arial" text-anchor="middle" fill="#555">${l[0]}</text>`).join('') + '</svg>';
+%>
+<%- include('partials/lkm_std_top', { nomorLkm: 4, subLkm: 'Seven Segment dan LCD 16x2 I2C', nilaiNo: 4 }) %>
+
+<div class="sect-title">Tabel A - Seven Segment (Program 1)</div>
+<p class="catatan-kecil">Arsir segmen yang menyala pada gambar, lalu tulis huruf segmennya. Tandai Ya bila tampilan benar.</p>
+<table class="tabel-data">
+  <tbody>
+    <% for (let r = 0; r < 2; r++) { %>
+      <tr>
+        <% for (let i = r * 5; i < r * 5 + 5; i++) { %><td class="label tengah" style="width:20%;">Angka <%= i %></td><% } %>
+      </tr>
+      <tr>
+        <% for (let i = r * 5; i < r * 5 + 5; i++) { %><td class="seg-sel"><%- svg7() %></td><% } %>
+      </tr>
+      <tr>
+        <% for (let i = r * 5; i < r * 5 + 5; i++) { %><td class="t30" style="font-size:8pt;">Segmen: <br><%- cb %> Ya <%- cb %> Tidak</td><% } %>
+      </tr>
+    <% } %>
+  </tbody>
+</table>
+<div class="rumus-box" style="margin-top:6px;">Arus tiap segmen: I = (5 V &minus; 2 V) &divide; 220 &Omega; = ............ mA &nbsp; (tuliskan langkah hitung Anda di samping)</div>
+
+<div class="sect-title">Tabel B1 - Hasil I2C Scanner (Program 2)</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:55%;">Parameter</th><th>Hasil</th></tr></thead>
+  <tbody>
+    <% ['Alamat I2C yang terdeteksi (0x..)','Jumlah perangkat I2C terdeteksi','Alamat yang dipakai pada Program 3'].forEach(p => { %><tr><td class="label"><%= p %></td><td class="t30"></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">Gambar Tampilan LCD 16x2 (Program 3)</div>
+<p class="catatan-kecil">Tulis satu huruf per kotak sesuai tampilan nyata pada LCD.</p>
+<table class="lcd">
+  <% [1,2].forEach(b => { %><tr><td class="ket">Baris <%= b %></td><% for (let i = 0; i < 16; i++) { %><td></td><% } %></tr><% }) %>
+</table>
+
+<div class="sect-title">Tabel B2 - Percobaan Perintah LCD</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:42%;">Perintah / perubahan</th><th style="width:30%;">Tampilan pada LCD</th><th>Keterangan</th></tr></thead>
+  <tbody>
+    <% ['lcd.setCursor(0, 0) lalu print teks','lcd.setCursor(0, 1) lalu print teks','lcd.setCursor(10, 0) lalu print teks','lcd.clear()','lcd.noBacklight()','Potensiometer kontras diputar penuh ke kiri / kanan'].forEach(p => { %><tr><td class="label"><%= p %></td><td class="t30"></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">Tabel C - Integrasi (Program 4)</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:36%;">Pengamatan</th><th>Hasil</th><th style="width:30%;">Keterangan</th></tr></thead>
+  <tbody>
+    <% ['Angka seven segment = angka pada LCD?','Teks baris 1 LCD','Masalah yang ditemui'].forEach(p => { %><tr><td class="label"><%= p %></td><td class="t30"></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+</div>
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">Jawaban Pertanyaan</div>
+<% (modul.tugasLaporan || []).forEach((t, i) => { %>
+  <div class="pertanyaan-item"><div class="no-pertanyaan"><%= i + 1 %>. <%= t %></div><%- g(i === 5 ? 5 : 3) %></div>
+<% }) %>
+
+<div class="sect-title">Kesimpulan</div>
+<%- g(4) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

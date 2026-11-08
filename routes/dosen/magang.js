@@ -36,6 +36,7 @@ const {
 } = require('../../helpers/konsultasiLogbookHelper');
 const { terapkanJudulLaporan } = require('../../helpers/laporanJudulHelper');
 const { tampilkanCetakLogbook } = require('../../helpers/logbookPdfHelper');
+const magangNotif = require('../../helpers/magangNotifHelper');
 const {
   ROLE_PEMBIMBING,
   isPembimbingMahasiswa,
@@ -502,6 +503,7 @@ router.post('/:userId/kunci-logbook', async (req, res) => {
     }
 
     await kunciLogbookMagang(userId, pdkId, req.dosen.id);
+    magangNotif.logbookDikunci(db, { mahasiswaId: userId, oleh: req.dosen.nama });
     req.session.success = 'Logbook berhasil dikunci. Form Penilaian Dosen Pembimbing bisa diisi setelah laporan di-ACC.';
     res.redirect(`/dosen/magang/${userId}?periodId=${req.body.periodId || ''}`);
   } catch (error) {
@@ -524,6 +526,7 @@ router.post('/:userId/buka-kunci-logbook', async (req, res) => {
     }
 
     await bukaKunciLogbookMagang(userId, pdkId);
+    magangNotif.logbookDibuka(db, { mahasiswaId: userId, oleh: req.dosen.nama });
     req.session.success = 'Kunci logbook dibuka kembali.';
     res.redirect(`/dosen/magang/${userId}?periodId=${req.body.periodId || ''}`);
   } catch (error) {
@@ -655,6 +658,7 @@ router.post('/logbook/:id/approve', async (req, res) => {
       approvedByRole: 'Dosen Pembimbing (PA)'
     });
     invalidateProgressMagangHarian(mahasiswaId, pdkId);
+    magangNotif.logbookDisetujui(db, { mahasiswaId, tanggal: logbook.tanggal, oleh: req.dosen.nama });
     req.session.success = 'Logbook berhasil disetujui';
     res.redirect(`/dosen/magang/${mahasiswaId}`);
   } catch (error) {
@@ -699,6 +703,7 @@ router.post('/logbook/:id/reject', async (req, res) => {
       rejectionReason: alasan || 'Tidak ada alasan'
     });
     invalidateProgressMagangHarian(mahasiswaId, pdkId);
+    magangNotif.logbookDitolak(db, { mahasiswaId, tanggal: logbook.tanggal, alasan, oleh: req.dosen.nama });
     req.session.success = 'Logbook berhasil ditolak';
     res.redirect(`/dosen/magang/${mahasiswaId}`);
   } catch (error) {
@@ -754,6 +759,7 @@ router.post('/:userId/minggu/:mingguKe/setujui', async (req, res) => {
       dosen: { id: req.dosen.id, nama: req.dosen.nama }
     });
     invalidateProgressMagangHarian(ctx.userId, ctx.period.pdkId);
+    magangNotif.mingguDisetujui(db, { mahasiswaId: ctx.userId, mingguKe: ctx.n, oleh: req.dosen.nama, catatan: req.body.catatan });
     req.session.success = `Logbook minggu ke-${ctx.n} disetujui (${jumlah} entri pending ikut disetujui)`;
     res.redirect(ctx.kembali);
   } catch (error) {
@@ -772,6 +778,7 @@ router.post('/:userId/minggu/:mingguKe/batal', async (req, res) => {
       awal: ctx.awal, akhir: ctx.akhir, dosen: { id: req.dosen.id, nama: req.dosen.nama }
     });
     invalidateProgressMagangHarian(ctx.userId, ctx.period.pdkId);
+    magangNotif.mingguDicabut(db, { mahasiswaId: ctx.userId, mingguKe: ctx.n, oleh: req.dosen.nama });
     req.session.success = `Persetujuan minggu ke-${ctx.n} dicabut (lembar kembali berwatermark "Belum Konsultasi")`;
     res.redirect(ctx.kembali);
   } catch (error) {
@@ -878,6 +885,7 @@ router.post('/:userId/setujui-minggu', async (req, res) => {
       : [...new Set(docsMingguIni.map(doc => doc.data().pdkId).filter(Boolean))];
     pdkIdUntukInvalidasi.forEach(pid => invalidateProgressMagangHarian(userId, pid));
 
+    magangNotif.logbookBanyakDisetujui(db, { mahasiswaId: userId, jumlah: docsMingguIni.length, oleh: req.dosen.nama });
     req.session.success = `${docsMingguIni.length} logbook (7 hari terakhir) berhasil disetujui sekaligus`;
     res.redirect(`/dosen/magang/${userId}${periodId ? `?periodId=${periodId}` : ''}`);
   } catch (error) {

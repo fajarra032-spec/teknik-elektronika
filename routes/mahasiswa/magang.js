@@ -29,6 +29,7 @@ const { getPembimbingMahasiswa: getPembimbingDosenPa } = require('../../helpers/
 const { getKonsultasiByPeriod, mingguDisetujui, normalisasiNoWa } = require('../../helpers/konsultasiLogbookHelper');
 const { getNamaPerusahaanMagang, formatJudulLaporan, buildJudulLaporan, namaFileDariJudul } = require('../../helpers/laporanJudulHelper');
 const { logbookHariIniTerisi } = require('../../helpers/logbookNotifHelper');
+const magangNotif = require('../../helpers/magangNotifHelper');
 const {
   calculateProgress,
   groupLogbookByMinggu,
@@ -1173,6 +1174,7 @@ router.post('/laporan/upload', upload.single('file'), async (req, res) => {
       pembimbingId: pembimbing.pembimbing.id,
       pembimbingNama: pembimbing.pembimbing.nama
     });
+    magangNotif.laporanDiunggah(db, { dosenId: pembimbing.pembimbing.id, mahasiswaId: userId, namaMahasiswa: nama, laporanKe: parseInt(laporanKe) });
 
     res.redirect('/mahasiswa/magang/laporan');
   } catch (error) {
@@ -1272,6 +1274,7 @@ router.post('/seminar', async (req, res) => {
       updatedAt: new Date().toISOString(),
       history: [{ status: 'pending', timestamp: new Date().toISOString(), catatan: 'Pengajuan seminar diterima' }]
     });
+    magangNotif.seminarDiajukan(db, { dosenId: pembimbing && pembimbing.pembimbing && pembimbing.pembimbing.id, namaMahasiswa: req.user.nama, tanggal });
 
     res.redirect('/mahasiswa/magang/seminar');
   } catch (error) {

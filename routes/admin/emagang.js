@@ -24,6 +24,7 @@ const {
 const { getPembimbingMahasiswa } = require('../../helpers/pembimbingHelper');
 const { buildLogbookPrintData } = require('../../helpers/logbookPrintHelper');
 const { tampilkanCetakLogbook } = require('../../helpers/logbookPdfHelper');
+const magangNotif = require('../../helpers/magangNotifHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -539,6 +540,7 @@ router.post('/period/start', async (req, res) => {
       }]
     });
     
+    magangNotif.periodeDimulai(db, { mahasiswaId, perusahaan: namaPerusahaan, tanggalMulai, tanggalSelesai });
     req.session.success = `Periode magang ${pdk.nama} berhasil dimulai`;
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
   } catch (error) {
@@ -595,6 +597,7 @@ router.post('/period/:periodId/lock', async (req, res) => {
     
     await lockMagangPeriod(periodId, reason, { id: req.user.id, nama: req.user.nama || 'Admin' });
     
+    magangNotif.periodeDikunci(db, { mahasiswaId, alasan: reason, oleh: 'Admin' });
     req.session.success = 'Periode magang berhasil dikunci';
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
   } catch (error) {
@@ -617,6 +620,7 @@ router.post('/period/:periodId/unlock', async (req, res) => {
     
     await unlockMagangPeriod(periodId, reason, { id: req.user.id, nama: req.user.nama || 'Admin' });
     
+    magangNotif.periodeDibuka(db, { mahasiswaId, oleh: 'Admin' });
     req.session.success = 'Periode magang berhasil dibuka';
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
   } catch (error) {
@@ -639,6 +643,7 @@ router.post('/period/:periodId/extend', async (req, res) => {
     
     await extendMagangPeriod(periodId, tanggalSelesaiBaru, catatan, { id: req.user.id, nama: req.user.nama || 'Admin' });
     
+    magangNotif.periodeDiperpanjang(db, { mahasiswaId, tanggalSelesaiBaru, oleh: 'Admin' });
     req.session.success = 'Periode magang berhasil diperpanjang';
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
   } catch (error) {
@@ -772,6 +777,7 @@ router.post('/mahasiswa/:userId/kunci-nilai-magang', async (req, res) => {
       return res.redirect('back');
     }
     const hasil = await kunciNilaiMagangKeGrades(userId, pdkId, req.user.id);
+    magangNotif.nilaiMagangKeluar(db, { mahasiswaId: userId, huruf: hasil.huruf });
     req.session.success = `Nilai akhir magang berhasil dikunci: ${hasil.huruf} (${hasil.nilaiAkhir}) - sudah masuk ke KHS/Transkrip mahasiswa.`;
     res.redirect(`/admin/emagang/mahasiswa/${userId}?periodId=${periodId || ''}`);
   } catch (error) {
@@ -804,6 +810,7 @@ router.post('/logbook/:id/approve', async (req, res) => {
       approvedByRole: 'Admin'
     });
     invalidateProgressMagangHarian(mahasiswaId, logbook.pdkId);
+    magangNotif.logbookDisetujui(db, { mahasiswaId, tanggal: logbook.tanggal, oleh: 'Admin' });
     req.session.success = 'Logbook berhasil disetujui';
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
   } catch (error) {
@@ -833,6 +840,7 @@ router.post('/logbook/:id/reject', async (req, res) => {
       rejectionReason: alasan || 'Tidak ada alasan'
     });
     invalidateProgressMagangHarian(mahasiswaId, logbook.pdkId);
+    magangNotif.logbookDitolak(db, { mahasiswaId, tanggal: logbook.tanggal, alasan, oleh: 'Admin' });
     req.session.success = 'Logbook berhasil ditolak';
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
   } catch (error) {
@@ -906,6 +914,7 @@ router.post('/mahasiswa/:userId/setujui-minggu', async (req, res) => {
       : [...new Set(docsMingguIni.map(doc => doc.data().pdkId).filter(Boolean))];
     pdkIdUntukInvalidasi.forEach(pid => invalidateProgressMagangHarian(userId, pid));
 
+    magangNotif.logbookBanyakDisetujui(db, { mahasiswaId: userId, jumlah: docsMingguIni.length, oleh: 'Admin' });
     req.session.success = `${docsMingguIni.length} logbook (7 hari terakhir) berhasil disetujui sekaligus`;
     res.redirect(`/admin/emagang/mahasiswa/${userId}${periodId ? `?periodId=${periodId}` : ''}`);
   } catch (error) {
@@ -971,6 +980,7 @@ router.post('/mahasiswa/:userId/setujui-semua', async (req, res) => {
       : [...new Set(docs.map(doc => doc.data().pdkId).filter(Boolean))];
     pdkIdUntukInvalidasi.forEach(pid => invalidateProgressMagangHarian(userId, pid));
 
+    magangNotif.logbookBanyakDisetujui(db, { mahasiswaId: userId, jumlah: docs.length, oleh: 'Admin' });
     req.session.success = `${docs.length} logbook pending berhasil disetujui semua sekaligus`;
     res.redirect(`/admin/emagang/mahasiswa/${userId}${periodId ? `?periodId=${periodId}` : ''}`);
   } catch (error) {

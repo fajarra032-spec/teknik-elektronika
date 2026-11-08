@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 3, subLkm: 'Input Analog (ADC) dan Output PWM', nilaiNo: 3 }) %>
+
+<div class="sect-title">A. Data Kalibrasi Potensiometer</div>
+<div class="rumus-box">Tegangan hitung = ADC &times; 5 &divide; 1023 &nbsp;|&nbsp; Duty cycle (%) = nilai PWM &divide; 255 &times; 100</div>
+<table class="tt">
+  <thead>
+    <tr><th rowspan="2" style="width:12%;">Posisi pot</th><th colspan="3">Input (ADC)</th><th colspan="3">Output (PWM)</th></tr>
+    <tr><th>Nilai ADC</th><th>Tegangan ukur (V)</th><th>Tegangan hitung (V)</th><th>Nilai PWM</th><th>Duty (%)</th><th>Kecerahan LED (1-5)</th></tr>
+  </thead>
+  <tbody>
+    <% ['0 %','20 %','40 %','60 %','80 %','100 %'].forEach(p => { %><tr><td><strong><%= p %></strong></td><td class="k" style="height:24px;"></td><td></td><td></td><td></td><td></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">B. Perhitungan Contoh</div>
+<div class="dua-kolom">
+  <div><div class="judul-kecil">Tegangan dari ADC (ambil satu data)</div><div class="kotak-gambar" style="height:70px;"></div></div>
+  <div><div class="judul-kecil">Duty cycle dari nilai PWM (ambil satu data)</div><div class="kotak-gambar" style="height:70px;"></div></div>
+</div>
+
+<div class="sect-title">C. Grafik Hubungan ADC terhadap PWM</div>
+<p class="catatan-kecil">Sumbu X: nilai ADC (0 - 1023). Sumbu Y: nilai PWM (0 - 255). Plot titik dari Tabel A lalu hubungkan.</p>
+<div class="grid-kertas" style="height:215px;"><span class="sb-y">PWM 255</span><span class="sb-x">ADC 1023</span></div>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">D. Uji Fungsi map()</div>
+<p class="catatan-kecil">Ubah parameter map() lalu amati LED pada potensiometer posisi 0 %, 50 %, dan 100 %.</p>
+<table class="tabel-data">
+  <thead><tr><th style="width:30%;">Bentuk map() yang dicoba</th><th style="width:13%;">PWM saat 0 %</th><th style="width:13%;">PWM saat 50 %</th><th style="width:13%;">PWM saat 100 %</th><th>Perilaku LED</th></tr></thead>
+  <tbody>
+    <tr><td class="label">map(adc, 0, 1023, 0, 255)</td><td class="t40"></td><td></td><td></td><td></td></tr>
+    <tr><td class="label">map(adc, 0, 1023, 255, 0)</td><td class="t40"></td><td></td><td></td><td></td></tr>
+    <tr><td class="label">map(adc, 0, 1023, 50, 200)</td><td class="t40"></td><td></td><td></td><td></td></tr>
+    <tr><td class="label">Variasi sendiri: map(adc, ........)</td><td class="t40"></td><td></td><td></td><td></td></tr>
+  </tbody>
+</table>
+
+<div class="sect-title">E. Beban Motor DC (Bila Tersedia)</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:22%;">Nilai PWM</th><th style="width:28%;">Putaran motor (diam / pelan / sedang / cepat)</th><th>Keterangan</th></tr></thead>
+  <tbody>
+    <% ['64','128','192','255'].forEach(v => { %><tr><td class="tengah t30"><%= v %></td><td></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">F. Pertanyaan Analisis</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Mengapa nilai ADC Arduino Uno berkisar 0 - 1023 sedangkan PWM hanya 0 - 255?</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Apakah tegangan hitung sama dengan tegangan ukur? Jelaskan penyebab selisihnya.</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">3. Apakah PWM benar-benar tegangan analog? Jelaskan arti duty cycle.</div><%- g(3) %></div>
+
+<div class="sect-title">G. Kesimpulan</div>
+<%- g(4) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

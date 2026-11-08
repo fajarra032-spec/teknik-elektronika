@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 6, subLkm: 'Serial Input sebagai Kontrol (UART)', nilaiNo: 6 }) %>
+
+<div class="sect-title">Frame UART dan Waktu Kirim</div>
+<p class="catatan-kecil">Isi bit-bit karakter &quot;R&quot; (kode ASCII 82) pada format 8N1. Bit data dikirim dari yang paling kanan (LSB lebih dulu).</p>
+<table class="tt">
+  <thead><tr><th>Start</th><% for (let i = 0; i < 8; i++) { %><th>D<%= i %></th><% } %><th>Stop</th></tr></thead>
+  <tbody><tr><% for (let i = 0; i < 10; i++) { %><td class="k" style="height:26px;"></td><% } %></tr></tbody>
+</table>
+<table class="tt" style="margin-top:4px;">
+  <tr><td style="text-align:left;width:46%;">Jumlah bit satu karakter</td><td class="k" style="width:14%;"></td><td style="text-align:left;width:26%;">Lama kirim 1 karakter pada 9600 baud</td><td></td></tr>
+</table>
+
+<div class="sect-title">Tabel A - Pengiriman Data (Program 1)</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:6%;">No</th><th style="width:40%;">Pengamatan</th><th>Hasil</th></tr></thead>
+  <tbody>
+    <% ['Teks pembuka yang tampil','Isi tiga baris pertama setelah teks pembuka','Perbedaan tampilan antara print dan println'].forEach((p, i) => { %><tr><td class="tengah"><%= i + 1 %></td><td class="label"><%= p %></td><td class="t30"></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">Tabel B - Perintah Kontrol LED (Program 2)</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:6%;">No</th><th style="width:16%;">Perintah dikirim</th><th>Balasan di Serial Monitor</th><th style="width:26%;">Kondisi LED (M / K / H)</th></tr></thead>
+  <tbody>
+    <% ['R','K','H','r','k','h','S','X'].forEach((c, i) => { %><tr><td class="tengah"><%= i + 1 %></td><td class="tengah"><strong><%= c %></strong></td><td></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">Tabel C - Nilai Sensor LDR (Program 3)</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:6%;">No</th><th style="width:34%;">Kondisi cahaya</th><th>Nilai analogRead (terendah - tertinggi)</th></tr></thead>
+  <tbody>
+    <% ['Ruangan normal','Sensor ditutup tangan','Disinari senter HP'].forEach((p, i) => { %><tr><td class="tengah"><%= i + 1 %></td><td class="label"><%= p %></td><td class="t30"></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">Tabel D - Pengujian Baud Rate</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:6%;">No</th><th style="width:20%;">Baud rate program</th><th style="width:22%;">Baud rate Serial Monitor</th><th>Tampilan yang muncul</th></tr></thead>
+  <tbody>
+    <% [['9600','9600'],['9600','115200'],['115200','115200'],['115200','9600']].forEach((r, i) => { %><tr><td class="tengah"><%= i + 1 %></td><td class="tengah"><%= r[0] %></td><td class="tengah"><%= r[1] %></td><td class="t30"></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">Salinan Layar Serial Monitor</div>
+<p class="catatan-kecil">Salin tulisan dari Serial Monitor saat Program 2 menerima perintah R, K, H, lalu X.</p>
+<div class="terminal"><%- g(7) %></div>
+
+</div>
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">Jawaban Pertanyaan</div>
+<% (modul.tugasLaporan || []).forEach((t, i) => { %>
+  <div class="pertanyaan-item"><div class="no-pertanyaan"><%= i + 1 %>. <%= t %></div><%- g(3) %></div>
+<% }) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

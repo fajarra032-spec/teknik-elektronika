@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 6, subLkm: 'Proyek Akhir: Simulasi Sistem Otomasi Sederhana', nilaiNo: 6 }) %>
+
+<div class="sect-title">A. Identitas Kelompok dan Studi Kasus</div>
+<table class="tabel-data">
+  <tbody>
+    <tr><td class="label" style="width:24%;">Nama kelompok</td><td class="t30"></td><td class="label" style="width:18%;">Studi kasus</td><td></td></tr>
+    <tr><td class="label">Anggota (nama dan NIM)</td><td colspan="3" class="t40"></td></tr>
+    <tr><td class="label">Deskripsi singkat proses</td><td colspan="3" class="t40"></td></tr>
+  </tbody>
+</table>
+
+<div class="sect-title">B. Urutan Proses (Sequence of Operation)</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:7%;">Langkah</th><th>Aksi sistem</th><th style="width:26%;">Input yang memicu</th><th style="width:26%;">Output yang aktif</th></tr></thead>
+  <tbody><% for (let i = 1; i <= 5; i++) { %><tr><td class="tengah t30"><%= i %></td><td></td><td></td><td></td></tr><% } %></tbody>
+</table>
+
+<div class="sect-title">C. Alokasi Input / Output PLC</div>
+<table class="tt">
+  <thead><tr><th style="width:12%;">Alamat</th><th style="width:16%;">Nama tag</th><th>Perangkat</th><th style="width:10%;">Tipe</th><th>Keterangan</th></tr></thead>
+  <tbody><% for (let i = 0; i < 7; i++) { %><tr><td class="k" style="height:20px;"></td><td></td><td></td><td></td><td></td></tr><% } %></tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">D. Rancangan Program Ladder</div>
+<%- include('partials/lkm_plc_rung', { label: 'Rung 1', ket: '' }) %>
+<%- include('partials/lkm_plc_rung', { label: 'Rung 2', ket: '' }) %>
+<%- include('partials/lkm_plc_rung', { label: 'Rung 3', ket: '' }) %>
+<%- include('partials/lkm_plc_rung', { label: 'Rung 4', ket: '' }) %>
+
+<div class="sect-title">E. Uji Bertahap (Commissioning)</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:5%;">No</th><th style="width:30%;">Bagian yang diuji</th><th>Hasil pengujian</th><th style="width:12%;">Status</th></tr></thead>
+  <tbody>
+    <% ['Pengawatan input dan output (tanpa program)','Fungsi dasar program','Timer / counter (bila dipakai)','Interlock dan tombol stop darurat','Sistem terintegrasi satu siklus penuh'].forEach((b, i) => { %><tr><td class="tengah t30"><%= i + 1 %></td><td class="label"><%= b %></td><td></td><td class="tengah"><%- cb %> OK<br><%- cb %> Ulang</td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">F. Dokumentasi</div>
+<div class="foto-wrap"><div class="foto-box">Foto rangkaian / miniatur</div><div class="foto-box">Tangkapan layar program</div><div class="foto-box">Foto atau video demonstrasi (tulis tautan)</div></div>
+</div>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">G. Lembar Penilaian Demonstrasi (diisi dosen)</div>
+<table class="tabel-data nilai-dosen">
+  <thead><tr><th>Kriteria</th><th style="width:12%;">Bobot (%)</th><th style="width:14%;">Skor</th><th style="width:30%;">Catatan</th></tr></thead>
+  <tbody>
+    <% [['Sistem berjalan sesuai urutan proses','30'],['Pemakaian timer, counter, interlock, sensor yang tepat','25'],['Keselamatan (stop dan interlock berfungsi)','15'],['Kerapian pengawatan dan program','10'],['Dokumentasi dan laporan','10'],['Presentasi dan tanya jawab','10']].forEach(r => { %><tr><td class="label"><%= r[0] %></td><td class="tengah"><%= r[1] %></td><td></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">H. Refleksi Kelompok</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Kendala terbesar selama proyek dan cara mengatasinya.</div><%- g(4) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Bagian rancangan yang berubah dari rencana awal dan alasannya.</div><%- g(4) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">3. Pengembangan yang bisa dilakukan bila waktu bertambah.</div><%- g(3) %></div>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

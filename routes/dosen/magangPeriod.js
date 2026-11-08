@@ -10,6 +10,7 @@ const {
   updatePerusahaanMagangPeriod
 } = require('../../models/magangPeriodModel');
 const { getPembimbingMahasiswa, isPembimbingMahasiswa } = require('../../helpers/pembimbingHelper');
+const magangNotif = require('../../helpers/magangNotifHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -248,6 +249,7 @@ router.post('/start', async (req, res) => {
       }]
     });
     
+    magangNotif.periodeDimulai(db, { mahasiswaId, perusahaan: namaPerusahaan, tanggalMulai, tanggalSelesai });
     res.redirect(`/dosen/magang-period/${mahasiswaId}`);
   } catch (error) {
     console.error('Error:', error);
@@ -331,6 +333,7 @@ router.post('/:periodId/lock', async (req, res) => {
     }
     
     await lockMagangPeriod(periodId, reason, { id: req.dosen.id, nama: req.dosen.nama });
+    magangNotif.periodeDikunci(db, { mahasiswaId, alasan: reason, oleh: req.dosen.nama });
     
     res.redirect(`/dosen/magang-period/${mahasiswaId}`);
   } catch (error) {
@@ -364,6 +367,7 @@ router.post('/:periodId/unlock', async (req, res) => {
     }
     
     await unlockMagangPeriod(periodId, reason, { id: req.dosen.id, nama: req.dosen.nama });
+    magangNotif.periodeDibuka(db, { mahasiswaId, oleh: req.dosen.nama });
     
     res.redirect(`/dosen/magang-period/${mahasiswaId}`);
   } catch (error) {
@@ -397,6 +401,7 @@ router.post('/:periodId/extend', async (req, res) => {
     }
     
     await extendMagangPeriod(periodId, tanggalSelesaiBaru, catatan, { id: req.dosen.id, nama: req.dosen.nama });
+    magangNotif.periodeDiperpanjang(db, { mahasiswaId, tanggalSelesaiBaru, oleh: req.dosen.nama });
     
     res.redirect(`/dosen/magang-period/${mahasiswaId}`);
   } catch (error) {

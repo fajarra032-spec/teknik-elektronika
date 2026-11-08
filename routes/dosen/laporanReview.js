@@ -12,6 +12,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const magangNotif = require('../../helpers/magangNotifHelper');
 const { getActivePdkWithPeriod } = require('../../helpers/magangHelper');
 const {
   getNilaiMagang,
@@ -173,6 +174,7 @@ router.post('/:laporanId/status', async (req, res) => {
     }
 
     await docRef.update(updateData);
+    magangNotif.laporanDireview(db, { mahasiswaId: userId, laporanKe: d.laporanKe, status, catatan, oleh: req.dosen.nama });
     req.session.success = status === 'approved'
       ? 'Laporan di-ACC dan otomatis tampil di ELK Library.'
       : 'Laporan dikembalikan ke mahasiswa untuk revisi (ditarik dari ELK Library bila sebelumnya sudah tampil).';

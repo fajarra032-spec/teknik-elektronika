@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 3, subLkm: 'Timer dan Counter pada PLC', nilaiNo: 3 }) %>
+
+<div class="sect-title">A. Ketelitian Timer On-Delay (TON)</div>
+<div class="rumus-box">Galat (%) = |waktu aktual &minus; waktu seting| &divide; waktu seting &times; 100. Ukur waktu aktual dengan stopwatch.</div>
+<table class="tt">
+  <thead><tr><th style="width:8%;">No</th><th>Alamat timer</th><th>Waktu seting (detik)</th><th>Waktu aktual (detik)</th><th>Selisih (detik)</th><th>Galat (%)</th></tr></thead>
+  <tbody><% ['3','5','10',''].forEach((v, i) => { %><tr><td><%= i + 1 %></td><td class="k" style="height:24px;"></td><td><%= v %></td><td></td><td></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">B. Pencacah (Counter) Naik</div>
+<table class="tt">
+  <tr><td style="text-align:left;width:26%;">Alamat counter</td><td class="k" style="width:20%;"></td><td style="text-align:left;width:26%;">Nilai preset (PV)</td><td></td></tr>
+</table>
+<table class="tt" style="margin-top:4px;">
+  <thead><tr><th>Penekanan ke</th><% for (let i = 1; i <= 10; i++) { %><th><%= i %></th><% } %></tr></thead>
+  <tbody>
+    <tr><td style="text-align:left;"><strong>Nilai hitung (CV)</strong></td><% for (let i = 0; i < 10; i++) { %><td class="k" style="height:24px;"></td><% } %></tr>
+    <tr><td style="text-align:left;"><strong>Output aktif? (1/0)</strong></td><% for (let i = 0; i < 10; i++) { %><td class="k" style="height:24px;"></td><% } %></tr>
+  </tbody>
+</table>
+<table class="tt" style="margin-top:4px;">
+  <tr><td style="text-align:left;width:50%;">Bagaimana cara me-reset counter pada program Anda?</td><td class="k" style="height:26px;"></td></tr>
+</table>
+
+<div class="sect-title">C. Gambar Program Timer dan Counter</div>
+<%- include('partials/lkm_plc_rung', { label: 'Rung timer', ket: '' }) %>
+<%- include('partials/lkm_plc_rung', { label: 'Rung counter', ket: '' }) %>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">D. Studi Kasus Lampu Lalu Lintas</div>
+<table class="tt">
+  <thead><tr><th>Fase</th><th>Lampu menyala</th><th>Timer yang dipakai</th><th>Durasi seting (detik)</th><th>Durasi terukur (detik)</th></tr></thead>
+  <tbody><% [['1','Merah'],['2','Hijau'],['3','Kuning']].forEach(f => { %><tr><td><%= f[0] %></td><td><strong><%= f[1] %></strong></td><td class="k" style="height:24px;"></td><td></td><td></td></tr><% }) %></tbody>
+</table>
+<div class="sub-title">Diagram waktu satu siklus (1 kotak = 1 detik)</div>
+<table class="timing">
+  <% ['Merah','Kuning','Hijau'].forEach(r => { %><tr class="tebal"><td class="nama" style="height:30px;"><%= r %></td><% for (let i = 0; i < 20; i++) { %><td></td><% } %></tr><% }) %>
+</table>
+<div class="sub-title">Gambar program lampu lalu lintas</div>
+<div class="kotak-gambar" style="height:150px;"></div>
+
+<div class="sect-title">E. Pertanyaan Analisis</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Apa beda TON dan TOF? Pada percobaan mana perbedaannya terlihat?</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Apa penyebab selisih waktu seting dan waktu aktual pada Tabel A?</div><%- g(2) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">3. Sebutkan satu contoh penerapan counter di lini produksi.</div><%- g(2) %></div>
+
+<div class="sect-title">F. Kesimpulan</div>
+<%- g(3) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

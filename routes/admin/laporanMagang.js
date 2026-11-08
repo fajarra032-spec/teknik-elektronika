@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const magangNotif = require('../../helpers/magangNotifHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -126,6 +127,9 @@ router.post('/:id/status', async (req, res) => {
     }
 
     await docRef.update(updateData);
+    if (['approved', 'revisi'].includes(status)) {
+      magangNotif.laporanDireview(db, { mahasiswaId: userId, laporanKe: doc.data().laporanKe, status, catatan, oleh: req.user.nama || 'Admin' });
+    }
     res.redirect(`/admin/laporan-magang/mahasiswa/${userId}?success=updated`);
   } catch (error) {
     console.error('Error update status:', error);
@@ -188,6 +192,7 @@ router.post('/:id/comment', async (req, res) => {
       komentar: [...komentarLama, komentarBaru]
     });
 
+    magangNotif.laporanDikomentari(db, { mahasiswaId: laporan.userId, laporanKe: laporan.laporanKe, penulis: komentarBaru.penulis, isi });
     res.redirect(`/admin/laporan-magang/mahasiswa/${laporan.userId}?success=comment`);
   } catch (error) {
     console.error('Error tambah komentar:', error);
@@ -212,6 +217,9 @@ router.post('/:id/approve', async (req, res) => {
       approvedAt: new Date().toISOString(),
       approvedBy: req.user.id
     });
+    db.collection('laporanMagang').doc(req.params.id).get().then((d) => {
+      if (d.exists) magangNotif.laporanDireview(db, { mahasiswaId: d.data().userId, laporanKe: d.data().laporanKe, status: 'approved', oleh: req.user.nama || 'Admin' });
+    }).catch(() => {});
     res.redirect('/admin/laporan-magang?success=approved');
   } catch (error) {
     console.error('Error approve laporan:', error);

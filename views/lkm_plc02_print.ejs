@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 2, subLkm: 'Instruksi Dasar Ladder: Kontak, Koil, AND/OR/NOT', nilaiNo: 2 }) %>
+
+<div class="sect-title">A. Gambar Program Ladder</div>
+<%- include('partials/lkm_plc_rung', { label: 'Logika AND (dua kontak seri)', ket: '' }) %>
+<%- include('partials/lkm_plc_rung', { label: 'Logika OR (dua kontak paralel)', ket: '' }) %>
+<%- include('partials/lkm_plc_rung', { label: 'Logika NOT (kontak NC)', ket: '' }) %>
+
+<div class="sect-title">B. Tabel Kebenaran Hasil Uji</div>
+<p class="catatan-kecil">Isi Y teori dari rancangan, lalu Y hasil dari pengamatan lampu output (0 = padam, 1 = menyala).</p>
+<div class="tiga-kolom">
+  <% [['AND','X0','X1'],['OR','X0','X1']].forEach(gt => { %>
+  <div>
+    <table class="tt kecil">
+      <caption><%= gt[0] %></caption>
+      <thead><tr><th>A</th><th>B</th><th>Y teori</th><th>Y hasil</th></tr></thead>
+      <tbody><% ['0 0','0 1','1 0','1 1'].forEach(r => { const p = r.split(' '); %><tr><td><%= p[0] %></td><td><%= p[1] %></td><td class="k"></td><td></td></tr><% }) %></tbody>
+    </table>
+  </div>
+  <% }) %>
+  <div>
+    <table class="tt kecil">
+      <caption>NOT</caption>
+      <thead><tr><th>A</th><th>Y teori</th><th>Y hasil</th></tr></thead>
+      <tbody><% ['0','1'].forEach(r => { %><tr><td><%= r %></td><td class="k"></td><td></td></tr><% }) %></tbody>
+    </table>
+    <p class="catatan-kecil">Alamat A = ......., B = ......., Y = .......</p>
+  </div>
+</div>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. Studi Kasus: Lampu menyala bila A aktif DAN (B ATAU C) aktif</div>
+<%- include('partials/lkm_plc_rung', { label: 'Rung studi kasus', ket: 'A seri dengan (B paralel C)' }) %>
+<table class="tt" style="margin-top:6px;">
+  <thead><tr><th>A</th><th>B</th><th>C</th><th>Y teori</th><th>Y hasil</th><th>Sesuai?</th></tr></thead>
+  <tbody>
+    <% ['0 0 0','0 0 1','0 1 0','0 1 1','1 0 0','1 0 1','1 1 0','1 1 1'].forEach(r => { const p = r.split(' '); %>
+      <tr><td><%= p[0] %></td><td><%= p[1] %></td><td><%= p[2] %></td><td class="k" style="height:18px;"></td><td></td><td><%- cb %> Ya <%- cb %> Tidak</td></tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">D. Persamaan Logika Rancangan Sendiri</div>
+<table class="tabel-data">
+  <tbody>
+    <tr><td class="label" style="width:26%;">Soal dari dosen</td><td class="t30"></td></tr>
+    <tr><td class="label">Persamaan Boolean</td><td class="t30"></td></tr>
+    <tr><td class="label">Gambar ladder</td><td class="t40"></td></tr>
+    <tr><td class="label">Hasil uji</td><td class="t30"></td></tr>
+  </tbody>
+</table>
+
+<div class="sect-title">E. Pertanyaan Analisis</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Mengapa kontak NC pada program dapat berfungsi sebagai NOT?</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Bagaimana hubungan susunan seri dan paralel dengan logika AND dan OR?</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">3. Adakah baris tabel yang tidak sesuai teori? Jelaskan penyebabnya.</div><%- g(2) %></div>
+
+<div class="sect-title">F. Kesimpulan</div>
+<%- g(2) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

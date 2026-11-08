@@ -1,0 +1,41 @@
+<%# Satu baris notifikasi (dipakai dropdown lonceng & halaman /notifikasi). Param: n, penuh (true = pesan tidak dipotong) %>
+<%
+  var _ikon = {
+    'logbook-hari-ini':   ['journal-text', 'amber'],
+    'logbook-disetujui':  ['check-circle-fill', 'green'],
+    'logbook-ditolak':    ['pencil-square', 'orange'],
+    'logbook-kunci':      ['lock-fill', 'slate'],
+    'logbook-menunggu':   ['journal-check', 'blue'],
+    'magang-periode':     ['briefcase-fill', 'blue'],
+    'magang-berakhir':    ['hourglass-split', 'amber'],
+    'laporan-magang':     ['file-earmark-text-fill', 'purple'],
+    'laporan-masuk':      ['file-earmark-arrow-up-fill', 'purple'],
+    'laporan':            ['file-earmark-text-fill', 'purple'],
+    'seminar':            ['easel2-fill', 'indigo'],
+    'seminar-diajukan':   ['easel2-fill', 'indigo'],
+    'nilai-magang':       ['mortarboard-fill', 'green'],
+    'nilai':              ['mortarboard-fill', 'green'],
+    'jadwal-mengajar':    ['calendar-event-fill', 'blue'],
+    'tugas-belum-dinilai':['clipboard-check-fill', 'orange'],
+    'sk':                 ['file-earmark-check-fill', 'slate'],
+    'pesan':              ['chat-dots-fill', 'teal'],
+    'pribadi':            ['chat-dots-fill', 'teal'],
+    'kelas':              ['people-fill', 'teal'],
+    'komunitas':          ['people-fill', 'teal']
+  };
+  var _i = _ikon[n.type] || ['bell-fill', 'slate'];
+  var _link = (typeof n.link === 'string' && n.link.charAt(0) === '/') ? n.link : '';
+  var _waktu = n.createdAt ? new Date(n.createdAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+%>
+<li class="nf-item <%= n.read ? '' : 'nf-unread' %> <%= (typeof penuh !== 'undefined' && penuh) ? 'nf-full' : '' %>" data-nf-id="<%= n.id %>">
+  <<%= _link ? 'a' : 'div' %> class="nf-main"<% if (_link) { %> href="<%= _link %>"<% } else { %> role="button" tabindex="0"<% } %>>
+    <span class="nf-ico nf-c-<%= _i[1] %>"><i class="bi bi-<%= _i[0] %>"></i></span>
+    <span class="nf-body">
+      <span class="nf-title"><%= n.title %></span>
+      <% if (n.message) { %><span class="nf-msg"><%= n.message %></span><% } %>
+      <span class="nf-time" data-time="<%= n.createdAt %>"><%= _waktu %></span>
+    </span>
+    <span class="nf-dot" aria-label="Belum dibaca"></span>
+  </<%= _link ? 'a' : 'div' %>>
+  <button type="button" class="nf-x" title="Hapus notifikasi" aria-label="Hapus notifikasi"><i class="bi bi-x-lg"></i></button>
+</li>

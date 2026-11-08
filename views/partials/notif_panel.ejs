@@ -1,0 +1,243 @@
+<%# Panel dropdown lonceng notifikasi (di dalam <li class="nav-item dropdown"> di header.ejs).
+    Berisi CSS + JS notifikasi untuk SELURUH halaman (header selalu dimuat sekali per halaman),
+    termasuk aksi baca/hapus/bersihkan TANPA pindah halaman. Data: res.locals.navNotifikasi. %>
+<%
+  var _nfItems = (typeof navNotifikasi !== 'undefined' && navNotifikasi && navNotifikasi.items) ? navNotifikasi.items : [];
+  var _nfUnread = (typeof navNotifikasi !== 'undefined' && navNotifikasi) ? (navNotifikasi.unreadCount || 0) : 0;
+%>
+<style>
+  .nf-panel { width: 380px; max-width: 94vw; max-height: none; overflow: hidden; padding: 0; border: 0; border-radius: 1rem; overflow: hidden; box-shadow: 0 18px 48px rgba(15,23,42,.22); }
+  .nf-head { display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:.8rem 1rem .6rem; background:#fff; }
+  .nf-head h6 { margin:0; font-weight:800; font-size:1rem; color:#0f172a; }
+  .nf-head h6 small { font-weight:600; color:#64748b; font-size:.72rem; margin-left:.35rem; }
+  .nf-actions { display:flex; gap:.25rem; }
+  .nf-btn { border:0; background:transparent; color:#475569; font-size:.74rem; font-weight:700; padding:.3rem .55rem; border-radius:50px; display:inline-flex; align-items:center; gap:.3rem; cursor:pointer; transition:background .15s,color .15s; white-space:nowrap; }
+  .nf-btn:hover { background:#eef2ff; color:#3730a3; }
+  .nf-btn.nf-danger { background:#fee2e2; color:#b91c1c; }
+  .nf-btn[disabled] { opacity:.5; pointer-events:none; }
+  .nf-list { list-style:none; margin:0; padding:.2rem .45rem .45rem; max-height:min(60vh, 470px); overflow-y:auto; background:#fff; }
+  .nf-item { position:relative; display:block; margin:.15rem 0; border-radius:.85rem; transition:background .15s, opacity .22s, max-height .22s, margin .22s, transform .22s; max-height:220px; overflow:hidden; }
+  .nf-item:hover { background:#f1f5f9; }
+  .nf-item.nf-unread { background:#eff6ff; }
+  .nf-item.nf-unread:hover { background:#e0ecff; }
+  .nf-item.nf-removing { opacity:0; max-height:0; margin:0; transform:translateX(24px); }
+  .nf-main { display:flex; align-items:flex-start; gap:.7rem; padding:.7rem 2.2rem .7rem .7rem; text-decoration:none; color:inherit; cursor:pointer; }
+  .nf-ico { flex:0 0 auto; width:2.4rem; height:2.4rem; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; }
+  .nf-ico i { font-size:1.1rem; }
+  .nf-body { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:.1rem; }
+  .nf-title { font-size:.86rem; line-height:1.3; color:#0f172a; font-weight:600; }
+  .nf-unread .nf-title { font-weight:800; }
+  .nf-msg { font-size:.78rem; line-height:1.4; color:#475569; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .nf-full .nf-msg { -webkit-line-clamp:unset; display:block; }
+  .nf-time { font-size:.7rem; color:#94a3b8; font-weight:600; margin-top:.1rem; }
+  .nf-dot { display:none; position:absolute; right:.85rem; top:50%; width:.6rem; height:.6rem; margin-top:-.3rem; border-radius:50%; background:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.18); }
+  .nf-unread .nf-dot { display:block; }
+  .nf-x { position:absolute; right:.4rem; top:.45rem; width:1.7rem; height:1.7rem; border:0; border-radius:50%; background:rgba(255,255,255,.9); color:#64748b; display:inline-flex; align-items:center; justify-content:center; font-size:.7rem; opacity:0; transition:opacity .15s, background .15s, color .15s; cursor:pointer; }
+  .nf-item:hover .nf-x, .nf-x:focus-visible { opacity:1; }
+  .nf-item:hover .nf-dot { opacity:0; }
+  .nf-x:hover { background:#fee2e2; color:#b91c1c; }
+  @media (hover:none) { .nf-x { opacity:.75; } .nf-item .nf-dot { right:2.6rem; } }
+  .nf-empty { text-align:center; padding:2.2rem 1.2rem; color:#64748b; background:#fff; }
+  .nf-empty[hidden] { display:none; }
+  .nf-empty i { font-size:2.2rem; display:block; margin-bottom:.4rem; color:#94a3b8; }
+  .nf-empty strong { display:block; color:#0f172a; font-size:.92rem; }
+  .nf-empty span { font-size:.78rem; }
+  .nf-foot { display:block; text-align:center; padding:.7rem; font-size:.8rem; font-weight:700; background:#f8fafc; color:#2563eb; text-decoration:none; border-top:1px solid #e2e8f0; }
+  .nf-foot:hover { background:#eff6ff; color:#1d4ed8; }
+  .nf-c-amber{background:#fef3c7}.nf-c-amber i{color:#d97706}
+  .nf-c-green{background:#dcfce7}.nf-c-green i{color:#16a34a}
+  .nf-c-orange{background:#ffedd5}.nf-c-orange i{color:#ea580c}
+  .nf-c-blue{background:#dbeafe}.nf-c-blue i{color:#2563eb}
+  .nf-c-purple{background:#f3e8ff}.nf-c-purple i{color:#9333ea}
+  .nf-c-indigo{background:#e0e7ff}.nf-c-indigo i{color:#4f46e5}
+  .nf-c-teal{background:#ccfbf1}.nf-c-teal i{color:#0d9488}
+  .nf-c-slate{background:#e2e8f0}.nf-c-slate i{color:#475569}
+  /* Di layar kecil, aturan umum panel navbar memaksa warna span gelap - kembalikan warna khusus notifikasi */
+  .navbar-dropdown-panel.nf-panel .nf-msg { color:#475569 !important; }
+  .navbar-dropdown-panel.nf-panel .nf-time { color:#94a3b8 !important; }
+  .navbar-dropdown-panel.nf-panel .nf-btn { color:#475569 !important; }
+  .navbar-dropdown-panel.nf-panel .nf-btn.nf-danger { color:#b91c1c !important; }
+  .navbar-dropdown-panel.nf-panel .nf-empty span { color:#64748b !important; }
+  /* halaman penuh /notifikasi */
+  .nf-page-list { max-height:none; padding:.5rem; border-radius:1rem; }
+  .nf-filter { display:inline-flex; background:#e2e8f0; border-radius:50px; padding:.2rem; }
+  .nf-filter button { border:0; background:transparent; border-radius:50px; padding:.28rem .85rem; font-size:.78rem; font-weight:700; color:#475569; cursor:pointer; }
+  .nf-filter button.aktif { background:#fff; color:#0f172a; box-shadow:0 1px 3px rgba(15,23,42,.15); }
+  .nf-only-unread .nf-item:not(.nf-unread) { display:none; }
+</style>
+
+<div class="dropdown-menu dropdown-menu-end navbar-dropdown-panel nf-panel" aria-labelledby="notifDropdown" id="nfPanel" data-nf-scope>
+  <div class="nf-head">
+    <h6>Notifikasi <small id="nfCountLabel"><%= _nfUnread > 0 ? _nfUnread + ' baru' : '' %></small></h6>
+    <div class="nf-actions" <%= _nfItems.length ? '' : 'hidden' %>>
+      <button type="button" class="nf-btn" data-nf-action="read-all" title="Tandai semua sudah dibaca"><i class="bi bi-check2-all"></i> Tandai dibaca</button>
+      <button type="button" class="nf-btn" data-nf-action="clear-all" title="Hapus semua notifikasi"><i class="bi bi-trash3"></i> Bersihkan</button>
+    </div>
+  </div>
+  <ul class="nf-list" id="nfPanelList">
+    <% _nfItems.forEach(function (n) { %><%- include('notif_item', { n: n }) %><% }); %>
+  </ul>
+  <div class="nf-empty" id="nfPanelEmpty" <%= _nfItems.length ? 'hidden' : '' %>>
+    <i class="bi bi-bell"></i>
+    <strong>Semua sudah bersih ✨</strong>
+    <span>Belum ada kabar baru. Santai dulu ya!</span>
+  </div>
+  <a class="nf-foot" href="/notifikasi">Lihat semua notifikasi</a>
+</div>
+
+<script>
+(function () {
+  if (window.__nfInit) return;
+  window.__nfInit = true;
+  function mulai() {
+
+  var badge = document.getElementById('notifBadge');
+  var label = document.getElementById('nfCountLabel');
+
+  function post(url, body) {
+    return fetch(url, {
+      method: 'POST', credentials: 'same-origin', keepalive: true,
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'fetch' },
+      body: JSON.stringify(body || {})
+    }).then(function (r) { return r.json(); }).catch(function () { return { ok: false }; });
+  }
+
+  function hitung() { return badge ? (parseInt(badge.getAttribute('data-count'), 10) || 0) : 0; }
+  function setBadge(n) {
+    n = Math.max(0, n);
+    if (badge) {
+      badge.setAttribute('data-count', n);
+      badge.textContent = n > 9 ? '9+' : String(n);
+      badge.style.display = n > 0 ? '' : 'none';
+    }
+    if (label) label.textContent = n > 0 ? (n + ' baru') : '';
+  }
+
+  /* ---------- waktu relatif ---------- */
+  function relatif(iso) {
+    var t = new Date(iso).getTime();
+    if (!t) return '';
+    var d = Math.floor((Date.now() - t) / 1000);
+    if (d < 45) return 'Baru saja';
+    if (d < 3600) return Math.max(1, Math.round(d / 60)) + ' menit lalu';
+    if (d < 86400) return Math.round(d / 3600) + ' jam lalu';
+    if (d < 172800) return 'Kemarin';
+    if (d < 7 * 86400) return Math.round(d / 86400) + ' hari lalu';
+    return new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function segarkanWaktu() {
+    document.querySelectorAll('.nf-time[data-time]').forEach(function (el) {
+      var r = relatif(el.getAttribute('data-time'));
+      if (r) el.textContent = r;
+    });
+  }
+  segarkanWaktu();
+  setInterval(segarkanWaktu, 60000);
+
+  /* ---------- keadaan daftar kosong / tombol aksi ---------- */
+  function perbaruiKosong() {
+    var halaman = document.getElementById('nfPageList');
+    document.querySelectorAll('[data-nf-scope]').forEach(function (scope) {
+      var daftar = scope.querySelector('.nf-list') || halaman;
+      var ada = !!daftar && daftar.querySelectorAll('.nf-item:not(.nf-removing)').length > 0;
+      var kosong = scope.querySelector('.nf-empty');
+      var aksi = scope.querySelector('.nf-actions');
+      if (kosong) kosong.hidden = ada;
+      if (aksi) aksi.hidden = !ada;
+    });
+  }
+
+  function hapusBaris(li) {
+    li.classList.add('nf-removing');
+    setTimeout(function () { li.remove(); perbaruiKosong(); }, 230);
+  }
+  function itemSama(id) { return document.querySelectorAll('.nf-item[data-nf-id="' + id + '"]'); }
+
+  function tandaiDibaca(li) {
+    if (!li.classList.contains('nf-unread')) return;
+    var id = li.getAttribute('data-nf-id');
+    itemSama(id).forEach(function (el) { el.classList.remove('nf-unread'); });
+    setBadge(hitung() - 1);
+    post('/notifikasi/' + encodeURIComponent(id) + '/baca');
+  }
+
+  /* ---------- tombol "Bersihkan" dengan konfirmasi dua langkah (tanpa jendela popup) ---------- */
+  var timerKonfirmasi = null;
+  function resetTombolBersihkan(btn) {
+    btn.classList.remove('nf-danger');
+    btn.innerHTML = '<i class="bi bi-trash3"></i> Bersihkan';
+    btn.removeAttribute('data-nf-konfirmasi');
+  }
+
+  function tanganiAksi(btn) {
+    var aksi = btn.getAttribute('data-nf-action');
+    if (aksi === 'read-all') {
+      document.querySelectorAll('.nf-item.nf-unread').forEach(function (el) { el.classList.remove('nf-unread'); });
+      setBadge(0);
+      post('/notifikasi/baca-semua');
+    } else if (aksi === 'clear-all') {
+      if (!btn.getAttribute('data-nf-konfirmasi')) {
+        btn.setAttribute('data-nf-konfirmasi', '1');
+        btn.classList.add('nf-danger');
+        btn.innerHTML = '<i class="bi bi-exclamation-circle"></i> Yakin? Klik lagi';
+        clearTimeout(timerKonfirmasi);
+        timerKonfirmasi = setTimeout(function () { resetTombolBersihkan(btn); }, 3500);
+        return;
+      }
+      clearTimeout(timerKonfirmasi);
+      resetTombolBersihkan(btn);
+      document.querySelectorAll('.nf-item').forEach(hapusBaris);
+      setBadge(0);
+      post('/notifikasi/hapus-semua');
+    }
+  }
+
+  function tangani(e) {
+    var btnAksi = e.target.closest('[data-nf-action]');
+    if (btnAksi) { e.preventDefault(); tanganiAksi(btnAksi); return; }
+
+    var x = e.target.closest('.nf-x');
+    if (x) {
+      e.preventDefault();
+      var li = x.closest('.nf-item');
+      var id = li.getAttribute('data-nf-id');
+      if (li.classList.contains('nf-unread')) setBadge(hitung() - 1);
+      itemSama(id).forEach(hapusBaris);
+      post('/notifikasi/' + encodeURIComponent(id) + '/hapus');
+      return;
+    }
+
+    var main = e.target.closest('.nf-main');
+    if (main) {
+      var baris = main.closest('.nf-item');
+      tandaiDibaca(baris);              // tautan tetap berjalan normal (request memakai keepalive)
+    }
+  }
+
+  document.querySelectorAll('[data-nf-scope]').forEach(function (scope) {
+    scope.addEventListener('click', function (e) {
+      tangani(e);
+      e.stopPropagation();              // jangan tutup dropdown saat membaca/menghapus di dalam panel
+    });
+    scope.addEventListener('keydown', function (e) {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('nf-main') && e.target.tagName !== 'A') {
+        e.preventDefault(); tandaiDibaca(e.target.closest('.nf-item'));
+      }
+    });
+  });
+
+  /* filter "Semua | Belum dibaca" di halaman penuh */
+  document.querySelectorAll('.nf-filter button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.nf-filter button').forEach(function (x) { x.classList.toggle('aktif', x === b); });
+      var list = document.getElementById('nfPageList');
+      if (list) list.classList.toggle('nf-only-unread', b.getAttribute('data-filter') === 'unread');
+    });
+  });
+
+  if (badge) setBadge(hitung());
+  perbaruiKosong();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mulai); else mulai();
+})();
+</script>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 1, subLkm: 'Pengenalan Perangkat Keras PLC dan Software Ladder', nilaiNo: 1 }) %>
+
+<div class="sect-title">A. Identifikasi Komponen Unit Trainer</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:24%;">Komponen</th><th style="width:22%;">Merek / tipe</th><th style="width:16%;">Tegangan kerja</th><th>Letak dan fungsi</th></tr></thead>
+  <tbody>
+    <% ['CPU PLC','Power supply','Modul / terminal input','Modul / terminal output','Port komunikasi PC'].forEach(k => { %><tr><td class="label"><%= k %></td><td class="t30"></td><td></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">B. Peta Alamat Input dan Output</div>
+<div class="dua-kolom">
+  <div>
+    <table class="tt">
+      <caption>Input</caption>
+      <thead><tr><th>Alamat</th><th>Perangkat</th><th>NO / NC</th></tr></thead>
+      <tbody><% for (let i = 0; i < 4; i++) { %><tr><td class="k" style="height:20px;"></td><td></td><td></td></tr><% } %></tbody>
+    </table>
+  </div>
+  <div>
+    <table class="tt">
+      <caption>Output</caption>
+      <thead><tr><th>Alamat</th><th>Beban</th><th>Tegangan</th></tr></thead>
+      <tbody><% for (let i = 0; i < 5; i++) { %><tr><td class="k" style="height:22px;"></td><td></td><td></td></tr><% } %></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="sect-title">C. Diagram Wiring I/O yang Dibuat</div>
+<div class="kotak-gambar" style="height:150px;"></div>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">D. Daftar Periksa Koneksi PLC dan Komputer</div>
+<div class="cek-list">
+  <div><%- cb %> Power supply trainer menyala</div>
+  <div><%- cb %> Kabel komunikasi terpasang</div>
+  <div><%- cb %> Software mengenali PLC (online)</div>
+  <div><%- cb %> Mode PLC diubah ke RUN</div>
+  <div><%- cb %> Program berhasil di-download</div>
+  <div><%- cb %> Monitoring online tampil di layar</div>
+</div>
+<table class="tt" style="margin-top:4px;">
+  <thead><tr><th>Lampu indikator</th><th>Kondisi saat STOP</th><th>Kondisi saat RUN</th><th>Kondisi saat ada kesalahan</th></tr></thead>
+  <tbody><% ['POWER','RUN','ERROR / ALARM','COMM'].forEach(l => { %><tr><td><strong><%= l %></strong></td><td class="k" style="height:22px;"></td><td></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">E. Program Ladder Pertama</div>
+<%- include('partials/lkm_plc_rung', { label: 'Rung 1', ket: 'tuliskan alamat kontak dan koil' }) %>
+<div class="sub-title">Penjelasan elemen program</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:26%;">Elemen</th><th style="width:20%;">Alamat</th><th>Fungsi</th></tr></thead>
+  <tbody><% ['Kontak','Koil output','Garis daya (power rail)'].forEach(e => { %><tr><td class="label"><%= e %></td><td class="t30"></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">F. Uji Langsung (Online Monitoring)</div>
+<table class="tt">
+  <thead><tr><th style="width:8%;">No</th><th>Kondisi input</th><th>Status kontak di layar</th><th>Status koil di layar</th><th>Lampu output menyala?</th></tr></thead>
+  <tbody><% ['Push button tidak ditekan','Push button ditekan','Push button dilepas lagi'].forEach((k, i) => { %><tr><td><%= i + 1 %></td><td style="text-align:left;"><%= k %></td><td class="k" style="height:24px;"></td><td></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">G. Kendala dan Kesimpulan</div>
+<%- g(5) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

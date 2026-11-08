@@ -276,6 +276,7 @@ module.exports = {
     {
       id: 'mk-01',
       judul: 'Pengenalan Perangkat Keras Mikrokontroler dan IDE Pemrograman',
+      viewCetak: 'lkm_mk01_print', // views/lkm_mk01_print.ejs
       pertemuanSaran: 2,
       tujuan: [
         'Mengenal arsitektur dasar mikrokontroler dan board pengembangan yang digunakan',
@@ -306,6 +307,7 @@ module.exports = {
     {
       id: 'mk-02',
       judul: 'Input/Output Digital: Saklar (Debouncing) dan LED/Relay',
+      viewCetak: 'lkm_mk02_print', // views/lkm_mk02_print.ejs
       pertemuanSaran: 4,
       tujuan: [
         'Membaca kondisi input digital dari push button/saklar',
@@ -335,6 +337,7 @@ module.exports = {
     {
       id: 'mk-03',
       judul: 'Input Analog (ADC) dan Output PWM',
+      viewCetak: 'lkm_mk03_print', // views/lkm_mk03_print.ejs
       pertemuanSaran: 6,
       tujuan: [
         'Membaca nilai tegangan analog menggunakan ADC internal mikrokontroler',
@@ -363,6 +366,7 @@ module.exports = {
     {
       id: 'mk-06',
       judul: 'Praktikum Seven Segment dan LCD 16x2 I2C',
+      viewCetak: 'lkm_mk06_print', // views/lkm_mk06_print.ejs
       pertemuanSaran: 7,
       tujuan: [
         'Merangkai seven segment 1 digit common cathode pada Arduino Uno dengan resistor pembatas arus',
@@ -618,6 +622,7 @@ void loop() {
     {
       id: 'mk-04',
       judul: 'Interrupt dan Timer',
+      viewCetak: 'lkm_mk04_print', // views/lkm_mk04_print.ejs
       pertemuanSaran: 8,
       tujuan: [
         'Memahami konsep interrupt eksternal dan penggunaannya dibandingkan polling',
@@ -646,6 +651,7 @@ void loop() {
     {
       id: 'mk-05',
       judul: 'Praktikum Serial Input sebagai Kontrol (UART)',
+      viewCetak: 'lkm_mk05_print', // views/lkm_mk05_print.ejs
       pertemuanSaran: 10,
       tujuan: [
         'Menjelaskan prinsip komunikasi UART: TX, RX, baud rate, serta start bit dan stop bit',
@@ -841,6 +847,7 @@ void loop() {
     {
       id: 'mk-07',
       judul: 'Proyek Akhir: Integrasi Sistem Mini (Sensor, Aktuator, dan Tampilan)',
+      viewCetak: 'lkm_mk07_print', // views/lkm_mk07_print.ejs
       pertemuanSaran: 14,
       tujuan: [
         'Merancang sistem mikrokontroler yang mengintegrasikan sensor, aktuator, dan tampilan',
@@ -876,6 +883,7 @@ void loop() {
     {
       id: 'plc-01',
       judul: 'Pengenalan Perangkat Keras PLC dan Software Pemrograman Ladder',
+      viewCetak: 'lkm_plc01_print', // views/lkm_plc01_print.ejs
       pertemuanSaran: 2,
       tujuan: [
         'Mengenal komponen utama PLC (CPU, modul input/output, power supply) dan wiring dasarnya',
@@ -906,6 +914,7 @@ void loop() {
     {
       id: 'plc-02',
       judul: 'Instruksi Dasar Ladder Diagram (Kontak, Koil, Logika AND/OR/NOT)',
+      viewCetak: 'lkm_plc02_print', // views/lkm_plc02_print.ejs
       pertemuanSaran: 4,
       tujuan: [
         'Menggunakan instruksi dasar ladder: kontak NO/NC, koil output, dan garis daya',
@@ -934,6 +943,7 @@ void loop() {
     {
       id: 'plc-03',
       judul: 'Timer dan Counter pada PLC',
+      viewCetak: 'lkm_plc03_print', // views/lkm_plc03_print.ejs
       pertemuanSaran: 6,
       tujuan: [
         'Menerapkan instruksi timer (TON/TOF) untuk kontrol berbasis waktu tunda',
@@ -962,6 +972,7 @@ void loop() {
     {
       id: 'plc-04',
       judul: 'Kontrol Sekuensial: Interlock, Start-Stop, dan Forward-Reverse',
+      viewCetak: 'lkm_plc04_print', // views/lkm_plc04_print.ejs
       pertemuanSaran: 8,
       tujuan: [
         'Menerapkan rangkaian pengunci (self-holding/latching) pada tombol start-stop',
@@ -990,6 +1001,7 @@ void loop() {
     {
       id: 'plc-05',
       judul: 'Interfacing Sensor dan Aktuator (Proximity, Limit Switch, Relay/Kontaktor)',
+      viewCetak: 'lkm_plc05_print', // views/lkm_plc05_print.ejs
       pertemuanSaran: 10,
       tujuan: [
         'Menghubungkan sensor proximity/limit switch sebagai input PLC',
@@ -1019,6 +1031,7 @@ void loop() {
     {
       id: 'plc-06',
       judul: 'Proyek Akhir: Simulasi Sistem Otomasi Sederhana',
+      viewCetak: 'lkm_plc06_print', // views/lkm_plc06_print.ejs
       pertemuanSaran: 14,
       tujuan: [
         'Merancang sistem kontrol otomasi berbasis PLC untuk studi kasus nyata sederhana (mis. sorting, conveyor, atau pengisian botol)',

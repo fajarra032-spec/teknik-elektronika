@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 4, subLkm: 'Kontrol Sekuensial: Interlock, Start-Stop, Forward-Reverse', nilaiNo: 4 }) %>
+
+<div class="sect-title">A. Tabel Urutan Kerja (Sequence of Operation)</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:7%;">Langkah</th><th style="width:28%;">Kondisi yang harus terpenuhi</th><th style="width:26%;">Output yang aktif</th><th>Syarat pindah ke langkah berikutnya</th></tr></thead>
+  <tbody><% ['Siap (semua padam)','Start / Forward ditekan','Start / Reverse ditekan','Stop ditekan'].forEach((k, i) => { %><tr><td class="tengah t40"><%= i + 1 %></td><td><span style="font-size:8pt;color:#666;"><%= k %> &mdash;</span></td><td></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">B. Gambar Program</div>
+<%- include('partials/lkm_plc_rung', { label: 'Rung 1: Start-Stop dengan self-holding', ket: 'kontak pengunci paralel dengan Start' }) %>
+<%- include('partials/lkm_plc_rung', { label: 'Rung 2: Forward dengan interlock', ket: 'sisipkan NC dari output Reverse' }) %>
+<%- include('partials/lkm_plc_rung', { label: 'Rung 3: Reverse dengan interlock', ket: 'sisipkan NC dari output Forward' }) %>
+
+<div class="sect-title">C. Alamat yang Dipakai</div>
+<table class="tt">
+  <tr><td style="text-align:left;">Start / Stop</td><td class="k" style="height:24px;"></td><td style="text-align:left;">Forward / Reverse (input)</td><td></td><td style="text-align:left;">Output FWD / REV</td><td></td></tr>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">D. Matriks Skenario Pengujian</div>
+<p class="catatan-kecil">Isi 0 (padam) atau 1 (menyala). Skenario dijalankan berurutan tanpa mematikan power di antaranya.</p>
+<table class="tt">
+  <thead>
+    <tr><th rowspan="2" style="width:5%;">No</th><th rowspan="2" style="width:38%;">Tindakan</th><th colspan="2">Diharapkan</th><th colspan="2">Hasil nyata</th><th rowspan="2">Aman?</th></tr>
+    <tr><th>FWD</th><th>REV</th><th>FWD</th><th>REV</th></tr>
+  </thead>
+  <tbody>
+    <% ['Power dinyalakan, tidak ada tombol ditekan','Tekan Start sesaat lalu lepas (rung 1)','Tekan Stop','Tekan Forward sesaat lalu lepas','Saat Forward aktif, tekan Reverse','Tekan Stop','Tekan Forward dan Reverse bersamaan','Tekan Reverse sesaat lalu lepas'].forEach((t, i) => { %>
+      <tr><td><%= i + 1 %></td><td style="text-align:left;"><%= t %></td><td class="k" style="height:24px;"></td><td></td><td></td><td></td><td><%- cb %></td></tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">E. Daftar Periksa Keselamatan</div>
+<div class="cek-list">
+  <div><%- cb %> Tombol Stop memakai kontak NC</div>
+  <div><%- cb %> Forward dan Reverse tidak pernah aktif bersamaan</div>
+  <div><%- cb %> Output tetap aktif setelah Start dilepas</div>
+  <div><%- cb %> Stop mematikan semua output</div>
+  <div><%- cb %> Power diputus sebelum mengubah pengawatan</div>
+  <div><%- cb %> Ada jeda sebelum membalik arah (bila diminta dosen)</div>
+</div>
+
+<div class="sect-title">F. Pertanyaan Analisis</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Jelaskan cara kerja self-holding. Mengapa output tetap aktif setelah Start dilepas?</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Apa bahaya bila Forward dan Reverse motor aktif bersamaan? Bagaimana interlock mencegahnya?</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">3. Skenario nomor berapa yang paling penting diuji dari sisi keselamatan? Mengapa?</div><%- g(3) %></div>
+
+<div class="sect-title">G. Kesimpulan</div>
+<%- g(3) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

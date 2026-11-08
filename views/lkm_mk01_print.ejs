@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 1, subLkm: 'Pengenalan Perangkat Keras dan IDE (LED Blink)', nilaiNo: 1 }) %>
+
+<div class="sect-title">A. Daftar Periksa Persiapan</div>
+<p class="catatan-kecil">Centang setiap langkah setelah berhasil dikerjakan.</p>
+<div class="cek-list">
+  <div><%- cb %> IDE terpasang dan dapat dibuka</div>
+  <div><%- cb %> Driver board terpasang (port terdeteksi)</div>
+  <div><%- cb %> Board dihubungkan lewat kabel USB</div>
+  <div><%- cb %> Jenis board dipilih pada menu Tools</div>
+  <div><%- cb %> Port komunikasi dipilih</div>
+  <div><%- cb %> Program blink berhasil di-compile</div>
+  <div><%- cb %> Program berhasil di-upload</div>
+  <div><%- cb %> LED berkedip sesuai program</div>
+</div>
+
+<div class="sect-title">B. Mengenal Bagian-Bagian Board</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:26%;">Bagian board</th><th style="width:30%;">Tulisan / label pada board</th><th>Fungsi menurut pengamatan</th></tr></thead>
+  <tbody>
+    <% ['Chip mikrokontroler','Konektor USB','Pin digital (D0-D13)','Pin analog (A0-A5)','Pin daya (5V, 3V3, GND, VIN)','Tombol reset','LED bawaan board (pin ?)'].forEach(b => { %>
+      <tr><td class="label"><%= b %></td><td class="t30"></td><td></td></tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">C. Pengaturan IDE</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:34%;">Pengaturan</th><th>Nilai yang dipilih</th><th style="width:30%;">Lokasi menu</th></tr></thead>
+  <tbody>
+    <% ['Board','Port','Versi IDE','Baud rate Serial Monitor (bila dipakai)'].forEach(b => { %><tr><td class="label"><%= b %></td><td class="t30"></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">D. Percobaan Variasi Delay</div>
+<div class="rumus-box">Frekuensi kedip (Hz) = jumlah kedip &divide; waktu pengamatan (detik). Amati selama 10 detik tiap percobaan.</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:6%;">No</th><th style="width:18%;">delay ON (ms)</th><th style="width:18%;">delay OFF (ms)</th><th style="width:20%;">Jumlah kedip dalam 10 detik</th><th style="width:16%;">Frekuensi (Hz)</th><th>Pengamatan</th></tr></thead>
+  <tbody>
+    <% [['1','1000','1000'],['2','500','500'],['3','200','200'],['4','100','900'],['5','','']].forEach(r => { %>
+      <tr><td class="tengah"><%= r[0] %></td><td class="tengah t30"><%= r[1] %></td><td class="tengah"><%= r[2] %></td><td></td><td></td><td></td></tr>
+    <% }) %>
+  </tbody>
+</table>
+<p class="catatan-kecil">Baris 5: isi dengan variasi delay milik Anda sendiri.</p>
+
+<div class="sect-title">E. Bukti Program</div>
+<div class="dua-kolom">
+  <div><div class="sub-title" style="margin-top:0;">Listing program blink</div><div class="kotak-gambar" style="height:115px;"></div></div>
+  <div><div class="sub-title" style="margin-top:0;">Tempel / gambar pesan "Done uploading"</div><div class="kotak-gambar" style="height:115px;"></div></div>
+</div>
+
+<div class="sect-title">F. Penjelasan Struktur Program</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:30%;">Bagian / fungsi</th><th>Penjelasan dengan kata sendiri</th></tr></thead>
+  <tbody>
+    <% ['setup()','loop()','pinMode()','digitalWrite()','delay()'].forEach(b => { %><tr><td class="label"><%= b %></td><td class="t30"></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">G. Kesimpulan</div>
+<%- g(3) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

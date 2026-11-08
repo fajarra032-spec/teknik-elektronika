@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 5, subLkm: 'Interfacing Sensor dan Aktuator (Proximity, Limit Switch, Relay)', nilaiNo: 5 }) %>
+
+<div class="sect-title">A. Data Spesifikasi Perangkat</div>
+<p class="catatan-kecil">Isi dari label atau datasheet perangkat yang dipakai.</p>
+<table class="tabel-data">
+  <thead><tr><th style="width:20%;">Perangkat</th><th style="width:18%;">Merek / tipe</th><th style="width:14%;">Tegangan kerja</th><th style="width:20%;">Jenis keluaran / kontak (NPN, PNP, NO, NC)</th><th>Data lain (jarak deteksi, rating kontak V / A)</th></tr></thead>
+  <tbody><% ['Sensor proximity','Limit switch','Relay / kontaktor','Aktuator (lampu / motor)'].forEach(p => { %><tr><td class="label"><%= p %></td><td class="t40"></td><td></td><td></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">B. Diagram Wiring Sensor dan Aktuator</div>
+<div class="kotak-gambar" style="height:175px;"></div>
+<table class="tt" style="margin-top:4px;">
+  <thead><tr><th>Titik ukur</th><th>Tegangan saat sensor OFF (V)</th><th>Tegangan saat sensor ON (V)</th></tr></thead>
+  <tbody><% ['Kawat sinyal sensor ke 0 V','Terminal input PLC','Koil relay'].forEach(t => { %><tr><td style="text-align:left;"><%= t %></td><td class="k" style="height:22px;"></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. Pengujian Deteksi dan Aktuasi</div>
+<table class="tt">
+  <thead><tr><th style="width:5%;">No</th><th style="width:15%;">Bahan objek</th><th style="width:12%;">Jarak (mm)</th><th>Lampu sensor</th><th>Status input di PLC</th><th>Relay</th><th>Aktuator bekerja</th></tr></thead>
+  <tbody><% for (let i = 1; i <= 10; i++) { %><tr><td><%= i %></td><td class="k" style="height:17px;"></td><td></td><td></td><td></td><td></td><td></td></tr><% } %></tbody>
+</table>
+<div class="rumus-box" style="margin-top:6px;">Tingkat keberhasilan (%) = jumlah deteksi berhasil &divide; 10 &times; 100 = ............ %</div>
+
+<div class="sect-title">D. Jarak Deteksi Berdasarkan Bahan</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:30%;">Bahan objek</th><th style="width:22%;">Jarak terjauh terdeteksi (mm)</th><th>Keterangan</th></tr></thead>
+  <tbody><% ['Logam','Bukan logam (plastik / kayu)'].forEach(b => { %><tr><td class="label"><%= b %></td><td class="t30"></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">E. Gambar Program dan Alur Kontrol</div>
+<%- include('partials/lkm_plc_rung', { label: 'Rung: sensor mengaktifkan relay selama waktu tertentu', ket: '' }) %>
+
+<div class="sect-title">F. Pertanyaan Analisis</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Mengapa keluaran PLC dihubungkan lewat relay atau kontaktor ke beban yang lebih besar?</div><%- g(2) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Jelaskan perbedaan cara kerja proximity dan limit switch berdasarkan hasil uji Anda.</div><%- g(2) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">3. Bagaimana menilai keandalan sistem dari Tabel C? Apa penyebab kegagalan deteksi bila ada?</div><%- g(2) %></div>
+
+<div class="sect-title">G. Kesimpulan</div>
+<%- g(2) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

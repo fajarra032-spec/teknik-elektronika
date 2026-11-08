@@ -1,7 +1,7 @@
 // helpers/logbookNotifHelper.js
 // ============================================================================
 // NOTIFIKASI LOGBOOK MAGANG
-//  - Mahasiswa : "Anda belum mengisi logbook hari ini" (banner + badge navbar +
+//  - Mahasiswa : "Logbook hari ini masih kosong nih" (banner + badge navbar +
 //                notifikasi lonceng setelah pukul 15.00 WITA).
 //  - Dosen PA  : "N mahasiswa menunggu persetujuan logbook - Buka sekarang"
 //                (banner + badge navbar + notifikasi lonceng harian).
@@ -79,6 +79,8 @@ function logbookHariIniTerisi(db, userId) {
 /** Notifikasi lonceng harian untuk mahasiswa (setelah 15.00 WITA, bila belum isi). */
 async function cekPengingatMahasiswa(db, user) {
   if (!user || user.role !== 'mahasiswa' || !user.id) return;
+  // Pengingat masa magang hampir berakhir (H-7/H-3/H-1): sekali per hari, tanpa menunggu jam 15.00
+  require('./magangNotifHelper').cekPengingatPeriodeMahasiswa(db, user);
   if (jamWITA() < JAM_NOTIF_LONCENG) return;
   const tanggal = todayWITA();
   const kunci = `${user.id}_${tanggal}`;
@@ -93,8 +95,8 @@ async function cekPengingatMahasiswa(db, user) {
     await ref.set({
       userId: user.id,
       type: 'logbook-hari-ini',
-      title: 'Anda belum mengisi logbook hari ini',
-      message: `Isi logbook magang untuk ${status.tanggalPanjang} sekarang.`,
+      title: 'Logbook hari ini masih kosong nih 📝',
+      message: `Yuk catat kegiatan magangmu hari ini (${status.tanggalPanjang}) selagi masih segar di ingatan. Cukup beberapa menit kok!`,
       link: status.link,
       read: false,
       createdAt: new Date().toISOString()

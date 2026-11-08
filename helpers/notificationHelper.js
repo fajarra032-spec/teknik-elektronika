@@ -48,6 +48,29 @@ async function createNotification(db, userId, data) {
 }
 
 /**
+ * Buat notifikasi dengan ID dokumen deterministik: kalau ID itu sudah ada,
+ * tidak dibuat lagi (aman dipanggil berulang untuk pengingat harian/berkala).
+ * @returns {Promise<boolean>} true bila notifikasi baru dibuat
+ */
+async function createNotificationOnce(db, userId, docId, data) {
+  if (!userId || !docId || !data || !data.title) return false;
+  const ref = db.collection(COLLECTION).doc(docId);
+  const ada = await ref.get();
+  if (ada.exists) return false;
+  await ref.set({
+    userId,
+    type: data.type || 'info',
+    title: data.title,
+    message: data.message || '',
+    link: data.link || null,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+  navbarNotifCache.delete(userId);
+  return true;
+}
+
+/**
  * Buat notifikasi yang sama untuk banyak user sekaligus (mis. seluruh
  * mahasiswa satu kelas). Dipakai untuk pemicu yang target-nya jelas &
  * terbatas jumlahnya - JANGAN dipakai untuk broadcast ke seluruh pengguna
@@ -139,11 +162,47 @@ async function markAllAsRead(db, userId) {
   navbarNotifCache.delete(userId);
 }
 
+/** Hapus satu notifikasi milik userId (memastikan itu miliknya). */
+async function deleteNotification(db, userId, notifId) {
+  const ref = db.collection(COLLECTION).doc(notifId);
+  const doc = await ref.get();
+  if (!doc.exists || doc.data().userId !== userId) return false;
+  await ref.delete();
+  navbarNotifCache.delete(userId);
+  return true;
+}
+
+/**
+ * Hapus (bersihkan) notifikasi milik user. Dikerjakan per 400 dokumen sampai
+ * habis (maks. 5 putaran = 2000 dokumen per panggilan, cukup untuk pemakaian wajar).
+ * @param {{hanyaDibaca?: boolean}} opsi - true: hanya yang sudah dibaca
+ * @returns {Promise<number>} jumlah yang terhapus
+ */
+async function deleteAllNotifications(db, userId, opsi = {}) {
+  let total = 0;
+  for (let i = 0; i < 5; i++) {
+    let q = db.collection(COLLECTION).where('userId', '==', userId);
+    if (opsi.hanyaDibaca) q = q.where('read', '==', true);
+    const snap = await q.limit(400).get();
+    if (snap.empty) break;
+    const batch = db.batch();
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    total += snap.size;
+    if (snap.size < 400) break;
+  }
+  navbarNotifCache.delete(userId);
+  return total;
+}
+
 module.exports = {
   createNotification,
+  createNotificationOnce,
   createNotificationForUsers,
   getNavbarSummary,
   getAllNotifications,
   markAsRead,
-  markAllAsRead
+  markAllAsRead,
+  deleteNotification,
+  deleteAllNotifications
 };

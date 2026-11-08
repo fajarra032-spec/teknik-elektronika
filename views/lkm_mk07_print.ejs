@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 7, subLkm: 'Proyek Akhir: Integrasi Sistem Mini', nilaiNo: 7 }) %>
+
+<div class="sect-title">1. Identitas Proyek</div>
+<table class="tabel-data">
+  <tbody>
+    <tr><td class="label" style="width:24%;">Judul proyek</td><td colspan="3" class="t30"></td></tr>
+    <tr><td class="label">Studi kasus / masalah</td><td colspan="3" class="t40"></td></tr>
+    <tr><th>Anggota kelompok</th><th style="width:22%;">NIM</th><th colspan="2" style="width:40%;">Tugas dalam proyek</th></tr>
+    <% for (let i = 0; i < 3; i++) { %><tr><td class="t30"></td><td></td><td colspan="2"></td></tr><% } %>
+  </tbody>
+</table>
+
+<div class="sect-title">2. Diagram Blok Sistem</div>
+<div class="alur">
+  <div class="kotak" style="min-height:62px;"><b>Masukan (sensor)</b></div><div class="panah">&rarr;</div>
+  <div class="kotak" style="min-height:62px;"><b>Pengolah (mikrokontroler)</b></div><div class="panah">&rarr;</div>
+  <div class="kotak" style="min-height:62px;"><b>Keluaran (aktuator / tampilan)</b></div>
+</div>
+
+<div class="sect-title">3. Daftar Komponen</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:5%;">No</th><th style="width:28%;">Komponen</th><th style="width:25%;">Spesifikasi</th><th style="width:9%;">Jumlah</th><th>Fungsi dalam sistem</th></tr></thead>
+  <tbody><% for (let i = 1; i <= 5; i++) { %><tr><td class="tengah t30"><%= i %></td><td></td><td></td><td></td><td></td></tr><% } %></tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">4. Alokasi Pin</div>
+<table class="tt">
+  <thead><tr><th style="width:16%;">Pin</th><th style="width:30%;">Terhubung ke</th><th style="width:14%;">Mode</th><th>Catatan</th></tr></thead>
+  <tbody><% for (let i = 0; i < 8; i++) { %><tr><td class="k" style="height:22px;"></td><td></td><td></td><td></td></tr><% } %></tbody>
+</table>
+
+<div class="sect-title">5. Diagram Alir (Flowchart) Program</div>
+<div class="kotak-gambar" style="height:190px;"></div>
+
+<div class="sect-title">6. Rencana dan Realisasi Pengerjaan</div>
+<table class="tabel-data">
+  <thead><tr><th>Tahap</th><th style="width:20%;">Rencana (tanggal)</th><th style="width:20%;">Realisasi (tanggal)</th><th style="width:12%;">Selesai</th><th>Kendala</th></tr></thead>
+  <tbody>
+    <% ['Rancangan dan diagram blok','Uji modul sensor','Uji modul aktuator / tampilan','Integrasi dan uji sistem','Dokumentasi dan demonstrasi'].forEach(t => { %><tr><td class="label"><%= t %></td><td class="t30"></td><td></td><td class="tengah"><%- cb %></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+</div>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">7. Uji Fungsional Sistem</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:5%;">No</th><th>Skenario uji</th><th style="width:26%;">Hasil yang diharapkan</th><th style="width:26%;">Hasil nyata</th><th style="width:9%;">Lulus</th></tr></thead>
+  <tbody><% for (let i = 1; i <= 5; i++) { %><tr><td class="tengah t40"><%= i %></td><td></td><td></td><td></td><td class="tengah"><%- cb %></td></tr><% } %></tbody>
+</table>
+
+<div class="sect-title">8. Dokumentasi</div>
+<div class="foto-wrap"><div class="foto-box">Foto rangkaian</div><div class="foto-box">Foto sistem berjalan</div><div class="foto-box">Tangkapan layar program</div></div>
+
+<div class="sect-title">9. Lembar Penilaian Demonstrasi (diisi dosen)</div>
+<table class="tabel-data nilai-dosen">
+  <thead><tr><th>Aspek penilaian</th><th style="width:12%;">Bobot (%)</th><th style="width:14%;">Skor</th></tr></thead>
+  <tbody>
+    <% [['Kesesuaian rancangan dengan hasil','20'],['Sensor, aktuator, dan tampilan bekerja terpadu','30'],['Kerapian rangkaian dan program','15'],['Dokumentasi dan laporan','15'],['Presentasi dan tanya jawab','20']].forEach(r => { %><tr><td class="label"><%= r[0] %></td><td class="tengah"><%= r[1] %></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">10. Refleksi: Kendala dan Solusi</div>
+<%- g(5) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

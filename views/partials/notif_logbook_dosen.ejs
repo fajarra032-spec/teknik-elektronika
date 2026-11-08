@@ -10,15 +10,15 @@
     .notif-dosen-logbook a.btn-buka { background:#2563eb; color:#fff; font-weight:700; border-radius:50px; padding:.45rem 1.2rem; text-decoration:none; font-size:.88rem; white-space:nowrap; }
     .notif-dosen-logbook a.btn-buka:hover { background:#1d4ed8; }
   </style>
-  <div class="notif-dosen-logbook" role="alert">
+  <div class="notif-dosen-logbook" role="status">
     <span class="ikon"><i class="bi bi-journal-check"></i><span class="jml"><%= navDosenMagang.jumlahMahasiswa %></span></span>
     <div class="teks">
-      <strong><%= navDosenMagang.jumlahMahasiswa %> mahasiswa menunggu persetujuan logbook</strong>
+      <strong><%= navDosenMagang.jumlahMahasiswa %> mahasiswa menunggu tinjauan logbook Anda</strong>
       <span>
-        <%= navDosenMagang.jumlahEntri %> entri belum disetujui:
+        Ada <%= navDosenMagang.jumlahEntri %> entri yang belum ditinjau, di antaranya:
         <%= navDosenMagang.daftar.slice(0, 3).map(function (m) { return m.nama + ' (' + m.pending + ')'; }).join(', ') %><%= navDosenMagang.daftar.length > 3 ? ', dan ' + (navDosenMagang.daftar.length - 3) + ' lainnya' : '' %>
       </span>
     </div>
-    <a class="btn-buka" href="<%= navDosenMagang.linkBuka %>"><i class="bi bi-box-arrow-up-right me-1"></i> Buka sekarang</a>
+    <a class="btn-buka" href="<%= navDosenMagang.linkBuka %>"><i class="bi bi-box-arrow-up-right me-1"></i> Tinjau sekarang</a>
   </div>
 <% } %>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 5, subLkm: 'Interrupt dan Timer', nilaiNo: 5 }) %>
+
+<div class="sect-title">A. Rancangan Alur Program</div>
+<p class="catatan-kecil">Gambar alur program utama dan alur ISR. Tulis nama pin interrupt dan jenis pemicu (RISING / FALLING / CHANGE).</p>
+<div class="alur">
+  <div class="kotak" style="min-height:120px;"><b>Program utama (loop)</b></div>
+  <div class="panah">&#8651;</div>
+  <div class="kotak" style="min-height:120px;"><b>Interrupt Service Routine (ISR)</b></div>
+</div>
+<table class="tt" style="margin-top:6px;">
+  <tr><td style="text-align:left;width:22%;">Pin interrupt</td><td class="k" style="width:28%;"></td><td style="text-align:left;width:22%;">Jenis pemicu</td><td></td></tr>
+  <tr><td style="text-align:left;">Variabel yang diubah ISR</td><td class="k"></td><td style="text-align:left;">Memakai kata volatile?</td><td><%- cb %> Ya <%- cb %> Tidak</td></tr>
+</table>
+
+<div class="sect-title">B. Waktu Respons: Polling dan Interrupt</div>
+<p class="catatan-kecil">Program utama diberi pekerjaan lambat (delay panjang). Ukur selisih waktu dari tombol ditekan sampai LED berubah (stopwatch atau rekaman video).</p>
+<table class="tt">
+  <thead><tr><th style="width:12%;">Percobaan</th><th>Respons dengan polling (ms)</th><th>Respons dengan interrupt (ms)</th><th>Tombol terlewat? (Ya/Tidak)</th></tr></thead>
+  <tbody>
+    <% for (let i = 1; i <= 5; i++) { %><tr><td><%= i %></td><td class="k" style="height:22px;"></td><td></td><td></td></tr><% } %>
+    <tr><td><strong>Rata-rata</strong></td><td class="k" style="height:22px;"></td><td></td><td></td></tr>
+  </tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. Diagram Waktu</div>
+<p class="catatan-kecil">Gambar tiga sinyal pada garis waktu yang sama selama dua kali penekanan tombol.</p>
+<table class="timing">
+  <% ['Tombol','Flag ISR','LED'].forEach(r => { %><tr class="tebal"><td class="nama" style="height:27px;"><%= r %></td><% for (let i = 0; i < 20; i++) { %><td></td><% } %></tr><% }) %>
+</table>
+
+<div class="sect-title">D. Ketelitian Timer</div>
+<div class="rumus-box">Galat (%) = |interval terukur &minus; interval seting| &divide; interval seting &times; 100</div>
+<table class="tt">
+  <thead><tr><th style="width:8%;">No</th><th>Interval seting (ms)</th><th>Interval terukur (ms)</th><th>Galat (%)</th><th>Cara mengukur</th></tr></thead>
+  <tbody>
+    <% ['100','500','1000',''].forEach((v, i) => { %><tr><td><%= i + 1 %></td><td class="k" style="height:24px;"><%= v %></td><td></td><td></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">E. Perbandingan Metode</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:26%;">Kriteria</th><th>Polling</th><th>Interrupt</th></tr></thead>
+  <tbody>
+    <% ['Kecepatan respons','Beban CPU','Kerumitan program','Cocok dipakai untuk'].forEach(k => { %><tr><td class="label"><%= k %></td><td class="t30"></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">F. Pertanyaan Analisis</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Mengapa ISR harus dibuat sesingkat mungkin? Apa yang terjadi bila memakai delay() di dalam ISR?</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Pada percobaan Anda, kapan polling gagal menangkap penekanan tombol?</div><%- g(3) %></div>
+
+<div class="sect-title">G. Kesimpulan</div>
+<%- g(3) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

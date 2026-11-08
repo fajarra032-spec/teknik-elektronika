@@ -1,22 +1,33 @@
-PATCH LOGBOOK MAGANG (cetak mingguan A4 + preview/PDF + form baru + daftar pekan ini)
-====================================================================================
-Timpa file berikut di proyek (struktur folder sama):
-  helpers/logbookPrintHelper.js                    TIMPA
-  helpers/logbookPdfHelper.js                      BARU  (preview + unduh PDF, dipakai 3 rute)
-  routes/mahasiswa/magang.js                       TIMPA (bila sudah Anda ubah sendiri, gabungkan manual)
-  routes/dosen/magang.js                           TIMPA (hanya 2 baris: import + panggilan cetak)
-  routes/admin/emagang.js                          TIMPA (hanya 2 baris: import + panggilan cetak)
-  views/mahasiswa/magang/print.ejs                 TIMPA
-  views/mahasiswa/magang/logbook.ejs               TIMPA
-  views/mahasiswa/magang/logbook_edit.ejs          TIMPA
-  views/mahasiswa/magang/_form_logbook_fields.ejs  BARU
+PATCH NOTIFIKASI MAGANG + TAMPILAN LONCENG BARU
+================================================
+Timpa file berikut (struktur folder sama dengan proyek). Tanpa perubahan database,
+indeks Firestore, package.json, maupun app.js. Restart server setelah menimpa.
 
-Tanpa perubahan database / indeks Firestore / package.json (puppeteer sudah ada). Restart server.
+A. TAMPILAN & PEMBERSIHAN NOTIFIKASI (baru)
+  views/partials/notif_panel.ejs     BARU   panel lonceng + CSS + JS (dipakai seluruh halaman)
+  views/partials/notif_item.ejs      BARU   satu baris notifikasi (ikon berwarna per jenis)
+  views/partials/header.ejs          TIMPA  (hanya blok lonceng: badge ber-id + include notif_panel;
+                                             bila header.ejs sudah Anda ubah, ganti blok "<!-- Notifikasi -->" saja)
+  views/notifikasi.ejs               TIMPA  halaman penuh, gaya sama + filter "Belum dibaca"
+  routes/notifikasi.js               TIMPA  + /:id/hapus, /hapus-semua, balasan JSON (tanpa redirect)
+  helpers/notificationHelper.js      TIMPA  + deleteNotification, deleteAllNotifications, createNotificationOnce
 
-CETAK
-- Tombol "Pratinjau & Cetak Logbook" membuka halaman pratinjau (seperti laporan EDOM):
-  toolbar Kembali | Unduh PDF | Cetak. Unduh PDF = berkas langsung dari server (?pdf=1).
-- 1 lembar = 1 minggu = tepat 1 halaman A4. Isi yang terlalu panjang DIPERKECIL OTOMATIS
-  (paksa muat), tidak pernah terpotong / jadi 2 halaman. Daftar Hadir juga dikunci 1 lembar.
-- Desain baru tanpa garis bawah isian: kartu identitas, tabel berwarna, kotak ringkasan.
-- Disarankan di server Linux: apt install fonts-crosextra-carlito (pengganti Calibri) agar huruf PDF sama dengan pratinjau Windows.
+  Di dropdown lonceng sekarang bisa, TANPA pindah/buka halaman lain:
+   - klik item  -> otomatis ditandai dibaca lalu menuju tautannya
+   - tombol X (muncul saat disentuh/di-hover) -> hapus satu notifikasi
+   - "Tandai dibaca" -> semua dibaca, badge merah langsung hilang
+   - "Bersihkan" -> klik 1x berubah "Yakin? Klik lagi" (3,5 dtk), klik lagi -> semua terhapus
+   - waktu relatif ("5 menit lalu"), titik biru untuk yang belum dibaca, ikon warna per jenis
+
+B. KALIMAT & NOTIFIKASI BARU ALUR MAGANG
+  helpers/magangNotifHelper.js       BARU
+  helpers/logbookNotifHelper.js      TIMPA
+  helpers/dosenReminderHelper.js     TIMPA
+  views/partials/notif_logbook_mahasiswa.ejs  TIMPA
+  views/partials/notif_logbook_dosen.ejs      TIMPA
+  routes/dosen/magang.js, routes/dosen/magangPeriod.js, routes/dosen/laporanReview.js,
+  routes/admin/emagang.js, routes/admin/laporanMagang.js, routes/mahasiswa/magang.js
+        TIMPA (bila sudah Anda ubah, gabungkan manual: hanya baris yang memuat "magangNotif")
+
+Catatan: notifikasi yang dihapus tidak bisa dikembalikan. Bila JS dimatikan, tombol tetap
+berfungsi sebagai pengiriman biasa (redirect) di halaman /notifikasi.

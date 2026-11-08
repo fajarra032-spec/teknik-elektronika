@@ -116,8 +116,8 @@ async function ingatkanLogbookMenunggu(db, user, tanggal) {
   if (!r.jumlahMahasiswa) return;
   await buatJikaBelumAda(db, `logbook-pending-${dosenId}-${tanggal}`, user.id, {
     type: 'logbook-menunggu',
-    title: `${r.jumlahMahasiswa} mahasiswa menunggu persetujuan logbook`,
-    message: `${r.jumlahEntri} entri logbook belum Anda setujui. Buka sekarang untuk meninjau.`,
+    title: `${r.jumlahMahasiswa} mahasiswa menunggu tanda tangan logbook dari Bapak/Ibu`,
+    message: `Ada ${r.jumlahEntri} entri logbook yang belum ditinjau. Sempatkan mampir sebentar ya, Bapak/Ibu.`,
     link: r.linkBuka
   });
 }
@@ -135,7 +135,8 @@ async function cekPengingatDosen(db, user) {
       await Promise.all([
         ingatkanJadwalMengajar(db, user, tanggal),
         ingatkanTugasBelumDinilai(db, user, tanggal),
-        ingatkanLogbookMenunggu(db, user, tanggal)
+        ingatkanLogbookMenunggu(db, user, tanggal),
+        require('./magangNotifHelper').cekPengingatPeriodeDosen(db, user)
       ]);
     } catch (error) {
       console.error('Gagal membuat pengingat otomatis dosen:', error);
