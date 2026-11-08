@@ -217,7 +217,9 @@
   document.querySelectorAll('[data-nf-scope]').forEach(function (scope) {
     scope.addEventListener('click', function (e) {
       tangani(e);
-      e.stopPropagation();              // jangan tutup dropdown saat membaca/menghapus di dalam panel
+      // jangan tutup dropdown saat membaca/menghapus di dalam panel (di modal tidak perlu, dan
+      // tombol data-bs-dismiss milik Bootstrap harus tetap sampai ke document)
+      if (!scope.closest('.modal')) e.stopPropagation();
     });
     scope.addEventListener('keydown', function (e) {
       if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('nf-main') && e.target.tagName !== 'A') {
@@ -235,6 +237,7 @@
     });
   });
 
+  window.nfSegarkan = function () { segarkanWaktu(); perbaruiKosong(); };   // dipakai pop up login
   if (badge) setBadge(hitung());
   perbaruiKosong();
   }

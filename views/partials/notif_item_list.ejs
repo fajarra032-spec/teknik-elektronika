@@ -1,0 +1,2 @@
+<%# Daftar baris notifikasi (potongan HTML untuk pop up login & pemuatan via AJAX). Param: items, penuh %>
+<% (items || []).forEach(function (n) { %><%- include('notif_item', { n: n, penuh: (typeof penuh !== 'undefined' && penuh) }) %><% }); %>

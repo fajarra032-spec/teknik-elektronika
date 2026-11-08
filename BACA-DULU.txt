@@ -68,3 +68,15 @@ D. NOTIFIKASI NILAI UNTUK MAHASISWA (baru)
   notifikasi baru dikirim lagi hanya bila nilainya berubah.
   TIDAK dinotifikasi (sengaja, karena auto-simpan saat mengetik = bisa puluhan notifikasi): nilai tugas manual
   di halaman Rincian Tugas dan komponen rubrik (kehadiran/sikap/keaktifan/kuis/UTS/UAS).
+
+
+E. POP UP NOTIFIKASI SAAT LOGIN (diperluas)
+  views/partials/popup_login.ejs     TIMPA  (sudah ada di proyek; dipakai footer.ejs, tidak perlu ubah footer)
+  views/partials/notif_item_list.ejs BARU   potongan daftar notifikasi untuk pop up
+  views/partials/notif_panel.ejs     TIMPA  (+ penyegar daftar pop up, tombol Tutup modal tidak lagi dicegat)
+  routes/notifikasi.js               TIMPA  + GET /notifikasi/belum-dibaca (JSON + HTML, maks. 30 terbaru)
+
+  Perilaku: setelah login berhasil (req.session.popupNotif di routes/auth.js - tidak diubah), pop up muncul SEKALI
+  berisi: (1) baris "Perlu tindakan" (logbook hari ini kosong / antrean logbook dosen / pekerjaan admin) dan
+  (2) SEMUA notifikasi yang belum dibaca (sebelumnya hanya 3). Dari dalam pop up bisa klik (otomatis ditandai dibaca),
+  hapus per item (X), atau "Tandai dibaca" semua - tanpa pindah halaman. Bila tidak ada isi apa pun, pop up tidak muncul.

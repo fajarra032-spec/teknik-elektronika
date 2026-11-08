@@ -1,73 +1,96 @@
 <%#
-  Pop up ringkasan notifikasi yang muncul SEKALI setelah login.
-  Pemicu: req.session.popupNotif = true (diset di routes/auth.js saat login berhasil).
-  Dikonsumsi di sini: flag dimatikan begitu halaman penuh dirender, sehingga tidak muncul lagi di halaman berikutnya.
-  Isi berasal dari res.locals yang disiapkan app.js: navMhsLogbook, navDosenMagang, navNotifikasi, navAdminPending.
+  Pop up notifikasi yang muncul SEKALI setelah login - menampilkan SEMUA notifikasi yang belum dibaca
+  (maks. 30 terbaru) ditambah baris "perlu tindakan" (logbook hari ini, antrean dosen/admin).
+  Pemicu : req.session.popupNotif = true (diset routes/auth.js saat login berhasil).
+  Sekali : flag dimatikan begitu halaman penuh dirender, jadi tidak muncul lagi di halaman berikutnya.
+  Data   : baris "perlu tindakan" dari res.locals app.js (navMhsLogbook, navDosenMagang, navAdminPending);
+           daftar notifikasi diambil lewat GET /notifikasi/belum-dibaca. Pop up hanya tampil bila ada isinya.
+  Aksi   : klik = tandai dibaca lalu buka; X = hapus; "Tandai dibaca" - semua tanpa pindah halaman
+           (logika bersama ada di views/partials/notif_panel.ejs).
 %>
 <%
   var _popup = (typeof session !== 'undefined' && session && session.popupNotif === true);
   if (_popup) { session.popupNotif = false; }   // sekali saja
 
-  var _pItems = [];
+  var _live = [];
   var user = (typeof popupUser !== 'undefined') ? popupUser : null;
   if (_popup && user) {
     if (typeof navMhsLogbook !== 'undefined' && navMhsLogbook && navMhsLogbook.perluDiisi) {
-      _pItems.push({ ikon: 'exclamation-triangle-fill', warna: '#ea580c', judul: 'Anda belum mengisi logbook hari ini',
-        isi: navMhsLogbook.tanggalPanjang, link: navMhsLogbook.link, tombol: 'Isi logbook sekarang' });
+      _live.push({ ikon: 'journal-text', warna: 'amber', judul: 'Logbook hari ini masih kosong nih 📝',
+        isi: navMhsLogbook.tanggalPanjang + ' · yuk catat kegiatan magangmu sebelum lupa.', link: navMhsLogbook.link, tombol: 'Isi sekarang' });
     }
     if (typeof navDosenMagang !== 'undefined' && navDosenMagang && navDosenMagang.jumlahMahasiswa > 0) {
-      _pItems.push({ ikon: 'journal-check', warna: '#2563eb', judul: navDosenMagang.jumlahMahasiswa + ' mahasiswa menunggu persetujuan logbook',
-        isi: navDosenMagang.jumlahEntri + ' entri: ' + navDosenMagang.daftar.slice(0, 3).map(function (m) { return m.nama + ' (' + m.pending + ')'; }).join(', ') + (navDosenMagang.daftar.length > 3 ? ', dan ' + (navDosenMagang.daftar.length - 3) + ' lainnya' : ''),
-        link: navDosenMagang.linkBuka, tombol: 'Buka sekarang' });
+      _live.push({ ikon: 'journal-check', warna: 'blue', judul: navDosenMagang.jumlahMahasiswa + ' mahasiswa menunggu tinjauan logbook Anda',
+        isi: 'Ada ' + navDosenMagang.jumlahEntri + ' entri yang belum ditinjau, di antaranya: ' + navDosenMagang.daftar.slice(0, 3).map(function (m) { return m.nama + ' (' + m.pending + ')'; }).join(', ') + (navDosenMagang.daftar.length > 3 ? ', dan ' + (navDosenMagang.daftar.length - 3) + ' lainnya' : '') + '.',
+        link: navDosenMagang.linkBuka, tombol: 'Tinjau sekarang' });
     }
     if (user.role === 'admin' && typeof navAdminPending !== 'undefined' && navAdminPending && navAdminPending.total > 0) {
-      _pItems.push({ ikon: 'clipboard-check', warna: '#7c3aed', judul: navAdminPending.total + ' pekerjaan menunggu tindakan admin',
+      _live.push({ ikon: 'clipboard-check', warna: 'purple', judul: navAdminPending.total + ' pekerjaan menunggu tindakan Anda',
         isi: 'Kunjungan industri, peminjaman alat, seminar magang, atau pendaftar PMB.', link: '/admin/dashboard', tombol: 'Lihat' });
     }
-    if (typeof navNotifikasi !== 'undefined' && navNotifikasi && navNotifikasi.items) {
-      var _lain = navNotifikasi.items.filter(function (n) { return !n.read && n.type !== 'logbook-hari-ini' && n.type !== 'logbook-menunggu'; }).slice(0, 3);
-      _lain.forEach(function (n) {
-        _pItems.push({ ikon: 'bell-fill', warna: '#0d9488', judul: n.title || 'Notifikasi baru', isi: n.message || '', link: n.link || '/notifikasi', tombol: 'Buka' });
-      });
-    }
   }
+  var _unreadBadge = (typeof navNotifikasi !== 'undefined' && navNotifikasi) ? (navNotifikasi.unreadCount || 0) : 0;
 %>
-<% if (_popup && _pItems.length > 0) { %>
+<% if (_popup && user && (_live.length > 0 || _unreadBadge > 0)) { %>
   <style>
     .popup-login .modal-content { border: 0; border-radius: 1.2rem; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
     .popup-login .modal-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: #fff; border: 0; padding: 1rem 1.3rem; }
     .popup-login .modal-header .btn-close { filter: invert(1); opacity: .85; }
-    .popup-login .pl-item { display: flex; gap: .85rem; align-items: flex-start; padding: .8rem .9rem; border: 1px solid #e5e7eb; border-radius: .9rem; margin-bottom: .6rem; background: #fff; }
-    .popup-login .pl-ikon { font-size: 1.5rem; line-height: 1; flex: 0 0 auto; margin-top: .15rem; }
-    .popup-login .pl-judul { font-weight: 800; color: #0f2b5c; }
-    .popup-login .pl-isi { font-size: .84rem; color: #64748b; overflow-wrap: anywhere; }
-    .popup-login .pl-aksi { margin-left: auto; align-self: center; flex: 0 0 auto; }
+    .popup-login .modal-body { padding: .9rem .9rem .4rem; background: #fff; }
+    .popup-login .pl-label { font-size: .72rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #64748b; margin: .2rem .3rem .45rem; }
+    .popup-login .pl-live { display: flex; gap: .75rem; align-items: center; padding: .7rem .75rem; border: 1px solid #e2e8f0; border-radius: .9rem; margin-bottom: .5rem; background: #fff; }
+    .popup-login .pl-live .pl-teks { min-width: 0; flex: 1 1 auto; }
+    .popup-login .pl-live .pl-judul { font-weight: 800; font-size: .86rem; color: #0f172a; }
+    .popup-login .pl-live .pl-isi { font-size: .78rem; color: #475569; overflow-wrap: anywhere; }
+    .popup-login .pl-live .pl-aksi { flex: 0 0 auto; border-radius: 50px; white-space: nowrap; font-weight: 700; font-size: .78rem; background: #1e3a8a; color: #fff; padding: .35rem .85rem; text-decoration: none; }
+    .popup-login .pl-live .pl-aksi:hover { background: #1d4ed8; color: #fff; }
+    .popup-login .nf-list { max-height: none; overflow: visible; padding: 0 0 .3rem; }
+    .popup-login .pl-memuat { text-align: center; padding: 1.2rem; color: #64748b; font-size: .85rem; }
+    .popup-login .modal-footer { border: 0; padding: .4rem .9rem .9rem; background: #fff; gap: .35rem; }
+    .popup-login .pl-sorot { font-size: .75rem; color: #64748b; text-align: center; padding: 0 .5rem .4rem; }
+    .navbar-dropdown-panel .pl-isi, .popup-login .pl-live span { color: inherit; }
   </style>
   <div class="modal fade popup-login" id="popupLoginModal" tabindex="-1" aria-labelledby="popupLoginJudul" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content" data-nf-scope>
         <div class="modal-header">
           <div>
-            <h5 class="modal-title fw-bold" id="popupLoginJudul"><i class="bi bi-bell-fill me-2"></i>Halo, <%= user.nama || 'Pengguna' %>!</h5>
-            <div class="small opacity-75">Ada <%= _pItems.length %> hal yang perlu perhatian Anda</div>
+            <h5 class="modal-title fw-bold" id="popupLoginJudul">Halo, <%= user.nama || 'Pengguna' %>! 👋</h5>
+            <div class="small opacity-75" id="plRingkas">Ini kabar terbaru untukmu</div>
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
         </div>
         <div class="modal-body">
-          <% _pItems.forEach(function (it) { %>
-            <div class="pl-item">
-              <i class="bi bi-<%= it.ikon %> pl-ikon" style="color:<%= it.warna %>;"></i>
-              <div style="min-width:0;">
-                <div class="pl-judul"><%= it.judul %></div>
-                <% if (it.isi) { %><div class="pl-isi"><%= it.isi %></div><% } %>
+          <% if (_live.length > 0) { %>
+            <div class="pl-label">Perlu tindakan</div>
+            <% _live.forEach(function (it) { %>
+              <div class="pl-live">
+                <span class="nf-ico nf-c-<%= it.warna %>"><i class="bi bi-<%= it.ikon %>"></i></span>
+                <div class="pl-teks">
+                  <div class="pl-judul"><%= it.judul %></div>
+                  <div class="pl-isi"><%= it.isi %></div>
+                </div>
+                <a class="pl-aksi" href="<%= it.link %>"><%= it.tombol %></a>
               </div>
-              <a class="btn btn-sm pl-aksi" style="background:<%= it.warna %>;color:#fff;border-radius:50px;white-space:nowrap;" href="<%= it.link %>"><%= it.tombol %></a>
+            <% }) %>
+          <% } %>
+
+          <div id="plBagianNotif">
+            <div class="pl-label">Notifikasi baru</div>
+            <div class="pl-memuat" id="plMemuat">Memuat notifikasi&hellip;</div>
+            <ul class="nf-list" id="plList"></ul>
+            <div class="nf-empty" id="plEmpty" hidden>
+              <i class="bi bi-bell"></i>
+              <strong>Semua sudah bersih ✨</strong>
+              <span>Tidak ada notifikasi baru lagi.</span>
             </div>
-          <% }) %>
+            <div class="pl-sorot" id="plLebih" hidden></div>
+          </div>
         </div>
-        <div class="modal-footer border-0 pt-0">
-          <a href="/notifikasi" class="btn btn-link btn-sm me-auto">Semua notifikasi</a>
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Nanti saja</button>
+        <div class="modal-footer">
+          <a href="/notifikasi" class="btn btn-link btn-sm me-auto">Lihat semua</a>
+          <span class="nf-actions"><button type="button" class="nf-btn" data-nf-action="read-all" title="Tandai semua sudah dibaca"><i class="bi bi-check2-all"></i> Tandai dibaca</button></span>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
         </div>
       </div>
     </div>
@@ -75,7 +98,40 @@
   <script>
     window.addEventListener('load', function () {
       var el = document.getElementById('popupLoginModal');
-      if (el && window.bootstrap && bootstrap.Modal) { new bootstrap.Modal(el).show(); }
+      if (!el || !window.bootstrap || !bootstrap.Modal) return;
+      var liveCount = <%= _live.length %>;
+      var bagian = document.getElementById('plBagianNotif');
+      var list = document.getElementById('plList');
+      var memuat = document.getElementById('plMemuat');
+      var lebih = document.getElementById('plLebih');
+      var ringkas = document.getElementById('plRingkas');
+      var tampil = function () { new bootstrap.Modal(el).show(); };
+
+      function ringkasan(n) {
+        var total = n + liveCount;
+        ringkas.textContent = total > 0 ? ('Ada ' + total + ' kabar untukmu hari ini') : 'Ini kabar terbaru untukmu';
+      }
+
+      fetch('/notifikasi/belum-dibaca?popup=1', {
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'fetch' }
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        var n = (d && d.ok) ? (d.total || 0) : 0;
+        if (n > 0) {
+          list.innerHTML = d.html;
+          if (d.lebih > 0) { lebih.textContent = 'Menampilkan ' + n + ' terbaru, masih ada ' + d.lebih + ' lainnya.'; lebih.hidden = false; }
+          if (window.nfSegarkan) window.nfSegarkan();
+        } else {
+          bagian.hidden = true;             // tidak ada notifikasi baru: tinggalkan baris "perlu tindakan" saja
+        }
+        memuat.hidden = true;
+        ringkasan(n);
+        if (n + liveCount > 0) tampil();
+      }).catch(function () {
+        bagian.hidden = true;
+        ringkasan(0);
+        if (liveCount > 0) tampil();
+      });
     });
   </script>
 <% } %>

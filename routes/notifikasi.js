@@ -51,6 +51,25 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /notifikasi/belum-dibaca - semua notifikasi yang belum dibaca (maks. 30 terbaru) sebagai JSON
+// + potongan HTML siap pakai. Dipakai pop up setelah login. ?popup=1 menyembunyikan jenis yang
+// sudah tampil sebagai baris "perlu tindakan" (pengingat logbook) agar tidak dobel.
+router.get('/belum-dibaca', async (req, res) => {
+  try {
+    const semua = await getAllNotifications(db, req.user.id, 100);
+    const abaikan = req.query.popup === '1' ? ['logbook-hari-ini', 'logbook-menunggu'] : [];
+    const belum = semua.filter(n => !n.read && !abaikan.includes(n.type));
+    const items = belum.slice(0, 30);
+    res.render('partials/notif_item_list', { items, penuh: false }, (err, html) => {
+      if (err) {
+        console.error('Gagal render daftar notifikasi:', err);
+        return res.status(500).json({ ok: false, message: 'Gagal memuat notifikasi' });
+      }
+      res.json({ ok: true, total: items.length, lebih: Math.max(0, belum.length - items.length), html });
+    });
+  } catch (e) { gagal(req, res, '/notifikasi', e); }
+});
+
 // POST /notifikasi/baca-semua - tandai semua dibaca
 router.post('/baca-semua', async (req, res) => {
   try {
