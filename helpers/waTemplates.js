@@ -23,6 +23,11 @@ const TEMPLATES = {
     body: 'Halo {{1}}, pengingat dari Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih.',
     contoh: ['Budi', 'Logbook hari ini masih kosong', 'Buka: https://elektronika.polidewa.ac.id/mahasiswa/magang']
   },
+  pengingat_kuliah: {
+    language: 'id',
+    body: 'Halo {{1}}, pengingat jadwal dari Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih.',
+    contoh: ['Budi', 'Jadwal kuliah hari ini (Senin, 9 Nov 2026)', '• 08:00–10:30 Rangkaian Listrik (Ruang A101)']
+  },
   info_dosen: {
     language: 'id',
     body: 'Yth. {{1}}, informasi dari Sistem Informasi Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih.',

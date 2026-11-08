@@ -28,6 +28,8 @@ Kolom **WA** = dikirim ke WhatsApp secara bawaan. Aturan yang mati bisa dinyalak
 | `tugas_belum_dinilai` | N tugas mahasiswa menunggu dinilai | dosenReminderHelper | Dosen | info_dosen | ✅ |
 | `jadwal_mengajar` | Jadwal mengajar hari ini: {MK} | dosenReminderHelper | Dosen | info_dosen | ⬜ (satu per MK) |
 | `alat` | Peminjaman alat disetujui/ditolak; pengembalian terverifikasi/belum diterima | peminjamanAlatHelper | Mahasiswa | info_layanan | ✅ |
+| `kuliah_pagi` | Jadwal kuliah/mengajar hari ini (ringkasan 1 pesan) | kuliahReminderHelper (**baru**) | Mahasiswa & Dosen | pengingat_kuliah | ✅ |
+| `kuliah_sebelum` | Kuliah/mengajar pukul HH:MM dimulai N menit lagi | kuliahReminderHelper (**baru**) | Mahasiswa & Dosen | pengingat_kuliah | ✅ bila `KULIAH_REMINDER_MENIT` > 0 |
 | `pesan` | Pesan baru dari {nama} (chat website) | messengerHelper | Mahasiswa & Dosen | info_layanan | ⬜ (ramai) |
 
 Tidak diteruskan: notifikasi ke **admin** (mis. "Pengajuan peminjaman alat baru") dan jenis lain yang tidak punya aturan.

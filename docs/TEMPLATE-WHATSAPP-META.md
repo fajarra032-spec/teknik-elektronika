@@ -8,6 +8,7 @@ Semua template memakai 3 variabel: `{{1}}` nama penerima, `{{2}}` judul, `{{3}}`
 | `nilai_keluar` | Halo {{1}}, ada pembaruan nilai di Sistem Informasi Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih. Prodi Teknik Elektronika. |
 | `info_magang` | Halo {{1}}, informasi magang Anda: {{2}}. {{3}} Terima kasih. Prodi Teknik Elektronika. |
 | `pengingat_logbook` | Halo {{1}}, pengingat dari Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih. |
+| `pengingat_kuliah` | Halo {{1}}, pengingat jadwal dari Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih. |
 | `info_dosen` | Yth. {{1}}, informasi dari Sistem Informasi Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih. |
 | `info_layanan` | Halo {{1}}, pemberitahuan layanan Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih. |
 

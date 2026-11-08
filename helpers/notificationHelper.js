@@ -113,6 +113,8 @@ async function createNotificationForUsers(db, userIds, data) {
  * terbaru (dibaca maupun belum). Hasilnya di-cache singkat per user.
  */
 async function getNavbarSummary(db, userId) {
+  // Cadangan: pastikan penjadwal pengingat kuliah berjalan (idempotent; no-op bila WA mati).
+  try { require('./kuliahReminderHelper').mulai(db); } catch (_) { /* jangan ganggu navbar */ }
   if (!userId) return { unreadCount: 0, items: [] };
   return navbarNotifCache.getOrFetch(userId, async () => {
     // Dua query berjalan paralel. Jumlah belum dibaca memakai count()

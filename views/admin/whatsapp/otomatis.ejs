@@ -29,6 +29,20 @@
     </div>
   </div>
 
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <div class="fw-bold mb-2"><i class="bi bi-calendar-check me-1"></i>Pengingat kuliah (dosen &amp; mahasiswa)</div>
+      <div class="row g-3 small">
+        <div class="col-6 col-md-3"><div class="text-muted">Penjadwal</div>
+          <strong><%- kuliah.aktif ? (kuliah.berjalan ? '<span class="text-success">Berjalan</span>' : '<span class="text-warning">Aktif, menunggu start</span>') : '<span class="text-secondary">Nonaktif</span>' %></strong></div>
+        <div class="col-6 col-md-3"><div class="text-muted">Ringkasan pagi</div><strong><%= kuliah.pagi %> WITA</strong></div>
+        <div class="col-6 col-md-3"><div class="text-muted">Sebelum kelas</div><strong><%= kuliah.sebelumMenit > 0 ? kuliah.sebelumMenit + ' menit sebelum' : 'Mati' %></strong></div>
+        <div class="col-6 col-md-3"><div class="text-muted">Untuk</div><strong><%= [kuliah.dosen ? 'Dosen' : '', kuliah.mahasiswa ? 'Mahasiswa' : ''].filter(Boolean).join(' + ') || '—' %></strong></div>
+      </div>
+      <div class="text-muted small mt-2">Jadwal dibaca dari field <code>jadwal</code> pada mata kuliah (mis. <em>Senin 08:00-10:30, Ruang A101</em>). Mata kuliah tanpa jadwal terbaca tidak diingatkan.</div>
+    </div>
+  </div>
+
   <div class="card shadow-sm">
     <div class="table-responsive">
       <table class="table table-sm table-hover align-middle mb-0">

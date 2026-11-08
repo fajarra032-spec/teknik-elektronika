@@ -10,6 +10,7 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../../config/firebaseAdmin');
 const waNotifier = require('../../helpers/waNotifier');
+const kuliahReminder = require('../../helpers/kuliahReminderHelper');
 
 const API_BASE = (process.env.NOTIFICATION_API_URL || '').replace(/\/+$/, '');
 const API_KEY = process.env.NOTIFICATION_INTERNAL_KEY || '';

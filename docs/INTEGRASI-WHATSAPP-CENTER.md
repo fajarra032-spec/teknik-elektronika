@@ -1,4 +1,4 @@
-# Patch Integrasi WhatsApp Center v4 — Website Teknik Elektronika
+# Patch Integrasi WhatsApp Center v5 — Website Teknik Elektronika
 
 Patch ini menambahkan menu **WhatsApp Center** ke dashboard admin website Teknik Elektronika.
 
@@ -49,6 +49,25 @@ Route mengharapkan endpoint Notification API berikut:
 - `POST /internal/messages`
 
 Kode mencoba membaca array dari properti `conversations`/`messages`, `items`, `results`, atau array langsung. Jika struktur respons API berbeda, sesuaikan `unwrapArray()` pada `routes/admin/whatsapp.js`.
+
+## Tambahan v5 — Pengingat kuliah dosen & mahasiswa
+- `helpers/kuliahReminderHelper.js` (baru): penjadwal 1 tick/menit di dalam aplikasi website (tidak butuh cron/PM2 baru).
+  - **Ringkasan pagi** (bawaan 06:30 WITA): 1 pesan berisi semua kelas hari itu, ke dosen pengampu dan mahasiswa peserta.
+  - **Sebelum kelas** (bawaan MATI): set `KULIAH_REMINDER_MENIT=60` untuk pengingat 1 jam sebelum tiap kelas.
+- Sumber: `mataKuliah.jadwal` (teks, boleh banyak sesi dipisah `;`), `mataKuliah.dosenIds`, dan `enrollment` berstatus `active`
+  pada **periode akademik berjalan** (enrollment angkatan lama tidak ikut).
+- Pesan dibuat sebagai notifikasi lonceng dengan ID deterministik (tidak ganda walau server restart), lalu diteruskan ke WA
+  oleh `waNotifier` (opt-out, jam tenang, log, template). Pengingat kuliah tidak memakai kuota 5 pesan/hari.
+- Hanya aktif bila `WA_AUTO_ENABLED=true`. Opsi `.env`: `KULIAH_REMINDER_ENABLED`, `KULIAH_PAGI_JAM`, `KULIAH_PAGI_BATAS`,
+  `KULIAH_REMINDER_MENIT`, `KULIAH_UNTUK_DOSEN`, `KULIAH_UNTUK_MAHASISWA`.
+- **Start penjadwal:** otomatis (cadangan lewat `notificationHelper`, begitu ada satu halaman login dibuka setelah restart).
+  Agar pasti jalan sejak server hidup, tambahkan SATU baris di `app.js`, tepat di dalam callback `app.listen(...)`:
+  ```js
+  require('./helpers/kuliahReminderHelper').mulai(require('./config/firebaseAdmin').getFirebaseInstances().db);
+  ```
+  (sesuaikan cara mengambil `db` dengan yang dipakai app.js; lihat `getFirebaseInstances` di config/firebaseAdmin.js).
+- Batasan: tidak mengenal hari libur/kalender akademik; kelas dengan jadwal tidak terbaca (tanpa hari atau tanpa jam) dilewati.
+- Template Meta baru: `pengingat_kuliah` (lihat `docs/TEMPLATE-WHATSAPP-META.md`).
 
 ## Tambahan v4 — Notifikasi otomatis website → WhatsApp
 - `helpers/waNotifier.js` (baru), `helpers/waTemplates.js` (baru), `helpers/notificationHelper.js` (diubah: 4 baris pemanggilan).

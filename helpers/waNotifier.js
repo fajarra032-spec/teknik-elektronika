@@ -34,7 +34,7 @@ const list = (k) => String(env(k, '')).split(',').map(s => s.trim()).filter(Bool
 
 const LOG_COLLECTION = 'wa_auto_logs';
 const WITA_MS = 8 * 3600 * 1000;
-const MAX_QUEUE = 500;
+const MAX_QUEUE = 1000;
 const MAX_DEFERRED = 300;
 
 // ---------------------------------------------------------------------------
@@ -68,6 +68,9 @@ const RULES = [
   { key: 'sk_dosen',         type: 'sk',                                           roles: DSN, template: 'info_dosen',   on: true,  label: 'SK Mengajar / SK Pembimbing Akademik terbit' },
   { key: 'tugas_belum_dinilai', type: 'tugas-belum-dinilai',                       roles: DSN, template: 'info_dosen',   on: true,  label: 'Ringkasan tugas belum dinilai' },
   { key: 'jadwal_mengajar',  type: 'jadwal-mengajar',                              roles: DSN, template: 'info_dosen',   on: false, label: 'Pengingat jadwal mengajar hari ini' },
+  // Pengingat kuliah (dibuat oleh helpers/kuliahReminderHelper.js)
+  { key: 'kuliah_pagi',    type: 'kuliah-pagi',    roles: ['mahasiswa', 'dosen'], template: 'pengingat_kuliah', on: true, bypassKuota: true, label: 'Ringkasan jadwal kuliah/mengajar hari ini (pagi)' },
+  { key: 'kuliah_sebelum', type: 'kuliah-sebelum', roles: ['mahasiswa', 'dosen'], template: 'pengingat_kuliah', on: true, bypassKuota: true, label: 'Pengingat N menit sebelum kelas dimulai' },
   // Layanan
   { key: 'alat',             type: 'peminjaman_alat',                              roles: MHS, template: 'info_layanan', on: true,  label: 'Status peminjaman alat lab (ke mahasiswa)' },
   { key: 'pesan',            type: 'pesan',                                        roles: ['mahasiswa', 'dosen'], template: 'info_layanan', on: false, label: 'Pesan baru di chat website' }
@@ -255,10 +258,11 @@ async function proses(job) {
 
   const kKey = `${userId}|${tglWita()}`;
   const terpakai = kuotaHarian.get(kKey) || 0;
-  if (terpakai >= num('WA_AUTO_MAX_PER_DAY', 5)) return catat(db, job, 'dilewati', 'batas harian penerima tercapai', { to: p.nomor });
+  // Pengingat kuliah punya pembatas sendiri (1 ringkasan/hari + opsional per kelas) -> tidak memakai kuota harian umum.
+  if (!rule.bypassKuota && terpakai >= num('WA_AUTO_MAX_PER_DAY', 5)) return catat(db, job, 'dilewati', 'batas harian penerima tercapai', { to: p.nomor });
 
   if (bool('WA_AUTO_DRY_RUN', 'true')) {
-    kuotaHarian.set(kKey, terpakai + 1);
+    if (!rule.bypassKuota) kuotaHarian.set(kKey, terpakai + 1);
     return catat(db, job, 'simulasi', 'dry-run: tidak dikirim', { to: p.nomor });
   }
 
@@ -268,7 +272,7 @@ async function proses(job) {
     : { to: p.nomor, text: susunTeks(data, p.nama) };
   try {
     await kirimDenganUlang(body);
-    kuotaHarian.set(kKey, terpakai + 1);
+    if (!rule.bypassKuota) kuotaHarian.set(kKey, terpakai + 1);
     await catat(db, job, 'terkirim', null, { to: p.nomor });
   } catch (e) {
     await catat(db, job, 'gagal', potong(e.message, 200), { to: p.nomor });
