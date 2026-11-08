@@ -1,0 +1,6 @@
+<% var _t = (typeof waTab !== 'undefined') ? waTab : ''; %>
+<ul class="nav nav-pills mb-3 gap-1">
+  <li class="nav-item"><a class="nav-link <%= _t === 'dashboard' ? 'active' : '' %>" href="/admin/whatsapp/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
+  <li class="nav-item"><a class="nav-link <%= _t === 'inbox' ? 'active' : '' %>" href="/admin/whatsapp"><i class="bi bi-chat-dots me-1"></i>Inbox</a></li>
+  <li class="nav-item"><a class="nav-link <%= _t === 'riwayat' ? 'active' : '' %>" href="/admin/whatsapp/riwayat"><i class="bi bi-clock-history me-1"></i>Riwayat</a></li>
+</ul>

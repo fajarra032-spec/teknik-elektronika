@@ -1,0 +1,139 @@
+<%- include('../../partials/header') %>
+
+<style>
+  .wa-page { max-width: 1440px; margin: 1.5rem auto; }
+  .wa-shell { display:grid; grid-template-columns: minmax(280px, 360px) minmax(0,1fr); gap:1rem; min-height:650px; }
+  .wa-panel { background:#fff; border:1px solid #e2e8f0; border-radius:1rem; overflow:hidden; box-shadow:0 4px 16px rgba(15,23,42,.04); }
+  .wa-panel-head { padding:1rem 1.15rem; border-bottom:1px solid #e2e8f0; }
+  .wa-list { max-height:650px; overflow-y:auto; }
+  .wa-conv { display:block; padding:.9rem 1rem; border-bottom:1px solid #f1f5f9; text-decoration:none; color:#0f172a; }
+  .wa-conv:hover,.wa-conv.active { background:#f0fdf4; }
+  .wa-conv.active { border-left:4px solid #16a34a; padding-left:calc(1rem - 4px); }
+  .wa-muted { color:#64748b; font-size:.82rem; }
+  .wa-chat { display:flex; flex-direction:column; min-height:650px; }
+  .wa-messages { flex:1; padding:1.2rem; background:#f8fafc; overflow-y:auto; max-height:560px; }
+  .wa-bubble { max-width:min(78%,650px); padding:.7rem .9rem; margin-bottom:.8rem; border-radius:1rem; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .wa-in { background:#fff; border:1px solid #e2e8f0; border-top-left-radius:.25rem; }
+  .wa-out { background:#dcfce7; border:1px solid #bbf7d0; margin-left:auto; border-top-right-radius:.25rem; }
+  .wa-compose { padding:1rem; border-top:1px solid #e2e8f0; background:#fff; }
+  .wa-empty { display:flex; align-items:center; justify-content:center; text-align:center; min-height:500px; color:#64748b; padding:2rem; }
+  @media(max-width:850px) { .wa-shell {grid-template-columns:1fr;} .wa-list {max-height:300px;} .wa-chat {min-height:500px;} .wa-messages {max-height:420px;} }
+</style>
+
+<div class="container-fluid wa-page">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-whatsapp text-success me-2"></i>WhatsApp Center</h2>
+      <div class="text-muted small">Inbox komunikasi WhatsApp Program Studi D3 Teknik Elektronika</div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="/admin/whatsapp/riwayat" class="btn btn-outline-secondary btn-sm"><i class="bi bi-clock-history me-1"></i>Riwayat pengiriman</a>
+      <a href="/admin/whatsapp<%= selectedWaId ? '?waId=' + selectedWaId : '' %>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise me-1"></i>Muat ulang</a>
+    </div>
+  </div>
+
+  <% var waTab = 'inbox'; %>
+  <%- include('_tabs', { waTab: waTab }) %>
+
+  <% if (apiError) { %>
+    <div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-2"></i><%= apiError %></div>
+  <% } %>
+  <% if (success) { %>
+    <div class="alert alert-success"><i class="bi bi-check-circle me-2"></i><%= success %></div>
+  <% } %>
+  <% if (sendError) { %>
+    <div class="alert alert-danger"><i class="bi bi-exclamation-circle me-2"></i><%= sendError %></div>
+  <% } %>
+
+  <div class="wa-shell">
+    <section class="wa-panel">
+      <div class="wa-panel-head">
+        <div class="fw-bold">Percakapan</div>
+        <div class="wa-muted"><%= conversations.length %> percakapan tersimpan</div>
+      </div>
+      <div class="wa-list">
+        <% if (!conversations.length) { %>
+          <div class="p-4 text-center text-muted small">Belum ada percakapan atau API belum mengembalikan data.</div>
+        <% } %>
+        <% conversations.forEach(function(c) {
+          const phone = String(c.waId || c.phone || c.id || '').replace(/\D/g, '');
+          const last = c.lastMessage || c.last_message || {};
+          const preview = typeof last === 'string' ? last : (last.text || last.message || c.lastText || 'Belum ada pesan');
+          const when = c.updatedAt || c.lastMessageAt || c.timestamp || '';
+          const active = phone && phone === selectedWaId;
+        %>
+          <a class="wa-conv <%= active ? 'active' : '' %>" href="/admin/whatsapp?waId=<%= encodeURIComponent(phone) %>">
+            <div class="d-flex justify-content-between gap-2">
+              <strong><%= c.name || c.profileName || ('+' + phone) %></strong>
+              <span class="wa-muted"><%= when ? new Date(when).toLocaleString('id-ID', {dateStyle:'short',timeStyle:'short'}) : '' %></span>
+            </div>
+            <div class="wa-muted text-truncate mt-1"><%= preview %></div>
+          </a>
+        <% }); %>
+      </div>
+    </section>
+
+    <section class="wa-panel wa-chat">
+      <% if (!selectedWaId) { %>
+        <div class="wa-empty">
+          <div>
+            <i class="bi bi-chat-square-text display-4 d-block mb-3"></i>
+            <h5 class="fw-bold text-dark">Pilih percakapan</h5>
+            <p class="mb-0">Pilih nomor pada daftar di sebelah kiri untuk melihat riwayat pesan dan membalas WhatsApp.</p>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="wa-panel-head d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-bold"><i class="bi bi-person-circle me-2"></i>+<%= selectedWaId %></div>
+            <div class="wa-muted">Riwayat percakapan WhatsApp</div>
+          </div>
+          <span class="badge text-bg-success">Terhubung ke API</span>
+        </div>
+        <div class="wa-messages" id="waMessages">
+          <% if (!messages.length) { %>
+            <div class="text-center text-muted small py-5">Belum ada riwayat pesan untuk nomor ini.</div>
+          <% } %>
+          <% messages.forEach(function(m) {
+            const dir = String(m.direction || m.dir || m.type_direction || '').toLowerCase();
+            const outgoing = ['outbound','out','outgoing','sent','send'].includes(dir) || m.fromBusiness === true || m.from_me === true || m.fromMe === true;
+            const body = m.text || m.message || (m.type && m.type !== 'text' ? '[' + m.type + ']' : '');
+            const stamp = m.timestamp || m.createdAt || '';
+          %>
+            <div class="wa-bubble <%= outgoing ? 'wa-out' : 'wa-in' %>">
+              <div><%= body %></div>
+              <div class="wa-muted text-end mt-1"><%= stamp ? new Date(stamp).toLocaleString('id-ID', {dateStyle:'short',timeStyle:'short'}) : '' %> · <%= outgoing ? 'Terkirim' : 'Mahasiswa' %></div>
+            </div>
+          <% }); %>
+        </div>
+        <form class="wa-compose" method="POST" action="/admin/whatsapp/send" id="waSendForm">
+          <input type="hidden" name="to" value="<%= selectedWaId %>">
+          <label for="waMessage" class="form-label fw-semibold">Balas pesan</label>
+          <div class="input-group">
+            <textarea id="waMessage" name="message" class="form-control" rows="2" maxlength="4096" required placeholder="Tulis balasan WhatsApp..." style="resize:vertical"></textarea>
+            <button class="btn btn-success px-4" type="submit" id="waSendBtn"><i class="bi bi-send-fill me-1"></i>Kirim</button>
+          </div>
+          <div class="wa-muted mt-2">Pesan teks bebas hanya dapat dikirim dalam jendela layanan pelanggan 24 jam setelah mahasiswa mengirim pesan. Di luar jendela tersebut gunakan template yang disetujui Meta.</div>
+        </form>
+      <% } %>
+    </section>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const box = document.getElementById('waMessages');
+    if (box) box.scrollTop = box.scrollHeight;
+    // Cegah kirim ganda: nonaktifkan tombol setelah submit
+    const form = document.getElementById('waSendForm');
+    const btn = document.getElementById('waSendBtn');
+    if (form && btn) {
+      form.addEventListener('submit', function () {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Mengirim...';
+      });
+    }
+  })();
+</script>
+
+<%- include('../../partials/footer') %>

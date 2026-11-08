@@ -1,0 +1,173 @@
+<%- include('../../partials/header') %>
+
+<style>
+  .wad { max-width:1200px; margin:1.5rem auto; }
+  .wad-card { background:#fff; border:1px solid #e2e8f0; border-radius:1rem; padding:1.1rem 1.25rem; box-shadow:0 4px 16px rgba(15,23,42,.04); height:100%; }
+  .wad-num { font-size:2rem; font-weight:700; line-height:1.1; }
+  .wad-lbl { color:#64748b; font-size:.82rem; }
+  .wad-chart { display:flex; align-items:flex-end; gap:6px; height:150px; padding-top:8px; }
+  .wad-col { flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%; min-width:0; }
+  .wad-bar { width:100%; max-width:34px; border-radius:6px 6px 0 0; display:flex; flex-direction:column-reverse; overflow:hidden; background:#f1f5f9; }
+  .wad-ok { background:#16a34a; }
+  .wad-bad { background:#ef4444; }
+  .wad-tick { font-size:.65rem; color:#94a3b8; margin-top:4px; }
+  .wad-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+</style>
+
+<div class="container-fluid wad">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-whatsapp text-success me-2"></i>WhatsApp Center</h2>
+      <div class="text-muted small">Ringkasan komunikasi WhatsApp Program Studi D3 Teknik Elektronika</div>
+    </div>
+    <a href="/admin/whatsapp/dashboard" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise me-1"></i>Muat ulang</a>
+  </div>
+
+  <% var waTab = 'dashboard'; %>
+  <%- include('_tabs', { waTab: waTab }) %>
+
+  <% peringatan.forEach(function(p) { %>
+    <div class="alert alert-warning py-2"><i class="bi bi-exclamation-triangle me-2"></i><%= p %></div>
+  <% }); %>
+  <% if (convError) { %>
+    <div class="alert alert-warning py-2"><i class="bi bi-exclamation-triangle me-2"></i>Data percakapan tidak dapat diambil dari Notification API.</div>
+  <% } %>
+
+  <!-- Status API + kartu angka -->
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+      <div class="wad-card">
+        <div class="wad-lbl mb-1">Status Notification API</div>
+        <% if (!api.configured) { %>
+          <div class="wad-num text-secondary" style="font-size:1.3rem"><span class="wad-dot bg-secondary"></span>Belum dikonfigurasi</div>
+        <% } else if (api.ok) { %>
+          <div class="wad-num text-success" style="font-size:1.3rem"><span class="wad-dot bg-success"></span>Online</div>
+          <div class="wad-lbl mt-1">Respons <%= api.ms %> ms</div>
+        <% } else { %>
+          <div class="wad-num text-danger" style="font-size:1.3rem"><span class="wad-dot bg-danger"></span>Tidak merespons</div>
+          <div class="wad-lbl mt-1">Periksa PM2 <code>polidewa-notification</code></div>
+        <% } %>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="wad-card">
+        <div class="wad-lbl">Total percakapan</div>
+        <div class="wad-num"><%= totalConv %></div>
+        <div class="wad-lbl mt-1"><%= aktif24 %> aktif 24 jam · <%= aktif7 %> aktif 7 hari</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="wad-card">
+        <div class="wad-lbl">Pesan keluar hari ini</div>
+        <div class="wad-num"><%= stat.hariIni %></div>
+        <div class="wad-lbl mt-1"><%= stat.tujuh %> dalam 7 hari · <%= stat.tigaPuluh %> dalam 30 hari</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="wad-card">
+        <div class="wad-lbl">Tingkat keberhasilan (30 hari)</div>
+        <div class="wad-num <%= successRate === null ? 'text-secondary' : (successRate >= 90 ? 'text-success' : (successRate >= 70 ? 'text-warning' : 'text-danger')) %>">
+          <%= successRate === null ? '—' : successRate + '%' %>
+        </div>
+        <div class="wad-lbl mt-1"><%= stat.terkirim30 %> terkirim · <%= stat.gagal30 %> gagal · <%= stat.ditolak30 %> ditolak</div>
+      </div>
+    </div>
+  </div>
+
+  <% if (adaUnread) { %>
+    <div class="alert alert-success py-2"><i class="bi bi-envelope-open me-2"></i><strong><%= unread %></strong> pesan belum dibaca.</div>
+  <% } %>
+
+  <div class="row g-3 mb-3">
+    <!-- Grafik -->
+    <div class="col-lg-8">
+      <div class="wad-card">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="fw-bold">Pesan keluar 14 hari terakhir</div>
+          <div class="wad-lbl"><span class="wad-dot wad-ok"></span>Terkirim <span class="wad-dot wad-bad ms-2"></span>Gagal</div>
+        </div>
+        <div class="wad-chart" role="img" aria-label="Grafik pesan keluar 14 hari terakhir">
+          <% grafik.forEach(function(g) {
+               var total = g.terkirim + g.gagal;
+               var h = total ? Math.max(6, Math.round(total / maxGrafik * 100)) : 0;
+          %>
+            <div class="wad-col" title="<%= g.tgl %>: <%= g.terkirim %> terkirim, <%= g.gagal %> gagal">
+              <div class="wad-lbl" style="font-size:.68rem"><%= total || '' %></div>
+              <div class="wad-bar" style="height:<%= h %>%">
+                <% if (g.terkirim) { %><div class="wad-ok" style="flex:<%= g.terkirim %>"></div><% } %>
+                <% if (g.gagal) { %><div class="wad-bad" style="flex:<%= g.gagal %>"></div><% } %>
+              </div>
+              <div class="wad-tick"><%= g.tgl.slice(8) %></div>
+            </div>
+          <% }); %>
+        </div>
+        <div class="wad-lbl mt-2">Tanggal dalam WITA. Data berasal dari audit log pengiriman lewat dashboard.</div>
+      </div>
+    </div>
+
+    <!-- Admin teraktif -->
+    <div class="col-lg-4">
+      <div class="wad-card">
+        <div class="fw-bold mb-2">Pengirim teraktif (30 hari)</div>
+        <% if (!adminTop.length) { %>
+          <div class="text-muted small">Belum ada pengiriman.</div>
+        <% } %>
+        <% adminTop.forEach(function(a) { %>
+          <div class="d-flex justify-content-between border-bottom py-2 small">
+            <span><i class="bi bi-person-circle me-2 text-muted"></i><%= a[0] %></span>
+            <strong><%= a[1] %></strong>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Percakapan terbaru -->
+    <div class="col-lg-7">
+      <div class="wad-card">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="fw-bold">Percakapan terbaru</div>
+          <a href="/admin/whatsapp" class="small">Buka Inbox <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <% if (!terbaru.length) { %>
+          <div class="text-muted small">Belum ada percakapan.</div>
+        <% } %>
+        <% terbaru.forEach(function(c) { %>
+          <a href="/admin/whatsapp?waId=<%= encodeURIComponent(c.phone) %>" class="d-block text-decoration-none text-dark border-bottom py-2">
+            <div class="d-flex justify-content-between gap-2">
+              <strong><%= c.nama || ('+' + c.phone) %></strong>
+              <span class="wad-lbl"><%= c.ms ? new Date(c.ms).toLocaleString('id-ID', {dateStyle:'short', timeStyle:'short'}) : '' %></span>
+            </div>
+            <div class="wad-lbl text-truncate"><%= c.preview || 'Belum ada pesan' %></div>
+          </a>
+        <% }); %>
+      </div>
+    </div>
+
+    <!-- Pengiriman gagal -->
+    <div class="col-lg-5">
+      <div class="wad-card">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="fw-bold">Pengiriman gagal terbaru</div>
+          <a href="/admin/whatsapp/riwayat" class="small">Semua riwayat <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <% if (!gagalTerbaru.length) { %>
+          <div class="text-muted small"><i class="bi bi-check-circle text-success me-1"></i>Tidak ada pengiriman gagal.</div>
+        <% } %>
+        <% gagalTerbaru.forEach(function(l) { %>
+          <div class="border-bottom py-2 small">
+            <div class="d-flex justify-content-between">
+              <strong>+<%= l.to %></strong>
+              <span class="wad-lbl"><%= new Date(l.createdAt).toLocaleString('id-ID', {dateStyle:'short', timeStyle:'short'}) %></span>
+            </div>
+            <div class="wad-lbl text-truncate"><%= l.error || 'Gagal dikirim' %></div>
+          </div>
+        <% }); %>
+        <div class="wad-lbl mt-2">Penyebab umum: di luar jendela 24 jam (perlu template Meta) atau nomor tidak valid.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

@@ -38,6 +38,9 @@ router.use('/rps', rpsRouter);
 router.use('/bimbingan', bimbinganRouter);
 // Kelola Pengguna (users) – CRUD akun
 router.use('/users', usersRoutes);
+
+// WhatsApp Center — Inbox dan balasan melalui Elektronika Notification API
+router.use('/whatsapp', require('./whatsapp'));
 // Laporan Magang
 router.use('/laporan-magang', require('./laporanMagang'));   // untuk persetujuan laporan
 router.use('/elk-library', require('./elkLibrary'));        // untuk kelola konten library
