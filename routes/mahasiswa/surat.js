@@ -625,8 +625,8 @@ router.get('/:id/download', async (req, res) => {
     if (!surat.fileUrl) {
       return res.status(400).send('File surat belum diupload');
     }
-    // Redirect ke URL file (bisa juga download langsung)
-    res.redirect(surat.fileUrl);
+    // Tampilkan halaman pratinjau dulu (Unduh / Cetak dipilih pengguna di sana)
+    res.redirect(require('../pratinjau').urlPratinjau(surat.fileUrl, `${surat.jenisSurat || surat.jenis || 'Surat'}`.trim(), `/mahasiswa/surat/${req.params.id}`));
   } catch (error) {
     console.error('Error download surat:', error);
     res.status(500).render('error', { 

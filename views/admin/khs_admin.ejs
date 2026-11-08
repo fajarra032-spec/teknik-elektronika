@@ -157,7 +157,7 @@
           </td>
           <td><%= item.semester %></td>
           <td>
-            <a href="<%= item.driveFileLink %>" target="_blank" class="btn btn-sm btn-outline-info btn-action">
+            <a href="/pratinjau?u=<%= encodeURIComponent(item.driveFileLink) %>" target="_blank" class="btn btn-sm btn-outline-info btn-action">
               <i class="bi bi-file-earmark-pdf me-1"></i> Lihat PDF
             </a>
           </td>

@@ -95,7 +95,7 @@
 
       <% if (p) { %>
         <div class="text-end" style="min-width: 260px;">
-          <a href="<%= p.fileUrl %>" target="_blank" class="file-chip mb-2 d-inline-flex">
+          <a href="/pratinjau?u=<%= encodeURIComponent(p.fileUrl) %>" target="_blank" class="file-chip mb-2 d-inline-flex">
             <i class="bi bi-file-earmark-image"></i> Lihat File (<%= p.fileNama || 'LKM' %>)
           </a>
           <form method="POST" action="/dosen/mk/<%= mk.id %>/modul-template/<%= modul.id %>/kumpulan/<%= p.id %>/periksa" class="periksa-form justify-content-end">

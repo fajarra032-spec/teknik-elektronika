@@ -46,7 +46,7 @@
         <p><strong>Mahasiswa:</strong> <%= laporan.nama %> (NIM: <%= laporan.nim %>)</p>
         <p><strong>Laporan ke-:</strong> <%= laporan.laporanKe %></p>
         <p><strong>Semester:</strong> <%= laporan.semester %></p>
-        <p><strong>File:</strong> <a href="<%= laporan.fileUrl %>" target="_blank">Lihat file</a></p>
+        <p><strong>File:</strong> <a href="/pratinjau?u=<%= encodeURIComponent(laporan.fileUrl) %>" target="_blank">Lihat file</a></p>
       </div>
 
       <form method="POST" action="/admin/elk-library/laporan/<%= laporan.id %>/approve">

@@ -336,7 +336,8 @@ router.get('/:id/download', async (req, res) => {
     if (surat.status !== 'completed' || !surat.fileUrl) {
       return res.status(400).send('Surat belum tersedia');
     }
-    res.redirect(surat.fileUrl);
+    // Tampilkan halaman pratinjau dulu (Unduh / Cetak dipilih pengguna di sana)
+    res.redirect(require('../pratinjau').urlPratinjau(surat.fileUrl, `${surat.jenisSurat || surat.jenis || surat.judul || 'Surat'}`.trim(), `/dosen/surat/${id}`));
   } catch (error) {
     console.error('Error download surat:', error);
     res.status(500).send('Gagal mengunduh surat');

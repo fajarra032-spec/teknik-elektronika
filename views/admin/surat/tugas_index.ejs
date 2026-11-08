@@ -25,7 +25,7 @@
                 <td>
                   <a href="/admin/surat/tugas/<%= t.id %>" class="btn btn-sm btn-info">Detail</a>
                   <% if (t.status === 'completed') { %>
-                    <a href="<%= t.fileUrl %>" target="_blank" class="btn btn-sm btn-success">Unduh PDF</a>
+                    <a href="/pratinjau?u=<%= encodeURIComponent(t.fileUrl) %>" target="_blank" class="btn btn-sm btn-success">Unduh PDF</a>
                   <% } %>
                   <form method="POST" action="/admin/surat/tugas/<%= t.id %>/delete" style="display:inline;" onsubmit="return confirm('Yakin hapus surat tugas ini?')">
                     <button class="btn btn-sm btn-danger">Hapus</button>

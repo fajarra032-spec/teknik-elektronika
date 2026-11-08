@@ -306,7 +306,7 @@
 
       <h5 class="fw-bold mb-3">File KRS</h5>
       <% if (krs.driveFileLink) { %>
-        <a href="<%= krs.driveFileLink %>" target="_blank" class="btn-outline-info">
+        <a href="/pratinjau?u=<%= encodeURIComponent(krs.driveFileLink) %>" target="_blank" class="btn-outline-info">
           <i class="bi bi-file-earmark-pdf"></i> Lihat File KRS
         </a>
       <% } else { %>

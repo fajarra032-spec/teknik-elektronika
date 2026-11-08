@@ -47,7 +47,7 @@
                     </span>
                   </td>
                   <td class="text-nowrap">
-                    <a href="<%= s.fileUrl %>" target="_blank" class="btn btn-sm btn-outline-primary" title="Lihat">
+                    <a href="/pratinjau?u=<%= encodeURIComponent(s.fileUrl) %>" target="_blank" class="btn btn-sm btn-outline-primary" title="Lihat">
                       <i class="bi bi-eye"></i>
                     </a>
                     <form method="POST" action="/admin/sertifikat/<%= s.id %>/delete" style="display:inline" onsubmit="return confirm('Hapus sertifikat ini?')">

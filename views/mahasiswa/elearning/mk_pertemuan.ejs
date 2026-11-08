@@ -84,7 +84,7 @@
             <span class="badge-status badge-belum-absen">Belum diambil absen</span>
           <% } %>
           <% if (m.fileUrl) { %>
-            <a href="<%= m.fileUrl %>" target="_blank" class="badge-status" style="background:var(--primary-light); color:var(--primary-dark); text-decoration:none;">
+            <a href="/pratinjau?u=<%= encodeURIComponent(m.fileUrl) %>" target="_blank" class="badge-status" style="background:var(--primary-light); color:var(--primary-dark); text-decoration:none;">
               <i class="bi bi-paperclip"></i> Materi
             </a>
           <% } %>
@@ -125,7 +125,7 @@
               </td>
               <td>
                 <% if (m.fileUrl) { %>
-                  <a href="<%= m.fileUrl %>" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2">Lihat</a>
+                  <a href="/pratinjau?u=<%= encodeURIComponent(m.fileUrl) %>" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2">Lihat</a>
                 <% } else { %>-<% } %>
               </td>
               <td>

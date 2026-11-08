@@ -174,7 +174,7 @@
       <h5><%= (laporan && laporan.judul) ? laporan.judul : ('Laporan Magang ' + i) %></h5>
       <% if (laporan) { %>
         <p><strong>File:</strong> 
-          <a href="<%= laporan.fileUrl %>" target="_blank" class="btn-download">
+          <a href="/pratinjau?u=<%= encodeURIComponent(laporan.fileUrl) %>" target="_blank" class="btn-download">
             <i class="bi bi-download"></i> <%= laporan.fileName || 'Unduh' %>
           </a>
         </p>

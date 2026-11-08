@@ -374,7 +374,7 @@
 
     <% if (rpsSelected && rpsSelected.fileUrl) { %>
       <div class="d-flex flex-wrap align-items-center gap-3">
-        <a href="<%= rpsSelected.fileUrl %>" target="_blank" class="btn-primary-custom">
+        <a href="/pratinjau?u=<%= encodeURIComponent(rpsSelected.fileUrl) %>" target="_blank" class="btn-primary-custom">
           <i class="bi bi-eye"></i> Lihat RPS
         </a>
         <a href="<%= rpsSelected.fileUrl %>" download class="btn-outline-custom">
@@ -410,7 +410,7 @@
                     <%= r.label %>
                     <% if (r.periodeId === activePeriodeId) { %><span class="badge bg-success">Aktif</span><% } %>
                   </td>
-                  <td><a href="<%= r.fileUrl %>" target="_blank"><%= r.fileNama || 'Lihat file' %></a></td>
+                  <td><a href="/pratinjau?u=<%= encodeURIComponent(r.fileUrl) %>" target="_blank"><%= r.fileNama || 'Lihat file' %></a></td>
                 </tr>
               <% }) %>
             </tbody>
@@ -488,7 +488,7 @@
               </td>
               <td>
                 <% if (p.fileUrl) { %>
-                  <a href="<%= p.fileUrl %>" target="_blank" class="btn-outline-custom btn-sm">
+                  <a href="/pratinjau?u=<%= encodeURIComponent(p.fileUrl) %>" target="_blank" class="btn-outline-custom btn-sm">
                     <i class="bi bi-file-earmark-pdf"></i> Lihat
                   </a>
                 <% } else { %>

@@ -96,7 +96,7 @@
       <% if (item.fileUrl) { %>
         <div class="main-card mb-3">
           <h6 class="fw-bold mb-3">Buku Lengkap</h6>
-          <a href="<%= item.fileUrl %>" target="_blank" class="btn-download-buku">
+          <a href="/pratinjau?u=<%= encodeURIComponent(item.fileUrl) %>" target="_blank" class="btn-download-buku">
             <i class="bi bi-file-earmark-pdf fs-4"></i> Baca PDF
           </a>
         </div>

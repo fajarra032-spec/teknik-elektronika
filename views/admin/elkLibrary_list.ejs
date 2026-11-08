@@ -222,7 +222,7 @@
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="<%= detail %>"><i class="bi bi-eye me-2"></i>Lihat detail</a></li>
                 <li><a class="dropdown-item" href="<%= detail %>/edit"><i class="bi bi-pencil-square me-2"></i>Edit</a></li>
-                <% if (it.fileUrl) { %><li><a class="dropdown-item" href="<%= it.fileUrl %>" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf me-2"></i>Buka file</a></li><% } %>
+                <% if (it.fileUrl) { %><li><a class="dropdown-item" href="/pratinjau?u=<%= encodeURIComponent(it.fileUrl) %>" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf me-2"></i>Buka file</a></li><% } %>
                 <% if (it.status === 'approved') { %><li><a class="dropdown-item" href="/elk-library/<%= it.id %>" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-2"></i>Lihat di halaman publik</a></li><% } %>
                 <li><hr class="dropdown-divider"></li>
                 <li>

@@ -443,7 +443,7 @@
               </td>
               <td>
                 <% if (krs.driveFileLink) { %>
-                  <a href="<%= krs.driveFileLink %>" target="_blank" class="btn-outline-file">
+                  <a href="/pratinjau?u=<%= encodeURIComponent(krs.driveFileLink) %>" target="_blank" class="btn-outline-file">
                     <i class="bi bi-file-earmark-pdf me-1"></i> Lihat
                   </a>
                 <% } else { %>

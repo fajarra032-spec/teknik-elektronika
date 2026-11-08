@@ -106,7 +106,7 @@
                 <li class="list-group-item px-0">
                   <div class="d-flex justify-content-between align-items-start">
                     <div>
-                      <a href="<%= doc.fileUrl %>" target="_blank"><%= doc.judul %></a>
+                      <a href="/pratinjau?u=<%= encodeURIComponent(doc.fileUrl) %>" target="_blank"><%= doc.judul %></a>
                       <div class="text-muted small">
                         <%= doc.fileName %> &middot; oleh <%= doc.uploadedBy %> (<%= doc.uploadedByRole %>)
                       </div>

@@ -180,7 +180,7 @@
         </div>
         <div class="d-flex align-items-center gap-3" onclick="event.stopPropagation()">
           <% if (m.fileUrl) { %>
-            <a href="<%= m.fileUrl %>" target="_blank" class="file-chip"><i class="bi bi-file-earmark-pdf"></i> Job Sheet</a>
+            <a href="/pratinjau?u=<%= encodeURIComponent(m.fileUrl) %>" target="_blank" class="file-chip"><i class="bi bi-file-earmark-pdf"></i> Job Sheet</a>
           <% } %>
           <form method="POST" action="/dosen/mk/<%= mk.id %>/praktikum/<%= m.id %>/toggle" class="switch-form">
             <span class="switch-label"><%= m.aktif ? 'Aktif' : 'Nonaktif' %></span>

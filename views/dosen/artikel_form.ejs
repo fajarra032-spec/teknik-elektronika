@@ -225,7 +225,7 @@
           <% if (artikel && artikel.fileUrl) { %>
             <div class="file-info">
               <i class="bi bi-file-earmark-pdf-fill"></i>
-              <span>File saat ini: <a href="<%= artikel.fileUrl %>" target="_blank"><%= artikel.fileName || 'Lihat file' %></a></span>
+              <span>File saat ini: <a href="/pratinjau?u=<%= encodeURIComponent(artikel.fileUrl) %>" target="_blank"><%= artikel.fileName || 'Lihat file' %></a></span>
             </div>
           <% } %>
           <input type="file" class="form-control" id="file" name="file" accept=".pdf" <%= artikel ? '' : 'required' %>>

@@ -35,7 +35,7 @@
             <label class="form-label">File Buku (PDF maks 5MB)</label>
             <% if (item && item.fileUrl) { %>
               <div class="mb-2">
-                <a href="<%= item.fileUrl %>" target="_blank"><i class="bi bi-file-earmark-pdf"></i> File saat ini</a>
+                <a href="/pratinjau?u=<%= encodeURIComponent(item.fileUrl) %>" target="_blank"><i class="bi bi-file-earmark-pdf"></i> File saat ini</a>
               </div>
             <% } %>
             <input type="file" name="file" class="form-control" accept=".pdf">

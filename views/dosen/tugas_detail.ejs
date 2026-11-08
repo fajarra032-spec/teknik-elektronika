@@ -332,7 +332,7 @@
     <h5><i class="bi bi-info-circle me-2"></i>Deskripsi</h5>
     <p><%= tugas.deskripsi || 'Tidak ada deskripsi.' %></p>
     <% if (tugas.fileUrl) { %>
-      <a href="<%= tugas.fileUrl %>" target="_blank" class="btn-outline-info">
+      <a href="/pratinjau?u=<%= encodeURIComponent(tugas.fileUrl) %>" target="_blank" class="btn-outline-info">
         <i class="bi bi-download"></i> Unduh Soal
       </a>
     <% } %>
@@ -392,7 +392,7 @@
                 </td>
                 <td>
                   <% if (m.pengumpulan && m.pengumpulan.fileUrl) { %>
-                    <a href="<%= m.pengumpulan.fileUrl %>" target="_blank" class="btn-outline-info btn-sm">
+                    <a href="/pratinjau?u=<%= encodeURIComponent(m.pengumpulan.fileUrl) %>" target="_blank" class="btn-outline-info btn-sm">
                       <i class="bi bi-file-earmark-pdf"></i> Lihat
                     </a>
                   <% } else { %>

@@ -16,7 +16,7 @@
           <div class="col-12 mb-2"><strong>Surat Tugas:</strong> <a href="<%= data.suratTugasUrl %>" target="_blank">Lihat</a></div>
         <% } %>
         <% if (data.fileUrl) { %>
-          <div class="col-12 mb-2"><strong>File Penelitian:</strong> <a href="<%= data.fileUrl %>" target="_blank">Buka PDF</a></div>
+          <div class="col-12 mb-2"><strong>File Penelitian:</strong> <a href="/pratinjau?u=<%= encodeURIComponent(data.fileUrl) %>" target="_blank">Buka PDF</a></div>
         <% } %>
       </div>
       <hr>

@@ -460,7 +460,7 @@
                       </a>
                     <% } %>
                     <% if (surat.status === 'completed' && surat.fileUrl) { %>
-                      <a href="<%= surat.fileUrl %>" target="_blank" class="btn-detail btn-download">
+                      <a href="/pratinjau?u=<%= encodeURIComponent(surat.fileUrl) %>" target="_blank" class="btn-detail btn-download">
                         <i class="bi bi-download"></i> Unduh
                       </a>
                     <% } %>

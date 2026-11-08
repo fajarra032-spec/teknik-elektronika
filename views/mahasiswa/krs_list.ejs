@@ -437,7 +437,7 @@
                     <i class="bi bi-printer-fill"></i> Cetak KRS
                   </a>
                   <% if (krs.driveFileLink) { %>
-                    <a href="<%= krs.driveFileLink %>" target="_blank" class="btn-icon-sm" title="Lihat dokumen resmi yang sudah ditandatangani">
+                    <a href="/pratinjau?u=<%= encodeURIComponent(krs.driveFileLink) %>" target="_blank" class="btn-icon-sm" title="Lihat dokumen resmi yang sudah ditandatangani">
                       <i class="bi bi-file-earmark-check"></i>
                     </a>
                   <% } %>

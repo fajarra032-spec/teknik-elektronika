@@ -31,3 +31,24 @@ B. KALIMAT & NOTIFIKASI BARU ALUR MAGANG
 
 Catatan: notifikasi yang dihapus tidak bisa dikembalikan. Bila JS dimatikan, tombol tetap
 berfungsi sebagai pengiriman biasa (redirect) di halaman /notifikasi.
+
+
+C. HALAMAN PRATINJAU DOKUMEN / PDF (baru)
+  routes/pratinjau.js                BARU   GET /pratinjau?u=<tautan berkas>&t=<judul>&k=<kembali>
+  views/pratinjau.ejs                BARU   toolbar: Kembali | Tab baru | Cetak | Unduh + penampil dokumen
+  app.js                             TIMPA  hanya +1 baris: app.use('/pratinjau', require('./routes/pratinjau'));
+                                            (bila app.js sudah Anda ubah, cukup tambahkan baris itu di bawah mount '/notifikasi')
+  routes/mahasiswa/surat.js, routes/dosen/surat.js   TIMPA  /:id/download kini membuka pratinjau, bukan langsung ke file
+  views/mahasiswa/krs_print.ejs      TIMPA  tidak lagi langsung membuka dialog cetak (tombol "Cetak" tetap ada)
+  + 48 file views/**.ejs: tautan "Lihat / Buka / Unduh PDF" ke file Drive (surat, SK, laporan magang,
+    KRS/KHS, sertifikat, modul, tugas, RPS, ELK Library, akreditasi, dll.) kini lewat /pratinjau.
+    Perubahannya hanya pada atribut href: href="/pratinjau?u=<%= encodeURIComponent(x.fileUrl) %>"
+
+Keamanan /pratinjau: tidak memberi akses baru. Hanya ID berkas Google Drive yang valid (ditampilkan lewat
+penampil resmi Drive, tunduk pada izin berkas itu sendiri) atau berkas /uploads & /dokumen milik situs yang
+diterima. Tautan lain TIDAK pernah di-redirect otomatis (hanya tombol "Buka tautan asli" yang diklik pengguna).
+Halaman ini sengaja publik agar perpustakaan ELK & dokumen publik tetap bisa dilihat tanpa login.
+
+Tidak diubah (memang berkas data, tidak punya tampilan): ekspor Excel/CSV (PMB, tagihan, EDOM, nilai, laporan awal
+semester, dll.) dan unduhan Word (.docx) SK PA / Penyelesaian Studi. Halaman cetak HTML (logbook, KHS, transkrip,
+EDOM, SK, dll.) sudah berupa halaman pratinjau dan hanya mencetak bila tombol Cetak diklik.

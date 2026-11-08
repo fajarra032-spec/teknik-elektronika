@@ -132,7 +132,7 @@
             <td><%= m.nama %></td>
             <td>
               <% if (m.pengumpulan) { %>
-                <a href="<%= m.pengumpulan.fileUrl %>" target="_blank" class="btn btn-sm btn-outline-info btn-action">
+                <a href="/pratinjau?u=<%= encodeURIComponent(m.pengumpulan.fileUrl) %>" target="_blank" class="btn btn-sm btn-outline-info btn-action">
                   <i class="bi bi-file-earmark-pdf"></i> Lihat
                 </a>
               <% } else { %>

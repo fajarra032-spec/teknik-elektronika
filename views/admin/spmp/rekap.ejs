@@ -29,7 +29,7 @@
                 <div class="small">
                   <%= ind.nama %>: <%= resp ? resp.capaian : '-' %> / <%= ind.target %> <%= ind.satuan %>
                   <% if (resp && resp.fileUrl) { %>
-                    <a href="<%= resp.fileUrl %>" target="_blank" title="Bukti"><i class="bi bi-paperclip"></i></a>
+                    <a href="/pratinjau?u=<%= encodeURIComponent(resp.fileUrl) %>" target="_blank" title="Bukti"><i class="bi bi-paperclip"></i></a>
                   <% } %>
                 </div>
               <% }); %>

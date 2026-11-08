@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title><%= judul %> - Pratinjau</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body { display: flex; flex-direction: column; background: #e5e7eb; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
+    .toolbar { flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between; padding: .6rem 1rem; background: #1b2a4a; color: #fff; font-size: 13px; }
+    .toolbar .kiri { display: flex; align-items: center; gap: .75rem; min-width: 0; flex: 1 1 260px; }
+    .toolbar .judul { min-width: 0; }
+    .toolbar .judul strong { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .toolbar .judul small { opacity: .75; font-size: 11.5px; }
+    .toolbar .aksi { display: flex; flex-wrap: wrap; gap: .45rem; }
+    .toolbar a, .toolbar button { font: inherit; font-weight: 600; border: 0; border-radius: 8px; padding: .45rem .85rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap; }
+    .btn-ghost { background: rgba(255,255,255,.14); color: #fff; }
+    .btn-ghost:hover { background: rgba(255,255,255,.24); }
+    .btn-utama { background: #fff; color: #1e3a8a; }
+    .btn-utama:hover { background: #e0e7ff; }
+    .btn-unduh { background: #22c55e; color: #052e16; }
+    .btn-unduh:hover { background: #4ade80; }
+    .viewer { flex: 1 1 auto; position: relative; min-height: 0; }
+    .viewer iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
+    .viewer .memuat { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .6rem; color: #475569; font-size: 14px; pointer-events: none; }
+    .spin { width: 34px; height: 34px; border: 4px solid #cbd5e1; border-top-color: #1e3a8a; border-radius: 50%; animation: putar .8s linear infinite; }
+    @keyframes putar { to { transform: rotate(360deg); } }
+    .pesan { max-width: 520px; margin: 12vh auto; padding: 2rem; background: #fff; border-radius: 16px; text-align: center; box-shadow: 0 10px 30px rgba(15,23,42,.12); color: #334155; }
+    .pesan i { font-size: 2.6rem; color: #f59e0b; }
+    .pesan h2 { margin: .6rem 0 .3rem; font-size: 1.15rem; color: #0f172a; }
+    .pesan p { margin: .3rem 0 1rem; font-size: .9rem; }
+    .pesan a { display: inline-block; background: #1e3a8a; color: #fff; padding: .55rem 1.2rem; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: .88rem; margin: .15rem; }
+    .pesan a.sekunder { background: #e2e8f0; color: #1e293b; }
+    @media (max-width: 600px) { .toolbar .aksi a span, .toolbar .aksi button span { display: none; } }
+    @media print { .toolbar { display: none !important; } body { background: #fff; } }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <div class="kiri">
+      <% if (urlKembali) { %>
+        <a class="btn-ghost" href="<%= urlKembali %>"><i class="bi bi-arrow-left"></i><span>Kembali</span></a>
+      <% } else { %>
+        <button type="button" class="btn-ghost" id="btnKembali"><i class="bi bi-arrow-left"></i><span>Kembali</span></button>
+      <% } %>
+      <div class="judul">
+        <strong><%= judul %></strong>
+        <small>Pratinjau dokumen &middot; periksa dulu sebelum mengunduh atau mencetak</small>
+      </div>
+    </div>
+    <% if (jenis !== 'tidak-didukung') { %>
+    <div class="aksi">
+      <a class="btn-ghost" href="<%= urlTabBaru %>" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i><span>Tab baru</span></a>
+      <button type="button" class="btn-utama" id="btnCetak"><i class="bi bi-printer"></i><span>Cetak</span></button>
+      <a class="btn-unduh" href="<%= urlUnduh %>" <%= jenis === 'lokal' ? 'download' : '' %>><i class="bi bi-download"></i><span>Unduh</span></a>
+    </div>
+    <% } %>
+  </div>
+
+  <% if (jenis === 'tidak-didukung') { %>
+    <div class="pesan">
+      <i class="bi bi-exclamation-triangle"></i>
+      <h2>Berkas ini tidak bisa dipratinjau di sini</h2>
+      <p>Tautannya bukan berkas Google Drive atau berkas situs ini. Anda tetap bisa membukanya sendiri bila yakin tautannya aman.</p>
+      <% if (urlAsli) { %><a href="<%= urlAsli %>" target="_blank" rel="noopener noreferrer nofollow">Buka tautan asli</a><% } %>
+      <a class="sekunder" href="javascript:history.back()">Kembali</a>
+    </div>
+  <% } else { %>
+    <div class="viewer">
+      <div class="memuat" id="memuat"><div class="spin"></div>Memuat dokumen&hellip;</div>
+      <iframe id="viewer" src="<%= src %>" title="<%= judul %>" allow="autoplay" referrerpolicy="no-referrer"></iframe>
+    </div>
+  <% } %>
+
+  <script>
+    (function () {
+      var kembali = document.getElementById('btnKembali');
+      if (kembali) kembali.addEventListener('click', function () {
+        if (history.length > 1) history.back(); else location.href = '/';
+      });
+
+      var frame = document.getElementById('viewer');
+      var memuat = document.getElementById('memuat');
+      if (frame && memuat) frame.addEventListener('load', function () { memuat.style.display = 'none'; });
+
+      var cetak = document.getElementById('btnCetak');
+      if (cetak) cetak.addEventListener('click', function () {
+        <% if (jenis === 'lokal') { %>
+        // berkas milik situs sendiri: satu asal (same-origin) -> bisa langsung dicetak dari pratinjau
+        try { frame.contentWindow.focus(); frame.contentWindow.print(); return; } catch (e) { /* lanjut ke tab baru */ }
+        <% } %>
+        // penampil Google Drive tidak bisa dicetak dari halaman lain (beda asal): buka di tab baru,
+        // lalu gunakan tombol cetak / Ctrl+P di sana.
+        window.open(<%- JSON.stringify(urlTabBaru).replace(/</g, '\\u003c') %>, '_blank', 'noopener');
+      });
+    })();
+  </script>
+</body>
+</html>

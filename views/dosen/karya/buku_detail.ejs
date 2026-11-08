@@ -13,7 +13,7 @@
         <div class="col-12 mb-2"><strong>Deskripsi:</strong> <%= data.deskripsi || '-' %></div>
         <div class="col-12 mb-2"><strong>Status Verifikasi:</strong> <span class="badge bg-<%= data.status === 'pending' ? 'warning' : (data.status === 'approved' ? 'success' : 'danger') %>"><%= data.status %></span></div>
         <% if (data.fileUrl) { %>
-          <div class="col-12 mb-2"><strong>File Buku:</strong> <a href="<%= data.fileUrl %>" target="_blank">Buka PDF</a></div>
+          <div class="col-12 mb-2"><strong>File Buku:</strong> <a href="/pratinjau?u=<%= encodeURIComponent(data.fileUrl) %>" target="_blank">Buka PDF</a></div>
         <% } %>
       </div>
       <hr>

@@ -34,7 +34,7 @@
         <p><strong>Penulis:</strong> <%= artikel.penulis %></p>
         <p><strong>Abstrak:</strong></p>
         <p><%= artikel.abstrak %></p>
-        <p><strong>File:</strong> <a href="<%= artikel.fileUrl %>" target="_blank">Lihat file</a></p>
+        <p><strong>File:</strong> <a href="/pratinjau?u=<%= encodeURIComponent(artikel.fileUrl) %>" target="_blank">Lihat file</a></p>
       </div>
 
       <form method="POST" action="/admin/artikel/<%= artikel.id %>/approve">

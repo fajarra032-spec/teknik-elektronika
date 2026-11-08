@@ -13,7 +13,7 @@
       <p><strong>IP Semester:</strong> <%= khs.ip || '-' %></p>
       <p><strong>File KHS:</strong> 
         <% if (khs.fileUrl) { %>
-          <a href="<%= khs.fileUrl %>" target="_blank">Lihat File</a>
+          <a href="/pratinjau?u=<%= encodeURIComponent(khs.fileUrl) %>" target="_blank">Lihat File</a>
         <% } else { %>
           -
         <% } %>

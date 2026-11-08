@@ -267,7 +267,7 @@
       <% if (surat.fileUrl) { %>
         <div class="info-card bg-primary text-white">
           <div class="section-title text-white opacity-75">Dokumen Terbit</div>
-          <a href="<%= surat.fileUrl %>" target="_blank" class="btn btn-light w-100 btn-action shadow-sm">
+          <a href="/pratinjau?u=<%= encodeURIComponent(surat.fileUrl) %>" target="_blank" class="btn btn-light w-100 btn-action shadow-sm">
             <i class="bi bi-file-earmark-pdf-fill me-2 text-danger"></i>Buka Dokumen
           </a>
         </div>

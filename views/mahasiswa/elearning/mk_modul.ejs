@@ -132,7 +132,7 @@
                 <p class="text-muted mt-2"><i class="bi bi-chat-left-text"></i> Catatan dosen: <%= m.catatanDosen %></p>
               <% } %>
               <% if (m.fileUrl) { %>
-                <a href="<%= m.fileUrl %>" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                <a href="/pratinjau?u=<%= encodeURIComponent(m.fileUrl) %>" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
                   <i class="bi bi-file-earmark-pdf"></i> Unduh Job Sheet (<%= m.fileNama || 'PDF' %>)
                 </a>
               <% } %>
@@ -157,7 +157,7 @@
                   <i class="bi <%= p.status === 'diperiksa' ? 'bi-check-circle' : 'bi-check2' %>"></i>
                   <%= p.status === 'diperiksa' ? 'Sudah diperiksa dosen' : 'Sudah dikumpulkan - menunggu pemeriksaan dosen' %>
                   &middot; <%= new Date(p.submittedAt).toLocaleString('id-ID', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) %>
-                  &middot; <a href="<%= p.fileUrl %>" target="_blank">Lihat file</a>
+                  &middot; <a href="/pratinjau?u=<%= encodeURIComponent(p.fileUrl) %>" target="_blank">Lihat file</a>
                 </div>
                 <% if (p.status === 'diperiksa') { %>
                   <div class="lkm-nilai-box">
@@ -212,13 +212,13 @@
           <div class="mt-2">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <span class="modul-lampiran"><i class="bi bi-file-earmark-pdf text-danger me-1"></i><%= m.fileNama || 'Modul.pdf' %></span>
-              <a href="<%= m.fileUrl %>" target="_blank" class="btn-action"><i class="bi bi-box-arrow-up-right"></i> Buka Penuh</a>
+              <a href="/pratinjau?u=<%= encodeURIComponent(m.fileUrl) %>" target="_blank" class="btn-action"><i class="bi bi-box-arrow-up-right"></i> Buka Penuh</a>
             </div>
             <iframe src="https://drive.google.com/file/d/<%= m.fileId %>/preview" style="width:100%; height:480px; border:1px solid #e2e8f0; border-radius:0.75rem;" allow="autoplay"></iframe>
           </div>
         <% } else if (m.fileUrl) { %>
           <div class="modul-lampiran mt-2">
-            <a href="<%= m.fileUrl %>" target="_blank"><i class="bi bi-paperclip me-1"></i><%= m.fileNama || 'Lampiran' %></a>
+            <a href="/pratinjau?u=<%= encodeURIComponent(m.fileUrl) %>" target="_blank"><i class="bi bi-paperclip me-1"></i><%= m.fileNama || 'Lampiran' %></a>
           </div>
         <% } %>
 

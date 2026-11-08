@@ -334,7 +334,7 @@
       <% if (item.fileUrl) { %>
       <div class="sidebar-card border-success bg-light bg-opacity-10">
         <h6 class="fw-bold mb-3">Dokumen Lengkap</h6>
-        <a href="<%= item.fileUrl %>" target="_blank" class="btn-download-full">
+        <a href="/pratinjau?u=<%= encodeURIComponent(item.fileUrl) %>" target="_blank" class="btn-download-full">
           <i class="bi bi-file-earmark-pdf fs-4"></i> Lihat PDF Lengkap
         </a>
         <p class="text-muted small text-center mt-3 mb-0">

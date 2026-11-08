@@ -241,7 +241,7 @@
         <% if (tugas.fileUrl) { %>
           <div class="file-info">
             <i class="bi bi-file-earmark-text me-2"></i>File Soal: 
-            <a href="<%= tugas.fileUrl %>" target="_blank" class="btn-outline-gradient btn-sm ms-2">
+            <a href="/pratinjau?u=<%= encodeURIComponent(tugas.fileUrl) %>" target="_blank" class="btn-outline-gradient btn-sm ms-2">
               <i class="bi bi-download"></i> Unduh
             </a>
           </div>
@@ -268,7 +268,7 @@
           <p class="mt-3"><i class="bi bi-clock me-2"></i><%= new Date(pengumpulan.submittedAt).toLocaleString('id-ID') %></p>
           <div class="file-info">
             <i class="bi bi-file-earmark me-2"></i>File Jawaban:
-            <a href="<%= pengumpulan.fileUrl %>" target="_blank" class="btn-outline-gradient btn-sm ms-2">
+            <a href="/pratinjau?u=<%= encodeURIComponent(pengumpulan.fileUrl) %>" target="_blank" class="btn-outline-gradient btn-sm ms-2">
               <i class="bi bi-eye"></i> Lihat
             </a>
           </div>

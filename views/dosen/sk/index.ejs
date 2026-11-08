@@ -289,7 +289,7 @@
               </div>
               <h5 class="sk-judul"><%= sk.judul %></h5>
               <div class="mt-auto">
-                <a href="<%= sk.fileUrl %>" target="_blank" class="btn btn-pdf">
+                <a href="/pratinjau?u=<%= encodeURIComponent(sk.fileUrl) %>" target="_blank" class="btn btn-pdf">
                   <i class="bi bi-eye"></i> Lihat SK
                 </a>
               </div>

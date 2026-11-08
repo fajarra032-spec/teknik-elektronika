@@ -159,7 +159,7 @@
         <div class="info-card bg-primary text-white">
           <div class="section-title text-white opacity-75 mb-3"><i class="bi bi-file-pdf-fill me-2"></i>Dokumen Terbit</div>
           <p class="small text-white-50">Surat tugas elektronik valid terlampir di bawah ini:</p>
-          <a href="<%= surat.fileUrl %>" target="_blank" class="btn btn-light w-100 btn-action shadow-sm text-dark">
+          <a href="/pratinjau?u=<%= encodeURIComponent(surat.fileUrl) %>" target="_blank" class="btn btn-light w-100 btn-action shadow-sm text-dark">
             <i class="bi bi-download text-success me-2"></i>Lihat / Unduh PDF
           </a>
         </div>
@@ -195,7 +195,7 @@
           <h5 class="fw-bold mb-3 text-success"><i class="bi bi-check-circle-fill me-2"></i>Surat Berhasil Diterbitkan</h5>
           <p class="text-muted small">Dokumen arsip ini sudah berada pada fasa finalisasi penomoran surat otomatis.</p>
           <div class="d-flex flex-wrap gap-2 mt-3">
-            <a href="<%= surat.fileUrl %>" target="_blank" class="btn btn-success btn-action">
+            <a href="/pratinjau?u=<%= encodeURIComponent(surat.fileUrl) %>" target="_blank" class="btn btn-success btn-action">
               <i class="bi bi-cloud-arrow-down me-2"></i>Unduh PDF Fisik
             </a>
             <form method="POST" action="/admin/surat/tugas/<%= surat.id %>/generate" class="d-inline">

@@ -31,7 +31,7 @@
       <p><strong>Penulis:</strong> <%= item.penulis %></p>
       <p><strong>Abstrak:</strong></p>
       <p><%= item.abstrak || item.abstract %></p>
-      <p><strong>File:</strong> <a href="<%= item.fileUrl %>" target="_blank">Lihat</a></p>
+      <p><strong>File:</strong> <a href="/pratinjau?u=<%= encodeURIComponent(item.fileUrl) %>" target="_blank">Lihat</a></p>
 
       <form method="POST" action="/admin/elk-library/<%= item.id %>/approve">
         <div class="mb-3">

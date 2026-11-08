@@ -308,7 +308,7 @@
             <h6 class="sk-judul"><%= sk.judul %></h6>
             <p class="sk-dosen"><i class="bi bi-person-badge me-1"></i> <%= sk.namaDosen %></p>
             <div class="mt-auto d-flex justify-content-between align-items-center pt-2">
-              <a href="<%= sk.fileUrl %>" target="_blank" class="btn btn-outline-primary btn-outline-sk">
+              <a href="/pratinjau?u=<%= encodeURIComponent(sk.fileUrl) %>" target="_blank" class="btn btn-outline-primary btn-outline-sk">
                 <i class="bi bi-eye me-1"></i> Lihat PDF
               </a>
               <form action="/admin/sk/<%= sk.id %>/delete" method="POST" onsubmit="return confirm('Yakin hapus SK ini?')" class="d-inline">

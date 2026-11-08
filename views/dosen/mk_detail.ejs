@@ -528,7 +528,7 @@
                 </td>
                 <td>
                   <% if (p.fileUrl) { %>
-                    <a href="<%= p.fileUrl %>" target="_blank" class="btn-file mb-1">
+                    <a href="/pratinjau?u=<%= encodeURIComponent(p.fileUrl) %>" target="_blank" class="btn-file mb-1">
                       <i class="bi bi-file-earmark-pdf"></i> Lihat
                     </a><br>
                   <% } %>

@@ -281,7 +281,7 @@
             <table class="table table-borderless mb-3" style="width: auto;">
               <tr>
                 <td><strong>File:</strong></td>
-                <td><a href="<%= laporan.fileUrl %>" target="_blank" class="text-decoration-none"><i class="bi bi-file-earmark-pdf text-danger me-1"></i><%= laporan.fileName || 'file.pdf' %></a></td>
+                <td><a href="/pratinjau?u=<%= encodeURIComponent(laporan.fileUrl) %>" target="_blank" class="text-decoration-none"><i class="bi bi-file-earmark-pdf text-danger me-1"></i><%= laporan.fileName || 'file.pdf' %></a></td>
               </tr>
               <tr>
                 <td><strong>Diunggah:</strong></td>

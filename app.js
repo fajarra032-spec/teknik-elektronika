@@ -421,6 +421,7 @@ async function startServer() {
 
     // ROUTES NOTIFIKASI & PESAN (semua role - mahasiswa/dosen/admin)
     app.use('/notifikasi', require('./routes/notifikasi'));
+    app.use('/pratinjau', require('./routes/pratinjau'));   // pratinjau dokumen/PDF bersama (lihat dulu, baru unduh/cetak)
     app.use('/pesan', require('./routes/pesan'));
 
     // ROUTES PUBLIK
