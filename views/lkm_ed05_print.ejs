@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
-<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %></head>
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %><style>table.tt td.k { height: 15px !important; } table.tt td { padding: 1px 3px; } table.timing td { height: 17px; } .sect-title { margin: 7px 0 3px 0; } .petunjuk { margin: 2px 0; } .ttd-wrap { margin-top: 4px; } .ttd-box .nama-ttd { margin-top: 24px; } .nilai-box .angka { height: 16px; } .nilai-box { padding: 3px; }</style></head>
 <body>
 <div class="container-fluid">
 <% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
@@ -39,8 +39,8 @@
 <table class="tt kecil" style="margin-top:6px;">
   <thead><tr><th style="width:34%;">Uji</th><th>Data input DCBA</th><th>Hasil keluaran QD QC QB QA</th><th>Sesuai?</th></tr></thead>
   <tbody>
-    <tr><td style="text-align:left;">Load data (LOAD = LOW)</td><td class="k" style="height:24px;"></td><td></td><td></td></tr>
-    <tr><td style="text-align:left;">Clear (CLR = HIGH)</td><td class="k" style="height:24px;"></td><td></td><td></td></tr>
+    <tr><td style="text-align:left;">Load data (LOAD = LOW)</td><td class="k" style="height:20px;"></td><td></td><td></td></tr>
+    <tr><td style="text-align:left;">Clear (CLR = HIGH)</td><td class="k" style="height:20px;"></td><td></td><td></td></tr>
   </tbody>
 </table>
 
@@ -61,7 +61,11 @@
   <tbody><% ['Sumber clock flip-flop','Tundaan antarkeluaran','Keadaan sesaat (glitch)','Contoh pemakaian'].forEach(a => { %><tr><td style="text-align:left;"><strong><%= a %></strong></td><td class="k" style="height:26px;"></td><td></td></tr><% }) %></tbody>
 </table>
 
-<div class="pertanyaan-item" style="margin-top:6px;"><div class="no-pertanyaan">Jelaskan mengapa counter modulus 10 pada 7493 bisa menimbulkan keadaan sesaat 1010, dan apa dampaknya bagi rangkaian berikutnya?</div><%- g(3) %></div>
+</div>
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">F. Analisis</div>
+<div class="pertanyaan-item" style="margin-top:6px;"><div class="no-pertanyaan">Jelaskan mengapa counter modulus 10 pada 7493 bisa menimbulkan keadaan sesaat 1010, dan apa dampaknya bagi rangkaian berikutnya?</div><%- g(6) %></div>
 <%- include('partials/lkm_std_bottom') %>
 </div>
 </div>

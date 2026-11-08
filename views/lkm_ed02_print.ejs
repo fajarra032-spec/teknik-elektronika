@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
-<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %></head>
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
 <body>
 <div class="container-fluid">
 <% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
@@ -80,8 +80,8 @@
     <div class="sub-title" style="margin-top:0;">K-Map 4 x 4 (isi 1, 0, atau X)</div>
     <%- include('partials/lkm_ed_kmap', {vars:4}) %>
     <table class="tt" style="margin-top:6px;">
-      <tr><td style="text-align:left;width:36%;">Persamaan minimal tanpa memanfaatkan X</td><td style="height:34px;"></td></tr>
-      <tr><td style="text-align:left;">Persamaan minimal dengan memanfaatkan X</td><td style="height:34px;"></td></tr>
+      <tr><td style="text-align:left;width:36%;">Persamaan minimal tanpa memanfaatkan X</td><td style="height:28px;"></td></tr>
+      <tr><td style="text-align:left;">Persamaan minimal dengan memanfaatkan X</td><td style="height:28px;"></td></tr>
     </table>
   </div>
 </div>
@@ -89,13 +89,13 @@
 <div class="sect-title">Perbandingan Sebelum dan Sesudah Penyederhanaan</div>
 <table class="tt">
   <thead><tr><th style="width:24%;">Kasus</th><th>Jumlah gerbang sebelum</th><th>Jumlah gerbang sesudah</th><th>Jumlah IC sebelum</th><th>Jumlah IC sesudah</th><th>Penghematan (%)</th></tr></thead>
-  <tbody><% ['Kasus 1','Kasus 2','Kasus 3'].forEach(k => { %><tr><td><strong><%= k %></strong></td><td class="k" style="height:26px;"></td><td></td><td></td><td></td><td></td></tr><% }) %></tbody>
+  <tbody><% ['Kasus 1','Kasus 2','Kasus 3'].forEach(k => { %><tr><td><strong><%= k %></strong></td><td class="k" style="height:22px;"></td><td></td><td></td><td></td><td></td></tr><% }) %></tbody>
 </table>
 
 <div class="sect-title">Analisis</div>
-<div class="pertanyaan-item"><div class="no-pertanyaan">1. Jelaskan mengapa sel bertetangga pada K-Map disusun dengan urutan kode Gray (00, 01, 11, 10).</div><%- g(3) %></div>
-<div class="pertanyaan-item"><div class="no-pertanyaan">2. Pada Kasus 3, apa manfaat sel tidak peduli (X) dan apa syarat boleh tidaknya sel X dimasukkan ke dalam kelompok?</div><%- g(3) %></div>
-<div class="pertanyaan-item"><div class="no-pertanyaan">3. Mengapa rangkaian yang sudah disederhanakan lebih baik ditinjau dari biaya dan keandalan?</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Jelaskan mengapa sel bertetangga pada K-Map disusun dengan urutan kode Gray (00, 01, 11, 10).</div><%- g(2) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Pada Kasus 3, apa manfaat sel tidak peduli (X) dan apa syarat boleh tidaknya sel X dimasukkan ke dalam kelompok?</div><%- g(2) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">3. Mengapa rangkaian yang sudah disederhanakan lebih baik ditinjau dari biaya dan keandalan?</div><%- g(2) %></div>
 <%- include('partials/lkm_std_bottom') %>
 </div>
 </div>

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
-<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %></head>
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %></head>
 <body>
 <div class="container-fluid">
 <% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
@@ -59,14 +59,14 @@
 <table class="tt">
   <thead><tr><th style="width:12%;">Fungsi</th><th style="width:20%;">Jumlah gerbang NAND</th><th>Skema rangkaian NAND</th><th style="width:20%;">Hasil uji sesuai tabel?</th></tr></thead>
   <tbody>
-    <% ['NOT','AND','OR'].forEach(f => { %><tr><td><strong><%= f %></strong></td><td></td><td style="height:62px;"></td><td><span class="cb"></span> Ya <span class="cb"></span> Tidak</td></tr><% }) %>
+    <% ['NOT','AND','OR'].forEach(f => { %><tr><td><strong><%= f %></strong></td><td></td><td style="height:44px;"></td><td><span class="cb"></span> Ya <span class="cb"></span> Tidak</td></tr><% }) %>
   </tbody>
 </table>
 
 <div class="sect-title">E. Analisis</div>
-<div class="pertanyaan-item"><div class="no-pertanyaan">1. Tandai baris tabel kebenaran yang tidak sesuai teori (bila ada), lalu jelaskan kemungkinan penyebabnya.</div><%- g(3) %></div>
-<div class="pertanyaan-item"><div class="no-pertanyaan">2. Mengapa pembacaan logika sebaiknya berdasarkan tegangan terukur, bukan hanya nyala LED?</div><%- g(3) %></div>
-<div class="pertanyaan-item"><div class="no-pertanyaan">3. Jelaskan mengapa NAND disebut gerbang universal berdasarkan hasil praktik Anda.</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Tandai baris tabel kebenaran yang tidak sesuai teori (bila ada), lalu jelaskan kemungkinan penyebabnya.</div><%- g(2) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Mengapa pembacaan logika sebaiknya berdasarkan tegangan terukur, bukan hanya nyala LED?</div><%- g(2) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">3. Jelaskan mengapa NAND disebut gerbang universal berdasarkan hasil praktik Anda.</div><%- g(2) %></div>
 <%- include('partials/lkm_std_bottom') %>
 </div>
 </div>
