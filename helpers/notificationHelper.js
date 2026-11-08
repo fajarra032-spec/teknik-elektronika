@@ -16,6 +16,8 @@
  */
 
 const { TTLCache } = require('./cache');
+// Teruskan ke WhatsApp (mati kecuali WA_AUTO_ENABLED=true; tidak pernah melempar error).
+const waNotifier = require('./waNotifier');
 
 // 60 detik (dulu 15): navbar dibangun di setiap halaman. Cache user dihapus
 // langsung saat notifikasi dibuat / dibaca, jadi angka tetap terasa real-time.
@@ -44,6 +46,7 @@ async function createNotification(db, userId, data) {
   };
   const ref = await db.collection(COLLECTION).add(doc);
   navbarNotifCache.delete(userId); // biar langsung kehitung di halaman berikutnya
+  waNotifier.enqueue(db, userId, doc); // WhatsApp otomatis (tanpa await)
   return { id: ref.id, ...doc };
 }
 
@@ -57,7 +60,7 @@ async function createNotificationOnce(db, userId, docId, data) {
   const ref = db.collection(COLLECTION).doc(docId);
   const ada = await ref.get();
   if (ada.exists) return false;
-  await ref.set({
+  const doc = {
     userId,
     type: data.type || 'info',
     title: data.title,
@@ -65,8 +68,10 @@ async function createNotificationOnce(db, userId, docId, data) {
     link: data.link || null,
     read: false,
     createdAt: new Date().toISOString()
-  });
+  };
+  await ref.set(doc);
   navbarNotifCache.delete(userId);
+  waNotifier.enqueue(db, userId, doc); // WhatsApp otomatis (tanpa await)
   return true;
 }
 
@@ -97,7 +102,10 @@ async function createNotificationForUsers(db, userIds, data) {
     });
   });
   await batch.commit();
-  unique.forEach(uid => navbarNotifCache.delete(uid));
+  unique.forEach(uid => {
+    navbarNotifCache.delete(uid);
+    waNotifier.enqueue(db, uid, { type: data.type || 'info', title: data.title, message: data.message || '', link: data.link || null });
+  });
 }
 
 /**

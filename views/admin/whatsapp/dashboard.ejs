@@ -168,6 +168,40 @@
       </div>
     </div>
   </div>
+  <!-- Notifikasi otomatis -->
+  <div class="wad-card mt-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+      <div class="fw-bold"><i class="bi bi-robot me-1"></i>Notifikasi otomatis dari website</div>
+      <div>
+        <% if (!auto.cfg.enabled) { %><span class="badge text-bg-secondary">Nonaktif</span>
+        <% } else if (auto.cfg.dryRun) { %><span class="badge text-bg-warning">Simulasi (dry-run)</span>
+        <% } else { %><span class="badge text-bg-success">Aktif · mode <%= auto.cfg.mode %></span><% } %>
+        <a href="/admin/whatsapp/otomatis" class="small ms-2">Lihat aturan <i class="bi bi-arrow-right"></i></a>
+      </div>
+    </div>
+    <div class="row g-3">
+      <div class="col-6 col-md-3"><div class="wad-lbl">Terkirim hari ini</div><div class="wad-num"><%= auto.hariIni %></div></div>
+      <div class="col-6 col-md-3"><div class="wad-lbl">Terkirim 30 hari</div><div class="wad-num"><%= auto.terkirim %></div></div>
+      <div class="col-6 col-md-3"><div class="wad-lbl">Gagal 30 hari</div><div class="wad-num <%= auto.gagal ? 'text-danger' : '' %>"><%= auto.gagal %></div></div>
+      <div class="col-6 col-md-3"><div class="wad-lbl">Dilewati / simulasi</div><div class="wad-num"><%= auto.dilewati %> / <%= auto.simulasi %></div></div>
+    </div>
+    <div class="row g-3 mt-1">
+      <div class="col-md-6">
+        <div class="wad-lbl mb-1">Jenis notifikasi terkirim terbanyak</div>
+        <% if (!auto.perRule.length) { %><div class="text-muted small">Belum ada.</div><% } %>
+        <% auto.perRule.forEach(function(r) { %>
+          <div class="d-flex justify-content-between border-bottom py-1 small"><span><%= r.label %></span><strong><%= r.n %></strong></div>
+        <% }); %>
+      </div>
+      <div class="col-md-6">
+        <div class="wad-lbl mb-1">Alasan paling sering dilewati</div>
+        <% if (!auto.alasanTop.length) { %><div class="text-muted small">Belum ada.</div><% } %>
+        <% auto.alasanTop.forEach(function(a) { %>
+          <div class="d-flex justify-content-between border-bottom py-1 small"><span><%= a[0] %></span><strong><%= a[1] %></strong></div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
 </div>
 
 <%- include('../../partials/footer') %>

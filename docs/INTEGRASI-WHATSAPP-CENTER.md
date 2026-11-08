@@ -1,4 +1,4 @@
-# Patch Integrasi WhatsApp Center v3 — Website Teknik Elektronika
+# Patch Integrasi WhatsApp Center v4 — Website Teknik Elektronika
 
 Patch ini menambahkan menu **WhatsApp Center** ke dashboard admin website Teknik Elektronika.
 
@@ -49,6 +49,19 @@ Route mengharapkan endpoint Notification API berikut:
 - `POST /internal/messages`
 
 Kode mencoba membaca array dari properti `conversations`/`messages`, `items`, `results`, atau array langsung. Jika struktur respons API berbeda, sesuaikan `unwrapArray()` pada `routes/admin/whatsapp.js`.
+
+## Tambahan v4 — Notifikasi otomatis website → WhatsApp
+- `helpers/waNotifier.js` (baru), `helpers/waTemplates.js` (baru), `helpers/notificationHelper.js` (diubah: 4 baris pemanggilan).
+- `views/admin/whatsapp/otomatis.ejs` (baru): daftar aturan dan statusnya; kartu ringkasan di Dashboard; tabel di Riwayat.
+- Katalog lengkap: `docs/KATALOG-NOTIFIKASI-WA.md`. Draf template Meta: `docs/TEMPLATE-WHATSAPP-META.md`.
+- **Mati bawaan.** Tambahkan ke `.env` website untuk memulai uji aman:
+  ```env
+  WA_AUTO_ENABLED=true
+  WA_AUTO_DRY_RUN=true      # ubah ke false setelah log simulasi terlihat benar
+  WA_SEND_MODE=text         # template bila API sudah mendukung
+  WA_SITE_URL=https://elektronika.polidewa.ac.id
+  ```
+  Variabel lain (opsional) ada di komentar bagian atas `helpers/waNotifier.js`.
 
 ## Tambahan v3 — Dashboard WhatsApp (`/admin/whatsapp/dashboard`)
 - Status Notification API (`GET /health`, tanpa API key) + waktu respons.

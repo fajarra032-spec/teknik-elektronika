@@ -4,7 +4,7 @@
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <div>
       <h2 class="fw-bold mb-1"><i class="bi bi-clock-history me-2"></i>Riwayat Pengiriman WhatsApp</h2>
-      <div class="text-muted small">100 pengiriman terakhir dari dashboard (siapa, ke mana, kapan, status)</div>
+      <div class="text-muted small">Pengiriman manual dari dashboard dan notifikasi otomatis dari website</div>
     </div>
     <a href="/admin/whatsapp" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali ke Inbox</a>
   </div>
@@ -34,6 +34,36 @@
                 <% if (l.status === 'terkirim') { %><span class="badge text-bg-success">Terkirim</span>
                 <% } else if (l.status === 'gagal') { %><span class="badge text-bg-danger" title="<%= l.error || '' %>">Gagal</span>
                 <% } else { %><span class="badge text-bg-secondary" title="<%= l.error || '' %>">Ditolak</span><% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <h5 class="fw-bold mt-4 mb-2"><i class="bi bi-robot me-2"></i>Notifikasi otomatis (100 terakhir)</h5>
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>Waktu</th><th>Aturan</th><th>Ke</th><th>Judul</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <% if (!autoLogs.length) { %>
+            <tr><td colspan="5" class="text-center text-muted py-4">Belum ada notifikasi otomatis.</td></tr>
+          <% } %>
+          <% autoLogs.forEach(function(l) { %>
+            <tr>
+              <td class="text-nowrap small"><%= new Date(l.createdAt).toLocaleString('id-ID', {dateStyle:'short', timeStyle:'short'}) %></td>
+              <td class="small"><code><%= l.rule %></code></td>
+              <td class="text-nowrap"><%= l.to ? '+' + l.to : '—' %></td>
+              <td style="max-width:360px" class="text-truncate" title="<%= l.title %>"><%= l.title %></td>
+              <td>
+                <% if (l.status === 'terkirim') { %><span class="badge text-bg-success">Terkirim</span>
+                <% } else if (l.status === 'gagal') { %><span class="badge text-bg-danger" title="<%= l.alasan || '' %>">Gagal</span>
+                <% } else if (l.status === 'simulasi') { %><span class="badge text-bg-warning" title="<%= l.alasan || '' %>">Simulasi</span>
+                <% } else { %><span class="badge text-bg-secondary" title="<%= l.alasan || '' %>">Dilewati</span><% } %>
+                <% if (l.alasan && l.status !== 'terkirim') { %><span class="text-muted small ms-1"><%= l.alasan %></span><% } %>
               </td>
             </tr>
           <% }); %>

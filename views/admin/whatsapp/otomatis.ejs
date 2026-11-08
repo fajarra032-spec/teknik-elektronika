@@ -1,0 +1,54 @@
+<%- include('../../partials/header') %>
+
+<div class="container-fluid" style="max-width:1200px;margin:1.5rem auto;">
+  <div class="mb-3">
+    <h2 class="fw-bold mb-1"><i class="bi bi-whatsapp text-success me-2"></i>WhatsApp Center</h2>
+    <div class="text-muted small">Notifikasi lonceng website yang diteruskan otomatis ke WhatsApp</div>
+  </div>
+
+  <% var waTab = 'otomatis'; %>
+  <%- include('_tabs', { waTab: waTab }) %>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <div class="row g-3 small">
+        <div class="col-6 col-md-3"><div class="text-muted">Status</div>
+          <strong>
+            <% if (!cfg.enabled) { %><span class="text-secondary">Nonaktif</span>
+            <% } else if (cfg.dryRun) { %><span class="text-warning">Simulasi (dry-run)</span>
+            <% } else { %><span class="text-success">Aktif</span><% } %>
+          </strong></div>
+        <div class="col-6 col-md-3"><div class="text-muted">Mode kirim</div><strong><%= cfg.mode %></strong></div>
+        <div class="col-6 col-md-3"><div class="text-muted">Batas per penerima / hari</div><strong><%= cfg.maxPerDay %></strong></div>
+        <div class="col-6 col-md-3"><div class="text-muted">Jam tenang</div><strong><%= cfg.quiet %></strong></div>
+      </div>
+      <div class="text-muted small mt-3">
+        Pengaturan diubah lewat file <code>.env</code> website (<code>WA_AUTO_ENABLED</code>, <code>WA_AUTO_DRY_RUN</code>,
+        <code>WA_AUTO_RULES_ON</code>, <code>WA_AUTO_RULES_OFF</code>), lalu <code>pm2 restart teknik-elektronika --update-env</code>.
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>Kode aturan</th><th>Notifikasi website</th><th>Penerima</th><th>Template</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <% cfg.rules.forEach(function(r) { %>
+            <tr>
+              <td><code><%= r.key %></code></td>
+              <td><%= r.label %></td>
+              <td><%= r.roles.join(', ') %></td>
+              <td><code><%= r.template %></code></td>
+              <td><%- r.aktif ? '<span class="badge text-bg-success">Dikirim</span>' : '<span class="badge text-bg-secondary">Tidak dikirim</span>' %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

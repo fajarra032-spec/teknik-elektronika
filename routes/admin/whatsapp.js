@@ -9,10 +9,12 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../../config/firebaseAdmin');
+const waNotifier = require('../../helpers/waNotifier');
 
 const API_BASE = (process.env.NOTIFICATION_API_URL || '').replace(/\/+$/, '');
 const API_KEY = process.env.NOTIFICATION_INTERNAL_KEY || '';
 const LOG_COLLECTION = 'wa_logs';
+const AUTO_COLLECTION = 'wa_auto_logs';
 
 // ---- Pembatasan frekuensi & pencegah kirim ganda (in-memory, per proses) ----
 const RATE_WINDOW_MS = 60 * 1000;
@@ -283,12 +285,38 @@ router.get('/dashboard', async (req, res) => {
   const adminTop = Object.entries(perAdmin).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const gagalTerbaru = logs.filter(l => l.status === 'gagal').slice(0, 5);
 
+  // 4) Notifikasi otomatis (wa_auto_logs, 30 hari)
+  const auto = { cfg: waNotifier.status(), terkirim: 0, gagal: 0, dilewati: 0, simulasi: 0, perRule: [], alasanTop: [], hariIni: 0 };
+  try {
+    const sejak = new Date(now - 30 * 24 * 3600 * 1000).toISOString();
+    const snap = await db.collection(AUTO_COLLECTION)
+      .where('createdAt', '>=', sejak)
+      .orderBy('createdAt', 'desc')
+      .limit(3000)
+      .get();
+    const perRule = {}, alasan = {};
+    snap.docs.forEach(d => {
+      const l = d.data();
+      if (auto[l.status] !== undefined) auto[l.status]++;
+      if (l.status === 'terkirim') {
+        perRule[l.rule] = (perRule[l.rule] || 0) + 1;
+        if (tglWita(l.createdAt) === hariIni) auto.hariIni++;
+      }
+      if (l.status === 'dilewati' && l.alasan) alasan[l.alasan] = (alasan[l.alasan] || 0) + 1;
+    });
+    const label = Object.fromEntries(auto.cfg.rules.map(r => [r.key, r.label]));
+    auto.perRule = Object.entries(perRule).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k, n]) => ({ label: label[k] || k, n }));
+    auto.alasanTop = Object.entries(alasan).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  } catch (e) {
+    console.error('[WhatsApp Center] Dashboard: gagal baca wa_auto_logs:', e.message);
+  }
+
   res.render('admin/whatsapp/dashboard', {
     title: 'Dashboard WhatsApp',
     user: req.user,
     api, convError, peringatan,
     totalConv: conversations.length, aktif24, aktif7, unread, adaUnread,
-    terbaru, stat, successRate, grafik, adminTop, gagalTerbaru,
+    terbaru, stat, successRate, grafik, adminTop, gagalTerbaru, auto,
     maxGrafik: Math.max(1, ...grafik.map(g => g.terkirim + g.gagal))
   });
 });
@@ -307,7 +335,14 @@ router.get('/riwayat', async (req, res) => {
     console.error('[WhatsApp Center] Gagal memuat riwayat:', e.message);
     error = 'Gagal memuat riwayat pengiriman.';
   }
-  res.render('admin/whatsapp/riwayat', { title: 'Riwayat WhatsApp', user: req.user, logs, error });
+  let autoLogs = [];
+  try {
+    const snap = await db.collection(AUTO_COLLECTION).orderBy('createdAt', 'desc').limit(100).get();
+    autoLogs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    console.error('[WhatsApp Center] Gagal memuat riwayat otomatis:', e.message);
+  }
+  res.render('admin/whatsapp/riwayat', { title: 'Riwayat WhatsApp', user: req.user, logs, autoLogs, error });
 });
 
 // POST /admin/whatsapp/send
