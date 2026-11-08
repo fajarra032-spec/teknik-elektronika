@@ -17,6 +17,11 @@
   .wa-out { background:#dcfce7; border:1px solid #bbf7d0; margin-left:auto; border-top-right-radius:.25rem; }
   .wa-compose { padding:1rem; border-top:1px solid #e2e8f0; background:#fff; }
   .wa-empty { display:flex; align-items:center; justify-content:center; text-align:center; min-height:500px; color:#64748b; padding:2rem; }
+  .wa-new { padding:.8rem 1rem; border-bottom:1px solid #e2e8f0; background:#f8fafc; position:relative; }
+  .wa-results { position:absolute; left:1rem; right:1rem; top:100%; z-index:20; background:#fff; border:1px solid #cbd5e1; border-radius:.6rem; box-shadow:0 8px 24px rgba(15,23,42,.12); max-height:320px; overflow-y:auto; display:none; }
+  .wa-res { display:flex; justify-content:space-between; gap:.5rem; width:100%; text-align:left; padding:.55rem .8rem; border:0; background:none; border-bottom:1px solid #f1f5f9; }
+  .wa-res:hover:not(:disabled) { background:#f0fdf4; }
+  .wa-res:disabled { opacity:.55; cursor:not-allowed; }
   @media(max-width:850px) { .wa-shell {grid-template-columns:1fr;} .wa-list {max-height:300px;} .wa-chat {min-height:500px;} .wa-messages {max-height:420px;} }
 </style>
 
@@ -50,6 +55,18 @@
       <div class="wa-panel-head">
         <div class="fw-bold">Percakapan</div>
         <div class="wa-muted"><%= conversations.length %> percakapan tersimpan</div>
+      </div>
+      <div class="wa-new">
+        <label for="waCari" class="form-label small fw-semibold mb-1"><i class="bi bi-person-plus me-1"></i>Pesan baru ke mahasiswa / dosen</label>
+        <div class="input-group input-group-sm">
+          <select id="waRole" class="form-select" style="max-width:120px">
+            <option value="">Semua</option>
+            <option value="mahasiswa">Mahasiswa</option>
+            <option value="dosen">Dosen</option>
+          </select>
+          <input type="search" id="waCari" class="form-control" placeholder="Ketik nama / NIM / NIP..." autocomplete="off">
+        </div>
+        <div class="wa-results" id="waResults"></div>
       </div>
       <div class="wa-list">
         <% if (!conversations.length) { %>
@@ -85,8 +102,10 @@
       <% } else { %>
         <div class="wa-panel-head d-flex justify-content-between align-items-center">
           <div>
-            <div class="fw-bold"><i class="bi bi-person-circle me-2"></i>+<%= selectedWaId %></div>
-            <div class="wa-muted">Riwayat percakapan WhatsApp</div>
+            <div class="fw-bold"><i class="bi bi-person-circle me-2"></i><%= kontak ? kontak.nama : ('+' + selectedWaId) %>
+              <% if (kontak) { %><span class="badge text-bg-<%= kontak.role === 'dosen' ? 'primary' : 'secondary' %> ms-1"><%= kontak.role === 'dosen' ? 'Dosen' : 'Mahasiswa' %></span><% } %>
+            </div>
+            <div class="wa-muted"><%= kontak && kontak.sub ? (kontak.role === 'dosen' ? 'NIP ' : 'NIM ') + kontak.sub + ' · ' : '' %>+<%= selectedWaId %></div>
           </div>
           <span class="badge text-bg-success">Terhubung ke API</span>
         </div>
@@ -102,7 +121,7 @@
           %>
             <div class="wa-bubble <%= outgoing ? 'wa-out' : 'wa-in' %>">
               <div><%= body %></div>
-              <div class="wa-muted text-end mt-1"><%= stamp ? new Date(stamp).toLocaleString('id-ID', {dateStyle:'short',timeStyle:'short'}) : '' %> · <%= outgoing ? 'Terkirim' : 'Mahasiswa' %></div>
+              <div class="wa-muted text-end mt-1"><%= stamp ? new Date(stamp).toLocaleString('id-ID', {dateStyle:'short',timeStyle:'short'}) : '' %> · <%= outgoing ? 'Terkirim' : (kontak ? (kontak.role === 'dosen' ? 'Dosen' : 'Mahasiswa') : 'Penerima') %></div>
             </div>
           <% }); %>
         </div>
@@ -113,6 +132,23 @@
             <textarea id="waMessage" name="message" class="form-control" rows="2" maxlength="4096" required placeholder="Tulis balasan WhatsApp..." style="resize:vertical"></textarea>
             <button class="btn btn-success px-4" type="submit" id="waSendBtn"><i class="bi bi-send-fill me-1"></i>Kirim</button>
           </div>
+          <details class="mt-2">
+            <summary class="small fw-semibold text-success" style="cursor:pointer">Belum pernah chat / di luar 24 jam? Kirim sebagai template</summary>
+            <div class="row g-2 mt-1">
+              <div class="col-md-4">
+                <select name="tpl" class="form-select form-select-sm">
+                  <% templates.forEach(function(t) { %>
+                    <option value="<%= t %>" <%= (kontak && kontak.role === 'dosen' ? 'info_dosen' : 'info_layanan') === t ? 'selected' : '' %>><%= t %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="col-md-8"><input type="text" name="judul" id="waJudul" class="form-control form-control-sm" maxlength="120" placeholder="Judul singkat (wajib untuk template)"></div>
+              <div class="col-12">
+                <div class="form-check"><input class="form-check-input" type="checkbox" name="mode" value="template" id="waModeTpl">
+                <label class="form-check-label small" for="waModeTpl">Kirim memakai template (kolom pesan di atas jadi isi, maks. 300 karakter)</label></div>
+              </div>
+            </div>
+          </details>
           <div class="wa-muted mt-2">Pesan teks bebas hanya dapat dikirim dalam jendela layanan pelanggan 24 jam setelah mahasiswa mengirim pesan. Di luar jendela tersebut gunakan template yang disetujui Meta.</div>
         </form>
       <% } %>
@@ -122,6 +158,60 @@
 
 <script>
   (function () {
+    // ---- Pencarian kontak mahasiswa/dosen ----
+    const cari = document.getElementById('waCari');
+    const roleSel = document.getElementById('waRole');
+    const hasil = document.getElementById('waResults');
+    let timer = null, seq = 0;
+    function tutup() { hasil.style.display = 'none'; hasil.textContent = ''; }
+    function pesan(teks) {
+      hasil.textContent = '';
+      const d = document.createElement('div');
+      d.className = 'p-3 text-center text-muted small';
+      d.textContent = teks;
+      hasil.appendChild(d);
+      hasil.style.display = 'block';
+    }
+    async function jalankan() {
+      const q = cari.value.trim();
+      if (q.length < 2) return tutup();
+      const mine = ++seq;
+      try {
+        const r = await fetch('/admin/whatsapp/kontak?q=' + encodeURIComponent(q) + '&role=' + encodeURIComponent(roleSel.value), { headers: { Accept: 'application/json' } });
+        const data = await r.json();
+        if (mine !== seq) return;
+        if (!data.items || !data.items.length) return pesan('Tidak ada kontak yang cocok.');
+        hasil.textContent = '';
+        data.items.forEach(function (k) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'wa-res';
+          b.disabled = !k.waId;
+          const kiri = document.createElement('div');
+          const nm = document.createElement('strong');
+          nm.textContent = k.nama || '(tanpa nama)';
+          const sb = document.createElement('div');
+          sb.className = 'wa-muted';
+          sb.textContent = (k.role === 'dosen' ? 'Dosen' : 'Mahasiswa') + (k.sub ? ' · ' + k.sub : '') + ' · ' + (k.waId ? '+' + k.waId : 'nomor WA kosong/tidak valid');
+          kiri.appendChild(nm); kiri.appendChild(sb);
+          b.appendChild(kiri);
+          if (k.waId) b.addEventListener('click', function () { window.location.href = '/admin/whatsapp?waId=' + encodeURIComponent(k.waId); });
+          hasil.appendChild(b);
+        });
+        hasil.style.display = 'block';
+      } catch (e) { pesan('Gagal memuat kontak.'); }
+    }
+    if (cari) {
+      cari.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(jalankan, 250); });
+      roleSel.addEventListener('change', jalankan);
+      document.addEventListener('click', function (e) { if (!e.target.closest('.wa-new')) tutup(); });
+    }
+
+    // Template butuh judul
+    const modeTpl = document.getElementById('waModeTpl');
+    const judul = document.getElementById('waJudul');
+    if (modeTpl && judul) modeTpl.addEventListener('change', function () { judul.required = modeTpl.checked; });
+
     const box = document.getElementById('waMessages');
     if (box) box.scrollTop = box.scrollHeight;
     // Cegah kirim ganda: nonaktifkan tombol setelah submit

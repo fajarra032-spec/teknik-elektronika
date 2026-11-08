@@ -330,4 +330,4 @@ function status() {
   };
 }
 
-module.exports = { enqueue, status, RULES, _test: { normalisasiNomor, cariRule, susunTeks, susunTemplate, proses, cariPenerima, penerimaCache, antrean } };
+module.exports = { enqueue, status, RULES, normalisasiNomor, _test: { normalisasiNomor, cariRule, susunTeks, susunTemplate, proses, cariPenerima, penerimaCache, antrean } };

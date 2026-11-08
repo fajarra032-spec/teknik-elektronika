@@ -11,6 +11,7 @@ const router = express.Router();
 const { db } = require('../../config/firebaseAdmin');
 const waNotifier = require('../../helpers/waNotifier');
 const kuliahReminder = require('../../helpers/kuliahReminderHelper');
+const { TEMPLATES, bersihkanParam } = require('../../helpers/waTemplates');
 
 const API_BASE = (process.env.NOTIFICATION_API_URL || '').replace(/\/+$/, '');
 const API_KEY = process.env.NOTIFICATION_INTERNAL_KEY || '';
@@ -123,6 +124,100 @@ async function tulisLog(req, { to, text, status, error }) {
   }
 }
 
+
+// ---- Direktori kontak (mahasiswa & dosen) untuk memulai chat manual ----
+// Sumber: koleksi 'users' (role mahasiswa/dosen) + koleksi 'dosen'.
+// Di-cache 5 menit agar pencarian cepat dan hemat pembacaan Firestore.
+const KONTAK_TTL_MS = 5 * 60 * 1000;
+const FIELD_NOMOR = ['noHp', 'noHP', 'nohp', 'whatsapp', 'noWa', 'noWA', 'telepon', 'kontak'];
+let kontakCache = { t: 0, list: [] };
+
+function ambilNomor(o) {
+  if (!o) return '';
+  for (const f of FIELD_NOMOR) {
+    if (o[f]) {
+      const n = waNotifier.normalisasiNomor(o[f]);
+      if (n) return n;
+    }
+  }
+  return '';
+}
+
+async function muatKontak(force = false) {
+  if (!force && Date.now() - kontakCache.t < KONTAK_TTL_MS && kontakCache.list.length) return kontakCache.list;
+
+  const [usersSnap, dosenSnap] = await Promise.all([
+    db.collection('users').where('role', 'in', ['mahasiswa', 'dosen']).get(),
+    db.collection('dosen').get()
+  ]);
+
+  const dosenByUser = new Map();
+  const dosenDocs = [];
+  dosenSnap.docs.forEach(d => {
+    const x = d.data();
+    dosenDocs.push({ id: d.id, ...x });
+    if (x.userId) dosenByUser.set(x.userId, { id: d.id, ...x });
+  });
+
+  const list = [];
+  const userDosenTerpakai = new Set();
+
+  usersSnap.docs.forEach(d => {
+    const u = d.data();
+    if (u.role === 'mahasiswa') {
+      list.push({ id: d.id, role: 'mahasiswa', nama: u.nama || '', sub: u.nim || '', waId: ambilNomor(u) });
+    } else if (u.role === 'dosen') {
+      const dd = dosenByUser.get(d.id);
+      if (dd) userDosenTerpakai.add(dd.id);
+      list.push({
+        id: d.id, role: 'dosen',
+        nama: u.nama || (dd && dd.nama) || '',
+        sub: (dd && dd.nip) || u.nip || '',
+        waId: ambilNomor(u) || ambilNomor(dd)
+      });
+    }
+  });
+  // Dosen yang hanya ada di koleksi 'dosen' (belum punya akun users)
+  dosenDocs.forEach(dd => {
+    if (userDosenTerpakai.has(dd.id)) return;
+    list.push({ id: 'dosen:' + dd.id, role: 'dosen', nama: dd.nama || '', sub: dd.nip || '', waId: ambilNomor(dd) });
+  });
+
+  list.sort((a, b) => a.nama.localeCompare(b.nama, 'id'));
+  kontakCache = { t: Date.now(), list };
+  return list;
+}
+
+async function cariKontakByWa(waId) {
+  if (!waId) return null;
+  const list = await muatKontak();
+  return list.find(k => k.waId === waId) || null;
+}
+
+// GET /admin/whatsapp/kontak?q=nama|nim|nomor&role=mahasiswa|dosen  -> JSON
+router.get('/kontak', async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim().toLowerCase();
+    const role = ['mahasiswa', 'dosen'].includes(req.query.role) ? req.query.role : '';
+    if (q.length < 2) return res.json({ items: [] });
+    const qDigit = q.replace(/\D/g, '');
+    const list = await muatKontak(req.query.refresh === '1');
+    const items = list
+      .filter(k => !role || k.role === role)
+      .filter(k =>
+        k.nama.toLowerCase().includes(q) ||
+        String(k.sub).toLowerCase().includes(q) ||
+        (qDigit.length >= 4 && k.waId.includes(qDigit))
+      )
+      .slice(0, 20)
+      .map(k => ({ nama: k.nama, role: k.role, sub: k.sub, waId: k.waId }));
+    res.json({ items });
+  } catch (e) {
+    console.error('[WhatsApp Center] Gagal memuat kontak:', e.message);
+    res.status(500).json({ items: [], error: 'Gagal memuat daftar kontak.' });
+  }
+});
+
 // GET /admin/whatsapp
 router.get('/', async (req, res) => {
   let conversations = [];
@@ -150,7 +245,23 @@ router.get('/', async (req, res) => {
     apiError = renderError(error);
   }
 
+  // Kenali nomor sebagai mahasiswa/dosen (gagal memuat kontak tidak boleh merusak inbox)
+  let kontak = null;
+  try {
+    const daftar = await muatKontak();
+    const peta = new Map(daftar.filter(k => k.waId).map(k => [k.waId, k]));
+    conversations.forEach(c => {
+      const ph = String(c.waId || c.phone || c.id || '').replace(/\D/g, '');
+      const k = peta.get(ph);
+      if (k && !(c.name || c.profileName)) c.name = k.nama + (k.role === 'dosen' ? ' (Dosen)' : '');
+    });
+    if (selectedWaId) kontak = peta.get(selectedWaId) || null;
+  } catch (e) {
+    console.error('[WhatsApp Center] Gagal mengenali kontak:', e.message);
+  }
+
   const pesanError = {
+    'tpl': 'Mode template: judul wajib diisi dan isi pesan maksimal 300 karakter.',
     '1': 'Pesan gagal dikirim. Periksa nomor, jendela layanan WhatsApp, template, dan koneksi API.',
     'rate': 'Terlalu banyak pesan dalam waktu singkat. Tunggu sebentar lalu coba lagi.',
     'dup': 'Pesan identik baru saja dikirim ke nomor ini. Diabaikan agar tidak terkirim ganda.'
@@ -162,6 +273,8 @@ router.get('/', async (req, res) => {
     conversations,
     messages,
     selectedWaId,
+    kontak,
+    templates: Object.keys(TEMPLATES),
     apiError,
     success: req.query.success === '1' ? 'Pesan berhasil dikirim.' : '',
     sendError: pesanError[req.query.error] || ''
@@ -322,6 +435,29 @@ router.get('/dashboard', async (req, res) => {
   });
 });
 
+// GET /admin/whatsapp/otomatis - aturan notifikasi otomatis website -> WhatsApp
+router.get('/otomatis', (req, res) => {
+  let cfg, kuliah;
+  try {
+    cfg = waNotifier.status();
+  } catch (e) {
+    console.error('[WhatsApp Center] Gagal membaca status waNotifier:', e.message);
+    cfg = { enabled: false, dryRun: true, mode: 'text', maxPerDay: 0, quiet: '-', antrean: 0, rules: [] };
+  }
+  try {
+    kuliah = kuliahReminder.info();
+  } catch (e) {
+    console.error('[WhatsApp Center] Gagal membaca info kuliahReminder:', e.message);
+    kuliah = { aktif: false, berjalan: false, pagi: '-', sebelumMenit: 0, dosen: false, mahasiswa: false };
+  }
+  res.render('admin/whatsapp/otomatis', {
+    title: 'Notifikasi Otomatis WhatsApp',
+    user: req.user,
+    cfg,
+    kuliah
+  });
+});
+
 // GET /admin/whatsapp/riwayat  - riwayat pengiriman dari dashboard
 router.get('/riwayat', async (req, res) => {
   let logs = [];
@@ -347,33 +483,54 @@ router.get('/riwayat', async (req, res) => {
 });
 
 // POST /admin/whatsapp/send
+// mode=text (bawaan)  : teks bebas, hanya sukses dalam jendela layanan 24 jam.
+// mode=template       : kirim template Meta (judul + isi) untuk memulai percakapan di luar 24 jam.
 router.post('/send', async (req, res) => {
   const to = safeWaId(req.body.to);
   const message = String(req.body.message || '').trim();
+  const mode = req.body.mode === 'template' ? 'template' : 'text';
+  const judul = String(req.body.judul || '').trim();
   const back = (flag) => `/admin/whatsapp?waId=${encodeURIComponent(to)}&${flag}`;
 
   if (!to || !message || message.length > 4096) return res.redirect(back('error=1'));
+  if (mode === 'template' && (!judul || message.length > 300)) return res.redirect(back('error=tpl'));
 
   const adminId = (req.user && (req.user.id || req.user.uid)) || 'admin';
+  const logText = mode === 'template' ? `[template] ${judul} | ${message}` : message;
+
   if (kenaRateLimit(adminId)) {
-    await tulisLog(req, { to, text: message, status: 'ditolak', error: 'rate limit' });
+    await tulisLog(req, { to, text: logText, status: 'ditolak', error: 'rate limit' });
     return res.redirect(back('error=rate'));
   }
-  if (pesanGanda(to, message)) {
-    await tulisLog(req, { to, text: message, status: 'ditolak', error: 'pesan ganda' });
+  if (pesanGanda(to, logText)) {
+    await tulisLog(req, { to, text: logText, status: 'ditolak', error: 'pesan ganda' });
     return res.redirect(back('error=dup'));
   }
 
   try {
-    await notificationRequest('/internal/messages', {
-      method: 'POST',
-      body: JSON.stringify({ to, text: message })
-    });
-    await tulisLog(req, { to, text: message, status: 'terkirim' });
+    let body;
+    if (mode === 'template') {
+      let k = null;
+      try { k = await cariKontakByWa(to); } catch (_) { /* nama opsional */ }
+      const tplKey = TEMPLATES[req.body.tpl] ? req.body.tpl : (k && k.role === 'dosen' ? 'info_dosen' : 'info_layanan');
+      const nama = (k && k.nama) || (k && k.role === 'dosen' ? 'Bapak/Ibu Dosen' : 'Mahasiswa');
+      body = {
+        to,
+        template: {
+          name: tplKey,
+          language: TEMPLATES[tplKey].language || 'id',
+          params: [bersihkanParam(nama, 60), bersihkanParam(judul, 120), bersihkanParam(message, 300)]
+        }
+      };
+    } else {
+      body = { to, text: message };
+    }
+    await notificationRequest('/internal/messages', { method: 'POST', body: JSON.stringify(body) });
+    await tulisLog(req, { to, text: logText, status: 'terkirim' });
     return res.redirect(back('success=1'));
   } catch (error) {
     console.error('[WhatsApp Center] Gagal mengirim pesan:', error.message);
-    await tulisLog(req, { to, text: message, status: 'gagal', error: error.message });
+    await tulisLog(req, { to, text: logText, status: 'gagal', error: error.message });
     return res.redirect(back('error=1'));
   }
 });
