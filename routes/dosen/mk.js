@@ -10,7 +10,6 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
-const nilaiNotif = require('../../helpers/nilaiNotifHelper');
 const { filterIdMahasiswaAktif, filterEnrollmentDocsAktif } = require('../../helpers/statusMahasiswaHelper');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
@@ -1126,7 +1125,7 @@ router.get('/:id/modul-template/:modulId/cetak', async (req, res) => {
     if (!modul) return res.status(404).render('error', { title: 'Tidak Ditemukan', message: 'Modul tidak ditemukan.' });
     const nomorModul = modulList.findIndex(m => m.id === req.params.modulId) + 1;
 
-    res.render('lkm_praktikum_print', {
+    res.render(modul.viewCetak || 'lkm_praktikum_print', {
       title: `LKM - ${modul.judul}`,
       mk: akses.mk,
       modul,
@@ -1231,11 +1230,6 @@ router.post('/:id/modul-template/:modulId/kumpulan/:pengumpulanId/periksa', asyn
       status: 'diperiksa',
       diperiksaPada: new Date().toISOString()
     });
-    {
-      const dataLkm = pengumpulanDoc.data();
-      const modulLkm = (getModulPraktikumList(akses.mk).modulList || []).find(m => m.id === req.params.modulId);
-      nilaiNotif.nilaiLkm(db, { mahasiswaId: dataLkm.mahasiswaId, mkId: akses.mk.id, modulJudul: modulLkm && modulLkm.judul, nilai: nilaiPraktikum, catatan: catatanDosen, oleh: req.dosen.nama });
-    }
 
     res.redirect(`/dosen/mk/${akses.mk.id}/modul-template/${req.params.modulId}/kumpulan`);
   } catch (error) {

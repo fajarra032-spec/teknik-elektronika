@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %><%- include('partials/lkm_re_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 4, subLkm: 'Transistor sebagai Saklar dan Penguat', nilaiNo: 4 }) %>
+
+<div class="sect-title">A. Transistor sebagai Saklar</div>
+<table class="tt">
+  <tr><td style="text-align:left;width:20%;">Tipe transistor</td><td class="k" style="width:16%;"></td><td style="text-align:left;width:18%;">Beban (LED / relay)</td><td style="width:16%;"></td><td style="text-align:left;width:14%;">R<sub>B</sub> / R<sub>C</sub></td><td></td></tr>
+</table>
+<table class="tt" style="margin-top:4px;">
+  <thead><tr><th>Tegangan input</th><th>V<sub>BE</sub> (V)</th><th>V<sub>CE</sub> (V)</th><th>I<sub>B</sub> (mA)</th><th>I<sub>C</sub> (mA)</th><th>Kondisi beban</th><th>Daerah kerja (cutoff / saturasi)</th></tr></thead>
+  <tbody>
+    <% ['0 V (LOW)','5 V (HIGH)','Variasi: ........ V'].forEach(v => { %><tr><td><strong><%= v %></strong></td><td class="k" style="height:24px;"></td><td></td><td></td><td></td><td></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+<div class="rumus-box">I<sub>B</sub> = (V<sub>in</sub> &minus; V<sub>BE</sub>) &divide; R<sub>B</sub> &nbsp;|&nbsp; I<sub>C(sat)</sub> &asymp; (V<sub>CC</sub> &minus; V<sub>CE(sat)</sub>) &divide; R<sub>C</sub> &nbsp;|&nbsp; h<sub>FE</sub> = I<sub>C</sub> &divide; I<sub>B</sub></div>
+
+<div class="sect-title">B. Titik Kerja DC Penguat Common Emitter</div>
+<div class="dua-kolom">
+  <div><div class="judul-kecil">Gambar rangkaian penguat beserta nilai komponen</div><div class="kotak-gambar" style="height:130px;"></div></div>
+  <div>
+    <table class="tt">
+      <caption>Tegangan DC (tanpa sinyal)</caption>
+      <thead><tr><th>Titik</th><th>Hitung (V)</th><th>Ukur (V)</th></tr></thead>
+      <tbody><% ['V<sub>B</sub>','V<sub>E</sub>','V<sub>C</sub>','V<sub>CE</sub>'].forEach(t => { %><tr><td><strong><%- t %></strong></td><td class="k" style="height:24px;"></td><td></td></tr><% }) %></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. Pengujian Penguat dengan Sinyal AC</div>
+<p class="catatan-kecil">Input sinus dari function generator, frekuensi 1 kHz. Ubah amplitudo input lalu catat output.</p>
+<div class="rumus-box">Penguatan A<sub>v</sub> = V<sub>out(p-p)</sub> &divide; V<sub>in(p-p)</sub> &nbsp;|&nbsp; A<sub>v</sub> (dB) = 20 log A<sub>v</sub></div>
+<table class="tt">
+  <thead><tr><th style="width:6%;">No</th><th>V<sub>in</sub> p-p (mV)</th><th>V<sub>out</sub> p-p (V)</th><th>A<sub>v</sub> (kali)</th><th>A<sub>v</sub> (dB)</th><th>Beda fasa input-output</th><th>Bentuk output (utuh / terpotong)</th></tr></thead>
+  <tbody><% [50,100,200,400,800].forEach((v, i) => { %><tr><td><%= i + 1 %></td><td class="k" style="height:22px;"><%= v %></td><td></td><td></td><td></td><td></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">D. Gelombang Input dan Output (Dua Kanal)</div>
+<%- include('partials/lkm_osc', { judul: 'Gambar kedua sinyal pada satu layar: kanal 1 = input, kanal 2 = output', baris: 8 }) %>
+
+<div class="sect-title">E. Perbandingan Dua Mode Kerja</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:26%;">Hal yang dibandingkan</th><th>Mode saklar</th><th>Mode penguat</th></tr></thead>
+  <tbody><% ['Daerah kerja transistor','Titik kerja V<sub>CE</sub>','Fungsi pada rangkaian'].forEach(h => { %><tr><td class="label"><%- h %></td><td class="t30"></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">F. Pertanyaan Analisis</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Mengapa penguat common emitter membalik fasa sinyal? Apakah hasil osiloskop Anda sesuai?</div><%- g(2) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Pada V<sub>in</sub> berapa output mulai terpotong (clipping)? Jelaskan penyebabnya.</div><%- g(2) %></div>
+
+<div class="sect-title">G. Kesimpulan</div>
+<%- g(3) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

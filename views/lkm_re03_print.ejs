@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %><%- include('partials/lkm_re_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 3, subLkm: 'Catu Daya dengan Regulator Tegangan', nilaiNo: 3 }) %>
+
+<div class="sect-title">A. Diagram Blok dan Titik Ukur</div>
+<div class="blok-alur">
+  <div class="b"><b>Trafo</b>Titik 1<br>V<sub>AC</sub> = <span class="titik-ukur"></span></div><div class="p">&rarr;</div>
+  <div class="b"><b>Penyearah</b>Titik 2<br>V<sub>DC</sub> = <span class="titik-ukur"></span></div><div class="p">&rarr;</div>
+  <div class="b"><b>Filter</b>Titik 3<br>V<sub>DC</sub> = <span class="titik-ukur"></span></div><div class="p">&rarr;</div>
+  <div class="b"><b>Regulator</b>Titik 4<br>V<sub>out</sub> = <span class="titik-ukur"></span></div>
+</div>
+<table class="tt" style="margin-top:5px;">
+  <tr><td style="text-align:left;width:22%;">Tipe IC regulator</td><td class="k" style="width:18%;"></td><td style="text-align:left;width:22%;">Tegangan output nominal</td><td style="width:14%;"></td><td style="text-align:left;width:14%;">Arus maks IC</td><td></td></tr>
+  <tr><td style="text-align:left;">Nilai kapasitor filter</td><td class="k"></td><td style="text-align:left;">Rating sekring</td><td></td><td style="text-align:left;">Heatsink dipakai?</td><td><%- cb %> Ya <%- cb %> Tidak</td></tr>
+</table>
+<div class="sub-title">Gambar rangkaian catu daya lengkap</div>
+<div class="kotak-gambar" style="height:125px;"></div>
+
+<div class="sect-title">B. Uji Regulasi Beban</div>
+<div class="rumus-box">Regulasi beban (%) = (V<sub>tanpa beban</sub> &minus; V<sub>beban penuh</sub>) &divide; V<sub>beban penuh</sub> &times; 100 &nbsp;|&nbsp; I<sub>L</sub> = V<sub>out</sub> &divide; R<sub>L</sub></div>
+<table class="tt">
+  <thead><tr><th style="width:6%;">No</th><th>R beban (&Omega;)</th><th>Daya R (W)</th><th>V<sub>out</sub> terukur (V)</th><th>I<sub>L</sub> hitung (mA)</th><th>V<sub>riak</sub> output (mV p-p)</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td class="k" style="height:22px;">tanpa beban</td><td></td><td></td><td></td><td></td></tr>
+    <% for (let i = 2; i <= 6; i++) { %><tr><td><%= i %></td><td class="k" style="height:22px;"></td><td></td><td></td><td></td><td></td></tr><% } %>
+  </tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. Grafik V<sub>out</sub> terhadap Arus Beban</div>
+<div class="grid-kertas" style="height:190px;"><span class="sb-y">V<sub>out</sub> (V)</span><span class="sb-x">I<sub>L</sub> (mA)</span></div>
+<table class="tt" style="margin-top:5px;">
+  <tr><td style="text-align:left;width:34%;">Regulasi beban (hasil hitung)</td><td class="k" style="width:16%;"></td><td style="text-align:left;width:34%;">Arus saat V<sub>out</sub> mulai turun</td><td></td></tr>
+</table>
+
+<div class="sect-title">D. Gelombang Output Sebelum dan Sesudah Regulator</div>
+<div class="dua-kolom">
+  <div><%- include('partials/lkm_osc', { judul: 'Sebelum regulator (titik 3)', baris: 5 }) %></div>
+  <div><%- include('partials/lkm_osc', { judul: 'Sesudah regulator (titik 4)', baris: 5 }) %></div>
+</div>
+
+<div class="sect-title">E. Fungsi Pengaman</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:30%;">Komponen pengaman</th><th>Dipasang pada bagian</th><th>Fungsi menurut Anda</th></tr></thead>
+  <tbody><% ['Sekring (fuse)','Heatsink / pendingin IC'].forEach(k => { %><tr><td class="label"><%= k %></td><td class="t30"></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">F. Pertanyaan Analisis</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Mengapa tegangan input regulator harus lebih tinggi dari tegangan outputnya?</div><%- g(2) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Pada beban berapa V<sub>out</sub> mulai menyimpang? Apa penyebabnya?</div><%- g(2) %></div>
+
+<div class="sect-title">G. Kesimpulan</div>
+<%- g(3) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

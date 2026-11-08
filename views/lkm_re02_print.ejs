@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %><%- include('partials/lkm_re_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 2, subLkm: 'Rangkaian Dioda: Penyearah Setengah dan Gelombang Penuh', nilaiNo: 2 }) %>
+
+<div class="sect-title">A. Skema Rangkaian yang Dirakit</div>
+<div class="dua-kolom">
+  <div><div class="judul-kecil">Penyearah setengah gelombang</div><div class="kotak-gambar" style="height:110px;"></div></div>
+  <div><div class="judul-kecil">Penyearah gelombang penuh (jembatan)</div><div class="kotak-gambar" style="height:110px;"></div></div>
+</div>
+<table class="tt" style="margin-top:5px;">
+  <tr><td style="text-align:left;width:22%;">Tipe dioda</td><td class="k" style="width:18%;"></td><td style="text-align:left;width:22%;">Tegangan sekunder trafo</td><td style="width:16%;"></td><td style="text-align:left;width:12%;">Kapasitor filter</td><td></td></tr>
+</table>
+
+<div class="sect-title">B. Bentuk Gelombang pada Osiloskop</div>
+<p class="catatan-kecil">Gambar dengan skala yang sama. Tandai Vp pada tiap gambar.</p>
+<div class="dua-kolom">
+  <div><%- include('partials/lkm_osc', { judul: 'Input (sekunder trafo)', baris: 6 }) %></div>
+  <div><%- include('partials/lkm_osc', { judul: 'Output setengah gelombang (tanpa filter)', baris: 6 }) %></div>
+</div>
+<div class="dua-kolom" style="margin-top:4px;">
+  <div><%- include('partials/lkm_osc', { judul: 'Output gelombang penuh (tanpa filter)', baris: 6 }) %></div>
+  <div><%- include('partials/lkm_osc', { judul: 'Output gelombang penuh + kapasitor filter', baris: 6 }) %></div>
+</div>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. Data Hasil Pengukuran</div>
+<table class="tt">
+  <thead><tr><th rowspan="2" style="width:20%;">Jenis penyearah</th><th rowspan="2">Vin (V rms)</th><th colspan="2">Tanpa filter</th><th colspan="3">Dengan filter</th></tr>
+  <tr><th>Vdc (V)</th><th>Frekuensi riak (Hz)</th><th>Vdc (V)</th><th>Vriak p-p (V)</th><th>Frekuensi riak (Hz)</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Setengah gelombang</strong></td><td class="k" style="height:30px;"></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td><strong>Gelombang penuh</strong></td><td class="k" style="height:30px;"></td><td></td><td></td><td></td><td></td><td></td></tr>
+  </tbody>
+</table>
+
+<div class="sect-title">D. Perhitungan dan Perbandingan dengan Teori</div>
+<div class="rumus-box">Vp = Vrms &times; 1,414 &nbsp;|&nbsp; Vdc setengah gelombang &asymp; Vp &divide; &pi; &nbsp;|&nbsp; Vdc gelombang penuh &asymp; 2 &times; Vp &divide; &pi; &nbsp;|&nbsp; Faktor riak = Vriak (rms) &divide; Vdc</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:30%;">Besaran</th><th>Setengah gelombang</th><th>Gelombang penuh</th></tr></thead>
+  <tbody>
+    <% ['Vp hasil hitung (V)','Vdc teori (V)','Vdc terukur (V)','Selisih teori dan ukur (%)','Faktor riak (dengan filter)'].forEach(b => { %><tr><td class="label"><%= b %></td><td class="t30"></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">E. Pertanyaan Analisis</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Mengapa frekuensi riak penyearah gelombang penuh dua kali frekuensi jala-jala?</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Jelaskan pengaruh kapasitor filter terhadap bentuk gelombang dan besar riak.</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">3. Mengapa Vdc terukur lebih kecil daripada Vp trafo? (petunjuk: tegangan jatuh dioda)</div><%- g(2) %></div>
+
+<div class="sect-title">F. Kesimpulan</div>
+<%- g(3) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %><%- include('partials/lkm_re_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 1, subLkm: 'Pengukuran dan Karakteristik Komponen Elektronika Dasar', nilaiNo: 1 }) %>
+
+<div class="sect-title">A. Resistor: Kode Warna dan Pengukuran</div>
+<table class="warna-ref">
+  <tr><th>Warna</th><td>Hitam</td><td>Coklat</td><td>Merah</td><td>Oranye</td><td>Kuning</td><td>Hijau</td><td>Biru</td><td>Ungu</td><td>Abu-abu</td><td>Putih</td><td>Emas</td><td>Perak</td></tr>
+  <tr><th>Angka</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>&times;0,1 / &plusmn;5%</td><td>&times;0,01 / &plusmn;10%</td></tr>
+</table>
+<table class="tt" style="margin-top:5px;">
+  <thead><tr><th rowspan="2" style="width:4%;">No</th><th colspan="4">Warna gelang</th><th rowspan="2" style="width:11%;">Nilai nominal (&Omega;)</th><th rowspan="2" style="width:8%;">Toleransi (%)</th><th rowspan="2" style="width:13%;">Rentang diterima (min - maks)</th><th rowspan="2" style="width:10%;">R ukur (&Omega;)</th><th rowspan="2" style="width:11%;">Penyimpangan (%)</th><th rowspan="2" style="width:13%;">Dalam toleransi?</th></tr>
+  <tr><th style="width:7%;">1</th><th style="width:7%;">2</th><th style="width:7%;">Pengali</th><th style="width:7%;">Toleransi</th></tr></thead>
+  <tbody><% for (let i = 1; i <= 5; i++) { %><tr><td><%= i %></td><td class="k" style="height:25px;"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td style="text-align:left;"><%- cb %> Ya<br><%- cb %> Tidak</td></tr><% } %></tbody>
+</table>
+<div class="rumus-box">Penyimpangan (%) = |nilai ukur &minus; nilai nominal| &divide; nilai nominal &times; 100</div>
+
+<div class="sect-title">B. Kapasitor dan Induktor</div>
+<table class="tt">
+  <thead><tr><th style="width:4%;">No</th><th>Jenis (keramik / elco / mylar / induktor)</th><th>Kode / label pada badan komponen</th><th>Nilai nominal</th><th>Nilai ukur</th><th>Penyimpangan (%)</th><th>Alat ukur dipakai</th></tr></thead>
+  <tbody><% for (let i = 1; i <= 5; i++) { %><tr><td><%= i %></td><td class="k" style="height:25px;"></td><td></td><td></td><td></td><td></td><td></td></tr><% } %></tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. Uji Kondisi Komponen</div>
+<p class="catatan-kecil">Gunakan mode kontinuitas atau ohm. Tandai kondisi tiap komponen yang diperiksa.</p>
+<table class="tabel-data">
+  <thead><tr><th style="width:5%;">No</th><th style="width:26%;">Komponen</th><th style="width:18%;">Hasil pembacaan</th><th>Kondisi</th><th>Tindakan</th></tr></thead>
+  <tbody><% for (let i = 1; i <= 4; i++) { %><tr><td class="tengah t30"><%= i %></td><td></td><td></td><td><%- cb %> Baik <%- cb %> Putus (open) <%- cb %> Hubung singkat</td><td></td></tr><% } %></tbody>
+</table>
+
+<div class="sect-title">D. Contoh Perhitungan dan Gambar</div>
+<div class="dua-kolom">
+  <div><div class="judul-kecil">Perhitungan satu resistor (nilai dari gelang warna)</div><div class="kotak-gambar" style="height:95px;"></div></div>
+  <div><div class="judul-kecil">Gambar simbol: resistor, kapasitor, induktor</div><div class="kotak-gambar" style="height:95px;"></div></div>
+</div>
+
+<div class="sect-title">E. Pertanyaan Analisis</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Apakah semua resistor masih dalam toleransi? Bila ada yang di luar toleransi, jelaskan kemungkinan penyebabnya.</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Mengapa resistansi sebaiknya diukur saat komponen dilepas dari rangkaian?</div><%- g(3) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">3. Mengapa verifikasi komponen perlu dilakukan sebelum dipasang pada rangkaian?</div><%- g(3) %></div>
+
+<div class="sect-title">F. Kesimpulan</div>
+<%- g(4) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

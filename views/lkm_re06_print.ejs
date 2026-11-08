@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %><%- include('partials/lkm_re_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 6, subLkm: 'Proyek Akhir: Rangkaian Elektronika Terapan', nilaiNo: 6 }) %>
+
+<div class="sect-title">A. Rancangan dan Spesifikasi Target</div>
+<table class="tabel-data">
+  <tbody>
+    <tr><td class="label" style="width:24%;">Nama kelompok / anggota</td><td colspan="3" class="t30"></td></tr>
+    <tr><td class="label">Judul rangkaian</td><td colspan="3" class="t30"></td></tr>
+  </tbody>
+</table>
+<table class="tt" style="margin-top:5px;">
+  <thead><tr><th style="width:5%;">No</th><th>Parameter spesifikasi</th><th>Target</th><th>Hasil ukur akhir</th><th>Sesuai?</th></tr></thead>
+  <tbody><% for (let i = 1; i <= 4; i++) { %><tr><td><%= i %></td><td class="k" style="height:22px;"></td><td></td><td></td><td><%- cb %> Ya <%- cb %> Tidak</td></tr><% } %></tbody>
+</table>
+
+<div class="sect-title">B. Diagram Blok dan Skematik</div>
+<div class="blok-alur">
+  <div class="b" style="min-height:48px;"><b>Blok 1</b></div><div class="p">&rarr;</div>
+  <div class="b"><b>Blok 2</b></div><div class="p">&rarr;</div>
+  <div class="b"><b>Blok 3</b></div><div class="p">&rarr;</div>
+  <div class="b"><b>Blok 4</b></div>
+</div>
+<div class="sub-title">Skematik lengkap</div>
+<div class="kotak-gambar" style="height:105px;"></div>
+
+<div class="sect-title">C. Perhitungan Nilai Komponen</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:22%;">Komponen</th><th style="width:20%;">Nilai dipilih</th><th>Dasar perhitungan</th></tr></thead>
+  <tbody><% for (let i = 0; i < 2; i++) { %><tr><td class="t30"></td><td></td><td></td></tr><% } %></tbody>
+</table>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">D. Uji Per Blok Sebelum Digabung</div>
+<table class="tt">
+  <thead><tr><th style="width:12%;">Blok</th><th>Titik uji</th><th>Nilai diharapkan</th><th>Nilai terukur</th><th>Perbaikan yang dilakukan</th><th style="width:8%;">OK</th></tr></thead>
+  <tbody><% for (let i = 1; i <= 4; i++) { %><tr><td><strong>Blok <%= i %></strong></td><td class="k" style="height:26px;"></td><td></td><td></td><td></td><td><%- cb %></td></tr><% } %></tbody>
+</table>
+
+<div class="sect-title">E. Uji Sistem Terintegrasi</div>
+<div class="dua-kolom">
+  <div><%- include('partials/lkm_osc', { judul: 'Gelombang / sinyal pada titik keluaran akhir', baris: 6 }) %></div>
+  <div>
+    <table class="tt">
+      <caption>Uji variasi kondisi</caption>
+      <thead><tr><th>Kondisi</th><th>Hasil</th></tr></thead>
+      <tbody><% ['Tanpa beban','Beban normal','Beban maksimum','Input diubah +/- 10%'].forEach(k => { %><tr><td style="text-align:left;"><%= k %></td><td class="k" style="height:24px;"></td></tr><% }) %></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="sect-title">F. Dokumentasi</div>
+<div class="foto-wrap"><div class="foto-box">Foto rangkaian jadi</div><div class="foto-box">Foto pengukuran</div><div class="foto-box">Foto demonstrasi</div></div>
+
+<div class="sect-title">G. Penilaian Demonstrasi (diisi dosen)</div>
+<table class="tabel-data nilai-dosen">
+  <thead><tr><th>Kriteria</th><th style="width:12%;">Bobot (%)</th><th style="width:14%;">Skor</th></tr></thead>
+  <tbody>
+    <% [['Kesesuaian hasil ukur dengan spesifikasi target','30'],['Ketepatan perhitungan dan pemilihan komponen','20'],['Kerapian dan keamanan perakitan','15'],['Dokumentasi dan laporan','15'],['Presentasi dan tanya jawab','20']].forEach(r => { %><tr><td class="label"><%= r[0] %></td><td class="tengah"><%= r[1] %></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+
+<div class="sect-title">H. Refleksi: Kendala dan Solusi</div>
+<%- g(3) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>

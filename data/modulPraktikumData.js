@@ -1596,6 +1596,7 @@ void loop() {
     {
       id: 're-01',
       judul: 'Pengukuran dan Karakteristik Komponen Elektronika Dasar',
+      viewCetak: 'lkm_re01_print', // views/lkm_re01_print.ejs
       pertemuanSaran: 2,
       tujuan: [
         'Mengidentifikasi jenis dan membaca nilai komponen dasar (resistor, kapasitor, induktor) dari kode warna/label',
@@ -1625,6 +1626,7 @@ void loop() {
     {
       id: 're-02',
       judul: 'Rangkaian Dioda: Penyearah (Rectifier) Setengah dan Gelombang Penuh',
+      viewCetak: 'lkm_re02_print', // views/lkm_re02_print.ejs
       pertemuanSaran: 4,
       tujuan: [
         'Memahami prinsip kerja dioda sebagai penyearah (rectifier) sinyal AC ke DC',
@@ -1654,6 +1656,7 @@ void loop() {
     {
       id: 're-03',
       judul: 'Rangkaian Catu Daya (Power Supply) dengan Regulator Tegangan',
+      viewCetak: 'lkm_re03_print', // views/lkm_re03_print.ejs
       pertemuanSaran: 6,
       tujuan: [
         'Merangkai catu daya DC teregulasi menggunakan IC regulator tegangan (mis. seri 78xx)',
@@ -1683,6 +1686,7 @@ void loop() {
     {
       id: 're-04',
       judul: 'Transistor sebagai Saklar dan Penguat (Amplifier) Sederhana',
+      viewCetak: 'lkm_re04_print', // views/lkm_re04_print.ejs
       pertemuanSaran: 8,
       tujuan: [
         'Memahami prinsip kerja transistor bipolar (BJT) pada mode saklar dan mode penguat',
@@ -1711,6 +1715,7 @@ void loop() {
     {
       id: 're-05',
       judul: 'Rangkaian Op-Amp Dasar: Penguat Inverting, Non-Inverting, dan Komparator',
+      viewCetak: 'lkm_re05_print', // views/lkm_re05_print.ejs
       pertemuanSaran: 10,
       tujuan: [
         'Memahami karakteristik dasar penguat operasional (op-amp) sebagai penguat ideal',
@@ -1739,6 +1744,7 @@ void loop() {
     {
       id: 're-06',
       judul: 'Proyek Akhir: Rangkaian Elektronika Terapan',
+      viewCetak: 'lkm_re06_print', // views/lkm_re06_print.ejs
       pertemuanSaran: 14,
       tujuan: [
         'Merancang dan merealisasikan rangkaian elektronika terapan yang mengintegrasikan beberapa konsep (penyearah, regulator, transistor, dan/atau op-amp)',

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %><%- include('partials/lkm_re_extra') %></head>
+<body>
+<div class="container-fluid">
+<% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
+<% const cb = '<span class="cb"></span>'; %>
+<%- include('partials/lkm_std_top', { nomorLkm: 5, subLkm: 'Op-Amp Dasar: Inverting, Non-Inverting, dan Komparator', nilaiNo: 5 }) %>
+
+<div class="sect-title">A. Perancangan Penguat</div>
+<div class="rumus-box">Inverting: A<sub>v</sub> = &minus;R<sub>f</sub> &divide; R<sub>in</sub> &nbsp;|&nbsp; Non-inverting: A<sub>v</sub> = 1 + R<sub>f</sub> &divide; R<sub>1</sub></div>
+<table class="tt">
+  <thead><tr><th style="width:22%;">Konfigurasi</th><th>Target penguatan</th><th>Nilai resistor dipilih (R<sub>in</sub> atau R<sub>1</sub> / R<sub>f</sub>)</th><th>Penguatan teori</th><th>Tipe IC dan tegangan catu</th></tr></thead>
+  <tbody>
+    <% ['Inverting','Non-inverting'].forEach(k => { %><tr><td><strong><%= k %></strong></td><td class="k" style="height:28px;"></td><td></td><td></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+<div class="dua-kolom" style="margin-top:6px;">
+  <div><div class="judul-kecil">Gambar rangkaian inverting</div><div class="kotak-gambar" style="height:95px;"></div></div>
+  <div><div class="judul-kecil">Gambar rangkaian non-inverting</div><div class="kotak-gambar" style="height:95px;"></div></div>
+</div>
+
+<div class="sect-title">B. Hasil Pengujian Penguat (f = 1 kHz)</div>
+<table class="tt">
+  <thead><tr><th rowspan="2" style="width:15%;">Konfigurasi</th><th rowspan="2">V<sub>in</sub> p-p (V)</th><th rowspan="2">V<sub>out</sub> p-p (V)</th><th rowspan="2">A<sub>v</sub> ukur</th><th rowspan="2">A<sub>v</sub> teori</th><th rowspan="2">Selisih (%)</th><th rowspan="2">Fasa output terhadap input</th></tr></thead>
+  <tbody>
+    <% ['Inverting','Inverting','Non-inverting','Non-inverting'].forEach((k, i) => { %><tr><td><strong><%= k %></strong></td><td class="k" style="height:24px;"></td><td></td><td></td><td></td><td></td><td></td></tr><% }) %>
+  </tbody>
+</table>
+<div class="dua-kolom" style="margin-top:5px;">
+  <div><%- include('partials/lkm_osc', { judul: 'Gelombang inverting (input dan output)', baris: 6 }) %></div>
+  <div><%- include('partials/lkm_osc', { judul: 'Gelombang non-inverting (input dan output)', baris: 6 }) %></div>
+</div>
+
+<div class="halaman-baru">
+<%- include('partials/kop_surat') %>
+<div class="sect-title">C. Rangkaian Komparator</div>
+<table class="tt">
+  <tr><td style="text-align:left;width:26%;">Tegangan referensi V<sub>ref</sub></td><td class="k" style="width:16%;"></td><td style="text-align:left;width:26%;">Tegangan catu +V / &minus;V</td><td></td></tr>
+  <tr><td style="text-align:left;">Input ke pin (+ atau &minus;)</td><td class="k"></td><td style="text-align:left;">Tegangan saturasi output (HIGH / LOW)</td><td></td></tr>
+</table>
+<table class="tt" style="margin-top:5px;">
+  <thead><tr><th style="width:6%;">No</th><th>V<sub>in</sub> (V)</th><th>V<sub>in</sub> dibanding V<sub>ref</sub> (&gt; / &lt; / =)</th><th>V<sub>out</sub> terukur (V)</th><th>Kondisi output (HIGH / LOW)</th></tr></thead>
+  <tbody><% for (let i = 1; i <= 6; i++) { %><tr><td><%= i %></td><td class="k" style="height:20px;"></td><td></td><td></td><td></td></tr><% } %></tbody>
+</table>
+<div class="sub-title">Grafik transfer komparator (V<sub>out</sub> terhadap V<sub>in</sub>)</div>
+<div class="grid-kertas" style="height:112px;"><span class="sb-y">V<sub>out</sub> (V)</span><span class="sb-x">V<sub>in</sub> (V)</span></div>
+
+<div class="sect-title">D. Perbandingan Tiga Rangkaian</div>
+<table class="tabel-data">
+  <thead><tr><th style="width:22%;">Kriteria</th><th>Inverting</th><th>Non-inverting</th><th>Komparator</th></tr></thead>
+  <tbody><% ['Umpan balik','Hubungan fasa','Output berupa'].forEach(k => { %><tr><td class="label"><%= k %></td><td class="t30"></td><td></td><td></td></tr><% }) %></tbody>
+</table>
+
+<div class="sect-title">E. Pertanyaan Analisis</div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">1. Mengapa penguatan terukur sedikit berbeda dari teori? Apa pengaruh toleransi resistor?</div><%- g(2) %></div>
+<div class="pertanyaan-item"><div class="no-pertanyaan">2. Mengapa komparator tidak memakai umpan balik negatif?</div><%- g(2) %></div>
+
+<div class="sect-title">F. Kesimpulan</div>
+<%- g(3) %>
+<%- include('partials/lkm_std_bottom') %>
+</div>
+</div>
+</body>
+</html>
