@@ -57,7 +57,10 @@
         <div class="wa-muted"><%= conversations.length %> percakapan tersimpan</div>
       </div>
       <div class="wa-new">
-        <label for="waCari" class="form-label small fw-semibold mb-1"><i class="bi bi-person-plus me-1"></i>Pesan baru ke mahasiswa / dosen</label>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label for="waCari" class="form-label small fw-semibold mb-0"><i class="bi bi-person-plus me-1"></i>Pesan baru ke mahasiswa / dosen</label>
+          <button type="button" id="waRefreshKontak" class="btn btn-link btn-sm p-0 text-decoration-none" title="Muat ulang daftar kontak (setelah ada nomor baru)"><i class="bi bi-arrow-repeat"></i> <span class="small">Muat ulang</span></button>
+        </div>
         <div class="input-group input-group-sm">
           <select id="waRole" class="form-select" style="max-width:120px">
             <option value="">Semua</option>
@@ -206,6 +209,19 @@
       roleSel.addEventListener('change', jalankan);
       document.addEventListener('click', function (e) { if (!e.target.closest('.wa-new')) tutup(); });
     }
+
+    // Muat ulang daftar kontak (server membatasi 1x/menit)
+    const rf = document.getElementById('waRefreshKontak');
+    if (rf) rf.addEventListener('click', async function () {
+      const label = rf.querySelector('span');
+      rf.disabled = true; label.textContent = 'Memuat...';
+      try {
+        const r = await fetch('/admin/whatsapp/kontak/refresh', { method: 'POST', headers: { Accept: 'application/json' } });
+        const d = await r.json();
+        label.textContent = d.ok ? (d.dimuatUlang ? d.jumlah + ' kontak dimuat' : 'Sudah terbaru') : 'Gagal';
+      } catch (e) { label.textContent = 'Gagal'; }
+      setTimeout(function () { label.textContent = 'Muat ulang'; rf.disabled = false; }, 2500);
+    });
 
     // Template butuh judul
     const modeTpl = document.getElementById('waModeTpl');

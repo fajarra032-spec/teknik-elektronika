@@ -128,9 +128,11 @@ async function tulisLog(req, { to, text, status, error }) {
 // ---- Direktori kontak (mahasiswa & dosen) untuk memulai chat manual ----
 // Sumber: koleksi 'users' (role mahasiswa/dosen) + koleksi 'dosen'.
 // Di-cache 5 menit agar pencarian cepat dan hemat pembacaan Firestore.
-const KONTAK_TTL_MS = 5 * 60 * 1000;
+const KONTAK_TTL_MS = 45 * 60 * 1000;   // kontak jarang berubah -> cache lama
+const KONTAK_REFRESH_MIN_MS = 60 * 1000; // jeda minimal antar muat-ulang paksa
 const FIELD_NOMOR = ['noHp', 'noHP', 'nohp', 'whatsapp', 'noWa', 'noWA', 'telepon', 'kontak'];
 let kontakCache = { t: 0, list: [] };
+let kontakLoading = null; // promise sedang berjalan -> cegah baca ganda bersamaan
 
 function ambilNomor(o) {
   if (!o) return '';
@@ -144,7 +146,22 @@ function ambilNomor(o) {
 }
 
 async function muatKontak(force = false) {
-  if (!force && Date.now() - kontakCache.t < KONTAK_TTL_MS && kontakCache.list.length) return kontakCache.list;
+  const umur = Date.now() - kontakCache.t;
+  const segar = umur < KONTAK_TTL_MS && kontakCache.list.length;
+  // force hanya dihormati bila cache sudah lebih tua dari jeda minimal
+  if (segar && (!force || umur < KONTAK_REFRESH_MIN_MS)) return kontakCache.list;
+  if (kontakLoading) return kontakLoading;
+  kontakLoading = bacaKontakDariFirestore().finally(() => { kontakLoading = null; });
+  return kontakLoading;
+}
+
+/** Hanya memakai cache yang sudah ada (walau agak lama). Baca Firestore HANYA bila cache belum pernah terisi. */
+async function kontakHemat() {
+  if (kontakCache.list.length) return kontakCache.list;
+  return muatKontak();
+}
+
+async function bacaKontakDariFirestore() {
 
   const [usersSnap, dosenSnap] = await Promise.all([
     db.collection('users').where('role', 'in', ['mahasiswa', 'dosen']).get(),
@@ -190,9 +207,24 @@ async function muatKontak(force = false) {
 
 async function cariKontakByWa(waId) {
   if (!waId) return null;
-  const list = await muatKontak();
+  const list = await kontakHemat();
   return list.find(k => k.waId === waId) || null;
 }
+
+// POST /admin/whatsapp/kontak/refresh - muat ulang daftar kontak (dibatasi 1x/menit)
+router.post('/kontak/refresh', async (req, res) => {
+  try {
+    const umur = Date.now() - kontakCache.t;
+    if (kontakCache.list.length && umur < KONTAK_REFRESH_MIN_MS) {
+      return res.json({ ok: true, jumlah: kontakCache.list.length, dimuatUlang: false, pesan: 'Daftar kontak masih sangat baru (kurang dari 1 menit).' });
+    }
+    const list = await muatKontak(true);
+    res.json({ ok: true, jumlah: list.length, dimuatUlang: true });
+  } catch (e) {
+    console.error('[WhatsApp Center] Gagal refresh kontak:', e.message);
+    res.status(500).json({ ok: false, error: 'Gagal memuat ulang kontak.' });
+  }
+});
 
 // GET /admin/whatsapp/kontak?q=nama|nim|nomor&role=mahasiswa|dosen  -> JSON
 router.get('/kontak', async (req, res) => {
@@ -201,7 +233,7 @@ router.get('/kontak', async (req, res) => {
     const role = ['mahasiswa', 'dosen'].includes(req.query.role) ? req.query.role : '';
     if (q.length < 2) return res.json({ items: [] });
     const qDigit = q.replace(/\D/g, '');
-    const list = await muatKontak(req.query.refresh === '1');
+    const list = await muatKontak();
     const items = list
       .filter(k => !role || k.role === role)
       .filter(k =>
@@ -248,7 +280,7 @@ router.get('/', async (req, res) => {
   // Kenali nomor sebagai mahasiswa/dosen (gagal memuat kontak tidak boleh merusak inbox)
   let kontak = null;
   try {
-    const daftar = await muatKontak();
+    const daftar = await kontakHemat();
     const peta = new Map(daftar.filter(k => k.waId).map(k => [k.waId, k]));
     conversations.forEach(c => {
       const ph = String(c.waId || c.phone || c.id || '').replace(/\D/g, '');
@@ -281,6 +313,20 @@ router.get('/', async (req, res) => {
   });
 });
 
+
+// ---- Cache hasil query berat dashboard (per proses) ----
+const DASH_TTL_MS = 5 * 60 * 1000;
+const dashCache = new Map(); // key -> { t, v, p }
+async function dariCache(key, fn, force = false) {
+  const c = dashCache.get(key);
+  const umur = c ? Date.now() - c.t : Infinity;
+  if (c && c.v !== undefined && umur < DASH_TTL_MS && !(force && umur > 30 * 1000)) return c.v;
+  if (c && c.p) return c.p; // sedang dimuat oleh permintaan lain
+  const p = fn().then(v => { dashCache.set(key, { t: Date.now(), v }); return v; })
+                .catch(e => { dashCache.delete(key); throw e; });
+  dashCache.set(key, { t: c ? c.t : 0, v: c ? c.v : undefined, p });
+  return p;
+}
 
 // ---- Util dashboard ----
 const WITA_MS = 8 * 60 * 60 * 1000; // Makassar (UTC+8)
@@ -357,13 +403,15 @@ router.get('/dashboard', async (req, res) => {
   // 3) Statistik pengiriman dari audit log (30 hari)
   let logs = [];
   try {
-    const sejak = new Date(now - 30 * 24 * 3600 * 1000).toISOString();
-    const snap = await db.collection(LOG_COLLECTION)
-      .where('createdAt', '>=', sejak)
-      .orderBy('createdAt', 'desc')
-      .limit(2000)
-      .get();
-    logs = snap.docs.map(d => d.data());
+    logs = await dariCache('wa_logs30', async () => {
+      const sejak = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+      const snap = await db.collection(LOG_COLLECTION)
+        .where('createdAt', '>=', sejak)
+        .orderBy('createdAt', 'desc')
+        .limit(2000)
+        .get();
+      return snap.docs.map(d => d.data());
+    }, req.query.segar === '1');
   } catch (e) {
     console.error('[WhatsApp Center] Dashboard: gagal baca wa_logs:', e.message);
     peringatan.push('Riwayat pengiriman (wa_logs) tidak dapat dibaca.');
@@ -402,15 +450,17 @@ router.get('/dashboard', async (req, res) => {
   // 4) Notifikasi otomatis (wa_auto_logs, 30 hari)
   const auto = { cfg: waNotifier.status(), terkirim: 0, gagal: 0, dilewati: 0, simulasi: 0, perRule: [], alasanTop: [], hariIni: 0 };
   try {
-    const sejak = new Date(now - 30 * 24 * 3600 * 1000).toISOString();
-    const snap = await db.collection(AUTO_COLLECTION)
-      .where('createdAt', '>=', sejak)
-      .orderBy('createdAt', 'desc')
-      .limit(3000)
-      .get();
+    const autoRows = await dariCache('wa_auto_logs30', async () => {
+      const sejak = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+      const snap = await db.collection(AUTO_COLLECTION)
+        .where('createdAt', '>=', sejak)
+        .orderBy('createdAt', 'desc')
+        .limit(3000)
+        .get();
+      return snap.docs.map(d => d.data());
+    }, req.query.segar === '1');
     const perRule = {}, alasan = {};
-    snap.docs.forEach(d => {
-      const l = d.data();
+    autoRows.forEach(l => {
       if (auto[l.status] !== undefined) auto[l.status]++;
       if (l.status === 'terkirim') {
         perRule[l.rule] = (perRule[l.rule] || 0) + 1;
