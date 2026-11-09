@@ -66,10 +66,7 @@ async function hapusFileBilaYatim(db, drive, fileId) {
 
 /** dosenId -> id akun user (dipakai notifikasi navbar, yang membaca req.user.id). */
 async function petaUserPerDosen(db) {
-  const snap = await db.collection('users').where('role', '==', 'dosen').get();
-  const peta = {};
-  snap.docs.forEach(u => { const dId = u.data().dosenId; if (dId) peta[dId] = u.id; });
-  return peta;
+  return require('./dosenAkunHelper').petaUserPerDosen(db);
 }
 
 const amanNama = (v) => String(v).replace(/[^\w.-]+/g, '_');

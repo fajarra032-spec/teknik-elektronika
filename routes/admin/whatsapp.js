@@ -169,10 +169,12 @@ async function bacaKontakDariFirestore() {
   ]);
 
   const dosenByUser = new Map();
+  const dosenById = new Map();
   const dosenDocs = [];
   dosenSnap.docs.forEach(d => {
     const x = d.data();
     dosenDocs.push({ id: d.id, ...x });
+    dosenById.set(d.id, { id: d.id, ...x });
     if (x.userId) dosenByUser.set(x.userId, { id: d.id, ...x });
   });
 
@@ -184,7 +186,7 @@ async function bacaKontakDariFirestore() {
     if (u.role === 'mahasiswa') {
       list.push({ id: d.id, role: 'mahasiswa', nama: u.nama || '', sub: u.nim || '', waId: ambilNomor(u) });
     } else if (u.role === 'dosen') {
-      const dd = dosenByUser.get(d.id);
+      const dd = dosenByUser.get(d.id) || (u.dosenId && dosenById.get(u.dosenId)) || null; // tautan utama: users.dosenId
       if (dd) userDosenTerpakai.add(dd.id);
       list.push({
         id: d.id, role: 'dosen',

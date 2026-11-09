@@ -11,7 +11,7 @@ Kolom **WA** = dikirim ke WhatsApp secara bawaan. Aturan yang mati bisa dinyalak
 |---|---|---|---|---|---|
 | `nilai_akhir` | Nilai akhir {MK} sudah keluar 🎓 | nilaiNotifHelper (rubrik, nilai admin) | Mahasiswa | nilai_keluar | ✅ |
 | `nilai_magang` | Nilai magangmu sudah keluar 🎓 | magangNotifHelper | Mahasiswa | nilai_keluar | ✅ |
-| `nilai_tugas` | Tugas “…” sudah dinilai 📝; LKM … sudah diperiksa 🔬 | nilaiNotifHelper, dosen/nilai | Mahasiswa | nilai_keluar | ⬜ (ramai) |
+| `nilai_tugas` | Tugas “…” sudah dinilai 📝; LKM … sudah diperiksa 🔬 | nilaiNotifHelper, dosen/nilai | Mahasiswa | nilai_keluar | ✅ |
 | `laporan_review` | Laporan magang di-ACC 🎉 / perlu direvisi 📄 | magangNotifHelper | Mahasiswa | info_magang | ✅ |
 | `laporan_komentar` | Ada komentar baru di laporan magang 💬 | magangNotifHelper | Mahasiswa | info_magang | ⬜ |
 | `laporan_masuk` | {Mahasiswa} mengunggah laporan magang 📄 | magangNotifHelper | Dosen | info_dosen | ✅ |
@@ -24,6 +24,7 @@ Kolom **WA** = dikirim ke WhatsApp secara bawaan. Aturan yang mati bisa dinyalak
 | `logbook_menunggu` | N mahasiswa menunggu tanda tangan logbook | dosenReminderHelper | Dosen | info_dosen | ✅ |
 | `magang_periode` | Magang dimulai 🎉 / dikunci 🔒 / aktif lagi 🔓 / diperpanjang 📅 | magangNotifHelper | Mahasiswa | info_magang | ✅ |
 | `magang_berakhir` | Magangmu berakhir H-7/H-3/H-1 ⏳; N mahasiswa segera selesai | magangNotifHelper | Mahasiswa & Dosen | info_magang | ✅ |
+| `surat_tugas` | Surat Tugas baru terbit untuk dosen | helpers/suratTugasNotifHelper (admin/surat) | Dosen | info_dosen | ✅ |
 | `sk_dosen` | SK Mengajar baru/diperbarui; SK Pembimbing Akademik | admin/sk, admin/bimbingan | Dosen | info_dosen | ✅ |
 | `tugas_belum_dinilai` | N tugas mahasiswa menunggu dinilai | dosenReminderHelper | Dosen | info_dosen | ✅ |
 | `jadwal_mengajar` | Jadwal mengajar hari ini: {MK} | dosenReminderHelper | Dosen | info_dosen | ⬜ (satu per MK) |

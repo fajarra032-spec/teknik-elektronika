@@ -46,7 +46,7 @@ const DSN = ['dosen'];
 const RULES = [
   // Nilai
   { key: 'nilai_akhir',      type: 'nilai', title: /^Nilai akhir/i,                 roles: MHS, template: 'nilai_keluar', on: true,  label: 'Nilai akhir mata kuliah keluar' },
-  { key: 'nilai_tugas',      type: 'nilai', title: /(sudah dinilai|diperiksa)/i,    roles: MHS, template: 'nilai_keluar', on: false, label: 'Tugas dinilai / LKM diperiksa' },
+  { key: 'nilai_tugas',      type: 'nilai', title: /(sudah dinilai|diperiksa)/i,    roles: MHS, template: 'nilai_keluar', on: true,  label: 'Tugas dinilai / LKM diperiksa' },
   { key: 'nilai_magang',     type: 'nilai-magang',                                 roles: MHS, template: 'nilai_keluar', on: true,  label: 'Nilai magang keluar' },
   // Laporan magang
   { key: 'laporan_komentar', type: 'laporan-magang', title: /komentar/i,            roles: MHS, template: 'info_magang',  on: false, label: 'Komentar baru di laporan magang' },
@@ -65,6 +65,7 @@ const RULES = [
   { key: 'magang_periode',   type: 'magang-periode',                               roles: MHS, template: 'info_magang',  on: true,  label: 'Magang dimulai / dikunci / dibuka / diperpanjang' },
   { key: 'magang_berakhir',  type: 'magang-berakhir',                              roles: ['mahasiswa', 'dosen'], template: 'info_magang', on: true, label: 'Masa magang segera berakhir (H-7/H-3/H-1)' },
   // Dosen
+  { key: 'surat_tugas',      type: 'surat-tugas',                                  roles: DSN, template: 'info_dosen',   on: true,  label: 'Surat Tugas baru terbit untuk dosen' },
   { key: 'sk_dosen',         type: 'sk',                                           roles: DSN, template: 'info_dosen',   on: true,  label: 'SK Mengajar / SK Pembimbing Akademik terbit' },
   { key: 'tugas_belum_dinilai', type: 'tugas-belum-dinilai',                       roles: DSN, template: 'info_dosen',   on: true,  label: 'Ringkasan tugas belum dinilai' },
   { key: 'jadwal_mengajar',  type: 'jadwal-mengajar',                              roles: DSN, template: 'info_dosen',   on: false, label: 'Pengingat jadwal mengajar hari ini' },
@@ -149,31 +150,42 @@ function susunTemplate(rule, data, nama) {
 // ---------------------------------------------------------------------------
 const penerimaCache = new Map();
 const CACHE_MS = 10 * 60 * 1000;
-const FIELD_NOMOR = ['noHp', 'noHP', 'nohp', 'whatsapp', 'noWa', 'noWA', 'telepon'];
+const FIELD_NOMOR = ['noHp', 'noHP', 'nohp', 'whatsapp', 'noWa', 'noWA', 'telepon', 'kontak'];
 const ambilNomor = (o) => { for (const f of FIELD_NOMOR) if (o && o[f]) return o[f]; return ''; };
 
 async function cariPenerima(db, userId) {
   const c = penerimaCache.get(userId);
   if (c && Date.now() - c.t < CACHE_MS) return c.v;
 
-  let role = null, nama = '', nomor = '', optOut = false, optIn = false;
+  let role = null, nama = '', nomor = '', optOut = false, optIn = false, dosenId = null;
   const u = await db.collection('users').doc(userId).get();
   if (u.exists) {
     const d = u.data();
     role = d.role || null; nama = d.nama || ''; nomor = ambilNomor(d);
     optOut = d.waOptOut === true; optIn = d.waOptIn === true;
+    dosenId = d.dosenId || null;
   }
+  // Nomor dosen umumnya disimpan di dokumen 'dosen' (field 'kontak'), bukan di 'users'.
+  // Tautan akun -> dosen: users.dosenId (utama) atau dosen.userId (cadangan).
   if (!nomor || !role || role === 'dosen') {
-    const s = await db.collection('dosen').where('userId', '==', userId).limit(1).get();
-    if (!s.empty) {
-      const d = s.docs[0].data();
+    let dd = null;
+    if (dosenId) {
+      const ds = await db.collection('dosen').doc(dosenId).get();
+      if (ds.exists) dd = ds.data();
+    }
+    if (!dd) {
+      const s = await db.collection('dosen').where('userId', '==', userId).limit(1).get();
+      if (!s.empty) dd = s.docs[0].data();
+    }
+    if (dd) {
       role = role || 'dosen';
-      nama = nama || d.nama || '';
-      nomor = nomor || ambilNomor(d);
+      nama = nama || dd.nama || '';
+      nomor = nomor || ambilNomor(dd);
     }
   }
   const v = { role, nama, nomor: normalisasiNomor(nomor), optOut, optIn };
-  penerimaCache.set(userId, { t: Date.now(), v });
+  // Jangan cache hasil tanpa nomor terlalu lama: nomor bisa baru diisi admin.
+  penerimaCache.set(userId, { t: v.nomor ? Date.now() : Date.now() - CACHE_MS + 60 * 1000, v });
   return v;
 }
 

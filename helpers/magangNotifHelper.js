@@ -53,9 +53,7 @@ function sapaOleh(oleh) { return oleh ? `${oleh}` : 'Pembimbing'; }
 
 /** Dokumen `dosen` menyimpan uid akun di field userId (notifikasi ditujukan ke uid itu). */
 async function uidDosen(db, dosenId) {
-  if (!dosenId) return null;
-  const doc = await db.collection('dosen').doc(dosenId).get();
-  return doc.exists ? (doc.data().userId || null) : null;
+  return require('./dosenAkunHelper').uidDariDosenId(db, dosenId);
 }
 
 // ============================================================================

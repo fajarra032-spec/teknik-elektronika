@@ -19,6 +19,7 @@ const { getPeriodeAktif, saveKomponenRubrik } = require('../../helpers/nilaiHelp
 const { detectJenisPraktikum, getModulPraktikumList } = require('../../helpers/modulPraktikumHelper');
 const { getRencanaPertemuan, getInfoRencana } = require('../../data/rencanaPertemuanData');
 const rpsHelper = require('../../helpers/rpsHelper');
+const nilaiNotif = require('../../helpers/nilaiNotifHelper');
 
 console.log('mk.js loaded');
 
@@ -1224,12 +1225,27 @@ router.post('/:id/modul-template/:modulId/kumpulan/:pengumpulanId/periksa', asyn
       return res.status(404).send('Pengumpulan LKM tidak ditemukan');
     }
 
+    const nilaiBaru = nilaiPraktikum !== undefined && nilaiPraktikum !== '' ? parseFloat(nilaiPraktikum) : null;
     await pengumpulanRef.update({
-      nilaiPraktikum: nilaiPraktikum !== undefined && nilaiPraktikum !== '' ? parseFloat(nilaiPraktikum) : null,
+      nilaiPraktikum: nilaiBaru,
       catatanDosen: catatanDosen || '',
       status: 'diperiksa',
       diperiksaPada: new Date().toISOString()
     });
+
+    // Notifikasi ke mahasiswa (lonceng + WhatsApp). Tanpa await; gagal notif tidak membatalkan penyimpanan.
+    try {
+      const { modulList } = getModulPraktikumList(akses.mk);
+      const modulInfo = (modulList || []).find(m => m.id === req.params.modulId);
+      nilaiNotif.nilaiLkm(db, {
+        mahasiswaId: pengumpulanDoc.data().mahasiswaId,
+        mkId: akses.mk.id,
+        modulJudul: modulInfo ? modulInfo.judul : '',
+        nilai: nilaiBaru,
+        catatan: catatanDosen,
+        oleh: req.dosen.nama
+      });
+    } catch (e) { console.error('Notifikasi LKM gagal disiapkan:', e.message); }
 
     res.redirect(`/dosen/mk/${akses.mk.id}/modul-template/${req.params.modulId}/kumpulan`);
   } catch (error) {

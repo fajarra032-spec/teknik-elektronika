@@ -1,0 +1,22 @@
+PERBAIKAN NOTIFIKASI WHATSAPP + PEMETAAN DOSEN -> AKUN
+Timpa file berikut sesuai struktur folder proyek, lalu restart server.
+
+Notifikasi yang dilaporkan (surat tugas, nilai tugas/LKM, SK dosen):
+  helpers/waNotifier.js              TIMPA  baca nomor dari field 'kontak' dosen, cari dosen via users.dosenId,
+                                            aturan nilai_tugas dihidupkan, aturan surat_tugas baru
+  helpers/suratTugasNotifHelper.js   BARU
+  routes/admin/surat.js              TIMPA  notif saat surat tugas terbit (2 tempat)
+  routes/dosen/mk.js                 TIMPA  notif saat LKM diperiksa
+  docs/KATALOG-NOTIFIKASI-WA.md      TIMPA
+
+Fungsi lain dengan bug yang sama (dosen dicari lewat dosen.userId yang bisa kosong):
+  helpers/dosenAkunHelper.js         BARU   pemetaan dosen <-> akun (users.dosenId utama, dosen.userId cadangan)
+  helpers/skDistribusiHelper.js      TIMPA  SK / SK PA memakai pemetaan baru
+  helpers/magangNotifHelper.js       TIMPA  notif ke dosen PA (laporan masuk, seminar diajukan)
+  helpers/kuliahReminderHelper.js    TIMPA  pengingat jadwal mengajar pagi & sebelum kelas
+  helpers/messengerHelper.js         TIMPA  daftar dosen di chat/pesan
+  routes/admin/whatsapp.js           TIMPA  daftar kontak WA admin: nomor dosen terbaca
+
+.env: WA_AUTO_ENABLED=true, WA_AUTO_DRY_RUN=false.
+Hapus nilai_tugas / surat_tugas / sk_dosen dari WA_AUTO_RULES_OFF bila ada.
+Cek hasil di koleksi Firestore 'wa_auto_logs'.

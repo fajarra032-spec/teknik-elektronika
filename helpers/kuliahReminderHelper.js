@@ -83,9 +83,7 @@ async function bangunRencana(db, hariNama) {
 
   // Dosen
   if (bool('KULIAH_UNTUK_DOSEN', 'true')) {
-    const snap = await db.collection('dosen').get();
-    const uidPerDosen = {};
-    snap.docs.forEach(d => { const x = d.data(); if (x.userId) uidPerDosen[d.id] = x.userId; });
+    const uidPerDosen = await require('./dosenAkunHelper').petaUserPerDosen(db);
     sesiHariIni.forEach(x => {
       (Array.isArray(x.mk.dosenIds) ? x.mk.dosenIds : []).forEach(did => tambah(uidPerDosen[did], 'dosen', itemDari(x)));
     });

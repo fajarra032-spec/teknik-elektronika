@@ -15,6 +15,7 @@ const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { isTidakIkutKegiatan } = require('../../helpers/statusMahasiswaHelper');
+const suratTugasNotif = require('../../helpers/suratTugasNotifHelper');
 const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
@@ -715,6 +716,11 @@ router.post('/create-tugas', upload.none(), async (req, res) => {
           updatedAt: now,
           history: [{ status: 'completed', timestamp: now, catatan: `Surat tugas diterbitkan oleh ${req.user.nama || 'Admin'}` }]
         });
+        // Notifikasi lonceng + WhatsApp ke dosen penerima (tanpa await, tidak menggagalkan surat)
+        suratTugasNotif.suratTugasTerbit(db, {
+          dosenId: p.id, namaKegiatan, nomorSurat: finalNomorSurat,
+          tanggal: `${hari}, ${tanggalAcaraFormatted} ${waktu}`, tempat
+        });
       } else if (p.tipe === 'mahasiswa') {
         const mahasiswa = await getMahasiswa(p.id);
         await db.collection('surat').add({
@@ -1052,6 +1058,11 @@ router.post('/tugas/:id/generate', async (req, res) => {
       fileId: driveResponse.data.id,
       updatedAt: new Date().toISOString(),
       history: [...(tugas.history || []), { status: 'completed', timestamp: new Date().toISOString(), catatan: `Surat tugas digenerate dengan nomor ${finalNomor}` }]
+    });
+
+    suratTugasNotif.suratTugasTerbit(db, {
+      dosenId: tugas.dosenId, namaKegiatan: tugas.namaKegiatan, nomorSurat: finalNomor,
+      tanggal: tugas.tanggalPelaksanaan || tugas.tanggalAcara, tempat: tugas.tempat || tugas.penyelenggara
     });
 
     res.redirect(`/admin/surat/tugas/${id}`);

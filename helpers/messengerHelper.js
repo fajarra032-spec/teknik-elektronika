@@ -46,11 +46,14 @@ async function getAllAdmins(db) {
 /** Daftar dosen sebagai kontak pesan: id di sini = uid (bukan dosenId). */
 async function getAllDosenAsContacts(db) {
   return dosenContactCache.getOrFetch('all', async () => {
-    const snap = await db.collection('dosen').get();
+    const [snap, peta] = await Promise.all([
+      db.collection('dosen').get(),
+      require('./dosenAkunHelper').petaUserPerDosen(db)
+    ]);
     return snap.docs
-      .map(d => ({ dosenId: d.id, ...d.data() }))
-      .filter(d => d.userId) // hanya dosen yang akunnya sudah aktif (punya login)
-      .map(d => ({ id: d.userId, nama: d.nama, role: 'dosen', foto: d.foto || null }));
+      .map(d => ({ dosenId: d.id, uid: peta[d.id], ...d.data() }))
+      .filter(d => d.uid) // hanya dosen yang akunnya sudah aktif (punya login)
+      .map(d => ({ id: d.uid, nama: d.nama, role: 'dosen', foto: d.foto || null }));
   });
 }
 
