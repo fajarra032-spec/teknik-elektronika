@@ -25,7 +25,7 @@
  *   estimasiWaktu  - estimasi durasi praktikum
  */
 
-module.exports = {
+const MODUL_PRAKTIKUM_DATA = {
   // ==========================================================================
   // ELEKTRONIKA DIGITAL (kode a.l. PEK3202 / PEK3208)
   // ==========================================================================
@@ -3212,3 +3212,18 @@ void loop() {
     }
   ]
 };
+
+// Modul yang belum punya template cetak khusus memakai template berbasis blueprint
+// (views/lkm_blueprint_print.ejs): tiap modul punya susunan blok sendiri,
+// lihat data/lkmBlueprints.js dan data/lkmBlueprints/*.js.
+const LKM_BLUEPRINTS = require('./lkmBlueprints');
+Object.keys(MODUL_PRAKTIKUM_DATA).forEach((jenis) => {
+  (MODUL_PRAKTIKUM_DATA[jenis] || []).forEach((modul) => {
+    if (!modul.viewCetak && LKM_BLUEPRINTS[modul.id]) {
+      modul.viewCetak = 'lkm_blueprint_print';
+      modul.blueprint = LKM_BLUEPRINTS[modul.id];
+    }
+  });
+});
+
+module.exports = MODUL_PRAKTIKUM_DATA;

@@ -267,10 +267,19 @@ router.get('/', async (req, res) => {
     }
 
     if (selectedWaId) {
-      const messageResult = await notificationRequest(
-        `/internal/conversations/${encodeURIComponent(selectedWaId)}/messages`
-      );
-      messages = unwrapArray(messageResult, ['messages', 'items', 'results']);
+      try {
+        const messageResult = await notificationRequest(
+          `/internal/conversations/${encodeURIComponent(selectedWaId)}/messages`
+        );
+        messages = unwrapArray(messageResult, ['messages', 'items', 'results']);
+      } catch (messageError) {
+        if (messageError.status === 404) {
+          console.warn('[WhatsApp Center] Riwayat belum tersedia untuk percakapan:', selectedWaId);
+          messages = [];
+        } else {
+          throw messageError;
+        }
+      }
     }
   } catch (error) {
     console.error('[WhatsApp Center] Gagal memuat data:', error.message);

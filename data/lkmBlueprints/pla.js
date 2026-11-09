@@ -1,0 +1,57 @@
+// Perangkat Lunak Aplikasi (pla-01 .. pla-06): isian berbasis tangkapan layar, daftar fitur, dan hasil file.
+const { tb, gb, gr, kd, ru, tn, ck, fm, al, ft, rb, du, tg, ba, ru1, HAL } = require('./_h');
+module.exports = {
+  'pla-01': [
+    ck('Daftar periksa antarmuka dan personalisasi', ['Mengenali desktop, taskbar, dan menu mulai', 'Mengubah latar dan tema tampilan', 'Mengatur resolusi / skala layar', 'Mengatur tanggal, waktu, dan bahasa', 'Membuka pengelola tugas (task manager)', 'Mengatur volume dan keluaran suara', 'Menghubungkan perangkat ke jaringan', 'Mengatur akun pengguna']),
+    gb('Rancangan struktur folder penyimpanan tugas', 150, { bg: 'dot', cap: 'Gambarkan pohon folder: semester > mata kuliah > jenis berkas', note: 'Rancang sendiri, lalu tulis aturan penamaan yang dipakai pada kolom di bawahnya.' }),
+    ba('Aturan penamaan berkas', ['Pola nama file', 'Contoh nama file']),
+    tb('Latihan operasi file dan folder', ['Operasi', 'Nama file / folder', 'Lokasi asal', 'Lokasi tujuan', '[]Berhasil'], { rl: ['Buat folder baru', 'Salin file', 'Pindahkan file', 'Ganti nama', 'Hapus lalu pulihkan dari Recycle Bin'], w: [28, 22, 18, 18, 14], rh: 24 }),
+    tb('Kompresi dan backup', ['Berkas / folder', 'Ukuran sebelum (KB)', 'Ukuran sesudah zip (KB)', 'Penghematan (%)', 'Media backup'], { n: 3, rumus: 'Penghematan (%) = (ukuran sebelum - ukuran sesudah) / ukuran sebelum x 100' }),
+    tn('Pertanyaan analisis', ['Mengapa struktur folder yang rapi membantu pengerjaan tugas mata kuliah teknik?', 'Mengapa backup perlu disimpan pada lebih dari satu media?'], 2),
+    ru('Kesimpulan', 3),
+  ],
+  'pla-02': [
+    tb('Pengaturan format halaman laporan teknis', ['Parameter', 'Nilai yang dipakai', 'Alasan / sumber acuan'], { rl: ['Ukuran kertas', 'Margin atas / bawah', 'Margin kiri / kanan', 'Orientasi', 'Jenis dan ukuran huruf isi', 'Spasi baris', 'Posisi nomor halaman'], w: [28, 30, null], rh: 22 }),
+    tb('Struktur heading berjenjang', ['Tingkat', 'Contoh judul yang dibuat', 'Gaya (huruf / ukuran / tebal)', '[]Masuk daftar isi'], { rl: ['Judul (Heading 1)', 'Sub-judul (Heading 2)', 'Sub-sub judul (Heading 3)'], w: [22, 34, 28, 16], rh: 26 }),
+    gb('Tempel tangkapan layar daftar isi otomatis', 130, { cap: 'Tangkapan layar daftar isi' }),
+    tb('Fitur yang dipraktikkan', ['Fitur', 'Menu / langkah yang dipakai', 'Fungsi bagi laporan', '[]Berhasil'], { rl: ['Tabel dengan caption', 'Gambar dengan caption', 'Penomoran halaman', 'Header dan footer', 'Mail merge (opsional)'], w: [24, 32, 30, 14], rh: 24 }),
+    du('Hasil format laporan', { k: 'gambar', j: 'Halaman contoh: tabel + caption', h: 120 }, { k: 'gambar', j: 'Halaman contoh: gambar + caption', h: 120 }),
+    tn('Pertanyaan analisis', ['Apa keuntungan daftar isi otomatis dibanding mengetik manual?', 'Apa yang terjadi pada penomoran bila gambar atau tabel ditambah di tengah laporan?'], 2),
+    ru('Kesimpulan', 3),
+  ],
+  'pla-03': [
+    tb('Latihan referensi sel', ['Sel', 'Rumus yang ditulis', 'Hasil', 'Jenis referensi (relatif / absolut / campuran)'], { n: 4, w: [10, 36, 16, null], no: false }),
+    tb('Rekap data pengukuran', ['No', 'Data (V)', 'Data (mA)', 'Daya P = V x I (mW)', 'Status (IF)'], { n: 6, rh: 22, rumus: 'Contoh pernyataan logika: =IF(B2>=4,5;"Lolos";"Periksa ulang")' }),
+    tb('Fungsi dan hasil perhitungan', ['Fungsi', 'Rentang sel', 'Hasil', 'Kegunaan'], { rl: ['SUM', 'AVERAGE', 'MIN', 'MAX', 'IF'], w: [20, 22, 18, null], rh: 22 }),
+    gr('Sketsa grafik yang dibuat', 150, 'Kategori / waktu', 'Nilai', { note: 'Tulis jenis grafik yang dipilih: ............ Alasan: ........................................' }),
+    gb('Tempel tangkapan layar pemformatan bersyarat', 90, { cap: 'Sel yang disorot otomatis' }),
+    tn('Pertanyaan analisis', ['Mengapa grafik garis atau batang dipilih untuk data ini?', 'Apa keuntungan rumus otomatis dibanding menghitung manual saat data berubah?'], 2),
+    ru('Kesimpulan', 3),
+  ],
+  'pla-04': [
+    fm('Identitas presentasi', ['Judul presentasi', 'Studi kasus', 'Tema / palet warna', 'Jumlah slide']),
+    tb('Kerangka slide', ['Slide', 'Judul slide', 'Isi utama (maksimal 3 poin)', 'Visual (grafik / gambar / tabel)'], { n: 6, rh: 30, w: [8, 24, 44, null] }),
+    ck('Pengaturan tema, slide master, dan animasi', ['Slide master memakai jenis huruf yang sama', 'Warna tema konsisten pada semua slide', 'Maksimal 3 poin per slide', 'Grafik dari spreadsheet disisipkan dan terbaca', 'Animasi secukupnya, tidak mengganggu isi', 'Transisi antarslide seragam']),
+    tb('Umpan balik latihan presentasi', ['Aspek', 'Skor (1-5)', 'Masukan dari teman / dosen', 'Perbaikan yang dilakukan'], { rl: ['Kejelasan isi', 'Tata letak slide', 'Suara dan tempo', 'Kontak mata', 'Pengaturan waktu'], w: [24, 12, 32, null], rh: 24 }),
+    ru('Refleksi hasil latihan presentasi', 4),
+  ],
+  'pla-05': [
+    gb('Sketsa awal diagram alur studi kasus', 170, { bg: 'dot', cap: 'Rancang di kertas: mulai - proses - keputusan - selesai' }),
+    tb('Simbol yang dipakai', ['Simbol', 'Arti', 'Dipakai pada langkah', 'Jumlah'], { rl: ['Terminator (mulai / selesai)', 'Proses', 'Keputusan', 'Masukan / keluaran', 'Konektor'], w: [32, 28, null, 12], rh: 22 }),
+    ck('Pemeriksaan tata letak diagram', ['Objek sejajar dan rata', 'Jarak antarobjek seragam', 'Garis panah tidak saling menyilang', 'Teks mudah dibaca', 'Warna dan huruf konsisten', 'Diekspor ke format PNG / JPG']),
+    tb('Ekspor dan penyisipan', ['Berkas hasil', 'Format', 'Ukuran (KB)', 'Disisipkan ke (dokumen / slide)'], { n: 3, w: [30, 14, 16, null] }),
+    du('Hasil akhir', { k: 'gambar', j: 'Tempel diagram akhir', h: 150 }, { k: 'gambar', j: 'Tempel hasil sisipan pada laporan / slide', h: 150 }),
+    ru('Kesimpulan manfaat visualisasi diagram', 3),
+  ],
+  'pla-06': [
+    fm('Identitas proyek', ['Judul laporan', 'Studi kasus', 'Nama kelompok', 'Anggota dan NIM']),
+    al('Alur kerja proyek terintegrasi', ['Data mentah', 'Spreadsheet', 'Diagram', 'Laporan (word)', 'Presentasi'], 52),
+    tb('Jadwal dan status pengerjaan', ['Tahap', 'Rencana', 'Realisasi', '[]Selesai', 'Kendala'], { rl: ['Menentukan studi kasus dan data', 'Olah data di spreadsheet', 'Membuat diagram pendukung', 'Menyusun laporan', 'Menyusun slide dan latihan'], w: [34, 14, 14, 10, null], rh: 24 }),
+    tb('Ringkasan olah data', ['Besaran', 'Nilai', 'Fungsi / rumus', 'Ditampilkan sebagai'], { n: 4, w: [26, 16, 28, null], no: false }),
+    ck('Kelengkapan dokumen laporan', ['Halaman sampul', 'Daftar isi otomatis', 'Heading berjenjang', 'Tabel dengan caption', 'Grafik dengan caption', 'Diagram alur', 'Nomor halaman', 'Daftar pustaka', 'File spreadsheet terlampir', 'File presentasi terlampir']),
+    HAL,
+    ft('Dokumentasi hasil', ['Halaman laporan', 'Grafik dari spreadsheet', 'Slide presentasi']),
+    rb('Penilaian proyek (diisi dosen)', [['Ketepatan olah data dan grafik', '25'], ['Kelengkapan dan format laporan', '30'], ['Diagram dan visualisasi', '15'], ['Slide dan presentasi', '20'], ['Kerja sama dan ketepatan waktu', '10']]),
+    ru('Refleksi: kendala dan solusi', 4),
+  ],
+};

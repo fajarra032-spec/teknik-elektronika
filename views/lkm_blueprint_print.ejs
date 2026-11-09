@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_ed_extra') %><%- include('partials/lkm_mkplc_extra') %>
+<style>
+  /* Gaya blok blueprint LKM (lkm_blueprint_print) */
+  table.bp-t { margin: 3px 0 2px 0; }
+  table.bp-t td.lbl { text-align: left; background: #f6f8fb; font-weight: bold; }
+  table.bp-t td.kiri { text-align: left; }
+  table.bp-t tr { break-inside: avoid; page-break-inside: avoid; }
+  table.bp-t thead { display: table-header-group; }
+  .bp-kode { border: 1px solid #000; margin-top: 4px; background-color: #fff;
+    background-image: linear-gradient(to right, #eef2f7 0, #eef2f7 26px, #8a97ab 26px, #8a97ab 27px, transparent 27px),
+                      repeating-linear-gradient(to bottom, transparent 0, transparent 17px, #e4e8ef 17px, #e4e8ef 18px); }
+  .bp-kode .cap { font: 8pt/1.2 'Courier New', monospace; color: #6b7686; padding: 2px 6px 0 32px; }
+  .bp-grid-bg { background-color: #fff; background-image: linear-gradient(#d3dbe8 1px, transparent 1px), linear-gradient(90deg, #d3dbe8 1px, transparent 1px); background-size: 14px 14px; }
+  .bp-dot-bg { background-color: #fff; background-image: radial-gradient(#9aa6b8 1px, transparent 1.2px); background-size: 14px 14px; }
+  .bp-baris { display: flex; align-items: flex-end; gap: 6px; margin-bottom: 3px; font-size: 9pt; }
+  .bp-baris .l { white-space: nowrap; }
+  .bp-baris .i { flex: 1; border-bottom: 1px dotted #000; height: 18px; }
+  table.bp-etiket td { text-align: left; vertical-align: top; font-size: 7.5pt; color: #555; height: 32px; }
+  .bp-hal-kop { margin-top: 0; }
+</style>
+</head>
+<body>
+<div class="container-fluid">
+<%
+  const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const BP = Array.isArray(modul.blueprint) ? modul.blueprint : [];
+  const nomor = parseInt(String(modul.id).split('-')[1], 10) || 1;
+  const sub = (typeof subLkm !== 'undefined' && subLkm) ? subLkm : modul.judul;
+
+  // ------------------------------------------------------------------
+  // Konstanta estimasi tinggi (px) untuk penentuan pemenggalan halaman.
+  // ------------------------------------------------------------------
+  const E = { title: 20, note: 22, rumus: 32, th1: 21, th2: 33, th3: 45, grp: 18, gap: 6, pad: 6, tanyaLine: 20, tanyaHead: 15, ttd: 128, cekRow: 20 };
+  const CPL = 112; // karakter per baris teks lebar penuh (perkiraan)
+  const lines = (txt, cpl) => Math.max(1, Math.ceil(String(txt || '').length / (cpl || CPL)));
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let letterIdx = 0;
+  const titleHtml = (b) => {
+    if (!b.j) return '';
+    const label = (b.nolabel ? '' : letters[letterIdx++] + '. ');
+    return '<div class="sect-title">' + esc(label + b.j) + '</div>';
+  };
+  const noteHtml = (b) => {
+    let h = '', hh = 0;
+    if (b.note) { h += '<div class="catatan-kecil">' + esc(b.note) + '</div>'; hh += E.note * lines(b.note, 120) - (lines(b.note, 120) > 1 ? 6 : 0); }
+    if (b.rumus) { h += '<div class="rumus-box">' + esc(b.rumus) + '</div>'; hh += E.rumus * lines(b.rumus, 105) - (lines(b.rumus, 105) > 1 ? 8 : 0); }
+    return { h, hh };
+  };
+  const cbx = '<span class="cb"></span>';
+
+  // ------------------------------------------------------------------
+  // Tabel
+  // ------------------------------------------------------------------
+  const tableCore = (b, widthPx) => {
+    const cols = b.cols || [];
+    const rows = b.r || null;
+    const rl = b.rl || null;
+    const n = rows ? rows.length : (rl ? rl.length : (b.n || 3));
+    const rh = b.rh || 24;
+    const numbered = !rows && !rl && b.no !== false;
+    const nc = cols.length;
+    const w = b.w || cols.map((c, i) => (i === 0 && (numbered || rl) ? (numbered ? 6 : 24) : null));
+    // lebar kolom: yang null dibagi rata dari sisa
+    const fixed = w.reduce((a, x) => a + (x || 0), 0);
+    const freeN = w.filter(x => !x).length || 1;
+    const wf = w.map(x => x || (100 - fixed) / freeN);
+    let html = '<table class="tt bp-t"' + (b.compact ? ' style="font-size:8pt;"' : '') + '><colgroup>' + wf.map(x => '<col style="width:' + x.toFixed(1) + '%">').join('') + '</colgroup>';
+    let h = 6;
+    if (b.cap) { html += '<caption>' + esc(b.cap) + '</caption>'; h += 18; }
+    html += '<thead>';
+    if (b.grp) {
+      html += '<tr>' + b.grp.map(g => '<th colspan="' + g[1] + '">' + esc(g[0]) + '</th>').join('') + '</tr>';
+      h += E.grp;
+    }
+    let maxL = 1;
+    cols.forEach((c, i) => {
+      const txt = String(c).replace(/^\[\]/, '');
+      const cpl = Math.max(4, Math.floor((wf[i] / 100 * widthPx - 8) / 5.2));
+      maxL = Math.max(maxL, Math.ceil(txt.length / cpl));
+    });
+    html += '<tr>' + cols.map(c => '<th>' + esc(String(c).replace(/^\[\]/, '')) + '</th>').join('') + '</tr></thead><tbody>';
+    h += (maxL === 1 ? E.th1 : maxL === 2 ? E.th2 : E.th3) + 2;
+    for (let i = 0; i < n; i++) {
+      html += '<tr style="height:' + rh + 'px">';
+      let rowL = 1;
+      for (let c = 0; c < nc; c++) {
+        const isCb = /^\[\]/.test(cols[c] || '');
+        let content = '', cls = '';
+        if (rows) { const v = rows[i][c]; if (v != null && v !== '') content = esc(v); }
+        else if (rl && c === 0) { content = esc(rl[i]); cls = 'lbl'; }
+        else if (numbered && c === 0) { content = String(i + 1); }
+        if (rows && c === 0 && content && !isCb && b.kiri0 !== false && rows[i][c] && String(rows[i][c]).length > 3) cls = 'lbl';
+        if (rl && c === 0) rowL = Math.max(rowL, Math.ceil(String(rl[i]).length / Math.max(4, Math.floor((wf[0] / 100 * widthPx - 8) / 5.2))));
+        if (rows && rows[i][c]) rowL = Math.max(rowL, Math.ceil(String(rows[i][c]).length / Math.max(4, Math.floor((wf[c] / 100 * widthPx - 8) / 5.2))));
+        if (isCb && !content) content = cbx.replace('margin: 0 2px 0 6px', '');
+        html += '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + content + '</td>';
+      }
+      html += '</tr>';
+      h += Math.max(rh, rowL * 11 + 8) + 1;
+    }
+    html += '</tbody></table>';
+    return { html, h };
+  };
+  const tabel = (b) => {
+    const t = titleHtml(b); const nt = noteHtml(b);
+    const core = tableCore(b, 664);
+    return { html: t + nt.h + core.html, h: (b.j ? E.title : 0) + nt.hh + core.h };
+  };
+
+  // ------------------------------------------------------------------
+  // Blok lain
+  // ------------------------------------------------------------------
+  const gambar = (b) => {
+    const bg = b.bg === 'grid' ? ' bp-grid-bg' : (b.bg === 'dot' ? ' bp-dot-bg' : '');
+    const t = titleHtml(b); const nt = noteHtml(b);
+    return { html: t + nt.h + '<div class="kotak-gambar' + bg + '" style="height:' + b.h + 'px;">' + esc(b.cap || '') + '</div>', h: (b.j ? E.title : 0) + nt.hh + b.h + 8 };
+  };
+  const grid = (b) => {
+    const t = titleHtml(b); const nt = noteHtml(b);
+    return { html: t + nt.h + '<div class="grid-kertas" style="height:' + b.h + 'px;">' + (b.y ? '<span class="sb-y">' + esc(b.y) + '</span>' : '') + (b.x ? '<span class="sb-x">' + esc(b.x) + '</span>' : '') + '</div>', h: (b.j ? E.title : 0) + nt.hh + b.h + 6 };
+  };
+  const kode = (b) => {
+    const t = titleHtml(b); const nt = noteHtml(b);
+    return { html: t + nt.h + '<div class="bp-kode" style="height:' + b.h + 'px;"><div class="cap">' + esc(b.cap || '') + '</div></div>', h: (b.j ? E.title : 0) + nt.hh + b.h + 6 };
+  };
+  const ruang = (b) => {
+    const t = titleHtml(b); const nt = noteHtml(b);
+    const n = b.n || 3;
+    return { html: t + nt.h + '<div>' + '<div class="garis-isi"></div>'.repeat(n) + '</div>', h: (b.j ? E.title : 0) + nt.hh + n * 19 + 6 };
+  };
+  const tanya = (b) => {
+    const t = titleHtml(b); const nt = noteHtml(b);
+    const n = b.n || 2;
+    let html = t + nt.h, h = (b.j ? E.title : 0) + nt.hh;
+    (b.q || []).forEach((q, i) => {
+      html += '<div class="pertanyaan-item"><div class="no-pertanyaan">' + (i + 1) + '. ' + esc(q) + '</div>' + '<div class="garis-isi"></div>'.repeat(n) + '</div>';
+      h += lines(q, 100) * 15 + 4 + n * 19 + 5;
+    });
+    return { html, h };
+  };
+  const cek = (b) => {
+    const t = titleHtml(b); const nt = noteHtml(b);
+    const items = b.items || [];
+    let html = t + nt.h + '<div class="cek-list">' + items.map(x => '<div>' + cbx + ' ' + esc(x) + '</div>').join('') + '</div>';
+    const rowsN = Math.ceil(items.reduce((a, x) => a + lines(x, 52), 0) / 2);
+    return { html, h: (b.j ? E.title : 0) + nt.hh + rowsN * 17 + 14 };
+  };
+  const form = (b) => {
+    const t = titleHtml(b); const nt = noteHtml(b);
+    const f = b.f || [];
+    const per = b.k || 2;
+    let html = t + nt.h + '<table class="bp-t tt" style="margin-top:3px;"><colgroup>';
+    for (let k = 0; k < per; k++) html += '<col style="width:' + (b.lw || 18) + '%"><col>';
+    html += '</colgroup><tbody>';
+    let h = (b.j ? E.title : 0) + nt.hh + 4;
+    const rowH = b.rh || 26;
+    for (let i = 0; i < f.length; i += per) {
+      html += '<tr style="height:' + rowH + 'px">';
+      for (let k = 0; k < per; k++) {
+        const lab = f[i + k];
+        html += lab ? '<td class="lbl">' + esc(lab) + '</td><td></td>' : '<td></td><td></td>';
+      }
+      html += '</tr>'; h += rowH + 1;
+    }
+    html += '</tbody></table>';
+    return { html, h };
+  };
+  const alur = (b) => {
+    const t = titleHtml(b); const nt = noteHtml(b);
+    const bx = b.b || [];
+    const hh = b.h || 66;
+    let html = t + nt.h + '<div class="alur">';
+    bx.forEach((x, i) => { html += (i ? '<div class="panah">' + (b.pan || '&rarr;') + '</div>' : '') + '<div class="kotak" style="min-height:' + hh + 'px;"><b>' + esc(x) + '</b></div>'; });
+    html += '</div>';
+    return { html, h: (b.j ? E.title : 0) + nt.hh + hh + 12 };
+  };
+  const foto = (b) => {
+    const t = titleHtml(b); const nt = noteHtml(b);
+    const hh = b.h || 96;
+    return { html: t + nt.h + '<div class="foto-wrap">' + (b.l || []).map(x => '<div class="foto-box" style="height:' + hh + 'px;">' + esc(x) + '</div>').join('') + '</div>', h: (b.j ? E.title : 0) + nt.hh + hh + 8 };
+  };
+  const rubrik = (b) => {
+    const rows = (b.r || []).map(x => [x[0], String(x[1]), '', '']);
+    const c = Object.assign({}, b, { cols: ['Kriteria penilaian', 'Bobot (%)', 'Skor', 'Catatan dosen'], r: rows, w: [52, 12, 12, null], rh: b.rh || 24 });
+    return tabel(c);
+  };
+  const etiket = (b) => {
+    const t = titleHtml(b); const nt = noteHtml(b);
+    const cells = ['Judul gambar', 'Skala', 'Satuan', 'Digambar oleh', 'Diperiksa oleh', 'Tanggal', 'Nomor gambar', 'Ukuran kertas', 'Nilai'];
+    let html = t + nt.h + '<table class="tt bp-t bp-etiket"><tbody>';
+    for (let r = 0; r < 3; r++) { html += '<tr>'; for (let c = 0; c < 3; c++) html += '<td>' + cells[r * 3 + c] + '</td>'; html += '</tr>'; }
+    html += '</tbody></table>';
+    return { html, h: (b.j ? E.title : 0) + nt.hh + 3 * 33 + 10 };
+  };
+  const baris = (b) => {
+    const t = titleHtml(b); const nt = noteHtml(b);
+    const f = b.f || [];
+    return { html: t + nt.h + f.map(x => '<div class="bp-baris"><span class="l">' + esc(x) + '</span><span class="i"></span></div>').join(''), h: (b.j ? E.title : 0) + nt.hh + f.length * 22 + 4 };
+  };
+  const rumusBlk = (b) => {
+    const t = titleHtml(b);
+    return { html: t + '<div class="rumus-box">' + esc(b.text) + '</div>', h: (b.j ? E.title : 0) + E.rumus * lines(b.text, 105) };
+  };
+  const catatanBlk = (b) => ({ html: '<div class="petunjuk">' + esc(b.text) + '</div>', h: 12 * lines(b.text, 120) + 12 });
+  // dua kolom: setiap sisi sub-blok sederhana
+  const mini = (x, widthPx) => {
+    if (x.k === 'tabel') {
+      const core = tableCore(Object.assign({ compact: true }, x), widthPx);
+      return { html: (x.j ? '<div class="judul-kecil">' + esc(x.j) + '</div>' : '') + core.html, h: (x.j ? 18 : 0) + core.h };
+    }
+    if (x.k === 'grid') return { html: (x.j ? '<div class="judul-kecil">' + esc(x.j) + '</div>' : '') + '<div class="grid-kertas" style="height:' + x.h + 'px;">' + (x.y ? '<span class="sb-y">' + esc(x.y) + '</span>' : '') + (x.x ? '<span class="sb-x">' + esc(x.x) + '</span>' : '') + '</div>', h: (x.j ? 18 : 0) + x.h + 4 };
+    if (x.k === 'osc') { const rr = x.rows || 6; let o = '<table class="osc">'; for (let r = 0; r < rr; r++) { o += '<tr' + (r === Math.floor(rr / 2) - 1 ? ' class="mid-h"' : '') + '>'; for (let c = 0; c < 10; c++) o += '<td' + (c === 4 ? ' class="mid-v"' : '') + '></td>'; o += '</tr>'; } o += '</table><div class="osc-set">Volt/div: ......... Time/div: .........</div>'; return { html: (x.j ? '<div class="judul-kecil">' + esc(x.j) + '</div>' : '') + o, h: (x.j ? 18 : 0) + rr * 16 + 34 }; }
+    if (x.k === 'kode') return { html: (x.j ? '<div class="judul-kecil">' + esc(x.j) + '</div>' : '') + '<div class="bp-kode" style="height:' + x.h + 'px;"><div class="cap">' + esc(x.cap || '') + '</div></div>', h: (x.j ? 18 : 0) + x.h + 8 };
+    if (x.k === 'ruang') return { html: (x.j ? '<div class="judul-kecil">' + esc(x.j) + '</div>' : '') + '<div class="garis-isi"></div>'.repeat(x.n || 4), h: (x.j ? 18 : 0) + (x.n || 4) * 19 };
+    const bg = x.bg === 'grid' ? ' bp-grid-bg' : (x.bg === 'dot' ? ' bp-dot-bg' : '');
+    return { html: (x.j ? '<div class="judul-kecil">' + esc(x.j) + '</div>' : '') + '<div class="kotak-gambar' + bg + '" style="height:' + x.h + 'px;">' + esc(x.cap || '') + '</div>', h: (x.j ? 18 : 0) + x.h + 8 };
+  };
+  const dua = (b) => {
+    const t = titleHtml(b); const nt = noteHtml(b);
+    const A = mini(b.a, 325), B = mini(b.b, 325);
+    return { html: t + nt.h + '<div class="dua-kolom"><div>' + A.html + '</div><div>' + B.html + '</div></div>', h: (b.j ? E.title : 0) + nt.hh + Math.max(A.h, B.h) + 4 };
+  };
+  const tiga = (b) => {
+    const t = titleHtml(b); const nt = noteHtml(b);
+    const parts = (b.p || []).map(x => mini(x, 215));
+    return { html: t + nt.h + '<div class="tiga-kolom">' + parts.map(p => '<div>' + p.html + '</div>').join('') + '</div>', h: (b.j ? E.title : 0) + nt.hh + Math.max.apply(null, parts.map(p => p.h)) + 4 };
+  };
+  const osc = (b) => { const t = titleHtml(b); const nt = noteHtml(b); const m = mini({ k: 'osc', rows: b.rows || 8 }, 664); return { html: t + nt.h + m.html, h: (b.j ? E.title : 0) + nt.hh + m.h }; };
+  const RENDER = { osc, tabel, gambar, grid, kode, ruang, tanya, cek, form, alur, foto, rubrik, etiket, baris, rumus: rumusBlk, catatan: catatanBlk, dua, tiga };
+
+  // ------------------------------------------------------------------
+  // Susun blok -> halaman (pemenggalan otomatis berdasarkan estimasi)
+  // ------------------------------------------------------------------
+  // tinggi kepala halaman 1 (kop, info, tujuan, K3) - hasil kalibrasi terhadap cetak nyata
+  const tujuanArr = modul.tujuan || [];
+  const extraT = tujuanArr.reduce((a, x) => a + Math.ceil(String(x).length / 102) - 1, 0);
+  const headBase = String(modul.estimasiWaktu || '').length > 20 ? 263 : 217;
+  const P1_HEAD = headBase + 29 + Math.round(6.7 + 20.1 * tujuanArr.length + 10.4 * extraT) + (modul.k3 ? 55 : 4) + 4;
+  const PAGE_H = 1016;
+  const KOP_H = 96;
+  const SAFE = 10;
+  const pages = [[]];
+  let used = P1_HEAD;
+  let cap = PAGE_H - SAFE;
+  const out = [];
+  BP.forEach((b) => {
+    if (b.t === 'hal') { pages.push([]); used = KOP_H; return; }
+    const fn = RENDER[b.t];
+    if (!fn) return;
+    const r = fn(b);
+    if (used + r.h > cap && pages[pages.length - 1].length) { pages.push([]); used = KOP_H; }
+    pages[pages.length - 1].push('<div class="bp" data-t="' + b.t + '" data-est="' + r.h + '">' + r.html + '</div>');
+    used += r.h;
+  });
+  // halaman terakhir masih longgar: beri ruang catatan agar halaman tidak terkesan kosong
+  if (pages.length > 1 && used < 560 && used + E.ttd < cap) {
+    const nLines = Math.max(4, Math.min(14, Math.floor((cap - used - E.ttd - 40) * 0.6 / 19)));
+    const rr = ruang({ j: 'Catatan hasil, temuan, dan kendala', n: nLines });
+    pages[pages.length - 1].push('<div class="bp" data-t="catatan-hasil" data-est="' + rr.h + '">' + rr.html + '</div>');
+    used += rr.h;
+  }
+  if (used + E.ttd > cap && pages[pages.length - 1].length) {
+    // tanda tangan tidak muat: bawa blok terakhir agar halaman baru tidak hanya berisi tanda tangan
+    const lastPg = pages[pages.length - 1];
+    const carry = lastPg.length > 1 ? lastPg.pop() : null;
+    pages.push(carry ? [carry] : []);
+  }
+%>
+<%- include('partials/lkm_std_top', { nomorLkm: nomor, subLkm: sub, nilaiNo: nomor }) %>
+<div id="bp-start" data-p1="<%= P1_HEAD %>"></div>
+<% pages.forEach((blocks, pi) => { %>
+<% if (pi === 0) { %><%- blocks.join('\n') %><% } else { %><div class="halaman-baru"><%- include('partials/kop_surat') %><%- blocks.join('\n') %><% if (pi === pages.length - 1) { %><%- include('partials/lkm_std_bottom') %><% } %></div><% } %>
+<% }) %>
+<% if (pages.length === 1) { %><%- include('partials/lkm_std_bottom') %><% } %>
+</div>
+</body>
+</html>
