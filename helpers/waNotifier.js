@@ -27,7 +27,8 @@
  */
 const { TEMPLATES, bersihkanParam } = require('./waTemplates');
 
-const env = (k, d) => (process.env[k] === undefined || process.env[k] === '' ? d : process.env[k]);
+const S = require('./waSettings'); // pengaturan dari halaman admin (web > .env > bawaan)
+const env = (k, d) => S.env(k, d);
 const bool = (k, d) => String(env(k, d)).toLowerCase() === 'true';
 const num = (k, d) => { const n = Number(env(k, d)); return Number.isFinite(n) ? n : d; };
 const list = (k) => String(env(k, '')).split(',').map(s => s.trim()).filter(Boolean);
@@ -77,11 +78,39 @@ const RULES = [
   { key: 'pesan',            type: 'pesan',                                        roles: ['mahasiswa', 'dosen'], template: 'info_layanan', on: false, label: 'Pesan baru di chat website' }
 ];
 
+// ---------------------------------------------------------------------------
+// Pengaturan aturan: web (Firestore settings/wa_auto) > .env > bawaan kode.
+// Penyimpanan & pemuatan ada di helpers/waSettings.js.
+// ---------------------------------------------------------------------------
+function sumberRule(rule) {
+  if (typeof S.state.rules[rule.key] === 'boolean') return 'web';
+  if (list('WA_AUTO_RULES_OFF').includes(rule.key) || list('WA_AUTO_RULES_ON').includes(rule.key)) return 'env';
+  return 'bawaan';
+}
+
 function ruleAktif(rule) {
+  if (typeof S.state.rules[rule.key] === 'boolean') return S.state.rules[rule.key];
   if (list('WA_AUTO_RULES_OFF').includes(rule.key)) return false;
   if (list('WA_AUTO_RULES_ON').includes(rule.key)) return true;
   return rule.on;
 }
+
+/** nilai: true | false | null (null = kembali ke .env/bawaan). */
+async function aturRule(key, nilai, oleh) {
+  if (!RULES.some(r => r.key === key)) throw new Error('Aturan tidak dikenal');
+  await S.aturRule(key, nilai, oleh);
+}
+const segarkanOverride = (paksa) => S.segarkan(paksa);
+
+const GRUP = {
+  nilai_akhir: 'Nilai & tugas', nilai_tugas: 'Nilai & tugas', nilai_magang: 'Nilai & tugas',
+  laporan_komentar: 'Magang', laporan_review: 'Magang', laporan_masuk: 'Magang', seminar_diajukan: 'Magang', seminar_jadwal: 'Magang',
+  logbook_kosong: 'Magang', logbook_ditolak: 'Magang', logbook_disetujui: 'Magang', logbook_kunci: 'Magang', logbook_menunggu: 'Magang',
+  magang_periode: 'Magang', magang_berakhir: 'Magang',
+  surat_tugas: 'Dosen', sk_dosen: 'Dosen', tugas_belum_dinilai: 'Dosen', jadwal_mengajar: 'Dosen',
+  kuliah_pagi: 'Pengingat kuliah', kuliah_sebelum: 'Pengingat kuliah',
+  alat: 'Layanan', pesan: 'Layanan'
+};
 function cariRule(data) {
   if (!data) return null;
   const title = String(data.title || '');
@@ -123,17 +152,15 @@ function tautan(link) {
   return env('WA_SITE_URL', 'https://elektronika.polidewa.ac.id').replace(/\/+$/, '') + link;
 }
 
-function susunTeks(data, nama) {
+function susunTeks(data, nama, rule) {
   const url = tautan(data.link);
-  return [
-    '*Prodi Teknik Elektronika*',
-    data.title,
-    data.message || '',
-    url ? `\nBuka: ${url}` : '',
-    '\n_Pesan otomatis dari Sistem Informasi Prodi Teknik Elektronika._'
-  ].filter(x => x !== '').join('\n');
+  const situs = env('WA_SITE_URL', 'https://elektronika.polidewa.ac.id').replace(/\/+$/, '');
+  const tpl = S.teksTemplate(rule && rule.template);
+  return S.isiTemplate(tpl, {
+    nama: nama || '', judul: data.title || '', isi: data.message || '',
+    tautan: url ? `Buka: ${url}` : '', situs
+  });
 }
-
 function susunTemplate(rule, data, nama) {
   const tpl = TEMPLATES[rule.template];
   const url = tautan(data.link);
@@ -281,7 +308,7 @@ async function proses(job) {
   const mode = env('WA_SEND_MODE', 'text');
   const body = mode === 'template'
     ? { to: p.nomor, template: susunTemplate(rule, data, p.nama || (p.role === 'dosen' ? 'Bapak/Ibu Dosen' : 'Mahasiswa')) }
-    : { to: p.nomor, text: susunTeks(data, p.nama) };
+    : { to: p.nomor, text: susunTeks(data, p.nama || (p.role === 'dosen' ? 'Bapak/Ibu Dosen' : 'Mahasiswa'), rule) };
   try {
     await kirimDenganUlang(body);
     if (!rule.bypassKuota) kuotaHarian.set(kKey, terpakai + 1);
@@ -320,11 +347,18 @@ function enqueue(db, userId, data) {
   try {
     if (!bool('WA_AUTO_ENABLED', 'false')) return;
     if (!db || !userId || !data) return;
-    const rule = cariRule(data);
-    if (!rule || !ruleAktif(rule)) return;
-    if (antrean.length >= MAX_QUEUE) { console.error('[WA-Auto] Antrean penuh, notifikasi dilewati'); return; }
-    antrean.push({ db, userId, data: { type: data.type, title: data.title, message: data.message || '', link: data.link || null }, rule });
-    setImmediate(kuras);
+    const lanjut = () => {
+      try {
+        const rule = cariRule(data);
+        if (!rule || !ruleAktif(rule)) return;
+        if (antrean.length >= MAX_QUEUE) { console.error('[WA-Auto] Antrean penuh, notifikasi dilewati'); return; }
+        antrean.push({ db, userId, data: { type: data.type, title: data.title, message: data.message || '', link: data.link || null }, rule });
+        setImmediate(kuras);
+      } catch (e) { console.error('[WA-Auto] enqueue gagal:', e.message); }
+    };
+    // Pengaturan dari web di-cache 20 detik; bila basi, segarkan dulu (tidak menunda halaman).
+    if (S.segar()) lanjut();
+    else S.segarkan().then(lanjut, lanjut);
   } catch (e) {
     console.error('[WA-Auto] enqueue gagal:', e.message);
   }
@@ -338,8 +372,8 @@ function status() {
     maxPerDay: num('WA_AUTO_MAX_PER_DAY', 5),
     quiet: `${num('WA_QUIET_START', 21)}:00–${num('WA_QUIET_END', 6)}:00 WITA`,
     antrean: antrean.length,
-    rules: RULES.map(r => ({ key: r.key, label: r.label, aktif: ruleAktif(r), roles: r.roles, template: r.template }))
+    rules: RULES.map(r => ({ key: r.key, label: r.label, aktif: ruleAktif(r), bawaan: !!r.on, sumber: sumberRule(r), grup: GRUP[r.key] || 'Lainnya', roles: r.roles, template: r.template }))
   };
 }
 
-module.exports = { enqueue, status, RULES, normalisasiNomor, _test: { normalisasiNomor, cariRule, susunTeks, susunTemplate, proses, cariPenerima, penerimaCache, antrean } };
+module.exports = { enqueue, status, aturRule, segarkanOverride, RULES, normalisasiNomor, _test: { normalisasiNomor, cariRule, susunTeks, susunTemplate, proses, cariPenerima, penerimaCache, antrean } };

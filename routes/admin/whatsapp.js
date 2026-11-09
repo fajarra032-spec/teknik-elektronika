@@ -10,6 +10,7 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../../config/firebaseAdmin');
 const waNotifier = require('../../helpers/waNotifier');
+const waSettings = require('../../helpers/waSettings');
 const kuliahReminder = require('../../helpers/kuliahReminderHelper');
 const { TEMPLATES, bersihkanParam } = require('../../helpers/waTemplates');
 
@@ -497,9 +498,10 @@ router.get('/dashboard', async (req, res) => {
 });
 
 // GET /admin/whatsapp/otomatis - aturan notifikasi otomatis website -> WhatsApp
-router.get('/otomatis', (req, res) => {
+router.get('/otomatis', async (req, res) => {
   let cfg, kuliah;
   try {
+    await waNotifier.segarkanOverride(true);
     cfg = waNotifier.status();
   } catch (e) {
     console.error('[WhatsApp Center] Gagal membaca status waNotifier:', e.message);
@@ -511,12 +513,97 @@ router.get('/otomatis', (req, res) => {
     console.error('[WhatsApp Center] Gagal membaca info kuliahReminder:', e.message);
     kuliah = { aktif: false, berjalan: false, pagi: '-', sebelumMenit: 0, dosen: false, mahasiswa: false };
   }
+  const NAMA_TEMPLATE = {
+    nilai_keluar: 'Nilai keluar (tugas, LKM, nilai akhir, magang)',
+    info_magang: 'Informasi magang (logbook, laporan, periode)',
+    pengingat_logbook: 'Pengingat logbook hari ini',
+    pengingat_kuliah: 'Pengingat jadwal kuliah / mengajar',
+    info_dosen: 'Informasi untuk dosen (SK, surat tugas, dll.)',
+    info_layanan: 'Layanan (seminar, peminjaman alat, pesan)'
+  };
+  const templates = Object.keys(NAMA_TEMPLATE).map(nama => ({
+    nama,
+    judul: NAMA_TEMPLATE[nama],
+    teks: waSettings.teksTemplate(nama),
+    kustom: waSettings.templateKustom(nama),
+    dipakai: cfg.rules.filter(r => r.template === nama).map(r => r.label)
+  }));
   res.render('admin/whatsapp/otomatis', {
     title: 'Notifikasi Otomatis WhatsApp',
     user: req.user,
     cfg,
-    kuliah
+    kuliah,
+    pengaturan: waSettings.daftarConfig(),
+    templates,
+    placeholder: waSettings.PLACEHOLDER,
+    teksBawaan: waSettings.TEKS_BAWAAN,
+    maksTeks: waSettings.MAKS_TEKS
   });
+});
+
+const oleh = (req) => (req.user && (req.user.email || req.user.nama)) || '';
+
+// POST /admin/whatsapp/otomatis/config - ubah pengaturan pengiriman/jadwal
+// body: { values: { NAMA_PENGATURAN: 'nilai' | 'reset' } }
+router.post('/otomatis/config', async (req, res) => {
+  try {
+    const values = (req.body && req.body.values) || {};
+    const kunci = Object.keys(values);
+    if (!kunci.length) return res.status(400).json({ ok: false, error: 'Tidak ada yang diubah' });
+    // Validasi semua dulu supaya tidak tersimpan setengah-setengah
+    kunci.forEach(k => {
+      const d = waSettings.DEF.find(x => x.key === k);
+      if (!d) throw new Error('Pengaturan tidak dikenal: ' + k);
+      if (values[k] !== 'reset') waSettings.validasi(d, values[k]);
+    });
+    for (const k of kunci) await waSettings.aturConfig(k, values[k] === 'reset' ? null : values[k], oleh(req));
+    res.json({ ok: true, pengaturan: waSettings.daftarConfig() });
+  } catch (e) {
+    res.status(400).json({ ok: false, error: e.message });
+  }
+});
+
+// POST /admin/whatsapp/otomatis/template - simpan / kembalikan teks template
+// body: { nama, teks } atau { nama, reset: true }
+router.post('/otomatis/template', async (req, res) => {
+  try {
+    const nama = String((req.body && req.body.nama) || '');
+    if (req.body && req.body.reset) await waSettings.aturTemplate(nama, null, oleh(req));
+    else await waSettings.aturTemplate(nama, req.body && req.body.teks, oleh(req));
+    res.json({ ok: true, teks: waSettings.teksTemplate(nama), kustom: waSettings.templateKustom(nama) });
+  } catch (e) {
+    res.status(400).json({ ok: false, error: e.message });
+  }
+});
+
+// POST /admin/whatsapp/otomatis/preview - pratinjau teks dengan data contoh
+router.post('/otomatis/preview', (req, res) => {
+  try {
+    const teks = waSettings.validasiTeks(req.body && req.body.teks);
+    const situs = waSettings.env('WA_SITE_URL', 'https://elektronika.polidewa.ac.id').replace(/\/+$/, '');
+    res.json({ ok: true, hasil: waSettings.isiTemplate(teks, {
+      nama: 'Budi', judul: 'Tugas “Bab 1” sudah dinilai 📝',
+      isi: 'Nilai: 85. Catatan dosen: sudah bagus.', tautan: 'Buka: ' + situs + '/mahasiswa/akademik', situs
+    }) });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
+// POST /admin/whatsapp/otomatis/rule - hidupkan/matikan satu aturan dari halaman web
+// body: { key, aktif: 'true' | 'false' | 'reset' }
+router.post('/otomatis/rule', async (req, res) => {
+  try {
+    const key = String((req.body && req.body.key) || '');
+    const v = String((req.body && req.body.aktif) || '');
+    if (!['true', 'false', 'reset'].includes(v)) return res.status(400).json({ ok: false, error: 'Nilai tidak valid' });
+    await waNotifier.aturRule(key, v === 'reset' ? null : v === 'true', oleh(req));
+    const cfg = waNotifier.status();
+    res.json({ ok: true, rules: cfg.rules });
+  } catch (e) {
+    console.error('[WhatsApp Center] Gagal mengubah aturan:', e.message);
+    res.status(400).json({ ok: false, error: e.message });
+  }
 });
 
 // GET /admin/whatsapp/riwayat  - riwayat pengiriman dari dashboard

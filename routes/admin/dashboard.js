@@ -3,6 +3,10 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
+const { getAdminPending } = require('../../helpers/adminBadgeHelper');
+
+/** Tanggal hari ini menurut WITA (server bisa berjam UTC; antara 00.00-08.00 WITA tanggal UTC masih kemarin). */
+const hariIniWITA = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Makassar' });
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -45,6 +49,8 @@ router.get('/', async (req, res) => {
       laporanPending,
       suratMahasiswaPending,
       suratDosenPending,
+      suratTugasPending,
+      badge,
       eventsSnapshot
     ] = await Promise.all([
       hitungJumlah(db.collection('users').where('role', '==', 'mahasiswa')),
@@ -55,14 +61,16 @@ router.get('/', async (req, res) => {
       hitungJumlah(db.collection('laporanMagang').where('status', '==', 'submitted')),
       hitungJumlah(db.collection('surat').where('status', '==', 'pending')),
       hitungJumlah(db.collection('surat_dosen').where('status', '==', 'pending')),
+      hitungJumlah(db.collection('surat_tugas').where('status', '==', 'pending')),
+      getAdminPending(db).catch(() => ({ kunjungan: 0, peminjaman: 0, seminar: 0, pmb: 0 })),
       db.collection('jadwalPenting')
-        .where('tanggal', '>=', new Date().toISOString().split('T')[0])
+        .where('tanggal', '>=', hariIniWITA())
         .orderBy('tanggal', 'asc')
         .limit(5)
         .get() // ini tetap .get() biasa karena kita memang butuh ISI 5 event-nya utk ditampilkan
     ]);
 
-    const suratPending = suratMahasiswaPending + suratDosenPending;
+    const suratPending = suratMahasiswaPending + suratDosenPending + suratTugasPending;
     const events = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     const stats = {
@@ -73,6 +81,11 @@ router.get('/', async (req, res) => {
       logbookPending,
       laporanPending,
       suratPending,
+      // Dulu tidak dikirim sehingga kartu di view selalu 0
+      kunjunganPending: badge.kunjungan,
+      peminjamanPending: badge.peminjaman,
+      seminarPending: badge.seminar,
+      pmbPending: badge.pmb,
       // Opsional: kirim juga detail per role jika diperlukan di view
       suratMahasiswaPending,
       suratDosenPending

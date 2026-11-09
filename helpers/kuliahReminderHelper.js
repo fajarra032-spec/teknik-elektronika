@@ -33,7 +33,7 @@ const { parseJadwalText, HARI_LIST } = require('./jadwalHelper');
 const { getCurrentAcademicSemester } = require('./academicHelper');
 const { createNotificationOnce } = require('./notificationHelper');
 
-const env = (k, d) => (process.env[k] === undefined || process.env[k] === '' ? d : process.env[k]);
+const env = (k, d) => require('./waSettings').env(k, d); // web > .env > bawaan
 const bool = (k, d) => String(env(k, d)).toLowerCase() === 'true';
 const num = (k, d) => { const n = Number(env(k, d)); return Number.isFinite(n) ? n : d; };
 const jamKeMenit = (s, d) => { const m = String(env(s, d)).match(/^(\d{1,2})[.:](\d{2})$/); return m ? Number(m[1]) * 60 + Number(m[2]) : jamKeMenit('', d); };
@@ -171,6 +171,7 @@ let status = { tanggal: null, pagi: false, sebelum: new Set(), rencana: null, re
 const aktif = () => bool('WA_AUTO_ENABLED', 'false') && bool('KULIAH_REMINDER_ENABLED', 'true');
 
 async function tick() {
+  if (dbRef) { try { await require('./waSettings').segarkan(); } catch (e) { /* pakai nilai terakhir */ } }
   if (!aktif() || !dbRef || sedangTick) return;
   sedangTick = true;
   try {
@@ -218,13 +219,15 @@ async function tick() {
 /** Idempotent: aman dipanggil berkali-kali (app.js saat start, atau lewat notificationHelper). */
 function mulai(db) {
   if (timer || !db) return;
-  if (!aktif()) return;
+  // Penjadwal selalu dijalankan; tick() yang memeriksa aktif() tiap menit,
+  // sehingga bisa dihidupkan dari halaman admin tanpa restart server.
   dbRef = db;
+  require('./waSettings').segarkan().catch(() => {});
   timer = setInterval(() => { tick(); }, 60 * 1000);
   if (timer.unref) timer.unref();
   const t = setTimeout(() => { tick(); }, 5000);
   if (t.unref) t.unref();
-  console.log('[Kuliah] Penjadwal pengingat kuliah aktif.');
+  console.log('[Kuliah] Penjadwal pengingat kuliah dimulai (aktif/tidaknya mengikuti pengaturan).');
 }
 
 function info() {

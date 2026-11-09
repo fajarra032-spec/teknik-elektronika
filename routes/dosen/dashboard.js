@@ -39,7 +39,8 @@ router.get('/', async (req, res) => {
     const dosen = req.dosen;
     const currentSemester = getCurrentAcademicSemester();
     const dosenId = req.dosen.id;
-    const today = new Date().toISOString().split('T')[0];
+    // Tanggal menurut WITA (toISOString = UTC, salah hari antara 00.00-08.00 WITA)
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Makassar' });
     const now = new Date().toISOString();
 
     // ⚡ OPTIMISASI KECEPATAN (bukan cuma kuota): 5 query di bawah ini SAMA
@@ -97,9 +98,8 @@ router.get('/', async (req, res) => {
     // dosenPaId di dokumen mahasiswa. Mahasiswa bimbingan magang di atas
     // adalah subset-nya (yang statusnya Aktif).
     // ========================================================================
-    const totalMahasiswaPa = await hitungJumlah(
-      db.collection('users').where('role', '==', 'mahasiswa').where('dosenPaId', '==', dosen.id)
-    );
+    // Query-nya sama persis dengan mahasiswaPaSnap di atas: pakai .size, tidak perlu query ulang.
+    const totalMahasiswaPa = mahasiswaPaSnap.size;
 
     // ========================================================================
     // 3 & 4. Tugas aktif + Pengumpulan belum dinilai
