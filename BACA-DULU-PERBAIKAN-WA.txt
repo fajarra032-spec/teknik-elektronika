@@ -20,3 +20,26 @@ Fungsi lain dengan bug yang sama (dosen dicari lewat dosen.userId yang bisa koso
 .env: WA_AUTO_ENABLED=true, WA_AUTO_DRY_RUN=false.
 Hapus nilai_tugas / surat_tugas / sk_dosen dari WA_AUTO_RULES_OFF bila ada.
 Cek hasil di koleksi Firestore 'wa_auto_logs'.
+
+--- TAMBAHAN: halaman admin WhatsApp > Otomatis + dashboard ---
+  views/admin/whatsapp/otomatis.ejs  TIMPA  tampilan baru: aturan dikelompokkan, ada saklar hidup/mati,
+                                            pencarian, filter, penjelasan status (nonaktif/simulasi/aktif)
+  helpers/waNotifier.js              TIMPA  aturan bisa diatur dari web (disimpan di Firestore settings/wa_auto);
+                                            prioritas: web > .env > bawaan
+  routes/admin/whatsapp.js           TIMPA  POST /admin/whatsapp/otomatis/rule
+  routes/admin/dashboard.js          TIMPA  kartu Seminar/PMB/Kunjungan/Peminjaman kini terisi (dulu selalu 0);
+                                            Surat Pending ikut menghitung surat tugas; tanggal event memakai WITA
+  routes/dosen/dashboard.js          TIMPA  tanggal memakai WITA; satu query Firestore dihemat
+Master switch WA_AUTO_ENABLED dan WA_AUTO_DRY_RUN tetap hanya lewat .env.
+
+--- TAMBAHAN 2: template teks, jadwal, dan pengaturan .env dari halaman admin ---
+  helpers/waSettings.js              BARU   penyimpanan pengaturan (Firestore settings/wa_auto): web > .env > bawaan
+  helpers/waNotifier.js              TIMPA  memakai waSettings; teks pesan mengikuti template yang diatur di web
+  helpers/kuliahReminderHelper.js    TIMPA  jam/menit/penerima pengingat kuliah dari pengaturan web;
+                                            penjadwal selalu berjalan sehingga bisa dihidupkan tanpa restart
+  routes/admin/whatsapp.js           TIMPA  POST /otomatis/config, /otomatis/template, /otomatis/preview, /otomatis/rule
+  views/admin/whatsapp/otomatis.ejs  TIMPA  3 tab: Aturan notifikasi | Pengiriman & jadwal | Template pesan
+Yang bisa diatur dari web: WA_AUTO_ENABLED, WA_AUTO_DRY_RUN, WA_SEND_MODE, WA_REQUIRE_OPTIN, WA_SITE_URL,
+  WA_AUTO_MAX_PER_DAY, WA_AUTO_GAP_MS, WA_QUIET_START/END, KULIAH_REMINDER_ENABLED, KULIAH_PAGI_JAM,
+  KULIAH_REMINDER_MENIT, KULIAH_UNTUK_DOSEN, KULIAH_UNTUK_MAHASISWA, serta teks 6 template pesan.
+Tetap hanya di .env (rahasia): NOTIFICATION_API_URL, NOTIFICATION_INTERNAL_KEY.

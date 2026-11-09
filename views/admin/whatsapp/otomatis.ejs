@@ -1,68 +1,415 @@
 <%- include('../../partials/header') %>
+<%
+  var URUTAN_GRUP = ['Nilai & tugas', 'Dosen', 'Magang', 'Pengingat kuliah', 'Layanan', 'Lainnya'];
+  var IKON_GRUP = { 'Nilai & tugas': 'bi-journal-check', 'Dosen': 'bi-person-workspace', 'Magang': 'bi-briefcase', 'Pengingat kuliah': 'bi-alarm', 'Layanan': 'bi-tools', 'Lainnya': 'bi-three-dots' };
+  var grup = {};
+  cfg.rules.forEach(function (r) { (grup[r.grup || 'Lainnya'] = grup[r.grup || 'Lainnya'] || []).push(r); });
+  var jumlahAktif = cfg.rules.filter(function (r) { return r.aktif; }).length;
+  var labelRole = { mahasiswa: 'Mahasiswa', dosen: 'Dosen' };
+  var kirimNyata = cfg.enabled && !cfg.dryRun;
+  var modeKirim = (pengaturan.filter(function (p) { return p.key === 'WA_SEND_MODE'; })[0] || {}).nilai || 'text';
+  var GRUP_SET = ['Pengiriman', 'Batas & jadwal', 'Pengingat kuliah'];
+  var IKON_SET = { 'Pengiriman': 'bi-send', 'Batas & jadwal': 'bi-clock-history', 'Pengingat kuliah': 'bi-alarm' };
+  function labelSumber(x) { return x === 'web' ? 'Diatur di web' : (x === 'env' ? 'Dari .env' : 'Bawaan'); }
+  function kelasSumber(x) { return x === 'web' ? 'text-bg-primary' : (x === 'env' ? 'text-bg-info' : 'text-bg-light border'); }
+%>
+<style>
+  .wa-stat { background:#f8f9fa; border-radius:.75rem; padding:.75rem 1rem; height:100%; }
+  .wa-stat .k { font-size:.75rem; color:#6c757d; text-transform:uppercase; letter-spacing:.03em; }
+  .wa-stat .v { font-weight:700; font-size:1.05rem; }
+  .wa-grup-head { background:#fff; border-bottom:1px solid rgba(0,0,0,.08); }
+  .wa-rule { display:flex; align-items:center; gap:.9rem; padding:.8rem 1rem; border-bottom:1px solid rgba(0,0,0,.05); }
+  .wa-rule:last-child { border-bottom:0; }
+  .wa-rule .form-check-input { width:2.6em; height:1.3em; cursor:pointer; margin:0; flex:none; }
+  .wa-rule .judul { font-weight:600; line-height:1.25; }
+  .wa-rule .meta { font-size:.78rem; color:#6c757d; }
+  .wa-rule.mati .judul { color:#6c757d; font-weight:500; }
+  .wa-rule.menyimpan { opacity:.55; pointer-events:none; }
+  .wa-pill { cursor:pointer; user-select:none; }
+  .wa-tabs .nav-link { cursor:pointer; }
+  .wa-set { display:flex; align-items:center; gap:1rem; padding:.85rem 1rem; border-bottom:1px solid rgba(0,0,0,.05); }
+  .wa-set:last-child { border-bottom:0; }
+  .wa-set .isi { flex:1; min-width:0; }
+  .wa-set .ctl { width:210px; flex:none; }
+  .wa-chip { cursor:pointer; font-family:monospace; }
+  .wa-preview { background:#e7fed8; border-radius:.75rem; padding:.8rem 1rem; white-space:pre-wrap; font-size:.9rem; min-height:4rem; border:1px solid rgba(0,0,0,.06); }
+  @media (max-width:768px){ .wa-set { flex-wrap:wrap; } .wa-set .ctl { width:100%; } }
+  #waToast { position:fixed; right:1rem; bottom:1rem; z-index:2000; }
+</style>
 
-<div class="container-fluid" style="max-width:1200px;margin:1.5rem auto;">
+<div class="container-fluid" style="max-width:1100px;margin:1.5rem auto;">
   <div class="mb-3">
     <h2 class="fw-bold mb-1"><i class="bi bi-whatsapp text-success me-2"></i>WhatsApp Center</h2>
-    <div class="text-muted small">Notifikasi lonceng website yang diteruskan otomatis ke WhatsApp</div>
+    <div class="text-muted small">Pilih notifikasi website mana yang ikut dikirim otomatis ke WhatsApp</div>
   </div>
 
   <% var waTab = 'otomatis'; %>
   <%- include('_tabs', { waTab: waTab }) %>
 
-  <div class="card shadow-sm mb-3">
-    <div class="card-body">
-      <div class="row g-3 small">
-        <div class="col-6 col-md-3"><div class="text-muted">Status</div>
-          <strong>
-            <% if (!cfg.enabled) { %><span class="text-secondary">Nonaktif</span>
-            <% } else if (cfg.dryRun) { %><span class="text-warning">Simulasi (dry-run)</span>
-            <% } else { %><span class="text-success">Aktif</span><% } %>
-          </strong></div>
-        <div class="col-6 col-md-3"><div class="text-muted">Mode kirim</div><strong><%= cfg.mode %></strong></div>
-        <div class="col-6 col-md-3"><div class="text-muted">Batas per penerima / hari</div><strong><%= cfg.maxPerDay %></strong></div>
-        <div class="col-6 col-md-3"><div class="text-muted">Jam tenang</div><strong><%= cfg.quiet %></strong></div>
-      </div>
-      <div class="text-muted small mt-3">
-        Pengaturan diubah lewat file <code>.env</code> website (<code>WA_AUTO_ENABLED</code>, <code>WA_AUTO_DRY_RUN</code>,
-        <code>WA_AUTO_RULES_ON</code>, <code>WA_AUTO_RULES_OFF</code>), lalu <code>pm2 restart teknik-elektronika --update-env</code>.
-      </div>
+  <!-- STATUS UTAMA -->
+  <% if (!cfg.enabled) { %>
+    <div class="alert alert-secondary d-flex gap-3 align-items-start">
+      <i class="bi bi-pause-circle-fill fs-4"></i>
+      <div><strong>Pengiriman otomatis nonaktif.</strong> Tidak ada pesan yang dikirim walaupun aturan di bawah dihidupkan.
+        Untuk menyalakan: isi <code>WA_AUTO_ENABLED=true</code> di <code>.env</code>, lalu restart server.</div>
+    </div>
+  <% } else if (cfg.dryRun) { %>
+    <div class="alert alert-warning d-flex gap-3 align-items-start">
+      <i class="bi bi-eye-fill fs-4"></i>
+      <div><strong>Mode simulasi.</strong> Pesan hanya dicatat di Riwayat, belum benar-benar terkirim ke WhatsApp.
+        Setelah yakin, ubah <code>WA_AUTO_DRY_RUN=false</code> di <code>.env</code> dan restart server.</div>
+    </div>
+  <% } else { %>
+    <div class="alert alert-success d-flex gap-3 align-items-start">
+      <i class="bi bi-check-circle-fill fs-4"></i>
+      <div><strong>Pengiriman otomatis aktif.</strong> Aturan yang dihidupkan di bawah langsung berlaku (maks. ±20 detik).</div>
+    </div>
+  <% } %>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="wa-stat"><div class="k">Aturan aktif</div><div class="v"><span id="waJumlahAktif"><%= jumlahAktif %></span> dari <%= cfg.rules.length %></div></div></div>
+    <div class="col-6 col-md-3"><div class="wa-stat"><div class="k">Batas / penerima / hari</div><div class="v"><%= cfg.maxPerDay %> pesan</div></div></div>
+    <div class="col-6 col-md-3"><div class="wa-stat"><div class="k">Jam tenang</div><div class="v"><%= cfg.quiet %></div></div></div>
+    <div class="col-6 col-md-3"><div class="wa-stat"><div class="k">Antrean sekarang</div><div class="v"><%= cfg.antrean %> pesan</div></div></div>
+  </div>
+
+  <ul class="nav nav-tabs wa-tabs mb-3" id="waSubTabs">
+    <li class="nav-item"><a class="nav-link active" data-pane="aturan"><i class="bi bi-toggles me-1"></i>Aturan notifikasi</a></li>
+    <li class="nav-item"><a class="nav-link" data-pane="jadwal"><i class="bi bi-sliders me-1"></i>Pengiriman &amp; jadwal</a></li>
+    <li class="nav-item"><a class="nav-link" data-pane="template"><i class="bi bi-chat-text me-1"></i>Template pesan</a></li>
+  </ul>
+
+  <div id="pane-aturan">
+  <!-- PENCARIAN & FILTER -->
+  <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+    <div class="input-group" style="max-width:320px;">
+      <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+      <input type="search" id="waCari" class="form-control" placeholder="Cari notifikasi…" autocomplete="off">
+    </div>
+    <div class="d-flex flex-wrap gap-1" id="waFilter">
+      <span class="badge rounded-pill text-bg-dark wa-pill" data-grup="">Semua</span>
+      <% URUTAN_GRUP.forEach(function (g) { if (grup[g]) { %>
+        <span class="badge rounded-pill text-bg-light border wa-pill" data-grup="<%= g %>"><%= g %></span>
+      <% } }); %>
     </div>
   </div>
 
-  <div class="card shadow-sm mb-3">
-    <div class="card-body">
-      <div class="fw-bold mb-2"><i class="bi bi-calendar-check me-1"></i>Pengingat kuliah (dosen &amp; mahasiswa)</div>
-      <div class="row g-3 small">
-        <div class="col-6 col-md-3"><div class="text-muted">Penjadwal</div>
-          <strong><%- kuliah.aktif ? (kuliah.berjalan ? '<span class="text-success">Berjalan</span>' : '<span class="text-warning">Aktif, menunggu start</span>') : '<span class="text-secondary">Nonaktif</span>' %></strong></div>
-        <div class="col-6 col-md-3"><div class="text-muted">Ringkasan pagi</div><strong><%= kuliah.pagi %> WITA</strong></div>
-        <div class="col-6 col-md-3"><div class="text-muted">Sebelum kelas</div><strong><%= kuliah.sebelumMenit > 0 ? kuliah.sebelumMenit + ' menit sebelum' : 'Mati' %></strong></div>
-        <div class="col-6 col-md-3"><div class="text-muted">Untuk</div><strong><%= [kuliah.dosen ? 'Dosen' : '', kuliah.mahasiswa ? 'Mahasiswa' : ''].filter(Boolean).join(' + ') || '—' %></strong></div>
-      </div>
-      <div class="text-muted small mt-2">Jadwal dibaca dari field <code>jadwal</code> pada mata kuliah (mis. <em>Senin 08:00-10:30, Ruang A101</em>). Mata kuliah tanpa jadwal terbaca tidak diingatkan.</div>
+  <!-- DAFTAR ATURAN PER KELOMPOK -->
+  <% URUTAN_GRUP.forEach(function (g) { if (!grup[g]) return; %>
+    <div class="card shadow-sm mb-3 wa-grup" data-grup="<%= g %>">
+      <div class="wa-grup-head px-3 py-2 rounded-top fw-bold"><i class="bi <%= IKON_GRUP[g] %> me-2 text-success"></i><%= g %></div>
+      <% grup[g].forEach(function (r) { %>
+        <div class="wa-rule <%= r.aktif ? '' : 'mati' %>" data-key="<%= r.key %>" data-teks="<%= (r.label + ' ' + r.key + ' ' + r.roles.join(' ')).toLowerCase() %>">
+          <div class="form-check form-switch m-0">
+            <input class="form-check-input wa-switch" type="checkbox" role="switch" id="sw-<%= r.key %>" <%= r.aktif ? 'checked' : '' %> aria-label="<%= r.label %>">
+          </div>
+          <label for="sw-<%= r.key %>" class="flex-grow-1 m-0" style="cursor:pointer;">
+            <div class="judul"><%= r.label %></div>
+            <div class="meta">
+              Ke: <%= r.roles.map(function (x) { return labelRole[x] || x; }).join(' & ') %>
+              · <code><%= r.key %></code>
+            </div>
+          </label>
+          <div class="text-end">
+            <span class="badge rounded-pill wa-sumber <%= r.sumber === 'web' ? 'text-bg-primary' : (r.sumber === 'env' ? 'text-bg-info' : 'text-bg-light border') %>"
+                  title="Asal pengaturan: web = diubah di halaman ini, env = dari file .env, bawaan = pengaturan standar sistem">
+              <%= r.sumber === 'web' ? 'Diatur di web' : (r.sumber === 'env' ? 'Dari .env' : 'Bawaan') %>
+            </span>
+            <div><a href="#" class="small wa-reset <%= r.sumber === 'web' ? '' : 'd-none' %>">Kembalikan</a></div>
+          </div>
+        </div>
+      <% }); %>
     </div>
+  <% }); %>
+  <div id="waKosong" class="text-center text-muted py-4 d-none">Tidak ada notifikasi yang cocok.</div>
+
+  </div><!-- /pane-aturan -->
+
+  <!-- ===================== PANE: PENGIRIMAN & JADWAL ===================== -->
+  <div id="pane-jadwal" class="d-none">
+    <div class="text-muted small mb-3">
+      Pengaturan di sini disimpan di web dan <strong>menggantikan nilai di <code>.env</code></strong>. Tombol &ldquo;Kembalikan&rdquo; membuatnya mengikuti <code>.env</code>/bawaan lagi.
+      Alamat &amp; kunci Notification API tetap hanya di <code>.env</code> karena bersifat rahasia.
+    </div>
+    <% GRUP_SET.forEach(function (g) { %>
+      <div class="card shadow-sm mb-3 wa-setgrup">
+        <div class="wa-grup-head px-3 py-2 rounded-top fw-bold d-flex justify-content-between align-items-center">
+          <span><i class="bi <%= IKON_SET[g] %> me-2 text-success"></i><%= g %>
+            <% if (g === 'Pengingat kuliah') { %>
+              <span class="ms-2 badge rounded-pill <%= kuliah.berjalan ? 'text-bg-success' : 'text-bg-secondary' %>"><%= kuliah.aktif ? (kuliah.berjalan ? 'Penjadwal berjalan' : 'Menunggu aktivitas pertama') : 'Tidak aktif' %></span>
+            <% } %>
+          </span>
+          <button type="button" class="btn btn-success btn-sm wa-simpan-set"><i class="bi bi-check2 me-1"></i>Simpan</button>
+        </div>
+        <% pengaturan.filter(function (p) { return p.grup === g; }).forEach(function (p) { %>
+          <div class="wa-set" data-key="<%= p.key %>" data-bahaya="<%= p.bahaya ? '1' : '' %>">
+            <div class="isi">
+              <div class="fw-semibold"><%= p.label %></div>
+              <% if (p.bantuan) { %><div class="small text-muted"><%= p.bantuan %></div><% } %>
+            </div>
+            <div class="text-end small" style="width:110px;flex:none;">
+              <span class="badge rounded-pill wa-set-sumber <%= kelasSumber(p.sumber) %>"><%= labelSumber(p.sumber) %></span>
+              <div><a href="#" class="wa-set-reset <%= p.sumber === 'web' ? '' : 'd-none' %>">Kembalikan</a></div>
+            </div>
+            <div class="ctl">
+              <% if (p.tipe === 'bool') { %>
+                <div class="form-check form-switch m-0 d-flex justify-content-end">
+                  <input class="form-check-input wa-set-input" type="checkbox" role="switch" data-asal="<%= p.nilai %>" <%= p.nilai === 'true' ? 'checked' : '' %> style="width:2.6em;height:1.3em;cursor:pointer;">
+                </div>
+              <% } else if (p.tipe === 'pilih') { %>
+                <select class="form-select form-select-sm wa-set-input" data-asal="<%= p.nilai %>">
+                  <% p.pilihan.forEach(function (o) { %><option value="<%= o[0] %>" <%= p.nilai === o[0] ? 'selected' : '' %>><%= o[1] %></option><% }); %>
+                </select>
+              <% } else if (p.tipe === 'angka') { %>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control wa-set-input" min="<%= p.min %>" max="<%= p.max %>" step="1" value="<%= p.nilai %>" data-asal="<%= p.nilai %>">
+                  <span class="input-group-text"><%= p.satuan || '' %></span>
+                </div>
+              <% } else if (p.tipe === 'jam') { %>
+                <div class="input-group input-group-sm">
+                  <input type="time" class="form-control wa-set-input" min="06:00" max="21:00" value="<%= p.nilai %>" data-asal="<%= p.nilai %>">
+                  <span class="input-group-text"><%= p.satuan || '' %></span>
+                </div>
+              <% } else { %>
+                <input type="url" class="form-control form-control-sm wa-set-input" value="<%= p.nilai %>" data-asal="<%= p.nilai %>">
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% }); %>
   </div>
 
-  <div class="card shadow-sm">
-    <div class="table-responsive">
-      <table class="table table-sm table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr><th>Kode aturan</th><th>Notifikasi website</th><th>Penerima</th><th>Template</th><th>Status</th></tr>
-        </thead>
-        <tbody>
-          <% cfg.rules.forEach(function(r) { %>
-            <tr>
-              <td><code><%= r.key %></code></td>
-              <td><%= r.label %></td>
-              <td><%= r.roles.join(', ') %></td>
-              <td><code><%= r.template %></code></td>
-              <td><%- r.aktif ? '<span class="badge text-bg-success">Dikirim</span>' : '<span class="badge text-bg-secondary">Tidak dikirim</span>' %></td>
-            </tr>
-          <% }); %>
-        </tbody>
-      </table>
+  <!-- ===================== PANE: TEMPLATE PESAN ===================== -->
+  <div id="pane-template" class="d-none">
+    <% if (modeKirim !== 'text') { %>
+      <div class="alert alert-warning small">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>Cara kirim sekarang <strong>Template resmi Meta</strong>, jadi teks di bawah belum dipakai.
+        Ubah &ldquo;Cara kirim&rdquo; ke <em>Teks biasa</em> di tab Pengiriman &amp; jadwal agar teks ini berlaku.
+      </div>
+    <% } %>
+    <div class="text-muted small mb-3">
+      Atur bunyi pesan WhatsApp per jenis notifikasi. Klik kode di bawah kotak teks untuk menyisipkannya.
+      Baris yang isinya kosong (mis. tanpa tautan) otomatis dibuang. Format WhatsApp berlaku: <code>*tebal*</code>, <code>_miring_</code>.
     </div>
+    <% templates.forEach(function (t) { %>
+      <div class="card shadow-sm mb-3 wa-tpl" data-nama="<%= t.nama %>">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+            <div>
+              <div class="fw-bold"><%= t.judul %> <span class="badge rounded-pill wa-tpl-badge <%= t.kustom ? 'text-bg-primary' : 'text-bg-light border' %>"><%= t.kustom ? 'Diubah' : 'Standar' %></span></div>
+              <div class="small text-muted">Dipakai oleh: <%= t.dipakai.length ? t.dipakai.join(' · ') : '—' %></div>
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col-lg-7">
+              <textarea class="form-control wa-tpl-teks" rows="8" maxlength="<%= maksTeks %>" spellcheck="false"><%= t.teks %></textarea>
+              <div class="d-flex flex-wrap gap-1 mt-2 align-items-center">
+                <% placeholder.forEach(function (ph) { %>
+                  <span class="badge text-bg-light border wa-chip" data-kode="<%= ph[0] %>" title="<%= ph[1] %>"><%= ph[0] %></span>
+                <% }); %>
+                <span class="small text-muted ms-auto"><span class="wa-tpl-hitung">0</span>/<%= maksTeks %></span>
+              </div>
+            </div>
+            <div class="col-lg-5">
+              <div class="small text-muted mb-1">Pratinjau (data contoh)</div>
+              <div class="wa-preview wa-tpl-pratinjau"></div>
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button type="button" class="btn btn-success btn-sm wa-tpl-simpan"><i class="bi bi-check2 me-1"></i>Simpan</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm wa-tpl-reset <%= t.kustom ? '' : 'd-none' %>">Kembalikan standar</button>
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+
+  <div class="text-muted small mb-4">
+    <i class="bi bi-info-circle me-1"></i>Penerima tanpa nomor WhatsApp di datanya akan dilewati otomatis; lihat alasannya di tab <a href="/admin/whatsapp/riwayat">Riwayat</a>.
   </div>
 </div>
+
+<div id="waToast"></div>
+
+<script>
+(function () {
+  var toastEl = document.getElementById('waToast');
+  function toast(msg, ok) {
+    toastEl.innerHTML = '<div class="alert alert-' + (ok ? 'success' : 'danger') + ' shadow-sm py-2 px-3 mb-0">' + msg + '</div>';
+    clearTimeout(toast._t); toast._t = setTimeout(function () { toastEl.innerHTML = ''; }, 2600);
+  }
+  function terapkan(rules) {
+    var aktif = 0;
+    rules.forEach(function (r) {
+      if (r.aktif) aktif++;
+      var row = document.querySelector('.wa-rule[data-key="' + r.key + '"]');
+      if (!row) return;
+      row.classList.toggle('mati', !r.aktif);
+      row.querySelector('.wa-switch').checked = r.aktif;
+      var b = row.querySelector('.wa-sumber');
+      b.className = 'badge rounded-pill wa-sumber ' + (r.sumber === 'web' ? 'text-bg-primary' : (r.sumber === 'env' ? 'text-bg-info' : 'text-bg-light border'));
+      b.textContent = r.sumber === 'web' ? 'Diatur di web' : (r.sumber === 'env' ? 'Dari .env' : 'Bawaan');
+      row.querySelector('.wa-reset').classList.toggle('d-none', r.sumber !== 'web');
+    });
+    document.getElementById('waJumlahAktif').textContent = aktif;
+  }
+  function simpan(row, nilai) {
+    row.classList.add('menyimpan');
+    return fetch('/admin/whatsapp/otomatis/rule', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ key: row.dataset.key, aktif: nilai })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j.ok) throw new Error(j.error || 'Gagal menyimpan');
+      terapkan(j.rules);
+      toast(nilai === 'reset' ? 'Dikembalikan ke pengaturan awal' : (nilai === 'true' ? 'Notifikasi dihidupkan' : 'Notifikasi dimatikan'), true);
+    }).catch(function (e) {
+      var sw = row.querySelector('.wa-switch'); sw.checked = !sw.checked; // batalkan tampilan
+      row.classList.toggle('mati', !sw.checked);
+      toast(e.message || 'Gagal menyimpan', false);
+    }).finally(function () { row.classList.remove('menyimpan'); });
+  }
+  document.querySelectorAll('.wa-switch').forEach(function (sw) {
+    sw.addEventListener('change', function () {
+      var row = sw.closest('.wa-rule');
+      row.classList.toggle('mati', !sw.checked);
+      simpan(row, sw.checked ? 'true' : 'false');
+    });
+  });
+  document.querySelectorAll('.wa-reset').forEach(function (a) {
+    a.addEventListener('click', function (e) { e.preventDefault(); simpan(a.closest('.wa-rule'), 'reset'); });
+  });
+
+  // Pencarian + filter kelompok
+  var grupAktif = '';
+  function saring() {
+    var q = document.getElementById('waCari').value.trim().toLowerCase();
+    var adaTampil = false;
+    document.querySelectorAll('.wa-grup').forEach(function (g) {
+      var cocokGrup = !grupAktif || g.dataset.grup === grupAktif;
+      var tampil = 0;
+      g.querySelectorAll('.wa-rule').forEach(function (row) {
+        var ok = cocokGrup && (!q || row.dataset.teks.indexOf(q) !== -1);
+        row.style.display = ok ? '' : 'none';
+        if (ok) tampil++;
+      });
+      g.style.display = tampil ? '' : 'none';
+      if (tampil) adaTampil = true;
+    });
+    document.getElementById('waKosong').classList.toggle('d-none', adaTampil);
+  }
+  document.getElementById('waCari').addEventListener('input', saring);
+  document.querySelectorAll('#waFilter .wa-pill').forEach(function (p) {
+    p.addEventListener('click', function () {
+      grupAktif = p.dataset.grup;
+      document.querySelectorAll('#waFilter .wa-pill').forEach(function (x) {
+        x.className = 'badge rounded-pill wa-pill ' + (x === p ? 'text-bg-dark' : 'text-bg-light border');
+      });
+      saring();
+    });
+  });
+  // ---------- Sub-tab ----------
+  function bukaPane(nama) {
+    ['aturan', 'jadwal', 'template'].forEach(function (n) {
+      document.getElementById('pane-' + n).classList.toggle('d-none', n !== nama);
+    });
+    document.querySelectorAll('#waSubTabs .nav-link').forEach(function (a) { a.classList.toggle('active', a.dataset.pane === nama); });
+    if (location.hash.slice(1) !== nama) history.replaceState(null, '', '#' + nama);
+    if (nama === 'template') document.querySelectorAll('.wa-tpl-teks').forEach(pratinjau);
+  }
+  document.querySelectorAll('#waSubTabs .nav-link').forEach(function (a) {
+    a.addEventListener('click', function () { bukaPane(a.dataset.pane); });
+  });
+
+  function kirimJson(url, body) {
+    return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); });
+  }
+  function muatUlang() { setTimeout(function () { location.reload(); }, 700); }
+
+  // ---------- Pengiriman & jadwal ----------
+  function nilaiInput(el) { return el.type === 'checkbox' ? (el.checked ? 'true' : 'false') : String(el.value).trim(); }
+  document.querySelectorAll('.wa-simpan-set').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var kartu = btn.closest('.wa-setgrup');
+      var values = {}, bahaya = false;
+      kartu.querySelectorAll('.wa-set').forEach(function (row) {
+        var el = row.querySelector('.wa-set-input'), v = nilaiInput(el);
+        if (v !== el.dataset.asal) {
+          values[row.dataset.key] = v;
+          if ((row.dataset.key === 'WA_AUTO_ENABLED' && v === 'true') || (row.dataset.key === 'WA_AUTO_DRY_RUN' && v === 'false')) bahaya = true;
+        }
+      });
+      if (!Object.keys(values).length) return toast('Tidak ada perubahan', true);
+      if (bahaya && !confirm('Pesan akan benar-benar dikirim ke WhatsApp penerima (bila pengiriman otomatis hidup dan mode simulasi mati). Lanjutkan?')) return;
+      btn.disabled = true;
+      kirimJson('/admin/whatsapp/otomatis/config', { values: values }).then(function (j) {
+        if (!j.ok) throw new Error(j.error);
+        toast('Pengaturan disimpan', true); muatUlang();
+      }).catch(function (e) { toast(e.message || 'Gagal menyimpan', false); btn.disabled = false; });
+    });
+  });
+  document.querySelectorAll('.wa-set-reset').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var key = a.closest('.wa-set').dataset.key, v = {}; v[key] = 'reset';
+      kirimJson('/admin/whatsapp/otomatis/config', { values: v }).then(function (j) {
+        if (!j.ok) throw new Error(j.error);
+        toast('Dikembalikan ke .env/bawaan', true); muatUlang();
+      }).catch(function (err) { toast(err.message || 'Gagal', false); });
+    });
+  });
+
+  // ---------- Template pesan ----------
+  var timers = new WeakMap();
+  function pratinjau(ta) {
+    var kartu = ta.closest('.wa-tpl');
+    kartu.querySelector('.wa-tpl-hitung').textContent = ta.value.length;
+    clearTimeout(timers.get(ta));
+    timers.set(ta, setTimeout(function () {
+      kirimJson('/admin/whatsapp/otomatis/preview', { teks: ta.value }).then(function (j) {
+        var box = kartu.querySelector('.wa-tpl-pratinjau');
+        box.textContent = j.ok ? j.hasil : '⚠ ' + j.error;
+        box.style.background = j.ok ? '' : '#fde8e8';
+      });
+    }, 250));
+  }
+  document.querySelectorAll('.wa-tpl').forEach(function (kartu) {
+    var ta = kartu.querySelector('.wa-tpl-teks');
+    ta.addEventListener('input', function () { pratinjau(ta); });
+    kartu.querySelectorAll('.wa-chip').forEach(function (c) {
+      c.addEventListener('click', function () {
+        var a = ta.selectionStart, b = ta.selectionEnd;
+        ta.value = ta.value.slice(0, a) + c.dataset.kode + ta.value.slice(b);
+        ta.focus(); ta.selectionStart = ta.selectionEnd = a + c.dataset.kode.length; pratinjau(ta);
+      });
+    });
+    kartu.querySelector('.wa-tpl-simpan').addEventListener('click', function () {
+      kirimJson('/admin/whatsapp/otomatis/template', { nama: kartu.dataset.nama, teks: ta.value }).then(function (j) {
+        if (!j.ok) throw new Error(j.error);
+        ta.value = j.teks; pratinjau(ta);
+        var bd = kartu.querySelector('.wa-tpl-badge'); bd.className = 'badge rounded-pill wa-tpl-badge ' + (j.kustom ? 'text-bg-primary' : 'text-bg-light border'); bd.textContent = j.kustom ? 'Diubah' : 'Standar';
+        kartu.querySelector('.wa-tpl-reset').classList.toggle('d-none', !j.kustom);
+        toast('Template disimpan', true);
+      }).catch(function (e) { toast(e.message || 'Gagal menyimpan', false); });
+    });
+    kartu.querySelector('.wa-tpl-reset').addEventListener('click', function () {
+      if (!confirm('Kembalikan teks template ini ke standar?')) return;
+      kirimJson('/admin/whatsapp/otomatis/template', { nama: kartu.dataset.nama, reset: true }).then(function (j) {
+        if (!j.ok) throw new Error(j.error);
+        ta.value = j.teks; pratinjau(ta);
+        kartu.querySelector('.wa-tpl-badge').className = 'badge rounded-pill wa-tpl-badge text-bg-light border';
+        kartu.querySelector('.wa-tpl-badge').textContent = 'Standar';
+        kartu.querySelector('.wa-tpl-reset').classList.add('d-none');
+        toast('Dikembalikan ke standar', true);
+      }).catch(function (e) { toast(e.message || 'Gagal', false); });
+    });
+  });
+
+  var awal = location.hash.slice(1);
+  bukaPane(['aturan', 'jadwal', 'template'].indexOf(awal) !== -1 ? awal : 'aturan');
+})();
+</script>
 
 <%- include('../../partials/footer') %>
