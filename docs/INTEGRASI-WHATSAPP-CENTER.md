@@ -50,6 +50,13 @@ Route mengharapkan endpoint Notification API berikut:
 
 Kode mencoba membaca array dari properti `conversations`/`messages`, `items`, `results`, atau array langsung. Jika struktur respons API berbeda, sesuaikan `unwrapArray()` pada `routes/admin/whatsapp.js`.
 
+## Tambahan v6 — Notifikasi WhatsApp untuk admin
+- `helpers/waNotifier.js`: 3 aturan admin (`admin_pmb`, `admin_kunjungan`, `admin_alat`), penerima admin (nomor akun + `WA_ADMIN_NUMBERS`), dedup per nomor, batas harian admin terpisah.
+- `helpers/waSettings.js`: pengaturan `WA_ADMIN_NUMBERS`, `WA_ADMIN_MAX_PER_DAY`, `WA_ADMIN_IGNORE_QUIET` (bisa diatur dari web); validator nomor.
+- `helpers/waTemplates.js`: template `info_admin`.
+- `routes/admin/whatsapp.js` + `views/admin/whatsapp/otomatis.ejs`: grup Admin di tab aturan, kartu "Notifikasi admin" di tab pengaturan, template `info_admin`.
+- `app.js`: memulai penjadwal pengingat kuliah saat server hidup (`kuliahReminderHelper.mulai`), tidak lagi bergantung pada login pertama.
+
 ## Tambahan v5 — Pengingat kuliah dosen & mahasiswa
 - `helpers/kuliahReminderHelper.js` (baru): penjadwal 1 tick/menit di dalam aplikasi website (tidak butuh cron/PM2 baru).
   - **Ringkasan pagi** (bawaan 06:30 WITA): 1 pesan berisi semua kelas hari itu, ke dosen pengampu dan mahasiswa peserta.

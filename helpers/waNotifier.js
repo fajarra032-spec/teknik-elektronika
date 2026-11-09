@@ -24,6 +24,10 @@
  *   WA_REQUIRE_OPTIN=false       true = hanya kirim ke users yang waOptIn === true
  *   WA_AUTO_RULES_ON=nilai_tugas,...    aktifkan aturan yang default-nya mati
  *   WA_AUTO_RULES_OFF=alat,...          matikan aturan yang default-nya hidup
+ *   --- Notifikasi untuk ADMIN (semua juga bisa diatur dari halaman admin WhatsApp > Otomatis) ---
+ *   WA_ADMIN_NUMBERS=085242459746,...   nomor WA admin penerima (koma). Ditambahkan ke noHp akun admin (bila ada).
+ *   WA_ADMIN_MAX_PER_DAY=30             batas pesan otomatis per nomor admin per hari
+ *   WA_ADMIN_IGNORE_QUIET=false         true = pesan admin tetap dikirim saat jam tenang
  */
 const { TEMPLATES, bersihkanParam } = require('./waTemplates');
 
@@ -44,6 +48,7 @@ const MAX_DEFERRED = 300;
 // ---------------------------------------------------------------------------
 const MHS = ['mahasiswa'];
 const DSN = ['dosen'];
+const ADM = ['admin'];
 const RULES = [
   // Nilai
   { key: 'nilai_akhir',      type: 'nilai', title: /^Nilai akhir/i,                 roles: MHS, template: 'nilai_keluar', on: true,  label: 'Nilai akhir mata kuliah keluar' },
@@ -73,6 +78,10 @@ const RULES = [
   // Pengingat kuliah (dibuat oleh helpers/kuliahReminderHelper.js)
   { key: 'kuliah_pagi',    type: 'kuliah-pagi',    roles: ['mahasiswa', 'dosen'], template: 'pengingat_kuliah', on: true, bypassKuota: true, label: 'Ringkasan jadwal kuliah/mengajar hari ini (pagi)' },
   { key: 'kuliah_sebelum', type: 'kuliah-sebelum', roles: ['mahasiswa', 'dosen'], template: 'pengingat_kuliah', on: true, bypassKuota: true, label: 'Pengingat N menit sebelum kelas dimulai' },
+  // Admin (penerima: akun role 'admin'). Harus SEBELUM aturan 'alat' karena tipenya sama (peminjaman_alat).
+  { key: 'admin_pmb',       type: 'pmb',                roles: ADM, template: 'info_admin', on: true, label: 'Pendaftar PMB baru (ke admin)' },
+  { key: 'admin_kunjungan', type: 'kunjungan_industri', roles: ADM, template: 'info_admin', on: true, label: 'Pengajuan kunjungan industri baru (ke admin)' },
+  { key: 'admin_alat',      type: 'peminjaman_alat', title: /^Pengajuan (peminjaman|pengembalian) alat/i, roles: ADM, template: 'info_admin', on: true, label: 'Pengajuan peminjaman / pengembalian alat lab (ke admin)' },
   // Layanan
   { key: 'alat',             type: 'peminjaman_alat',                              roles: MHS, template: 'info_layanan', on: true,  label: 'Status peminjaman alat lab (ke mahasiswa)' },
   { key: 'pesan',            type: 'pesan',                                        roles: ['mahasiswa', 'dosen'], template: 'info_layanan', on: false, label: 'Pesan baru di chat website' }
@@ -109,7 +118,8 @@ const GRUP = {
   magang_periode: 'Magang', magang_berakhir: 'Magang',
   surat_tugas: 'Dosen', sk_dosen: 'Dosen', tugas_belum_dinilai: 'Dosen', jadwal_mengajar: 'Dosen',
   kuliah_pagi: 'Pengingat kuliah', kuliah_sebelum: 'Pengingat kuliah',
-  alat: 'Layanan', pesan: 'Layanan'
+  alat: 'Layanan', pesan: 'Layanan',
+  admin_pmb: 'Admin', admin_kunjungan: 'Admin', admin_alat: 'Admin'
 };
 function cariRule(data) {
   if (!data) return null;
@@ -120,15 +130,8 @@ function cariRule(data) {
 // ---------------------------------------------------------------------------
 // Util
 // ---------------------------------------------------------------------------
-/** 08xx / +62 / 0062 / 8xx -> 628xx (hanya digit). Kembalikan '' bila tidak valid. */
-function normalisasiNomor(v) {
-  let d = String(v == null ? '' : v).replace(/\D/g, '');
-  if (!d) return '';
-  if (d.startsWith('00')) d = d.slice(2);
-  if (d.startsWith('0')) d = '62' + d.slice(1);
-  else if (d.startsWith('8')) d = '62' + d;
-  return /^62\d{8,13}$/.test(d) ? d : '';
-}
+/** 08xx / +62 / 0062 / 8xx -> 628xx. Implementasi tunggal ada di waSettings (dipakai juga validasi form). */
+const normalisasiNomor = S.normalisasiNomor;
 const witaNow = () => new Date(Date.now() + WITA_MS);
 const tglWita = () => witaNow().toISOString().slice(0, 10);
 const jamWita = () => witaNow().getUTCHours();
@@ -194,7 +197,7 @@ async function cariPenerima(db, userId) {
   }
   // Nomor dosen umumnya disimpan di dokumen 'dosen' (field 'kontak'), bukan di 'users'.
   // Tautan akun -> dosen: users.dosenId (utama) atau dosen.userId (cadangan).
-  if (!nomor || !role || role === 'dosen') {
+  if (role !== 'admin' && (!nomor || !role || role === 'dosen')) {
     let dd = null;
     if (dosenId) {
       const ds = await db.collection('dosen').doc(dosenId).get();
@@ -282,39 +285,62 @@ function bersihkanMap() {
   for (const k of kuotaHarian.keys()) if (!k.endsWith('|' + hari)) kuotaHarian.delete(k);
 }
 
+/** Nomor admin tambahan (WA_ADMIN_NUMBERS: web > .env), sudah dinormalisasi & unik. */
+function nomorAdminEnv() {
+  return [...new Set(list('WA_ADMIN_NUMBERS').map(normalisasiNomor).filter(Boolean))];
+}
+
 async function proses(job) {
   const { db, userId, data, rule } = job;
 
   const p = await cariPenerima(db, userId);
+  const admin = p.role === 'admin';
   if (!p.role || !rule.roles.includes(p.role)) return catat(db, job, 'dilewati', `peran ${p.role || '?'} tidak termasuk aturan`);
   if (p.optOut) return catat(db, job, 'dilewati', 'pengguna menolak (waOptOut)');
-  if (bool('WA_REQUIRE_OPTIN', 'false') && !p.optIn) return catat(db, job, 'dilewati', 'belum opt-in');
-  if (!p.nomor) return catat(db, job, 'dilewati', 'nomor WhatsApp kosong/tidak valid');
+  if (!admin && bool('WA_REQUIRE_OPTIN', 'false') && !p.optIn) return catat(db, job, 'dilewati', 'belum opt-in');
 
-  const dupKey = `${userId}|${data.title}`;
-  if (baruSaja.has(dupKey)) return catat(db, job, 'dilewati', 'notifikasi identik baru saja diproses', { to: p.nomor });
-  baruSaja.set(dupKey, Date.now());
-
-  const kKey = `${userId}|${tglWita()}`;
-  const terpakai = kuotaHarian.get(kKey) || 0;
-  // Pengingat kuliah punya pembatas sendiri (1 ringkasan/hari + opsional per kelas) -> tidak memakai kuota harian umum.
-  if (!rule.bypassKuota && terpakai >= num('WA_AUTO_MAX_PER_DAY', 5)) return catat(db, job, 'dilewati', 'batas harian penerima tercapai', { to: p.nomor });
-
-  if (bool('WA_AUTO_DRY_RUN', 'true')) {
-    if (!rule.bypassKuota) kuotaHarian.set(kKey, terpakai + 1);
-    return catat(db, job, 'simulasi', 'dry-run: tidak dikirim', { to: p.nomor });
+  // Admin: nomor di akun (bila ada) + WA_ADMIN_NUMBERS. Peran lain: nomor akun.
+  const tujuan = admin ? [...new Set([p.nomor, ...nomorAdminEnv()].filter(Boolean))] : (p.nomor ? [p.nomor] : []);
+  if (!tujuan.length) {
+    return catat(db, job, 'dilewati', admin
+      ? 'nomor admin kosong (isi WA_ADMIN_NUMBERS di pengaturan / .env, atau noHp akun admin)'
+      : 'nomor WhatsApp kosong/tidak valid');
   }
 
-  const mode = env('WA_SEND_MODE', 'text');
-  const body = mode === 'template'
-    ? { to: p.nomor, template: susunTemplate(rule, data, p.nama || (p.role === 'dosen' ? 'Bapak/Ibu Dosen' : 'Mahasiswa')) }
-    : { to: p.nomor, text: susunTeks(data, p.nama || (p.role === 'dosen' ? 'Bapak/Ibu Dosen' : 'Mahasiswa'), rule) };
-  try {
-    await kirimDenganUlang(body);
-    if (!rule.bypassKuota) kuotaHarian.set(kKey, terpakai + 1);
-    await catat(db, job, 'terkirim', null, { to: p.nomor });
-  } catch (e) {
-    await catat(db, job, 'gagal', potong(e.message, 200), { to: p.nomor });
+  const batas = admin ? num('WA_ADMIN_MAX_PER_DAY', 30) : num('WA_AUTO_MAX_PER_DAY', 5);
+  const nama = admin ? 'Admin Prodi' : (p.nama || (p.role === 'dosen' ? 'Bapak/Ibu Dosen' : 'Mahasiswa'));
+
+  for (const nomor of tujuan) {
+    // Kunci per NOMOR (bukan per akun): beberapa akun admin dengan nomor sama hanya menghasilkan satu pesan.
+    const dupKey = `${nomor}|${data.title}|${data.message}`;
+    if (baruSaja.has(dupKey)) {
+      if (!admin) await catat(db, job, 'dilewati', 'notifikasi identik baru saja diproses', { to: nomor });
+      continue;
+    }
+    baruSaja.set(dupKey, Date.now());
+
+    const kKey = `${nomor}|${tglWita()}`;
+    const terpakai = kuotaHarian.get(kKey) || 0;
+    // Pengingat kuliah punya pembatas sendiri (1 ringkasan/hari + opsional per kelas) -> tidak memakai kuota harian umum.
+    if (!rule.bypassKuota && terpakai >= batas) { await catat(db, job, 'dilewati', 'batas harian penerima tercapai', { to: nomor }); continue; }
+
+    if (bool('WA_AUTO_DRY_RUN', 'true')) {
+      if (!rule.bypassKuota) kuotaHarian.set(kKey, terpakai + 1);
+      await catat(db, job, 'simulasi', 'dry-run: tidak dikirim', { to: nomor });
+      continue;
+    }
+
+    const mode = env('WA_SEND_MODE', 'text');
+    const body = mode === 'template'
+      ? { to: nomor, template: susunTemplate(rule, data, nama) }
+      : { to: nomor, text: susunTeks(data, nama, rule) };
+    try {
+      await kirimDenganUlang(body);
+      if (!rule.bypassKuota) kuotaHarian.set(kKey, terpakai + 1);
+      await catat(db, job, 'terkirim', null, { to: nomor });
+    } catch (e) {
+      await catat(db, job, 'gagal', potong(e.message, 200), { to: nomor });
+    }
   }
 }
 
@@ -324,7 +350,8 @@ async function kuras() {
   try {
     while (antrean.length) {
       const job = antrean.shift();
-      const tunda = msSampaiJamTenangSelesai();
+      const kecualiTenang = job.rule.roles.includes('admin') && bool('WA_ADMIN_IGNORE_QUIET', 'false');
+      const tunda = kecualiTenang ? 0 : msSampaiJamTenangSelesai();
       if (tunda > 0) {
         if (tertunda >= MAX_DEFERRED) { await catat(job.db, job, 'dilewati', 'jam tenang & antrean tunda penuh'); continue; }
         tertunda++;
@@ -370,6 +397,7 @@ function status() {
     dryRun: bool('WA_AUTO_DRY_RUN', 'true'),
     mode: env('WA_SEND_MODE', 'text'),
     maxPerDay: num('WA_AUTO_MAX_PER_DAY', 5),
+    adminNomor: nomorAdminEnv().length,
     quiet: `${num('WA_QUIET_START', 21)}:00–${num('WA_QUIET_END', 6)}:00 WITA`,
     antrean: antrean.length,
     rules: RULES.map(r => ({ key: r.key, label: r.label, aktif: ruleAktif(r), bawaan: !!r.on, sumber: sumberRule(r), grup: GRUP[r.key] || 'Lainnya', roles: r.roles, template: r.template }))

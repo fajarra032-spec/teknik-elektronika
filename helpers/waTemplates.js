@@ -33,6 +33,11 @@ const TEMPLATES = {
     body: 'Yth. {{1}}, informasi dari Sistem Informasi Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih.',
     contoh: ['Bapak/Ibu Dosen', 'Budi mengajukan seminar magang', 'Buka: https://elektronika.polidewa.ac.id/dosen/magang']
   },
+  info_admin: {
+    language: 'id',
+    body: 'Yth. {{1}}, notifikasi admin dari Sistem Informasi Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih.',
+    contoh: ['Admin Prodi', 'Pendaftar PMB baru', 'Budi mendaftar (Teknik Elektronika, jalur Reguler). Buka: https://elektronika.polidewa.ac.id/admin/pmb']
+  },
   info_layanan: {
     language: 'id',
     body: 'Halo {{1}}, pemberitahuan layanan Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih.',

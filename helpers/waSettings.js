@@ -35,9 +35,23 @@ const DEF = [
   { key: 'KULIAH_PAGI_JAM', grup: 'Pengingat kuliah', tipe: 'jam', bawaan: '06:30', label: 'Jam ringkasan pagi', bantuan: 'Ringkasan jadwal hari ini dikirim pada jam ini (06:00–21:00 WITA).', satuan: 'WITA' },
   { key: 'KULIAH_REMINDER_MENIT', grup: 'Pengingat kuliah', tipe: 'angka', min: 0, max: 180, bawaan: '0', label: 'Pengingat sebelum kelas dimulai', bantuan: '0 = tidak ada pengingat sebelum kelas.', satuan: 'menit' },
   { key: 'KULIAH_UNTUK_DOSEN', grup: 'Pengingat kuliah', tipe: 'bool', bawaan: 'true', label: 'Kirim ke dosen' },
-  { key: 'KULIAH_UNTUK_MAHASISWA', grup: 'Pengingat kuliah', tipe: 'bool', bawaan: 'true', label: 'Kirim ke mahasiswa' }
+  { key: 'KULIAH_UNTUK_MAHASISWA', grup: 'Pengingat kuliah', tipe: 'bool', bawaan: 'true', label: 'Kirim ke mahasiswa' },
+  // Notifikasi untuk admin (PMB baru, kunjungan industri baru, pengajuan peminjaman/pengembalian alat)
+  { key: 'WA_ADMIN_NUMBERS', grup: 'Notifikasi admin', tipe: 'nomor', bawaan: '', label: 'Nomor WhatsApp admin penerima', bantuan: 'Satu atau beberapa nomor, pisahkan dengan koma (mis. 085242459746). Ditambahkan ke nomor noHp pada akun admin, bila ada.' },
+  { key: 'WA_ADMIN_MAX_PER_DAY', grup: 'Notifikasi admin', tipe: 'angka', min: 1, max: 200, bawaan: '30', label: 'Maks. pesan per nomor admin per hari', bantuan: 'Batas terpisah dari penerima lain karena admin menerima pengajuan dari banyak orang.', satuan: 'pesan' },
+  { key: 'WA_ADMIN_IGNORE_QUIET', grup: 'Notifikasi admin', tipe: 'bool', bawaan: 'false', label: 'Tetap kirim ke admin saat jam tenang', bantuan: 'Hidup = pesan admin tidak ditunda walau di jam tenang (21.00–06.00 WITA bawaan).' }
 ];
 const DEF_MAP = Object.fromEntries(DEF.map(d => [d.key, d]));
+
+/** 08xx / +62 / 0062 / 8xx -> 628xx (hanya digit). Kembalikan '' bila tidak valid. */
+function normalisasiNomor(v) {
+  let d = String(v == null ? '' : v).replace(/\D/g, '');
+  if (!d) return '';
+  if (d.startsWith('00')) d = d.slice(2);
+  if (d.startsWith('0')) d = '62' + d.slice(1);
+  else if (d.startsWith('8')) d = '62' + d;
+  return /^62\d{8,13}$/.test(d) ? d : '';
+}
 
 /** Validasi + normalisasi nilai dari form. Lempar Error bila tidak valid. */
 function validasi(d, mentah) {
@@ -58,6 +72,17 @@ function validasi(d, mentah) {
       const m = v.match(/^(\d{1,2})[.:](\d{2})$/);
       if (!m || +m[1] > 21 || +m[1] < 6 || +m[2] > 59 || (+m[1] === 21 && +m[2] > 0)) throw new Error(`${d.label}: isi jam 06:00–21:00`);
       return `${String(+m[1]).padStart(2, '0')}:${m[2]}`;
+    }
+    case 'nomor': {
+      if (!v) return '';                                   // kosong = tidak ada nomor tambahan
+      const bagian = v.split(/[,;\n]+/).map(x => x.trim()).filter(Boolean);
+      if (bagian.length > 10) throw new Error(`${d.label}: maksimal 10 nomor`);
+      const hasil = bagian.map(x => {
+        const n = normalisasiNomor(x);
+        if (!n) throw new Error(`${d.label}: nomor tidak valid (“${x.slice(0, 20)}”). Contoh: 085242459746`);
+        return n;
+      });
+      return [...new Set(hasil)].join(',');
     }
     case 'url':
       if (!/^https?:\/\/[^\s]+$/i.test(v)) throw new Error(`${d.label}: harus diawali http:// atau https://`);
@@ -166,7 +191,7 @@ function teksTemplate(nama) { return typeof state.templates[nama] === 'string' &
 function templateKustom(nama) { return typeof state.templates[nama] === 'string' && !!state.templates[nama]; }
 
 module.exports = {
-  state, DEF, PLACEHOLDER, TEKS_BAWAAN, MAKS_TEKS,
+  state, DEF, PLACEHOLDER, normalisasiNomor, TEKS_BAWAAN, MAKS_TEKS,
   segarkan, segar, env, sumberConfig, aturConfig, aturTemplate, aturRule,
   daftarConfig, teksTemplate, templateKustom, isiTemplate, validasiTeks, validasi
 };

@@ -1,15 +1,15 @@
 <%- include('../../partials/header') %>
 <%
-  var URUTAN_GRUP = ['Nilai & tugas', 'Dosen', 'Magang', 'Pengingat kuliah', 'Layanan', 'Lainnya'];
-  var IKON_GRUP = { 'Nilai & tugas': 'bi-journal-check', 'Dosen': 'bi-person-workspace', 'Magang': 'bi-briefcase', 'Pengingat kuliah': 'bi-alarm', 'Layanan': 'bi-tools', 'Lainnya': 'bi-three-dots' };
+  var URUTAN_GRUP = ['Nilai & tugas', 'Dosen', 'Magang', 'Pengingat kuliah', 'Layanan', 'Admin', 'Lainnya'];
+  var IKON_GRUP = { 'Nilai & tugas': 'bi-journal-check', 'Dosen': 'bi-person-workspace', 'Magang': 'bi-briefcase', 'Pengingat kuliah': 'bi-alarm', 'Layanan': 'bi-tools', 'Admin': 'bi-shield-lock', 'Lainnya': 'bi-three-dots' };
   var grup = {};
   cfg.rules.forEach(function (r) { (grup[r.grup || 'Lainnya'] = grup[r.grup || 'Lainnya'] || []).push(r); });
   var jumlahAktif = cfg.rules.filter(function (r) { return r.aktif; }).length;
-  var labelRole = { mahasiswa: 'Mahasiswa', dosen: 'Dosen' };
+  var labelRole = { mahasiswa: 'Mahasiswa', dosen: 'Dosen', admin: 'Admin' };
   var kirimNyata = cfg.enabled && !cfg.dryRun;
   var modeKirim = (pengaturan.filter(function (p) { return p.key === 'WA_SEND_MODE'; })[0] || {}).nilai || 'text';
-  var GRUP_SET = ['Pengiriman', 'Batas & jadwal', 'Pengingat kuliah'];
-  var IKON_SET = { 'Pengiriman': 'bi-send', 'Batas & jadwal': 'bi-clock-history', 'Pengingat kuliah': 'bi-alarm' };
+  var GRUP_SET = ['Pengiriman', 'Batas & jadwal', 'Pengingat kuliah', 'Notifikasi admin'];
+  var IKON_SET = { 'Pengiriman': 'bi-send', 'Batas & jadwal': 'bi-clock-history', 'Pengingat kuliah': 'bi-alarm', 'Notifikasi admin': 'bi-shield-lock' };
   function labelSumber(x) { return x === 'web' ? 'Diatur di web' : (x === 'env' ? 'Dari .env' : 'Bawaan'); }
   function kelasSumber(x) { return x === 'web' ? 'text-bg-primary' : (x === 'env' ? 'text-bg-info' : 'text-bg-light border'); }
 %>
@@ -170,6 +170,8 @@
                   <input type="time" class="form-control wa-set-input" min="06:00" max="21:00" value="<%= p.nilai %>" data-asal="<%= p.nilai %>">
                   <span class="input-group-text"><%= p.satuan || '' %></span>
                 </div>
+              <% } else if (p.tipe === 'nomor') { %>
+                <input type="text" inputmode="tel" class="form-control form-control-sm wa-set-input" placeholder="085242459746, 08123456789" value="<%= p.nilai %>" data-asal="<%= p.nilai %>" autocomplete="off">
               <% } else { %>
                 <input type="url" class="form-control form-control-sm wa-set-input" value="<%= p.nilai %>" data-asal="<%= p.nilai %>">
               <% } %>

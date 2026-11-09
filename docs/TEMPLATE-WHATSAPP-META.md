@@ -11,6 +11,7 @@ Semua template memakai 3 variabel: `{{1}}` nama penerima, `{{2}}` judul, `{{3}}`
 | `pengingat_kuliah` | Halo {{1}}, pengingat jadwal dari Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih. |
 | `info_dosen` | Yth. {{1}}, informasi dari Sistem Informasi Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih. |
 | `info_layanan` | Halo {{1}}, pemberitahuan layanan Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih. |
+| `info_admin` | Yth. {{1}}, notifikasi admin dari Sistem Informasi Prodi Teknik Elektronika: {{2}}. {{3}} Terima kasih. |
 
 Contoh isi variabel untuk formulir pengajuan Meta ada di `helpers/waTemplates.js` (properti `contoh`).
 

@@ -43,3 +43,17 @@ Yang bisa diatur dari web: WA_AUTO_ENABLED, WA_AUTO_DRY_RUN, WA_SEND_MODE, WA_RE
   WA_AUTO_MAX_PER_DAY, WA_AUTO_GAP_MS, WA_QUIET_START/END, KULIAH_REMINDER_ENABLED, KULIAH_PAGI_JAM,
   KULIAH_REMINDER_MENIT, KULIAH_UNTUK_DOSEN, KULIAH_UNTUK_MAHASISWA, serta teks 6 template pesan.
 Tetap hanya di .env (rahasia): NOTIFICATION_API_URL, NOTIFICATION_INTERNAL_KEY.
+
+--- TAMBAHAN 3: notifikasi WhatsApp untuk ADMIN + penjadwal kuliah dari app.js ---
+  helpers/waNotifier.js              TIMPA  aturan admin_pmb / admin_kunjungan / admin_alat; penerima admin;
+                                            nomor admin = noHp akun admin + WA_ADMIN_NUMBERS; dedup per nomor
+  helpers/waSettings.js              TIMPA  pengaturan WA_ADMIN_NUMBERS, WA_ADMIN_MAX_PER_DAY, WA_ADMIN_IGNORE_QUIET
+  helpers/waTemplates.js             TIMPA  template info_admin
+  routes/admin/whatsapp.js           TIMPA  template info_admin muncul di tab Template pesan
+  views/admin/whatsapp/otomatis.ejs  TIMPA  grup "Admin" di tab aturan, kartu "Notifikasi admin" di tab pengaturan
+  app.js                             TIMPA  memulai penjadwal pengingat kuliah saat server hidup
+  docs/*.md                          TIMPA  katalog, template, integrasi
+Cara pakai: buka Admin > WhatsApp > Otomatis > Pengiriman & jadwal > Notifikasi admin, isi nomor
+(mis. 085242459746), Simpan. Tanpa restart. Master switch WA_AUTO_ENABLED=true dan WA_AUTO_DRY_RUN=false tetap berlaku.
+Catatan: mode "text" hanya sampai ke nomor yang chat ke nomor WA prodi dalam 24 jam terakhir; untuk kepastian
+pakai mode template (info_admin harus disetujui Meta dan Notification API harus mendukung field template).

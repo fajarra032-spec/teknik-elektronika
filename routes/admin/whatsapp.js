@@ -519,7 +519,8 @@ router.get('/otomatis', async (req, res) => {
     pengingat_logbook: 'Pengingat logbook hari ini',
     pengingat_kuliah: 'Pengingat jadwal kuliah / mengajar',
     info_dosen: 'Informasi untuk dosen (SK, surat tugas, dll.)',
-    info_layanan: 'Layanan (seminar, peminjaman alat, pesan)'
+    info_layanan: 'Layanan (seminar, peminjaman alat, pesan)',
+    info_admin: 'Notifikasi untuk admin (PMB baru, kunjungan industri, peminjaman alat)'
   };
   const templates = Object.keys(NAMA_TEMPLATE).map(nama => ({
     nama,
