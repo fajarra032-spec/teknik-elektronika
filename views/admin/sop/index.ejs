@@ -1,0 +1,41 @@
+<%- include('../../partials/header') %>
+<div class="container-fluid mt-4 px-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <h2 class="mb-0">Buku Induk SOP</h2>
+    <div><a class="btn btn-outline-success" href="/admin/sop/export.xlsx"><i class="bi bi-file-earmark-excel me-1"></i>Unduh .xlsx</a> <a class="btn btn-outline-primary" href="/sop" target="_blank">Lihat halaman publik</a></div>
+  </div>
+  <% if (pesan) { %><div class="alert alert-success mt-3"><%= pesan %></div><% } %>
+  <div class="row g-2 mt-2">
+    <% STATUS.forEach(function(s){ %><div class="col-6 col-md"><div class="border rounded p-2 text-center bg-white"><div class="fs-4 fw-bold"><%= hitung[s] %></div><div class="small text-muted"><%= s %></div></div></div><% }) %>
+  </div>
+  <div class="table-responsive mt-3">
+    <table class="table table-bordered table-sm align-middle bg-white">
+      <thead class="table-light"><tr><th>No. Dokumen</th><th>Judul</th><th>Penanggung jawab (usulan)</th><th>Prio</th><th style="min-width:420px">Status &middot; versi &middot; tanggal berlaku &middot; catatan</th><th>Isi</th></tr></thead>
+      <tbody>
+      <% daftar.forEach(function(d){ %>
+        <tr id="<%= d.kode %>">
+          <td class="text-nowrap"><b><%= d.kode %></b><br><span class="badge text-bg-<%= d.akses === 'internal' ? 'secondary' : 'info' %>"><%= d.akses %></span></td>
+          <td><%= d.judul %><% if (d.catatan) { %><div class="small text-muted"><%= d.catatan %></div><% } %></td>
+          <td class="small"><%= d.pj %></td>
+          <td class="text-center"><%= d.prioritas %></td>
+          <td>
+            <form method="POST" action="/admin/sop/<%= d.kode %>/status" class="d-flex flex-wrap gap-1">
+              <select name="status" class="form-select form-select-sm" style="width:auto"><% STATUS.forEach(function(s){ %><option <%= s === d.status ? 'selected' : '' %>><%= s %></option><% }) %></select>
+              <input name="versi" class="form-control form-control-sm" style="width:70px" placeholder="Versi" value="<%= d.versi %>">
+              <input name="tanggalBerlaku" type="date" class="form-control form-control-sm" style="width:140px" value="<%= d.tanggalBerlaku %>">
+              <input name="catatan" class="form-control form-control-sm" style="min-width:140px;flex:1" placeholder="Catatan" value="<%= d.catatanAdmin %>">
+              <button class="btn btn-sm btn-primary">Simpan</button>
+            </form>
+          </td>
+          <td class="text-nowrap">
+            <% if (d.urlEksternal) { %><a href="<%= d.urlEksternal %>" class="btn btn-sm btn-outline-primary">Lihat</a>
+            <% } else if (d.tersedia) { %><a href="/sop/<%= d.kode %>" class="btn btn-sm btn-outline-primary">Lihat</a> <a href="/sop/<%= d.kode %>/docx" class="btn btn-sm btn-primary">.docx</a>
+            <% } else { %><span class="text-muted small">belum ditulis</span><% } %>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../../partials/footer') %>

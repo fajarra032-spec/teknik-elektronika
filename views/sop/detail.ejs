@@ -1,0 +1,39 @@
+<%- include('../partials/header-landing') %>
+<% var d = item.isi; var versi = (st && st.versi) || d.versi; var status = (st && st.status) || 'Draf disusun'; %>
+<style>
+  .sop-h{background:linear-gradient(135deg,#0d6efd,#0dcaf0);color:#fff;border-radius:1.5rem;padding:2rem 1.5rem;margin:1.5rem 0}
+  .sop-h .kode{opacity:.85;font-weight:700;font-size:.9rem}
+  .sop-h h1{font-weight:800;font-size:clamp(1.4rem,3.5vw,2.1rem);margin:.2rem 0 .6rem}
+  .sec{background:#fff;border:1px solid rgba(13,110,253,.12);border-radius:1rem;padding:1.2rem 1.4rem;margin-bottom:1rem}
+  .sec h4{font-size:1.05rem;font-weight:700;color:#0b5ed7;margin-bottom:.8rem}
+  .sec table{font-size:.88rem}
+  .konf{background:#fff8e1;border:1px solid #ffe08a;border-radius:1rem;padding:1.1rem 1.3rem;margin-bottom:1rem}
+</style>
+<div class="container pb-5">
+  <div class="sop-h">
+    <div class="kode"><%= item.kode %> &middot; Versi <%= versi %> &middot; <%= status %></div>
+    <h1><%= d.judul %></h1>
+    <a class="btn btn-light btn-sm fw-bold" href="/sop/<%= item.kode %>/docx"><i class="bi bi-download me-1"></i>Unduh .docx</a>
+    <a class="btn btn-outline-light btn-sm" href="/sop">Semua SOP</a>
+  </div>
+
+  <% if (status !== 'Disahkan') { %>
+  <div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill me-1"></i>Dokumen ini masih <b>draf</b> dan belum disahkan pejabat berwenang.</div>
+  <% } %>
+
+  <div class="sec"><h4>Tujuan</h4><ol class="mb-0"><% d.tujuan.forEach(function(t){ %><li><%= t %></li><% }) %></ol></div>
+  <div class="sec"><h4>Ruang Lingkup</h4><ol class="mb-0"><% d.ruangLingkup.forEach(function(t){ %><li><%= t %></li><% }) %></ol></div>
+  <div class="sec"><h4>Dasar Hukum</h4><ol class="mb-0"><% d.dasarHukum.forEach(function(t){ %><li><%= t %></li><% }) %></ol></div>
+  <div class="sec"><h4>Definisi</h4><div class="table-responsive"><table class="table table-bordered mb-0"><thead class="table-light"><tr><th>Istilah</th><th>Pengertian</th></tr></thead><tbody><% d.definisi.forEach(function(x){ %><tr><td><b><%= x.istilah %></b></td><td><%= x.arti %></td></tr><% }) %></tbody></table></div></div>
+  <div class="sec"><h4>Pihak yang Bertanggung Jawab</h4><div class="table-responsive"><table class="table table-bordered mb-0"><thead class="table-light"><tr><th>Pihak</th><th>Tanggung jawab</th></tr></thead><tbody><% d.pihak.forEach(function(x){ %><tr><td><b><%= x.peran %></b></td><td><%= x.tanggungJawab %></td></tr><% }) %></tbody></table></div></div>
+  <div class="sec"><h4>Persyaratan</h4><ol class="mb-0"><% d.persyaratan.forEach(function(t){ %><li><%= t %></li><% }) %></ol></div>
+  <div class="sec"><h4>Prosedur</h4><div class="table-responsive"><table class="table table-bordered mb-0"><thead class="table-light"><tr><th>No.</th><th>Kegiatan</th><th>Pelaksana</th><th>Waktu</th><th>Output / bukti</th></tr></thead><tbody><% d.prosedur.forEach(function(p){ %><tr><td><%= p.no %></td><td><%= p.kegiatan %></td><td><%= p.pelaksana %></td><td><%= p.waktu %></td><td><%= p.output %></td></tr><% }) %></tbody></table></div><div class="small text-muted mt-2">(u) = usulan waktu, ditetapkan Ketua Program Studi saat pengesahan.</div></div>
+  <% if (d.kasusKhusus && d.kasusKhusus.length) { %><div class="sec"><h4>Penanganan Kasus Khusus</h4><div class="table-responsive"><table class="table table-bordered mb-0"><thead class="table-light"><tr><th>Kasus</th><th>Penanganan</th></tr></thead><tbody><% d.kasusKhusus.forEach(function(k){ %><tr><td><%= k.kasus %></td><td><%= k.penanganan %></td></tr><% }) %></tbody></table></div></div><% } %>
+  <div class="sec"><h4>Formulir dan Rekaman</h4><ol class="mb-0"><% d.formulir.forEach(function(t){ %><li><%= t %></li><% }) %></ol></div>
+  <% (d.lampiran || []).forEach(function(l){ %><div class="sec"><h4><%= l.judul %></h4><div class="table-responsive"><table class="table table-bordered mb-0"><thead class="table-light"><tr><% l.head.forEach(function(h){ %><th><%= h %></th><% }) %></tr></thead><tbody><% l.rows.forEach(function(r){ %><tr><% r.forEach(function(c){ %><td><%= c %></td><% }) %></tr><% }) %></tbody></table></div></div><% }) %>
+
+  <% if (user && user.role === 'admin' && d.konfirmasi && d.konfirmasi.length) { %>
+  <div class="konf"><b><i class="bi bi-question-circle-fill me-1"></i>Perlu dikonfirmasi sebelum disahkan (hanya terlihat admin)</b><ul class="mb-0 mt-2"><% d.konfirmasi.forEach(function(t){ %><li><%= t %></li><% }) %></ul></div>
+  <% } %>
+</div>
+<%- include('../partials/footer-landing') %>
