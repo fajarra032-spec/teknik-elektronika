@@ -116,6 +116,26 @@ router.get('/kriteria/:id', async (req, res) => {
   }
 });
 
+// -------- Narasi LED per kriteria (dosen: draft/review; 'final' hanya admin) --------
+router.post('/kriteria/:id/led', async (req, res) => {
+  try {
+    const { ledNarasi, ledStatus } = req.body;
+    const status = ['draft', 'review'].includes(ledStatus) ? ledStatus : 'draft';
+    const ref = db.collection('akreditasi_kriteria').doc(req.params.id);
+    const doc = await ref.get();
+    if (!doc.exists) return res.status(404).send('Kriteria tidak ditemukan');
+    if (doc.data().ledStatus === 'final') return res.redirect(`/dosen/akreditasi/kriteria/${req.params.id}#led`); // sudah dikunci admin
+    await ref.update({
+      ledNarasi: ledNarasi || '', ledStatus: status,
+      ledUpdatedBy: req.dosen.nama, ledUpdatedAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+    });
+    res.redirect(`/dosen/akreditasi/kriteria/${req.params.id}#led`);
+  } catch (error) {
+    console.error('Error menyimpan narasi LED (dosen):', error);
+    res.status(500).send('Gagal menyimpan narasi LED');
+  }
+});
+
 // -------- Dokumen --------
 router.post('/kriteria/:id/dokumen', upload.single('file'), async (req, res) => {
   try {

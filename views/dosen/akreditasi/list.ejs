@@ -2,6 +2,10 @@
 <div class="container mt-4 mb-5">
   <h2>Akreditasi Program Studi</h2>
   <small class="text-muted">Workspace persiapan akreditasi LAM Teknik - tempat pembahasan &amp; pengumpulan dokumen per kriteria</small>
+  <div class="mt-2 d-flex gap-2 flex-wrap">
+    <a href="/dosen/akreditasi/master" class="btn btn-outline-primary btn-sm"><i class="bi bi-journal-check me-1"></i>Master Dokumen Prodi</a>
+    <a href="/dosen/akreditasi/tabel<%= periode ? `?periodeId=${periode.id}` : '' %>" class="btn btn-outline-primary btn-sm"><i class="bi bi-table me-1"></i>Tabel Data LKPS</a>
+  </div>
 
   <% if (!periode) { %>
     <div class="alert alert-info mt-4">Belum ada periode akreditasi yang sedang berjalan.</div>

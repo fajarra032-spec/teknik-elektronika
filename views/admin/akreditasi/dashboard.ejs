@@ -9,7 +9,13 @@
   </div>
 
   <% if (periodeList.length) { %>
-    <div class="mt-2">
+    <div class="mt-2 d-flex gap-2 flex-wrap">
+      <a href="/admin/akreditasi/master<%= periodeId ? `?periodeId=${periodeId}` : '' %>" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-journal-check me-1"></i>Master Dokumen Prodi
+      </a>
+      <a href="/admin/akreditasi/tabel<%= periodeId ? `?periodeId=${periodeId}` : '' %>" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-table me-1"></i>Tabel Data LKPS
+      </a>
       <a href="/admin/akreditasi/rekap<%= periodeId ? `?periodeId=${periodeId}` : '' %>" class="btn btn-outline-success btn-sm">
         <i class="bi bi-file-earmark-bar-graph me-1"></i>Rekap &amp; Laporan / Ekspor
       </a>
@@ -61,6 +67,13 @@
               <%= progresKeseluruhan %>% Kriteria Selesai
             </div>
           </div>
+          <% if (masterProgres && masterProgres.total) { %>
+            <div class="progress mt-2" style="height: 22px;">
+              <div class="progress-bar bg-primary" role="progressbar" style="width: <%= masterProgres.persen %>%;">
+                <%= masterProgres.persen %>% Kesiapan Master Dokumen (<%= masterProgres.disahkan %>/<%= masterProgres.total %> disahkan)
+              </div>
+            </div>
+          <% } %>
         </div>
       </div>
 

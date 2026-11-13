@@ -460,6 +460,12 @@ async function startServer() {
     app.use('/admin/akreditasi/tabel', adminAkreditasiTabelRouter);
     app.use('/dosen/akreditasi/tabel', dosenAkreditasiTabelRouter);
 
+    // Master Dokumen Prodi (buku induk administrasi untuk akreditasi)
+    const adminAkreditasiMasterRouter = require('./routes/admin/akreditasiMaster');
+    const dosenAkreditasiMasterRouter = require('./routes/dosen/akreditasiMasterRoute');
+    app.use('/admin/akreditasi/master', adminAkreditasiMasterRouter);
+    app.use('/dosen/akreditasi/master', dosenAkreditasiMasterRouter);
+
     // Perusahaan magang
     const adminPerusahaanRouter = require('./routes/admin/perusahaan');
     const dosenPerusahaanRouter = require('./routes/dosen/perusahaan');

@@ -1,0 +1,30 @@
+PATCH AKREDITASI: MASTER DOKUMEN PRODI + NARASI LED + MENU TABEL LKPS
+=====================================================================
+Timpa file sesuai struktur folder proyek, lalu restart server.
+Tanpa perubahan package.json dan TANPA indeks Firestore baru.
+
+BARU
+  helpers/masterDokumenConfig.js        template 12 kelompok (A-L), 202 dokumen
+  helpers/masterDokumenHelper.js        seed, progres, upload bukti ke Drive, ekspor CSV
+  routes/admin/akreditasiMaster.js      /admin/akreditasi/master
+  routes/dosen/akreditasiMasterRoute.js /dosen/akreditasi/master (lihat + unggah bukti)
+  views/admin/akreditasi/master.ejs
+  views/dosen/akreditasi/master.ejs
+
+TIMPA (bila sudah Anda ubah, gabungkan manual: cari komentar "Master Dokumen" / "Narasi LED")
+  app.js                                +4 baris mount master (di bawah mount akreditasi/tabel)
+  routes/admin/akreditasi.js            seed master saat periode baru, hapus master saat periode dihapus,
+                                        progres master di dashboard, route POST /kriteria/:id/led
+  routes/dosen/akreditasiRoute.js       route POST /kriteria/:id/led (dosen hanya draft/review)
+  views/admin/akreditasi/dashboard.ejs  tombol Master Dokumen, Tabel Data LKPS (sebelumnya TIDAK ADA tautannya), bar progres master
+  views/admin/akreditasi/workspace.ejs  kartu Narasi LED
+  views/dosen/akreditasi/list.ejs       tombol Master Dokumen dan Tabel Data LKPS
+  views/dosen/akreditasi/workspace.ejs  kartu Narasi LED
+
+PENTING UNTUK PERIODE YANG SUDAH ADA
+  Master dokumen otomatis dibuat hanya untuk periode BARU. Untuk periode lama:
+  buka Akreditasi > Master Dokumen Prodi > pilih periode > klik "Siapkan template".
+
+KOLEKSI FIRESTORE BARU
+  akreditasi_master        satu dokumen = satu item dokumen prodi
+  Field baru di akreditasi_kriteria: ledNarasi, ledStatus, ledUpdatedBy, ledUpdatedAt

@@ -23,6 +23,7 @@ const {
   isKriteriaTerlambat,
   kriteriaListToCsv
 } = require('../../helpers/akreditasiHelper');
+const { seedMasterDokumen, getMasterItems, hitungProgresMaster } = require('../../helpers/masterDokumenHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -39,15 +40,18 @@ router.get('/', async (req, res) => {
     let kriteriaList = [];
     let progresKeseluruhan = 0;
     let periodeAktif = null;
+    let masterProgres = null;
 
     if (periodeId) {
       periodeAktif = periodeList.find(p => p.id === periodeId) || null;
       kriteriaList = await getKriteriaDenganProgress(periodeId);
       kriteriaList = kriteriaList.map(k => ({ ...k, terlambat: isKriteriaTerlambat(k) }));
       progresKeseluruhan = hitungProgresKeseluruhan(kriteriaList);
+      masterProgres = hitungProgresMaster(await getMasterItems(periodeId));
     }
 
     res.render('admin/akreditasi/dashboard', {
+      masterProgres,
       title: 'Akreditasi Program Studi',
       periodeList,
       periodeAktif,
@@ -85,6 +89,7 @@ router.post('/periode', async (req, res) => {
 
     // Otomatis siapkan 9 kriteria standar sebagai titik awal
     await seedKriteriaUntukPeriode(ref.id);
+    await seedMasterDokumen(ref.id); // template Master Dokumen Prodi (12 kelompok)
 
     res.redirect(`/admin/akreditasi?periodeId=${ref.id}`);
   } catch (error) {
@@ -122,7 +127,7 @@ router.post('/periode/:id/delete', async (req, res) => {
   try {
     const periodeId = req.params.id;
     // Hapus kriteria, dokumen & diskusi terkait supaya tidak jadi data yatim
-    const koleksiTerkait = ['akreditasi_kriteria', 'akreditasi_dokumen', 'akreditasi_diskusi', 'akreditasi_checklist'];
+    const koleksiTerkait = ['akreditasi_kriteria', 'akreditasi_dokumen', 'akreditasi_diskusi', 'akreditasi_checklist', 'akreditasi_master'];
     for (const koleksi of koleksiTerkait) {
       const snap = await db.collection(koleksi).where('periodeId', '==', periodeId).get();
       const batch = db.batch();
@@ -312,6 +317,25 @@ router.post('/kriteria/:id/pic', async (req, res) => {
   } catch (error) {
     console.error('Error menetapkan PIC kriteria:', error);
     res.status(500).send('Gagal menetapkan dosen penanggung jawab');
+  }
+});
+
+// -------- Narasi LED per kriteria (draft -> review -> final; 'final' hanya admin) --------
+router.post('/kriteria/:id/led', async (req, res) => {
+  try {
+    const { ledNarasi, ledStatus } = req.body;
+    const status = ['draft', 'review', 'final'].includes(ledStatus) ? ledStatus : 'draft';
+    await db.collection('akreditasi_kriteria').doc(req.params.id).update({
+      ledNarasi: ledNarasi || '',
+      ledStatus: status,
+      ledUpdatedBy: req.user.nama || req.user.email,
+      ledUpdatedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+    res.redirect(`/admin/akreditasi/kriteria/${req.params.id}#led`);
+  } catch (error) {
+    console.error('Error menyimpan narasi LED:', error);
+    res.status(500).send('Gagal menyimpan narasi LED');
   }
 });
 

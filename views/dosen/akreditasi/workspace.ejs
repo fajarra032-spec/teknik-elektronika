@@ -24,6 +24,34 @@
     </div>
   </div>
 
+  <!-- ============== NARASI LED ============== -->
+  <div class="card mb-4" id="led">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span><i class="bi bi-pencil-square me-1"></i> Narasi Laporan Evaluasi Diri (LED) - Kriteria <%= kriteria.kode %></span>
+      <% const ledSt = kriteria.ledStatus || 'draft'; %>
+      <span class="badge bg-<%= ledSt === 'final' ? 'success' : (ledSt === 'review' ? 'info' : 'secondary') %>"><%= ledSt === 'final' ? 'Final' : (ledSt === 'review' ? 'Siap Direview' : 'Draft') %></span>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="/dosen/akreditasi/kriteria/<%= kriteria.id %>/led">
+        <textarea name="ledNarasi" class="form-control mb-2" rows="10" <%= ledSt === 'final' ? 'disabled' : '' %>
+          placeholder="Tulis narasi LED untuk kriteria ini: kondisi, upaya/program, capaian, evaluasi, dan tindak lanjut (PPEPP). Rujuk bukti dari Workspace/Master Dokumen."><%= kriteria.ledNarasi || '' %></textarea>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <small class="text-muted">
+            <% if (kriteria.ledUpdatedAt) { %>Terakhir diubah <%= new Date(kriteria.ledUpdatedAt).toLocaleString('id-ID') %> oleh <%= kriteria.ledUpdatedBy %> &middot; <% } %>
+            <%= (kriteria.ledNarasi || '').trim() ? (kriteria.ledNarasi.trim().split(/\s+/).length) : 0 %> kata <% if (ledSt === 'final') { %> &middot; Sudah final (dikunci admin)<% } %>
+          </small>
+          <div class="d-flex gap-2">
+            <select name="ledStatus" class="form-select form-select-sm" style="width:auto;" <%= ledSt === 'final' ? 'disabled' : '' %>>
+              <option value="draft" <%= ledSt === 'draft' ? 'selected' : '' %>>Draft</option>
+              <option value="review" <%= ledSt === 'review' ? 'selected' : '' %>>Siap Direview</option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary" <%= ledSt === 'final' ? 'disabled' : '' %>>Simpan Narasi</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="row">
     <!-- ============== CHECKLIST PROSES ============== -->
     <div class="col-lg-4 mb-4" id="checklist">

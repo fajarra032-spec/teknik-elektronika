@@ -1,0 +1,138 @@
+<%- include('../../partials/header') %>
+<div class="container mt-4 mb-5">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h2 class="mb-0">Master Dokumen Prodi</h2>
+      <small class="text-muted">Buku induk administrasi program studi: status kelengkapan &amp; bukti tiap dokumen</small>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <% if (periodeId) { %>
+        <a href="/admin/akreditasi/master/export?periodeId=<%= periodeId %>" class="btn btn-outline-success btn-sm"><i class="bi bi-download me-1"></i>Ekspor CSV</a>
+      <% } %>
+      <a href="/admin/akreditasi<%= periodeId ? '?periodeId=' + periodeId : '' %>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Kembali</a>
+    </div>
+  </div>
+
+  <% if (!periodeList.length) { %>
+    <div class="alert alert-info mt-4">Belum ada periode akreditasi. Buat periode dulu di halaman Akreditasi.</div>
+  <% } else { %>
+    <form method="GET" action="/admin/akreditasi/master" class="row row-cols-auto g-2 align-items-center mt-3">
+      <div class="col"><label class="col-form-label">Periode:</label></div>
+      <div class="col">
+        <select name="periodeId" class="form-select" onchange="this.form.submit()">
+          <% periodeList.forEach(p => { %>
+            <option value="<%= p.id %>" <%= p.id === periodeId ? 'selected' : '' %>><%= p.nama %></option>
+          <% }) %>
+        </select>
+      </div>
+    </form>
+
+    <% if (!grouped.length) { %>
+      <div class="alert alert-warning mt-4">
+        Periode ini belum punya daftar master dokumen.
+        <form method="POST" action="/admin/akreditasi/master/seed" class="d-inline">
+          <input type="hidden" name="periodeId" value="<%= periodeId %>">
+          <button class="btn btn-sm btn-primary ms-2">Siapkan template (12 kelompok)</button>
+        </form>
+      </div>
+    <% } else { %>
+      <div class="card mt-3">
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-3 small mb-2">
+            <span><strong><%= total.total %></strong> dokumen</span>
+            <span class="text-success"><strong><%= total.disahkan %></strong> lengkap &amp; disahkan</span>
+            <span class="text-info"><strong><%= total.ada %></strong> ada</span>
+            <span class="text-warning"><strong><%= total.draft %></strong> draft</span>
+            <span class="text-secondary"><strong><%= total.belum %></strong> belum ada</span>
+            <span><strong><%= total.adaBukti %></strong> sudah ada berkas bukti</span>
+          </div>
+          <div class="progress" style="height: 22px;">
+            <div class="progress-bar bg-success" style="width: <%= total.persen %>%;"><%= total.persen %>% Kesiapan Dokumen</div>
+          </div>
+          <div class="form-text">"Ada (belum disahkan)" dihitung setengah; hanya "Lengkap &amp; Disahkan" dihitung penuh.</div>
+        </div>
+      </div>
+
+      <div class="d-flex flex-wrap gap-1 mt-3">
+        <% grouped.forEach(g => { %>
+          <a href="#kel-<%= g.kode %>" class="btn btn-sm btn-outline-secondary"><%= g.kode %> <span class="badge bg-light text-dark border"><%= g.progres.persen %>%</span></a>
+        <% }) %>
+      </div>
+
+      <% grouped.forEach(g => { %>
+        <div class="card mt-4" id="kel-<%= g.kode %>">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <strong><%= g.kode %>. <%= g.nama %></strong>
+            <span class="small text-muted"><%= g.progres.disahkan %>/<%= g.progres.total %> disahkan &middot; <%= g.progres.persen %>%</span>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Dokumen</th><th style="width:190px;">Status</th><th style="width:150px;">Penanggung Jawab</th>
+                  <th style="width:190px;">Bukti</th><th style="width:70px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% let subTerakhir = null; g.items.forEach(i => { %>
+                  <% if (i.sub && i.sub !== subTerakhir) { subTerakhir = i.sub; %>
+                    <tr class="table-secondary"><td colspan="5" class="fw-bold small"><%= i.sub %></td></tr>
+                  <% } %>
+                  <tr>
+                    <td>
+                      <%= i.nama %>
+                      <% if (i.keterangan) { %><div class="text-muted small"><%= i.keterangan %></div><% } %>
+                      <% if (i.catatan) { %><div class="small text-primary"><i class="bi bi-sticky me-1"></i><%= i.catatan %></div><% } %>
+                    </td>
+                    <td colspan="2">
+                      <form method="POST" action="/admin/akreditasi/master/item/<%= i.id %>/update" class="d-flex gap-1 flex-wrap">
+                        <select name="status" class="form-select form-select-sm" style="width:auto;">
+                          <% Object.keys(STATUS_MASTER).forEach(s => { %>
+                            <option value="<%= s %>" <%= i.status === s ? 'selected' : '' %>><%= STATUS_MASTER[s].label %></option>
+                          <% }) %>
+                        </select>
+                        <input type="text" name="picNama" value="<%= i.picNama || '' %>" class="form-control form-control-sm" style="width:120px;" placeholder="PIC">
+                        <input type="text" name="catatan" value="<%= i.catatan || '' %>" class="form-control form-control-sm" style="width:150px;" placeholder="Catatan">
+                        <button class="btn btn-sm btn-outline-primary" title="Simpan"><i class="bi bi-check-lg"></i></button>
+                      </form>
+                    </td>
+                    <td>
+                      <% if (i.fileUrl) { %>
+                        <div class="d-flex gap-1 align-items-center">
+                          <a href="/pratinjau?u=<%= encodeURIComponent(i.fileUrl) %>" target="_blank" class="small text-truncate" style="max-width:120px;" title="<%= i.fileName %>"><%= i.fileName %></a>
+                          <form method="POST" action="/admin/akreditasi/master/item/<%= i.id %>/hapus-file" onsubmit="return confirm('Hapus berkas bukti ini?');">
+                            <button class="btn btn-sm btn-outline-danger py-0 px-1"><i class="bi bi-x"></i></button>
+                          </form>
+                        </div>
+                      <% } else { %>
+                        <form method="POST" action="/admin/akreditasi/master/item/<%= i.id %>/upload" enctype="multipart/form-data" class="d-flex gap-1">
+                          <input type="file" name="file" class="form-control form-control-sm" required style="max-width:150px;">
+                          <button class="btn btn-sm btn-primary py-0 px-2"><i class="bi bi-upload"></i></button>
+                        </form>
+                      <% } %>
+                    </td>
+                    <td class="text-end">
+                      <form method="POST" action="/admin/akreditasi/master/item/<%= i.id %>/delete" onsubmit="return confirm('Hapus dokumen ini dari daftar?');">
+                        <button class="btn btn-sm btn-outline-danger py-0 px-1"><i class="bi bi-trash"></i></button>
+                      </form>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <div class="card-footer">
+            <form method="POST" action="/admin/akreditasi/master/item/baru" class="d-flex gap-2 flex-wrap">
+              <input type="hidden" name="periodeId" value="<%= periodeId %>">
+              <input type="hidden" name="kelompok" value="<%= g.kode %>">
+              <input type="text" name="nama" class="form-control form-control-sm" style="max-width:320px;" placeholder="Tambah dokumen lain di kelompok ini..." required>
+              <input type="text" name="keterangan" class="form-control form-control-sm" style="max-width:240px;" placeholder="Keterangan (opsional)">
+              <button class="btn btn-sm btn-outline-primary">+ Tambah</button>
+            </form>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+  <% } %>
+</div>
+<%- include('../../partials/footer') %>

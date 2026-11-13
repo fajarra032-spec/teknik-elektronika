@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
-<head><%- include('partials/lkm_std_head') %></head>
+<head><%- include('partials/lkm_std_head') %><%- include('partials/lkm_mkplc_extra') %></head>
 <body>
 <div class="container-fluid">
 <% const g = (n) => '<div class="garis-isi"></div>'.repeat(n); %>
@@ -18,7 +18,7 @@
 <p class="catatan-kecil">Turunkan persyaratan standar menjadi 10 butir yang dapat diamati. Beri tanda &#10003; (sesuai), &#10007; (tidak sesuai), atau N/A. Audit hanya pengamatan visual; jangan membongkar produk.</p>
 <table class="tabel-data">
   <thead><tr><th style="width:4%;">No</th><th style="width:40%;">Butir persyaratan yang diperiksa</th><th style="width:16%;">Acuan klausul/standar</th><th style="width:8%;">Status</th><th style="width:9%;">No. foto</th><th>Bukti / catatan</th></tr></thead>
-  <tbody><% for (let i = 1; i <= 10; i++) { %><tr><td class="tengah t40"><%= i %></td><td></td><td></td><td></td><td></td><td></td></tr><% } %></tbody>
+  <tbody><% for (let i = 1; i <= 10; i++) { %><tr><td class="tengah t30"><%= i %></td><td></td><td></td><td></td><td></td><td></td></tr><% } %></tbody>
 </table>
 
 <div class="halaman-baru">
