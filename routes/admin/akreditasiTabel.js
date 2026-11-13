@@ -13,6 +13,7 @@ const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getTabelConfig, getSemuaTabelConfig, TABEL7_CONFIG } = require('../../helpers/lkpsTabelConfig');
+const { AUTO_INFO, isiOtomatis } = require('../../helpers/lkpsAutoFill');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -153,7 +154,9 @@ router.get('/:tableKey', async (req, res) => {
       config,
       periodeId: periodeId || '',
       baris,
-      editRow
+      editRow,
+      autoInfo: AUTO_INFO[config.key] || null,
+      info: req.query.info || ''
     });
   } catch (error) {
     console.error('Error memuat tabel LKPS:', error);
@@ -181,6 +184,22 @@ router.post('/:tableKey', async (req, res) => {
   } catch (error) {
     console.error('Error menambah baris tabel LKPS:', error);
     res.status(500).send('Gagal menambah baris');
+  }
+});
+
+// Isi otomatis dari data yang sudah ada di sistem (hanya menambah baris yang belum ada)
+router.post('/:tableKey/isi-otomatis', async (req, res) => {
+  try {
+    const config = getTabelConfig(req.params.tableKey);
+    if (!config || !AUTO_INFO[config.key]) return res.status(404).send('Tabel ini tidak mendukung isi otomatis');
+    const { periodeId } = req.body;
+    if (!periodeId) return res.status(400).send('periodeId wajib diisi');
+    const hasil = await isiOtomatis(config.key, periodeId, config.collection);
+    const info = `Isi otomatis selesai: ${hasil.ditambah} baris ditambahkan, ${hasil.dilewati} dilewati (sudah ada).`;
+    res.redirect(`/admin/akreditasi/tabel/${config.key}?periodeId=${periodeId}&info=${encodeURIComponent(info)}`);
+  } catch (error) {
+    console.error('Error isi otomatis tabel LKPS:', error);
+    res.status(500).send('Gagal mengisi otomatis: ' + error.message);
   }
 });
 
