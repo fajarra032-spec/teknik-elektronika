@@ -1,0 +1,133 @@
+<%- include('../../partials/header') %>
+<% const base = `/${role}/akreditasi`; const id = D.identitas; const KON = D.KONSENTRASI; const jn = D.JENIS; %>
+<style>
+  .kur-nav a { font-size: .85rem; }
+  .matriks td, .matriks th { text-align: center; vertical-align: middle; font-size: .78rem; padding: .25rem .35rem; white-space: nowrap; }
+  .matriks td.l { text-align: left; white-space: normal; min-width: 220px; }
+  .matriks .yes { background: #d1e7dd; font-weight: 700; }
+  .mk-pill { font-size: .7rem; }
+  @media print { .no-print { display: none !important; } }
+</style>
+<div class="container-fluid px-4 mt-4 mb-5">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h2 class="mb-0">Dokumen Kurikulum 2024</h2>
+      <small class="text-muted">D3 Teknik Elektronika, Politeknik Dewantara &middot; SK <%= id.skKurikulum %> (<%= id.tglSkKurikulum %>). Data dari dokumen kurikulum, tersimpan tetap di web untuk bahan LED/LKPS.</small>
+    </div>
+    <div class="d-flex gap-2 flex-wrap no-print">
+      <button onclick="window.print()" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer"></i> Cetak</button>
+      <a href="/dokumen/kurikulum" target="_blank" class="btn btn-outline-primary btn-sm"><i class="bi bi-box-arrow-up-right"></i> Halaman publik</a>
+      <a href="<%= base %>/master" class="btn btn-outline-secondary btn-sm"><i class="bi bi-journal-check"></i> Master Dokumen</a>
+      <a href="<%= base %>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Kembali</a>
+    </div>
+  </div>
+
+  <div class="kur-nav d-flex flex-wrap gap-1 mt-3 no-print">
+    <% [['identitas','Identitas & VMTS'],['cpl','Profil & CPL'],['struktur','Struktur & SKS'],['matriks','Matriks CPL'],['cakupan','Cakupan CPL'],['magang','Magang & Penilaian'],['deskripsi','Deskripsi MK']].concat(catatan.length ? [['catatan','Catatan Perbaikan']] : []).forEach(n => { %>
+      <a href="#<%= n[0] %>" class="btn btn-sm btn-outline-secondary"><%= n[1] %></a>
+    <% }) %>
+  </div>
+
+  <!-- ===== Pemeriksaan otomatis ===== -->
+  <div class="card mt-3"><div class="card-body py-2">
+    <div class="fw-bold small mb-1"><i class="bi bi-clipboard-check me-1"></i>Pemeriksaan otomatis angka kurikulum</div>
+    <% pemeriksaan.forEach(c => { %><div class="small <%= c.ok ? 'text-success' : 'text-danger' %>"><i class="bi bi-<%= c.ok ? 'check-circle' : 'x-circle' %> me-1"></i><%= c.teks %></div><% }) %>
+  </div></div>
+
+  <!-- ===== Identitas & VMTS ===== -->
+  <h4 class="mt-4" id="identitas">Identitas Program Studi</h4>
+  <table class="table table-sm table-bordered bg-white" style="max-width:900px;"><tbody>
+    <% [['Unit pengelola', id.unitPengelola],['Jenjang', id.jenjang],['Nama program studi', id.namaProdi],['Gelar', id.gelar],['Alamat', id.alamat],['Telepon', id.telepon],['E-mail', id.email],['Website', id.website],
+        ['SK pendirian PT', `${id.skPendirianPT} (${id.tglSkPendirianPT})`],['SK pembukaan PS', id.skPembukaanPS ? `${id.skPembukaanPS} (${id.tglSkPembukaanPS})` : ''],['Akreditasi', id.akreditasi],['No. SK akreditasi', id.skAkreditasi],['Masa berlaku akreditasi', id.masaBerlakuAkreditasi],
+        ['Beban studi', `${id.totalSks} SKS, ${id.totalSemester} semester`],['Pendekatan kurikulum', id.pendekatan]].forEach(r => { %>
+      <tr><th style="width:230px;" class="table-light"><%= r[0] %></th><td><%= r[1] %><% if (!r[1]) { %><span class="badge bg-warning text-dark">belum diisi di dokumen</span><% } %></td></tr>
+    <% }) %>
+  </tbody></table>
+  <p class="small"><strong>Visi program studi:</strong> <%= D.visi %></p>
+
+  <!-- ===== Profil & CPL ===== -->
+  <h4 class="mt-4" id="cpl">Profil Lulusan dan CPL</h4>
+  <div class="row g-3">
+    <div class="col-lg-4"><ol class="small"><% D.profilLulusan.forEach(p => { %><li><%= p %></li><% }) %></ol></div>
+    <div class="col-lg-8"><table class="table table-sm table-bordered bg-white small"><tbody>
+      <% D.cpl.forEach(c => { %><tr><th class="table-light" style="width:80px;"><%= c.kode %></th><td><%= c.ringkas %></td></tr><% }) %>
+    </tbody></table><div class="form-text">Ringkasan CPL. Rumusan lengkap ada di halaman publik Kurikulum.</div></div>
+  </div>
+
+  <!-- ===== Struktur ===== -->
+  <h4 class="mt-4" id="struktur">Struktur Mata Kuliah dan SKS</h4>
+  <div class="row g-3">
+    <% KON.forEach(k => { const sem = K.perSemester(k); %>
+      <div class="col-xl-6">
+        <div class="card"><div class="card-header fw-bold">Konsentrasi <%= k %> (semester 3 berbeda; semester lain sama)</div>
+        <div class="table-responsive"><table class="table table-sm mb-0 small">
+          <thead class="table-light"><tr><th>Sem</th><th>Kode</th><th>Mata Kuliah</th><th>Jenis</th><th class="text-center">T</th><th class="text-center">P</th><th class="text-center">SKS</th></tr></thead>
+          <tbody>
+            <% sem.forEach(s => { s.mk.forEach((m, i) => { %>
+              <tr><td><%= i === 0 ? s.semester : '' %></td><td><%= m.kode %></td><td><%= m.nama %></td><td><%= jn[m.jenis] %></td><td class="text-center"><%= m.teori %></td><td class="text-center"><%= m.praktik %></td><td class="text-center"><%= m.sks %></td></tr>
+            <% }); %>
+              <tr class="table-secondary"><td colspan="4" class="text-end">Total semester <%= s.semester %></td><td class="text-center"><%= s.teori %></td><td class="text-center"><%= s.praktik %></td><td class="text-center fw-bold"><%= s.sks %></td></tr>
+            <% }) %>
+          </tbody>
+        </table></div></div>
+      </div>
+    <% }) %>
+  </div>
+
+  <!-- ===== Matriks ===== -->
+  <h4 class="mt-4" id="matriks">Matriks CPL dengan Mata Kuliah</h4>
+  <p class="small text-muted">Hijau = mata kuliah tersebut dipetakan ke CPL (Tabel 11-15 dokumen). Ditampilkan per konsentrasi karena MK semester 3 berbeda.</p>
+  <% KON.forEach(k => { const m = K.matriks(k); %>
+    <div class="fw-bold mt-3">Konsentrasi <%= k %></div>
+    <div class="table-responsive"><table class="table table-bordered matriks bg-white">
+      <thead class="table-light"><tr><th class="l">CPL</th><% m.kolom.forEach(c => { %><th title="<%= c.nama %>"><%= c.kode %></th><% }) %><th>&Sigma;</th></tr></thead>
+      <tbody><% m.baris.forEach(b => { %>
+        <tr><td class="l"><b><%= b.cpl %></b> <span class="text-muted"><%= b.ringkas.slice(0, 60) %>...</span></td>
+          <% b.tanda.forEach(t => { %><td class="<%= t ? 'yes' : '' %>"><%= t ? '\u2713' : '' %></td><% }) %>
+          <td><b><%= b.tanda.filter(Boolean).length %></b></td></tr>
+      <% }) %></tbody>
+    </table></div>
+  <% }) %>
+
+  <!-- ===== Cakupan ===== -->
+  <h4 class="mt-4" id="cakupan">Cakupan CPL per Kelompok Mata Kuliah</h4>
+  <div class="row g-3">
+    <% KON.forEach(k => { const c = K.cakupanCpl(k); %>
+      <div class="col-lg-6"><div class="card"><div class="card-header fw-bold">Konsentrasi <%= k %></div>
+        <table class="table table-sm mb-0 small text-center">
+          <thead class="table-light"><tr><th class="text-start">CPL</th><th>WUD</th><th>PD</th><th>PEK</th><th>WP</th><th>Total MK</th></tr></thead>
+          <tbody><% c.baris.forEach(b => { %><tr class="<%= b.jumlah <= 4 ? 'table-warning' : '' %>"><td class="text-start"><%= b.cpl %></td><td><%= b.perJenis.WUD %></td><td><%= b.perJenis.PD %></td><td><%= b.perJenis.PEK %></td><td><%= b.perJenis.WP %></td><td><b><%= b.jumlah %></b></td></tr><% }) %></tbody>
+        </table><div class="card-footer small text-muted">Baris kuning: didukung 4 mata kuliah atau kurang.</div></div></div>
+    <% }) %>
+  </div>
+
+  <!-- ===== Magang ===== -->
+  <h4 class="mt-4" id="magang">Praktik Dunia Kerja dan Penilaian</h4>
+  <div class="row g-3">
+    <div class="col-lg-6"><table class="table table-sm table-bordered bg-white small"><thead class="table-light"><tr><th>Kegiatan</th><th>Sem</th><th>SKS</th><th>Fokus</th></tr></thead><tbody>
+      <% D.rekognisiPdk.forEach(r => { %><tr><td><%= r.kegiatan %></td><td><%= r.semester %></td><td><%= r.sks %></td><td><%= r.fokus %></td></tr><% }) %></tbody></table></div>
+    <div class="col-lg-6"><table class="table table-sm table-bordered bg-white small"><thead class="table-light"><tr><th>Komponen penilaian magang</th><th>Bobot</th><th>Indikator</th></tr></thead><tbody>
+      <% D.penilaianMagang.forEach(p => { %><tr><td><%= p.komponen %></td><td><%= p.bobot %>%</td><td><%= p.indikator %></td></tr><% }) %></tbody></table></div>
+  </div>
+
+  <!-- ===== Deskripsi MK ===== -->
+  <h4 class="mt-4" id="deskripsi">Deskripsi Mata Kuliah</h4>
+  <div class="table-responsive"><table class="table table-sm table-bordered bg-white small"><thead class="table-light"><tr><th style="width:110px;">Kode</th><th style="width:260px;">Mata Kuliah</th><th>Deskripsi</th></tr></thead><tbody>
+    <% D.MK.forEach(m => { %><tr><td><%= m.kode %></td><td><%= m.nama %><% if (m.konsentrasi) { %> <span class="badge bg-light text-dark border mk-pill"><%= m.konsentrasi %></span><% } %></td><td><%= D.deskripsiMk[m.kode] || '' %></td></tr><% }) %>
+  </tbody></table></div>
+
+  <!-- ===== Catatan (admin) ===== -->
+  <% if (catatan.length) { %>
+    <h4 class="mt-4" id="catatan"><i class="bi bi-exclamation-triangle text-warning me-1"></i>Catatan Perbaikan Dokumen (untuk persiapan akreditasi)</h4>
+    <div class="list-group mb-4">
+      <% catatan.forEach(c => { %>
+        <div class="list-group-item">
+          <span class="badge bg-<%= c.tingkat === 'tinggi' ? 'danger' : (c.tingkat === 'sedang' ? 'warning text-dark' : 'secondary') %> me-2"><%= c.tingkat %></span><strong><%= c.judul %></strong>
+          <div class="small mt-1"><%= c.isi %></div>
+          <% if (c.sumber) { %><div class="small text-muted mt-1">Sumber: <%= c.sumber %></div><% } %>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+<%- include('../../partials/footer') %>

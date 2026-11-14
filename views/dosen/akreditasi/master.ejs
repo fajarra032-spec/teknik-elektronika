@@ -61,6 +61,8 @@
                     <td>
                       <%= i.nama %>
                       <% if (i.keterangan) { %><div class="text-muted small"><%= i.keterangan %></div><% } %>
+                      <% if (i.kurikulumBagian) { %><div class="small text-muted"><i class="bi bi-link-45deg"></i> <%= i.kurikulumKet %> &middot; <a href="/dosen/akreditasi/kurikulum#<%= i.kurikulumBagian %>">Lihat</a><% if (i.statusDariKurikulum) { %> &middot; <span class="text-primary">status awal otomatis, ubah bila perlu</span><% } %></div><% } %>
+                      <% if (i.sopKode) { %><div class="small text-muted"><i class="bi bi-link-45deg"></i> <%= i.sopKode %>: <%= i.sopStatus %><% if (i.sopUrl) { %> &middot; <a href="<%= i.sopUrl %>" target="_blank">Buka SOP</a><% } %></div><% } %>
                       <% if (i.catatan) { %><div class="small text-primary"><i class="bi bi-sticky me-1"></i><%= i.catatan %></div><% } %>
                     </td>
                     <td>

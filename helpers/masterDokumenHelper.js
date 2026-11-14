@@ -10,6 +10,8 @@ const drive = require('../config/googleDrive');
 const { Readable } = require('stream');
 const { getOrCreateSubFolder, DATA_WEB_FOLDER_ID } = require('./akreditasiHelper');
 const { MASTER_DOKUMEN, STATUS_MASTER, flattenTemplate } = require('./masterDokumenConfig');
+const { infoSopPerJudul } = require('./sopMasterMap');
+const { PETA_MASTER: PETA_KURIKULUM } = require('./kurikulumHelper');
 
 const COL = 'akreditasi_master';
 
@@ -35,7 +37,27 @@ async function seedMasterDokumen(periodeId) {
 
 async function getMasterItems(periodeId) {
   const snap = await db.collection(COL).where('periodeId', '==', periodeId).get();
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // Item SOP (kelompok B) yang terpetakan ke Buku Induk SOP: status DIAMBIL dari Buku Induk SOP
+  // (sumber tunggal), bukan dari isian manual di Master Dokumen.
+  let sop = {};
+  try { sop = await infoSopPerJudul(); } catch (e) { console.error('Gagal membaca status SOP:', e.message); }
+  items.forEach(i => {
+    const s = sop[i.nama];
+    if (i.kelompok === 'B' && s) {
+      i.statusManual = i.status;
+      i.status = s.statusMaster;
+      i.sopKode = s.kode; i.sopStatus = s.status; i.sopUrl = s.url; i.sopVersi = s.versi;
+    }
+    // Item yang isinya sudah ada di Dokumen Kurikulum 2024: status awal "Ada" selama admin belum mengubahnya
+    // (pilihan manual admin selalu menang). Disahkan/draft tidak ditimpa.
+    const kur = PETA_KURIKULUM[i.nama];
+    if (kur && !i.sopKode) {
+      i.kurikulumBagian = kur.bagian; i.kurikulumKet = kur.ket;
+      if (i.status === 'belum') { i.statusManual = i.status; i.status = kur.status; i.statusDariKurikulum = true; }
+    }
+  });
+  return items;
 }
 
 /** Kelompokkan item per kelompok A-L (mengikuti urutan template) + progres tiap kelompok. */

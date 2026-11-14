@@ -1,0 +1,28 @@
+DOKUMEN KURIKULUM 2024 DI WORKSPACE AKREDITASI (data hardcoded dari PDF)
+========================================================================
+Paket KUMULATIF: sudah memuat perbaikan mount Master Dokumen dan integrasi Buku Induk SOP dari paket
+sebelumnya, jadi cukup pasang paket ini. Dibuat dari scripts.zip terbaru. Restart aplikasi setelah dipasang.
+Tanpa indeks Firestore dan paket npm baru.
+
+CARA PASANG
+  Opsi A: timpa semua file (syarat: app.js Anda masih sama dengan yang ada di scripts.zip).
+  Opsi B (app.js sudah Anda ubah): timpa semua KECUALI app.js, lalu dari folder proyek jalankan:
+      node scripts/pasang-master-akreditasi.js
+      node scripts/pasang-kurikulum-akreditasi.js
+  (masing-masing aman diulang dan membuat cadangan app.js.bak-...)
+
+YANG BARU
+  Halaman  /admin/akreditasi/kurikulum  dan  /dosen/akreditasi/kurikulum  (tombol "Dokumen Kurikulum 2024"
+  di dashboard akreditasi): identitas prodi, profil & CPL, struktur MK per konsentrasi dengan cek SKS,
+  Matriks CPL-MK (Tabel 11-15 dokumen; sebelumnya belum ada di web), cakupan CPL, penilaian magang,
+  deskripsi 28 MK, dan (khusus admin) Catatan Perbaikan Dokumen.
+  Data hardcoded: data/kurikulum/kurikulum2024.js. Kurikulum direvisi = ubah file itu.
+  Halaman publik /dokumen/kurikulum TIDAK diubah.
+
+INTEGRASI
+  Tabel 1 LKPS, tombol Isi Otomatis: sekarang berdasarkan Dokumen Kurikulum 2024 (28 MK, termasuk dua
+  konsentrasi), bukan koleksi mataKuliah. Koleksi mataKuliah hanya dipakai mengecek RPS. Baris yang sudah
+  ada tidak ditimpa. SKS diisi total (teori+praktik).
+  Master Dokumen: 6 item yang isinya sudah ada di kurikulum (VMTS, Dokumen Kurikulum, Profil Lulusan, CPL,
+  Matriks CPL-MK, Peta kurikulum) berstatus awal "Ada (belum disahkan)" selama belum Anda ubah. Pilihan manual
+  Anda selalu menang. Ubah ke "Lengkap & Disahkan" setelah SK dibereskan (lihat catatan nomor 2).

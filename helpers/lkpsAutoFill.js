@@ -13,7 +13,7 @@
 const { db } = require('../config/firebaseAdmin');
 
 const AUTO_INFO = {
-  tabel1: { sumber: 'data Mata Kuliah', diisi: 'semester, kode MK, nama MK, SKS kuliah, status dokumen RPS, unit penyelenggara (Prodi)', manual: 'MK kompetensi inti, SKS seminar, konversi jam' },
+  tabel1: { sumber: 'Dokumen Kurikulum 2024 (+ cek RPS di data Mata Kuliah)', diisi: 'semester, kode, nama, SKS (total teori + praktik), MK inti keahlian, status dokumen RPS, unit penyelenggara (Prodi)', manual: 'SKS seminar, konversi jam, dan pemisahan SKS kuliah vs praktik bila instrumen meminta' },
   tabel5: { sumber: 'data Dosen', diisi: 'nama, NIP/NIDN, MK yang diampu', manual: 'kategori dosen, pendidikan, bidang keahlian, jabatan akademik, sertifikat, homebase PDDikti' },
   tabel6: { sumber: 'Inventaris Alat Lab', diisi: 'nama alat, lokasi (prasarana), jumlah, kondisi baik/rusak', manual: 'jumlah prasarana, kepemilikan, logbook penggunaan, rata-rata jam/minggu' }
 };
@@ -37,35 +37,39 @@ async function simpanBaris(collection, periodeId, rows, sumber) {
 }
 
 async function isiTabel1(periodeId, collection) {
-  const mkSnap = await db.collection('mataKuliah').orderBy('kode').get();
+  // Sumber: Dokumen Kurikulum 2024 yang di-hardcode (data/kurikulum/kurikulum2024.js), bukan koleksi mataKuliah,
+  // supaya daftar MK mengikuti kurikulum resmi. Koleksi mataKuliah hanya dipakai untuk mengecek RPS tersimpan.
+  const kur = require('../data/kurikulum/kurikulum2024');
   const ada = new Set((await barisAda(collection, periodeId)).map(r => norm(r.kodeMk)));
+  const agamaSudahAda = ['WUD2201', 'WUD2202', 'WUD2203', 'WUD2204', 'WUD2205'].some(k => ada.has(norm(k))); // baris lama dari DB
 
-  // Satu MK bisa punya beberapa dokumen (per kelas) -> ambil satu per kode.
-  const perKode = new Map();
-  mkSnap.docs.forEach(d => { const m = d.data(); if (m.kode && !perKode.has(norm(m.kode))) perKode.set(norm(m.kode), { id: d.id, ...m }); });
-  const calon = [...perKode.values()].filter(m => !ada.has(norm(m.kode)));
+  const mkSnap = await db.collection('mataKuliah').get();
+  const idPerKode = {};
+  mkSnap.docs.forEach(d => { const k = norm(d.data().kode); if (k) (idPerKode[k] = idPerKode[k] || []).push(d.id); });
+  const kodeRps = k => (k === 'WUD2201-5' ? ['WUD2201', 'WUD2202', 'WUD2203', 'WUD2204', 'WUD2205'] : [k]);
 
-  // Cek RPS tersimpan (dibaca paralel per 100 dokumen)
-  const rpsAda = {};
-  for (let i = 0; i < calon.length; i += 100) {
-    const chunk = calon.slice(i, i + 100);
-    const docs = await db.getAll(...chunk.map(m => db.collection('mataKuliah').doc(m.id).collection('rps').doc('utama')));
-    docs.forEach((doc, idx) => { rpsAda[chunk[idx].id] = doc.exists; });
+  const calon = kur.MK.filter(m => !ada.has(norm(m.kode)) && !(m.kode === 'WUD2201-5' && agamaSudahAda));
+  const punyaRps = {};
+  for (const m of calon) {
+    const ids = kodeRps(m.kode).flatMap(k => idPerKode[norm(k)] || []);
+    if (!ids.length) { punyaRps[m.kode] = false; continue; }
+    const docs = await db.getAll(...ids.map(id => db.collection('mataKuliah').doc(id).collection('rps').doc('utama')));
+    punyaRps[m.kode] = docs.some(d => d.exists);
   }
 
   const rows = calon.map(m => ({
-    semester: m.semester != null ? Number(m.semester) : null,
+    semester: m.semester,
     kodeMk: m.kode,
-    namaMk: m.nama || '',
-    mkKompetensi: false,
-    bobotKuliah: m.sks != null ? Number(m.sks) : null,
+    namaMk: m.konsentrasi ? `${m.nama} (Konsentrasi ${m.konsentrasi})` : m.nama,
+    mkKompetensi: m.jenis === 'PEK',
+    bobotKuliah: m.sks,
     bobotSeminar: null,
     konversiJam: null,
-    dokumenRps: rpsAda[m.id] ? 'Ada' : 'Tidak Ada',
+    dokumenRps: punyaRps[m.kode] ? 'Ada' : 'Tidak Ada',
     unitPenyelenggara: 'Prodi'
   }));
-  await simpanBaris(collection, periodeId, rows, 'mataKuliah');
-  return { ditambah: rows.length, dilewati: perKode.size - rows.length, catatan: 'Status RPS "Ada" = RPS sudah disimpan dosen di web; selain itu ditandai "Tidak Ada" (periksa lagi).' };
+  await simpanBaris(collection, periodeId, rows, 'kurikulum2024');
+  return { ditambah: rows.length, dilewati: kur.MK.length - rows.length, catatan: 'Daftar MK dari Dokumen Kurikulum 2024. "Dokumen RPS" = Ada hanya jika RPS sudah disimpan dosen di web; SKS diisi total (teori + praktik).' };
 }
 
 async function isiTabel5(periodeId, collection) {
