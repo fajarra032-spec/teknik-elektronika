@@ -31,3 +31,6 @@ Lihat bagian konfirmasi di tiap file detail (juga tampil bagi admin di halaman S
 
 ## Pembaruan 14 November 2026
 SOP baru: SOP-TE-002 (KRS) dan SOP-TE-012 (Penyelesaian Studi). Bila modul sudah terpasang, cukup salin folder data/sop (master.js dan detail/*.js) lalu restart; tidak ada file lain yang berubah.
+
+## Pembaruan 14 November 2026 (2)
+SOP baru: SOP-TE-029 (Persuratan Mahasiswa) dan SOP-TE-033 (Penugasan Mengajar dan Penerbitan SK; akses internal dosen/admin). Bila modul sudah terpasang, cukup salin folder data/sop lalu restart.

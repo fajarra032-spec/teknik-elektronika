@@ -362,7 +362,7 @@ module.exports = [
     "prioritas": 1,
     "statusAwal": "Belum ada",
     "catatan": "Mencakup SK mengajar, SK PA, SK pembimbing.",
-    "akses": "publik"
+    "akses": "internal"
   },
   {
     "kode": "SOP-TE-034",
