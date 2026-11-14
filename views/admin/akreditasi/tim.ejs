@@ -1,0 +1,60 @@
+<%- include('../../partials/header') %>
+<% const base = `/${role}/akreditasi`; const prog = Object.fromEntries(ringkas.map(r => [r.nama, r])); %>
+<div class="container mt-4 mb-5">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h2 class="mb-0">Tim Persiapan Akreditasi</h2>
+      <small class="text-muted">Program Studi D3 Teknik Elektronika &middot; SK No. <%= T.sk.nomor %> (<%= T.sk.tanggal %>)</small>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="<%= base %>/master" class="btn btn-primary btn-sm"><i class="bi bi-journal-check me-1"></i>Pusat Data Dokumen (Master Dokumen)</a>
+      <a href="<%= base %>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Kembali</a>
+    </div>
+  </div>
+
+  <div class="card mt-3"><div class="card-body small">
+    <div><strong>Tentang:</strong> <%= T.sk.tentang %></div>
+    <div><strong>Ditetapkan oleh:</strong> <%= T.sk.penetap %></div>
+    <div><strong>Masa berlaku:</strong> <%= T.sk.berlaku %></div>
+  </div></div>
+
+  <h5 class="mt-4">Susunan Tim dan Bidang Tanggung Jawab</h5>
+  <div class="table-responsive"><table class="table table-bordered bg-white align-middle">
+    <thead class="table-light"><tr><th>Nama</th><th>Jabatan</th><th>Bidang tanggung jawab</th><% if (ringkas.length) { %><th style="width:200px;">Kesiapan dokumen<%= periode ? ' (' + periode.nama + ')' : '' %></th><% } %></tr></thead>
+    <tbody>
+      <% T.anggota.forEach(a => { const p = prog[a.nama]; %>
+        <tr>
+          <td><strong><%= a.nama %></strong><div class="small text-muted"><%= a.idTipe %>: <%= a.id %></div></td>
+          <td><%= a.jabatan %></td>
+          <td class="small"><% a.bidang.forEach(b => { %><div><span class="badge bg-secondary me-1"><%= b %></span><%= T.BIDANG[b] %></div><% }) %></td>
+          <% if (ringkas.length) { %><td><% if (p) { %><div class="progress" style="height:16px;"><div class="progress-bar bg-success" style="width: <%= p.persen %>%;"><%= p.persen %>%</div></div><div class="small text-muted"><%= p.disahkan %>/<%= p.total %> disahkan</div><% } %></td><% } %>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table></div>
+
+  <h5 class="mt-4">Tugas Tim</h5>
+  <ol class="small"><% T.tugasTim.forEach(t => { %><li><%= t %></li><% }) %></ol>
+
+  <h5 class="mt-4">Tugas Khusus per Anggota</h5>
+  <div class="row g-3">
+    <% T.anggota.forEach(a => { %>
+      <div class="col-lg-6"><div class="card h-100"><div class="card-header py-2"><strong><%= a.nama %></strong> <span class="badge bg-light text-dark border ms-1"><%= a.jabatan %></span></div>
+        <ul class="small mb-0 py-2"><% a.tugas.forEach(t => { %><li><%= t %></li><% }) %></ul></div></div>
+    <% }) %>
+  </div>
+
+  <h5 class="mt-4">Ketentuan Pelaksanaan</h5>
+  <ol class="small"><% T.ketentuan.forEach(k => { %><li><%= k %></li><% }) %></ol>
+  <div class="alert alert-info small">Ketentuan no. 3 dan 4 diterapkan di halaman <a href="<%= base %>/master">Master Dokumen</a>: tiap dokumen punya kolom <em>sumber</em>, <em>periode data</em>, dan berkas bukti, dan seluruh dokumen dikumpulkan di satu tempat sebagai Pusat Data Dokumen prodi.</div>
+
+  <% if (catatan.length) { %>
+    <h5 class="mt-4"><i class="bi bi-exclamation-triangle text-warning me-1"></i>Catatan Pemeriksaan SK</h5>
+    <div class="list-group mb-4">
+      <% catatan.forEach(c => { %>
+        <div class="list-group-item"><span class="badge bg-<%= c.tingkat === 'sedang' ? 'warning text-dark' : 'secondary' %> me-2"><%= c.tingkat %></span><strong><%= c.judul %></strong><div class="small mt-1"><%= c.isi %></div></div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+<%- include('../../partials/footer') %>

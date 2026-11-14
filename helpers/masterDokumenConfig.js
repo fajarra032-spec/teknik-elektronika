@@ -33,6 +33,7 @@ const MASTER_DOKUMEN = [
       'SK koordinator laboratorium',
       'SK tim kurikulum',
       'SK tim penjaminan mutu / tim mutu prodi',
+      'SK Tim Persiapan Akreditasi | SK Kaprodi No. 5666/ELK/POLIDEWA/XI/2026 (14 November 2026)',
       'SK pembimbing dan penguji magang',
       'Daftar dosen beserta bidang keahlian'
     ]

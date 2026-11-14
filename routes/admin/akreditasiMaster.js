@@ -12,7 +12,7 @@ const { db } = require('../../config/firebaseAdmin');
 const { hapusFileDrive } = require('../../helpers/akreditasiHelper');
 const { MASTER_DOKUMEN } = require('../../helpers/masterDokumenConfig');
 const {
-  COL, seedMasterDokumen, getMasterItems, groupMaster, hitungProgresMaster,
+  COL, seedMasterDokumen, sinkronTemplate, ringkasTim, getMasterItems, groupMaster, hitungProgresMaster,
   uploadBuktiMaster, masterToCsv, STATUS_MASTER
 } = require('../../helpers/masterDokumenHelper');
 
@@ -29,10 +29,11 @@ router.get('/', async (req, res) => {
     const periodeId = req.query.periodeId || (periodeList[0] && periodeList[0].id) || null;
     let items = [];
     if (periodeId) items = await getMasterItems(periodeId);
+    const grouped = groupMaster(items);
     res.render('admin/akreditasi/master', {
       title: 'Master Dokumen Prodi',
       periodeList, periodeId,
-      grouped: groupMaster(items),
+      grouped, timRingkas: ringkasTim(grouped), info: req.query.info || '',
       total: hitungProgresMaster(items),
       STATUS_MASTER,
       kelompokTemplate: MASTER_DOKUMEN.map(g => ({ kode: g.kode, nama: g.nama }))
@@ -50,6 +51,17 @@ router.post('/seed', async (req, res) => {
   } catch (error) {
     console.error('Error seed master dokumen:', error);
     res.status(500).send('Gagal menyiapkan template master dokumen');
+  }
+});
+
+router.post('/sinkron-template', async (req, res) => {
+  try {
+    const n = await sinkronTemplate(req.body.periodeId);
+    const info = n ? `${n} dokumen template baru ditambahkan.` : 'Template sudah lengkap, tidak ada yang ditambahkan.';
+    res.redirect(`/admin/akreditasi/master?periodeId=${req.body.periodeId}&info=${encodeURIComponent(info)}`);
+  } catch (error) {
+    console.error('Error sinkron template master:', error);
+    res.status(500).send('Gagal memperbarui template');
   }
 });
 
@@ -83,6 +95,8 @@ router.post('/item/:id/update', async (req, res) => {
     await ref.update({
       status,
       picNama: (req.body.picNama || '').trim(),
+      sumber: (req.body.sumber || '').trim(),
+      periodeData: (req.body.periodeData || '').trim(),
       catatan: (req.body.catatan || '').trim(),
       updatedBy: req.user.nama || req.user.email,
       updatedAt: new Date().toISOString()

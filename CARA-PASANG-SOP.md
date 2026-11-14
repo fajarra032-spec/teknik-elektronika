@@ -46,3 +46,6 @@ SOP baru: SOP-TE-041 (Pengendalian Dokumen dan Arsip) dan SOP-TE-042 (Pengumpula
 
 ## Pembaruan 14 November 2026 (6)
 SOP baru: SOP-TE-015 (Penggunaan Lab, Praktikum, dan Modul/LKM) dan SOP-TE-019 (K3, Kecelakaan, Limbah Elektronik). Buku Induk (master.js) diperbarui: modul inspeksi dan servisan ternyata kegiatan PkM (bukan K3/lab), sehingga SOP-TE-017 menjadi Penanganan Kerusakan Alat Laboratorium dan servisan dan inspeksi dipindah ke SOP-TE-036. Bila modul sudah terpasang, cukup salin folder data/sop lalu restart.
+
+## Pembaruan 14 November 2026 (7)
+SOP baru: SOP-TE-006 (Pelaporan Nilai dan Revisi Nilai), SOP-TE-022 (Magang Luar Negeri), SOP-TE-024 (Penanganan Masalah Magang). Perubahan lain: data/sop/index.js (SOP-TE-006 kini memakai halaman detail baru, halaman lama menjadi rujukan) dan views/sop/detail.ejs (menampilkan bagian Rujukan Terkait). Bila modul sudah terpasang, salin folder data/sop dan views/sop lalu restart.

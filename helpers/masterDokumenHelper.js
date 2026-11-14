@@ -11,6 +11,7 @@ const { Readable } = require('stream');
 const { getOrCreateSubFolder, DATA_WEB_FOLDER_ID } = require('./akreditasiHelper');
 const { MASTER_DOKUMEN, STATUS_MASTER, flattenTemplate } = require('./masterDokumenConfig');
 const { infoSopPerJudul } = require('./sopMasterMap');
+const TIM = require('../data/akreditasi/timPersiapan');
 const { PETA_MASTER: PETA_KURIKULUM } = require('./kurikulumHelper');
 
 const COL = 'akreditasi_master';
@@ -51,6 +52,13 @@ async function getMasterItems(periodeId) {
     }
     // Item yang isinya sudah ada di Dokumen Kurikulum 2024: status awal "Ada" selama admin belum mengubahnya
     // (pilihan manual admin selalu menang). Disahkan/draft tidak ditimpa.
+    // Penanggung jawab kelompok menurut SK Tim Persiapan Akreditasi (No. 5666/ELK/POLIDEWA/XI/2026)
+    const pj = TIM.pjPerBidang[i.kelompok];
+    if (pj) { i.pjNama = pj.nama; i.pjJabatan = pj.jabatan; }
+    if (i.nama === 'SK Tim Persiapan Akreditasi') {
+      i.timKet = `SK ${TIM.sk.nomor}, ${TIM.sk.tanggal}`;
+      if (i.status === 'belum') { i.statusManual = i.status; i.status = 'disahkan'; i.statusDariKurikulum = true; }
+    }
     const kur = PETA_KURIKULUM[i.nama];
     if (kur && !i.sopKode) {
       i.kurikulumBagian = kur.bagian; i.kurikulumKet = kur.ket;
@@ -70,7 +78,7 @@ function groupMaster(items) {
     const list = byKode[kode].sort((a, b) =>
       (a.sub || '').localeCompare(b.sub || '') || (a.urutan || 0) - (b.urutan || 0));
     const tpl = MASTER_DOKUMEN.find(g => g.kode === kode);
-    return { kode, nama: (tpl && tpl.nama) || list[0].kelompokNama || kode, items: list, progres: hitungProgresMaster(list) };
+    return { kode, nama: (tpl && tpl.nama) || list[0].kelompokNama || kode, items: list, progres: hitungProgresMaster(list), pj: TIM.pjPerBidang[kode] || null };
   });
 }
 
@@ -104,15 +112,42 @@ async function uploadBuktiMaster({ periodeId, kelompok, file }) {
   };
 }
 
+/** Progres per anggota Tim Persiapan Akreditasi (gabungan kelompok yang menjadi tanggung jawabnya). */
+function ringkasTim(grouped) {
+  const per = Object.fromEntries(grouped.map(g => [g.kode, g]));
+  return TIM.anggota.map(a => {
+    const gs = a.bidang.map(k => per[k]).filter(Boolean);
+    const total = gs.reduce((x, g) => x + g.progres.total, 0);
+    const disahkan = gs.reduce((x, g) => x + g.progres.disahkan, 0);
+    const ada = gs.reduce((x, g) => x + g.progres.ada, 0);
+    return { nama: a.nama, jabatan: a.jabatan, bidang: a.bidang, kelompok: gs.map(g => ({ kode: g.kode, nama: g.nama, persen: g.progres.persen, total: g.progres.total })),
+      total, disahkan, ada, persen: total ? Math.round(((disahkan + ada * 0.5) / total) * 100) : 0 };
+  });
+}
+
+/** Tambahkan item template yang belum ada pada periode lama (tidak menyentuh item yang sudah ada). */
+async function sinkronTemplate(periodeId) {
+  const sudah = await db.collection(COL).where('periodeId', '==', periodeId).get();
+  const ada = new Set(sudah.docs.map(d => `${d.data().kelompok}|${d.data().nama}`));
+  const baru = flattenTemplate().filter(t => !ada.has(`${t.kelompok}|${t.nama}`));
+  const now = new Date().toISOString();
+  for (let i = 0; i < baru.length; i += 400) {
+    const batch = db.batch();
+    baru.slice(i, i + 400).forEach(t => batch.set(db.collection(COL).doc(), { periodeId, ...t, status: 'belum', picNama: '', catatan: '', sumber: '', periodeData: '', fileId: null, fileUrl: null, fileName: null, createdAt: now, updatedAt: now }));
+    await batch.commit();
+  }
+  return baru.length;
+}
+
 function masterToCsv(grouped, periodeNama) {
   const esc = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
   const lines = [`Master Dokumen Prodi - ${periodeNama}`, '',
-    ['Kelompok', 'Sub', 'Dokumen', 'Keterangan', 'Status', 'Penanggung Jawab', 'Bukti (tautan)', 'Catatan'].map(esc).join(',')];
+    ['Kelompok', 'PJ Tim (SK)', 'Sub', 'Dokumen', 'Keterangan', 'Status', 'PIC', 'Sumber', 'Periode Data', 'Bukti (tautan)', 'Catatan'].map(esc).join(',')];
   grouped.forEach(g => g.items.forEach(i => lines.push([
-    `${g.kode}. ${g.nama}`, i.sub || '', i.nama, i.keterangan || '',
-    (STATUS_MASTER[i.status] || STATUS_MASTER.belum).label, i.picNama || '', i.fileUrl || '', i.catatan || ''
+    `${g.kode}. ${g.nama}`, g.pj ? g.pj.nama : '', i.sub || '', i.nama, i.keterangan || '',
+    (STATUS_MASTER[i.status] || STATUS_MASTER.belum).label, i.picNama || '', i.sumber || '', i.periodeData || '', i.fileUrl || '', i.catatan || ''
   ].map(esc).join(','))));
   return lines.join('\r\n');
 }
 
-module.exports = { COL, seedMasterDokumen, getMasterItems, groupMaster, hitungProgresMaster, uploadBuktiMaster, masterToCsv, STATUS_MASTER };
+module.exports = { COL, seedMasterDokumen, sinkronTemplate, ringkasTim, getMasterItems, groupMaster, hitungProgresMaster, uploadBuktiMaster, masterToCsv, STATUS_MASTER };

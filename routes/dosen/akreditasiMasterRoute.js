@@ -10,7 +10,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { hapusFileDrive } = require('../../helpers/akreditasiHelper');
-const { COL, getMasterItems, groupMaster, hitungProgresMaster, uploadBuktiMaster, STATUS_MASTER } = require('../../helpers/masterDokumenHelper');
+const { COL, ringkasTim, getMasterItems, groupMaster, hitungProgresMaster, uploadBuktiMaster, STATUS_MASTER } = require('../../helpers/masterDokumenHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -20,9 +20,10 @@ router.get('/', async (req, res) => {
     const snap = await db.collection('akreditasi_periode').where('status', '==', 'berjalan').orderBy('createdAt', 'desc').limit(1).get();
     const periode = snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
     const items = periode ? await getMasterItems(periode.id) : [];
+    const grouped = groupMaster(items);
     res.render('dosen/akreditasi/master', {
       title: 'Master Dokumen Prodi', periode,
-      grouped: groupMaster(items), total: hitungProgresMaster(items), STATUS_MASTER
+      grouped, timRingkas: ringkasTim(grouped), total: hitungProgresMaster(items), STATUS_MASTER
     });
   } catch (error) {
     console.error('Error memuat master dokumen (dosen):', error);

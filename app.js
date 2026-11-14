@@ -465,6 +465,10 @@ async function startServer() {
     app.use('/admin/akreditasi/kurikulum', require('./routes/admin/akreditasiKurikulum'));
     app.use('/dosen/akreditasi/kurikulum', require('./routes/dosen/akreditasiKurikulumRoute'));
 
+    // Tim Persiapan Akreditasi (SK 5666/ELK/POLIDEWA/XI/2026)
+    app.use('/admin/akreditasi/tim', require('./routes/admin/akreditasiTim'));
+    app.use('/dosen/akreditasi/tim', require('./routes/dosen/akreditasiTimRoute'));
+
     // Master Dokumen Prodi (buku induk administrasi untuk akreditasi)
     const adminAkreditasiMasterRouter = require('./routes/admin/akreditasiMaster');
     const dosenAkreditasiMasterRouter = require('./routes/dosen/akreditasiMasterRoute');

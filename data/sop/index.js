@@ -11,7 +11,7 @@ fs.readdirSync(dir).filter(f => f.endsWith('.js')).forEach(f => {
 });
 
 // SOP yang sudah ada sebagai halaman tersendiri (bukan dari data/sop/detail)
-const URL_EKSTERNAL = { 'SOP-TE-006': '/dokumen/sop-pelaporan-nilai' };
+const URL_EKSTERNAL = {};
 
 function semua() {
   return master.map(m => ({ ...m, tersedia: !!detail[m.kode], urlEksternal: URL_EKSTERNAL[m.kode] || null }));

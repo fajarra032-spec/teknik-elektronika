@@ -1,0 +1,32 @@
+TIM PERSIAPAN AKREDITASI (SK 5666/ELK/POLIDEWA/XI/2026) DI WORKSPACE AKREDITASI
+================================================================================
+Paket KUMULATIF: memuat semua paket akreditasi sebelumnya (Master Dokumen, integrasi Buku Induk SOP,
+Dokumen Kurikulum 2024). Cukup pasang paket ini. Restart aplikasi setelah dipasang.
+Tanpa indeks Firestore dan paket npm baru.
+
+CARA PASANG
+  Opsi A: timpa semua file (syarat: app.js Anda masih sama dengan yang ada di scripts.zip).
+  Opsi B (app.js sudah Anda ubah): timpa semua KECUALI app.js, lalu dari folder proyek jalankan SATU skrip:
+      node scripts/pasang-akreditasi.js
+  Skrip ini menambah mount Master Dokumen, Kurikulum, dan Tim yang belum ada (aman diulang, membuat
+  cadangan app.js.bak-akreditasi). Skrip lama pasang-master-akreditasi.js / pasang-kurikulum-akreditasi.js
+  tidak diperlukan lagi.
+
+YANG BARU
+  Halaman Tim Persiapan: /admin/akreditasi/tim dan /dosen/akreditasi/tim (tombol "Tim Persiapan" di
+  dashboard akreditasi). Data hardcoded dari SK: data/akreditasi/timPersiapan.js (SK baru = ubah file itu).
+
+  Master Dokumen (Pusat Data Dokumen):
+   - Tiap kelompok A-L menampilkan Penanggung Jawab sesuai SK (mis. A = Fajar Ramadhan, C = Suardi).
+   - Tabel "Progres per Penanggung Jawab": kesiapan dokumen tiap anggota tim.
+   - Kolom baru per dokumen: Sumber dan Periode data (Ketentuan Pelaksanaan no. 3 SK). Ikut ekspor CSV,
+     bersama kolom "PJ Tim (SK)".
+   - Item baru "SK Tim Persiapan Akreditasi" di kelompok A, status awal Disahkan (selama belum Anda ubah).
+   - Tombol "Perbarui template" (admin): menambah item template yang belum ada ke periode LAMA tanpa
+     menyentuh item yang sudah ada. Jalankan sekali agar item SK tim muncul di periode yang sudah dibuat.
+
+CATATAN PEMERIKSAAN SK (tampil di halaman Tim, khusus admin)
+  1. SK ditetapkan Kaprodi, bukan pimpinan: cek kewenangan menurut Statuta.
+  2. Ketua Tim memegang 6 dari 12 bidang: risiko hambatan.
+  3. Alamat/e-mail di SK berbeda dengan Dokumen Kurikulum 2024.
+  4. Dasar "Mengingat" masih umum (opsional dispesifikkan).
