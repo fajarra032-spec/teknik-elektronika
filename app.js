@@ -430,6 +430,7 @@ async function startServer() {
 
     // ROUTES DOKUMEN (baru)
     app.use('/dokumen', require('./routes/dokumen'));
+    app.use('/sop', require('./routes/sop'));   // SOP prodi (publik/internal) + unduh .docx
 
     // ROUTES PORAL IC3 DIGITAL LITERACY
     const ic3Router = require('./routes/ic3');
@@ -459,12 +460,6 @@ async function startServer() {
     const dosenAkreditasiTabelRouter = require('./routes/dosen/akreditasiTabelRoute');
     app.use('/admin/akreditasi/tabel', adminAkreditasiTabelRouter);
     app.use('/dosen/akreditasi/tabel', dosenAkreditasiTabelRouter);
-
-    // Master Dokumen Prodi (buku induk administrasi untuk akreditasi)
-    const adminAkreditasiMasterRouter = require('./routes/admin/akreditasiMaster');
-    const dosenAkreditasiMasterRouter = require('./routes/dosen/akreditasiMasterRoute');
-    app.use('/admin/akreditasi/master', adminAkreditasiMasterRouter);
-    app.use('/dosen/akreditasi/master', dosenAkreditasiMasterRouter);
 
     // Perusahaan magang
     const adminPerusahaanRouter = require('./routes/admin/perusahaan');
@@ -527,6 +522,7 @@ async function startServer() {
     app.use('/dosen/kalender', dosenKalenderRouter);
 
     // Admin
+    app.use('/admin/sop', require('./routes/admin/sop'));   // Buku Induk SOP (admin)
     const adminRoutes = require('./routes/admin/index');
     app.use('/admin', adminRoutes);
     const adminLaporanMagangRouter = require('./routes/admin/elkLibrary');

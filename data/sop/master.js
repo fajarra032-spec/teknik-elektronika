@@ -125,7 +125,7 @@ module.exports = [
   {
     "kode": "SOP-TE-012",
     "kelompok": "A. Akademik",
-    "judul": "Penyelesaian Studi, Yudisium, SKL, dan Transkrip",
+    "judul": "Penyelesaian Studi: Seminar Hasil Magang, SKL Sementara, dan Transkrip",
     "pj": "Kaprodi / Admin Akademik",
     "modul": "penyelesaianStudi, surat/skl_sementara",
     "prioritas": 1,

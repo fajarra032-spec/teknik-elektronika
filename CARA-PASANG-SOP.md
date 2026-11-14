@@ -1,34 +1,33 @@
 # Modul SOP Prodi - cara pasang
 
-## Isi paket
-| File | Fungsi |
-|---|---|
-| `data/sop/master.js` | Buku Induk 47 SOP (nomor, judul, penanggung jawab, prioritas, akses publik/internal) |
-| `data/sop/detail/sop-te-021.js` | Isi SOP Magang Dalam Negeri |
-| `data/sop/detail/sop-te-023.js` | Isi SOP Penilaian, Laporan, Seminar Magang |
-| `data/sop/index.js` | Penggabung master + isi |
-| `helpers/sopDocx.js` | Pembuat file Word (.docx) memakai package `docx` yang sudah ada |
-| `routes/sop.js` | `/sop`, `/sop/:kode`, `/sop/:kode/docx`, `/sop/magang` |
-| `routes/admin/sop.js` | `/admin/sop` (status, versi, tanggal berlaku), `/admin/sop/export.xlsx` |
-| `views/sop/index.ejs`, `views/sop/detail.ejs`, `views/admin/sop/index.ejs` | Tampilan |
-| `scripts/pasang-menu-sop.js` | Memasang route ke `app.js` dan menu ke header (aman diulang, membuat `.bak`) |
+Zip ini sudah berisi semua file dengan struktur folder yang sama dengan proyek Anda, termasuk 3 file yang sudah diedit (menu dan route sudah terpasang).
 
-## Langkah
-1. Salin semua folder di paket ini ke folder proyek (struktur sama; tidak ada file yang tertimpa).
-2. Dari folder proyek jalankan: `node scripts/pasang-menu-sop.js`
-   Skrip menambah 2 baris di `app.js` dan 1 tautan di `header-landing.ejs` (menu Layanan) dan `header.ejs` (menu admin). Bila ada baris yang gagal, skrip menyebutkan; pasang manual:
-   - `app.js`, setelah `app.use('/dokumen', ...)`: `app.use('/sop', require('./routes/sop'));`
-   - `app.js`, sebelum `const adminRoutes = ...`: `app.use('/admin/sop', require('./routes/admin/sop'));`
-3. Restart aplikasi. Tidak perlu paket baru dan tidak perlu index Firestore.
-4. Buka `/sop` (publik) dan `/admin/sop` (admin).
+## Opsi A - timpa langsung (paling cepat)
+Syarat: app.js, views/partials/header.ejs, dan views/partials/header-landing.ejs di server Anda masih sama dengan yang ada di routes.zip yang Anda kirim.
+1. Ekstrak zip ini ke folder proyek dan setuju menimpa 3 file tersebut.
+2. Restart aplikasi.
 
-## Data di Firestore
-Koleksi baru `sop_status`, dokumen per nomor SOP (mis. `SOP-TE-021`): `status`, `versi`, `tanggalBerlaku`, `catatan`, `updatedAt`, `updatedBy`. Dibuat otomatis saat admin menekan Simpan. Isi SOP tetap di file kode.
+## Opsi B - aman bila 3 file itu sudah Anda ubah sendiri
+1. Ekstrak zip ke folder proyek, tetapi JANGAN menimpa app.js, header.ejs, header-landing.ejs.
+2. Jalankan: node scripts/pasang-menu-sop.js  (menambah 2 baris di app.js dan 2 tautan menu; membuat cadangan .bak; aman diulang)
+3. Restart aplikasi.
+
+## Hasilnya
+- Menu admin: Layanan > Buku Induk SOP (halaman /admin/sop)
+- Menu publik: Layanan > Dokumen > Semua SOP Prodi (halaman /sop)
+- Unduh Word: /sop/SOP-TE-021/docx dan /sop/SOP-TE-023/docx
+
+## File baru
+data/sop/*, helpers/sopDocx.js, routes/sop.js, routes/admin/sop.js, views/sop/*, views/admin/sop/index.ejs, scripts/pasang-menu-sop.js
+
+## Data Firestore
+Koleksi baru sop_status (otomatis dibuat saat admin menekan Simpan). Tidak perlu index baru.
 
 ## Menambah SOP baru
-1. Salin `data/sop/detail/sop-te-021.js` menjadi `sop-te-0XX.js`, ubah `kode` (harus ada di `master.js`) dan isinya.
-2. Restart aplikasi. SOP otomatis muncul di `/sop`, dapat diunduh .docx, dan statusnya berubah ke "Draf disusun" di `/admin/sop`.
-3. SOP berakses `internal` (mis. backup, koreksi data, audit) hanya tampil untuk dosen/admin yang login.
+Salin data/sop/detail/sop-te-021.js menjadi sop-te-0XX.js, ubah kode (harus ada di master.js) dan isinya, restart.
 
-## Yang perlu diputuskan sebelum disahkan
-Lihat bagian `konfirmasi` di tiap file detail; daftar itu juga tampil untuk admin di bawah halaman SOP. Yang paling penting: bobot nilai akhir magang (sistem 50:50 dua komponen vs halaman pedoman 3 komponen).
+## Perlu diputuskan sebelum disahkan
+Lihat bagian konfirmasi di tiap file detail (juga tampil bagi admin di halaman SOP). Terpenting: bobot nilai akhir magang (sistem 50:50 dua komponen vs halaman pedoman 3 komponen).
+
+## Pembaruan 14 November 2026
+SOP baru: SOP-TE-002 (KRS) dan SOP-TE-012 (Penyelesaian Studi). Bila modul sudah terpasang, cukup salin folder data/sop (master.js dan detail/*.js) lalu restart; tidak ada file lain yang berubah.

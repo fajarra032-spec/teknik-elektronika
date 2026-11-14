@@ -41,7 +41,7 @@ module.exports = {
     { no: 6, kegiatan: 'Sistem menghitung nilai akhir sebagai rata-rata Dosen Pembimbing dan Pendamping Lapangan dengan bobot 50:50, lalu dikonversi ke huruf.', pelaksana: 'Sistem', waktu: 'Otomatis', output: 'Nilai akhir sementara' },
     { no: 7, kegiatan: 'Memeriksa kewajaran nilai dan mengunci nilai akhir sehingga masuk ke KHS/Transkrip.', pelaksana: 'Ketua Program Studi', waktu: '3 hari kerja (u)', output: 'Nilai magang di KHS/Transkrip' },
     { no: 8, kegiatan: 'Mengisi Ulasan dan Rating (bintang 1-5) tentang pengalaman magang dan IDUKA.', pelaksana: 'Mahasiswa', waktu: 'Setelah nilai terbit', output: 'Ulasan dan rating' },
-    { no: 9, kegiatan: 'Pengajuan ujian/seminar hasil magang melalui menu Penyelesaian Studi (formulir, surat permohonan, berita acara). [KONFIRMASI]', pelaksana: 'Mahasiswa / Admin', waktu: 'Sesuai jadwal seminar', output: 'Berita acara seminar' }
+    { no: 9, kegiatan: 'Mengajukan seminar hasil magang melalui menu Penyelesaian Studi (lihat SOP-TE-012).', pelaksana: 'Mahasiswa / Admin', waktu: 'Sesuai jadwal seminar', output: 'Berita acara seminar' }
   ],
   kasusKhusus: [
     { kasus: 'Data nilai lama (Nilai Laporan dan Nilai Logbook terpisah)', penanganan: 'Komponen Dosen dihitung dari rata-rata keduanya sampai Dosen PA mengisi form baru; nilai yang sudah dikunci ke KHS tidak berubah.' },
@@ -73,7 +73,6 @@ module.exports = {
     'PENTING - bobot nilai akhir: sistem memakai 2 komponen (Dosen PA 50% + Pendamping Lapangan 50%), sedangkan halaman Pedoman Magang publik masih menyebut 3 komponen (pembekalan, pelaksanaan, pelaporan). CATATAN-FORMAT-MAGANG-BARU.txt juga menandai bobot ini untuk dikonfirmasi ke Kaprodi. Putuskan satu aturan, lalu samakan halaman pedoman dan SOP ini.',
     'Pedoman publik menyebut Kaprodi menginput nilai Pendamping Lapangan, sedangkan sistem memberi akses input kepada admin. Tetapkan siapa pelaksananya.',
     'Apakah unggah laporan baru terbuka setelah logbook terkunci (pedoman) atau tidak dibatasi lagi (sistem terbaru).',
-    'Apakah seminar/ujian magang masih menjadi bagian alur (langkah 9).',
     'Angka waktu bertanda (u) adalah usulan.'
   ],
   referensi: []

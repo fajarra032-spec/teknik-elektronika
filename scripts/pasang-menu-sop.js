@@ -18,7 +18,7 @@ const sisip = [
     tambah: '\n                        <li><a class="dropdown-item" href="/sop"><i class="bi bi-clipboard2-check-fill me-2"></i>Semua SOP Prodi</a></li>',
     penanda: 'href="/sop"' },
   { file: 'views/partials/header.ejs',
-    cari: /(<li><a class="dropdown-item" href="\/admin\/akreditasi">[\s\S]*?<\/a><\/li>)/,
+    cari: /(<li><a class="dropdown-item" href="\/admin\/alat-lab">[\s\S]*?<\/a><\/li>)/,
     tambah: '\n                                    <li><a class="dropdown-item" href="/admin/sop"><i class="bi bi-clipboard2-check me-2"></i>Buku Induk SOP</a></li>',
     penanda: 'href="/admin/sop"' }
 ];
