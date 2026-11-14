@@ -43,3 +43,6 @@ SOP baru: SOP-TE-043 (Tracer Study dan Kepuasan Pengguna Lulusan) dan SOP-TE-045
 
 ## Pembaruan 14 November 2026 (5)
 SOP baru: SOP-TE-041 (Pengendalian Dokumen dan Arsip) dan SOP-TE-042 (Pengumpulan Data dan Bukti Akreditasi; akses internal dosen/admin). Bila modul sudah terpasang, cukup salin folder data/sop lalu restart.
+
+## Pembaruan 14 November 2026 (6)
+SOP baru: SOP-TE-015 (Penggunaan Lab, Praktikum, dan Modul/LKM) dan SOP-TE-019 (K3, Kecelakaan, Limbah Elektronik). Buku Induk (master.js) diperbarui: modul inspeksi dan servisan ternyata kegiatan PkM (bukan K3/lab), sehingga SOP-TE-017 menjadi Penanganan Kerusakan Alat Laboratorium dan servisan dan inspeksi dipindah ke SOP-TE-036. Bila modul sudah terpasang, cukup salin folder data/sop lalu restart.

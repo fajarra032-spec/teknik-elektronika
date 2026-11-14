@@ -180,12 +180,12 @@ module.exports = [
   {
     "kode": "SOP-TE-017",
     "kelompok": "B. Laboratorium",
-    "judul": "Penanganan Kerusakan dan Layanan Servis Alat",
+    "judul": "Penanganan Kerusakan Alat Laboratorium",
     "pj": "Koordinator Lab",
-    "modul": "servisan",
+    "modul": "peminjamanAlat (verifikasi rusak), alatLab (perbaikan)",
     "prioritas": 2,
     "statusAwal": "Belum ada",
-    "catatan": "Konfirmasi fungsi modul servisan (layanan servis perangkat?).",
+    "catatan": "Modul servisan ternyata layanan servis alat elektronik rumah tangga untuk masyarakat (kegiatan PkM), sehingga dipindah ke SOP-TE-036.",
     "akses": "publik"
   },
   {
@@ -204,10 +204,10 @@ module.exports = [
     "kelompok": "B. Laboratorium",
     "judul": "K3, Penanganan Kecelakaan, dan Pengelolaan Limbah Elektronik",
     "pj": "Koordinator Lab / Kaprodi",
-    "modul": "inspeksi (konfirmasi)",
+    "modul": "modulPraktikumData (catatan K3 tiap LKM)",
     "prioritas": 1,
     "statusAwal": "Belum ada",
-    "catatan": "Konfirmasi fungsi modul inspeksi.",
+    "catatan": "Modul inspeksi bukan K3 laboratorium (inspeksi instalasi listrik rumah tangga, kegiatan PkM); dasar K3 laboratorium: catatan K3 pada modul praktikum.",
     "akses": "publik"
   },
   {
@@ -391,10 +391,10 @@ module.exports = [
     "kelompok": "F. Penelitian dan PkM",
     "judul": "Pengelolaan Penelitian, PkM, dan Publikasi Dosen",
     "pj": "Kaprodi / Dosen",
-    "modul": "penelitian, pengabdian, artikel, buku",
+    "modul": "penelitian, pengabdian, artikel, buku, inspeksi, servisan",
     "prioritas": 2,
     "statusAwal": "Belum ada",
-    "catatan": "Tidak ada di daftar awal.",
+    "catatan": "Termasuk kegiatan PkM Electro Care (inspeksi instalasi listrik rumah tangga dan layanan servis alat elektronik di desa binaan). Tidak ada di daftar awal.",
     "akses": "publik"
   },
   {
