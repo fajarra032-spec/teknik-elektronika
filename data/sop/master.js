@@ -461,7 +461,7 @@ module.exports = [
     "prioritas": 1,
     "statusAwal": "Belum ada",
     "catatan": "Target persiapan September 2027.",
-    "akses": "publik"
+    "akses": "internal"
   },
   {
     "kode": "SOP-TE-043",

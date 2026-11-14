@@ -40,3 +40,6 @@ SOP baru: SOP-TE-016 (Peminjaman dan Pengembalian Alat Laboratorium) dan SOP-TE-
 
 ## Pembaruan 14 November 2026 (4)
 SOP baru: SOP-TE-043 (Tracer Study dan Kepuasan Pengguna Lulusan) dan SOP-TE-045 (Backup dan Keamanan Data; akses internal dosen/admin). Bila modul sudah terpasang, cukup salin folder data/sop lalu restart.
+
+## Pembaruan 14 November 2026 (5)
+SOP baru: SOP-TE-041 (Pengendalian Dokumen dan Arsip) dan SOP-TE-042 (Pengumpulan Data dan Bukti Akreditasi; akses internal dosen/admin). Bila modul sudah terpasang, cukup salin folder data/sop lalu restart.
