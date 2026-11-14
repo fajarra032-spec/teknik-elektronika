@@ -34,3 +34,6 @@ SOP baru: SOP-TE-002 (KRS) dan SOP-TE-012 (Penyelesaian Studi). Bila modul sudah
 
 ## Pembaruan 14 November 2026 (2)
 SOP baru: SOP-TE-029 (Persuratan Mahasiswa) dan SOP-TE-033 (Penugasan Mengajar dan Penerbitan SK; akses internal dosen/admin). Bila modul sudah terpasang, cukup salin folder data/sop lalu restart.
+
+## Pembaruan 14 November 2026 (3)
+SOP baru: SOP-TE-016 (Peminjaman dan Pengembalian Alat Laboratorium) dan SOP-TE-046 (Koreksi dan Perubahan Data Akademik; akses internal dosen/admin). Bila modul sudah terpasang, cukup salin folder data/sop lalu restart.
