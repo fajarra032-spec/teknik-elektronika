@@ -49,3 +49,6 @@ SOP baru: SOP-TE-015 (Penggunaan Lab, Praktikum, dan Modul/LKM) dan SOP-TE-019 (
 
 ## Pembaruan 14 November 2026 (7)
 SOP baru: SOP-TE-006 (Pelaporan Nilai dan Revisi Nilai), SOP-TE-022 (Magang Luar Negeri), SOP-TE-024 (Penanganan Masalah Magang). Perubahan lain: data/sop/index.js (SOP-TE-006 kini memakai halaman detail baru, halaman lama menjadi rujukan) dan views/sop/detail.ejs (menampilkan bagian Rujukan Terkait). Bila modul sudah terpasang, salin folder data/sop dan views/sop lalu restart.
+
+## Pembaruan 14 November 2026 (8)
+SOP baru: SOP-TE-005 (UTS dan UAS), SOP-TE-009 (Pembimbingan Akademik dan Monitoring Masa Studi), SOP-TE-010 (Cuti Akademik dan Aktif Kembali). Bila modul sudah terpasang, cukup salin folder data/sop lalu restart.
