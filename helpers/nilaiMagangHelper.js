@@ -325,7 +325,11 @@ async function kunciNilaiMagangKeGrades(mahasiswaId, pdkId, dikunciOleh) {
   }
 
   const semuaPeriode = await getMagangPeriodsByMahasiswa(mahasiswaId);
-  const period = semuaPeriode.find(p => p.pdkId === pdkId);
+  // Satu PDK bisa punya >1 periode (mis. yang lama dibatalkan lalu dibuat ulang):
+  // abaikan 'cancelled', pakai yang tanggal mulainya paling baru.
+  const period = semuaPeriode
+    .filter(p => p.pdkId === pdkId && p.status !== 'cancelled')
+    .sort((a, b) => String(b.tanggalMulai || '').localeCompare(String(a.tanggalMulai || '')))[0];
   if (!period) {
     throw new Error('Periode magang untuk mahasiswa dan PDK ini tidak ditemukan');
   }

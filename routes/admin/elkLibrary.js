@@ -214,7 +214,7 @@ router.get('/laporan/:id/edit', async (req, res) => {
     const doc = await db.collection('laporanMagang').doc(req.params.id).get();
     if (!doc.exists) return res.status(404).send('Laporan tidak ditemukan');
     const dataLap = { id: doc.id, ...doc.data() };
-    const perusahaan = await getNamaPerusahaanMagang(dataLap.userId);
+    const perusahaan = await getNamaPerusahaanMagang(dataLap.userId, dataLap.laporanKe);
     res.render('admin/elkLibrary_edit', {
       title: 'Edit Laporan', item: dataLap, type: 'laporan',
       judulOtomatis: dataLap.judulPublik || dataLap.judul || formatJudulLaporan(dataLap.laporanKe, perusahaan),

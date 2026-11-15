@@ -19,6 +19,7 @@ const {
   getNilaiDosenEfektif
 } = require('../../helpers/nilaiMagangHelper');
 const { getNamaPerusahaanMagang, formatJudulLaporan, terapkanJudulLaporan } = require('../../helpers/laporanJudulHelper');
+const { saringLaporanUntukPdk, getUrutanPdkMap, labelMagang } = require('../../helpers/laporanPdkHelper');
 const {
   isPembimbingMahasiswa,
   getMahasiswaBimbinganPa
@@ -58,12 +59,21 @@ router.get('/', async (req, res) => {
       const adaYangAcc = laporanList.some(l => l.status === 'approved');
       const adaYangBelumDitinjau = laporanList.some(l => l.status === 'submitted' || !l.status);
 
+      // Status nilai dihitung PER periode magang aktif (Magang 1/2/3), bukan hanya yang pertama.
       const pdkList = await getActivePdkWithPeriod(mhs.id);
       let statusNilai = '-';
       if (pdkList.length > 0) {
-        const nm = await getNilaiMagang(mhs.id, pdkList[0].pdkId);
-        const nilaiDosen = getNilaiDosenEfektif(nm).nilai;
-        statusNilai = nilaiDosen !== null ? `Sudah dinilai (${nilaiDosen})` : (adaYangAcc ? 'Siap dinilai' : 'Menunggu ACC');
+        const urutanMap = await getUrutanPdkMap();
+        const bagian = [];
+        for (const pdk of pdkList) {
+          const nm = await getNilaiMagang(mhs.id, pdk.pdkId);
+          const nilaiDosen = getNilaiDosenEfektif(nm).nilai;
+          const laporanPdk = await saringLaporanUntukPdk(laporanList, pdk.pdkId);
+          const accPdk = laporanPdk.some(l => l.status === 'approved');
+          const teks = nilaiDosen !== null ? `Sudah dinilai (${nilaiDosen})` : (accPdk ? 'Siap dinilai' : 'Menunggu ACC');
+          bagian.push(pdkList.length > 1 ? `${labelMagang(urutanMap[pdk.pdkId] || pdk.urutanPDK)}: ${teks}` : teks);
+        }
+        statusNilai = bagian.join(' | ');
       }
 
       return {
@@ -108,10 +118,11 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       .get();
     const laporanList = laporanSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     await terapkanJudulLaporan(laporanList, req.params.userId);
-    const adaYangAcc = laporanList.some(l => l.status === 'approved');
 
     const pdkList = await getActivePdkWithPeriod(userId);
     const pdkIdDipilih = req.query.pdkId || (pdkList[0] && pdkList[0].pdkId) || null;
+    // "Sudah di-ACC" mengacu ke laporan milik PDK yang dipilih, bukan laporan mana pun.
+    const adaYangAcc = (await saringLaporanUntukPdk(laporanList, pdkIdDipilih)).some(l => l.status === 'approved');
     const nilaiMagang = pdkIdDipilih ? await getNilaiMagang(userId, pdkIdDipilih) : null;
 
     res.render('dosen/laporan_review_detail', {
@@ -156,7 +167,7 @@ router.post('/:laporanId/status', async (req, res) => {
     };
     if (status === 'approved') {
       // ACC dosen => otomatis tampil di ELK Library (koleksi laporanMagang status 'approved')
-      const perusahaan = await getNamaPerusahaanMagang(userId);
+      const perusahaan = await getNamaPerusahaanMagang(userId, d.laporanKe);
       const judulPublik = d.judulPublik || d.judul || formatJudulLaporan(d.laporanKe, perusahaan);
       const abstrakInput = String(req.body.abstrak || '').trim().slice(0, 3000);
       updateData.approvedAt = new Date().toISOString();

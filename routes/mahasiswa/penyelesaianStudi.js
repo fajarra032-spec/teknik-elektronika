@@ -20,6 +20,7 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../../config/firebaseAdmin');
 const { getPembimbingMahasiswa } = require('../../helpers/pembimbingHelper');
+const { getPeriodePerNomor } = require('../../helpers/laporanPdkHelper');
 const {
   DOKUMEN, PRODI, tanggalPanjang, pecahTanggal,
   bangunDataBerkas, namaBerkas
@@ -64,30 +65,55 @@ async function ambilPengajuanMilik(id, userId) {
 
 /** Data awal formulir: lokasi magang, pendamping lapangan, dan status laporan dari sistem */
 async function ambilDataAwal(user) {
-  const [periodSnap, laporanDocs] = await Promise.all([
-    db.collection('magangPeriod').where('mahasiswaId', '==', user.id).get(),
+  // Magang N dicocokkan lewat PDK urutan N (bukan urutan tanggal mulai), periode
+  // 'cancelled' diabaikan - lihat helpers/laporanPdkHelper.js.
+  const [periodePerNomor, laporanDocs] = await Promise.all([
+    getPeriodePerNomor(user.id),
     db.getAll(...[1, 2, 3].map((ke) => db.collection('laporanMagang').doc(`${user.id}_${ke}`)))
   ]);
 
-  const periode = periodSnap.docs
-    .map((d) => d.data())
-    .filter((p) => p.status !== 'cancelled')
-    .sort((a, b) => String(a.tanggalMulai || '').localeCompare(String(b.tanggalMulai || '')));
-
   const lokasi = [1, 2, 3].map((ke) => ({
     ke,
-    perusahaan: (periode[ke - 1] && periode[ke - 1].perusahaan && periode[ke - 1].perusahaan.nama) || ''
+    perusahaan: (periodePerNomor[ke] && periodePerNomor[ke].perusahaan && periodePerNomor[ke].perusahaan.nama) || ''
   }));
 
+  const periode = [1, 2, 3].map((ke) => periodePerNomor[ke]).filter(Boolean)
+    .sort((a, b) => String(a.tanggalMulai || '').localeCompare(String(b.tanggalMulai || '')));
   const terakhir = [...periode].reverse().find((p) => p.perusahaan && p.perusahaan.pembimbingLapangan);
-  const laporan = {};
-  laporanDocs.forEach((doc, i) => { laporan[i + 1] = doc.exists; });
+
+  const laporan = {};      // sudah diunggah?
+  const laporanAcc = {};   // sudah di-ACC dosen?
+  const magangSelesai = {}; // periode Magang N sudah 'completed' (nilai dikunci)?
+  laporanDocs.forEach((doc, i) => {
+    const ke = i + 1;
+    laporan[ke] = doc.exists;
+    laporanAcc[ke] = doc.exists && doc.data().status === 'approved';
+    magangSelesai[ke] = !!(periodePerNomor[ke] && periodePerNomor[ke].status === 'completed');
+  });
 
   return {
     lokasi,
     laporan,
+    laporanAcc,
+    magangSelesai,
     pendampingLapangan: (terakhir && terakhir.perusahaan.pembimbingLapangan) || ''
   };
+}
+
+/**
+ * Syarat mengajukan seminar gabungan "Magang 1, 2, dan 3": ketiga periode
+ * selesai (nilai sudah dikunci) dan ketiga laporan sudah di-ACC dosen.
+ * Matikan dengan env SEMINAR_GATE=off bila prodi ingin melonggarkan.
+ * @returns {string[]} daftar kekurangan (kosong = boleh mengajukan)
+ */
+function cekSyaratSeminar(awal) {
+  if (String(process.env.SEMINAR_GATE || '').toLowerCase() === 'off') return [];
+  const kurang = [];
+  [1, 2, 3].forEach((ke) => {
+    if (!awal.magangSelesai[ke]) kurang.push(`Magang ${ke} belum selesai/nilainya belum dikunci`);
+    if (!awal.laporanAcc[ke]) kurang.push(`Laporan Magang ${ke} belum di-ACC dosen pembimbing`);
+  });
+  return kurang;
 }
 
 async function tampilkanHalaman(req, res, { error = null, form = null, status = 200 } = {}) {
@@ -154,6 +180,14 @@ router.post('/ajukan', async (req, res) => {
     if (!pembimbing) {
       return tampilkanHalaman(req, res, {
         error: 'Dosen Pembimbing Akademik (PA) Anda belum ditetapkan. Hubungi admin program studi terlebih dahulu.',
+        form, status: 400
+      });
+    }
+
+    const kurang = cekSyaratSeminar(awal);
+    if (kurang.length) {
+      return tampilkanHalaman(req, res, {
+        error: 'Pengajuan seminar belum bisa dikirim. Yang masih kurang: ' + kurang.join('; ') + '.',
         form, status: 400
       });
     }

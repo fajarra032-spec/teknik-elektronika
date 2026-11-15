@@ -1,0 +1,48 @@
+PERBAIKAN: LAPORAN & PENYELESAIAN MAGANG 1/2/3 TIDAK LAGI BERCAMPUR
+===================================================================
+ATURAN BAKU: Magang N = mata kuliah PDK dengan urutanPDK = N.
+             Laporan N (laporanKe = N) = laporan untuk Magang N.
+
+YANG DIPERBAIKI
+1. Laporan kini menyimpan pdkId, pdkKode, periodId (saat diunggah).
+   Laporan N hanya bisa diunggah bila periode Magang N sudah dimulai.
+2. Syarat penilaian dosen (/dosen/magang/:userId/nilai-dosen): hanya laporan
+   milik PDK yang dinilai yang dihitung. ACC Laporan 1 tidak membuka Magang 2/3.
+3. Judul laporan memakai perusahaan Magang N, bukan periode terbaru.
+   Judul otomatis lama dikoreksi saat tampil; judul manual tidak disentuh.
+4. Halaman dosen: daftar laporan di /dosen/magang/:userId disaring per periode
+   terpilih; status nilai di daftar review ditampilkan per Magang
+   ("Magang 1: Sudah dinilai (80) | Magang 2: Menunggu ACC").
+5. Penyelesaian Studi: lokasi Magang 1/2/3 dicocokkan lewat urutan PDK (bukan
+   urutan tanggal), periode cancelled diabaikan.
+6. Kunci nilai ke KHS: memilih periode PDK yang benar (abaikan cancelled,
+   ambil tanggal mulai terbaru).
+7. Unggah ulang laporan: laporan berstatus approved TIDAK bisa ditimpa;
+   status revisi/submitted tetap menyimpan komentar dosen; file Drive lama
+   dihapus.
+8. Pengajuan seminar kini mewajibkan: 3 periode magang 'completed' (nilai
+   dikunci) DAN 3 laporan di-ACC. Untuk melonggarkan: set env SEMINAR_GATE=off.
+
+FILE
+BARU   : helpers/laporanPdkHelper.js
+         scripts/migrasi-laporan-pdk.js
+TIMPA  : helpers/laporanJudulHelper.js, helpers/nilaiMagangHelper.js
+         routes/mahasiswa/magang.js, routes/mahasiswa/penyelesaianStudi.js
+         routes/dosen/magang.js, routes/dosen/laporanReview.js
+         routes/admin/elkLibrary.js
+(Tidak ada perubahan view/EJS, tidak perlu index Firestore baru.)
+
+LANGKAH PASANG
+1. Timpa file di atas ke proyek.
+2. node scripts/migrasi-laporan-pdk.js          (DRY-RUN, cek hasilnya)
+3. node scripts/migrasi-laporan-pdk.js --apply  (menulis pdkId/periodId ke
+   laporan lama & membetulkan judul otomatis yang salah perusahaan)
+4. Pastikan mataKuliah PDK punya urutanPDK 1/2/3. Bila tidak ada satupun,
+   sistem memakai fallback urutan tanggal mulai (perilaku lama).
+
+CATATAN
+- Belum diuji dengan Firestore asli/browser. Yang diuji: node --check semua
+  file + uji logika helper dengan data tiruan (periode cancelled, urutan
+  PDK, judul otomatis vs manual).
+- Gerbang seminar (poin 8) adalah keputusan kebijakan: sesuaikan bila prodi
+  mengizinkan seminar sebelum nilai dikunci.

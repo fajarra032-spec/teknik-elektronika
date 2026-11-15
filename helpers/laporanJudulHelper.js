@@ -4,9 +4,26 @@
 // mahasiswa (periode aktif/terbaru yang punya nama perusahaan).
 
 const { getMagangPeriodsByMahasiswa } = require('../models/magangPeriodModel');
+const { getNamaPerusahaanUntukNomor } = require('./laporanPdkHelper');
 
-/** Nama perusahaan dari periode magang terbaru mahasiswa ('' bila belum ada). */
-async function getNamaPerusahaanMagang(userId) {
+const POLA_JUDUL_OTOMATIS = /^Laporan Magang \d+( di .+)?$/;
+
+/**
+ * Nama perusahaan untuk judul laporan.
+ * - Dengan laporanKe (1/2/3): perusahaan milik periode Magang N saja ('' bila
+ *   periode itu belum ada) - TIDAK lagi jatuh ke periode terbaru, supaya
+ *   Laporan 1 tidak berjudul dengan perusahaan Magang 2/3.
+ * - Tanpa laporanKe: perilaku lama (periode terbaru), untuk pemakaian umum.
+ */
+async function getNamaPerusahaanMagang(userId, laporanKe) {
+  if (laporanKe !== undefined && laporanKe !== null && laporanKe !== '') {
+    try {
+      return await getNamaPerusahaanUntukNomor(userId, parseInt(laporanKe, 10));
+    } catch (err) {
+      console.error('Error getNamaPerusahaanMagang (per nomor):', err);
+      return '';
+    }
+  }
   try {
     const periods = await getMagangPeriodsByMahasiswa(userId);
     const urut = (periods || [])
@@ -26,7 +43,7 @@ function formatJudulLaporan(laporanKe, namaPerusahaan) {
 }
 
 async function buildJudulLaporan(userId, laporanKe) {
-  return formatJudulLaporan(laporanKe, await getNamaPerusahaanMagang(userId));
+  return formatJudulLaporan(laporanKe, await getNamaPerusahaanMagang(userId, laporanKe));
 }
 
 /** Nama file aman untuk Google Drive / unduhan. */
@@ -45,10 +62,13 @@ function buatAbstrakLaporan(d, namaPerusahaan) {
  */
 async function isiJudulOtomatis(items) {
   const perlu = items.filter((it) => it && it._judulAuto);
-  const userIds = [...new Set(perlu.map((it) => it.userId).filter(Boolean))];
+  const kunci = [...new Set(perlu.filter((it) => it.userId).map((it) => `${it.userId}|${it.laporanKe}`))];
   const peta = {};
-  await Promise.all(userIds.map(async (uid) => { peta[uid] = await getNamaPerusahaanMagang(uid); }));
-  perlu.forEach((it) => { it.judul = formatJudulLaporan(it.laporanKe, peta[it.userId] || ''); });
+  await Promise.all(kunci.map(async (k) => {
+    const [uid, ke] = k.split('|');
+    peta[k] = await getNamaPerusahaanMagang(uid, ke);
+  }));
+  perlu.forEach((it) => { it.judul = formatJudulLaporan(it.laporanKe, peta[`${it.userId}|${it.laporanKe}`] || ''); });
   return items;
 }
 
@@ -57,7 +77,7 @@ async function isiJudulOtomatis(items) {
  * Mengembalikan objek siap di-update ke dokumen laporanMagang.
  */
 async function lengkapiDataPublikasiLaporan(d, opsi = {}) {
-  const perusahaan = await getNamaPerusahaanMagang(d.userId);
+  const perusahaan = await getNamaPerusahaanMagang(d.userId, d.laporanKe);
   const judul = d.judulPublik || d.judul || formatJudulLaporan(d.laporanKe, perusahaan);
   const tahunUnggah = d.uploadedAt ? new Date(d.uploadedAt).getFullYear() : new Date().getFullYear();
   const out = {};
@@ -76,10 +96,15 @@ async function lengkapiDataPublikasiLaporan(d, opsi = {}) {
  */
 async function terapkanJudulLaporan(list, userId) {
   if (!Array.isArray(list) || list.length === 0) return list;
-  const perusahaan = await getNamaPerusahaanMagang(userId || (list[0] && list[0].userId));
+  const uid = userId || (list[0] && list[0].userId);
+  const nomor = [...new Set(list.map((l) => l.laporanKe))];
+  const peta = {};
+  await Promise.all(nomor.map(async (ke) => { peta[ke] = await getNamaPerusahaanMagang(uid, ke); }));
   list.forEach((l) => {
-    const tanpaPerusahaan = formatJudulLaporan(l.laporanKe, '');
-    if (!l.judul || (perusahaan && l.judul === tanpaPerusahaan)) {
+    const perusahaan = peta[l.laporanKe] || '';
+    // Judul otomatis (pola "Laporan Magang N [di X]") selalu disamakan dengan
+    // perusahaan periode Magang N; judul yang diedit manual tidak disentuh.
+    if (!l.judul || (perusahaan && POLA_JUDUL_OTOMATIS.test(l.judul))) {
       l.judul = formatJudulLaporan(l.laporanKe, perusahaan);
     }
   });

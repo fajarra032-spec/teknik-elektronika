@@ -35,6 +35,7 @@ const {
   getKonsultasiByPeriod, mingguDisetujui, setujuiMinggu, cabutPersetujuanMinggu, normalisasiNoWa
 } = require('../../helpers/konsultasiLogbookHelper');
 const { terapkanJudulLaporan } = require('../../helpers/laporanJudulHelper');
+const { saringLaporanUntukPdk, adaLaporanAccUntukPdk } = require('../../helpers/laporanPdkHelper');
 const { tampilkanCetakLogbook } = require('../../helpers/logbookPdfHelper');
 const magangNotif = require('../../helpers/magangNotifHelper');
 const {
@@ -394,7 +395,9 @@ router.get('/:userId', async (req, res) => {
       };
     });
 
-    const laporanList = laporanSnapshot ? laporanSnapshot.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+    const laporanSemua = laporanSnapshot ? laporanSnapshot.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+    // Tampilkan hanya laporan milik periode yang dipilih (bukan semua Magang 1/2/3 sekaligus).
+    const laporanList = await saringLaporanUntukPdk(laporanSemua, selectedPeriod ? selectedPeriod.pdkId : null);
     await terapkanJudulLaporan(laporanList, userId);   // "Laporan Magang N di <perusahaan>"
     const adaLaporanYangAcc = laporanList.some(l => l.status === 'approved');
     // semesterList sudah didapat dari getSemesterListLogbook() di atas (cached)
@@ -557,10 +560,10 @@ router.post('/:userId/nilai-dosen', async (req, res) => {
       req.session.error = 'Kunci logbook dulu sebelum mengisi penilaian.';
       return res.redirect(kembali);
     }
-    const laporanAcc = await db.collection('laporanMagang')
-      .where('userId', '==', userId).get();
-    if (!laporanAcc.docs.some(d => d.data().status === 'approved')) {
-      req.session.error = 'Laporan mahasiswa ini belum di-ACC - ACC dulu sebelum memberi penilaian.';
+    // Hanya laporan milik PDK/Magang yang sedang dinilai yang dihitung
+    // (Laporan 1 yang di-ACC tidak lagi membuka penilaian Magang 2/3).
+    if (!(await adaLaporanAccUntukPdk(userId, pdkId))) {
+      req.session.error = 'Laporan untuk periode magang ini belum di-ACC - ACC dulu sebelum memberi penilaian.';
       return res.redirect(kembali);
     }
 

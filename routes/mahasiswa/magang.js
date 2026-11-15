@@ -28,6 +28,7 @@ const { db } = require('../../config/firebaseAdmin');
 const { getPembimbingMahasiswa: getPembimbingDosenPa } = require('../../helpers/pembimbingHelper');
 const { getKonsultasiByPeriod, mingguDisetujui, normalisasiNoWa } = require('../../helpers/konsultasiLogbookHelper');
 const { getNamaPerusahaanMagang, formatJudulLaporan, buildJudulLaporan, namaFileDariJudul } = require('../../helpers/laporanJudulHelper');
+const { getPeriodePerNomor } = require('../../helpers/laporanPdkHelper');
 const { logbookHariIniTerisi } = require('../../helpers/logbookNotifHelper');
 const magangNotif = require('../../helpers/magangNotifHelper');
 const {
@@ -1106,16 +1107,21 @@ router.get('/laporan', async (req, res) => {
       data: doc.exists ? doc.data() : null
     }));
 
-    // Judul otomatis: "Laporan Magang {ke} di {perusahaan}"
-    const namaPerusahaan = await getNamaPerusahaanMagang(userId);
+    // Judul otomatis: "Laporan Magang {ke} di {perusahaan Magang ke-N}" -
+    // perusahaan diambil dari periode Magang N, BUKAN periode terbaru.
+    const periodePerNomor = await getPeriodePerNomor(userId);
     const judulMap = {};
-    [1, 2, 3].forEach(i => { judulMap[i] = formatJudulLaporan(i, namaPerusahaan); });
+    [1, 2, 3].forEach(i => {
+      const nama = periodePerNomor[i] && periodePerNomor[i].perusahaan && periodePerNomor[i].perusahaan.nama;
+      judulMap[i] = formatJudulLaporan(i, nama ? String(nama).trim() : '');
+    });
 
     res.render('mahasiswa/magang/laporan', {
       title: 'Laporan Magang',
       user: req.user,
       laporanList,
       judulMap,
+      periodePerNomor,
       pembimbing
     });
   } catch (error) {
@@ -1130,6 +1136,8 @@ router.post('/laporan/upload', upload.single('file'), async (req, res) => {
     const file = req.file;
 
     if (!laporanKe || !file) return res.status(400).send('Laporan ke dan file wajib diisi');
+    const ke = parseInt(laporanKe, 10);
+    if (isNaN(ke) || ke < 1 || ke > 3) return res.status(400).send('Nomor laporan tidak valid');
     if (file.mimetype !== 'application/pdf') return res.status(400).send('Laporan magang harus dalam format PDF');
 
     const pembimbing = await getPembimbingMahasiswa(req.user.id);
@@ -1140,11 +1148,26 @@ router.post('/laporan/upload', upload.single('file'), async (req, res) => {
     const userId = req.user.id;
     const nim = req.user.nim;
     const nama = req.user.nama;
+
+    // Laporan N hanya untuk periode Magang N (PDK urutan N) milik mahasiswa ini.
+    const periodeLaporan = (await getPeriodePerNomor(userId))[ke];
+    if (!periodeLaporan) {
+      return res.status(400).send(`Periode Magang ${ke} belum dimulai - laporan ${ke} belum bisa diunggah. Hubungi dosen pembimbing/admin.`);
+    }
+
+    // Laporan yang sudah di-ACC tidak boleh ditimpa (status & komentar dosen ikut hilang).
+    const laporanRef = db.collection('laporanMagang').doc(`${userId}_${ke}`);
+    const laporanLama = await laporanRef.get();
+    const dataLama = laporanLama.exists ? laporanLama.data() : null;
+    if (dataLama && dataLama.status === 'approved') {
+      return res.status(400).send(`Laporan ${ke} sudah di-ACC dosen dan tidak bisa diunggah ulang. Hubungi dosen pembimbing bila perlu revisi.`);
+    }
+
     const currentSemester = getCurrentAcademicSemester().label;
     const folderId = await getLaporanMagangFolder(nim, nama, currentSemester);
 
     // Judul & nama file otomatis, mis. "Laporan Magang 1 di PT PLN"
-    const judul = await buildJudulLaporan(userId, laporanKe);
+    const judul = await buildJudulLaporan(userId, ke);
     const fileName = namaFileDariJudul(judul);
     const fileMetadata = { name: fileName, parents: [folderId] };
     const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
@@ -1156,13 +1179,16 @@ router.post('/laporan/upload', upload.single('file'), async (req, res) => {
     });
 
     const fileUrl = `https://drive.google.com/uc?export=view&id=${response.data.id}`;
-    const docId = `${userId}_${laporanKe}`;
-
-    await db.collection('laporanMagang').doc(docId).set({
+    // Unggah ulang (status 'revisi'/'submitted'): riwayat komentar & catatan dosen dipertahankan.
+    await laporanRef.set({
+      ...(dataLama || {}),
       userId,
       nim,
       nama: req.user.nama,
-      laporanKe: parseInt(laporanKe),
+      laporanKe: ke,
+      pdkId: periodeLaporan.pdkId,
+      pdkKode: periodeLaporan.pdkKode || null,
+      periodId: periodeLaporan.id,
       judul,
       fileUrl,
       fileId: response.data.id,
@@ -1170,11 +1196,15 @@ router.post('/laporan/upload', upload.single('file'), async (req, res) => {
       semester: currentSemester,
       uploadedAt: new Date().toISOString(),
       status: 'submitted',
-      komentar: [],
+      komentar: (dataLama && dataLama.komentar) || [],
       pembimbingId: pembimbing.pembimbing.id,
       pembimbingNama: pembimbing.pembimbing.nama
     });
-    magangNotif.laporanDiunggah(db, { dosenId: pembimbing.pembimbing.id, mahasiswaId: userId, namaMahasiswa: nama, laporanKe: parseInt(laporanKe) });
+    // Bersihkan file lama di Drive agar tidak menumpuk.
+    if (dataLama && dataLama.fileId && dataLama.fileId !== response.data.id) {
+      drive.files.delete({ fileId: dataLama.fileId }).catch(err => console.error('Gagal hapus file Drive lama:', err.message));
+    }
+    magangNotif.laporanDiunggah(db, { dosenId: pembimbing.pembimbing.id, mahasiswaId: userId, namaMahasiswa: nama, laporanKe: ke });
 
     res.redirect('/mahasiswa/magang/laporan');
   } catch (error) {
