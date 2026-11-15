@@ -312,7 +312,20 @@ async function salinNilaiMagangKeGrades(period, nilaiAngka) {
       return { berhasil: false, alasan: 'mk-tidak-ketemu' };
     }
     const mk = mkDoc.data();
-    const semesterLabel = getSemesterForDate(period.tanggalMulai || new Date()).label;
+    // Kalau nilai MK ini SUDAH ada di grades (mis. diinput admin lewat Input Nilai),
+    // pakai semester yang sama - supaya tidak muncul nilai ganda di KHS/Transkrip.
+    let semesterLabel = null;
+    const gradesAda = await db.collection('grades')
+      .where('userId', '==', period.mahasiswaId)
+      .where('kodeMk', '==', mk.kode)
+      .get();
+    if (!gradesAda.empty) {
+      const terbaru = gradesAda.docs
+        .map(d => d.data())
+        .sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')))[0];
+      semesterLabel = terbaru.semester || null;
+    }
+    if (!semesterLabel) semesterLabel = getSemesterForDate(period.tanggalMulai || new Date()).label;
     await saveGradeFinal({
       userId: period.mahasiswaId,
       kodeMk: mk.kode,
