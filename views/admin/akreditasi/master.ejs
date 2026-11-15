@@ -127,7 +127,7 @@
                           <% }) %>
                         </select>
                         <% } %>
-                        <input type="text" name="picNama" value="<%= i.picNama || '' %>" class="form-control form-control-sm" style="width:120px;" placeholder="PIC">
+                        <input type="text" name="picNama" value="<%= i.picNama || '' %>" class="form-control form-control-sm" style="width:120px;" placeholder="<%= i.pjNama ? 'PIC (default: ' + i.pjNama.split(',')[0] + ')' : 'PIC' %>">
                         <input type="text" name="sumber" value="<%= i.sumber || '' %>" class="form-control form-control-sm" style="width:130px;" placeholder="Sumber dokumen">
                         <input type="text" name="periodeData" value="<%= i.periodeData || '' %>" class="form-control form-control-sm" style="width:110px;" placeholder="Periode data">
                         <input type="text" name="catatan" value="<%= i.catatan || '' %>" class="form-control form-control-sm" style="width:150px;" placeholder="Catatan">

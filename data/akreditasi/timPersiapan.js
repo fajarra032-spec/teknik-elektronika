@@ -67,4 +67,21 @@ const catatan = [
     isi: 'Butir 4 hanya menyebut "ketentuan peraturan perundang-undangan mengenai penjaminan mutu". Ini aman dari risiko merujuk peraturan yang sudah dicabut, tetapi bila ingin lebih spesifik dapat mencantumkan peraturan penjaminan mutu terbaru (Permendiktisaintek No. 39 Tahun 2025) dan dokumen SPMI institusi.' }
 ];
 
-module.exports = { sk, BIDANG, anggota, tugasTim, ketentuan, pjPerBidang, catatan };
+// Pemetaan Kriteria akreditasi (I-IX di workspace) -> bidang SK (A-L). INI TURUNAN ISI KRITERIA, bukan bagian SK:
+// SK hanya membagi bidang A-L. Ubah di sini bila pembagian kriteria berbeda.
+const kriteriaBidang = { I: ['A'], II: ['A', 'B', 'I', 'J'], III: ['E'], IV: ['D'], V: ['G'], VI: ['C', 'F'], VII: ['H'], VIII: ['H'], IX: ['K'] };
+
+/** Penanggung jawab (SK) untuk satu kriteria: [{ nama (tanpa gelar), lengkap, jabatan, bidang: [..] }] */
+function pjUntukKriteria(kode) {
+  const per = new Map();
+  (kriteriaBidang[kode] || []).forEach(b => {
+    const a = pjPerBidang[b];
+    if (!a) return;
+    if (!per.has(a.nama)) per.set(a.nama, { nama: a.nama.split(',')[0], lengkap: a.nama, jabatan: a.jabatan, bidang: [] });
+    per.get(a.nama).bidang.push(b);
+  });
+  return [...per.values()];
+}
+const koordinatorPelaporan = anggota.find(a => a.bidang.includes('L'));
+
+module.exports = { sk, BIDANG, anggota, tugasTim, ketentuan, pjPerBidang, catatan, kriteriaBidang, pjUntukKriteria, koordinatorPelaporan };

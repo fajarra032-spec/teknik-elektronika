@@ -39,3 +39,12 @@ UNDUH SK (PDF)
   (memuat nama, NUPTK/NIDN anggota tim). Jika tidak diinginkan, pindahkan berkas ke folder non-public dan
   layani lewat route yang memakai verifyToken.
   Pastikan folder public/ di server menerima folder baru dokumen/akreditasi/ (timpa/gabung saat menyalin).
+
+NAMA PENANGGUNG JAWAB DI WEB (pembaruan)
+  - Dashboard akreditasi (admin) dan daftar kriteria (dosen): kolom baru "Penanggung Jawab (SK Tim)".
+  - Halaman workspace tiap kriteria: baris "Penanggung jawab (SK Tim)" + koordinator kompilasi LED/LKPS.
+  - Master Dokumen: tiap baris dokumen menampilkan PJ default (admin: placeholder kolom PIC; dosen: teks abu-abu).
+  Pemetaan Kriteria I-IX -> bidang SK A-L adalah TURUNAN dari isi kriteria (bukan bagian SK):
+    I:A | II:A,B,I,J | III:E | IV:D | V:G | VI:C,F | VII:H | VIII:H | IX:K
+  Ubah di data/akreditasi/timPersiapan.js (kriteriaBidang) bila pembagian Anda berbeda.
+  PIC manual per kriteria (pilihan akun dosen di workspace) tetap terpisah dan tidak berubah.

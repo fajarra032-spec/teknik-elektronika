@@ -26,6 +26,12 @@ const {
 
 router.use(verifyToken);
 router.use(isDosen);
+router.use((req, res, next) => { // nama penanggung jawab per kriteria (SK Tim Persiapan)
+  const T = require('../../data/akreditasi/timPersiapan');
+  res.locals.pjKriteria = T.pjUntukKriteria;
+  res.locals.koordinatorPelaporan = T.koordinatorPelaporan;
+  next();
+});
 
 async function getPeriodeBerjalanTerbaru() {
   const snapshot = await db.collection('akreditasi_periode')

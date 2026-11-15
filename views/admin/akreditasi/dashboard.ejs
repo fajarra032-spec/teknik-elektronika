@@ -98,6 +98,7 @@
               <th style="width:140px;">Status</th>
               <th style="width:110px;">Target</th>
               <th style="width:110px;">Dokumen</th>
+              <th style="width:190px;">Penanggung Jawab (SK Tim)</th>
               <th style="width:230px;">Aksi</th>
             </tr>
           </thead>
@@ -125,6 +126,8 @@
                   <% } %>
                 </td>
                 <td><span class="badge bg-light text-dark border"><%= k.jumlahDokumen %> file</span></td>
+                <% const pjk = pjKriteria(k.kode); %>
+                <td class="small"><% if (pjk.length) { pjk.forEach(p => { %><div><i class="bi bi-person-check me-1"></i><%= p.nama %> <span class="badge bg-light text-dark border" title="Bidang SK: <%= p.bidang.join(', ') %>"><%= p.bidang.join(', ') %></span></div><% }) } else { %><span class="text-muted">-</span><% } %></td>
                 <td class="d-flex gap-1 flex-wrap">
                   <a href="/admin/akreditasi/kriteria/<%= k.id %>" class="btn btn-sm btn-primary">Workspace</a>
                   <a href="/admin/akreditasi/kriteria/<%= k.id %>/edit" class="btn btn-sm btn-warning">Edit</a>

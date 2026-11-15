@@ -91,7 +91,7 @@
                       <% const st = STATUS_MASTER[i.status] || STATUS_MASTER.belum; %>
                       <span class="badge bg-<%= st.badge %>"><%= st.label %></span>
                     </td>
-                    <td class="small"><%= i.picNama || '-' %></td>
+                    <td class="small"><% if (i.picNama) { %><%= i.picNama %><% } else if (i.pjNama) { %><span class="text-muted" title="Penanggung jawab menurut SK Tim"><%= i.pjNama.split(',')[0] %></span><% } else { %>-<% } %></td>
                     <td>
                       <% if (i.fileUrl) { %>
                         <div class="d-flex gap-1 align-items-center">

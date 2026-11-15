@@ -27,6 +27,12 @@ const { seedMasterDokumen, getMasterItems, hitungProgresMaster } = require('../.
 
 router.use(verifyToken);
 router.use(isAdmin);
+router.use((req, res, next) => { // nama penanggung jawab per kriteria (SK Tim Persiapan)
+  const T = require('../../data/akreditasi/timPersiapan');
+  res.locals.pjKriteria = T.pjUntukKriteria;
+  res.locals.koordinatorPelaporan = T.koordinatorPelaporan;
+  next();
+});
 
 // ==========================================================================
 // DASHBOARD - daftar periode & progres kriteria periode terpilih
