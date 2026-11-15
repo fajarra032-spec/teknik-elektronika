@@ -12,6 +12,7 @@ const { getOrCreateSubFolder, DATA_WEB_FOLDER_ID } = require('./akreditasiHelper
 const { MASTER_DOKUMEN, STATUS_MASTER, flattenTemplate } = require('./masterDokumenConfig');
 const { infoSopPerJudul } = require('./sopMasterMap');
 const TIM = require('../data/akreditasi/timPersiapan');
+const { infoBuktiSistem } = require('./masterBuktiSistem');
 const { PETA_MASTER: PETA_KURIKULUM } = require('./kurikulumHelper');
 
 const COL = 'akreditasi_master';
@@ -43,6 +44,8 @@ async function getMasterItems(periodeId) {
   // (sumber tunggal), bukan dari isian manual di Master Dokumen.
   let sop = {};
   try { sop = await infoSopPerJudul(); } catch (e) { console.error('Gagal membaca status SOP:', e.message); }
+  let bukti = {};
+  try { bukti = await infoBuktiSistem(); } catch (e) { console.error('Gagal membaca bukti dari sistem:', e.message); }
   items.forEach(i => {
     const s = sop[i.nama];
     if (i.kelompok === 'B' && s) {
@@ -58,6 +61,12 @@ async function getMasterItems(periodeId) {
     if (i.nama === 'SK Tim Persiapan Akreditasi') {
       i.timKet = `SK ${TIM.sk.nomor}, ${TIM.sk.tanggal}`;
       if (i.status === 'belum') { i.statusManual = i.status; i.status = 'disahkan'; i.statusDariKurikulum = true; }
+    }
+    // Data yang sudah ada di modul web lain (EDOM, dosen, mahasiswa, alat lab, magang, penelitian, tracer, dst)
+    const bs = bukti[i.nama];
+    if (bs && !i.sopKode && i.nama !== 'SK Tim Persiapan Akreditasi') {
+      i.buktiTeks = bs.teks; i.buktiHref = bs.href; i.buktiHrefDosen = bs.hrefDosen;
+      if (i.status === 'belum') { i.statusManual = i.status; i.status = bs.status; i.statusDariSistem = true; }
     }
     const kur = PETA_KURIKULUM[i.nama];
     if (kur && !i.sopKode) {

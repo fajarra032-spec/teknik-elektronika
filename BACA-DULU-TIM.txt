@@ -63,3 +63,16 @@ SK PANITIA DI MENU "KELOLA SK DOSEN" (/admin/sk) + KIRIM KE BEBERAPA DOSEN
     Satu berkas dikirim ke semua dosen terpilih. Menghapus satu entri tidak menghapus berkas selama masih dipakai
     dosen lain (perilaku bawaan tidak diubah).
   - Kategori "panitia" ditambahkan ke label, badge, dan filter di tampilan admin dan dosen.
+
+MASTER DOKUMEN TERHUBUNG KE DATA YANG SUDAH ADA DI WEB (pembaruan)
+  BARU   helpers/masterBuktiSistem.js
+  TIMPA  helpers/masterDokumenHelper.js, views/admin/akreditasi/master.ejs, views/dosen/akreditasi/master.ejs
+  22 item Master Dokumen kini otomatis menunjukkan jumlah data di modul web + tautan "Buka":
+    EDOM (edom_respon) | dosen | sertifikat dosen | SK Mengajar/PA/Pembimbing Magang (sk_dosen) | mahasiswa
+    logbook magang | perusahaan mitra magang (dari magangPeriod) | laporan magang | alat lab | peminjaman alat
+    penelitian | pengabdian | kunjungan industri | Jadwal Penting | lulusan + tracer study | RPS (28 MK kurikulum)
+  Aturan: hanya mengisi status awal bila item masih "Belum Ada" (pilihan manual admin menang);
+  data di sistem maksimal berstatus "Ada" (tidak pernah "Disahkan"); data yang kelengkapannya perlu dicek
+  (biodata dosen, mitra tanpa MoU, kunjungan tanpa dokumentasi, kalender, kontak alumni, sertifikat,
+  laporan magang) berstatus "Draft". Jumlah 0 = tidak diubah. Jumlah dihitung dengan count() agregat
+  dan di-cache 5 menit, jadi halaman tetap ringan. Tanpa indeks Firestore baru.
