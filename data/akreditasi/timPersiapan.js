@@ -6,7 +6,10 @@
 const sk = {
   nomor: '5666/ELK/POLIDEWA/XI/2026', tanggal: '14 November 2026', penetap: 'Ketua Program Studi D3 Teknik Elektronika (Fajar Ramadhan, S.Pd., M.T.)',
   tentang: 'Pembentukan Tim Persiapan Akreditasi Program Studi D3 Teknik Elektronika Politeknik Dewantara',
-  berlaku: 'Sejak ditetapkan sampai selesainya kegiatan persiapan akreditasi atau sampai ditetapkan keputusan lebih lanjut'
+  berlaku: 'Sejak ditetapkan sampai selesainya kegiatan persiapan akreditasi atau sampai ditetapkan keputusan lebih lanjut',
+  // Berkas PDF SK disimpan di public/ sehingga bisa diunduh langsung (tanpa login).
+  berkasUrl: '/dokumen/akreditasi/SK_Tim_Persiapan_Akreditasi_5666.pdf',
+  berkasNama: 'SK_Tim_Persiapan_Akreditasi_5666.pdf'
 };
 
 const BIDANG = {

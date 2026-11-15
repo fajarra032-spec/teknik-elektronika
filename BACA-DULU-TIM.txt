@@ -30,3 +30,12 @@ CATATAN PEMERIKSAAN SK (tampil di halaman Tim, khusus admin)
   2. Ketua Tim memegang 6 dari 12 bidang: risiko hambatan.
   3. Alamat/e-mail di SK berbeda dengan Dokumen Kurikulum 2024.
   4. Dasar "Mengingat" masih umum (opsional dispesifikkan).
+
+UNDUH SK (PDF)
+  Berkas SK disimpan di public/dokumen/akreditasi/SK_Tim_Persiapan_Akreditasi_5666.pdf (ikut di paket ini).
+  Tombol "Unduh SK (PDF)" dan "Lihat PDF" ada di halaman Tim Persiapan; tautan unduh juga ada pada item
+  "SK Tim Persiapan Akreditasi" di Master Dokumen. URL: /dokumen/akreditasi/SK_Tim_Persiapan_Akreditasi_5666.pdf
+  PERHATIAN: folder public dilayani tanpa login, jadi siapa pun yang tahu URL-nya bisa mengunduh PDF ini
+  (memuat nama, NUPTK/NIDN anggota tim). Jika tidak diinginkan, pindahkan berkas ke folder non-public dan
+  layani lewat route yang memakai verifyToken.
+  Pastikan folder public/ di server menerima folder baru dokumen/akreditasi/ (timpa/gabung saat menyalin).
