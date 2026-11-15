@@ -138,6 +138,7 @@
   .badge-pa { background: #e0e7ff; color: #1e3a8a; }
   .badge-pembimbing { background: #dcfce7; color: #166534; }
   .badge-mengajar { background: #fef3c7; color: #92400e; }
+  .badge-panitia { background: #ede9fe; color: #5b21b6; }
   .sk-judul {
     font-weight: 700;
     font-size: 1rem;
@@ -197,6 +198,17 @@
       </div>
     </div>
   <% } %>
+
+  <% if (panitiaTerkirim !== null) { %>
+    <div class="alert alert-success d-flex align-items-start gap-2 mb-3">
+      <i class="bi bi-check-circle-fill"></i>
+      <div>SK Panitia dikirim ke <strong><%= panitiaTerkirim %></strong> dosen.
+        <% if (panitiaDilewati > 0) { %><div class="small"><%= panitiaDilewati %> dosen dilewati karena sudah pernah menerima SK ini.</div><% } %>
+        <% if (panitiaGagal) { %><div class="small text-danger"><%= panitiaGagal %> dosen gagal diproses, coba kirim ulang.</div><% } %></div>
+    </div>
+  <% } %>
+  <% if (panitiaError) { %><div class="alert alert-warning mb-3"><%= panitiaError %></div><% } %>
+  <% if (diunggah > 0) { %><div class="alert alert-success mb-3">SK berhasil diunggah dan dikirim ke <strong><%= diunggah %></strong> dosen.</div><% } %>
 
   <!-- Header -->
   <div class="sk-header d-flex flex-wrap justify-content-between align-items-center">
@@ -263,6 +275,26 @@
     </div>
   </div>
 
+  <!-- SK Panitia / Tim -->
+  <% if (panitia) { %>
+    <div class="card mb-4" style="border:1px solid #c4b5fd;border-radius:1.25rem;">
+      <div class="card-body d-flex flex-wrap justify-content-between gap-3">
+        <div style="min-width:260px;flex:1;">
+          <span class="badge-sk badge-panitia"><i class="bi bi-people"></i> SK Panitia / Tim</span>
+          <h6 class="mt-2 mb-1"><%= panitia.judul %></h6>
+          <div class="small text-muted">Ditetapkan <%= panitia.tanggal %> &middot; <%= panitia.anggota.length %> anggota:
+            <%= panitia.anggota.map(a => a.nama.split(',')[0] + ' (' + a.jabatan + ')').join(', ') %></div>
+          <div class="small mt-1"><i class="bi bi-send-check me-1"></i>Sudah dikirim ke <strong><%= sudahPanitiaIds.length %></strong> dosen.</div>
+          <% if (!panitia.berkasAda) { %><div class="small text-danger mt-1">Berkas PDF SK belum ada di server (public/dokumen/akreditasi).</div><% } %>
+        </div>
+        <div class="d-flex gap-2 align-items-start flex-wrap">
+          <a href="<%= panitia.berkasUrl %>" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill"><i class="bi bi-eye me-1"></i>Lihat PDF</a>
+          <button class="btn btn-primary btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#kirimPanitiaModal" <%= panitia.berkasAda ? '' : 'disabled' %>><i class="bi bi-send me-1"></i>Kirim ke Dosen</button>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
   <!-- Filter & Search (client side) -->
   <div class="filter-bar">
     <div class="row g-3 align-items-center">
@@ -278,6 +310,7 @@
           <option value="pa">SK PA</option>
           <option value="pembimbing_magang">SK Pembimbing Magang</option>
           <option value="mengajar">SK Mengajar</option>
+          <option value="panitia">SK Panitia</option>
         </select>
       </div>
       <div class="col-md-4 text-md-end">
@@ -299,9 +332,9 @@
           <div class="card-body d-flex flex-column">
             <div class="d-flex justify-content-between align-items-start">
               <span class="badge-sk 
-                <%= sk.kategori === 'pa' ? 'badge-pa' : (sk.kategori === 'pembimbing_magang' ? 'badge-pembimbing' : 'badge-mengajar') %>">
-                <i class="bi <%= sk.kategori === 'pa' ? 'bi-person-check' : (sk.kategori === 'pembimbing_magang' ? 'bi-briefcase' : 'bi-chalkboard') %>"></i>
-                <%= sk.kategori === 'pa' ? 'SK PA' : (sk.kategori === 'pembimbing_magang' ? 'SK Pembimbing Magang' : 'SK Mengajar') %>
+                <%= sk.kategori === 'pa' ? 'badge-pa' : (sk.kategori === 'pembimbing_magang' ? 'badge-pembimbing' : (sk.kategori === 'panitia' ? 'badge-panitia' : 'badge-mengajar')) %>">
+                <i class="bi <%= sk.kategori === 'pa' ? 'bi-person-check' : (sk.kategori === 'pembimbing_magang' ? 'bi-briefcase' : (sk.kategori === 'panitia' ? 'bi-people' : 'bi-chalkboard')) %>"></i>
+                <%= sk.kategori === 'pa' ? 'SK PA' : (sk.kategori === 'pembimbing_magang' ? 'SK Pembimbing Magang' : (sk.kategori === 'panitia' ? 'SK Panitia' : 'SK Mengajar')) %>
               </span>
               <span class="sk-tanggal"><i class="bi bi-calendar3 me-1"></i><%= sk.tanggalUpload ? sk.tanggalUpload.toLocaleDateString('id-ID') : '-' %></span>
             </div>
@@ -335,6 +368,30 @@
   </div>
 </div>
 
+<!-- Modal Kirim SK Panitia ke beberapa dosen -->
+<% if (panitia) { %>
+<div class="modal fade" id="kirimPanitiaModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header modal-header-custom">
+        <h5 class="modal-title"><i class="bi bi-send me-2"></i> Kirim SK Panitia ke Dosen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="/admin/sk/panitia/kirim" method="POST" onsubmit="if(!this.querySelector('.pd-cek:checked')){alert('Pilih minimal satu dosen.');return false;}">
+        <div class="modal-body">
+          <p class="small text-muted mb-2"><%= panitia.judul %>. SK akan muncul di menu SK Dosen tiap dosen yang dipilih. Anggota tim terpilih otomatis; dosen yang sudah menerima tidak bisa dipilih lagi.</p>
+          <%- include('_pilih_dosen', { pid: 'pdPanitia', dosenList, pilihAwal: anggotaTimIds, terkunci: sudahPanitiaIds, anggotaTim: anggotaTimIds }) %>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-send me-1"></i>Kirim</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<% } %>
+
 <!-- Modal Upload SK (dipercantik) -->
 <div class="modal fade" id="uploadSkModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
@@ -343,16 +400,11 @@
         <h5 class="modal-title"><i class="bi bi-cloud-upload me-2"></i> Upload SK Baru</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form action="/admin/sk" method="POST" enctype="multipart/form-data">
+      <form action="/admin/sk" method="POST" enctype="multipart/form-data" onsubmit="if(!this.querySelector('.pd-cek:checked')){alert('Pilih minimal satu dosen.');return false;}">
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label fw-semibold">Pilih Dosen</label>
-            <select name="dosenId" class="form-select" required>
-              <option value="">-- Pilih Dosen --</option>
-              <% dosenList.forEach(d => { %>
-                <option value="<%= d.id %>"><%= d.nama %></option>
-              <% }) %>
-            </select>
+            <label class="form-label fw-semibold">Pilih Dosen (boleh lebih dari satu)</label>
+            <%- include('_pilih_dosen', { pid: 'pdUpload', dosenList, pilihAwal: [], terkunci: [], anggotaTim: [] }) %>
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Kategori SK</label>
@@ -360,6 +412,7 @@
               <option value="pa">SK PA (Pembimbing Akademik)</option>
               <option value="pembimbing_magang">SK Pembimbing Magang</option>
               <option value="mengajar">SK Mengajar</option>
+              <option value="panitia">SK Panitia / Tim</option>
             </select>
           </div>
           <div class="mb-3">

@@ -1,0 +1,45 @@
+<%
+  const pre = new Set(locals.pilihAwal || []);
+  const kunci = new Set(locals.terkunci || []);
+  const tim = new Set(locals.anggotaTim || []);
+%>
+<div id="<%= pid %>" class="pilih-dosen">
+  <div class="d-flex gap-2 mb-2 flex-wrap">
+    <input type="search" class="form-control form-control-sm pd-cari" style="max-width:220px;" placeholder="Cari nama dosen...">
+    <button type="button" class="btn btn-sm btn-outline-secondary pd-semua">Pilih semua</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary pd-kosong">Kosongkan</button>
+  </div>
+  <div class="border rounded p-2" style="max-height:260px;overflow:auto;">
+    <% dosenList.forEach(d => { const k = kunci.has(d.id); %>
+      <label class="d-flex align-items-center gap-2 py-1 pd-baris" data-nama="<%= String(d.nama || '').toLowerCase() %>">
+        <input type="checkbox" name="dosenIds" value="<%= d.id %>" class="form-check-input mt-0 pd-cek" <%= pre.has(d.id) && !k ? 'checked' : '' %> <%= k ? 'disabled' : '' %>>
+        <span><%= d.nama %></span>
+        <% if (tim.has(d.id)) { %><span class="badge bg-primary-subtle text-primary-emphasis border">anggota tim</span><% } %>
+        <% if (k) { %><span class="badge bg-success-subtle text-success-emphasis border">sudah terkirim</span><% } %>
+      </label>
+    <% }) %>
+    <% if (!dosenList.length) { %><div class="text-muted small">Belum ada data dosen.</div><% } %>
+  </div>
+  <div class="form-text pd-hitung"></div>
+</div>
+<script>
+(function () {
+  var root = document.getElementById('<%= pid %>');
+  if (!root) return;
+  var cek = function () { return root.querySelectorAll('.pd-cek:not(:disabled)'); };
+  var hitung = function () {
+    root.querySelector('.pd-hitung').textContent = root.querySelectorAll('.pd-cek:checked').length + ' dosen dipilih';
+  };
+  root.querySelector('.pd-cari').addEventListener('input', function () {
+    var q = this.value.toLowerCase();
+    root.querySelectorAll('.pd-baris').forEach(function (b) { b.style.display = b.getAttribute('data-nama').indexOf(q) >= 0 ? '' : 'none'; });
+  });
+  root.querySelector('.pd-semua').addEventListener('click', function () {
+    root.querySelectorAll('.pd-baris').forEach(function (b) { if (b.style.display !== 'none') { var c = b.querySelector('.pd-cek'); if (c && !c.disabled) c.checked = true; } });
+    hitung();
+  });
+  root.querySelector('.pd-kosong').addEventListener('click', function () { cek().forEach(function (c) { c.checked = false; }); hitung(); });
+  root.addEventListener('change', hitung);
+  hitung();
+})();
+</script>

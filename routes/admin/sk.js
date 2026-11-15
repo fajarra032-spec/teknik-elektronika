@@ -7,6 +7,7 @@ const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { generatePeriodeOptions, getActivePeriodeId, normalizeKelas } = require('../../helpers/academicHelper');
+const skPanitia = require('../../helpers/skPanitiaHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -141,8 +142,19 @@ router.get('/', async (req, res) => {
     // Ambil daftar dosen untuk dropdown
     const dosenSnapshot = await db.collection('dosen').get();
     const dosenList = dosenSnapshot.docs.map(doc => ({ id: doc.id, nama: doc.data().nama }));
+    let panitia = null, anggotaTimIds = [], sudahPanitiaIds = [];
+    try {
+      panitia = skPanitia.info();
+      anggotaTimIds = [...skPanitia.idDosenAnggotaTim(dosenList)];
+      sudahPanitiaIds = [...(await skPanitia.idDosenSudahTerkirim(db))];
+    } catch (e) { console.error('Gagal menyiapkan data SK panitia:', e.message); }
     res.render('admin/sk/index', {
       title: 'Kelola SK Dosen', skList, dosenList,
+      panitia, anggotaTimIds, sudahPanitiaIds,
+      panitiaTerkirim: req.query.panitiaTerkirim != null ? parseInt(req.query.panitiaTerkirim, 10) || 0 : null,
+      panitiaDilewati: parseInt(req.query.panitiaDilewati, 10) || 0,
+      panitiaGagal: req.query.panitiaGagal || '', panitiaError: req.query.panitiaError || '',
+      diunggah: parseInt(req.query.diunggah, 10) || 0,
       terkirim: req.query.terkirim ? parseInt(req.query.terkirim, 10) || 0 : 0,
       terkirimNomor: req.query.nomor || '',
       terkirimJenis: req.query.jenis === 'mengajar' ? 'Mengajar' : 'Pembimbing Akademik',
@@ -158,12 +170,34 @@ router.get('/', async (req, res) => {
 // Jalur dari menu SK ke Rilis SK Pembimbing Akademik (Dosen PA)
 router.get('/pembimbing', (req, res) => res.redirect('/admin/bimbingan/sk'));
 
+// Kirim SK Panitia/Tim (SK Tim Persiapan Akreditasi) ke satu atau beberapa dosen sekaligus
+router.post('/panitia/kirim', async (req, res) => {
+  try {
+    const { createNotification } = require('../../helpers/notificationHelper');
+    const skDistribusiHelper = require('../../helpers/skDistribusiHelper');
+    const hasil = await skPanitia.kirimKeDosen(req.body.dosenIds, {
+      db, drive, folderId: await getSkFolder(), userId: req.user.id,
+      userPerDosen: await skDistribusiHelper.petaUserPerDosen(db), createNotification
+    });
+    if (hasil.error) return res.redirect('/admin/sk?panitiaError=' + encodeURIComponent(hasil.error));
+    const q = new URLSearchParams({ panitiaTerkirim: String(hasil.terkirim) });
+    if (hasil.dilewati) q.set('panitiaDilewati', String(hasil.dilewati));
+    if (hasil.gagal.length) q.set('panitiaGagal', String(hasil.gagal.length));
+    res.redirect('/admin/sk?' + q.toString());
+  } catch (error) {
+    console.error('Error kirim SK panitia:', error);
+    res.status(500).send('Gagal mengirim SK panitia: ' + error.message);
+  }
+});
+
 // Proses upload SK
 router.post('/', upload.single('fileSk'), async (req, res) => {
   try {
-    const { dosenId, kategori, judul } = req.body;
+    const { kategori, judul } = req.body;
+    // Boleh satu atau beberapa dosen (dosenIds[] dari kotak centang; dosenId lama tetap didukung)
+    const daftarDosen = [...new Set([].concat(req.body.dosenIds || req.body.dosenId || []).filter(Boolean))];
     if (!req.file) return res.status(400).send('File SK harus diupload');
-    if (!dosenId || !kategori) return res.status(400).send('Dosen dan kategori wajib diisi');
+    if (!daftarDosen.length || !kategori) return res.status(400).send('Dosen (minimal satu) dan kategori wajib diisi');
 
     // Upload ke Drive
     const skFolderId = await getSkFolder();
@@ -177,18 +211,28 @@ router.post('/', upload.single('fileSk'), async (req, res) => {
     });
     const fileUrl = `https://drive.google.com/uc?export=view&id=${response.data.id}`;
 
-    // Simpan ke Firestore
-    await db.collection('sk_dosen').add({
-      dosenId,
-      kategori,
-      judul: judul || `SK ${kategori} - ${new Date().toLocaleDateString()}`,
-      fileUrl,
-      fileId: response.data.id,
-      tanggalUpload: new Date(),
-      createdBy: req.user.id,
-    });
+    // Simpan ke Firestore: satu entri per dosen, berkas Drive dipakai bersama
+    const judulSk = judul || `SK ${kategori} - ${new Date().toLocaleDateString()}`;
+    const { createNotification } = require('../../helpers/notificationHelper');
+    const userPerDosen = await require('../../helpers/skDistribusiHelper').petaUserPerDosen(db);
+    for (const dosenId of daftarDosen) {
+      await db.collection('sk_dosen').add({
+        dosenId,
+        kategori,
+        judul: judulSk,
+        fileUrl,
+        fileId: response.data.id,
+        tanggalUpload: new Date(),
+        createdBy: req.user.id,
+      });
+      const uid = userPerDosen[dosenId];
+      if (uid) {
+        try { await createNotification(db, uid, { type: 'sk', title: 'SK baru', message: judulSk, link: '/dosen/sk' }); }
+        catch (e) { console.error('SK tersimpan, tetapi notifikasi gagal dibuat:', e.message); }
+      }
+    }
 
-    res.redirect('/admin/sk');
+    res.redirect('/admin/sk?diunggah=' + daftarDosen.length);
   } catch (error) {
     console.error(error);
     res.status(500).send('Gagal upload SK');

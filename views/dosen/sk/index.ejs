@@ -154,6 +154,7 @@
   .badge-pa { background: #e0e7ff; color: #1e3a8a; }
   .badge-pembimbing { background: #dcfce7; color: #166534; }
   .badge-mengajar { background: #fef3c7; color: #92400e; }
+  .badge-panitia { background: #ede9fe; color: #5b21b6; }
   .sk-judul {
     font-weight: 700;
     font-size: 1rem;
@@ -259,6 +260,7 @@
         <option value="pa">SK PA</option>
         <option value="pembimbing_magang">SK Pembimbing Magang</option>
         <option value="mengajar">SK Mengajar</option>
+        <option value="panitia">SK Panitia</option>
       </select>
     </div>
   </div>
@@ -281,9 +283,9 @@
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-start">
                 <span class="badge-sk 
-                  <%= sk.kategori === 'pa' ? 'badge-pa' : (sk.kategori === 'pembimbing_magang' ? 'badge-pembimbing' : 'badge-mengajar') %>">
-                  <i class="bi <%= sk.kategori === 'pa' ? 'bi-person-check' : (sk.kategori === 'pembimbing_magang' ? 'bi-briefcase' : 'bi-chalkboard') %>"></i>
-                  <%= sk.kategori === 'pa' ? 'SK PA' : (sk.kategori === 'pembimbing_magang' ? 'SK Pembimbing Magang' : 'SK Mengajar') %>
+                  <%= sk.kategori === 'pa' ? 'badge-pa' : (sk.kategori === 'pembimbing_magang' ? 'badge-pembimbing' : (sk.kategori === 'panitia' ? 'badge-panitia' : 'badge-mengajar')) %>">
+                  <i class="bi <%= sk.kategori === 'pa' ? 'bi-person-check' : (sk.kategori === 'pembimbing_magang' ? 'bi-briefcase' : (sk.kategori === 'panitia' ? 'bi-people' : 'bi-chalkboard')) %>"></i>
+                  <%= sk.kategori === 'pa' ? 'SK PA' : (sk.kategori === 'pembimbing_magang' ? 'SK Pembimbing Magang' : (sk.kategori === 'panitia' ? 'SK Panitia' : 'SK Mengajar')) %>
                 </span>
                 <small class="sk-tanggal"><i class="bi bi-calendar3 me-1"></i><%= sk.tanggalUpload ? sk.tanggalUpload.toLocaleDateString('id-ID') : '-' %></small>
               </div>

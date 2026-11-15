@@ -48,3 +48,18 @@ NAMA PENANGGUNG JAWAB DI WEB (pembaruan)
     I:A | II:A,B,I,J | III:E | IV:D | V:G | VI:C,F | VII:H | VIII:H | IX:K
   Ubah di data/akreditasi/timPersiapan.js (kriteriaBidang) bila pembagian Anda berbeda.
   PIC manual per kriteria (pilihan akun dosen di workspace) tetap terpisah dan tidak berubah.
+
+SK PANITIA DI MENU "KELOLA SK DOSEN" (/admin/sk) + KIRIM KE BEBERAPA DOSEN
+  BARU   helpers/skPanitiaHelper.js, views/admin/sk/_pilih_dosen.ejs
+  TIMPA  routes/admin/sk.js, views/admin/sk/index.ejs, views/dosen/sk/index.ejs
+  (bila routes/admin/sk.js atau index.ejs Anda sudah berubah, gabungkan manual: cari "skPanitia" / "panitia")
+  - Kartu "SK Panitia / Tim" di atas daftar SK: judul, tanggal, anggota tim, jumlah dosen yang sudah menerima,
+    tombol Lihat PDF dan Kirim ke Dosen.
+  - Kirim ke Dosen: daftar kotak centang dosen (cari, pilih semua, kosongkan). Anggota tim (nama cocok dengan SK)
+    terpilih otomatis; dosen yang sudah menerima ditandai "sudah terkirim" dan tidak bisa dipilih lagi.
+  - Berkas PDF diunggah ke Google Drive SEKALI lalu dipakai bersama; entri masuk ke koleksi sk_dosen
+    (kategori "panitia") sehingga tampil di menu SK Dosen masing-masing dosen, plus notifikasi.
+  - "Upload SK Baru": pilihan dosen sekarang kotak centang (boleh banyak dosen), kategori baru "SK Panitia / Tim".
+    Satu berkas dikirim ke semua dosen terpilih. Menghapus satu entri tidak menghapus berkas selama masih dipakai
+    dosen lain (perilaku bawaan tidak diubah).
+  - Kategori "panitia" ditambahkan ke label, badge, dan filter di tampilan admin dan dosen.
