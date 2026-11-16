@@ -1,0 +1,19 @@
+PATCH: KRS OTOMATIS SAAT ADMIN MULAI PERIODE MAGANG + SINKRON YANG TERLANJUR
+============================================================================
+Ekstrak zip ini di ROOT proyek (struktur folder sama), timpa file yang ada. Restart server.
+Tanpa indeks Firestore / package baru.
+
+TIMPA  routes/admin/emagang.js                 (hanya POST /period/start berubah)
+BARU   scripts/sinkron-krs-periode-magang.js   (menyusulkan KRS utk periode yang sudah terlanjur)
+
+1) Perilaku baru saat admin klik "Mulai Periode":
+   - Belum ada enrollment aktif utk PDK tsb -> dibuatkan KRS (approved) + enrollment aktif
+     di semester akademik berjalan.
+   - Sudah ada -> tidak dibuat ganda.
+
+2) Menyinkronkan periode yang sudah terlanjur dimulai:
+   node scripts/sinkron-krs-periode-magang.js            (dry-run, hanya menampilkan rencana)
+   node scripts/sinkron-krs-periode-magang.js --confirm  (benar-benar menulis)
+   Aman diulang. Yang sudah punya enrollment aktif tidak disentuh; yang berstatus lain
+   (selain 'dibatalkan') dan mahasiswa Cuti/Keluar hanya dilaporkan.
+   Saran: jalankan scripts/backup-collections.js dulu sebelum --confirm.

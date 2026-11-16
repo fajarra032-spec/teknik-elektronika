@@ -25,6 +25,8 @@ const { getPembimbingMahasiswa } = require('../../helpers/pembimbingHelper');
 const { buildLogbookPrintData } = require('../../helpers/logbookPrintHelper');
 const { tampilkanCetakLogbook } = require('../../helpers/logbookPdfHelper');
 const magangNotif = require('../../helpers/magangNotifHelper');
+const { createKrsDanEnrollment } = require('../../helpers/paketKurikulumHelper');
+const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -504,6 +506,26 @@ router.post('/period/start', async (req, res) => {
       return res.redirect('back');
     }
     
+    // OTOMATIS KRS: kalau mahasiswa belum punya enrollment aktif untuk PDK ini,
+    // buatkan KRS (approved) + enrollment langsung, supaya PDK muncul di KRS/KHS
+    // dan lolos validasi PDK aktif tanpa admin harus "Buat KRS" manual dulu.
+    // Kalau sudah ada enrollment aktif, tidak dibuat ganda.
+    let krsOtomatis = false;
+    const enrollAktif = await db.collection('enrollment')
+      .where('userId', '==', mahasiswaId)
+      .where('mkId', '==', pdkId)
+      .where('status', '==', 'active')
+      .limit(1)
+      .get();
+    if (enrollAktif.empty) {
+      const academicLabel = getCurrentAcademicSemester().label;
+      await createKrsDanEnrollment(db, mahasiswaId, [pdkId], academicLabel, req.user.id, {
+        dibuatOlehSistem: true,
+        catatan: `KRS otomatis saat periode magang ${pdk.nama} dimulai`
+      });
+      krsOtomatis = true;
+    }
+
     const now = new Date().toISOString();
     await db.collection('magangPeriod').add({
       mahasiswaId,
@@ -541,7 +563,7 @@ router.post('/period/start', async (req, res) => {
     });
     
     magangNotif.periodeDimulai(db, { mahasiswaId, perusahaan: namaPerusahaan, tanggalMulai, tanggalSelesai });
-    req.session.success = `Periode magang ${pdk.nama} berhasil dimulai`;
+    req.session.success = `Periode magang ${pdk.nama} berhasil dimulai` + (krsOtomatis ? ` dan KRS ${pdk.nama} otomatis dibuatkan (${getCurrentAcademicSemester().label})` : '');
     res.redirect(`/admin/emagang/mahasiswa/${mahasiswaId}`);
   } catch (error) {
     console.error('Error:', error);
