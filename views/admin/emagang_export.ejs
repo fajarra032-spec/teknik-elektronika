@@ -55,6 +55,7 @@
           <th>Semester</th>
           <th>Tanggal</th>
           <th>Kegiatan</th>
+          <th>Hasil Pekerjaan</th>
           <th>Durasi</th>
           <th>Lokasi</th>
           <th>Jml Gambar</th>
@@ -63,7 +64,7 @@
       <tbody>
         <% if (data.length === 0) { %>
           <tr>
-            <td colspan="10" class="text-center">Tidak ada data</td>
+            <td colspan="11" class="text-center">Tidak ada data</td>
           </tr>
         <% } %>
         <% data.forEach((item, index) => { %>
@@ -75,6 +76,7 @@
             <td><%= item.semester %></td>
             <td><%= item.tanggal %></td>
             <td><%= item.kegiatan %></td>
+            <td><%= item.hasil || '' %></td>
             <td><%= item.durasi %></td>
             <td><%= item.lokasi %></td>
             <td class="text-center"><%= item.gambar %></td>

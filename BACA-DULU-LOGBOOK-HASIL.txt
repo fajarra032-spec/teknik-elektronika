@@ -1,0 +1,20 @@
+LOGBOOK: HASIL PEKERJAAN WAJIB DIISI MAHASISWA
+==============================================
+Pop-up Tambah/Edit logbook & halaman edit: kolom "Hasil pekerjaan" kini WAJIB
+(bintang merah + validasi server: "Hasil pekerjaan wajib diisi.").
+Hasil kini juga tampil untuk dosen & admin.
+
+File yang berubah (10):
+  routes/mahasiswa/magang.js
+  views/mahasiswa/magang/_form_logbook_fields.ejs
+  views/mahasiswa/magang/logbook_edit.ejs
+  views/mahasiswa/magang/arsip_detail.ejs
+  views/dosen/magang_logbook_detail.ejs   (baris baru "Hasil Pekerjaan")
+  views/dosen/magang_detail.ejs
+  views/dosen/magang_print.ejs
+  views/admin/emagang_mahasiswa.ejs
+  views/admin/emagang_print.ejs
+  views/admin/emagang_export.ejs          (kolom baru "Hasil Pekerjaan")
+
+Tanpa perubahan database/indeks/package.json/app.js. Restart server setelah menimpa.
+Entri lama yang hasilnya kosong tetap tampil; bila diedit, hasil wajib diisi.

@@ -38,6 +38,10 @@
         <div class="col-sm-3 text-muted">Deskripsi Kegiatan</div>
         <div class="col-sm-9"><%= logbook.kegiatan || '-' %></div>
       </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 text-muted">Hasil Pekerjaan</div>
+        <div class="col-sm-9" style="white-space:pre-line;"><%= logbook.hasil || '-' %></div>
+      </div>
 
       <% if (logbook.imageUrls && logbook.imageUrls.length > 0) { %>
         <div class="row">

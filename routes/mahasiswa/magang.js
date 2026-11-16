@@ -618,6 +618,9 @@ router.post('/logbook', upload.array('images', 5), async (req, res) => {
     if (!tanggal || !kegiatan || !semester || !periodId) {
       return res.status(400).send('Data tidak lengkap. Periode magang wajib dipilih.');
     }
+    if (!hasil) {
+      return res.status(400).send('Hasil pekerjaan wajib diisi.');
+    }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) {
       return res.status(400).send('Format tanggal tidak valid.');
     }
@@ -763,6 +766,9 @@ router.post('/logbook/:id/edit', upload.array('images', 5), async (req, res) => 
 
     if (!tanggal || !kegiatan || !/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) {
       return res.status(400).send('Tanggal dan kegiatan wajib diisi.');
+    }
+    if (!hasil) {
+      return res.status(400).send('Hasil pekerjaan wajib diisi.');
     }
     if (tanggal > todayWITA()) {
       return res.status(400).send('Tanggal kegiatan tidak boleh melewati hari ini.');

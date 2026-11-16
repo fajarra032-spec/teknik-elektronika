@@ -527,7 +527,7 @@
               <tr>
                 <td class="fw-bold text-center"><%= idx+1 %></td>
                 <td><%= formatTanggal(item.tanggal) %></td>
-                <td><%= item.kegiatan %></td>
+                <td><%= item.kegiatan %><% if (item.hasil) { %><div style="margin-top:4px;font-size:.88em;color:#0f766e;white-space:pre-line;"><b>Hasil:</b> <%= item.hasil %></div><% } %></td>
                 <td class="text-center"><%= item.durasi ? item.durasi + ' jam' : '-' %></td>
                 <td><%= item.lokasi || '-' %></td>
                 <td><%= item.semester || '-' %></td>
