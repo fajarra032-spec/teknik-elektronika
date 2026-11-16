@@ -124,6 +124,20 @@
         </div>
 
         <div class="mb-3">
+          <label class="form-label">Status Dosen <span class="text-danger">*</span></label>
+          <% const statusSaatIni = (dosen && dosen.statusDosen === 'bantu') ? 'bantu' : 'homebase'; %>
+          <div class="d-flex flex-wrap gap-4">
+            <% (typeof statusOptions !== 'undefined' ? statusOptions : [{value:'homebase',label:'Dosen Homebase'},{value:'bantu',label:'Dosen Bantu'}]).forEach(opt => { %>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="statusDosen" id="status_<%= opt.value %>" value="<%= opt.value %>" <%= statusSaatIni === opt.value ? 'checked' : '' %> required>
+                <label class="form-check-label" for="status_<%= opt.value %>"><%= opt.label %></label>
+              </div>
+            <% }) %>
+          </div>
+          <small class="text-muted">Homebase: dosen induk prodi ini. Bantu: dosen yang membantu mengajar (homebase di tempat lain).</small>
+        </div>
+
+        <div class="mb-3">
           <label for="foto" class="form-label">Foto Profil</label>
           <input type="file" class="form-control" id="foto" name="foto" accept="image/*">
           <small class="text-muted">Kosongkan jika tidak ingin mengubah foto</small>

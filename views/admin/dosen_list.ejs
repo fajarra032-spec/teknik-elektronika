@@ -194,6 +194,14 @@
     </div>
   <% } %>
 
+  <!-- Filter Status Dosen -->
+  <% const _j = (typeof jumlah !== 'undefined') ? jumlah : { semua: dosen.length, homebase: 0, bantu: 0 }; const _f = (typeof filterStatus !== 'undefined') ? filterStatus : ''; %>
+  <ul class="nav nav-pills mb-3">
+    <li class="nav-item"><a class="nav-link <%= _f === '' ? 'active' : '' %>" href="/admin/dosen">Semua <span class="badge bg-light text-dark"><%= _j.semua %></span></a></li>
+    <li class="nav-item"><a class="nav-link <%= _f === 'homebase' ? 'active' : '' %>" href="/admin/dosen?status=homebase">Dosen Homebase <span class="badge bg-light text-dark"><%= _j.homebase %></span></a></li>
+    <li class="nav-item"><a class="nav-link <%= _f === 'bantu' ? 'active' : '' %>" href="/admin/dosen?status=bantu">Dosen Bantu <span class="badge bg-light text-dark"><%= _j.bantu %></span></a></li>
+  </ul>
+
   <!-- Tabel Dosen -->
   <div class="table-container">
     <div class="table-responsive">
@@ -203,6 +211,7 @@
             <th>Foto</th>
             <th>NUPTK</th>
             <th>Nama</th>
+            <th>Status</th>
             <th>Email</th>
             <th>Kontak</th>
             <th>Mata Kuliah Diampu</th>
@@ -212,7 +221,7 @@
         <tbody>
           <% if (dosen.length === 0) { %>
             <tr>
-              <td colspan="7" class="text-center py-5">
+              <td colspan="8" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <h4>Belum Ada Data Dosen</h4>
@@ -243,6 +252,7 @@
               </td>
               <td><span class="fw-semibold"><%= d.nip || '-' %></span></td>
               <td><%= d.nama %></td>
+              <td><span class="badge <%= d.statusDosen === 'bantu' ? 'bg-warning text-dark' : 'bg-success' %>"><%= d.statusDosen === 'bantu' ? 'Dosen Bantu' : 'Dosen Homebase' %></span></td>
               <td><%= d.email %></td>
               <td><%= d.kontak || '-' %></td>
               <td>

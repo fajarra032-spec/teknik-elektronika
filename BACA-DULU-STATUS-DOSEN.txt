@@ -1,0 +1,16 @@
+PATCH: STATUS DOSEN (HOMEBASE / BANTU)
+======================================
+Ekstrak zip ini di ROOT proyek (struktur folder sama), timpa file yang ada. Restart server.
+Tanpa indeks Firestore / package baru / migrasi data.
+
+BARU   helpers/statusDosenHelper.js        (konstanta + fungsi normalisasi/label status)
+TIMPA  routes/admin/dosen.js               (simpan field statusDosen, filter ?status=, hitung per status)
+TIMPA  views/admin/dosen_form.ejs          (pilihan radio Status Dosen)
+TIMPA  views/admin/dosen_list.ejs          (kolom Status + tab filter Semua / Homebase / Bantu)
+
+Field baru di koleksi `dosen`:  statusDosen = 'homebase' | 'bantu'
+- Dokumen dosen lama yang belum punya field ini otomatis dianggap 'homebase'
+  (tidak perlu migrasi). Ubah yang bantu lewat Kelola Dosen > Edit.
+
+Pemakaian di kode lain:
+  const { getStatusDosen, isDosenBantu } = require('./helpers/statusDosenHelper');

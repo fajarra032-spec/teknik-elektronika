@@ -12,6 +12,7 @@ const { Readable } = require('stream');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { dosenCache } = require('../../helpers/cache');
+const { STATUS_DOSEN, STATUS_DOSEN_OPTIONS, normalizeStatusDosen, getStatusDosen } = require('../../helpers/statusDosenHelper');
 
 // Middleware autentikasi (sudah diterapkan di index.js, namun untuk keamanan tambahan)
 router.use(verifyToken);
@@ -57,7 +58,12 @@ router.get('/', async (req, res) => {
   try {
     const dosenSnapshot = await db.collection('dosen').orderBy('nama').get();
     const dosen = dosenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    res.render('admin/dosen_list', { title: 'Kelola Dosen', dosen });
+    // Hitung per status (dokumen lama tanpa field dianggap homebase), lalu filter ?status=
+    const jumlah = { semua: dosen.length, homebase: 0, bantu: 0 };
+    dosen.forEach(d => { jumlah[getStatusDosen(d)]++; });
+    const filterStatus = [STATUS_DOSEN.HOMEBASE, STATUS_DOSEN.BANTU].includes(req.query.status) ? req.query.status : '';
+    const dosenTampil = filterStatus ? dosen.filter(d => getStatusDosen(d) === filterStatus) : dosen;
+    res.render('admin/dosen_list', { title: 'Kelola Dosen', dosen: dosenTampil, jumlah, filterStatus });
   } catch (error) {
     console.error('Error mengambil data dosen:', error);
     res.status(500).render('error', { message: 'Gagal mengambil data dosen' });
@@ -72,7 +78,7 @@ router.get('/create', async (req, res) => {
   try {
     const mkSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
     const mkList = mkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    res.render('admin/dosen_form', { title: 'Tambah Dosen', dosen: null, mkList });
+    res.render('admin/dosen_form', { title: 'Tambah Dosen', dosen: null, mkList, statusOptions: STATUS_DOSEN_OPTIONS });
   } catch (error) {
     console.error('Error memuat form tambah dosen:', error);
     res.status(500).render('error', { message: 'Gagal memuat form' });
@@ -85,7 +91,7 @@ router.get('/create', async (req, res) => {
  */
 router.post('/', upload.single('foto'), async (req, res) => {
   try {
-    const { nip, nama, kontak, email, mataKuliahIds } = req.body;
+    const { nip, nama, kontak, email, mataKuliahIds, statusDosen } = req.body;
     const file = req.file;
 
     if (!nip || !nama || !email) {
@@ -121,6 +127,7 @@ router.post('/', upload.single('foto'), async (req, res) => {
       foto: fotoUrl,
       fotoFileId,
       mataKuliahIds: mkIds,
+      statusDosen: normalizeStatusDosen(statusDosen),
       createdAt: new Date().toISOString(),
     });
 
@@ -145,7 +152,7 @@ router.get('/:id/edit', async (req, res) => {
     const dosen = { id: dosenDoc.id, ...dosenDoc.data() };
     const mkSnapshot = await db.collection('mataKuliah').orderBy('kode').get();
     const mkList = mkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    res.render('admin/dosen_form', { title: 'Edit Dosen', dosen, mkList });
+    res.render('admin/dosen_form', { title: 'Edit Dosen', dosen, mkList, statusOptions: STATUS_DOSEN_OPTIONS });
   } catch (error) {
     console.error('Error memuat form edit dosen:', error);
     res.status(500).render('error', { message: 'Gagal memuat form edit' });
@@ -158,7 +165,7 @@ router.get('/:id/edit', async (req, res) => {
  */
 router.post('/:id/update', upload.single('foto'), async (req, res) => {
   try {
-    const { nip, nama, kontak, email, mataKuliahIds } = req.body;
+    const { nip, nama, kontak, email, mataKuliahIds, statusDosen } = req.body;
     const file = req.file;
     const dosenRef = db.collection('dosen').doc(req.params.id);
     const dosenDoc = await dosenRef.get();
@@ -179,6 +186,7 @@ router.post('/:id/update', upload.single('foto'), async (req, res) => {
       kontak,
       email,
       mataKuliahIds: mkIds,
+      statusDosen: normalizeStatusDosen(statusDosen),
       updatedAt: new Date().toISOString(),
     };
 
