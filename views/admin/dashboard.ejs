@@ -410,6 +410,18 @@
                 </div>
                 <div class="col-lg-3 col-md-4 col-6">
                     <div class="stat-item d-flex align-items-center">
+                        <div class="stat-icon me-2" style="color: #dc3545; background: rgba(220,53,69,0.1);">
+                            <i class="bi bi-hourglass-bottom"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Magang Berakhir (Belum Ditutup)</div>
+                            <div class="stat-number"><%= stats.periodeBerakhir || 0 %></div>
+                        </div>
+                        <a href="/admin/emagang?berakhir=1" class="btn-warning-custom ms-2">Lihat</a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 col-6">
+                    <div class="stat-item d-flex align-items-center">
                         <div class="stat-icon me-2" style="color: #0dcaf0; background: rgba(13,202,240,0.1);">
                             <i class="bi bi-envelope-paper"></i>
                         </div>

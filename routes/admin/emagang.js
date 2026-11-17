@@ -27,7 +27,7 @@ const { tampilkanCetakLogbook } = require('../../helpers/logbookPdfHelper');
 const magangNotif = require('../../helpers/magangNotifHelper');
 const { createKrsDanEnrollment } = require('../../helpers/paketKurikulumHelper');
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
-const { hariIniWITA, pilihPeriodeDefault, rentangLogbookPeriode, terapkanRentang, dalamRentang, ambilPeriodePerMahasiswa, statistikLogbookPeriode } = require('../../helpers/periodeMagangHelper');
+const { hariIniWITA, pilihPeriodeDefault, rentangLogbookPeriode, terapkanRentang, dalamRentang, ambilPeriodePerMahasiswa, statistikLogbookPeriode, validasiMulaiPeriode, periodeSudahBerakhir } = require('../../helpers/periodeMagangHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -175,7 +175,7 @@ router.get('/', async (req, res) => {
         totalMahasiswa: 0,
         summaryStats: { totalLogbook: 0, totalPending: 0, totalApproved: 0, totalRejected: 0 },
         angkatanList: [],
-        filters: { search: search || '', angkatan: angkatan || '' },
+        filters: { search: search || '', angkatan: angkatan || '', berakhir: false },
         pageInfo: null,
         showAll: false,
         pageListUrl: '/admin/emagang',
@@ -270,6 +270,13 @@ router.get('/', async (req, res) => {
     // terhadap filter pencarian/angkatan yang aktif.
     // Rekap PER PERIODE (periode yang sedang berjalan), bukan jumlah semua Magang.
     const periodePerMhs = await ambilPeriodePerMahasiswa(db, mahasiswaList.map(m => m.id));
+    // ?berakhir=1 -> hanya mahasiswa yang punya periode 'active' tetapi tanggal selesainya sudah lewat
+    const filterBerakhir = req.query.berakhir === '1';
+    if (filterBerakhir) {
+      const hariIniFilter = hariIniWITA();
+      mahasiswaList = mahasiswaList.filter(m =>
+        (periodePerMhs.get(m.id) || []).some(p => p.status === 'active' && periodeSudahBerakhir(p, hariIniFilter)));
+    }
     const statsPromises = mahasiswaList.map(async (m) => {
       const semua = periodePerMhs.get(m.id) || [];
       const per = pilihPeriodeDefault(semua, hariIniWITA());
@@ -302,6 +309,7 @@ router.get('/', async (req, res) => {
       const usp = new URLSearchParams();
       if (search) usp.set('search', search);
       if (angkatan) usp.set('angkatan', angkatan);
+      if (filterBerakhir) usp.set('berakhir', '1');
       Object.entries(params).forEach(([k, v]) => usp.set(k, v));
       return `/admin/emagang?${usp.toString()}`;
     };
@@ -342,7 +350,7 @@ router.get('/', async (req, res) => {
       totalMahasiswa: totalFiltered,
       summaryStats,
       angkatanList,
-      filters: { search: search || '', angkatan: angkatan || '' },
+      filters: { search: search || '', angkatan: angkatan || '', berakhir: filterBerakhir },
       pageInfo,
       showAll,
       pageListUrl: buildListUrl({ page: 1 }),
@@ -376,24 +384,26 @@ router.get('/mahasiswa/:userId', async (req, res) => {
     else if (allPeriods.length > 0) selectedPeriod = pilihPeriodeDefault(allPeriods, hariIniWITA());
     const rentangTerpilih = selectedPeriod ? rentangLogbookPeriode(selectedPeriod, allPeriods) : { awal: null, akhir: null };
 
-    // ✅ OPTIMISASI KUOTA: sebelumnya halaman ini membaca koleksi
-    // 'logbookMagang' mahasiswa yang SAMA sampai (2 + jumlah periode magang)
-    // KALI secara terpisah - sekali utk daftar yang ditampilkan, sekali lagi
-    // utk daftar semester, dan sekali lagi PER PERIODE utk statistik per PDK.
-    // Sekarang cukup SATU KALI baca semua logbook mahasiswa ini, sisanya
-    // (filter tampilan, daftar semester, statistik per PDK) dihitung di JS.
-    const semuaLogbookSnapshot = await db.collection('logbookMagang')
-      .where('userId', '==', userId)
-      .get();
-    const semuaLogbook = semuaLogbookSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // ✅ OPTIMISASI KUOTA: hanya logbook PERIODE yang dipilih yang dibaca (bukan seluruh
+    // logbook semua Magang). Statistik periode lain dihitung lewat count() agregasi.
+    let logbookPeriode;
+    if (selectedPeriod) {
+      const snapPeriode = await terapkanRentang(db.collection('logbookMagang')
+        .where('userId', '==', userId)
+        .where('pdkId', '==', selectedPeriod.pdkId), rentangTerpilih).get();
+      logbookPeriode = snapPeriode.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } else {
+      const snapSemua = await db.collection('logbookMagang').where('userId', '==', userId).get();
+      logbookPeriode = snapSemua.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
 
-    // Daftar logbook yang ditampilkan (terapkan filter period/semester + urutkan)
-    let logbookList = semuaLogbook.filter(l => {
-      if (selectedPeriod && l.pdkId !== selectedPeriod.pdkId) return false;
-      if (selectedPeriod && !dalamRentang(l.tanggal, rentangTerpilih)) return false;
-      if (semester && l.semester !== semester) return false;
-      return true;
-    });
+    // Daftar semester unik (dari logbook periode yang sedang dilihat)
+    const semesterSet = new Set();
+    logbookPeriode.forEach(l => { if (l.semester) semesterSet.add(l.semester); });
+    const semesterList = Array.from(semesterSet).sort();
+
+    // Daftar logbook yang ditampilkan (filter semester + urutkan)
+    let logbookList = logbookPeriode.filter(l => !semester || l.semester === semester);
     logbookList.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
     logbookList = logbookList.map(data => ({
       ...data,
@@ -401,36 +411,29 @@ router.get('/mahasiswa/:userId', async (req, res) => {
       tanggalWaktuFormatted: formatDateTime(data.tanggal)
     }));
 
-    // Daftar semester unik
-    const semesterSet = new Set();
-    semuaLogbook.forEach(l => { if (l.semester) semesterSet.add(l.semester); });
-    const semesterList = Array.from(semesterSet).sort();
-
-    // Statistik per PDK - dihitung dari data yang sudah ada di memori,
-    // BUKAN query baru per periode.
-    const pdkStats = allPeriods.map(period => {
-      let pending = 0, approved = 0, rejected = 0;
-      const rentangPeriode = rentangLogbookPeriode(period, allPeriods);
-      semuaLogbook.forEach(l => {
-        if (l.pdkId !== period.pdkId) return;
-        if (!dalamRentang(l.tanggal, rentangPeriode)) return;
-        if (l.status === 'pending') pending++;
-        else if (l.status === 'approved') approved++;
-        else if (l.status === 'rejected') rejected++;
-      });
+    // Statistik per PDK/periode: periode terpilih dihitung dari data yang sudah ada,
+    // periode lain lewat count().
+    const pdkStats = await Promise.all(allPeriods.map(async (period) => {
+      let st;
+      if (selectedPeriod && period.id === selectedPeriod.id) {
+        st = { pending: 0, approved: 0, rejected: 0 };
+        logbookPeriode.forEach(l => { if (st[l.status] !== undefined) st[l.status]++; });
+      } else {
+        st = await statistikLogbookPeriode(db, userId, period, allPeriods);
+      }
       return {
         id: period.id,
         pdkKode: period.pdkKode,
         pdkNama: period.pdkNama,
-        pendingCount: pending,
-        approvedCount: approved,
-        rejectedCount: rejected,
+        pendingCount: st.pending,
+        approvedCount: st.approved,
+        rejectedCount: st.rejected,
         status: period.status,
         tanggalMulai: period.tanggalMulai,
         tanggalSelesai: period.tanggalSelesai,
         perusahaan: period.perusahaan
       };
-    });
+    }));
 
     // Daftar PDK untuk dropdown (satu query)
     const pdkSnapshot = await db.collection('mataKuliah')
@@ -523,6 +526,13 @@ router.post('/period/start', async (req, res) => {
       return res.redirect('back');
     }
     
+    // Validasi tanggal: urutan tanggal, tidak tumpang tindih, urutan Magang 1/2/3
+    const galatPeriode = await validasiMulaiPeriode(db, { mahasiswaId, pdkId, tanggalMulai, tanggalSelesai });
+    if (galatPeriode) {
+      req.session.error = galatPeriode;
+      return res.redirect('back');
+    }
+
     // OTOMATIS KRS: kalau mahasiswa belum punya enrollment aktif untuk PDK ini,
     // buatkan KRS (approved) + enrollment langsung, supaya PDK muncul di KRS/KHS
     // dan lolos validasi PDK aktif tanpa admin harus "Buat KRS" manual dulu.

@@ -187,7 +187,7 @@
             <select class="form-select" id="dosenPaId" name="dosenPaId">
               <option value="">- Belum ditentukan -</option>
               <% (typeof dosenPaList !== 'undefined' ? dosenPaList : []).forEach(d => { %>
-                <option value="<%= d.id %>" <%= mahasiswa && mahasiswa.dosenPaId === d.id ? 'selected' : '' %>><%= d.nama %><%= d.nidn ? ' (NIDN ' + d.nidn + ')' : '' %></option>
+                <option value="<%= d.id %>" <%= mahasiswa && mahasiswa.dosenPaId === d.id ? 'selected' : '' %>><%= d.nama %><%= d.nidn ? ' (NIDN ' + d.nidn + ')' : '' %><%= d.statusDosen === 'bantu' ? ' - Dosen Bantu' : '' %></option>
               <% }) %>
             </select>
           </div>

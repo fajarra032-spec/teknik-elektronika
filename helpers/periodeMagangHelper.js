@@ -182,7 +182,85 @@ async function hitungApprovedPeriode(db, mahasiswaId, period, allPeriods) {
   catch (e) { return (await q.get()).size; }
 }
 
+const FORMAT_TANGGAL = /^\d{4}-\d{2}-\d{2}$/;
+const TANPA_BATAS = '9999-12-31';
+
+/**
+ * Validasi sebelum memulai periode magang baru. Mengembalikan teks galat (string)
+ * atau null bila lolos. Dipakai bersama oleh rute admin dan dosen.
+ *  1. Format tanggal valid, tanggal selesai tidak lebih awal dari tanggal mulai.
+ *  2. Tidak tumpang tindih dengan periode lain milik mahasiswa yang sama
+ *     (periode dibatalkan diabaikan; periode aktif tanpa tanggal selesai dianggap
+ *     masih berjalan).
+ *  3. Urutan PDK: Magang N tidak boleh dimulai lebih awal dari Magang N-1.
+ *     Bila Magang N-1 tidak ada di sistem (mis. data lama), tidak dihalangi.
+ *     Dimatikan dengan env PDK_URUTAN=off.
+ * opsi.urutanMap { pdkId: urutan } hanya untuk pengujian.
+ */
+async function validasiMulaiPeriode(db, data, opsi) {
+  const { mahasiswaId, pdkId } = data;
+  const mulai = String(data.tanggalMulai || '').substring(0, 10);
+  const selesai = data.tanggalSelesai ? String(data.tanggalSelesai).substring(0, 10) : '';
+
+  if (!FORMAT_TANGGAL.test(mulai)) return 'Format tanggal mulai tidak valid.';
+  if (selesai && !FORMAT_TANGGAL.test(selesai)) return 'Format tanggal selesai tidak valid.';
+  if (selesai && selesai < mulai) return 'Tanggal selesai tidak boleh lebih awal dari tanggal mulai.';
+
+  const snap = await db.collection('magangPeriod').where('mahasiswaId', '==', mahasiswaId).get();
+  const periode = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => p.status !== 'cancelled');
+
+  const akhirBaru = selesai || TANPA_BATAS;
+  for (const q of periode) {
+    if (!q.tanggalMulai) continue;
+    const awalQ = String(q.tanggalMulai).substring(0, 10);
+    let akhirQ = q.tanggalSelesai ? String(q.tanggalSelesai).substring(0, 10) : '';
+    if (!akhirQ) akhirQ = q.status === 'completed' ? (String(q.completedAt || awalQ).substring(0, 10)) : TANPA_BATAS;
+    if (mulai <= akhirQ && awalQ <= akhirBaru) {
+      const rentangQ = `${awalQ} s/d ${q.tanggalSelesai ? String(q.tanggalSelesai).substring(0, 10) : 'belum ditentukan'}`;
+      return `Tanggal bertabrakan dengan periode ${q.pdkNama || 'magang lain'} (${rentangQ}). Tutup atau ubah periode tersebut terlebih dahulu.`;
+    }
+  }
+
+  if (String(process.env.PDK_URUTAN || '').toLowerCase() !== 'off') {
+    let urutanMap = opsi && opsi.urutanMap;
+    if (!urutanMap) urutanMap = await require('./laporanPdkHelper').getUrutanPdkMap();
+    const n = urutanMap[pdkId];
+    if (Number.isFinite(n) && n > 1) {
+      const sebelumnya = periode.filter((p) => urutanMap[p.pdkId] === n - 1 && p.tanggalMulai);
+      if (sebelumnya.length > 0) {
+        const awalTerakhir = sebelumnya.map((p) => String(p.tanggalMulai).substring(0, 10)).sort().pop();
+        if (mulai < awalTerakhir) {
+          return `Magang ${n} tidak boleh dimulai lebih awal dari Magang ${n - 1} (dimulai ${awalTerakhir}).`;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Periode berstatus 'active' yang tanggal selesainya sudah lewat (belum ditutup/dinilai).
+ * Dibaca dari semua periode active (jumlahnya kecil), disaring di JS: tanpa indeks baru.
+ */
+async function ambilPeriodeBerakhirBelumDitutup(db, today) {
+  today = today || hariIniWITA();
+  const snap = await db.collection('magangPeriod')
+    .where('status', '==', 'active')
+    .select('mahasiswaId', 'pdkNama', 'tanggalSelesai', 'status')
+    .get();
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((p) => periodeSudahBerakhir(p, today))
+    .map((p) => ({
+      id: p.id, mahasiswaId: p.mahasiswaId, pdkNama: p.pdkNama || '', tanggalSelesai: p.tanggalSelesai,
+      hariLewat: Math.round((new Date(today + 'T00:00:00Z') - new Date(String(p.tanggalSelesai).substring(0, 10) + 'T00:00:00Z')) / MS_HARI)
+    }))
+    .sort((a, b) => b.hariLewat - a.hariLewat);
+}
+
 module.exports = {
+  validasiMulaiPeriode,
+  ambilPeriodeBerakhirBelumDitutup,
   pilihPeriodeUntukTanggal,
   hitungApprovedPeriode,
   hariIniWITA,

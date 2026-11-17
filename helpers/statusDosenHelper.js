@@ -34,7 +34,19 @@ function labelStatusDosen(value) {
 function isDosenHomebase(dosen) { return getStatusDosen(dosen) === STATUS_DOSEN.HOMEBASE; }
 function isDosenBantu(dosen) { return getStatusDosen(dosen) === STATUS_DOSEN.BANTU; }
 
+/**
+ * Boleh ditetapkan sebagai Dosen PA / pembimbing magang? Dosen bantu TIDAK boleh,
+ * kecuali env DOSEN_BANTU_BOLEH_PA=on. (Dosen lama tanpa status = homebase = boleh.)
+ */
+function bolehJadiDosenPa(dosen) {
+  if (String(process.env.DOSEN_BANTU_BOLEH_PA || '').toLowerCase() === 'on') return true;
+  return !isDosenBantu(dosen);
+}
+const PESAN_DOSEN_BANTU_PA = 'Dosen Bantu tidak dapat ditetapkan sebagai Dosen PA / pembimbing magang. Pilih dosen homebase.';
+
 module.exports = {
+  bolehJadiDosenPa,
+  PESAN_DOSEN_BANTU_PA,
   STATUS_DOSEN,
   STATUS_DOSEN_OPTIONS,
   DEFAULT_STATUS_DOSEN,

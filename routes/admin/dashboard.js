@@ -4,6 +4,7 @@ const router = express.Router();
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getAdminPending } = require('../../helpers/adminBadgeHelper');
+const { ambilPeriodeBerakhirBelumDitutup } = require('../../helpers/periodeMagangHelper');
 
 /** Tanggal hari ini menurut WITA (server bisa berjam UTC; antara 00.00-08.00 WITA tanggal UTC masih kemarin). */
 const hariIniWITA = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Makassar' });
@@ -70,6 +71,9 @@ router.get('/', async (req, res) => {
         .get() // ini tetap .get() biasa karena kita memang butuh ISI 5 event-nya utk ditampilkan
     ]);
 
+    // Periode magang yang tanggal selesainya sudah lewat tapi belum dinilai/ditutup
+    const periodeBerakhir = await ambilPeriodeBerakhirBelumDitutup(db).catch(() => []);
+
     const suratPending = suratMahasiswaPending + suratDosenPending + suratTugasPending;
     const events = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -80,6 +84,7 @@ router.get('/', async (req, res) => {
       krsPending,
       logbookPending,
       laporanPending,
+      periodeBerakhir: periodeBerakhir.length,
       suratPending,
       // Dulu tidak dikirim sehingga kartu di view selalu 0
       kunjunganPending: badge.kunjungan,

@@ -287,6 +287,7 @@ const cekPengingatPeriodeDosen = aman('cekPengingatPeriodeDosen', async (db, use
   const ids = [...nama.keys()];
   const hariIni = todayWITA();
   const segera = [];
+  const terlewat = [];   // periode sudah berakhir tapi belum dinilai/ditutup
   for (let i = 0; i < ids.length; i += 10) {
     const snap = await db.collection('magangPeriod')
       .where('mahasiswaId', 'in', ids.slice(i, i + 10))
@@ -297,6 +298,18 @@ const cekPengingatPeriodeDosen = aman('cekPengingatPeriodeDosen', async (db, use
       if (!p.tanggalSelesai) return;
       const sisa = selisihHari(hariIni, p.tanggalSelesai);
       if (sisa >= 0 && sisa <= 7) segera.push({ nama: nama.get(p.mahasiswaId), sisa });
+      else if (sisa < 0) terlewat.push({ nama: nama.get(p.mahasiswaId), hariLewat: -sisa });
+    });
+  }
+  if (terlewat.length) {
+    terlewat.sort((a, b) => b.hariLewat - a.hariLewat);
+    const daftarLewat = terlewat.slice(0, 3).map((x) => x.nama).join(', ') + (terlewat.length > 3 ? `, dan ${terlewat.length - 3} lainnya` : '');
+    const pekan = Math.floor(new Date(hariIni + 'T00:00:00Z').getTime() / (7 * 86400000));
+    await createNotificationOnce(db, user.id, `magang-perlu-ditutup-${user.dosenId}-${pekan}`, {
+      type: 'magang-berakhir',
+      title: `${terlewat.length} periode magang sudah berakhir, menunggu penilaian & penutupan`,
+      message: `${daftarLewat}. Mohon periksa logbook, beri nilai, lalu tutup periodenya agar tercatat selesai.`,
+      link: '/dosen/magang'
     });
   }
   if (!segera.length) return;

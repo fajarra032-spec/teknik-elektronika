@@ -11,6 +11,9 @@ const {
 } = require('../../models/magangPeriodModel');
 const { getPembimbingMahasiswa, isPembimbingMahasiswa } = require('../../helpers/pembimbingHelper');
 const magangNotif = require('../../helpers/magangNotifHelper');
+const { createKrsDanEnrollment } = require('../../helpers/paketKurikulumHelper');
+const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
+const { validasiMulaiPeriode } = require('../../helpers/periodeMagangHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -165,16 +168,6 @@ router.post('/start', async (req, res) => {
       return res.status(400).send('Data tidak lengkap. Nama perusahaan wajib diisi.');
     }
     
-    // 1. Validasi PDK aktif (harus sudah diambil di KRS)
-    const activePdks = await getActivePdkListForMahasiswa(mahasiswaId);
-    if (activePdks.length === 0) {
-      return res.status(400).send('Mahasiswa belum mengambil mata kuliah PDK. Arahkan mahasiswa untuk membuat KRS PDK terlebih dahulu.');
-    }
-    const isValidPdk = activePdks.some(p => p.id === pdkId);
-    if (!isValidPdk) {
-      return res.status(400).send('PDK yang dipilih tidak aktif atau tidak diambil mahasiswa.');
-    }
-    
     // 2. Validasi akses dosen sebagai pembimbing
     const isPembimbingDosen = await isPembimbing(req.dosen.id, mahasiswaId);
     if (!isPembimbingDosen) {
@@ -187,6 +180,10 @@ router.post('/start', async (req, res) => {
       return res.status(404).send('Mata kuliah PDK tidak ditemukan');
     }
     const pdk = pdkDoc.data();
+    
+    if (pdk.isPDK !== true) {
+      return res.status(400).send('Mata kuliah yang dipilih bukan PDK.');
+    }
     
     // 4. Cek bimbingan mahasiswa
     const bimbingan = await getBimbingan(mahasiswaId);
@@ -203,6 +200,29 @@ router.post('/start', async (req, res) => {
     
     if (!existing.empty) {
       return res.status(400).send(`Mahasiswa sudah memiliki periode magang aktif untuk ${pdk.nama}`);
+    }
+
+    // Validasi tanggal: urutan tanggal, tidak tumpang tindih, urutan Magang 1/2/3
+    const galatPeriode = await validasiMulaiPeriode(db, { mahasiswaId, pdkId, tanggalMulai, tanggalSelesai });
+    if (galatPeriode) {
+      return res.status(400).send(galatPeriode);
+    }
+
+    // KRS OTOMATIS: bila mahasiswa belum punya enrollment aktif untuk PDK ini,
+    // buatkan KRS (approved) + enrollment agar PDK muncul di KRS/KHS (tidak lagi
+    // menolak dengan "belum mengambil PDK"). Sudah ada -> tidak dibuat ganda.
+    const enrollAktif = await db.collection('enrollment')
+      .where('userId', '==', mahasiswaId)
+      .where('mkId', '==', pdkId)
+      .where('status', '==', 'active')
+      .limit(1)
+      .get();
+    if (enrollAktif.empty) {
+      await createKrsDanEnrollment(db, mahasiswaId, [pdkId], getCurrentAcademicSemester().label,
+        (req.user && req.user.id) || req.dosen.id, {
+          dibuatOlehSistem: true,
+          catatan: `KRS otomatis saat periode magang ${pdk.nama} dimulai`
+        });
     }
     
     const now = new Date().toISOString();

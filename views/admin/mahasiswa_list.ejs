@@ -377,7 +377,7 @@
         <label for="bulkDosenPaSelect">Tetapkan Dosen PA</label>
         <select name="dosenPaId" id="bulkDosenPaSelect" required>
           <option value="">- Pilih Dosen PA -</option>
-          <% dosenPaList.forEach(d => { %><option value="<%= d.id %>"><%= d.nama %><%= d.nidn ? ' (NIDN ' + d.nidn + ')' : '' %></option><% }) %>
+          <% dosenPaList.forEach(d => { %><option value="<%= d.id %>"><%= d.nama %><%= d.nidn ? ' (NIDN ' + d.nidn + ')' : '' %><%= d.statusDosen === 'bantu' ? ' - Dosen Bantu' : '' %></option><% }) %>
         </select>
       </div>
       <button type="submit" class="ea-btn ea-btn-primary">Terapkan</button>

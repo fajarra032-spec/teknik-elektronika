@@ -16,6 +16,7 @@ const { getCurrentAcademicSemester, normalizeKelas } = require('../../helpers/ac
 const { buatDokumenSkPa } = require('../../helpers/skPaHelper');
 const { dosenCache, mahasiswaCache, getAllMahasiswa, invalidateUserProfile } = require('../../helpers/cache');
 const { isTidakIkutKegiatan } = require('../../helpers/statusMahasiswaHelper');
+const { bolehJadiDosenPa, PESAN_DOSEN_BANTU_PA } = require('../../helpers/statusDosenHelper');
 
 // URL daftar mahasiswa terakhir yang dibuka admin (lengkap dengan filter,
 // pencarian & nomor halaman), disimpan di session. Dipakai tombol "Kembali"
@@ -61,7 +62,8 @@ async function getAllDosenPa() {
     // Dosen yang dibuat lewat form standar (/admin/dosen atau /admin/users)
     // menyimpan identitasnya di field `nip`, sementara sebagian data lama
     // (mis. hasil impor SK) memakai `nidn`/`nuptk` - tampilkan yang ada.
-    nidn: d.nidn || d.nip || d.nuptk || ''
+    nidn: d.nidn || d.nip || d.nuptk || '',
+    statusDosen: d.statusDosen === 'bantu' ? 'bantu' : 'homebase'
   }));
 }
 
@@ -451,6 +453,7 @@ router.post('/', upload.single('foto'), async (req, res) => {
     if (dosenPaId) {
       const dosenDoc = await db.collection('dosen').doc(dosenPaId).get();
       if (dosenDoc.exists) {
+        if (!bolehJadiDosenPa(dosenDoc.data())) return res.status(400).send(PESAN_DOSEN_BANTU_PA);
         dosenPaData = {
           dosenPaId,
           dosenPaNama: dosenDoc.data().nama || null,
@@ -604,6 +607,10 @@ router.post('/:id/update', upload.single('foto'), async (req, res) => {
       if (dosenPaId) {
         const dosenDoc = await db.collection('dosen').doc(dosenPaId).get();
         if (dosenDoc.exists) {
+          // penugasan lama tidak diganggu; yang diblokir hanya penetapan BARU dosen bantu
+          if (oldData.dosenPaId !== dosenPaId && !bolehJadiDosenPa(dosenDoc.data())) {
+            return res.status(400).send(PESAN_DOSEN_BANTU_PA);
+          }
           updateData.dosenPaId = dosenPaId;
           updateData.dosenPaNama = dosenDoc.data().nama || null;
           updateData.dosenPaNidn = dosenDoc.data().nidn || null;
@@ -1089,6 +1096,10 @@ router.post('/bulk-dosen-pa', async (req, res) => {
       const dosenDoc = await db.collection('dosen').doc(dosenPaId).get();
       if (!dosenDoc.exists) {
         req.session.importError = 'Dosen PA yang dipilih tidak ditemukan';
+        return res.redirect('/admin/mahasiswa');
+      }
+      if (!bolehJadiDosenPa(dosenDoc.data())) {
+        req.session.importError = PESAN_DOSEN_BANTU_PA;
         return res.redirect('/admin/mahasiswa');
       }
       dosenPaData = {

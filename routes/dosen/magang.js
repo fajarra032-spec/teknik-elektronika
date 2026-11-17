@@ -184,7 +184,7 @@ async function getActiveMagangPeriods(mahasiswaId) {
   try {
     const snapshot = await db.collection('magangPeriod')
       .where('mahasiswaId', '==', mahasiswaId)
-      .where('status', '==', 'active')
+      .where('status', 'in', ['active', 'locked', 'completed'])   // arsip (completed) tetap terlihat oleh dosen
       .get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {

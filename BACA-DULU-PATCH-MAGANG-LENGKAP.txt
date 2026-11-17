@@ -1,0 +1,35 @@
+PATCH MAGANG LENGKAP
+====================
+Ekstrak di ROOT proyek, timpa file yang ada, lalu restart server.
+Tanpa indeks Firestore baru dan tanpa paket baru. Paket ini sudah MENGGABUNGKAN semua patch
+sebelumnya (KRS otomatis, status dosen, pemisahan logbook, landing) - cukup pasang yang ini.
+
+A. KRS OTOMATIS saat mulai periode magang (admin DAN dosen). Belum punya enrollment aktif PDK -> dibuatkan.
+B. STATUS DOSEN homebase/bantu di Kelola Dosen (dokumen lama = homebase).
+C. LOGBOOK MAGANG 1/2/3 TIDAK BERCAMPUR: rekap per periode (daftar & detail admin/dosen, mahasiswa,
+   cetak, landing). Periode yang tanggal selesainya lewat dianggap berakhir/arsip. Tanggal logbook
+   wajib di dalam periode. Entri baru menyimpan periodId.
+D. (BARU) PERIODE BERAKHIR BELUM DITUTUP
+   - Dashboard admin: kartu "Magang Berakhir (Belum Ditutup)" -> /admin/emagang?berakhir=1 (filter + banner).
+   - Dosen PA: notifikasi mingguan "N periode magang sudah berakhir, menunggu penilaian & penutupan".
+E. (BARU) VALIDASI MULAI PERIODE (admin & dosen): tanggal selesai >= mulai; tidak tumpang tindih dengan
+   periode lain mahasiswa itu (aktif tanpa tgl selesai dianggap masih berjalan); Magang N tidak boleh
+   dimulai lebih awal dari Magang N-1. Matikan aturan urutan: env PDK_URUTAN=off.
+F. (BARU) Dosen kini juga melihat periode berstatus completed/locked (arsip) di detail mahasiswa bimbingan.
+G. (BARU) Dosen bantu tidak bisa DITETAPKAN BARU sebagai Dosen PA/pembimbing (tambah/edit mahasiswa &
+   penetapan massal). Penugasan lama tidak diganggu. Izinkan: env DOSEN_BANTU_BOLEH_PA=on.
+   Dropdown Dosen PA memberi label "- Dosen Bantu".
+H. (BARU) Efisiensi: detail admin hanya membaca logbook periode terpilih; statistik periode lain via count().
+
+SKRIP (dry-run default, --confirm untuk menulis):
+  node scripts/migrasi-periodid-logbook.js     isi periodId pada logbook lama
+  node scripts/arsipkan-file-lama.js           pindahkan landing.js/display.js/magang1.js (root) ke _arsip_lama/
+                                               hanya bila tidak ada yang me-require-nya
+  Saran: scripts/backup-collections.js dulu sebelum --confirm.
+
+FILE TIMPA: helpers/{logbookPrintHelper,magangNotifHelper,statusDosenHelper}.js
+            routes/{display,landing}.js, routes/admin/{dashboard,dosen,emagang,mahasiswa}.js,
+            routes/dosen/{magang,magangPeriod}.js, routes/mahasiswa/magang.js
+            views/admin/{dashboard,dosen_form,dosen_list,emagang_list,mahasiswa_form,mahasiswa_list}.ejs
+            views/dosen/magang_list.ejs, views/landing/cek_mahasiswa_detail.ejs
+FILE BARU : helpers/periodeMagangHelper.js, scripts/migrasi-periodid-logbook.js, scripts/arsipkan-file-lama.js
