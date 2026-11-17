@@ -15,6 +15,7 @@ const { getAlatPublik } = require('../helpers/alatPublikHelper');
 const { notifikasiAdmin } = require('../helpers/peminjamanAlatHelper');
 const { invalidateAdminPending } = require('../helpers/adminBadgeHelper');
 const { getTranskripMahasiswa } = require('../helpers/nilaiHelper');
+const { hariIniWITA, periodeSudahBerakhir, pilihPeriodeDefault, rentangLogbookPeriode, terapkanRentang, statistikLogbookPeriode } = require('../helpers/periodeMagangHelper');
 
 // IPK lulusan di halaman publik (beranda & /yudisium/:tahun) tidak perlu real-time:
 // transkrip dihitung dari grades + enrollment, jadi di-cache 6 jam per mahasiswa.
@@ -447,24 +448,27 @@ router.get('/cekmahasiswa/:id', async (req, res) => {
     }
     const mahasiswa = { id: userDoc.id, ...userDoc.data() };
 
-    // 5 logbook terbaru
-    const logbookSnapshot = await db.collection('logbookMagang')
-      .where('userId', '==', id)
-      .orderBy('tanggal', 'desc')
-      .limit(5)
-      .get();
-    const logbook = logbookSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Semua periode magang mahasiswa (1 query) -> menentukan periode yang ditampilkan.
+    const periodeSnap = await db.collection('magangPeriod').where('mahasiswaId', '==', id).get();
+    const semuaPeriode = periodeSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const hariIni = hariIniWITA();
 
-    // Statistik semua logbook
-    const allLogbook = await db.collection('logbookMagang')
-      .where('userId', '==', id)
-      .get();
-    const stats = {
-      total: allLogbook.size,
-      approved: allLogbook.docs.filter(d => d.data().status === 'approved').length,
-      pending: allLogbook.docs.filter(d => d.data().status === 'pending').length,
-      rejected: allLogbook.docs.filter(d => d.data().status === 'rejected').length
-    };
+    // Aktivitas & statistik logbook HANYA untuk satu periode (yang sedang berjalan,
+    // atau yang terakhir bila semuanya sudah berakhir) - Magang 1/2/3 tidak dicampur.
+    const periodeLogbook = pilihPeriodeDefault(semuaPeriode, hariIni);
+    let logbook = [];
+    let stats = { total: 0, approved: 0, pending: 0, rejected: 0 };
+    if (periodeLogbook) {
+      const rentang = rentangLogbookPeriode(periodeLogbook, semuaPeriode);
+      const logbookSnapshot = await terapkanRentang(db.collection('logbookMagang')
+        .where('userId', '==', id)
+        .where('pdkId', '==', periodeLogbook.pdkId), rentang)
+        .orderBy('tanggal', 'desc')
+        .limit(5)
+        .get();
+      logbook = logbookSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      stats = await statistikLogbookPeriode(db, id, periodeLogbook, semuaPeriode);
+    }
     // Ambil data tagihan mahasiswa dari koleksi 'tagihan'
 let totalTagihanBelumLunas = 0;
 const tagihanDoc = await db.collection('tagihan').doc(id).get();
@@ -474,13 +478,10 @@ if (tagihanDoc.exists) {
     .filter(t => t.status !== 'lunas')
     .reduce((sum, t) => sum + (t.jumlah || 0), 0);
 }
-    // Periode magang aktif
-    const activePeriodSnap = await db.collection('magangPeriod')
-      .where('mahasiswaId', '==', id)
-      .where('status', '==', 'active')
-      .limit(1)
-      .get();
-    const activePeriod = activePeriodSnap.empty ? null : { id: activePeriodSnap.docs[0].id, ...activePeriodSnap.docs[0].data() };
+    // Periode magang aktif = yang sedang berjalan (periode yang tanggal selesainya
+    // sudah lewat tidak lagi dianggap aktif).
+    const activePeriod = pilihPeriodeDefault(
+      semuaPeriode.filter(p => p.status === 'active' && !periodeSudahBerakhir(p, hariIni)), hariIni);
 
     // Mata kuliah yang diprogram
     const enrollmentSnapshot = await db.collection('enrollment')
@@ -507,6 +508,7 @@ res.render('landing/cek_mahasiswa_detail', {
   mahasiswa,
   logbook,
   stats,
+  periodeLogbook,
   activePeriod,
   mkList,
   totalTagihanBelumLunas: totalTagihanBelumLunas  

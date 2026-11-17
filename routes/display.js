@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../config/firebaseAdmin');
 const { HARI_LIST, parseJadwalText } = require('../helpers/jadwalHelper');
+const { pilihPeriodeUntukTanggal, hitungApprovedPeriode } = require('../helpers/periodeMagangHelper');
 
 // ============================================================================
 // DISPLAY TV - MODE SUPER HEMAT KUOTA FIRESTORE (target < 1.000 read/hari)
@@ -173,24 +174,22 @@ const getMahasiswa = cachedPersistent('mahasiswa', TTL_MAHASISWA, async () => {
 // Progres magang versi hemat: 1 read (periode) + 1 count() - dulu membaca
 // SEMUA logbook approved mahasiswa itu (puluhan dokumen). Catatan: ini
 // menghitung jumlah logbook approved (bukan hari unik); dibatasi totalDays.
-async function progressMagangRingan(userId, pdkId) {
+async function progressMagangRingan(userId, pdkId, tanggal) {
   const nol = { uploadedDays: 0, totalDays: 0, percentage: 0 };
   try {
+    // Progres dihitung untuk PERIODE yang memegang tanggal foto tsb (Magang 1 /
+    // 2 / 3 tidak dicampur), termasuk periode yang sudah berakhir/selesai.
     const periodSnap = await db.collection('magangPeriod')
       .where('mahasiswaId', '==', userId)
       .where('pdkId', '==', pdkId)
-      .where('status', '==', 'active')
-      .limit(1)
       .get();
-    if (periodSnap.empty) return nol;
-    const period = periodSnap.docs[0].data();
+    const periods = periodSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const period = pilihPeriodeUntukTanggal(periods, tanggal);
+    if (!period || !period.tanggalMulai) return nol;
     const start = new Date(period.tanggalMulai);
     const end = period.tanggalSelesai ? new Date(period.tanggalSelesai) : new Date();
     const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-    const jumlah = await hitung(db.collection('logbookMagang')
-      .where('userId', '==', userId)
-      .where('pdkId', '==', pdkId)
-      .where('status', '==', 'approved'));
+    const jumlah = await hitungApprovedPeriode(db, userId, period, periods);
     const uploadedDays = Math.min(jumlah, Math.max(totalDays, 0));
     const percentage = totalDays > 0 ? Math.min(100, Math.round((uploadedDays / totalDays) * 100)) : 0;
     return { uploadedDays, totalDays, percentage };
@@ -247,15 +246,15 @@ const getSlides = cachedPersistent('slides', TTL_SLIDES, async () => {
   }
 
   const progressPromises = new Map();
-  const getProgress = (userId, pdkId) => {
-    const k = `${userId}_${pdkId}`;
-    if (!progressPromises.has(k)) progressPromises.set(k, progressMagangRingan(userId, pdkId));
+  const getProgress = (userId, pdkId, tanggal) => {
+    const k = `${userId}_${pdkId}_${String(tanggal || '').substring(0, 7)}`;
+    if (!progressPromises.has(k)) progressPromises.set(k, progressMagangRingan(userId, pdkId, tanggal));
     return progressPromises.get(k);
   };
 
   const slides = await Promise.all(terpilih.map(async ({ data, url }) => {
     const mhs = mhsMap.get(data.userId) || {};
-    const progress = await getProgress(data.userId, data.pdkId);
+    const progress = await getProgress(data.userId, data.pdkId, data.tanggal);
     let imageUrl = url;
     if (imageUrl.includes('drive.google.com')) {
       const match = imageUrl.match(/id=([^&]+)/);

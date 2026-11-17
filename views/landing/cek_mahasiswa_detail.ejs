@@ -551,7 +551,7 @@
 
   <!-- Logbook Terbaru -->
   <div class="logbook-card">
-    <h4 class="section-title"><i class="bi bi-journal-check"></i> Aktivitas Magang Terbaru</h4>
+    <h4 class="section-title"><i class="bi bi-journal-check"></i> Aktivitas Magang Terbaru<% if (typeof periodeLogbook !== 'undefined' && periodeLogbook) { %> <small class="text-muted fw-normal">&mdash; <%= periodeLogbook.pdkNama %></small><% } %></h4>
     <div class="table-responsive">
       <table class="table-logbook">
         <thead>

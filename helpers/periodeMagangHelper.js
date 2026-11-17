@@ -151,7 +151,40 @@ async function statistikLogbookPeriode(db, mahasiswaId, period, allPeriods) {
   return { total, pending, approved, rejected };
 }
 
+/**
+ * Periode yang memegang sebuah TANGGAL (untuk foto/entri lama): periode dengan
+ * tanggalMulai terakhir yang <= tanggal; bila tanggal sebelum semuanya, yang paling awal.
+ */
+function pilihPeriodeUntukTanggal(periods, tanggal) {
+  const daftar = (periods || [])
+    .filter((p) => p.status !== 'cancelled' && p.tanggalMulai)
+    .sort((a, b) => String(a.tanggalMulai).localeCompare(String(b.tanggalMulai)));
+  if (daftar.length === 0) return (periods || []).find((p) => p.status !== 'cancelled') || null;
+  const t = String(tanggal || '').substring(0, 10);
+  let hasil = daftar[0];
+  daftar.forEach((p) => { if (t && String(p.tanggalMulai).substring(0, 10) <= t) hasil = p; });
+  return hasil;
+}
+
+/** Jumlah logbook 'approved' milik SATU periode (1 count() bila tanpa rentang). */
+async function hitungApprovedPeriode(db, mahasiswaId, period, allPeriods) {
+  if (!period) return 0;
+  const rentang = rentangLogbookPeriode(period, allPeriods);
+  const dasar = db.collection('logbookMagang')
+    .where('userId', '==', mahasiswaId)
+    .where('pdkId', '==', period.pdkId);
+  if (rentang.awal || rentang.akhir) {
+    const snap = await terapkanRentang(dasar, rentang).select('status').get();
+    return snap.docs.filter((d) => d.get('status') === 'approved').length;
+  }
+  const q = dasar.where('status', '==', 'approved');
+  try { return (await q.count().get()).data().count; }
+  catch (e) { return (await q.get()).size; }
+}
+
 module.exports = {
+  pilihPeriodeUntukTanggal,
+  hitungApprovedPeriode,
   hariIniWITA,
   periodeSudahBerakhir,
   pilihPeriodeDefault,

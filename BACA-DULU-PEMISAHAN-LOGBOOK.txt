@@ -26,3 +26,19 @@ FILE (TIMPA): routes/mahasiswa/magang.js, routes/dosen/magang.js, routes/admin/e
               (sudah termasuk KRS otomatis), helpers/logbookPrintHelper.js,
               views/admin/emagang_list.ejs, views/dosen/magang_list.ejs
 FILE (BARU) : helpers/periodeMagangHelper.js
+
+TAMBAHAN: LANDING (halaman publik)
+----------------------------------
+1. /cekmahasiswa/:id (detail mahasiswa publik): "Aktivitas Magang Terbaru" dan statistik logbook
+   kini hanya untuk SATU periode (yang sedang berjalan; bila semua sudah berakhir, yang terakhir),
+   lengkap dengan label nama Magang di judulnya. Sebelumnya 5 logbook terbaru dari semua Magang
+   dicampur. "Periode magang aktif" tidak lagi memakai periode yang tanggal selesainya sudah lewat.
+2. Slide foto beranda (routes/display.js, dipakai landing & layar display): progres tiap foto
+   dihitung untuk periode yang memegang tanggal foto itu (Magang 1/2/3 tidak dicampur), dan
+   periode yang sudah selesai kini tetap menampilkan progres akhirnya (dulu 0/0).
+   Total logbook di statistik beranda tetap total keseluruhan sistem (memang angka agregat).
+
+FILE TAMBAHAN (TIMPA): routes/landing.js, routes/display.js, views/landing/cek_mahasiswa_detail.ejs
+helpers/periodeMagangHelper.js diperbarui (timpa).
+Catatan: landing.js & display.js di root proyek adalah salinan lama yang tidak dipakai
+(app.js memuat ./routes/landing dan ./routes/display), jadi tidak diubah.
