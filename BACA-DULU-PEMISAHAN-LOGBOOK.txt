@@ -1,0 +1,28 @@
+PERBAIKAN: LOGBOOK MAGANG 1 / 2 / 3 TIDAK LAGI BERCAMPUR
+=========================================================
+Ekstrak di ROOT proyek, timpa file yang ada, restart server.
+Tanpa indeks Firestore baru, tanpa migrasi data.
+
+PENYEBAB
+1. Halaman daftar monitoring (admin /admin/emagang & dosen /dosen/magang) menjumlah
+   logbook SEMUA Magang mahasiswa -> total Magang 1 + 2 tercampur.
+2. Periode yang tanggalSelesai-nya sudah lewat tapi status masih 'active' tetap dianggap
+   periode aktif/default, sehingga Magang 1 yang sudah berakhir masih tampil di depan.
+3. Halaman detail admin/dosen/cetak memilih periode default dari urutan kode PDK.
+4. Logbook hanya diikat ke pdkId (bukan periode) dan tanggalnya tidak diperiksa terhadap
+   periode: bila PDK yang sama dimulai lagi, logbook dua periode menyatu.
+
+PERBAIKAN
+- BARU helpers/periodeMagangHelper.js: periode berakhir (tanggalSelesai lewat), periode default =
+  yang sedang berjalan, rekap per periode, dan pemisahan lewat tanggal bila satu PDK punya >1 periode.
+- Mahasiswa: periode aktif = yang sedang berjalan; periode lama yang sudah lewat masuk ARSIP
+  (logbook tetap tersimpan). Hitungan/riwayat/cetak/arsip per periode. Tanggal logbook wajib
+  di dalam periode (tambah & ubah tanggal). Entri baru menyimpan periodId.
+- Admin & Dosen: kolom rekap di daftar = periode berjalan (ada tooltip nama Magang);
+  detail default ke periode berjalan; statistik & daftar logbook per periode.
+- Cetak logbook: default periode berjalan, isi hanya milik periodenya.
+
+FILE (TIMPA): routes/mahasiswa/magang.js, routes/dosen/magang.js, routes/admin/emagang.js
+              (sudah termasuk KRS otomatis), helpers/logbookPrintHelper.js,
+              views/admin/emagang_list.ejs, views/dosen/magang_list.ejs
+FILE (BARU) : helpers/periodeMagangHelper.js

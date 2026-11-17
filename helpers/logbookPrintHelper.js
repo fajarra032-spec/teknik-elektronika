@@ -14,6 +14,7 @@ const { db } = require('../config/firebaseAdmin');
 const { getCurrentAcademicSemester } = require('./academicHelper');
 const { getPembimbingMahasiswa: getPembimbingDosenPa } = require('./pembimbingHelper');
 const { getMagangPeriodById, getMagangPeriodsByMahasiswa } = require('../models/magangPeriodModel');
+const { hariIniWITA, pilihPeriodeDefault, rentangLogbookPeriode, terapkanRentang, dalamRentang, ambilPeriodePerMahasiswa, statistikLogbookPeriode } = require('./periodeMagangHelper');
 const { getKonsultasiByPeriod, mingguDisetujui } = require('./konsultasiLogbookHelper');
 
 // ============================================================================
@@ -542,21 +543,22 @@ async function buildLogbookPrintData(mahasiswaId, periodId) {
   if (!mahasiswaDoc.exists) return null;
   const mahasiswa = mahasiswaDoc.data();
 
+  const semuaPeriode = await getMagangPeriodsByMahasiswa(mahasiswaId).catch(() => []);
   let period = null;
   if (periodId) {
     const p = await getMagangPeriodById(periodId);
     // periode harus milik mahasiswa ini (cegah cetak silang)
     if (p && p.mahasiswaId === mahasiswaId) period = p;
   } else {
-    const semua = await getMagangPeriodsByMahasiswa(mahasiswaId).catch(() => []);
-    if (semua.length > 0) period = semua[0]; // sama dengan default halaman detail dosen/admin
+    // default = periode yang sedang berjalan (sama dengan default halaman detail dosen/admin)
+    period = pilihPeriodeDefault(semuaPeriode, hariIniWITA());
   }
 
   let logbook = [];
   if (period) {
-    const snapshot = await db.collection('logbookMagang')
+    const snapshot = await terapkanRentang(db.collection('logbookMagang')
       .where('userId', '==', mahasiswaId)
-      .where('pdkId', '==', period.pdkId)
+      .where('pdkId', '==', period.pdkId), rentangLogbookPeriode(period, semuaPeriode))
       .orderBy('tanggal', 'asc')
       .get();
     logbook = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

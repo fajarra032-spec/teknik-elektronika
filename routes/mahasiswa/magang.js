@@ -29,6 +29,7 @@ const { getPembimbingMahasiswa: getPembimbingDosenPa } = require('../../helpers/
 const { getKonsultasiByPeriod, mingguDisetujui, normalisasiNoWa } = require('../../helpers/konsultasiLogbookHelper');
 const { getNamaPerusahaanMagang, formatJudulLaporan, buildJudulLaporan, namaFileDariJudul } = require('../../helpers/laporanJudulHelper');
 const { getPeriodePerNomor } = require('../../helpers/laporanPdkHelper');
+const { hariIniWITA, pilihPeriodeDefault, rentangLogbookPeriode, terapkanRentang, dalamRentang, ambilPeriodePerMahasiswa, statistikLogbookPeriode } = require('../../helpers/periodeMagangHelper');
 const { logbookHariIniTerisi } = require('../../helpers/logbookNotifHelper');
 const magangNotif = require('../../helpers/magangNotifHelper');
 const {
@@ -310,22 +311,30 @@ router.get('/', async (req, res) => {
     const completedPeriods = [];
     const upcomingPeriods = [];
 
+    // Periode 'active' yang tanggalSelesai-nya sudah lewat / bukan yang sedang berjalan
+    // tidak lagi jadi periode aktif: masuk arsip (logbook-nya tetap tersimpan & terbaca).
+    const periodeTerpilih = pilihPeriodeDefault(allPeriods.filter(p => p.status === 'active'), hariIniWITA());
+
     for (const period of allPeriods) {
+      if (period.status === 'active' && periodeTerpilih && period.id !== periodeTerpilih.id) {
+        completedPeriods.push(period);
+        continue;
+      }
       if (period.status === 'active') {
         // ✅ OPTIMISASI KUOTA: cuma butuh JUMLAH-nya, bukan isi dokumennya -
         // pakai count() aggregation, bukan .get().size (yang membaca semua
         // dokumen logbook periode ini).
         let totalLogbook;
         try {
-          const countSnap = await db.collection('logbookMagang')
+          const countSnap = await terapkanRentang(db.collection('logbookMagang')
             .where('userId', '==', userId)
-            .where('pdkId', '==', period.pdkId)
+            .where('pdkId', '==', period.pdkId), rentangLogbookPeriode(period, allPeriods))
             .count().get();
           totalLogbook = countSnap.data().count;
         } catch (err) {
-          const logbookSnapshot = await db.collection('logbookMagang')
+          const logbookSnapshot = await terapkanRentang(db.collection('logbookMagang')
             .where('userId', '==', userId)
-            .where('pdkId', '==', period.pdkId)
+            .where('pdkId', '==', period.pdkId), rentangLogbookPeriode(period, allPeriods))
             .get();
           totalLogbook = logbookSnapshot.size;
         }
@@ -355,9 +364,9 @@ router.get('/', async (req, res) => {
     if (activePeriod && activePeriod.tanggalMulai) {
       try {
         const [snap, konsMap] = await Promise.all([
-          db.collection('logbookMagang')
+          terapkanRentang(db.collection('logbookMagang')
             .where('userId', '==', userId)
-            .where('pdkId', '==', activePeriod.pdkId)
+            .where('pdkId', '==', activePeriod.pdkId), rentangLogbookPeriode(activePeriod, allPeriods))
             .orderBy('tanggal', 'asc')
             .get(),
           getKonsultasiByPeriod(activePeriod.id)
@@ -473,7 +482,7 @@ router.get('/logbook', async (req, res) => {
         submitReason = submitStatus.reason;
       }
     } else if (allPeriods.length > 0) {
-      selectedPeriod = allPeriods.find(p => p.status === 'active') || allPeriods[0];
+      selectedPeriod = pilihPeriodeDefault(allPeriods, hariIniWITA());
       if (selectedPeriod && selectedPeriod.status === 'active') {
         const submitStatus = await canSubmitLogbook(userId, selectedPeriod.pdkId);
         canSubmit = submitStatus.can;
@@ -485,17 +494,20 @@ router.get('/logbook', async (req, res) => {
     // dipakai baik untuk progress maupun badge "X total" di paginasi,
     // supaya tidak perlu baca ulang semua dokumen logbook.
     let totalLogbook = 0;
+    // Batas tanggal periode (hanya aktif bila PDK yang sama dimulai >1 kali) -
+    // supaya logbook Magang sebelumnya tidak ikut terhitung/tampil.
+    const rentangLogbook = selectedPeriod ? rentangLogbookPeriode(selectedPeriod, allPeriods) : { awal: null, akhir: null };
     if (selectedPeriod) {
       try {
-        const countSnap = await db.collection('logbookMagang')
+        const countSnap = await terapkanRentang(db.collection('logbookMagang')
           .where('userId', '==', userId)
-          .where('pdkId', '==', selectedPeriod.pdkId)
+          .where('pdkId', '==', selectedPeriod.pdkId), rentangLogbook)
           .count().get();
         totalLogbook = countSnap.data().count;
       } catch (err) {
-        const logbookSnapshotAll = await db.collection('logbookMagang')
+        const logbookSnapshotAll = await terapkanRentang(db.collection('logbookMagang')
           .where('userId', '==', userId)
-          .where('pdkId', '==', selectedPeriod.pdkId)
+          .where('pdkId', '==', selectedPeriod.pdkId), rentangLogbook)
           .get();
         totalLogbook = logbookSnapshotAll.size;
       }
@@ -530,9 +542,9 @@ router.get('/logbook', async (req, res) => {
         .get();
       logbook = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } else if (selectedPeriod) {
-      const baseQuery = db.collection('logbookMagang')
+      const baseQuery = terapkanRentang(db.collection('logbookMagang')
         .where('userId', '==', userId)
-        .where('pdkId', '==', selectedPeriod.pdkId)
+        .where('pdkId', '==', selectedPeriod.pdkId), rentangLogbook)
         .orderBy('tanggal', 'desc')
         .orderBy(admin.firestore.FieldPath.documentId(), 'desc');
 
@@ -641,6 +653,14 @@ router.post('/logbook', upload.array('images', 5), async (req, res) => {
     if (period.status !== 'active') {
       return res.status(400).send('Periode magang tidak aktif');
     }
+    // Tanggal kegiatan harus berada di dalam periode magang ini (tidak boleh
+    // mengisi untuk tanggal milik Magang lain / di luar periode).
+    if (period.tanggalMulai && tanggal < period.tanggalMulai) {
+      return res.status(400).send(`Tanggal kegiatan sebelum periode magang dimulai (${period.tanggalMulai}).`);
+    }
+    if (period.tanggalSelesai && tanggal > period.tanggalSelesai) {
+      return res.status(400).send(`Tanggal kegiatan melewati akhir periode magang (${period.tanggalSelesai}).`);
+    }
 
     const submitStatus = await canSubmitLogbook(req.user.id, period.pdkId);
     if (!submitStatus.can) {
@@ -704,6 +724,7 @@ router.post('/logbook', upload.array('images', 5), async (req, res) => {
       lokasi,
       durasi: durasi || '',
       folderId,
+      periodId: period.id,
       pdkId: period.pdkId,
       pdkKode: period.pdkKode,
       pdkNama: period.pdkNama,
@@ -783,6 +804,18 @@ router.post('/logbook/:id/edit', upload.array('images', 5), async (req, res) => 
     if (doc.data().userId !== req.user.id) return res.status(403).send('Akses ditolak');
     if (doc.data().status !== 'pending') {
       return res.status(400).send('Logbook sudah disetujui/ditolak, tidak dapat diedit.');
+    }
+    // Bila tanggal diubah, tetap harus di dalam periode magang entri ini
+    if (tanggal !== doc.data().tanggal) {
+      const periodeEntri = await getMagangPeriodById(doc.data().periodId || periodId);
+      if (periodeEntri && periodeEntri.mahasiswaId === req.user.id) {
+        if (periodeEntri.tanggalMulai && tanggal < periodeEntri.tanggalMulai) {
+          return res.status(400).send(`Tanggal kegiatan sebelum periode magang dimulai (${periodeEntri.tanggalMulai}).`);
+        }
+        if (periodeEntri.tanggalSelesai && tanggal > periodeEntri.tanggalSelesai) {
+          return res.status(400).send(`Tanggal kegiatan melewati akhir periode magang (${periodeEntri.tanggalSelesai}).`);
+        }
+      }
     }
 
     const existingData = doc.data();
@@ -902,9 +935,10 @@ router.get('/arsip/:periodId', async (req, res) => {
     if (!period) return res.status(404).send('Periode magang tidak ditemukan');
     if (period.mahasiswaId !== req.user.id) return res.status(403).send('Akses ditolak');
 
-    const logbookSnapshot = await db.collection('logbookMagang')
+    const semuaPeriode = await getMagangPeriodsByMahasiswa(req.user.id);
+    const logbookSnapshot = await terapkanRentang(db.collection('logbookMagang')
       .where('userId', '==', req.user.id)
-      .where('pdkId', '==', period.pdkId)
+      .where('pdkId', '==', period.pdkId), rentangLogbookPeriode(period, semuaPeriode))
       .orderBy('tanggal', 'asc')
       .get();
 

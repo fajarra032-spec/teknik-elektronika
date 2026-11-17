@@ -450,7 +450,7 @@
                   <% } %>
                 </td>
                 <td data-label="Total" class="text-center">
-                  <span class="badge-stat badge-total"><%= m.totalLogbook || 0 %></span>
+                  <span class="badge-stat badge-total" title="Rekap <%= m.rekapLabel || 'semua' %>"><%= m.totalLogbook || 0 %></span>
                 </td>
                 <td data-label="Pending" class="text-center">
                   <span class="badge-stat badge-pending"><%= m.pendingCount || 0 %></span>

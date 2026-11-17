@@ -27,6 +27,7 @@ const { tampilkanCetakLogbook } = require('../../helpers/logbookPdfHelper');
 const magangNotif = require('../../helpers/magangNotifHelper');
 const { createKrsDanEnrollment } = require('../../helpers/paketKurikulumHelper');
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
+const { hariIniWITA, pilihPeriodeDefault, rentangLogbookPeriode, terapkanRentang, dalamRentang, ambilPeriodePerMahasiswa, statistikLogbookPeriode } = require('../../helpers/periodeMagangHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -267,7 +268,19 @@ router.get('/', async (req, res) => {
     // sekarang pakai count() murah - lihat getLogbookStats di atas) supaya
     // kartu ringkasan (Total Logbook/Pending/Approved/Rejected) tetap akurat
     // terhadap filter pencarian/angkatan yang aktif.
-    const statsPromises = mahasiswaList.map(m => getLogbookStats(m.id));
+    // Rekap PER PERIODE (periode yang sedang berjalan), bukan jumlah semua Magang.
+    const periodePerMhs = await ambilPeriodePerMahasiswa(db, mahasiswaList.map(m => m.id));
+    const statsPromises = mahasiswaList.map(async (m) => {
+      const semua = periodePerMhs.get(m.id) || [];
+      const per = pilihPeriodeDefault(semua, hariIniWITA());
+      m.rekapLabel = per ? (per.pdkNama || '') : '';
+      if (!per) return getLogbookStats(m.id);
+      const key = `rekap_${per.id}`;
+      if (cache.logbookStats.has(key)) return cache.logbookStats.get(key);
+      const st = await statistikLogbookPeriode(db, m.id, per, semua);
+      cache.logbookStats.set(key, st);
+      return st;
+    });
     const statsResults = await Promise.all(statsPromises);
     mahasiswaList.forEach((m, idx) => {
       m.totalLogbook = statsResults[idx].total;
@@ -360,7 +373,8 @@ router.get('/mahasiswa/:userId', async (req, res) => {
     const allPeriods = await getMagangPeriods(userId);
     let selectedPeriod = null;
     if (periodId) selectedPeriod = allPeriods.find(p => p.id === periodId);
-    else if (allPeriods.length > 0) selectedPeriod = allPeriods[0];
+    else if (allPeriods.length > 0) selectedPeriod = pilihPeriodeDefault(allPeriods, hariIniWITA());
+    const rentangTerpilih = selectedPeriod ? rentangLogbookPeriode(selectedPeriod, allPeriods) : { awal: null, akhir: null };
 
     // ✅ OPTIMISASI KUOTA: sebelumnya halaman ini membaca koleksi
     // 'logbookMagang' mahasiswa yang SAMA sampai (2 + jumlah periode magang)
@@ -376,6 +390,7 @@ router.get('/mahasiswa/:userId', async (req, res) => {
     // Daftar logbook yang ditampilkan (terapkan filter period/semester + urutkan)
     let logbookList = semuaLogbook.filter(l => {
       if (selectedPeriod && l.pdkId !== selectedPeriod.pdkId) return false;
+      if (selectedPeriod && !dalamRentang(l.tanggal, rentangTerpilih)) return false;
       if (semester && l.semester !== semester) return false;
       return true;
     });
@@ -395,8 +410,10 @@ router.get('/mahasiswa/:userId', async (req, res) => {
     // BUKAN query baru per periode.
     const pdkStats = allPeriods.map(period => {
       let pending = 0, approved = 0, rejected = 0;
+      const rentangPeriode = rentangLogbookPeriode(period, allPeriods);
       semuaLogbook.forEach(l => {
         if (l.pdkId !== period.pdkId) return;
+        if (!dalamRentang(l.tanggal, rentangPeriode)) return;
         if (l.status === 'pending') pending++;
         else if (l.status === 'approved') approved++;
         else if (l.status === 'rejected') rejected++;

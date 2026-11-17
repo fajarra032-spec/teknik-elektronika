@@ -36,6 +36,8 @@ const {
 } = require('../../helpers/konsultasiLogbookHelper');
 const { terapkanJudulLaporan } = require('../../helpers/laporanJudulHelper');
 const { saringLaporanUntukPdk, adaLaporanAccUntukPdk } = require('../../helpers/laporanPdkHelper');
+const { hariIniWITA, pilihPeriodeDefault, rentangLogbookPeriode, terapkanRentang, dalamRentang, ambilPeriodePerMahasiswa, statistikLogbookPeriode } = require('../../helpers/periodeMagangHelper');
+const { getMagangPeriodsByMahasiswa: getSemuaPeriodeMahasiswa } = require('../../models/magangPeriodModel');
 const { tampilkanCetakLogbook } = require('../../helpers/logbookPdfHelper');
 const magangNotif = require('../../helpers/magangNotifHelper');
 const {
@@ -251,7 +253,18 @@ router.get('/', async (req, res) => {
       mkDocs.forEach((doc, i) => { if (doc.exists) mkDocsMap.set(mkIdArr[i], doc.data()); });
     }
 
-    const statsResults = await Promise.all(mahasiswaList.map(mhs => getLogbookStatistik(mhs.id)));
+    // Rekap logbook PER PERIODE (periode yang sedang berjalan) - bukan dijumlah
+    // antar Magang 1/2/3.
+    const periodePerMhs = await ambilPeriodePerMahasiswa(db, mahasiswaIdList);
+    const periodeRekap = new Map();
+    const statsResults = await Promise.all(mahasiswaList.map(async (mhs) => {
+      const semua = periodePerMhs.get(mhs.id) || [];
+      const per = pilihPeriodeDefault(semua, hariIniWITA());
+      periodeRekap.set(mhs.id, per);
+      if (!per) return getLogbookStatistik(mhs.id);
+      const st = await statistikLogbookPeriode(db, mhs.id, per, semua);
+      return { totalLogbook: st.total, pendingCount: st.pending, approvedCount: st.approved, rejectedCount: st.rejected };
+    }));
 
     for (let i = 0; i < mahasiswaList.length; i++) {
       const mhs = mahasiswaList[i];
@@ -275,6 +288,7 @@ router.get('/', async (req, res) => {
       mhs.pendingCount = stats.pendingCount;
       mhs.approvedCount = stats.approvedCount;
       mhs.rejectedCount = stats.rejectedCount;
+      mhs.rekapLabel = periodeRekap.get(mhs.id) ? (periodeRekap.get(mhs.id).pdkNama || '') : '';
     }
     
     mahasiswaList.sort((a, b) => a.nama.localeCompare(b.nama));
@@ -315,7 +329,9 @@ router.get('/:userId', async (req, res) => {
     const allPeriods = await getActiveMagangPeriods(userId);
     let selectedPeriod = null;
     if (periodId) selectedPeriod = allPeriods.find(p => p.id === periodId);
-    else if (allPeriods.length > 0) selectedPeriod = allPeriods[0];
+    else if (allPeriods.length > 0) selectedPeriod = pilihPeriodeDefault(allPeriods, hariIniWITA());
+    const semuaPeriode = await getSemuaPeriodeMahasiswa(userId).catch(() => allPeriods);
+    const rentangLogbook = selectedPeriod ? rentangLogbookPeriode(selectedPeriod, semuaPeriode) : { awal: null, akhir: null };
     
     // Query logbook utama (pakai orderBy) + tie-breaker documentId supaya
     // urutan stabil antar-request (dipakai untuk cursor paginasi).
@@ -323,7 +339,7 @@ router.get('/:userId', async (req, res) => {
       .where('userId', '==', userId)
       .orderBy('tanggal', 'desc')
       .orderBy(admin.firestore.FieldPath.documentId(), 'desc');
-    if (selectedPeriod) logbookBaseQuery = logbookBaseQuery.where('pdkId', '==', selectedPeriod.pdkId);
+    if (selectedPeriod) logbookBaseQuery = terapkanRentang(logbookBaseQuery.where('pdkId', '==', selectedPeriod.pdkId), rentangLogbook);
     if (semester) logbookBaseQuery = logbookBaseQuery.where('semester', '==', semester);
 
     // Semester list - dulu ini didapat dari baca SEMUA dokumen logbook
@@ -405,8 +421,8 @@ router.get('/:userId', async (req, res) => {
     // Statistik per PDK
     const pdkStats = [];
     for (const period of allPeriods) {
-      const stats = await getLogbookStatistik(userId, period.pdkId);
-      pdkStats.push({ ...period, ...stats });
+      const st = await statistikLogbookPeriode(db, userId, period, semuaPeriode);
+      pdkStats.push({ ...period, totalLogbook: st.total, pendingCount: st.pending, approvedCount: st.approved, rejectedCount: st.rejected });
     }
     
     // Nilai Magang (2 komponen: Dosen Pembimbing + Pendamping Lapangan) - hanya

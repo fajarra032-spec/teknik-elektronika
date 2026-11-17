@@ -742,7 +742,7 @@
                 </span>
                </td>
               <td data-label="Total" style="text-align: center;">
-                <span class="badge-stat badge-total"><%= m.totalLogbook || 0 %></span>
+                <span class="badge-stat badge-total" title="Rekap <%= m.rekapLabel || 'semua' %>"><%= m.totalLogbook || 0 %></span>
                </td>
               <td data-label="Pending" style="text-align: center;">
                 <% if ((m.pendingCount || 0) > 0) { %>

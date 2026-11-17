@@ -1,0 +1,183 @@
+[
+    {
+        "tahunAkademik":  "2024/2025",
+        "semesterAkademik":  "Genap",
+        "semester":  "II",
+        "kelas":  "2",
+        "hari":  "Senin",
+        "jam":  "09.30–11.30",
+        "ruang":  "L101",
+        "mataKuliah":  "Aplikasi Komputer",
+        "sksMataKuliah":  3,
+        "dosenPengampu":  [
+                              "Ariani Amri, S.Pd., M.Pd",
+                              "Deril Alfiance Kaligis, S.Kom., MT."
+                          ],
+        "alokasiSksPerDosen":  [
+                                   {
+                                       "sks":  1.5,
+                                       "nama":  "Ariani Amri, S.Pd., M.Pd"
+                                   },
+                                   {
+                                       "sks":  1.5,
+                                       "nama":  "Deril Alfiance Kaligis, S.Kom., MT."
+                                   }
+                               ],
+        "statusAlokasiSks":  "dibagi_rata",
+        "tanggalDokumenJadwal":  "2025-02-28",
+        "sumber":  "Jadwal Perkuliahan Semester Genap 2024/2025 - Tatap Muka"
+    },
+    {
+        "tahunAkademik":  "2024/2025",
+        "semesterAkademik":  "Genap",
+        "semester":  "II",
+        "kelas":  "2",
+        "hari":  "Senin",
+        "jam":  "11.30–12.30",
+        "ruang":  "K102",
+        "mataKuliah":  "Pendidikan Kewarganegaraan",
+        "sksMataKuliah":  2,
+        "dosenPengampu":  [
+                              "Muslim Andi Yusuf, S.H., M.H."
+                          ],
+        "alokasiSksPerDosen":  [
+                                   {
+                                       "sks":  2,
+                                       "nama":  "Muslim Andi Yusuf, S.H., M.H."
+                                   }
+                               ],
+        "statusAlokasiSks":  "utuh",
+        "tanggalDokumenJadwal":  "2025-02-28",
+        "sumber":  "Jadwal Perkuliahan Semester Genap 2024/2025 - Tatap Muka"
+    },
+    {
+        "tahunAkademik":  "2024/2025",
+        "semesterAkademik":  "Genap",
+        "semester":  "II",
+        "kelas":  "2",
+        "hari":  "Senin",
+        "jam":  "16.30–17.30",
+        "ruang":  "L101",
+        "mataKuliah":  "Data dan Sistem Informasi",
+        "sksMataKuliah":  3,
+        "dosenPengampu":  [
+                              "Muh. Fitra Nur Asri, S.Kom., M.Kom."
+                          ],
+        "alokasiSksPerDosen":  [
+                                   {
+                                       "sks":  3,
+                                       "nama":  "Muh. Fitra Nur Asri, S.Kom., M.Kom."
+                                   }
+                               ],
+        "statusAlokasiSks":  "utuh",
+        "tanggalDokumenJadwal":  "2025-02-28",
+        "sumber":  "Jadwal Perkuliahan Semester Genap 2024/2025 - Tatap Muka"
+    },
+    {
+        "tahunAkademik":  "2024/2025",
+        "semesterAkademik":  "Genap",
+        "semester":  "II",
+        "kelas":  "2",
+        "hari":  "Selasa",
+        "jam":  "09.30–10.30",
+        "ruang":  "K102",
+        "mataKuliah":  "Keselamatan dan Kesehatan Kerja",
+        "sksMataKuliah":  3,
+        "dosenPengampu":  [
+                              "Ir. Irhamni Nuhardin, S.T., M.T., IPP."
+                          ],
+        "alokasiSksPerDosen":  [
+                                   {
+                                       "sks":  3,
+                                       "nama":  "Ir. Irhamni Nuhardin, S.T., M.T., IPP."
+                                   }
+                               ],
+        "statusAlokasiSks":  "utuh",
+        "tanggalDokumenJadwal":  "2025-02-28",
+        "sumber":  "Jadwal Perkuliahan Semester Genap 2024/2025 - Tatap Muka"
+    },
+    {
+        "tahunAkademik":  "2024/2025",
+        "semesterAkademik":  "Genap",
+        "semester":  "II",
+        "kelas":  "2",
+        "hari":  "Rabu",
+        "jam":  "08.30–09.30",
+        "ruang":  "K101",
+        "mataKuliah":  "Peralatan Teknik",
+        "sksMataKuliah":  3,
+        "dosenPengampu":  [
+                              "Fitriani,S.Pd., M.T",
+                              "Elma, S.Pd., M.Pd"
+                          ],
+        "alokasiSksPerDosen":  [
+                                   {
+                                       "sks":  1.5,
+                                       "nama":  "Fitriani,S.Pd., M.T"
+                                   },
+                                   {
+                                       "sks":  1.5,
+                                       "nama":  "Elma, S.Pd., M.Pd"
+                                   }
+                               ],
+        "statusAlokasiSks":  "dibagi_rata",
+        "tanggalDokumenJadwal":  "2025-02-28",
+        "sumber":  "Jadwal Perkuliahan Semester Genap 2024/2025 - Tatap Muka"
+    },
+    {
+        "tahunAkademik":  "2024/2025",
+        "semesterAkademik":  "Genap",
+        "semester":  "II",
+        "kelas":  "2",
+        "hari":  "Jumat",
+        "jam":  "08.45–09.45",
+        "ruang":  "K202",
+        "mataKuliah":  "Menggambar Teknik",
+        "sksMataKuliah":  3,
+        "dosenPengampu":  [
+                              "Fitriani,S.Pd., M.T",
+                              "Gunawan Tari, S.T.,M.T"
+                          ],
+        "alokasiSksPerDosen":  [
+                                   {
+                                       "sks":  1.5,
+                                       "nama":  "Fitriani,S.Pd., M.T"
+                                   },
+                                   {
+                                       "sks":  1.5,
+                                       "nama":  "Gunawan Tari, S.T.,M.T"
+                                   }
+                               ],
+        "statusAlokasiSks":  "dibagi_rata",
+        "tanggalDokumenJadwal":  "2025-02-28",
+        "sumber":  "Jadwal Perkuliahan Semester Genap 2024/2025 - Tatap Muka"
+    },
+    {
+        "tahunAkademik":  "2024/2025",
+        "semesterAkademik":  "Genap",
+        "semester":  "II",
+        "kelas":  "2",
+        "hari":  "Jumat",
+        "jam":  "09.45–10.45",
+        "ruang":  "K202",
+        "mataKuliah":  "Teknik Pengukuran",
+        "sksMataKuliah":  3,
+        "dosenPengampu":  [
+                              "Elma, S.Pd., M.Pd",
+                              "Ariani Amri, S.Pd., M.Pd"
+                          ],
+        "alokasiSksPerDosen":  [
+                                   {
+                                       "sks":  1.5,
+                                       "nama":  "Elma, S.Pd., M.Pd"
+                                   },
+                                   {
+                                       "sks":  1.5,
+                                       "nama":  "Ariani Amri, S.Pd., M.Pd"
+                                   }
+                               ],
+        "statusAlokasiSks":  "dibagi_rata",
+        "tanggalDokumenJadwal":  "2025-02-28",
+        "sumber":  "Jadwal Perkuliahan Semester Genap 2024/2025 - Tatap Muka"
+    }
+]

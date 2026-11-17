@@ -1,0 +1,570 @@
+[
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "I",
+    "kelas": "1A",
+    "hari": "Senin",
+    "jam": "11.30–12.30",
+    "ruang": "RK.2",
+    "mataKuliah": "Matematika Teknik",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Fitriani, S.Pd., M.T",
+      "Iin Karmila Putri, S.Si., M.Si"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Fitriani, S.Pd., M.T",
+        "sks": 1.5
+      },
+      {
+        "nama": "Iin Karmila Putri, S.Si., M.Si",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "I",
+    "kelas": "1A",
+    "hari": "Senin",
+    "jam": "15.30–16.30",
+    "ruang": "RK.1",
+    "mataKuliah": "Etika Kerja",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Baso Amir, S.P., M.Si",
+      "Suardi, S.Pd., M.Pd"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Baso Amir, S.P., M.Si",
+        "sks": 1.5
+      },
+      {
+        "nama": "Suardi, S.Pd., M.Pd",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "I",
+    "kelas": "1A",
+    "hari": "Selasa",
+    "jam": "07.30–08.30",
+    "ruang": "RK.3",
+    "mataKuliah": "Standardisasi",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Iin Karmila Putri, S.Si., M.Si",
+      "Fitriani, S.Pd., M.T"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Iin Karmila Putri, S.Si., M.Si",
+        "sks": 1.5
+      },
+      {
+        "nama": "Fitriani, S.Pd., M.T",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "I",
+    "kelas": "1A",
+    "hari": "Selasa",
+    "jam": "13.30–15.30",
+    "ruang": "Masjid",
+    "mataKuliah": "Pendidikan Agama",
+    "sksMataKuliah": 2,
+    "dosenPengampu": [
+      "Ahwan Muru, S.ST., M.T"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Ahwan Muru, S.ST., M.T",
+        "sks": 2.0
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "I",
+    "kelas": "1A",
+    "hari": "Rabu",
+    "jam": "11.30–12.30",
+    "ruang": "RK.3",
+    "mataKuliah": "Bahasa Indonesia",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Alviani, S.Pd., M.Pd",
+      "Tenri Ampareng, S.Pd., M.Pd"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Alviani, S.Pd., M.Pd",
+        "sks": 1.5
+      },
+      {
+        "nama": "Tenri Ampareng, S.Pd., M.Pd",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "I",
+    "kelas": "1A",
+    "hari": "Rabu",
+    "jam": "13.30–14.30",
+    "ruang": "Labkom 2",
+    "mataKuliah": "Perangkat Lunak Aplikasi",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Ahwan Muru, S.ST., M.T",
+      "Ariani Amri, S.Pd., M.Pd"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Ahwan Muru, S.ST., M.T",
+        "sks": 1.5
+      },
+      {
+        "nama": "Ariani Amri, S.Pd., M.Pd",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "I",
+    "kelas": "1A",
+    "hari": "Kamis",
+    "jam": "09.30–10.30",
+    "ruang": "RK.3",
+    "mataKuliah": "Bahasa Inggris",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Suardi, S.Pd., M.Pd"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Suardi, S.Pd., M.Pd",
+        "sks": 3.0
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "III",
+    "kelas": "3A",
+    "hari": "Senin",
+    "jam": "07.30–08.30",
+    "ruang": "RK.3",
+    "mataKuliah": "Pendidikan Pancasila",
+    "sksMataKuliah": 2,
+    "dosenPengampu": [
+      "Suardi, S.Pd., M.Pd"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Suardi, S.Pd., M.Pd",
+        "sks": 2.0
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "III",
+    "kelas": "3A",
+    "hari": "Senin",
+    "jam": "16.30–17.30",
+    "ruang": "RK.3",
+    "mataKuliah": "Elektronika Daya",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Elma, S.Pd., M.Pd",
+      "Gunawan Tari, S.T., M.T"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Elma, S.Pd., M.Pd",
+        "sks": 1.5
+      },
+      {
+        "nama": "Gunawan Tari, S.T., M.T",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "III",
+    "kelas": "3A",
+    "hari": "Selasa",
+    "jam": "11.30–12.30",
+    "ruang": "RK.1",
+    "mataKuliah": "Transmisi dan Distribusi",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Fitriani, S.Pd., M.T",
+      "Ariani Amri, S.Pd., M.Pd"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Fitriani, S.Pd., M.T",
+        "sks": 1.5
+      },
+      {
+        "nama": "Ariani Amri, S.Pd., M.Pd",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "III",
+    "kelas": "3A",
+    "hari": "Selasa",
+    "jam": "13.30–14.30",
+    "ruang": "RK.1",
+    "mataKuliah": "Elektromagnetik",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Elma, S.Pd., M.Pd",
+      "Ariani Amri, S.Pd., M.Pd"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Elma, S.Pd., M.Pd",
+        "sks": 1.5
+      },
+      {
+        "nama": "Ariani Amri, S.Pd., M.Pd",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "III",
+    "kelas": "3A",
+    "hari": "Rabu",
+    "jam": "15.30–16.30",
+    "ruang": "RK.2",
+    "mataKuliah": "Elektronika Digital",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Gunawan Tari, S.T., M.T",
+      "Elma, S.Pd., M.Pd"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Gunawan Tari, S.T., M.T",
+        "sks": 1.5
+      },
+      {
+        "nama": "Elma, S.Pd., M.Pd",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "III",
+    "kelas": "3A",
+    "hari": "Kamis",
+    "jam": "07.30–08.30",
+    "ruang": "Labkom 2",
+    "mataKuliah": "Mikrokontroller",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Ahwan Muru, S.ST., M.T",
+      "Ariani Amri, S.Pd., M.Pd"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Ahwan Muru, S.ST., M.T",
+        "sks": 1.5
+      },
+      {
+        "nama": "Ariani Amri, S.Pd., M.Pd",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "III",
+    "kelas": "3A",
+    "hari": "Kamis",
+    "jam": "10.30–11.30",
+    "ruang": "RK.2",
+    "mataKuliah": "Rangkaian Elektronika",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Fitriani, S.Pd., M.T",
+      "Ahwan Muru, S.ST., M.T"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Fitriani, S.Pd., M.T",
+        "sks": 1.5
+      },
+      {
+        "nama": "Ahwan Muru, S.ST., M.T",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "III",
+    "kelas": "3B",
+    "hari": "Senin",
+    "jam": "07.30–08.30",
+    "ruang": "RK.3",
+    "mataKuliah": "Pendidikan Pancasila",
+    "sksMataKuliah": 2,
+    "dosenPengampu": [
+      "Suardi, S.Pd., M.Pd"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Suardi, S.Pd., M.Pd",
+        "sks": 2.0
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "III",
+    "kelas": "3B",
+    "hari": "Senin",
+    "jam": "08.30–09.30",
+    "ruang": "RK.2",
+    "mataKuliah": "Elektromagnetik",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Elma, S.Pd., M.Pd",
+      "Ariani Amri, S.Pd., M.Pd"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Elma, S.Pd., M.Pd",
+        "sks": 1.5
+      },
+      {
+        "nama": "Ariani Amri, S.Pd., M.Pd",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "III",
+    "kelas": "3B",
+    "hari": "Selasa",
+    "jam": "10.30–11.30",
+    "ruang": "RK.2",
+    "mataKuliah": "Elektronika Daya",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Elma, S.Pd., M.Pd",
+      "Gunawan Tari, S.T., M.T"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Elma, S.Pd., M.Pd",
+        "sks": 1.5
+      },
+      {
+        "nama": "Gunawan Tari, S.T., M.T",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "III",
+    "kelas": "3B",
+    "hari": "Selasa",
+    "jam": "14.30–15.30",
+    "ruang": "RK.2",
+    "mataKuliah": "Transmisi dan Distribusi",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Fitriani, S.Pd., M.T",
+      "Ariani Amri, S.Pd., M.Pd"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Fitriani, S.Pd., M.T",
+        "sks": 1.5
+      },
+      {
+        "nama": "Ariani Amri, S.Pd., M.Pd",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "III",
+    "kelas": "3B",
+    "hari": "Rabu",
+    "jam": "16.30–17.30",
+    "ruang": "RK.2",
+    "mataKuliah": "Elektronika Digital",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Gunawan Tari, S.T., M.T",
+      "Elma, S.Pd., M.Pd"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Gunawan Tari, S.T., M.T",
+        "sks": 1.5
+      },
+      {
+        "nama": "Elma, S.Pd., M.Pd",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "III",
+    "kelas": "3B",
+    "hari": "Kamis",
+    "jam": "08.30–09.30",
+    "ruang": "Labkom 2",
+    "mataKuliah": "Mikrokontroller",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Ahwan Muru, S.ST., M.T",
+      "Ariani Amri, S.Pd., M.Pd"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Ahwan Muru, S.ST., M.T",
+        "sks": 1.5
+      },
+      {
+        "nama": "Ariani Amri, S.Pd., M.Pd",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  },
+  {
+    "tahunAkademik": "2024/2025",
+    "semesterAkademik": "Ganjil",
+    "semester": "III",
+    "kelas": "3B",
+    "hari": "Kamis",
+    "jam": "13.30–14.30",
+    "ruang": "RK.1",
+    "mataKuliah": "Rangkaian Elektronika",
+    "sksMataKuliah": 3,
+    "dosenPengampu": [
+      "Fitriani, S.Pd., M.T",
+      "Ahwan Muru, S.ST., M.T"
+    ],
+    "alokasiSksPerDosen": [
+      {
+        "nama": "Fitriani, S.Pd., M.T",
+        "sks": 1.5
+      },
+      {
+        "nama": "Ahwan Muru, S.ST., M.T",
+        "sks": 1.5
+      }
+    ],
+    "statusAlokasiSks": "dibagi_rata",
+    "tanggalDokumenJadwal": "2024-09-07",
+    "sumber": "Jadwal Perkuliahan Semester Ganjil 2024/2025"
+  }
+]
