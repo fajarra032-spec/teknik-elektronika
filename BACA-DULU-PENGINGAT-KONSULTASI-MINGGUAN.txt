@@ -1,0 +1,25 @@
+PENGINGAT KONSULTASI LOGBOOK MINGGUAN (notifikasi + pop up login)
+=================================================================
+Ekstrak di ROOT proyek, timpa file yang ada, restart server.
+Tanpa indeks Firestore baru, tanpa paket baru, tanpa migrasi data.
+
+KAPAN MUNCUL
+Logbook satu minggu TERPENUHI (semua hari kerja Senin-Jumat minggu itu, di dalam
+periode magang, sudah ada logbook) tetapi belum disetujui/dikonsultasikan Dosen PA.
+Minggu dihitung 7 hari dari tanggal mulai periode (sama dengan kartu "Konsultasi
+Logbook Mingguan" di halaman Magang).
+Ambang bisa diubah: env KONSULTASI_MIN_HARI (mis. 4 = cukup 4 hari terisi).
+
+TAMPIL DI
+1. Pop up login   : baris "Perlu tindakan" + tombol "Konsultasi via WA" (muncul sekali setelah login).
+2. Notifikasi lonceng : satu per minggu (maks. 3 minggu terbaru), ID deterministik -> tidak dobel.
+3. Banner di dashboard mahasiswa & halaman Magang.
+Setelah dosen menyetujui / mencabut minggu, banner langsung diperbarui dan
+notifikasi lonceng minggu itu ditandai dibaca.
+
+FILE BARU : helpers/konsultasiReminderHelper.js
+FILE TIMPA: app.js (2 sisipan di middleware notifikasi)
+            routes/dosen/magang.js (2 baris: setujui & batal minggu)
+            views/partials/popup_login.ejs
+            views/partials/notif_logbook_mahasiswa.ejs
+            views/partials/notif_item.ejs (ikon tipe 'konsultasi-mingguan')

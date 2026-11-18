@@ -356,6 +356,7 @@ async function startServer() {
     const { getNavbarSummary: getNavbarPesanSummary } = require('./helpers/messengerHelper');
     const { cekPengingatDosen } = require('./helpers/dosenReminderHelper');
     const logbookNotif = require('./helpers/logbookNotifHelper');
+    const konsultasiReminder = require('./helpers/konsultasiReminderHelper');
     app.use(async (req, res, next) => {
       if (req.user && req.user.id) {
         try {
@@ -372,6 +373,9 @@ async function startServer() {
             if (req.user.role === 'mahasiswa') {
               await logbookNotif.cekPengingatMahasiswa(db, req.user);
               res.locals.navMhsLogbook = await logbookNotif.cekLogbookHariIni(db, req.user.id);
+              // Pengingat konsultasi mingguan: logbook satu minggu sudah lengkap, belum disetujui Dosen PA
+              await konsultasiReminder.cekPengingatKonsultasi(db, req.user);
+              res.locals.navMhsKonsultasi = await konsultasiReminder.cekKonsultasiMingguan(db, req.user);
             } else if (req.user.role === 'dosen' && req.user.dosenId) {
               res.locals.navDosenMagang = await logbookNotif.getRingkasanPendingDosen(db, req.user.dosenId);
             }

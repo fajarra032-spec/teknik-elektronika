@@ -727,22 +727,7 @@
 
   <section class="tab-pane-x" data-pane="mingguan">
     <% if (isPembimbing) { %>
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-        <span class="small text-muted">Pintasan: setujui sekaligus semua logbook pending 7 hari terakhir.</span>
-        <div class="btn-group">
-      <% if (isPembimbing) { %>
-        <form method="POST" action="/dosen/magang/<%= mahasiswa.id %>/setujui-minggu" style="display:inline;"
-              onsubmit="return confirm('Setujui SEMUA logbook pending mahasiswa ini dalam 7 hari terakhir<%= selectedPeriod ? ` untuk periode ${selectedPeriod.pdkKode}` : '' %> sekaligus? Catatan otomatis: \'Mahasiswa telah konsultasi dan logbook disetujui\'.');">
-          <% if (selectedPeriod) { %>
-            <input type="hidden" name="periodId" value="<%= selectedPeriod.id %>">
-          <% } %>
-          <button type="submit" class="btn-approve-minggu">
-            <i class="bi bi-check2-all"></i> Setujui 1 Minggu
-          </button>
-        </form>
-      <% } %>
-        </div>
-      </div>
+      <div class="small text-muted mb-2"><i class="bi bi-info-circle"></i> Dosen menyetujui logbook per minggu. Klik satu minggu untuk melihat detail logbook hariannya.</div>
     <% } %>
   <!-- Persetujuan Logbook PER MINGGU (konsultasi via WA + catatan dosen) -->
   <% if (isPembimbing && selectedPeriod && typeof mingguList !== 'undefined' && mingguList.length > 0) { %>
@@ -784,6 +769,47 @@
           </summary>
 
           <div class="minggu-body">
+            <div class="table-responsive mb-3">
+              <table class="table table-sm align-middle mb-0" style="font-size:.88rem;">
+                <thead>
+                  <tr>
+                    <th style="width:2.2rem;text-align:center;">No</th>
+                    <th style="width:7.5rem;">Tanggal</th>
+                    <th>Kegiatan &amp; Hasil</th>
+                    <th style="text-align:center;">Durasi</th>
+                    <th>Lokasi</th>
+                    <th style="text-align:center;">Gambar</th>
+                    <th style="text-align:center;">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (!m.entries || m.entries.length === 0) { %>
+                    <tr><td colspan="7" class="text-center text-muted py-3">Mahasiswa belum mengisi logbook pada minggu ini.</td></tr>
+                  <% } else { m.entries.forEach((e, ei) => { %>
+                    <tr>
+                      <td style="text-align:center;"><%= ei + 1 %></td>
+                      <td><%= e.tanggalFormatted %></td>
+                      <td style="max-width:320px;white-space:pre-line;"><%= e.kegiatan %><% if (e.hasil) { %><div style="margin-top:4px;color:#0f766e;"><b>Hasil:</b> <%= e.hasil %></div><% } %></td>
+                      <td style="text-align:center;"><%= e.durasi ? e.durasi + ' jam' : '-' %></td>
+                      <td><%= e.lokasi || '-' %></td>
+                      <td style="text-align:center;">
+                        <% if (e.imageUrls && e.imageUrls.length > 0) {
+                          const _u = e.imageUrls[0]; const _fid = getFileId(_u);
+                          const _th = _fid ? `https://drive.google.com/thumbnail?id=${_fid}&sz=w100` : _u;
+                          const _dr = _fid ? `https://drive.google.com/uc?export=view&id=${_fid}` : _u; %>
+                          <img src="<%= _th %>" class="thumbnail" alt="dokumentasi" onclick='lihatGambar(<%= JSON.stringify(e.imageUrls) %>)' onerror="this.onerror=null; this.src='<%= _dr %>';">
+                        <% } else { %><span class="text-muted">-</span><% } %>
+                      </td>
+                      <td style="text-align:center;">
+                        <% if (e.status === 'approved') { %><span class="badge-status badge-approved"><i class="bi bi-check-circle"></i> Disetujui</span>
+                        <% } else if (e.status === 'rejected') { %><span class="badge-status badge-rejected"><i class="bi bi-x-circle"></i> Ditolak</span>
+                        <% } else { %><span class="badge-status badge-pending"><i class="bi bi-hourglass-split"></i> Pending</span><% } %>
+                      </td>
+                    </tr>
+                  <% }) } %>
+                </tbody>
+              </table>
+            </div>
             <% if (m.disetujui && m.konsultasi) { %>
               <p class="mb-2" style="font-size:.88rem;">
                 <b>Konsultasi via WA</b>
@@ -867,6 +893,9 @@
     </form>
   </div>
 
+  <% if (isPembimbing) { %>
+    <div class="small text-muted mb-2"><i class="bi bi-info-circle"></i> Logbook harian hanya untuk dilihat. Persetujuan dilakukan per minggu di tab &ldquo;Persetujuan Mingguan&rdquo;.</div>
+  <% } %>
   <!-- Tabel Logbook -->
   <div class="table-container">
     <div class="table-responsive">
@@ -881,15 +910,12 @@
             <th>Semester</th>
             <th style="text-align: center;">Gambar</th>
             <th style="text-align: center;">Status</th>
-            <% if (isPembimbing) { %>
-              <th style="text-align: center;">Aksi</th>
-            <% } %>
           </tr>
         </thead>
         <tbody>
           <% if (logbookList.length === 0) { %>
             <tr>
-              <td colspan="<%= isPembimbing ? 9 : 8 %>" class="text-center py-5">
+              <td colspan="8" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <p>Belum ada logbook untuk periode ini.</p>
@@ -948,26 +974,6 @@
                     </span>
                   <% } %>
                 </td>
-                <% if (isPembimbing) { %>
-                  <td style="text-align: center;">
-                    <% if (item.status === 'pending') { %>
-                      <div class="d-flex gap-2 justify-content-center">
-                        <form method="POST" action="/dosen/magang/logbook/<%= item.id %>/approve" style="display: inline;">
-                          <button type="submit" class="btn-approve" onclick="return confirm('Setujui logbook ini?')">
-                            <i class="bi bi-check-circle"></i> Setujui
-                          </button>
-                        </form>
-                        <button type="button" class="btn-reject" data-bs-toggle="modal" data-bs-target="#rejectModal" 
-                                data-logbook-id="<%= item.id %>" 
-                                data-logbook-title="<%= item.kegiatan.substring(0, 50) %>">
-                          <i class="bi bi-x-circle"></i> Tolak
-                        </button>
-                      </div>
-                    <% } else { %>
-                      <span class="text-muted">-</span>
-                    <% } %>
-                  </td>
-                <% } %>
               </tr>
             <% }) %>
           <% } %>
@@ -1195,40 +1201,6 @@
 
 </div>
 
-<!-- Modal Reject -->
-<div class="modal fade" id="rejectModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header-custom">
-        <h5 class="modal-title">
-          <i class="bi bi-exclamation-triangle-fill me-2"></i>Tolak Logbook
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <form method="POST" id="rejectForm">
-        <div class="modal-body">
-          <div class="alert alert-warning">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <strong>Perhatian!</strong> Penolakan akan memberitahu mahasiswa beserta alasan yang diberikan.
-          </div>
-          <div class="mb-3">
-            <label for="alasan" class="form-label fw-bold">Alasan Penolakan <span class="text-danger">*</span></label>
-            <textarea class="form-control" id="alasan" name="alasan" rows="3" required 
-                      placeholder="Masukkan alasan penolakan logbook..."></textarea>
-            <small class="text-muted">Alasan akan ditampilkan kepada mahasiswa.</small>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-danger">
-            <i class="bi bi-x-circle me-1"></i> Tolak Logbook
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
 <!-- Lightbox Modal -->
 <div class="modal fade lightbox-modal" id="galleryModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -1328,22 +1300,6 @@
     };
     carousel.addEventListener('slid.bs.carousel', updateNewTabLink);
     setTimeout(updateNewTabLink, 100);
-  }
-
-  // Set action form untuk reject modal
-  const rejectModal = document.getElementById('rejectModal');
-  if (rejectModal) {
-    rejectModal.addEventListener('show.bs.modal', function(event) {
-      const button = event.relatedTarget;
-      const logbookId = button.getAttribute('data-logbook-id');
-      const logbookTitle = button.getAttribute('data-logbook-title');
-      
-      const form = document.getElementById('rejectForm');
-      form.action = `/dosen/magang/logbook/${logbookId}/reject`;
-      
-      const modalTitle = rejectModal.querySelector('.modal-title');
-      modalTitle.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i>Tolak Logbook: ${logbookTitle}`;
-    });
   }
 
   // Auto hide alert setelah 5 detik

@@ -57,15 +57,7 @@
       <% } %>
     </div>
 
-    <% if (canApprove) { %>
-      <div class="card-footer">
-        <form method="POST" action="/dosen/magang/logbook/<%= logbook.id %>/approve" onsubmit="return confirm('Setujui logbook ini?')">
-          <button type="submit" class="btn btn-success">
-            <i class="bi bi-check-circle me-1"></i> Setujui Logbook
-          </button>
-        </form>
-      </div>
-    <% } %>
+    <div class="card-footer small text-muted"><i class="bi bi-info-circle me-1"></i>Persetujuan dilakukan per minggu di tab &ldquo;Persetujuan Mingguan&rdquo;.</div>
   </div>
 </div>
 

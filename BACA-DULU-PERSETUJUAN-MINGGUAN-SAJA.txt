@@ -1,0 +1,22 @@
+PERSETUJUAN LOGBOOK HANYA PER MINGGU (HARIAN DITIADAKAN)
+=======================================================
+Ekstrak di ROOT proyek, timpa file yang ada, restart server.
+Tanpa indeks Firestore baru, tanpa paket baru, tanpa migrasi data.
+
+YANG BERUBAH
+1. Tombol "Setujui" & "Tolak" per entri harian dihapus (kolom Aksi, modal tolak, JS-nya).
+   Menu/tab "Logbook Harian" TETAP ada untuk melihat logbook (status lama tetap tampil).
+2. Tombol pintasan "Setujui 1 Minggu" (setujui massal 7 hari terakhir) dihapus.
+3. Halaman detail satu logbook: tombol "Setujui Logbook" dihapus.
+4. Tab "Persetujuan Mingguan": klik satu minggu -> tampil tabel detail logbook harian
+   minggu itu (tanggal, kegiatan & hasil, durasi, lokasi, gambar, status), lalu
+   formulir persetujuan mingguan (konsultasi WA + catatan) di bawahnya.
+5. Route lama POST /logbook/:id/approve, /logbook/:id/reject, /:userId/setujui-minggu
+   tidak lagi menyetujui/menolak; hanya mengembalikan pesan "gunakan Persetujuan Mingguan".
+   Persetujuan satu-satunya: POST /:userId/minggu/:mingguKe/setujui (tetap).
+
+FILE TIMPA: routes/dosen/magang.js
+            views/dosen/magang_detail.ejs
+            views/dosen/magang_logbook_detail.ejs
+Catatan: entri berstatus 'rejected' lama tidak lagi bisa diubah dosen; entri 'pending'
+ikut disetujui saat dosen menyetujui minggunya.

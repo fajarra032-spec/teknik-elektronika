@@ -18,3 +18,28 @@
     <a class="btn-isi" href="<%= navMhsLogbook.link %>"><i class="bi bi-pencil-square me-1"></i> Isi sekarang</a>
   </div>
 <% } %>
+
+<%# Banner mahasiswa: logbook mingguan sudah lengkap, saatnya konsultasi (res.locals.navMhsKonsultasi) %>
+<% if (typeof navMhsKonsultasi !== 'undefined' && navMhsKonsultasi && navMhsKonsultasi.perlu) { %>
+  <style>
+    .notif-konsul { display:flex; flex-wrap:wrap; align-items:center; gap:.6rem 1rem; background:linear-gradient(135deg,#f0fdf4,#dcfce7); border:1px solid #86efac; border-left:6px solid #16a34a; border-radius:1rem; padding:.85rem 1.1rem; margin-bottom:1rem; box-shadow:0 6px 16px rgba(22,163,74,.12); }
+    .notif-konsul .ikon { font-size:1.6rem; color:#15803d; line-height:1; }
+    .notif-konsul .teks { flex:1 1 240px; min-width:0; color:#14532d; }
+    .notif-konsul .teks strong { display:block; font-size:1rem; }
+    .notif-konsul .teks span { font-size:.85rem; opacity:.9; }
+    .notif-konsul a.btn-konsul { background:#16a34a; color:#fff; font-weight:700; border-radius:50px; padding:.45rem 1.2rem; text-decoration:none; font-size:.88rem; white-space:nowrap; }
+    .notif-konsul a.btn-konsul:hover { background:#15803d; }
+  </style>
+  <div class="notif-konsul" role="status">
+    <i class="bi bi-chat-dots ikon"></i>
+    <div class="teks">
+      <strong>Logbook minggu ke-<%= navMhsKonsultasi.daftar.map(function (m) { return m.mingguKe; }).slice(0, 3).join(', ') %> sudah lengkap, saatnya konsultasi 💬</strong>
+      <span>Konsultasikan ke Dosen PA via WhatsApp supaya lembar logbook mingguanmu disetujui dan tidak berwatermark &ldquo;Belum Konsultasi&rdquo;.</span>
+    </div>
+    <% if (navMhsKonsultasi.waLink) { %>
+      <a class="btn-konsul" href="<%= navMhsKonsultasi.waLink %>" target="_blank" rel="noopener"><i class="bi bi-whatsapp me-1"></i> Konsultasi via WA</a>
+    <% } else { %>
+      <a class="btn-konsul" href="<%= navMhsKonsultasi.link %>"><i class="bi bi-eye me-1"></i> Lihat status</a>
+    <% } %>
+  </div>
+<% } %>

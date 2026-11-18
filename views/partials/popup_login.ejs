@@ -19,6 +19,11 @@
       _live.push({ ikon: 'journal-text', warna: 'amber', judul: 'Logbook hari ini masih kosong nih 📝',
         isi: navMhsLogbook.tanggalPanjang + ' · yuk catat kegiatan magangmu sebelum lupa.', link: navMhsLogbook.link, tombol: 'Isi sekarang' });
     }
+    if (typeof navMhsKonsultasi !== 'undefined' && navMhsKonsultasi && navMhsKonsultasi.perlu) {
+      var _mk = navMhsKonsultasi.daftar.map(function (m) { return 'ke-' + m.mingguKe; });
+      _live.push({ ikon: 'chat-dots', warna: 'green', judul: 'Logbook minggu ' + _mk.slice(0, 3).join(', ') + (_mk.length > 3 ? ' dan ' + (_mk.length - 3) + ' lainnya' : '') + ' sudah lengkap, saatnya konsultasi 💬',
+        isi: 'Konsultasikan ke Dosen PA via WhatsApp supaya lembar mingguanmu disetujui.', link: navMhsKonsultasi.waLink || navMhsKonsultasi.link, tombol: navMhsKonsultasi.waLink ? 'Konsultasi via WA' : 'Lihat' });
+    }
     if (typeof navDosenMagang !== 'undefined' && navDosenMagang && navDosenMagang.jumlahMahasiswa > 0) {
       _live.push({ ikon: 'journal-check', warna: 'blue', judul: navDosenMagang.jumlahMahasiswa + ' mahasiswa menunggu tinjauan logbook Anda',
         isi: 'Ada ' + navDosenMagang.jumlahEntri + ' entri yang belum ditinjau, di antaranya: ' + navDosenMagang.daftar.slice(0, 3).map(function (m) { return m.nama + ' (' + m.pending + ')'; }).join(', ') + (navDosenMagang.daftar.length > 3 ? ', dan ' + (navDosenMagang.daftar.length - 3) + ' lainnya' : '') + '.',
