@@ -33,3 +33,12 @@ FILE TIMPA: helpers/{logbookPrintHelper,magangNotifHelper,statusDosenHelper}.js
             views/admin/{dashboard,dosen_form,dosen_list,emagang_list,mahasiswa_form,mahasiswa_list}.ejs
             views/dosen/magang_list.ejs, views/landing/cek_mahasiswa_detail.ejs
 FILE BARU : helpers/periodeMagangHelper.js, scripts/migrasi-periodid-logbook.js, scripts/arsipkan-file-lama.js
+
+I. (BARU) TANGGAL SELESAI OTOMATIS = tanggal mulai + 4 bulan (tanggal yang sama 4 bulan kemudian)
+   - Form "Mulai Periode": begitu tanggal mulai dipilih, tanggal selesai terisi sendiri (masih bisa diubah).
+   - Server: bila tanggal selesai kosong, dihitung otomatis (jadi tetap benar walau JS dimatikan).
+   - Contoh: 1 Sep 2026 -> 1 Jan 2027 | 15 Sep 2026 -> 15 Jan 2027 | 31 Okt 2026 -> 28 Feb 2027 (akhir bulan tujuan).
+   - Magang berikutnya boleh mulai TEPAT di tanggal selesai periode sebelumnya (tidak dianggap bertabrakan).
+   - Ubah durasi: env DURASI_MAGANG_BULAN (bawaan 4).
+   File: helpers/periodeMagangHelper.js, routes/admin/emagang.js, routes/dosen/magangPeriod.js,
+         views/admin/emagang_mahasiswa.ejs, views/dosen/magang_period.ejs

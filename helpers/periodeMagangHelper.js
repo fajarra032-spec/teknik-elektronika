@@ -215,7 +215,8 @@ async function validasiMulaiPeriode(db, data, opsi) {
     const awalQ = String(q.tanggalMulai).substring(0, 10);
     let akhirQ = q.tanggalSelesai ? String(q.tanggalSelesai).substring(0, 10) : '';
     if (!akhirQ) akhirQ = q.status === 'completed' ? (String(q.completedAt || awalQ).substring(0, 10)) : TANPA_BATAS;
-    if (mulai <= akhirQ && awalQ <= akhirBaru) {
+    // strict (<): periode berikutnya boleh mulai tepat di tanggal selesai periode sebelumnya
+    if (mulai < akhirQ && awalQ < akhirBaru) {
       const rentangQ = `${awalQ} s/d ${q.tanggalSelesai ? String(q.tanggalSelesai).substring(0, 10) : 'belum ditentukan'}`;
       return `Tanggal bertabrakan dengan periode ${q.pdkNama || 'magang lain'} (${rentangQ}). Tutup atau ubah periode tersebut terlebih dahulu.`;
     }
@@ -258,7 +259,31 @@ async function ambilPeriodeBerakhirBelumDitutup(db, today) {
     .sort((a, b) => b.hariLewat - a.hariLewat);
 }
 
+/** Durasi standar magang (bulan). Bisa diubah lewat env DURASI_MAGANG_BULAN. */
+const DURASI_MAGANG_BULAN = parseInt(process.env.DURASI_MAGANG_BULAN, 10) > 0
+  ? parseInt(process.env.DURASI_MAGANG_BULAN, 10) : 4;
+
+/**
+ * Tanggal selesai otomatis = tanggal mulai + N bulan (tanggal yang sama N bulan kemudian).
+ * Contoh (4 bulan): 2026-09-01 -> 2027-01-01, 2026-09-15 -> 2027-01-15.
+ * Bila tanggal tujuan tidak ada (mis. 31 Okt + 4 bln), dipakai akhir bulan tujuan.
+ * Mengembalikan null bila format tanggal mulai tidak valid.
+ */
+function hitungTanggalSelesaiMagang(tanggalMulai, bulan) {
+  bulan = bulan || DURASI_MAGANG_BULAN;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(tanggalMulai || '').substring(0, 10));
+  if (!m) return null;
+  const y = +m[1], bln = +m[2] - 1, hari = +m[3];
+  const total = bln + bulan;
+  const ty = y + Math.floor(total / 12), tm = total % 12;
+  const hariTerakhir = new Date(Date.UTC(ty, tm + 1, 0)).getUTCDate();
+  const tujuan = new Date(Date.UTC(ty, tm, Math.min(hari, hariTerakhir)));
+  return tujuan.toISOString().substring(0, 10);
+}
+
 module.exports = {
+  DURASI_MAGANG_BULAN,
+  hitungTanggalSelesaiMagang,
   validasiMulaiPeriode,
   ambilPeriodeBerakhirBelumDitutup,
   pilihPeriodeUntukTanggal,

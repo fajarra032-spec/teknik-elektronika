@@ -602,9 +602,31 @@
               <input type="date" name="tanggalMulai" class="form-control" required>
             </div>
             <div class="col-md-6 mb-3">
-              <label>Tanggal Selesai (Opsional)</label>
+              <label>Tanggal Selesai <small class="text-muted">(otomatis <%= typeof durasiMagangBulan !== 'undefined' ? durasiMagangBulan : 4 %> bulan)</small></label>
               <input type="date" name="tanggalSelesai" class="form-control">
+              <small class="text-muted">Terisi otomatis dari tanggal mulai; bisa diubah bila perlu.</small>
             </div>
+<script>
+(function () {
+  // Tanggal selesai otomatis = tanggal mulai + durasi standar (4 bulan secara bawaan)
+  var DURASI_BULAN = <%= typeof durasiMagangBulan !== 'undefined' ? durasiMagangBulan : 4 %>;
+  function hitungSelesai(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    if (!m) return '';
+    var y = +m[1], bln = +m[2] - 1, hari = +m[3], total = bln + DURASI_BULAN;
+    var ty = y + Math.floor(total / 12), tm = total % 12;
+    var akhirBulan = new Date(Date.UTC(ty, tm + 1, 0)).getUTCDate();
+    var d = new Date(Date.UTC(ty, tm, Math.min(hari, akhirBulan)));
+    return d.toISOString().substring(0, 10);
+  }
+  var mulai = document.querySelector('input[name="tanggalMulai"]');
+  var selesai = document.querySelector('input[name="tanggalSelesai"]');
+  if (!mulai || !selesai) return;
+  function isi() { var h = hitungSelesai(mulai.value); if (h) selesai.value = h; }
+  mulai.addEventListener('change', isi);
+  mulai.addEventListener('input', isi);
+})();
+</script>
           </div>
           <hr>
           <h6 class="fw-bold">Informasi Perusahaan</h6>

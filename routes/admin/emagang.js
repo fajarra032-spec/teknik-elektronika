@@ -27,7 +27,7 @@ const { tampilkanCetakLogbook } = require('../../helpers/logbookPdfHelper');
 const magangNotif = require('../../helpers/magangNotifHelper');
 const { createKrsDanEnrollment } = require('../../helpers/paketKurikulumHelper');
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
-const { hariIniWITA, pilihPeriodeDefault, rentangLogbookPeriode, terapkanRentang, dalamRentang, ambilPeriodePerMahasiswa, statistikLogbookPeriode, validasiMulaiPeriode, periodeSudahBerakhir } = require('../../helpers/periodeMagangHelper');
+const { hariIniWITA, pilihPeriodeDefault, rentangLogbookPeriode, terapkanRentang, dalamRentang, ambilPeriodePerMahasiswa, statistikLogbookPeriode, validasiMulaiPeriode, periodeSudahBerakhir, hitungTanggalSelesaiMagang, DURASI_MAGANG_BULAN } = require('../../helpers/periodeMagangHelper');
 
 router.use(verifyToken);
 router.use(isAdmin);
@@ -464,6 +464,7 @@ router.get('/mahasiswa/:userId', async (req, res) => {
     }
 
     res.render('admin/emagang_mahasiswa', {
+      durasiMagangBulan: DURASI_MAGANG_BULAN,
       title: `Logbook - ${mahasiswa.nama}`,
       mahasiswa,
       logbookList,
@@ -492,10 +493,12 @@ router.get('/mahasiswa/:userId', async (req, res) => {
 router.post('/period/start', async (req, res) => {
   try {
     const { 
-      mahasiswaId, pdkId, tanggalMulai, tanggalSelesai,
+      mahasiswaId, pdkId, tanggalMulai, tanggalSelesai: tanggalSelesaiInput,
       namaPerusahaan, alamatPerusahaan, kontakPerusahaan, kontakHpPerusahaan,
       emailPerusahaan, websitePerusahaan, pembimbingLapangan, jabatanPembimbingLapangan
     } = req.body;
+    // Tanggal selesai otomatis (tanggal mulai + durasi standar) bila tidak diisi
+    const tanggalSelesai = tanggalSelesaiInput || hitungTanggalSelesaiMagang(tanggalMulai);
     
     if (!mahasiswaId || !pdkId || !tanggalMulai || !namaPerusahaan) {
       req.session.error = 'Data tidak lengkap. Nama perusahaan wajib diisi.';

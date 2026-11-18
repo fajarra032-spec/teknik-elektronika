@@ -13,7 +13,7 @@ const { getPembimbingMahasiswa, isPembimbingMahasiswa } = require('../../helpers
 const magangNotif = require('../../helpers/magangNotifHelper');
 const { createKrsDanEnrollment } = require('../../helpers/paketKurikulumHelper');
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
-const { validasiMulaiPeriode } = require('../../helpers/periodeMagangHelper');
+const { validasiMulaiPeriode, hitungTanggalSelesaiMagang, DURASI_MAGANG_BULAN } = require('../../helpers/periodeMagangHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -128,6 +128,7 @@ router.get('/:mahasiswaId', async (req, res) => {
     }));
     
     res.render('dosen/magang_period', {
+      durasiMagangBulan: DURASI_MAGANG_BULAN,
       title: `Kelola Magang - ${mahasiswa.nama}`,
       mahasiswa,
       bimbingan,
@@ -153,7 +154,7 @@ router.post('/start', async (req, res) => {
       mahasiswaId, 
       pdkId, 
       tanggalMulai, 
-      tanggalSelesai,
+      tanggalSelesai: tanggalSelesaiInput,
       namaPerusahaan, 
       alamatPerusahaan,
       kontakPerusahaan,
@@ -163,6 +164,8 @@ router.post('/start', async (req, res) => {
       pembimbingLapangan,
       jabatanPembimbingLapangan
     } = req.body;
+    // Tanggal selesai otomatis (tanggal mulai + durasi standar) bila tidak diisi
+    const tanggalSelesai = tanggalSelesaiInput || hitungTanggalSelesaiMagang(tanggalMulai);
     
     if (!mahasiswaId || !pdkId || !tanggalMulai || !namaPerusahaan) {
       return res.status(400).send('Data tidak lengkap. Nama perusahaan wajib diisi.');
