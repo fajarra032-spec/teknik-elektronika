@@ -121,7 +121,16 @@ app.post('/webhook', (req, res) => {
   const exec = require('child_process').exec;
   console.log('🔔 Webhook diterima! Memulai deploy...');
   
-  exec('cd /DATA/teknik-elektronika && git pull origin main && npm install && pm2 restart teknik-elektronika', 
+  exec('/mnt/storage/projects/deploy-teknik-elektronika-webhook.sh', {
+    cwd: '/mnt/storage/projects/teknik-elektronika',
+    env: {
+      ...process.env,
+      PM2_HOME: '/mnt/storage/.pm2',
+      PATH: '/mnt/storage/npm-global/bin:' + (process.env.PATH || '')
+    },
+    timeout: 600000,
+    maxBuffer: 10 * 1024 * 1024
+  }, 
     (error, stdout, stderr) => {
       if (error) {
         console.error('❌ Deploy error:', error);
