@@ -1,0 +1,22 @@
+MONITORING MAGANG ADMIN (/admin/emagang) - TAB STATUS SEPERTI DOSEN
+===================================================================
+Ekstrak di ROOT proyek, timpa file yang ada, restart server.
+Tanpa indeks Firestore baru, tanpa paket baru, tanpa query tambahan (memakai data periode yang
+sudah dimuat halaman ini).
+
+TAMPILAN BARU
+- Tab: Semua | Sudah KRS Magang | Magang Aktif | Magang Selesai (dengan jumlah), gaya sama
+  dengan monitoring dosen. Tab dikirim ke server (?tab=krs|aktif|selesai) supaya tetap
+  benar dengan paginasi, dan tetap menyertakan pencarian / angkatan / filter "berakhir".
+- Kartu ringkasan: Mahasiswa PDK, Sudah KRS, Magang Aktif, Magang Selesai, Total Logbook, Pending.
+- Tabel: kolom baru "Status" (badge) dan "Tempat & Periode" (perusahaan, magang ke-, tanggal,
+  penanda bila tanggal selesai sudah lewat tapi belum ditutup/dinilai).
+
+ATURAN KATEGORI (satu mahasiswa = satu kategori; jumlah tab = jumlah Semua)
+- Magang Aktif   : punya periode berstatus active atau locked
+- Magang Selesai : tidak ada periode aktif, ada periode completed
+- Sudah KRS      : memprogram PDK, tetapi periode magang belum dimulai
+  (mis. mahasiswa dengan Magang 1 selesai & Magang 2 aktif tampil di "Magang Aktif".)
+Periode berstatus cancelled diabaikan.
+
+FILE TIMPA: routes/admin/emagang.js, views/admin/emagang_list.ejs

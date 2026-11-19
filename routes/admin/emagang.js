@@ -277,6 +277,38 @@ router.get('/', async (req, res) => {
       mahasiswaList = mahasiswaList.filter(m =>
         (periodePerMhs.get(m.id) || []).some(p => p.status === 'active' && periodeSudahBerakhir(p, hariIniFilter)));
     }
+
+    // ===== Kategori status magang (sama seperti monitoring dosen) =====
+    //   aktif   : punya periode berstatus active/locked
+    //   selesai : tidak ada periode aktif, tetapi ada periode completed
+    //   krs     : sudah KRS (memprogram PDK) tetapi periode magang belum dimulai
+    // Satu mahasiswa hanya masuk SATU kategori (prioritas aktif > selesai > krs),
+    // jadi jumlah ketiga tab = jumlah "Semua". Tanpa query Firestore tambahan.
+    const hariIniKat = hariIniWITA();
+    mahasiswaList.forEach((m) => {
+      const semuaP = (periodePerMhs.get(m.id) || []).filter(p => p.status !== 'cancelled');
+      const aktifP = semuaP.filter(p => p.status === 'active' || p.status === 'locked');
+      const selesaiP = semuaP.filter(p => p.status === 'completed');
+      m.statusMagang = aktifP.length ? 'aktif' : (selesaiP.length ? 'selesai' : 'krs');
+      const tampil = aktifP.length ? pilihPeriodeDefault(aktifP, hariIniKat)
+        : (selesaiP.length ? pilihPeriodeDefault(selesaiP, hariIniKat) : null);
+      m.periodeInfo = tampil ? {
+        pdkNama: tampil.pdkNama || '',
+        tanggalMulai: tampil.tanggalMulai || '',
+        tanggalSelesai: tampil.tanggalSelesai || '',
+        perusahaan: (tampil.perusahaan && tampil.perusahaan.nama) || '',
+        berakhir: aktifP.length > 0 && periodeSudahBerakhir(tampil, hariIniKat)
+      } : null;
+      m.jumlahPeriodeSelesai = selesaiP.length;
+    });
+    const tabCounts = {
+      semua: mahasiswaList.length,
+      krs: mahasiswaList.filter(m => m.statusMagang === 'krs').length,
+      aktif: mahasiswaList.filter(m => m.statusMagang === 'aktif').length,
+      selesai: mahasiswaList.filter(m => m.statusMagang === 'selesai').length
+    };
+    const tab = ['krs', 'aktif', 'selesai'].includes(req.query.tab) ? req.query.tab : 'semua';
+    if (tab !== 'semua') mahasiswaList = mahasiswaList.filter(m => m.statusMagang === tab);
     const statsPromises = mahasiswaList.map(async (m) => {
       const semua = periodePerMhs.get(m.id) || [];
       const per = pilihPeriodeDefault(semua, hariIniWITA());
@@ -310,8 +342,19 @@ router.get('/', async (req, res) => {
       if (search) usp.set('search', search);
       if (angkatan) usp.set('angkatan', angkatan);
       if (filterBerakhir) usp.set('berakhir', '1');
+      if (tab !== 'semua') usp.set('tab', tab);
       Object.entries(params).forEach(([k, v]) => usp.set(k, v));
       return `/admin/emagang?${usp.toString()}`;
+    };
+    // URL untuk berpindah tab (mempertahankan pencarian/angkatan, kembali ke halaman 1)
+    const tabUrl = (t) => {
+      const usp = new URLSearchParams();
+      if (search) usp.set('search', search);
+      if (angkatan) usp.set('angkatan', angkatan);
+      if (filterBerakhir) usp.set('berakhir', '1');
+      if (t !== 'semua') usp.set('tab', t);
+      const qs = usp.toString();
+      return '/admin/emagang' + (qs ? '?' + qs : '');
     };
 
     let pageInfo = null;
@@ -350,7 +393,10 @@ router.get('/', async (req, res) => {
       totalMahasiswa: totalFiltered,
       summaryStats,
       angkatanList,
-      filters: { search: search || '', angkatan: angkatan || '', berakhir: filterBerakhir },
+      filters: { search: search || '', angkatan: angkatan || '', berakhir: filterBerakhir, tab },
+      tab,
+      tabCounts,
+      tabUrls: { semua: tabUrl('semua'), krs: tabUrl('krs'), aktif: tabUrl('aktif'), selesai: tabUrl('selesai') },
       pageInfo,
       showAll,
       pageListUrl: buildListUrl({ page: 1 }),

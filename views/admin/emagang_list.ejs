@@ -305,6 +305,31 @@
     color: #495057;
   }
 
+  /* ===== Tab status magang (sama seperti monitoring dosen) ===== */
+  .peran-tabs { display: flex; gap: 0.6rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+  .peran-tab {
+    display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 50px;
+    font-weight: 600; font-size: clamp(0.78rem, 2vw, 0.9rem); border: 2px solid var(--gray-border);
+    background: white; color: #64748b; text-decoration: none; transition: all 0.2s; user-select: none;
+  }
+  .peran-tab .peran-count { background: rgba(100,116,139,0.15); border-radius: 50px; padding: 0.1rem 0.55rem; font-size: 0.78em; }
+  .peran-tab:hover { border-color: var(--primary-end); color: var(--primary-start); }
+  .peran-tab.active { color: white; border-color: transparent; }
+  .peran-tab.active .peran-count { background: rgba(255,255,255,0.25); color: white; }
+  .peran-tab[data-tab="semua"].active { background: linear-gradient(135deg, var(--primary-start), var(--primary-end)); box-shadow: 0 5px 15px rgba(30,58,138,0.25); }
+  .peran-tab[data-tab="krs"].active { background: linear-gradient(135deg, #f59e0b, #fbbf24); box-shadow: 0 5px 15px rgba(245,158,11,0.3); }
+  .peran-tab[data-tab="aktif"].active { background: linear-gradient(135deg, #10b981, #34d399); box-shadow: 0 5px 15px rgba(16,185,129,0.3); }
+  .peran-tab[data-tab="selesai"].active { background: linear-gradient(135deg, #475569, #64748b); box-shadow: 0 5px 15px rgba(71,85,105,0.3); }
+
+  .status-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.8rem; border-radius: 50px; font-size: 0.7rem; font-weight: 600; white-space: nowrap; }
+  .status-success { background: #d1fae5; color: #065f46; }
+  .status-warning { background: #fef3c7; color: #92400e; }
+  .status-selesai { background: #e2e8f0; color: #334155; }
+  .periode-info { font-size: 0.8rem; line-height: 1.35; }
+  .periode-info .tempat { font-weight: 600; color: #1e293b; }
+  .periode-info .tgl { color: #64748b; font-size: 0.75rem; }
+  .periode-info .lewat { color: #b45309; font-size: 0.72rem; font-weight: 600; }
+
   /* Responsive */
   @media (max-width: 768px) {
     .filter-section { flex-direction: column; align-items: stretch; }
@@ -358,27 +383,26 @@
   <% } %>
 
   <!-- Statistik Cards -->
+  <%
+    const _tc = (typeof tabCounts !== 'undefined' && tabCounts) ? tabCounts : { semua: totalMahasiswaCount, krs: 0, aktif: 0, selesai: 0 };
+    const _tab = (typeof tab !== 'undefined' && tab) ? tab : 'semua';
+    const _tu = (typeof tabUrls !== 'undefined' && tabUrls) ? tabUrls : { semua: '/admin/emagang', krs: '/admin/emagang?tab=krs', aktif: '/admin/emagang?tab=aktif', selesai: '/admin/emagang?tab=selesai' };
+  %>
   <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-value"><%= totalMahasiswaCount %></div>
-      <div class="stat-label">Mahasiswa PDK</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value"><%= totalLogbook %></div>
-      <div class="stat-label">Total Logbook</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value"><%= totalPending %></div>
-      <div class="stat-label">Pending</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value"><%= totalApproved %></div>
-      <div class="stat-label">Disetujui</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value"><%= totalRejected %></div>
-      <div class="stat-label">Ditolak</div>
-    </div>
+    <div class="stat-card"><div class="stat-value"><%= _tc.semua %></div><div class="stat-label">Mahasiswa PDK</div></div>
+    <div class="stat-card"><div class="stat-value"><%= _tc.krs %></div><div class="stat-label">Sudah KRS Magang</div></div>
+    <div class="stat-card"><div class="stat-value"><%= _tc.aktif %></div><div class="stat-label">Magang Aktif</div></div>
+    <div class="stat-card"><div class="stat-value"><%= _tc.selesai %></div><div class="stat-label">Magang Selesai</div></div>
+    <div class="stat-card"><div class="stat-value"><%= totalLogbook %></div><div class="stat-label">Total Logbook</div></div>
+    <div class="stat-card"><div class="stat-value"><%= totalPending %></div><div class="stat-label">Pending</div></div>
+  </div>
+
+  <!-- Tab status magang -->
+  <div class="peran-tabs" id="peranTabs">
+    <a class="peran-tab <%= _tab === 'semua' ? 'active' : '' %>" data-tab="semua" href="<%= _tu.semua %>"><i class="bi bi-people-fill"></i> Semua <span class="peran-count"><%= _tc.semua %></span></a>
+    <a class="peran-tab <%= _tab === 'krs' ? 'active' : '' %>" data-tab="krs" href="<%= _tu.krs %>"><i class="bi bi-clock-history"></i> Sudah KRS Magang <span class="peran-count"><%= _tc.krs %></span></a>
+    <a class="peran-tab <%= _tab === 'aktif' ? 'active' : '' %>" data-tab="aktif" href="<%= _tu.aktif %>"><i class="bi bi-play-circle"></i> Magang Aktif <span class="peran-count"><%= _tc.aktif %></span></a>
+    <a class="peran-tab <%= _tab === 'selesai' ? 'active' : '' %>" data-tab="selesai" href="<%= _tu.selesai %>"><i class="bi bi-check2-circle"></i> Magang Selesai <span class="peran-count"><%= _tc.selesai %></span></a>
   </div>
 
   <!-- Filter Section -->
@@ -386,6 +410,7 @@
        menjangkau SEMUA mahasiswa terfilter, bukan cuma 10 baris yang sedang
        tampil di halaman paginasi saat ini. -->
   <form class="filter-section" method="GET" action="/admin/emagang">
+    <% if (_tab !== 'semua') { %><input type="hidden" name="tab" value="<%= _tab %>"><% } %>
     <input type="text" name="search" id="searchInput" class="form-control" placeholder="🔍 Cari nama atau NIM..." value="<%= (filters && filters.search) || '' %>">
     <select name="angkatan" id="angkatanFilter" class="form-select">
       <option value="">📅 Semua Angkatan</option>
@@ -398,7 +423,7 @@
     <button class="btn-filter" type="submit">
       <i class="bi bi-funnel"></i> Terapkan
     </button>
-    <a href="/admin/emagang" class="btn-reset">
+    <a href="<%= _tu.semua %>" class="btn-reset" onclick="this.href='/admin/emagang' + (<%- JSON.stringify(_tab !== 'semua' ? '?tab=' + _tab : '') %>)">
       <i class="bi bi-arrow-repeat"></i> Reset
     </a>
   </form>
@@ -412,6 +437,8 @@
             <th style="width: 50px;">No</th>
             <th>Mahasiswa</th>
             <th>PDK Diprogram</th>
+            <th style="width: 120px;">Status</th>
+            <th>Tempat &amp; Periode</th>
             <th style="width: 80px;">Total</th>
             <th style="width: 80px;">Pending</th>
             <th style="width: 80px;">Disetujui</th>
@@ -455,6 +482,26 @@
                     <span class="text-muted">-</span>
                   <% } %>
                 </td>
+                <td data-label="Status" class="text-center">
+                  <% if (m.statusMagang === 'aktif') { %>
+                    <span class="status-badge status-success"><i class="bi bi-play-circle-fill"></i> Magang Aktif</span>
+                  <% } else if (m.statusMagang === 'selesai') { %>
+                    <span class="status-badge status-selesai"><i class="bi bi-check2-circle"></i> Magang Selesai</span>
+                  <% } else { %>
+                    <span class="status-badge status-warning"><i class="bi bi-clock-history"></i> Sudah KRS</span>
+                  <% } %>
+                </td>
+                <td data-label="Tempat &amp; Periode">
+                  <% if (m.periodeInfo) { %>
+                    <div class="periode-info">
+                      <div class="tempat"><%= m.periodeInfo.perusahaan || '-' %></div>
+                      <div class="tgl"><%= m.periodeInfo.pdkNama %><% if (m.periodeInfo.tanggalMulai) { %> &middot; <%= m.periodeInfo.tanggalMulai %><% if (m.periodeInfo.tanggalSelesai) { %> s.d. <%= m.periodeInfo.tanggalSelesai %><% } %><% } %></div>
+                      <% if (m.periodeInfo.berakhir) { %><div class="lewat"><i class="bi bi-hourglass-bottom"></i> Tanggal selesai sudah lewat, belum ditutup/dinilai</div><% } %>
+                    </div>
+                  <% } else { %>
+                    <span class="text-muted small">Belum memulai periode magang</span>
+                  <% } %>
+                </td>
                 <td data-label="Total" class="text-center">
                   <span class="badge-stat badge-total" title="Rekap <%= m.rekapLabel || 'semua' %>"><%= m.totalLogbook || 0 %></span>
                 </td>
@@ -476,11 +523,11 @@
             <% }); %>
           <% } else { %>
             <tr>
-              <td colspan="8" class="text-center py-5">
+              <td colspan="10" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <h4>Belum Ada Data</h4>
-                  <p class="text-muted">Belum ada mahasiswa yang memprogram mata kuliah PDK.</p>
+                  <p class="text-muted"><%= _tab === 'krs' ? 'Tidak ada mahasiswa yang sudah KRS magang dan belum memulai periode.' : (_tab === 'aktif' ? 'Belum ada mahasiswa yang sedang magang aktif.' : (_tab === 'selesai' ? 'Belum ada mahasiswa yang magangnya selesai.' : 'Belum ada mahasiswa yang memprogram mata kuliah PDK.')) %></p>
                 </div>
               </td>
             </tr>
