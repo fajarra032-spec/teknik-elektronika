@@ -769,6 +769,13 @@
           </summary>
 
           <div class="minggu-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+              <span class="small text-muted"><i class="bi bi-info-circle"></i> Lembar cetak memuat logbook harian, catatan Dosen Pembimbing, dan status persetujuan minggu ini.</span>
+              <% if (m.jumlahEntri > 0) { %>
+                <a class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener"
+                   href="/dosen/magang/print/<%= mahasiswa.id %>?periodId=<%= encodeURIComponent(selectedPeriod.id) %>&minggu=<%= m.mingguKe %>"><i class="bi bi-printer"></i> Lihat &amp; Cetak Minggu ke-<%= m.mingguKe %></a>
+              <% } %>
+            </div>
             <div class="table-responsive mb-3">
               <table class="table table-sm align-middle mb-0" style="font-size:.88rem;">
                 <thead>

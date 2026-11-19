@@ -84,8 +84,20 @@ async function htmlKePdf(html) {
  */
 function tampilkanCetakLogbook(req, res, locals, opt = {}) {
   const mintaPdf = req.query.pdf === '1';
+
+  // ?minggu=N -> cetak HANYA lembar logbook minggu ke-N (lengkap dengan Catatan Dosen
+  // Pembimbing & status persetujuan), tanpa daftar hadir / pengesahan / lembar konsultasi.
+  const nMinggu = parseInt(req.query.minggu, 10);
+  let mingguFilter = 0;
+  if (nMinggu >= 1) {
+    const ada = (locals.mingguGroups || []).some((g) => Number(g.mingguKe) === nMinggu);
+    if (!ada) return res.status(404).send(`Belum ada logbook pada minggu ke-${nMinggu}, jadi belum ada lembar yang bisa dicetak.`);
+    mingguFilter = nMinggu;
+  }
+
   const data = {
     ...locals,
+    mingguFilter,
     pdfMode: mintaPdf,
     pdfUrl: buatPdfUrl(req.originalUrl),
     urlKembali: opt.urlKembali || ''
@@ -102,7 +114,7 @@ function tampilkanCetakLogbook(req, res, locals, opt = {}) {
       const logo = await ambilLogoDataUri();
       if (logo) html = html.split(LOGO_URL).join(logo);
       const pdf = await htmlKePdf(html);
-      const nama = `Logbook_${bersihkanNamaFile(locals.mahasiswa && locals.mahasiswa.nim)}_${bersihkanNamaFile(locals.mahasiswa && locals.mahasiswa.nama)}.pdf`;
+      const nama = `Logbook${mingguFilter ? '_Minggu' + mingguFilter : ''}_${bersihkanNamaFile(locals.mahasiswa && locals.mahasiswa.nim)}_${bersihkanNamaFile(locals.mahasiswa && locals.mahasiswa.nama)}.pdf`;
       res.set({
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${nama}"`,

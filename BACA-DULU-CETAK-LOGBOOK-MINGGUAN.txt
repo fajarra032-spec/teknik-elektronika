@@ -1,0 +1,26 @@
+HALAMAN CETAK PERSETUJUAN LOGBOOK PER MINGGU (MAHASISWA & DOSEN)
+================================================================
+Ekstrak di ROOT proyek, timpa file yang ada, restart server.
+Paket ini SUDAH MENGGABUNGKAN patch "persetujuan mingguan saja" (tanpa setujui/tolak harian).
+Tanpa indeks Firestore baru, tanpa paket baru, tanpa migrasi data.
+
+CARA KERJA
+Halaman cetak yang sudah ada kini mendukung parameter ?minggu=N: hanya lembar logbook
+minggu ke-N yang tampil (beserta halaman dokumentasi minggu itu), lengkap dengan
+kotak "Catatan Dosen Pembimbing", info konsultasi WA, dan stempel SUDAH KONSULTASI /
+BELUM KONSULTASI (watermark bila belum disetujui). Daftar hadir, lembar pengesahan
+dan lembar konsultasi tidak ikut. Tombol Cetak & Unduh PDF tetap ada (nama berkas
+Logbook_Minggu<N>_<NIM>_<Nama>.pdf). Minggu tanpa logbook -> pesan 404.
+
+DI MANA TOMBOLNYA
+- Mahasiswa: halaman Magang > kartu "Konsultasi Logbook Mingguan" > kolom "Cetak" tiap minggu.
+  URL: /mahasiswa/magang/logbook-print?periodId=...&minggu=N
+- Dosen PA : Detail mahasiswa > tab "Persetujuan Mingguan" > buka satu minggu >
+  tombol "Lihat & Cetak Minggu ke-N".  URL: /dosen/magang/print/:userId?periodId=...&minggu=N
+Hak akses tidak berubah (mahasiswa hanya miliknya, dosen hanya bimbingannya).
+
+FILE TIMPA: helpers/logbookPdfHelper.js
+            views/mahasiswa/magang/print.ejs
+            views/mahasiswa/magang/index.ejs
+            views/dosen/magang_detail.ejs
+            routes/dosen/magang.js, views/dosen/magang_logbook_detail.ejs (dari patch sebelumnya)

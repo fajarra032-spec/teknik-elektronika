@@ -653,7 +653,7 @@
       <div class="table-responsive">
         <table class="table table-sm align-middle mb-0">
           <thead>
-            <tr><th>Minggu</th><th>Periode</th><th class="text-center">Entri / Jam</th><th>Status</th><th>Catatan Dosen Pembimbing</th></tr>
+            <tr><th>Minggu</th><th>Periode</th><th class="text-center">Entri / Jam</th><th>Status</th><th>Catatan Dosen Pembimbing</th><th class="text-center">Cetak</th></tr>
           </thead>
           <tbody>
             <% mingguStatus.forEach(m => { %>
@@ -671,6 +671,13 @@
                   <% } %>
                 </td>
                 <td class="small" style="white-space:pre-line;"><%= m.catatan || '-' %></td>
+                <td class="text-center">
+                  <% if (m.jumlahEntri > 0) { %>
+                    <a class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener"
+                       href="/mahasiswa/magang/logbook-print?periodId=<%= encodeURIComponent(activePeriod.id) %>&minggu=<%= m.mingguKe %>"
+                       title="Lihat &amp; cetak lembar logbook minggu ke-<%= m.mingguKe %> beserta catatan dosen"><i class="bi bi-printer"></i> Cetak</a>
+                  <% } else { %><span class="text-muted small">-</span><% } %>
+                </td>
               </tr>
             <% }) %>
           </tbody>

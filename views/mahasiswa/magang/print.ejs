@@ -306,8 +306,9 @@
 
   // Belum ada data sama sekali -> tetap cetak 1 lembar kosong (bisa dipakai sebagai formulir)
   const HARI_KOSONG = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Ahad'].map(h => ({ hari: h, tanggal: null, entries: [], durasi: 0 }));
+  const mingguCetak = (typeof mingguFilter !== 'undefined' && mingguFilter) ? Number(mingguFilter) : 0;   // cetak 1 minggu saja
   const lembarList = (mingguGroups && mingguGroups.length > 0)
-    ? mingguGroups
+    ? (mingguCetak ? mingguGroups.filter((g) => Number(g.mingguKe) === mingguCetak) : mingguGroups)
     : [{ mingguKe: '', bulanKe: '', periodeAwal: '', periodeAkhir: '', rows: HARI_KOSONG, totalDurasi: 0, entries: [] }];
   const totalHadir = (kehadiranGroups && kehadiranGroups.length > 0) ? kehadiranGroups.length : 1;
   const totalHalFoto = lembarList.reduce((n, g) => n + ((g.halamanFoto && g.halamanFoto.length) || 0), 0);
@@ -319,7 +320,11 @@
     <svg viewBox="0 0 16 16"><path d="M10 12.5 5.5 8 10 3.5l1 1L7.5 8l3.5 3.5z"/></svg> Kembali
   </a>
   <div class="info">
+    <% if (mingguCetak) { %>
+      <strong>Cetak Logbook Minggu ke-<%= mingguCetak %></strong> &middot; 1 lembar mingguan<% if (totalHalFoto) { %> + <%= totalHalFoto %> hal. dokumentasi<% } %> &middot; memuat catatan Dosen Pembimbing &amp; status persetujuan &middot; otomatis pas A4
+    <% } else { %>
     <strong>Pratinjau Logbook</strong> &middot; <%= lembarList.length %> lembar mingguan<% if (totalHalFoto) { %> + <%= totalHalFoto %> hal. dokumentasi<% } %> + <%= totalHadir %> daftar hadir + lembar pengesahan + lembar konsultasi &middot; setiap lembar otomatis pas A4
+    <% } %>
   </div>
   <div class="aksi">
     <a class="pdf" href="<%= (typeof pdfUrl !== 'undefined' && pdfUrl) ? pdfUrl : '#' %>" id="btnPdf">
@@ -509,6 +514,7 @@
   <% }) %>
 <% }) %>
 
+    <% if (!mingguCetak) { /* cetak 1 minggu: lewati daftar hadir, pengesahan & lembar konsultasi */ %>
     <%# ===== DAFTAR HADIR: satu lembar per bulan, tanpa kolom ttd per baris ===== %>
     <%
       const rg = ringkasan || {};
@@ -823,6 +829,7 @@
         <span class="kode-validasi"><%= kodeValidasi %></span>
       </div>
     </div></section>
+    <% } /* akhir !mingguCetak */ %>
 
 </div>
 
