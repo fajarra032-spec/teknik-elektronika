@@ -1,0 +1,20 @@
+LEMBAR PERNYATAAN "SAYA TELAH MENGIKUTI MAGANG" (BERFOTO + TTD MAHASISWA)
+========================================================================
+Ekstrak di ROOT proyek, timpa file yang ada, restart server.
+Paket ini MENGGABUNGKAN patch sebelumnya (persetujuan mingguan saja + cetak per minggu).
+Tanpa indeks Firestore baru, tanpa paket baru, tanpa migrasi data.
+
+ISI LEMBAR BARU (1 lembar A4, tepat sebelum Lembar Pengesahan pada cetak logbook lengkap)
+- Judul "SURAT PERNYATAAN TELAH MENGIKUTI MAGANG", kop Politeknik Dewantara.
+- Identitas: nama, NIM, program studi, semester, tempat magang.
+- Pernyataan: telah mengikuti magang di <tempat>, tanggal mulai s.d. selesai (lama magang),
+  jumlah hari hadir & total jam (otomatis dari logbook), bahwa isi logbook benar, + penutup.
+- Pas foto 3x4 cm otomatis dari foto profil mahasiswa (field `foto` / `fotoFileId`);
+  bila foto belum ada/gagal dimuat tampil kotak "Pas foto 3 x 4".
+- Kolom tanda tangan mahasiswa (tanda tangan basah) + nama + NIM, tanggal cetak "Palopo, ...".
+Tampil di cetak mahasiswa, dosen PA, dan admin (template yang sama), juga di PDF.
+Cetak satu minggu (?minggu=N) tidak memuat lembar ini.
+
+FILE TIMPA: views/mahasiswa/magang/print.ejs
+            helpers/logbookPdfHelper.js, views/mahasiswa/magang/index.ejs, views/dosen/magang_detail.ejs,
+            views/dosen/magang_logbook_detail.ejs, routes/dosen/magang.js (dari patch sebelumnya)

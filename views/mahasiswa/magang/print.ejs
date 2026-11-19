@@ -241,6 +241,14 @@
        CETAK / PDF
        ===================================================================== */
 
+    /* ===== LEMBAR PERNYATAAN TELAH MENGIKUTI MAGANG (foto + ttd mahasiswa) ===== */
+    .pernyataan-teks { font-size: 11pt; line-height: 1.75; text-align: justify; margin: 12px 0 6px; }
+    .pernyataan-teks p { margin: 0 0 9px; }
+    .ttd-pernyataan { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 16px; break-inside: avoid; }
+    .foto-3x4 { width: 30mm; height: 40mm; border: 1px solid #98a2b3; background: #f8fafc; overflow: hidden; display: grid; place-items: center; font-size: 8pt; color: #667085; text-align: center; line-height: 1.3; }
+    .foto-3x4 img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+    .ttd-pernyataan .ttd { width: 74mm; }
+    .ttd-pernyataan .ttd .area { height: 24mm; }
     /* ===== WATERMARK "BELUM KONSULTASI" (lembar mingguan yang belum disetujui dosen) ===== */
     .watermark {
       position: absolute; left: 0; right: 0; top: 50%; z-index: 20; pointer-events: none;
@@ -323,7 +331,7 @@
     <% if (mingguCetak) { %>
       <strong>Cetak Logbook Minggu ke-<%= mingguCetak %></strong> &middot; 1 lembar mingguan<% if (totalHalFoto) { %> + <%= totalHalFoto %> hal. dokumentasi<% } %> &middot; memuat catatan Dosen Pembimbing &amp; status persetujuan &middot; otomatis pas A4
     <% } else { %>
-    <strong>Pratinjau Logbook</strong> &middot; <%= lembarList.length %> lembar mingguan<% if (totalHalFoto) { %> + <%= totalHalFoto %> hal. dokumentasi<% } %> + <%= totalHadir %> daftar hadir + lembar pengesahan + lembar konsultasi &middot; setiap lembar otomatis pas A4
+    <strong>Pratinjau Logbook</strong> &middot; <%= lembarList.length %> lembar mingguan<% if (totalHalFoto) { %> + <%= totalHalFoto %> hal. dokumentasi<% } %> + <%= totalHadir %> daftar hadir + lembar pernyataan + lembar pengesahan + lembar konsultasi &middot; setiap lembar otomatis pas A4
     <% } %>
   </div>
   <div class="aksi">
@@ -629,6 +637,74 @@
         </div></section>
       <% }) %>
     <% } %>
+
+    <%# ===== LEMBAR PERNYATAAN TELAH MENGIKUTI MAGANG (sebelum lembar pengesahan) ===== %>
+    <%
+      const _fotoRaw = (mahasiswa && mahasiswa.foto) ? String(mahasiswa.foto).trim() : '';
+      const _fotoId = (_fotoRaw.match(/[?&]id=([^&]+)/) || _fotoRaw.match(/\/d\/([^/]+)/) || [])[1] || (mahasiswa && mahasiswa.fotoFileId) || '';
+      const _fotoUrl = _fotoId ? ('https://drive.google.com/thumbnail?id=' + encodeURIComponent(_fotoId) + '&sz=w600') : _fotoRaw;
+      const _fotoCadangan = _fotoId ? ('https://drive.google.com/uc?export=view&id=' + encodeURIComponent(_fotoId)) : '';
+      const _awal = (rg.durasi && rg.durasi.awal) || (pdkInfo && pdkInfo.tanggalMulai) || '';
+      const _akhir = (rg.durasi && rg.durasi.akhir) || (pdkInfo && pdkInfo.tanggalSelesai) || '';
+    %>
+    <section class="sheet"><div class="sheet-inner">
+
+      <div class="kop">
+        <img src="<%= LOGO_URL %>" alt="Logo Politeknik Dewantara">
+        <div>
+          <h2 class="nama">Politeknik Dewantara</h2>
+          <p class="alamat">Jl. KH. Ahmad Razak 2 No. 7 Palopo, Sulawesi Selatan &middot; Website: polidewa.ac.id</p>
+        </div>
+      </div>
+      <div class="kop-bar"></div>
+
+      <div class="judul" style="justify-content:center;">
+        <h1>SURAT PERNYATAAN TELAH MENGIKUTI MAGANG</h1>
+      </div>
+
+      <div class="pernyataan-teks"><p>Yang bertanda tangan di bawah ini:</p></div>
+
+      <div class="identitas">
+        <div class="span2"><span class="lbl">Nama mahasiswa</span><span class="val"><%= mahasiswa.nama %></span></div>
+        <div><span class="lbl">NIM</span><span class="val"><%= mahasiswa.nim %></span></div>
+        <div><span class="lbl">Program studi</span><span class="val"><%= typeof prodi !== 'undefined' ? prodi : '' %></span></div>
+        <div class="span2"><span class="lbl">Nama tempat magang</span><span class="val"><%= namaTempat || '-' %></span></div>
+        <div><span class="lbl">Semester</span><span class="val"><%= typeof semester !== 'undefined' ? semester : '' %></span></div>
+      </div>
+
+      <div class="pernyataan-teks">
+        <p>Dengan ini menyatakan dengan sebenar-benarnya bahwa saya <b>telah mengikuti kegiatan magang</b> pada
+          <b><%= namaTempat || '........................................' %></b><% if (_awal && _akhir) { %>
+          sejak tanggal <b><%= fmtTgl(_awal) %></b> sampai dengan <b><%= fmtTgl(_akhir) %></b><% if (rg.durasi) { %> (<%= rg.durasi.teks %>)<% } %><% } %><% if (rg.hariHadir) { %>,
+          dengan kehadiran <b><%= rg.hariHadir %> hari</b> dan total <b><%= fmtDesimal(rg.totalJam) %> jam</b> kegiatan<% } %>.</p>
+        <p>Saya menyatakan pula bahwa seluruh isi logbook, daftar hadir, dan dokumentasi kegiatan yang terlampir
+          adalah benar, merupakan hasil kegiatan saya sendiri selama magang, dan dapat saya pertanggungjawabkan.</p>
+        <p>Demikian surat pernyataan ini saya buat dengan sebenarnya untuk digunakan sebagaimana mestinya.</p>
+      </div>
+
+      <div class="ttd-pernyataan">
+        <div class="foto-3x4">
+          <% if (_fotoUrl) { %>
+            <img src="<%= _fotoUrl %>" data-fb="<%= _fotoCadangan %>" alt="Foto <%= mahasiswa.nama %>" referrerpolicy="no-referrer"
+                 onerror="if (this.dataset.fb &amp;&amp; this.src !== this.dataset.fb) { this.src = this.dataset.fb; } else { this.style.display='none'; this.parentNode.insertAdjacentHTML('beforeend', 'Pas foto<br>3 x 4'); }">
+          <% } else { %>Pas foto<br>3 x 4<% } %>
+        </div>
+        <div class="ttd">
+          <div>Palopo, <%= tglCetakPanjang %></div>
+          <div>Yang menyatakan,</div>
+          <div class="area"></div>
+          <div class="nama"><u><%= mahasiswa.nama %></u></div>
+          <div class="cap">NIM: <%= mahasiswa.nim %></div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="footer-cetak">
+        <span>Dicetak dari Web Portal Elektronika Polidewa: <%= generatedAt %></span>
+        <span class="kode-validasi"><%= kodeValidasi %></span>
+      </div>
+    </div></section>
 
     <%# ===== LEMBAR PENGESAHAN LOGBOOK (setelah seluruh daftar hadir) ===== %>
     <% const maksJam = Math.max(1, ...((rg.perMinggu || []).map(m => m.jam))); %>
