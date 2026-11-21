@@ -20,7 +20,8 @@ const drive = require('../../config/googleDrive');
 const { Readable } = require('stream');
 const multer = require('multer');
 // Konfigurasi multer dengan limit dan filter file
-const upload = multer({
+const { nomorSuratMiddleware } = require('../../helpers/nomorSuratHelper');
+const _upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
   fileFilter: (req, file, cb) => {
@@ -28,6 +29,12 @@ const upload = multer({
     else cb(new Error('Hanya file PDF yang diperbolehkan'), false);
   }
 });
+// Setelah multer mengurai form, nomorSurat yang hanya berupa nomor urut dilengkapi otomatis
+// menjadi nomor/ELK/POLIDEWA/bulan romawi/tahun (lihat helpers/nomorSuratHelper.js).
+const upload = {
+  single: (f) => [_upload.single(f), nomorSuratMiddleware],
+  none: () => [_upload.none(), nomorSuratMiddleware]
+};
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper');
 const { getAllMahasiswa } = require('../../helpers/cache');
 const puppeteer = require('puppeteer');
@@ -39,6 +46,7 @@ const DATA_WEB_FOLDER_ID = '17Z02_5zOImG1GYfi_5gvWL97-p6dW5t0';
 
 router.use(verifyToken);
 router.use(isAdmin);
+router.use(nomorSuratMiddleware); // form urlencoded (generate, ubah nomor); multipart ditangani di 'upload' di atas
 
 // ============================================================================
 // FUNGSI BANTU

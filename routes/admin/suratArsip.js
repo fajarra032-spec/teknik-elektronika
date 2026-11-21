@@ -13,6 +13,7 @@ const { Readable } = require('stream');
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const drive = require('../../config/googleDrive');
+const { normalisasiNomorSurat } = require('../../helpers/nomorSuratHelper');
 
 const DATA_WEB_FOLDER_ID = '17Z02_5zOImG1GYfi_5gvWL97-p6dW5t0';
 const COL = 'surat_arsip';
@@ -71,7 +72,7 @@ function bacaForm(b) {
   const tanggal = /^\d{4}-\d{2}-\d{2}$/.test(b.tanggalSurat || '') ? b.tanggalSurat : '';
   return {
     perihal: String(b.perihal || '').trim().slice(0, 250),
-    nomorSurat: String(b.nomorSurat || '').trim().slice(0, 120),
+    nomorSurat: normalisasiNomorSurat(b.nomorSurat, tanggal).slice(0, 120),
     kategori: KATEGORI.includes(b.kategori) ? b.kategori : 'Lainnya',
     tanggalSurat: tanggal,
     tahun: tanggal ? tanggal.slice(0, 4) : String(new Date().getFullYear()),

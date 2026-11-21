@@ -1,0 +1,32 @@
+<script>
+  // Kolom Nomor Surat: admin cukup mengetik nomor urut; server melengkapi menjadi
+  // <nomor>/ELK/POLIDEWA/<bulan romawi>/<tahun>. Skrip ini hanya menampilkan pratinjaunya.
+  (function () {
+    var KODE = 'ELK/POLIDEWA', ROMAWI = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+    function hariIniWita() { return new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10); }
+    function lengkap(v, tgl) {
+      v = (v || '').trim();
+      if (!v) return '';
+      if (v.indexOf('/') !== -1) return v;
+      var t = /^\d{4}-\d{2}-\d{2}$/.test(tgl || '') ? tgl : hariIniWita();
+      return v + '/' + KODE + '/' + ROMAWI[parseInt(t.slice(5, 7), 10) - 1] + '/' + t.slice(0, 4);
+    }
+    document.querySelectorAll('input[name="nomorSurat"][type="text"]').forEach(function (inp) {
+      var form = inp.form, tglInp = form ? form.querySelector('input[name="tanggalSurat"]') : null;
+      var hint = document.createElement('div');
+      hint.className = 'form-text';
+      inp.insertAdjacentElement('afterend', hint);
+      if (!inp.value) inp.placeholder = 'Ketik nomor urut saja, mis. 012';
+      function perbarui() {
+        var v = inp.value.trim();
+        if (!v) { hint.innerHTML = 'Cukup ketik nomor urut. Format otomatis: <code>nomor/' + KODE + '/bulan romawi/tahun</code>'; return; }
+        if (v.indexOf('/') !== -1) { hint.innerHTML = 'Nomor lengkap dipakai apa adanya: <code></code>'; hint.querySelector('code').textContent = v; return; }
+        hint.innerHTML = 'Nomor lengkap: <code></code>';
+        hint.querySelector('code').textContent = lengkap(v, tglInp ? tglInp.value : '');
+      }
+      inp.addEventListener('input', perbarui);
+      if (tglInp) tglInp.addEventListener('change', perbarui);
+      perbarui();
+    });
+  })();
+</script>
