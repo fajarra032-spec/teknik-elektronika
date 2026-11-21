@@ -4,6 +4,7 @@ const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper'); // <-- IMPORT HELPER
 const { getStatusRpsDosen } = require('../../helpers/rpsReminderHelper');
+const { ambilPeriodePerMahasiswa, periodeSudahBerakhir, hariIniWITA } = require('../../helpers/periodeMagangHelper');
 const { getRencanaPertemuan } = require('../../data/rencanaPertemuanData');
 
 router.use(verifyToken);
@@ -121,6 +122,23 @@ router.get('/', async (req, res) => {
       if (!sm || sm === 'Aktif') mahasiswaBimbinganIds.add(doc.id);
     });
     const totalMahasiswa = mahasiswaBimbinganIds.size;
+
+    // Mahasiswa bimbingan yang MAGANGNYA AKTIF: Dosen PA-nya Anda, status mahasiswa Aktif, dan punya
+    // periode magang berstatus active/locked yang sudah mulai & belum berakhir. Tidak sama dengan Mahasiswa PA.
+    let totalMagangAktif = 0;
+    try {
+      const hariIni = hariIniWITA();
+      const petaPeriode = await ambilPeriodePerMahasiswa(db, Array.from(mahasiswaBimbinganIds));
+      petaPeriode.forEach(periods => {
+        const berjalan = periods.some(pr =>
+          (pr.status === 'active' || pr.status === 'locked') &&
+          !periodeSudahBerakhir(pr, hariIni) &&
+          !(pr.tanggalMulai && String(pr.tanggalMulai).substring(0, 10) > hariIni));
+        if (berjalan) totalMagangAktif++;
+      });
+    } catch (e) {
+      console.error('Gagal menghitung mahasiswa magang aktif:', e.message);
+    }
 
     // ========================================================================
     // 2b. Total mahasiswa PA (semua status, termasuk non-aktif) - field
@@ -276,6 +294,7 @@ router.get('/', async (req, res) => {
       persentasePengajaran,
       pertemuanBerikutnya,
       totalMahasiswa,
+      totalMagangAktif,
       totalMahasiswaPa,
       tugasAktif,
       pengumpulanBelumDinilai,
