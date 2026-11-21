@@ -511,9 +511,8 @@ async function startServer() {
     app.get('/dosen/kurikulum/detail/:id', (req, res) => {
       res.render('dosen/kurikulum/detail', { id: req.params.id });
     });
-    app.get('/dosen/kurikulum/my-rps', (req, res) => {
-      res.render('dosen/kurikulum/my_rps');
-    });
+    // CATATAN: /dosen/kurikulum/my-rps ditangani routes/dosen/kurikulum.js (membawa mkList, status RPS, dll.).
+    // Jangan buat rute yang merender my_rps tanpa data di sini.
 
     // Berita (catatan: rute publik /berita/:id sudah ditangani di routes/landing.js)
     const adminBeritaRoutes = require('./routes/admin/berita');
