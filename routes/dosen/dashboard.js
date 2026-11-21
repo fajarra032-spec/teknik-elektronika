@@ -4,6 +4,7 @@ const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper'); // <-- IMPORT HELPER
 const { getStatusRpsDosen } = require('../../helpers/rpsReminderHelper');
+const { TTLCache } = require('../../helpers/cache');
 const { ambilPeriodePerMahasiswa, periodeSudahBerakhir, hariIniWITA } = require('../../helpers/periodeMagangHelper');
 const { getRencanaPertemuan } = require('../../data/rencanaPertemuanData');
 
@@ -35,6 +36,32 @@ async function hitungJumlah(query) {
     const snap = await query.get();
     return snap.size;
   }
+}
+
+// ============================================================================
+// Badge angka pada menu dashboard (cache 5 menit per dosen, memakai count()
+// agar murah). Gagal salah satu = angkanya 0, dashboard tetap tampil.
+// ============================================================================
+const badgeCache = new TTLCache(5 * 60 * 1000);
+async function hitungDok(query) {
+  try {
+    const r = await query.count().get();
+    return r.data().count || 0;
+  } catch (e) {
+    try { return (await query.get()).size; } catch (e2) { return 0; }
+  }
+}
+function getBadgeMenu(dosenId) {
+  return badgeCache.getOrFetch(dosenId, async () => {
+    const q = (col) => db.collection(col).where('dosenId', '==', dosenId);
+    const [penelitian, pengabdian, buku, sertifikat, sk, suratPending, tugasPending] = await Promise.all([
+      hitungDok(q('penelitian')), hitungDok(q('pengabdian')), hitungDok(q('buku')),
+      hitungDok(q('sertifikatDosen')), hitungDok(q('sk_dosen')),
+      hitungDok(q('surat_dosen').where('status', '==', 'pending')),
+      hitungDok(q('surat_tugas').where('status', '==', 'pending'))
+    ]);
+    return { penelitian, pengabdian, buku, sertifikat, sk, suratDiproses: suratPending + tugasPending };
+  });
 }
 
 router.get('/', async (req, res) => {
@@ -112,6 +139,15 @@ router.get('/', async (req, res) => {
     } catch (e) {
       console.error('Gagal menyusun pertemuan berikutnya:', e.message);
     }
+
+    // Badge menu (surat, SK, penelitian, dst.) + status RPS semester aktif
+    let badgeMenu = { penelitian: 0, pengabdian: 0, buku: 0, sertifikat: 0, sk: 0, suratDiproses: 0 };
+    try { badgeMenu = await getBadgeMenu(dosenId); } catch (e) { console.error('Gagal badge menu:', e.message); }
+    badgeMenu = Object.assign({}, badgeMenu, { mk: pertemuanBerikutnya.length, rpsBelum: 0, rpsTotal: 0 });
+    try {
+      const rps = await getStatusRpsDosen(db, dosenId);
+      badgeMenu.rpsBelum = rps.belum.length; badgeMenu.rpsTotal = rps.total;
+    } catch (e) { /* abaikan */ }
 
     // ========================================================================
     // 2. Total mahasiswa bimbingan
@@ -293,6 +329,7 @@ router.get('/', async (req, res) => {
       totalPertemuanMax,
       persentasePengajaran,
       pertemuanBerikutnya,
+      badgeMenu,
       totalMahasiswa,
       totalMagangAktif,
       totalMahasiswaPa,

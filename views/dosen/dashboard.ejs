@@ -1,4 +1,14 @@
 <%- include('../partials/header') %>
+<%
+  // Badge kecil di judul menu. nilai: angka; tone: primary|warning|success|secondary; ket: teks tambahan (opsional)
+  function bdg(nilai, tone, ket) {
+    var n = Number(nilai || 0);
+    var esc = function (x) { return String(x).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); };
+    var t = (n === 0 && tone !== 'success') ? 'secondary' : tone;
+    return '<span class="badge rounded-pill bg-' + t + '-subtle text-' + t + '-emphasis ms-1">' + n.toLocaleString('id-ID') + (ket ? ' ' + esc(ket) : '') + '</span>';
+  }
+  var _bm = (typeof badgeMenu !== 'undefined' && badgeMenu) ? badgeMenu : {};
+%>
 
 <%
   // Set default values for optional variables to prevent undefined errors
@@ -619,10 +629,10 @@
              daftar), dan Rubrik Penilaian. Menu terpisah utk itu (Buat Tugas,
              Daftar Tugas, Input Nilai, Rubrik) sengaja tidak ditampilkan lagi
              di sini supaya menu tidak berulang. -->
-        <div class="col-6 col-md-3"><a href="/dosen/mk" class="quick-card"><div class="quick-icon"><i class="bi bi-book"></i></div><h6>Mata Kuliah</h6><p>Pertemuan, absensi, tugas & rubrik</p></a></div>
-        <div class="col-6 col-md-3"><a href="/dosen/penelitian" class="quick-card"><div class="quick-icon"><i class="bi bi-mortarboard"></i></div><h6>Penelitian</h6><p>Kelola penelitian</p></a></div>
-        <div class="col-6 col-md-3"><a href="/dosen/pengabdian" class="quick-card"><div class="quick-icon"><i class="bi bi-people"></i></div><h6>Pengabdian</h6><p>Kelola pengabdian</p></a></div>
-        <div class="col-6 col-md-3"><a href="/dosen/buku" class="quick-card"><div class="quick-icon"><i class="bi bi-book"></i></div><h6>Buku</h6><p>Kelola buku</p></a></div>
+        <div class="col-6 col-md-3"><a href="/dosen/mk" class="quick-card"><div class="quick-icon"><i class="bi bi-book"></i></div><h6>Mata Kuliah <%- bdg(_bm.mk, 'primary', 'aktif') %></h6><p>Pertemuan, absensi, tugas & rubrik</p></a></div>
+        <div class="col-6 col-md-3"><a href="/dosen/penelitian" class="quick-card"><div class="quick-icon"><i class="bi bi-mortarboard"></i></div><h6>Penelitian <%- bdg(_bm.penelitian, 'primary') %></h6><p>Kelola penelitian</p></a></div>
+        <div class="col-6 col-md-3"><a href="/dosen/pengabdian" class="quick-card"><div class="quick-icon"><i class="bi bi-people"></i></div><h6>Pengabdian <%- bdg(_bm.pengabdian, 'primary') %></h6><p>Kelola pengabdian</p></a></div>
+        <div class="col-6 col-md-3"><a href="/dosen/buku" class="quick-card"><div class="quick-icon"><i class="bi bi-book"></i></div><h6>Buku <%- bdg(_bm.buku, 'primary') %></h6><p>Kelola buku</p></a></div>
       </div>
     </div>
   </div>
@@ -656,10 +666,10 @@
     </div>
     <div class="card-body">
       <div class="row g-4">
-        <div class="col-6 col-md-3"><a href="/dosen/surat" class="quick-card"><div class="quick-icon"><i class="bi bi-files"></i></div><h6>Daftar Pengajuan Surat</h6><p>Status pengajuan</p></a></div>
-        <div class="col-6 col-md-3"><a href="/dosen/sk" class="quick-card"><div class="quick-icon"><i class="bi bi-file-earmark-text"></i></div><h6>SK Saya</h6><p>Surat Keputusan</p></a></div>
-        <div class="col-6 col-md-3"><a href="/dosen/kurikulum" class="quick-card"><div class="quick-icon"><i class="bi bi-file-text"></i></div><h6>RPS Saya</h6><p>RPS mata kuliah</p></a></div>
-        <div class="col-6 col-md-3"><a href="/dosen/sertifikat" class="quick-card"><div class="quick-icon"><i class="bi bi-award"></i></div><h6>Sertifikat</h6><p>Sertifikat kompetensi</p></a></div>
+        <div class="col-6 col-md-3"><a href="/dosen/surat" class="quick-card"><div class="quick-icon"><i class="bi bi-files"></i></div><h6>Daftar Pengajuan Surat <%- bdg(_bm.suratDiproses, 'warning', 'diproses') %></h6><p>Status pengajuan</p></a></div>
+        <div class="col-6 col-md-3"><a href="/dosen/sk" class="quick-card"><div class="quick-icon"><i class="bi bi-file-earmark-text"></i></div><h6>SK Saya <%- bdg(_bm.sk, 'primary') %></h6><p>Surat Keputusan</p></a></div>
+        <div class="col-6 col-md-3"><a href="/dosen/kurikulum" class="quick-card"><div class="quick-icon"><i class="bi bi-file-text"></i></div><h6>RPS Saya <% if (_bm.rpsTotal > 0 && _bm.rpsBelum === 0) { %><span class="badge rounded-pill bg-success-subtle text-success-emphasis ms-1"><i class="bi bi-check2"></i> Lengkap</span><% } else { %><%- bdg(_bm.rpsBelum, 'warning', 'belum') %><% } %></h6><p>RPS mata kuliah</p></a></div>
+        <div class="col-6 col-md-3"><a href="/dosen/sertifikat" class="quick-card"><div class="quick-icon"><i class="bi bi-award"></i></div><h6>Sertifikat <%- bdg(_bm.sertifikat, 'primary') %></h6><p>Sertifikat kompetensi</p></a></div>
       </div>
     </div>
   </div>
