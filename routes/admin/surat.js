@@ -1368,6 +1368,34 @@ router.get('/', async (req, res) => {
       });
     }
 
+    // 4. Arsip Surat Prodi (collection 'surat_arsip'): surat prodi yang tidak dikirim ke siapa pun
+    //    (SK, pengajuan dana, dll). Statusnya 'arsip'; hilang bila filter status lain dipilih.
+    if (!status || status === 'arsip') {
+      const snapArsip = await db.collection('surat_arsip').get();
+      for (const doc of snapArsip.docs) {
+        const data = doc.data();
+        if (search) {
+          const lower = search.toLowerCase();
+          const cocok = [data.perihal, data.nomorSurat, data.tujuan, data.kategori, data.keterangan]
+            .some(v => String(v || '').toLowerCase().includes(lower));
+          if (!cocok) continue;
+        }
+        suratList.push({
+          id: doc.id,
+          role: 'arsip',
+          pemohon: 'Arsip Prodi',
+          identitas: data.tujuan || data.dibuatOlehNama || '',
+          jenis: data.kategori || 'Arsip',
+          keperluan: data.perihal || '',
+          createdAt: data.tanggalSurat ? data.tanggalSurat + 'T00:00:00' : data.createdAt,
+          status: 'arsip',
+          fileUrl: data.fileUrl,
+          fileTipe: data.fileTipe,
+          nomorSurat: data.nomorSurat || '',
+        });
+      }
+    }
+
     // Gabungkan dan urutkan
     suratList.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
