@@ -14,34 +14,44 @@ const academic = require('./academicHelper');
 
 const cache = new TTLCache(10 * 60 * 1000); // 10 menit per dosen
 
-async function hitung(db, dosenId) {
-  const periodeId = academic.getActivePeriodeId();
-  const info = academic.generatePeriodeOptions(0, 0).find(p => p.id === periodeId);
-  const periodeLabel = info ? info.label : academic.getCurrentAcademicSemester().label;
+async function hitung(db, dosenId, periodeId) {
+  const aktifId = academic.getActivePeriodeId();
+  periodeId = periodeId || aktifId;
+  const info = academic.generatePeriodeOptions(12, 1).find(p => p.id === periodeId);
+  const periodeLabel = info ? info.label : periodeId;
+  const isAktif = periodeId === aktifId;
 
-  const snap = await db.collection('mataKuliah').where('dosenIds', 'array-contains', dosenId).get();
+  // Periode aktif: cukup MK yang mirror dosenIds-nya memuat dosen. Periode lain: pengampu lama
+  // tidak tercermin di mk.dosenIds, jadi periksa semua MK lewat pengampuPeriode.
+  const snap = isAktif
+    ? await db.collection('mataKuliah').where('dosenIds', 'array-contains', dosenId).get()
+    : await db.collection('mataKuliah').get();
+
   const rows = await Promise.all(snap.docs.map(async d => {
     const mk = d.data();
     const ref = d.ref;
     let diampu = false;
     const p = await ref.collection('pengampuPeriode').doc(periodeId).get();
     if (p.exists) diampu = (p.data().dosenIds || []).includes(dosenId);
-    else diampu = mk.periodeAktifId === periodeId;
+    else diampu = isAktif && mk.periodeAktifId === periodeId;
     if (!diampu) return null;
     const r = await ref.collection('rpsPeriode').doc(periodeId).get();
     const rd = r.exists ? r.data() : null;
     return {
-      id: d.id, kode: mk.kode, nama: mk.nama, kelas: mk.kelas || null, semester: mk.semester || null,
+      id: d.id, kode: mk.kode, nama: mk.nama, sks: mk.sks, kelas: mk.kelas || null, semester: mk.semester || null,
       sudah: !!(rd && rd.fileUrl), fileUrl: rd ? rd.fileUrl || null : null, uploadedAt: rd ? rd.uploadedAt || null : null
     };
   }));
-  const daftar = rows.filter(Boolean).sort((a, b) => String(a.kode).localeCompare(String(b.kode)));
-  return { periodeId, periodeLabel, daftar, belum: daftar.filter(x => !x.sudah), total: daftar.length };
+  const daftar = rows.filter(Boolean).sort((a, b) => ((a.semester || 0) - (b.semester || 0)) || String(a.kode).localeCompare(String(b.kode)));
+  return { periodeId, periodeLabel, isAktif, daftar, belum: daftar.filter(x => !x.sudah), total: daftar.length };
 }
 
-function getStatusRpsDosen(db, dosenId) {
-  return cache.getOrFetch(dosenId, () => hitung(db, dosenId));
+function getStatusRpsDosen(db, dosenId, periodeId) {
+  const pid = periodeId || academic.getActivePeriodeId();
+  return cache.getOrFetch(`${dosenId}|${pid}`, () => hitung(db, dosenId, pid));
 }
-function resetStatusRps(dosenId) { if (dosenId) cache.delete ? cache.delete(dosenId) : cache.store.delete(dosenId); }
+function resetStatusRps(dosenId) {
+  Array.from(cache.store.keys()).forEach(k => { if (String(k).startsWith(`${dosenId}|`)) cache.delete(k); });
+}
 
 module.exports = { getStatusRpsDosen, resetStatusRps };

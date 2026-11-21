@@ -114,7 +114,18 @@
     <p class="mb-0">Daftar mata kuliah yang Anda ampu. Kelola RPS dan materi perkuliahan.</p>
   </div>
 
-  <% if (typeof rpsInfo !== 'undefined' && rpsInfo && rpsInfo.total > 0) { %>
+  <form method="get" action="/dosen/kurikulum/my-rps" class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <label for="periode" class="fw-semibold mb-0"><i class="bi bi-calendar3 me-1"></i>Semester:</label>
+    <select name="periode" id="periode" class="form-select w-auto" onchange="this.form.submit()">
+      <% periodeOptions.forEach(function (p) { %>
+        <option value="<%= p.id %>" <%= periodeTerpilih === p.id ? 'selected' : '' %>><%= p.label %><%= p.isActive ? ' (aktif)' : '' %></option>
+      <% }) %>
+    </select>
+  </form>
+
+  <% if (typeof rpsInfo !== 'undefined' && rpsInfo && !rpsInfo.isAktif) { %>
+    <div class="alert alert-light border small"><i class="bi bi-clock-history me-1"></i>Riwayat RPS semester <%= rpsInfo.periodeLabel %>. Pengumpulan wajib hanya berlaku untuk semester aktif.</div>
+  <% } else if (typeof rpsInfo !== 'undefined' && rpsInfo && rpsInfo.total > 0) { %>
     <% if (rpsInfo.belum.length > 0) { %>
       <div class="alert alert-warning d-flex gap-2 align-items-start">
         <i class="bi bi-exclamation-triangle-fill mt-1"></i>
@@ -151,7 +162,7 @@
 
   <% if (mkList.length === 0) { %>
     <div class="alert alert-info">
-      <i class="bi bi-info-circle"></i> Anda belum mengampu mata kuliah apapun.
+      <i class="bi bi-info-circle"></i> Tidak ada mata kuliah yang Anda ampu pada semester <%= rpsInfo.periodeLabel %>.
     </div>
   <% } else { %>
     <div class="row g-4">
@@ -184,10 +195,11 @@
             <% if (mk.statusRps) { %>
               <form class="rps-upload" method="post" action="/dosen/kurikulum/<%= mk.id %>/rps" enctype="multipart/form-data">
                 <input type="hidden" name="kembali" value="my-rps">
+                <input type="hidden" name="periodeId" value="<%= periodeTerpilih %>">
                 <label class="form-label small fw-semibold mb-1">Upload RPS bertanda tangan &amp; stempel (PDF scan)</label>
                 <div class="input-group input-group-sm">
                   <input type="file" class="form-control" name="rpsFile" accept=".pdf,application/pdf" required>
-                  <button class="btn btn-primary" type="submit"><i class="bi bi-cloud-upload me-1"></i><%= mk.statusRps === 'sudah' ? 'Ganti' : 'Upload' %></button>
+                  <button class="btn btn-primary" type="submit"><i class="bi bi-cloud-upload me-1"></i><%= mk.statusRps === 'sudah' ? 'Ganti' : (rpsInfo.isAktif ? 'Upload' : 'Upload susulan') %></button>
                 </div>
               </form>
             <% } %>

@@ -84,93 +84,46 @@ async function getDosenNames(dosenIds) {
 // ============================================================================
 // ROUTE UTAMA (DAFTAR MK YANG DIAMPU DOSEN) - dengan filter semester
 // ============================================================================
-router.get('/', async (req, res) => {
+async function tampilkanMyRps(req, res) {
   try {
     const dosenId = req.dosen.id;
-    const { semester } = req.query;
+    const aktifId = academicHelper.getActivePeriodeId();
+    const periodeOptions = academicHelper.generatePeriodeOptions(8, 0); // aktif + 8 periode sebelumnya
+    let periodeId = req.query.periode || aktifId;
+    if (!periodeOptions.find(p => p.id === periodeId)) periodeId = aktifId;
 
-    let query = db.collection('mataKuliah')
-      .where('dosenIds', 'array-contains', dosenId)
-      .orderBy('semester')
-      .orderBy('kode');
+    // Daftar MK + status RPS hanya untuk periode terpilih (tidak campur antar semester)
+    const rpsInfo = await getStatusRpsDosen(db, dosenId, periodeId);
+    const semester = req.query.semester ? parseInt(req.query.semester) : null;
+    let daftar = rpsInfo.daftar;
+    const semesterList = Array.from(new Set(daftar.map(m => m.semester).filter(Boolean))).sort((a, b) => a - b);
+    if (semester) daftar = daftar.filter(m => m.semester === semester);
 
-    if (semester) query = query.where('semester', '==', parseInt(semester));
+    const mkList = daftar.map(m => ({
+      id: m.id, kode: m.kode, nama: m.nama, sks: m.sks, semester: m.semester, kelas: m.kelas,
+      rpsUrl: m.fileUrl,
+      statusRps: m.sudah ? 'sudah' : 'belum',
+      rpsPeriodeUrl: m.fileUrl
+    }));
 
-    const mkSnapshot = await query.get();
-    const mkList = [];
-    for (const doc of mkSnapshot.docs) {
-      const data = doc.data();
-      const dosenNames = await getDosenNames(data.dosenIds || []);
-      mkList.push({
-        id: doc.id,
-        kode: data.kode,
-        nama: data.nama,
-        sks: data.sks,
-        semester: data.semester,
-        dosen: dosenNames,
-        rpsUrl: data.rpsUrl || null
-      });
-    }
-
-    const semesterSet = new Set();
-    mkList.forEach(mk => semesterSet.add(mk.semester));
-    const semesterList = Array.from(semesterSet).sort((a, b) => a - b);
-
-    const rpsInfo = await getStatusRpsDosen(db, dosenId);
-    mkList.forEach(mk => { const x = rpsInfo.daftar.find(d => d.id === mk.id); mk.statusRps = x ? (x.sudah ? 'sudah' : 'belum') : null; mk.rpsPeriodeUrl = x ? x.fileUrl : null; });
     res.render('dosen/kurikulum/my_rps', {
-      title: 'Mata Kuliah Saya',
+      title: 'RPS Saya',
       rpsInfo,
+      periodeOptions,
+      periodeTerpilih: periodeId,
       query: req.query,
       mkList,
       semesterList,
       selectedSemester: semester || ''
     });
   } catch (error) {
-    console.error('Error memuat kurikulum dosen:', error);
-    res.status(500).render('error', { message: 'Gagal memuat data mata kuliah' });
-  }
-});
-
-// ============================================================================
-// HALAMAN MY RPS (tanpa filter)
-// ============================================================================
-router.get('/my-rps', async (req, res) => {
-  try {
-    const dosenId = req.dosen.id;
-    const mkSnapshot = await db.collection('mataKuliah')
-      .where('dosenIds', 'array-contains', dosenId)
-      .orderBy('semester')
-      .orderBy('kode')
-      .get();
-
-    const mkList = mkSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        kode: data.kode,
-        nama: data.nama,
-        sks: data.sks,
-        semester: data.semester,
-        rpsUrl: data.rpsUrl || null
-      };
-    });
-
-    const rpsInfo = await getStatusRpsDosen(db, dosenId);
-    mkList.forEach(mk => { const x = rpsInfo.daftar.find(d => d.id === mk.id); mk.statusRps = x ? (x.sudah ? 'sudah' : 'belum') : null; mk.rpsPeriodeUrl = x ? x.fileUrl : null; });
-    res.render('dosen/kurikulum/my_rps', {
-      title: 'My RPS',
-      rpsInfo,
-      query: req.query,
-      mkList,
-      semesterList: [],
-      selectedSemester: ''
-    });
-  } catch (error) {
-    console.error('Error memuat My RPS:', error);
+    console.error('Error memuat RPS Saya:', error);
     res.status(500).render('error', { message: 'Gagal memuat data RPS' });
   }
-});
+}
+
+router.get('/', tampilkanMyRps);
+router.get('/my-rps', tampilkanMyRps);
 
 // ============================================================================
 // RPS PER PERIODE - supaya RPS bisa berbeda tiap semester tanpa menimpa
@@ -236,7 +189,7 @@ async function handleUploadRps(req, res, mkId) {
     }
 
     resetStatusRps(req.dosen.id);
-    if (req.body.kembali === 'my-rps') return res.redirect('/dosen/kurikulum/my-rps?upload=ok');
+    if (req.body.kembali === 'my-rps') return res.redirect(`/dosen/kurikulum/my-rps?periode=${periodeId}&upload=ok`);
     res.redirect(`/dosen/kurikulum/${mkId}?periode=${periodeId}`);
   } catch (error) {
     console.error('Error upload RPS:', error);
