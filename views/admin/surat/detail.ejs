@@ -341,14 +341,18 @@
     <% if (surat.status === 'completed') { %>
       <div class="col-12 mb-4">
         <div class="info-card border-warning border-top border-4" id="nomor-surat">
-          <h5 class="fw-bold mb-3"><i class="bi bi-hash me-2"></i>Nomor Surat</h5>
+          <h5 class="fw-bold mb-3"><i class="bi bi-hash me-2"></i>Nomor &amp; Tanggal Surat</h5>
           <form id="formNomorSurat" method="POST" action="/admin/surat/<%= surat.id %>/<%= role %>/nomor" data-action-nomor="/admin/surat/<%= surat.id %>/<%= role %>/nomor" data-action-generate="/admin/surat/<%= surat.id %>/<%= role %>/generate" class="row g-3 align-items-end">
-            <div class="col-md-7">
+            <div class="col-md-5">
               <label class="form-label small text-muted">Nomor surat saat ini</label>
               <input type="text" name="nomorSurat" class="form-control" maxlength="120" value="<%= surat.nomorSurat || '' %>" placeholder="Contoh: 001/ELK/PDW/V/2025" required>
             </div>
-            <div class="col-md-5">
-              <button type="submit" id="tombolNomorSurat" class="btn btn-warning w-100 btn-action"><i class="bi bi-check2 me-2"></i>Simpan Nomor</button>
+            <div class="col-md-3">
+              <label class="form-label small text-muted">Tanggal surat</label>
+              <input type="date" name="tanggalSurat" class="form-control" value="<%= surat.tanggalSurat || (surat.createdAt ? String(surat.createdAt).slice(0, 10) : '') %>">
+            </div>
+            <div class="col-md-4">
+              <button type="submit" id="tombolNomorSurat" class="btn btn-warning w-100 btn-action"><i class="bi bi-check2 me-2"></i>Simpan</button>
             </div>
             <% if (typeof bisaGenerate !== 'undefined' && bisaGenerate) { %>
             <div class="col-12">
@@ -405,7 +409,7 @@
     var tombol = document.getElementById('tombolNomorSurat');
     cek.addEventListener('change', function () {
       form.action = cek.checked ? gen : cetak;
-      if (tombol) tombol.innerHTML = cek.checked ? '<i class="bi bi-arrow-repeat me-2"></i>Simpan &amp; Terbitkan Ulang PDF' : '<i class="bi bi-check2 me-2"></i>Simpan Nomor';
+      if (tombol) tombol.innerHTML = cek.checked ? '<i class="bi bi-arrow-repeat me-2"></i>Simpan &amp; Terbitkan Ulang PDF' : '<i class="bi bi-check2 me-2"></i>Simpan';
     });
     form.addEventListener('submit', function (e) {
       if (cek.checked && !confirm('Terbitkan ulang PDF dengan nomor baru? File lama akan diganti (dipindah ke Sampah di Drive).')) e.preventDefault();

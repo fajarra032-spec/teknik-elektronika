@@ -159,6 +159,20 @@ function getTemplateAndDataForSuratDosen(suratDosen, dosen) {
 // SKL Sementara, Berkelakuan Baik, Rekomendasi, Cuti/Aktif Kembali,
 // Keterangan Dosen PA, Pengantar Magang/PKL)
 // ============================================================================
+/**
+ * Tanggal surat yang bisa diatur admin (mis. surat lama yang baru dikirim sekarang).
+ * Input 'YYYY-MM-DD'. Mengembalikan { tanggalSurat, createdAt } atau null bila kosong/tidak valid.
+ * createdAt ikut diubah supaya tanggal yang terlihat di daftar admin, dosen, dan mahasiswa sama
+ * dengan tanggal surat. Waktu pengiriman sebenarnya tetap tercatat di updatedAt dan riwayat.
+ */
+function bacaTanggalSurat(str) {
+  const v = String(str || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+  const d = new Date(v + 'T12:00:00+08:00'); // siang WITA: tanggal tidak bergeser saat dikonversi ke UTC
+  if (isNaN(d.getTime())) return null;
+  return { tanggalSurat: v, createdAt: d.toISOString() };
+}
+
 /** Pindahkan file lama di Google Drive ke Sampah (bisa dipulihkan). Gagal = diabaikan. */
 async function buangFileLama(fileId) {
   if (!fileId) return;
@@ -365,6 +379,7 @@ router.get('/create', async (req, res) => {
 router.post('/create', upload.single('file'), async (req, res) => {
   try {
     const { jenisSurat, keperluan, isiLain } = req.body;
+    const tglSurat = bacaTanggalSurat(req.body.tanggalSurat);
     let { dosenIds } = req.body;
     const file = req.file;
 
@@ -411,7 +426,8 @@ router.post('/create', upload.single('file'), async (req, res) => {
           status: 'completed',
           fileUrl,
           fileId,
-          createdAt: new Date().toISOString(),
+          createdAt: tglSurat ? tglSurat.createdAt : new Date().toISOString(),
+          ...(tglSurat ? { tanggalSurat: tglSurat.tanggalSurat } : {}),
           updatedAt: new Date().toISOString(),
           dikirimOleh: req.user.id,
           dikirimOlehNama: req.user.nama || 'Admin',
@@ -454,6 +470,7 @@ router.get('/kirim-mahasiswa', async (req, res) => {
 router.post('/kirim-mahasiswa', upload.single('file'), async (req, res) => {
   try {
     const { mahasiswaId, jenisSurat, jenisSuratLainnya, keperluan, isiLain, nomorSurat } = req.body;
+    const tglSurat = bacaTanggalSurat(req.body.tanggalSurat);
     const file = req.file;
     if (!mahasiswaId || !jenisSurat || !keperluan || !file) {
       return res.status(400).send('Mahasiswa, jenis surat, keperluan, dan file PDF wajib diisi');
@@ -492,7 +509,8 @@ router.post('/kirim-mahasiswa', upload.single('file'), async (req, res) => {
       fileId: driveResponse.data.id,
       dikirimOleh: req.user.id,
       dikirimOlehNama: req.user.nama || 'Admin',
-      createdAt: new Date().toISOString(),
+      createdAt: tglSurat ? tglSurat.createdAt : new Date().toISOString(),
+      ...(tglSurat ? { tanggalSurat: tglSurat.tanggalSurat } : {}),
       updatedAt: new Date().toISOString(),
       history: [{
         status: 'completed',
@@ -975,7 +993,8 @@ router.post('/undangan-magang/kirim-manual', upload.single('file'), async (req, 
       fileId: driveResponse.data.id,
       dikirimOleh: req.user.id,
       dikirimOlehNama: req.user.nama || 'Admin',
-      createdAt: new Date().toISOString(),
+      createdAt: bacaTanggalSurat(req.body.tanggalSurat) ? bacaTanggalSurat(req.body.tanggalSurat).createdAt : new Date().toISOString(),
+      ...(bacaTanggalSurat(req.body.tanggalSurat) ? { tanggalSurat: req.body.tanggalSurat } : {}),
       updatedAt: new Date().toISOString(),
       history: [{
         status: 'completed',
@@ -1004,6 +1023,7 @@ router.post('/tugas/:id/generate', async (req, res) => {
   try {
     const { id } = req.params;
     const { nomorSurat } = req.body;
+    { const t = bacaTanggalSurat(req.body.tanggalSurat); if (t) await db.collection('surat_tugas').doc(id).update(t).catch(() => {}); }
 
     const tugasRef = db.collection('surat_tugas').doc(id);
     const tugasDoc = await tugasRef.get();
@@ -1134,6 +1154,8 @@ router.post('/:id/:role/generate', async (req, res) => {
   try {
     const { id, role } = req.params;
     const { nomorSurat } = req.body;
+    { const t = bacaTanggalSurat(req.body.tanggalSurat); const col = { mahasiswa: 'surat', dosen: 'surat_dosen' }[role];
+      if (t && col) await db.collection(col).doc(id).update(t).catch(() => {}); }
 
     // --- ROLE MAHASISWA (Aktif Kuliah / Permohonan Kebijakan SPP) ---
     if (role === 'mahasiswa') {
@@ -1530,6 +1552,7 @@ router.post('/:id/:role/nomor', async (req, res) => {
     const { id, role } = req.params;
     const KOLEKSI = { mahasiswa: 'surat', dosen: 'surat_dosen', tugas: 'surat_tugas' };
     if (!KOLEKSI[role]) return res.status(400).send('Role tidak valid');
+    const tglSurat = bacaTanggalSurat(req.body.tanggalSurat);
     const nomor = String(req.body.nomorSurat || '').trim();
     if (!nomor) return res.status(400).send('Nomor surat tidak boleh kosong');
     if (nomor.length > 120) return res.status(400).send('Nomor surat terlalu panjang (maks 120 karakter)');
@@ -1538,13 +1561,19 @@ router.post('/:id/:role/nomor', async (req, res) => {
     const doc = await ref.get();
     if (!doc.exists) return res.status(404).send('Surat tidak ditemukan');
     const surat = doc.data();
-    if (nomor !== surat.nomorSurat) {
+    const nomorBerubah = nomor !== surat.nomorSurat;
+    const tanggalBerubah = !!tglSurat && tglSurat.tanggalSurat !== (surat.tanggalSurat || String(surat.createdAt || '').slice(0, 10));
+    if (nomorBerubah || tanggalBerubah) {
+      const catatan = [];
+      if (nomorBerubah) catatan.push(`nomor surat diubah: ${surat.nomorSurat || '(kosong)'} -> ${nomor}`);
+      if (tanggalBerubah) catatan.push(`tanggal surat diubah menjadi ${tglSurat.tanggalSurat}`);
       await ref.update({
         nomorSurat: nomor,
+        ...(tanggalBerubah ? tglSurat : {}),
         updatedAt: new Date().toISOString(),
         history: [...(surat.history || []), {
           status: surat.status, timestamp: new Date().toISOString(),
-          catatan: `Nomor surat diubah oleh Admin: ${surat.nomorSurat || '(kosong)'} -> ${nomor}`
+          catatan: `Admin: ${catatan.join('; ')}`
         }]
       });
     }
