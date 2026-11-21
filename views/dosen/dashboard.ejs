@@ -507,25 +507,35 @@
         </div>
       </div>
 
-      <!-- ===== INFORMASI PENGAJARAN & PROGRESS LOGBOOK ===== -->
+      <!-- ===== PERTEMUAN BERIKUTNYA (TOPIK YANG AKAN DIBAHAS) ===== -->
       <hr class="my-4">
-      <h6 class="fw-semibold mb-3"><i class="bi bi-journal-bookmark-fill me-2"></i>Pengajaran & Progress Logbook</h6>
-      <div class="mb-3">
-        <div class="d-flex justify-content-between mb-1">
-          <span><i class="bi bi-calendar-check me-1"></i> Progress Perkuliahan</span>
-          <span><%= totalPertemuanTerlaksana %> / <%= totalPertemuanMax %> pertemuan (<%= persentasePengajaran %>%)</span>
+      <h6 class="fw-semibold mb-3"><i class="bi bi-calendar2-check-fill me-2"></i>Topik Pertemuan Berikutnya</h6>
+      <% if (typeof pertemuanBerikutnya !== 'undefined' && pertemuanBerikutnya.length > 0) { %>
+        <div class="d-flex flex-column gap-2">
+          <% pertemuanBerikutnya.forEach(function (p) { %>
+            <a href="/dosen/mk/<%= p.id %>" class="text-decoration-none">
+              <div class="p-3 rounded-3" style="background: rgba(30,58,138,0.05); border-left: 3px solid var(--primary-start);">
+                <div class="d-flex justify-content-between flex-wrap gap-1">
+                  <span class="fw-semibold text-dark"><%= p.kode %> &middot; <%= p.nama %><% if (p.kelas) { %> <span class="badge bg-light text-dark border">Kelas <%= p.kelas %></span><% } %></span>
+                  <% if (p.ke) { %><span class="small text-muted">Pertemuan ke-<%= p.ke %></span><% } %>
+                </div>
+                <% if (p.ke) { %>
+                  <div class="small text-dark mt-1"><i class="bi bi-bookmark-fill me-1 text-primary"></i><%= p.topik || 'Topik belum diisi' %></div>
+                  <div class="small text-muted mt-1">
+                    <% if (p.tanggal) { %><i class="bi bi-calendar3 me-1"></i><%= new Date(p.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' }) %> &middot; <% } %>
+                    <% if (p.jadwal) { %><i class="bi bi-clock me-1"></i><%= p.jadwal %> &middot; <% } %>
+                    <%= p.selesai %>/<%= p.total %> pertemuan selesai
+                  </div>
+                <% } else { %>
+                  <div class="small text-success mt-1"><i class="bi bi-check-circle-fill me-1"></i>Semua pertemuan sudah terlaksana.</div>
+                <% } %>
+              </div>
+            </a>
+          <% }) %>
         </div>
-        <div class="progress mb-2">
-          <div class="progress-bar" role="progressbar" style="width: <%= persentasePengajaran %>%;" aria-valuenow="<%= persentasePengajaran %>" aria-valuemin="0" aria-valuemax="100"></div>
-        </div>
-        <div class="d-flex justify-content-between mb-1">
-          <span><i class="bi bi-check-circle me-1"></i> Logbook Di-ACC</span>
-          <span><%= totalLogbookApproved || 0 %> / <%= totalLogbookAll || 0 %> (<%= logbookPersentase || 0 %>%)</span>
-        </div>
-        <div class="progress">
-          <div class="progress-bar bg-success" role="progressbar" style="width: <%= logbookPersentase || 0 %>%;" aria-valuenow="<%= logbookPersentase || 0 %>" aria-valuemin="0" aria-valuemax="100"></div>
-        </div>
-      </div>
+      <% } else { %>
+        <p class="small text-muted mb-0">Belum ada mata kuliah pada semester aktif.</p>
+      <% } %>
     </div>
   </div>
 

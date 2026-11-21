@@ -3,6 +3,8 @@ const router = express.Router();
 const { verifyToken, isDosen } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getCurrentAcademicSemester } = require('../../helpers/academicHelper'); // <-- IMPORT HELPER
+const { getStatusRpsDosen } = require('../../helpers/rpsReminderHelper');
+const { getRencanaPertemuan } = require('../../data/rencanaPertemuanData');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -69,6 +71,8 @@ router.get('/', async (req, res) => {
       nama: doc.data().nama,
       semester: doc.data().semester,
       sks: doc.data().sks,
+      kelas: doc.data().kelas || null,
+      jadwal: doc.data().jadwal || '',
       materi: doc.data().materi || []
     }));
     const mkCount = mkList.length;
@@ -82,6 +86,31 @@ router.get('/', async (req, res) => {
     const persentasePengajaran = totalPertemuanMax > 0
       ? Math.round((totalPertemuanTerlaksana / totalPertemuanMax) * 100)
       : 0;
+
+    // Topik pertemuan berikutnya per MK (hanya MK periode aktif)
+    let pertemuanBerikutnya = [];
+    try {
+      const aktif = await getStatusRpsDosen(db, dosenId);
+      const idAktif = new Set(aktif.daftar.map(x => x.id));
+      pertemuanBerikutnya = mkList.filter(mk => idAktif.has(mk.id)).map(mk => {
+        const rencana = getRencanaPertemuan(mk.kode) || [];
+        const selesaiSet = new Set(mk.materi.filter(m => m.status === 'selesai').map(m => m.pertemuan));
+        let ke = null;
+        for (let i = 1; i <= PERTEMUAN_PER_MK; i++) { if (!selesaiSet.has(i)) { ke = i; break; } }
+        const rm = ke ? mk.materi.find(m => m.pertemuan === ke) : null;
+        const rr = ke ? rencana.find(r => r.pertemuan === ke) : null;
+        const generik = !rm || !rm.topik || /^Pertemuan \d+$/i.test(rm.topik);
+        return {
+          id: mk.id, kode: mk.kode, nama: mk.nama, kelas: mk.kelas, jadwal: mk.jadwal,
+          ke, topik: ke ? (!generik ? rm.topik : (rr ? rr.topik : '')) : '',
+          tanggal: rm && rm.tanggal ? rm.tanggal : null,
+          jenis: rr ? rr.jenis : null,
+          selesai: selesaiSet.size, total: PERTEMUAN_PER_MK
+        };
+      }).sort((a, b) => String(a.kode).localeCompare(String(b.kode)));
+    } catch (e) {
+      console.error('Gagal menyusun pertemuan berikutnya:', e.message);
+    }
 
     // ========================================================================
     // 2. Total mahasiswa bimbingan
@@ -245,6 +274,7 @@ router.get('/', async (req, res) => {
       totalPertemuanTerlaksana,
       totalPertemuanMax,
       persentasePengajaran,
+      pertemuanBerikutnya,
       totalMahasiswa,
       totalMahasiswaPa,
       tugasAktif,
