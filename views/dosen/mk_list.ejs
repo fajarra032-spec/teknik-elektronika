@@ -215,23 +215,24 @@
   <div class="page-header d-flex flex-wrap justify-content-between align-items-center">
     <div>
       <h1 class="fw-bold"><i class="bi bi-book-fill me-2"></i>Mata Kuliah Saya</h1>
-      <p class="mb-0">Daftar mata kuliah yang Anda ampu pada semester aktif</p>
+      <p class="mb-0">Riwayat dan daftar mata kuliah yang Anda ampu per periode</p>
     </div>
     <a href="/dosen/dashboard" class="btn-light btn mt-2 mt-sm-0">
       <i class="bi bi-arrow-left me-2"></i>Kembali ke Dashboard
     </a>
   </div>
 
-  <% if (typeof jumlahDisembunyikan !== 'undefined' && jumlahDisembunyikan > 0) { %>
-    <div class="alert alert-light border small">
-      <%= jumlahDisembunyikan %> MK lama/belum ber-periode disembunyikan.
-      <a href="/dosen/mk?semua=1">Tampilkan semua</a>
-    </div>
-  <% } else if (typeof tampilSemua !== 'undefined' && tampilSemua) { %>
-    <div class="alert alert-light border small">
-      Menampilkan semua MK (termasuk lama). <a href="/dosen/mk">Hanya periode aktif</a>
-    </div>
-  <% } %>
+  <!-- Pilih Periode -->
+  <form method="get" action="/dosen/mk" class="d-flex flex-wrap align-items-center gap-2 mb-4">
+    <label for="periode" class="fw-semibold mb-0"><i class="bi bi-calendar3 me-1"></i>Periode:</label>
+    <select name="periode" id="periode" class="form-select w-auto" onchange="this.form.submit()">
+      <% periodeOptions.forEach(p => { %>
+        <option value="<%= p.id %>" <%= periodeTerpilih === p.id ? 'selected' : '' %>><%= p.label %><%= p.isActive ? ' (aktif)' : '' %></option>
+      <% }) %>
+      <option value="belum" <%= periodeTerpilih === 'belum' ? 'selected' : '' %>>MK lama / belum ber-periode</option>
+    </select>
+    <noscript><button class="btn btn-primary btn-sm">Tampilkan</button></noscript>
+  </form>
 
   <!-- Daftar Mata Kuliah -->
   <% if (mkList && mkList.length > 0) { %>
@@ -250,7 +251,9 @@
               </div>
               <div class="mk-info">
                 <span class="mk-info-item"><i class="bi bi-people"></i> <%= mk.jumlahMahasiswa || 0 %> Mahasiswa</span>
-                <span class="mk-info-item"><i class="bi bi-bar-chart"></i> <span class="badge-progress"><%= mk.progress || 0 %>%</span></span>
+                <% if (mk.progress !== null && mk.progress !== undefined) { %>
+                <span class="mk-info-item"><i class="bi bi-bar-chart"></i> <span class="badge-progress"><%= mk.progress %>%</span></span>
+                <% } %>
               </div>
               <a href="/dosen/mk/<%= mk.id %>" class="btn-detail mt-2">
                 <i class="bi bi-eye me-2"></i>Lihat Detail
@@ -264,7 +267,7 @@
     <div class="empty-state">
       <i class="bi bi-inbox"></i>
       <h4>Belum Ada Mata Kuliah</h4>
-      <p class="text-muted">Anda belum mengampu mata kuliah apapun pada semester ini.</p>
+      <p class="text-muted">Tidak ada mata kuliah pada <%= labelPeriode %>.</p>
     </div>
   <% } %>
 </div>

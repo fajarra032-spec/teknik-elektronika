@@ -19,7 +19,7 @@ const { getPeriodeAktif, saveKomponenRubrik } = require('../../helpers/nilaiHelp
 const { detectJenisPraktikum, getModulPraktikumList } = require('../../helpers/modulPraktikumHelper');
 const { getRencanaPertemuan, getInfoRencana } = require('../../data/rencanaPertemuanData');
 const rpsHelper = require('../../helpers/rpsHelper');
-const { getActivePeriodeId } = require('../../helpers/academicHelper');
+const { getActivePeriodeId, generatePeriodeOptions } = require('../../helpers/academicHelper');
 
 console.log('mk.js loaded');
 
@@ -86,59 +86,71 @@ function removeUndefined(obj) {
  */
 router.get('/', async (req, res) => {
   try {
-    const snapshot = await db.collection('mataKuliah')
-      .where('dosenIds', 'array-contains', req.dosen.id)
-      .orderBy('semester', 'desc')
-      .orderBy('kode')
-      .get();
-
-    // FILTER PERIODE: hanya tampilkan MK yang benar-benar diampu dosen ini di
-    // PERIODE AKTIF. MK semester lalu / MK lama yang belum punya periode
-    // (tidak ada pengampuPeriode untuk periode aktif dan periodeAktifId-nya
-    // bukan periode aktif) disembunyikan. Tambah ?semua=1 untuk lihat semua.
-    const tampilSemua = req.query.semua === '1';
+    const dosenId = req.dosen.id;
     const periodeAktifId = getActivePeriodeId();
-    let docsTampil = snapshot.docs;
-    let jumlahDisembunyikan = 0;
-    if (!tampilSemua) {
-      const cek = await Promise.all(snapshot.docs.map(async d => {
-        try {
-          const p = await db.collection('mataKuliah').doc(d.id)
-            .collection('pengampuPeriode').doc(periodeAktifId).get();
-          if (p.exists) return (p.data().dosenIds || []).includes(req.dosen.id);
-        } catch (e) { /* jatuh ke pemeriksaan periodeAktifId */ }
-        return d.data().periodeAktifId === periodeAktifId;
-      }));
-      docsTampil = snapshot.docs.filter((_, i) => cek[i]);
-      jumlahDisembunyikan = snapshot.docs.length - docsTampil.length;
-    }
+    const periodeOptions = generatePeriodeOptions(8, 0); // aktif + 8 periode sebelumnya
+
+    // ?periode=<periodeId> | 'belum' (MK lama/belum ber-periode). ?semua=1 = 'belum' (kompatibel).
+    let sel = req.query.periode || (req.query.semua === '1' ? 'belum' : periodeAktifId);
+    if (sel !== 'belum' && !periodeOptions.find(p => p.id === sel)) sel = periodeAktifId;
+    const infoPeriode = periodeOptions.find(p => p.id === sel) || null;
+    const isAktif = sel === periodeAktifId;
+
+    // Ambil semua MK (riwayat pengampu periode lalu tidak tercermin di mk.dosenIds),
+    // lalu saring per periode lewat subcollection pengampuPeriode.
+    const snapshot = await db.collection('mataKuliah').get();
+    const semuaDocs = snapshot.docs.slice().sort((a, b) => {
+      const da = a.data(), dbb = b.data();
+      return ((dbb.semester || 0) - (da.semester || 0)) || String(da.kode || '').localeCompare(String(dbb.kode || ''));
+    });
+
+    const cek = await Promise.all(semuaDocs.map(async d => {
+      const data = d.data();
+      const mirrorMilikku = Array.isArray(data.dosenIds) && data.dosenIds.includes(dosenId);
+      try {
+        if (sel === 'belum') {
+          // MK yang ada nama dosen di dosenIds tapi tidak terdaftar di periode aktif
+          if (!mirrorMilikku) return false;
+          const p = await db.collection('mataKuliah').doc(d.id).collection('pengampuPeriode').doc(periodeAktifId).get();
+          if (p.exists) return !(p.data().dosenIds || []).includes(dosenId);
+          return data.periodeAktifId !== periodeAktifId;
+        }
+        const p = await db.collection('mataKuliah').doc(d.id).collection('pengampuPeriode').doc(sel).get();
+        if (p.exists) return (p.data().dosenIds || []).includes(dosenId);
+      } catch (e) { /* jatuh ke fallback di bawah */ }
+      return isAktif && mirrorMilikku && data.periodeAktifId === periodeAktifId;
+    }));
+    const docsTampil = semuaDocs.filter((_, i) => cek[i]);
 
     const mkList = [];
     for (const doc of docsTampil) {
       const data = doc.data();
 
-      // Hitung jumlah mahasiswa terdaftar aktif di MK ini
       let jumlahMahasiswa = 0;
-      try {
-        // PENTING: filter juga by `semester` (periode aktif) - kalau cuma
-        // mkId+status, mahasiswa yang PERNAH ikut MK ini di periode lalu
-        // (enrollment lama yang status-nya tidak pernah diubah dari
-        // 'active') ikut kehitung terus selamanya, walau sekarang sudah
-        // beda semester / sudah lanjut ke MK lain.
-        const enrollmentSnapshot = await db.collection('enrollment')
-          .where('mkId', '==', doc.id)
-          .where('semester', '==', getPeriodeAktif())
-          .where('status', '==', 'active')
-          .get();
-        jumlahMahasiswa = (await filterEnrollmentDocsAktif(db, enrollmentSnapshot.docs)).length; // tanpa Cuti/Keluar
-      } catch (err) {
-        console.error(`Gagal hitung enrollment untuk MK ${doc.id}:`, err);
+      if (sel !== 'belum') {
+        try {
+          // Filter semester = label periode terpilih supaya mahasiswa periode lain tidak ikut terhitung.
+          let q = db.collection('enrollment')
+            .where('mkId', '==', doc.id)
+            .where('semester', '==', infoPeriode.label);
+          if (isAktif) {
+            const snap = await q.where('status', '==', 'active').get();
+            jumlahMahasiswa = (await filterEnrollmentDocsAktif(db, snap.docs)).length; // tanpa Cuti/Keluar
+          } else {
+            // Periode lalu: status enrollment sering tidak ditutup, jadi hitung semua yang terdaftar.
+            jumlahMahasiswa = (await q.get()).size;
+          }
+        } catch (err) {
+          console.error(`Gagal hitung enrollment untuk MK ${doc.id}:`, err);
+        }
       }
 
-      // Hitung progress perkuliahan (dari materi)
-      const materi = data.materi || [];
-      const terlaksana = materi.filter(m => m.status === 'selesai').length;
-      const progress = Math.round((terlaksana / 16) * 100) || 0;
+      // Progress perkuliahan hanya bermakna untuk periode berjalan
+      let progress = null;
+      if (isAktif) {
+        const terlaksana = (data.materi || []).filter(m => m.status === 'selesai').length;
+        progress = Math.round((terlaksana / 16) * 100) || 0;
+      }
 
       mkList.push({
         id: doc.id,
@@ -155,8 +167,10 @@ router.get('/', async (req, res) => {
     res.render('dosen/mk_list', {
       title: 'Mata Kuliah Saya',
       mkList,
-      tampilSemua,
-      jumlahDisembunyikan
+      periodeOptions,
+      periodeTerpilih: sel,
+      labelPeriode: sel === 'belum' ? 'MK lama / belum ber-periode' : infoPeriode.label,
+      isAktif
     });
   } catch (error) {
     console.error('Error ambil mk:', error);
