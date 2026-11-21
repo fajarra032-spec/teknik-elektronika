@@ -207,6 +207,41 @@
           </div>
         </div>
       </div>
+      <div class="col-12 mb-4">
+        <div class="info-card border-warning border-top border-4" id="nomor-surat">
+          <h5 class="fw-bold mb-3"><i class="bi bi-hash me-2"></i>Nomor Surat</h5>
+          <form id="formNomorSurat" method="POST" action="/admin/surat/<%= surat.id %>/tugas/nomor" data-action-nomor="/admin/surat/<%= surat.id %>/tugas/nomor" data-action-generate="/admin/surat/tugas/<%= surat.id %>/generate" class="row g-3 align-items-end">
+            <div class="col-md-7">
+              <label class="form-label small text-muted">Nomor surat saat ini</label>
+              <input type="text" name="nomorSurat" class="form-control" maxlength="120" value="<%= surat.nomorSurat || '' %>" placeholder="Contoh: 001/ELK/PDW/V/2025" required>
+            </div>
+            <div class="col-md-5">
+              <button type="submit" id="tombolNomorSurat" class="btn btn-warning w-100 btn-action"><i class="bi bi-check2 me-2"></i>Simpan Nomor</button>
+            </div>
+            <% if (true) { %>
+            <div class="col-12">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="cekTerbitUlang">
+                <label class="form-check-label small" for="cekTerbitUlang">Terbitkan ulang PDF dengan nomor baru (nomor di dalam dokumen ikut berubah)</label>
+              </div>
+              <div class="form-text">Tanpa dicentang, hanya catatan/daftar yang diubah &mdash; isi PDF tetap. Jika PDF perlu menyesuaikan, centang opsi ini atau ganti file di bawah.</div>
+            </div>
+            <% } else { %>
+            <div class="col-12"><div class="form-text">Surat ini diunggah manual, jadi PDF tidak bisa dibuat ulang otomatis. Ubah nomor di sini lalu ganti file di bawah bila dokumen perlu diganti.</div></div>
+            <% } %>
+          </form>
+        </div>
+      </div>
+      <div class="col-12 mb-4">
+        <div class="info-card bg-light">
+          <h5 class="fw-bold mb-3"><i class="bi bi-cloud-arrow-up me-2"></i>Ganti File Surat</h5>
+          <form class="row g-3" method="POST" action="/admin/surat/<%= surat.id %>/tugas/upload" enctype="multipart/form-data">
+            <div class="col-md-6"><input type="file" class="form-control" name="file" accept=".pdf,.doc,.docx" required></div>
+            <div class="col-md-3"><input type="text" class="form-control" name="nomorSurat" maxlength="120" placeholder="Nomor baru (opsional)"></div>
+            <div class="col-md-3"><button type="submit" class="btn btn-warning w-100 btn-action" onclick="return confirm('Ganti file surat tugas? File lama dipindah ke Sampah di Drive.')">Ganti File</button></div>
+          </form>
+        </div>
+      </div>
     <% } %>
   </div>
 
@@ -223,3 +258,19 @@
 </div>
 
 <%- include('../../partials/footer') %>
+<script>
+  (function () {
+    var cek = document.getElementById('cekTerbitUlang');
+    var form = document.getElementById('formNomorSurat');
+    if (!cek || !form) return;
+    var cetak = form.getAttribute('data-action-nomor'), gen = form.getAttribute('data-action-generate');
+    var tombol = document.getElementById('tombolNomorSurat');
+    cek.addEventListener('change', function () {
+      form.action = cek.checked ? gen : cetak;
+      if (tombol) tombol.innerHTML = cek.checked ? '<i class="bi bi-arrow-repeat me-2"></i>Simpan &amp; Terbitkan Ulang PDF' : '<i class="bi bi-check2 me-2"></i>Simpan Nomor';
+    });
+    form.addEventListener('submit', function (e) {
+      if (cek.checked && !confirm('Terbitkan ulang PDF dengan nomor baru? File lama akan diganti (dipindah ke Sampah di Drive).')) e.preventDefault();
+    });
+  })();
+</script>

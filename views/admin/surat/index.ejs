@@ -396,6 +396,7 @@
             <th>Role</th>
             <th>Pemohon</th>
             <th>Jenis Surat</th>
+            <th>No. Surat</th>
             <th>Keperluan / Keterangan</th>
             <th>Tgl Pengajuan</th>
             <th>Status</th>
@@ -405,7 +406,7 @@
         <tbody>
           <% if (suratList.length === 0) { %>
             <tr>
-              <td colspan="8" class="text-center py-5">
+              <td colspan="9" class="text-center py-5">
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <p>Tidak ada surat.</p>
@@ -436,6 +437,13 @@
                   <small class="text-muted"><%= surat.identitas %></small>
                  </td>
                 <td><%= surat.jenis || surat.jenisSurat || 'Surat' %> </td>
+                <td style="white-space:nowrap;">
+                  <% if (surat.nomorSurat) { %>
+                    <code class="text-dark" style="font-size:.78rem;background:#f1f5f9;padding:.2rem .45rem;border-radius:.4rem;"><%= surat.nomorSurat %></code>
+                  <% } else { %>
+                    <span class="text-muted small">&mdash;</span>
+                  <% } %>
+                </td>
                 <td><%= keperluanText.length > 60 ? keperluanText.substring(0,60)+'...' : keperluanText %> </td>
                 <td><%= new Date(surat.createdAt).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) %> </td>
                 <td>

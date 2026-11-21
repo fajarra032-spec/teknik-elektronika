@@ -159,6 +159,13 @@ function getTemplateAndDataForSuratDosen(suratDosen, dosen) {
 // SKL Sementara, Berkelakuan Baik, Rekomendasi, Cuti/Aktif Kembali,
 // Keterangan Dosen PA, Pengantar Magang/PKL)
 // ============================================================================
+/** Pindahkan file lama di Google Drive ke Sampah (bisa dipulihkan). Gagal = diabaikan. */
+async function buangFileLama(fileId) {
+  if (!fileId) return;
+  try { await drive.files.update({ fileId, requestBody: { trashed: true } }); }
+  catch (e) { console.error('[surat] gagal memindahkan file lama ke sampah:', e.message); }
+}
+
 const JENIS_SURAT_MAHASISWA_OTOMATIS = [
   'Aktif Kuliah',
   'Permohonan Kebijakan SPP',
@@ -1004,8 +1011,10 @@ router.post('/tugas/:id/generate', async (req, res) => {
     let tugas = tugasDoc.data();
 
     // Hanya bisa generate jika status pending
-    if (tugas.status !== 'pending') {
-      return res.status(400).send('Surat tugas sudah digenerate sebelumnya');
+    // 'completed' diizinkan = terbitkan ulang (mis. nomor diganti admin); status lain ditolak.
+    const pertamaKaliTerbit = tugas.status === 'pending';
+    if (tugas.status !== 'pending' && tugas.status !== 'completed') {
+      return res.status(400).send('Surat tugas tidak bisa digenerate pada status ini');
     }
 
     // Update nomor surat jika diisi admin, atau buat default jika kosong
@@ -1057,10 +1066,11 @@ router.post('/tugas/:id/generate', async (req, res) => {
       fileUrl,
       fileId: driveResponse.data.id,
       updatedAt: new Date().toISOString(),
-      history: [...(tugas.history || []), { status: 'completed', timestamp: new Date().toISOString(), catatan: `Surat tugas digenerate dengan nomor ${finalNomor}` }]
+      history: [...(tugas.history || []), { status: 'completed', timestamp: new Date().toISOString(), catatan: pertamaKaliTerbit ? `Surat tugas digenerate dengan nomor ${finalNomor}` : `Surat tugas diterbitkan ulang dengan nomor ${finalNomor}` }]
     });
+    if (tugas.fileId && tugas.fileId !== driveResponse.data.id) await buangFileLama(tugas.fileId);
 
-    suratTugasNotif.suratTugasTerbit(db, {
+    if (pertamaKaliTerbit) suratTugasNotif.suratTugasTerbit(db, {
       dosenId: tugas.dosenId, namaKegiatan: tugas.namaKegiatan, nomorSurat: finalNomor,
       tanggal: tugas.tanggalPelaksanaan || tugas.tanggalAcara, tempat: tugas.tempat || tugas.penyelenggara
     });
@@ -1184,6 +1194,7 @@ router.post('/:id/:role/generate', async (req, res) => {
         updatedAt: new Date().toISOString(),
         history: [...(surat.history || []), { status: 'completed', timestamp: new Date().toISOString(), catatan: `Surat diterbitkan otomatis${nomorSurat ? ' dengan nomor ' + nomorSurat : ''}` }]
       });
+      if (surat.fileId && surat.fileId !== driveResponse.data.id) await buangFileLama(surat.fileId);
 
       return res.redirect(`/admin/surat/${id}/${role}`);
     }
@@ -1253,6 +1264,7 @@ router.post('/:id/:role/generate', async (req, res) => {
           { status: 'completed', timestamp: new Date().toISOString(), catatan: `Surat izin dosen di-generate otomatis dengan nomor ${finalNomorSurat}` }
         ]
       });
+      if (surat.fileId && surat.fileId !== driveResponse.data.id) await buangFileLama(surat.fileId);
 
       return res.redirect(`/admin/surat/${id}/${role}`);
     }
@@ -1286,7 +1298,7 @@ router.get('/', async (req, res) => {
       const mahasiswa = await getMahasiswa(data.userId);
       if (search) {
         const lower = search.toLowerCase();
-        if (!mahasiswa.nama.toLowerCase().includes(lower) && !data.keperluan?.toLowerCase().includes(lower)) continue;
+        if (!mahasiswa.nama.toLowerCase().includes(lower) && !data.keperluan?.toLowerCase().includes(lower) && !String(data.nomorSurat || '').toLowerCase().includes(lower)) continue;
       }
       suratList.push({
         id: doc.id,
@@ -1298,6 +1310,7 @@ router.get('/', async (req, res) => {
         createdAt: data.createdAt,
         status: data.status,
         fileUrl: data.fileUrl,
+        nomorSurat: data.nomorSurat || '',
       });
     }
 
@@ -1310,7 +1323,7 @@ router.get('/', async (req, res) => {
       const dosen = await getDosen(data.dosenId);
       if (search) {
         const lower = search.toLowerCase();
-        if (!dosen.nama.toLowerCase().includes(lower) && !data.keperluan?.toLowerCase().includes(lower)) continue;
+        if (!dosen.nama.toLowerCase().includes(lower) && !data.keperluan?.toLowerCase().includes(lower) && !String(data.nomorSurat || '').toLowerCase().includes(lower)) continue;
       }
       suratList.push({
         id: doc.id,
@@ -1322,6 +1335,7 @@ router.get('/', async (req, res) => {
         createdAt: data.createdAt,
         status: data.status,
         fileUrl: data.fileUrl,
+        nomorSurat: data.nomorSurat || '',
       });
     }
 
@@ -1334,7 +1348,7 @@ router.get('/', async (req, res) => {
       const dosen = await getDosen(data.dosenId);
       if (search) {
         const lower = search.toLowerCase();
-        if (!dosen.nama.toLowerCase().includes(lower) && !data.namaKegiatan?.toLowerCase().includes(lower)) continue;
+        if (!dosen.nama.toLowerCase().includes(lower) && !data.namaKegiatan?.toLowerCase().includes(lower) && !String(data.nomorSurat || '').toLowerCase().includes(lower)) continue;
       }
       suratList.push({
         id: doc.id,
@@ -1385,14 +1399,14 @@ router.get('/:id/:role', async (req, res) => {
       if (!doc.exists) return res.status(404).send('Surat tidak ditemukan');
       surat = { id: doc.id, ...doc.data() };
       pemohon = await getMahasiswa(surat.userId);
-      return res.render('admin/surat/detail', { title: `Detail Surat - ${pemohon.nama}`, surat, pemohon, role });
+      return res.render('admin/surat/detail', { title: `Detail Surat - ${pemohon.nama}`, surat, pemohon, role, bisaGenerate: JENIS_SURAT_MAHASISWA_OTOMATIS.includes(surat.jenis) });
     } 
     else if (role === 'dosen') {
       const doc = await db.collection('surat_dosen').doc(id).get();
       if (!doc.exists) return res.status(404).send('Surat tidak ditemukan');
       surat = { id: doc.id, ...doc.data() };
       pemohon = await getDosen(surat.dosenId);
-      return res.render('admin/surat/detail', { title: `Detail Surat - ${pemohon.nama}`, surat, pemohon, role });
+      return res.render('admin/surat/detail', { title: `Detail Surat - ${pemohon.nama}`, surat, pemohon, role, bisaGenerate: !!(surat.jenisIzin && surat.jenisIzin.length) });
     }
     else if (role === 'tugas') {
       const doc = await db.collection('surat_tugas').doc(id).get();
@@ -1419,60 +1433,97 @@ router.post('/:id/:role/upload', upload.single('file'), async (req, res) => {
     const { id, role } = req.params;
     const file = req.file;
     if (!file) return res.status(400).send('File tidak ada');
+    const nomorBaru = (req.body.nomorSurat || '').trim();
 
-    let suratRef, surat, identitas, tahunAkademik;
+    const KOLEKSI = { mahasiswa: 'surat', dosen: 'surat_dosen', tugas: 'surat_tugas' };
+    if (!KOLEKSI[role]) return res.status(400).send('Role tidak valid');
+    const suratRef = db.collection(KOLEKSI[role]).doc(id);
+    const doc = await suratRef.get();
+    if (!doc.exists) return res.status(404).send('Surat tidak ditemukan');
+    const surat = doc.data();
+
+    let folderId, fileName;
     if (role === 'mahasiswa') {
-      suratRef = db.collection('surat').doc(id);
-      const doc = await suratRef.get();
-      if (!doc.exists) return res.status(404).send('Surat tidak ditemukan');
-      surat = doc.data();
       const mahasiswa = await getMahasiswa(surat.userId);
-      identitas = mahasiswa.nim;
-      tahunAkademik = surat.tahunAkademik || getCurrentAcademicSemester().tahunAkademik;
-      const folderId = await getSuratFolderMahasiswa(identitas, tahunAkademik);
-      const fileName = `${identitas}_${surat.jenis.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
-      const fileMetadata = { name: fileName, parents: [folderId] };
-      const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
-      const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
-      await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
-      const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
-      await suratRef.update({
-        status: 'completed',
-        fileUrl,
-        fileId: driveResponse.data.id,
-        updatedAt: new Date().toISOString(),
-        history: [...(surat.history || []), { status: 'completed', timestamp: new Date().toISOString(), catatan: 'Surat telah diupload oleh Admin' }]
-      });
-    } else if (role === 'dosen') {
-      suratRef = db.collection('surat_dosen').doc(id);
-      const doc = await suratRef.get();
-      if (!doc.exists) return res.status(404).send('Surat tidak ditemukan');
-      surat = doc.data();
-      const dosen = await getDosen(surat.dosenId);
-      identitas = dosen.nip;
-      tahunAkademik = surat.tahunAkademik || getCurrentAcademicSemester().tahunAkademik;
-      const folderId = await getSuratFolderDosen(identitas, tahunAkademik);
-      const fileName = `${identitas}_${surat.jenisSurat?.replace(/\s+/g, '_') || 'surat'}_${Date.now()}.pdf`;
-      const fileMetadata = { name: fileName, parents: [folderId] };
-      const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
-      const driveResponse = await drive.files.create({ resource: fileMetadata, media, fields: 'id' });
-      await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
-      const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
-      await suratRef.update({
-        status: 'completed',
-        fileUrl,
-        fileId: driveResponse.data.id,
-        updatedAt: new Date().toISOString(),
-        history: [...(surat.history || []), { status: 'completed', timestamp: new Date().toISOString(), catatan: 'Surat telah diupload oleh Admin' }]
-      });
+      const tahunAkademik = surat.tahunAkademik || getCurrentAcademicSemester().tahunAkademik;
+      folderId = await getSuratFolderMahasiswa(mahasiswa.nim, tahunAkademik);
+      fileName = `${mahasiswa.nim}_${String(surat.jenis || 'surat').replace(/\s+/g, '_')}_${Date.now()}.pdf`;
     } else {
-      return res.status(400).send('Role tidak valid');
+      const dosen = await getDosen(surat.dosenId);
+      const tahunAkademik = surat.tahunAkademik || getCurrentAcademicSemester().tahunAkademik;
+      folderId = await getSuratFolderDosen(dosen.nip || surat.dosenId, tahunAkademik);
+      fileName = role === 'tugas'
+        ? `Surat_Tugas_${surat.kodeValidasi || Date.now()}_${Date.now()}.pdf`
+        : `${dosen.nip || surat.dosenId}_${surat.jenisSurat?.replace(/\s+/g, '_') || 'surat'}_${Date.now()}.pdf`;
     }
 
-    res.redirect(`/admin/surat/${id}/${role}`);
+    const media = { mimeType: file.mimetype, body: Readable.from(file.buffer) };
+    const driveResponse = await drive.files.create({ resource: { name: fileName, parents: [folderId] }, media, fields: 'id' });
+    await drive.permissions.create({ fileId: driveResponse.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+    const fileUrl = `https://drive.google.com/uc?export=view&id=${driveResponse.data.id}`;
+
+    const sebelumnyaPending = surat.status === 'pending';
+    const patch = {
+      status: 'completed',
+      fileUrl,
+      fileId: driveResponse.data.id,
+      updatedAt: new Date().toISOString(),
+      history: [...(surat.history || []), {
+        status: 'completed', timestamp: new Date().toISOString(),
+        catatan: sebelumnyaPending ? 'Surat telah diupload oleh Admin' : 'File surat diganti oleh Admin'
+          + (nomorBaru && nomorBaru !== surat.nomorSurat ? ` (nomor diubah menjadi ${nomorBaru})` : '')
+      }]
+    };
+    if (nomorBaru) patch.nomorSurat = nomorBaru;
+    await suratRef.update(patch);
+    if (surat.fileId && surat.fileId !== driveResponse.data.id) await buangFileLama(surat.fileId);
+
+    if (role === 'tugas' && sebelumnyaPending) {
+      suratTugasNotif.suratTugasTerbit(db, {
+        dosenId: surat.dosenId, namaKegiatan: surat.namaKegiatan, nomorSurat: nomorBaru || surat.nomorSurat,
+        tanggal: surat.tanggalPelaksanaan || surat.tanggalAcara, tempat: surat.tempat || surat.penyelenggara
+      });
+    }
+
+    res.redirect(role === 'tugas' ? `/admin/surat/tugas/${id}` : `/admin/surat/${id}/${role}`);
   } catch (error) {
     console.error('Error upload surat:', error);
     res.status(500).send('Gagal upload surat: ' + error.message);
+  }
+});
+
+// ============================================================================
+// UBAH NOMOR SURAT (tanpa mengubah file). Untuk surat otomatis yang nomornya
+// perlu diganti DAN PDF-nya ikut diperbarui, form di halaman detail
+// mengarahkan ke route generate (terbitkan ulang) - lihat detail.ejs.
+// ============================================================================
+router.post('/:id/:role/nomor', async (req, res) => {
+  try {
+    const { id, role } = req.params;
+    const KOLEKSI = { mahasiswa: 'surat', dosen: 'surat_dosen', tugas: 'surat_tugas' };
+    if (!KOLEKSI[role]) return res.status(400).send('Role tidak valid');
+    const nomor = String(req.body.nomorSurat || '').trim();
+    if (!nomor) return res.status(400).send('Nomor surat tidak boleh kosong');
+    if (nomor.length > 120) return res.status(400).send('Nomor surat terlalu panjang (maks 120 karakter)');
+
+    const ref = db.collection(KOLEKSI[role]).doc(id);
+    const doc = await ref.get();
+    if (!doc.exists) return res.status(404).send('Surat tidak ditemukan');
+    const surat = doc.data();
+    if (nomor !== surat.nomorSurat) {
+      await ref.update({
+        nomorSurat: nomor,
+        updatedAt: new Date().toISOString(),
+        history: [...(surat.history || []), {
+          status: surat.status, timestamp: new Date().toISOString(),
+          catatan: `Nomor surat diubah oleh Admin: ${surat.nomorSurat || '(kosong)'} -> ${nomor}`
+        }]
+      });
+    }
+    res.redirect(role === 'tugas' ? `/admin/surat/tugas/${id}` : `/admin/surat/${id}/${role}`);
+  } catch (error) {
+    console.error('Error ubah nomor surat:', error);
+    res.status(500).send('Gagal mengubah nomor surat: ' + error.message);
   }
 });
 
