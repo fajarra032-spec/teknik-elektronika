@@ -620,7 +620,6 @@
              Daftar Tugas, Input Nilai, Rubrik) sengaja tidak ditampilkan lagi
              di sini supaya menu tidak berulang. -->
         <div class="col-6 col-md-3"><a href="/dosen/mk" class="quick-card"><div class="quick-icon"><i class="bi bi-book"></i></div><h6>Mata Kuliah</h6><p>Pertemuan, absensi, tugas & rubrik</p></a></div>
-        <div class="col-6 col-md-3"><a href="/dosen/mahasiswa-pa" class="quick-card"><div class="quick-icon"><i class="bi bi-person-check-fill"></i></div><h6>Mahasiswa PA</h6><p>Magang, logbook &amp; laporan</p></a></div>
         <div class="col-6 col-md-3"><a href="/dosen/penelitian" class="quick-card"><div class="quick-icon"><i class="bi bi-mortarboard"></i></div><h6>Penelitian</h6><p>Kelola penelitian</p></a></div>
         <div class="col-6 col-md-3"><a href="/dosen/pengabdian" class="quick-card"><div class="quick-icon"><i class="bi bi-people"></i></div><h6>Pengabdian</h6><p>Kelola pengabdian</p></a></div>
         <div class="col-6 col-md-3"><a href="/dosen/buku" class="quick-card"><div class="quick-icon"><i class="bi bi-book"></i></div><h6>Buku</h6><p>Kelola buku</p></a></div>
@@ -643,8 +642,9 @@
            karena duplikat/menyesatkan. Halamannya sendiri tidak dihapus,
            supaya bookmark lama tetap jalan. -->
       <div class="row g-4">
-        <div class="col-6 col-md-6"><a href="/dosen/magang" class="quick-card"><div class="quick-icon"><i class="bi bi-journal-bookmark-fill"></i></div><h6>Monitoring Magang</h6><p>Logbook, tinjau laporan & nilai magang mahasiswa bimbingan</p></a></div>
-        <div class="col-6 col-md-6"><a href="/dosen/perusahaan" class="quick-card"><div class="quick-icon"><i class="bi bi-building"></i></div><h6>Perusahaan Magang</h6><p>Daftar perusahaan magang</p></a></div>
+        <div class="col-6 col-md-4"><a href="/dosen/mahasiswa-pa" class="quick-card"><div class="quick-icon"><i class="bi bi-person-check-fill"></i></div><h6>Mahasiswa PA <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis ms-1"><%= totalMahasiswaPa || 0 %></span></h6><p>Mahasiswa bimbingan akademik, magang, logbook &amp; laporan</p></a></div>
+        <div class="col-6 col-md-4"><a href="/dosen/magang" class="quick-card"><div class="quick-icon"><i class="bi bi-journal-bookmark-fill"></i></div><h6>Mahasiswa Magang Aktif <span class="badge rounded-pill bg-success-subtle text-success-emphasis ms-1"><%= totalMagangAktif || 0 %></span></h6><p>Logbook, tinjau laporan &amp; nilai magang mahasiswa bimbingan</p></a></div>
+        <div class="col-6 col-md-4"><a href="/dosen/perusahaan" class="quick-card"><div class="quick-icon"><i class="bi bi-building"></i></div><h6>Perusahaan Magang</h6><p>Daftar perusahaan magang</p></a></div>
       </div>
     </div>
   </div>
