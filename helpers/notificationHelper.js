@@ -205,7 +205,11 @@ async function deleteAllNotifications(db, userId, opsi = {}) {
   return total;
 }
 
+/** Hapus cache navbar satu user (dipakai saat dokumen notifikasi diubah langsung). */
+function invalidateNavbar(userId) { navbarNotifCache.delete(userId); }
+
 module.exports = {
+  invalidateNavbar,
   createNotification,
   createNotificationOnce,
   createNotificationForUsers,

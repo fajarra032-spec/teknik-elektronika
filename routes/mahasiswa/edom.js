@@ -235,6 +235,12 @@ router.post('/mk/:mkId', async (req, res) => {
       updatedAt: new Date().toISOString()
     });
 
+    // Beri tahu dosen (lonceng) - tanpa await, tidak boleh menggagalkan penyimpanan
+    require('../../helpers/edomNotifHelper').edomDiterima(db, {
+      dosenId, mkId, mkKode: mk.kode, mkNama: mk.nama,
+      periodeId: activePeriod.id, semester: activePeriod.semester || getCurrentAcademicSemester().label
+    });
+
     setMessage(req, 'success', `Evaluasi untuk ${dosenNama} berhasil disimpan. Terima kasih.`);
     res.redirect('/mahasiswa/edom');
   } catch (err) {
