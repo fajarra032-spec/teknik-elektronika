@@ -113,7 +113,10 @@ router.get('/', async (req, res) => {
           if (!mirrorMilikku) return false;
           const p = await db.collection('mataKuliah').doc(d.id).collection('pengampuPeriode').doc(periodeAktifId).get();
           if (p.exists) return !(p.data().dosenIds || []).includes(dosenId);
-          return data.periodeAktifId !== periodeAktifId;
+          if (data.periodeAktifId === periodeAktifId) return false;
+          // Sudah dimasukkan ke periode lain (mis. lewat script) = bukan "belum ber-periode" lagi
+          const semuaP = await db.collection('mataKuliah').doc(d.id).collection('pengampuPeriode').get();
+          return !semuaP.docs.some(x => (x.data().dosenIds || []).includes(dosenId));
         }
         const p = await db.collection('mataKuliah').doc(d.id).collection('pengampuPeriode').doc(sel).get();
         if (p.exists) return (p.data().dosenIds || []).includes(dosenId);
