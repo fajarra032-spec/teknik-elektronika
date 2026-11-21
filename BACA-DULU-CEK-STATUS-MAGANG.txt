@@ -1,0 +1,9 @@
+PEMERIKSA STATUS MAGANG ANGKATAN 2023 & 2024 (hanya membaca, tidak menulis apa pun)
+Taruh scripts/cek-status-magang-angkatan.js di folder scripts/, jalankan dari root proyek:
+  node scripts/cek-status-magang-angkatan.js              -> hanya yang bermasalah
+  node scripts/cek-status-magang-angkatan.js --semua      -> semua mahasiswa
+  node scripts/cek-status-magang-angkatan.js --nim=23302013
+Menampilkan per mahasiswa: nilai di grades, status periode, kelengkapan form, dan tab di
+Monitoring Magang admin (Magang Aktif / Magang Selesai / Sudah KRS), plus penanda "!!" untuk
+ketidaksesuaian (nilai ada tapi periode belum selesai / tanpa periode, periode aktif lewat tanggal,
+form belum lengkap, periode ganda).

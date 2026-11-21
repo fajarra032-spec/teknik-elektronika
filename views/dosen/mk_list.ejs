@@ -222,6 +222,17 @@
     </a>
   </div>
 
+  <% if (typeof jumlahDisembunyikan !== 'undefined' && jumlahDisembunyikan > 0) { %>
+    <div class="alert alert-light border small">
+      <%= jumlahDisembunyikan %> MK lama/belum ber-periode disembunyikan.
+      <a href="/dosen/mk?semua=1">Tampilkan semua</a>
+    </div>
+  <% } else if (typeof tampilSemua !== 'undefined' && tampilSemua) { %>
+    <div class="alert alert-light border small">
+      Menampilkan semua MK (termasuk lama). <a href="/dosen/mk">Hanya periode aktif</a>
+    </div>
+  <% } %>
+
   <!-- Daftar Mata Kuliah -->
   <% if (mkList && mkList.length > 0) { %>
     <div class="row g-4">

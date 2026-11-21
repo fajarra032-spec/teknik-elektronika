@@ -1,0 +1,37 @@
+SINKRONISASI MAGANG ANGKATAN 2023 & 2024 DARI NILAI AKHIR YANG SUDAH ADA
+========================================================================
+Letakkan scripts/sinkron-magang-dari-grades.js di folder scripts/ proyek, lalu jalankan dari
+root proyek di server yang punya akses Firebase. Tidak perlu restart server, tidak ada indeks baru.
+
+LANGKAH YANG DISARANKAN
+1. (opsional tapi disarankan) node scripts/backup-collections.js
+2. UJI COBA dulu - tidak menulis apa pun:
+     node scripts/sinkron-magang-dari-grades.js
+   Periksa daftar & rekap yang tampil.
+3. Terapkan:
+     node scripts/sinkron-magang-dari-grades.js --jalankan
+   (tambahkan --buat-periode bila banyak mahasiswa punya nilai tetapi belum punya periode magang)
+4. Batalkan bila perlu (memakai berkas backup yang dibuat otomatis di scripts/):
+     node scripts/sinkron-magang-dari-grades.js --rollback=scripts/backup-sinkron-magang-<waktu>.json
+
+APA YANG DILAKUKAN (untuk tiap mahasiswa NIM 23* / 24* yang punya nilai akhir PDK di `grades`)
+1. Form penilaian (koleksi nilaiMagang): 18 indikator Dosen Pembimbing + 10 indikator Pendamping
+   Lapangan diisi angka nilai akhir tsb -> rata-rata kedua komponen = nilai akhir (huruf sama);
+   logbook ditandai terkunci; oleh = 'sinkronisasi-grades'.
+2. Magang dinyatakan selesai (koleksi magangPeriod): status 'completed', nilai.angka/huruf terisi,
+   riwayat 'completed' ditambahkan. Tanggal selesai lama dipertahankan (bila kosong = hari ini).
+3. Koleksi `grades` TIDAK diubah (KHS/Transkrip tetap sama).
+
+ATURAN KEAMANAN
+- Default uji coba; --jalankan baru menulis. Backup kondisi lama dibuat sebelum menulis.
+- Aman diulang: form terisi penuh & periode yang sudah selesai dilewati.
+- Form terisi SEBAGIAN dilewati & dilaporkan (agar nilai akhir tidak bergeser dari grades);
+  --timpa untuk menimpanya.
+- Mahasiswa Cuti/Keluar dilewati (--semua untuk menyertakan). Periode 'cancelled' diabaikan.
+- Mahasiswa yang punya nilai tapi BELUM punya periode: hanya dilaporkan; dengan --buat-periode
+  dibuatkan periode berstatus selesai TANPA tanggal & perusahaan '-' (sumber: sinkronisasi-grades),
+  dapat dilengkapi admin kemudian.
+
+OPSI LAIN: --angkatan=24 | --nim=2330001,2430002
+Uji dengan Firestore tiruan: uji coba tidak mengubah data; mode tulis mengisi form & menyelesaikan
+periode; menjalankan ulang tidak mengubah apa pun; rollback mengembalikan kondisi awal.

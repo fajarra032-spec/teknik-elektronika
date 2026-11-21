@@ -19,6 +19,7 @@ const { getPeriodeAktif, saveKomponenRubrik } = require('../../helpers/nilaiHelp
 const { detectJenisPraktikum, getModulPraktikumList } = require('../../helpers/modulPraktikumHelper');
 const { getRencanaPertemuan, getInfoRencana } = require('../../data/rencanaPertemuanData');
 const rpsHelper = require('../../helpers/rpsHelper');
+const { getActivePeriodeId } = require('../../helpers/academicHelper');
 
 console.log('mk.js loaded');
 
@@ -91,8 +92,29 @@ router.get('/', async (req, res) => {
       .orderBy('kode')
       .get();
 
+    // FILTER PERIODE: hanya tampilkan MK yang benar-benar diampu dosen ini di
+    // PERIODE AKTIF. MK semester lalu / MK lama yang belum punya periode
+    // (tidak ada pengampuPeriode untuk periode aktif dan periodeAktifId-nya
+    // bukan periode aktif) disembunyikan. Tambah ?semua=1 untuk lihat semua.
+    const tampilSemua = req.query.semua === '1';
+    const periodeAktifId = getActivePeriodeId();
+    let docsTampil = snapshot.docs;
+    let jumlahDisembunyikan = 0;
+    if (!tampilSemua) {
+      const cek = await Promise.all(snapshot.docs.map(async d => {
+        try {
+          const p = await db.collection('mataKuliah').doc(d.id)
+            .collection('pengampuPeriode').doc(periodeAktifId).get();
+          if (p.exists) return (p.data().dosenIds || []).includes(req.dosen.id);
+        } catch (e) { /* jatuh ke pemeriksaan periodeAktifId */ }
+        return d.data().periodeAktifId === periodeAktifId;
+      }));
+      docsTampil = snapshot.docs.filter((_, i) => cek[i]);
+      jumlahDisembunyikan = snapshot.docs.length - docsTampil.length;
+    }
+
     const mkList = [];
-    for (const doc of snapshot.docs) {
+    for (const doc of docsTampil) {
       const data = doc.data();
 
       // Hitung jumlah mahasiswa terdaftar aktif di MK ini
@@ -132,7 +154,9 @@ router.get('/', async (req, res) => {
 
     res.render('dosen/mk_list', {
       title: 'Mata Kuliah Saya',
-      mkList
+      mkList,
+      tampilSemua,
+      jumlahDisembunyikan
     });
   } catch (error) {
     console.error('Error ambil mk:', error);

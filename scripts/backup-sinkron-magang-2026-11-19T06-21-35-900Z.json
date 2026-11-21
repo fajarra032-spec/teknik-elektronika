@@ -1,0 +1,193 @@
+{
+  "dibuat": "2026-11-19T06:21:35.900Z",
+  "entri": [
+    {
+      "koleksi": "nilaiMagang",
+      "id": "ViYWxrnksEkqnBarD9rr",
+      "sebelum": null
+    },
+    {
+      "koleksi": "magangPeriod",
+      "id": "AWBt9OAVH8jBDqZCGXPl",
+      "sebelum": null
+    },
+    {
+      "koleksi": "nilaiMagang",
+      "id": "Sp9TmJK7M0B1Dn8hZYHw",
+      "sebelum": null
+    },
+    {
+      "koleksi": "magangPeriod",
+      "id": "14OyXv5EgDnLD4UO0KSo",
+      "sebelum": {
+        "mahasiswaId": "LPdzVGJFiqOUhiUsUQjj8fiLQMd2",
+        "pdkId": "ViwJUaJtGI943PrjDr66",
+        "pdkKode": "WP2023",
+        "pdkNama": "Praktik Dunia Kerja 3",
+        "tanggalMulai": "2026-04-22",
+        "tanggalSelesai": "2026-08-26",
+        "status": "active",
+        "pembimbing1Id": "3F4ogmZOamPE2fr6ltseYGA3n263",
+        "pembimbing1Nama": "Miftahul Hairia, S.Pd., M.Pd",
+        "pembimbing2Id": "UtuyVRuhIoWcNoVOyjv99O09hxv1",
+        "pembimbing2Nama": "Fajar Ramadhan, S.Pd., M.T",
+        "perusahaan": {
+          "nama": "PT PLN",
+          "alamat": "",
+          "kontak": "",
+          "kontakHp": "",
+          "email": "",
+          "website": "",
+          "pembimbingLapangan": "",
+          "jabatanPembimbingLapangan": "",
+          "diisiOleh": "X475hVHaCVc0Q1kCnxENYPO2HtV2",
+          "diisiPada": "2026-04-22T11:54:18.933Z"
+        },
+        "nilai": {
+          "angka": null,
+          "huruf": null,
+          "komentar": null,
+          "dinilaiOleh": null,
+          "dinilaiPada": null,
+          "komponenNilai": {}
+        },
+        "ulasan": {
+          "isFilled": false
+        },
+        "lockHistory": [],
+        "createdAt": "2026-04-22T11:54:18.933Z",
+        "updatedAt": "2026-04-22T11:54:18.933Z",
+        "completedAt": null,
+        "history": [
+          {
+            "action": "started",
+            "tanggal": "2026-04-22",
+            "catatan": "Periode magang Praktik Dunia Kerja 3 di PT PLN dimulai oleh Kaprodi Elekronika"
+          }
+        ]
+      }
+    },
+    {
+      "koleksi": "nilaiMagang",
+      "id": "I6qIiGHRpUwFZR9ZfkVq",
+      "sebelum": null
+    },
+    {
+      "koleksi": "magangPeriod",
+      "id": "XHVyOrvrvx3bTP9O9ffV",
+      "sebelum": {
+        "mahasiswaId": "PPfyEoXVPWOI70NtNfPPFFxxJ013",
+        "pdkId": "ViwJUaJtGI943PrjDr66",
+        "pdkKode": "WP2023",
+        "pdkNama": "Praktik Dunia Kerja 3",
+        "tanggalMulai": "2026-04-23",
+        "tanggalSelesai": "2026-05-23",
+        "status": "active",
+        "pembimbing1Id": "gG5i8oMoxRRzzHCu2IpP4HVuqqe2",
+        "pembimbing1Nama": "Suardi, S.Pd., M.Pd",
+        "pembimbing2Id": "DZAaXXAAodVzILCf0CujXveA4352",
+        "pembimbing2Nama": "Rahman Syam",
+        "nilai": {
+          "angka": null,
+          "huruf": null,
+          "komentar": null,
+          "dinilaiOleh": null,
+          "dinilaiPada": null,
+          "komponenNilai": {}
+        },
+        "ulasan": {
+          "isFilled": false
+        },
+        "lockHistory": [],
+        "createdAt": "2026-04-23T07:21:30.544Z",
+        "completedAt": null,
+        "history": [
+          {
+            "action": "started",
+            "tanggal": "2026-04-23",
+            "catatan": "Periode magang Praktik Dunia Kerja 3 di Belum ditentukan dimulai oleh Kaprodi Elekronika"
+          }
+        ],
+        "perusahaan": {
+          "kontak": "",
+          "kontakHp": "",
+          "email": "",
+          "website": "",
+          "jabatanPembimbingLapangan": "",
+          "diisiOleh": "X475hVHaCVc0Q1kCnxENYPO2HtV2",
+          "pembimbingLapangan": "Ilham",
+          "nama": "PT Bumi Mineral Sulawesi",
+          "diisiPada": "2026-05-25T02:42:19.436Z",
+          "alamat": "Bua "
+        },
+        "updatedAt": "2026-05-25T02:42:19.436Z"
+      }
+    },
+    {
+      "koleksi": "nilaiMagang",
+      "id": "fRsu7siWGVaEhtXfUPQ2",
+      "sebelum": null
+    },
+    {
+      "koleksi": "magangPeriod",
+      "id": "iTUQ69WVzC1xo0XnJ8PK",
+      "sebelum": {
+        "mahasiswaId": "TCwN8xVaGKQ2vmDWLYpw5YJV6jG3",
+        "pdkId": "ViwJUaJtGI943PrjDr66",
+        "pdkKode": "WP2023",
+        "pdkNama": "Praktik Dunia Kerja 3",
+        "tanggalMulai": "2026-10-13",
+        "tanggalSelesai": "2026-10-30",
+        "status": "active",
+        "pembimbing1Id": "gG5i8oMoxRRzzHCu2IpP4HVuqqe2",
+        "pembimbing1Nama": "Suardi, S.Pd., M.Pd",
+        "pembimbing2Id": "g4dtuUHKbqPliI7xtyUK2kkNF6j1",
+        "pembimbing2Nama": "Ariani Amri, S.Pd., M.Pd.",
+        "perusahaan": {
+          "nama": " PT PLN (Persero) ULP Masamba",
+          "alamat": "JL. Muh. Hatta, Baliase Kec. Masamba Kab. Luwu Utara",
+          "kontak": "",
+          "kontakHp": "",
+          "email": "",
+          "website": "",
+          "pembimbingLapangan": "",
+          "jabatanPembimbingLapangan": "",
+          "diisiOleh": "X475hVHaCVc0Q1kCnxENYPO2HtV2",
+          "diisiPada": "2026-10-13T02:45:39.799Z"
+        },
+        "nilai": {
+          "angka": null,
+          "huruf": null,
+          "komentar": null,
+          "dinilaiOleh": null,
+          "dinilaiPada": null,
+          "komponenNilai": {}
+        },
+        "ulasan": {
+          "isFilled": false
+        },
+        "lockHistory": [],
+        "createdAt": "2026-10-13T02:45:39.799Z",
+        "updatedAt": "2026-10-13T02:45:39.799Z",
+        "completedAt": null,
+        "history": [
+          {
+            "action": "started",
+            "tanggal": "2026-10-13",
+            "catatan": "Periode magang Praktik Dunia Kerja 3 di  PT PLN (Persero) ULP Masamba dimulai oleh Kaprodi Elekronika"
+          }
+        ]
+      }
+    },
+    {
+      "koleksi": "nilaiMagang",
+      "id": "oNCaSUFFe76rcW4HJbb7",
+      "sebelum": null
+    },
+    {
+      "koleksi": "magangPeriod",
+      "id": "0BeO7MOEVFMCcblV7tlN",
+      "sebelum": null
+    }
+  ]
+}
