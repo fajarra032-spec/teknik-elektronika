@@ -287,6 +287,8 @@
     align-items: center;
     gap: 0.3rem;
   }
+  .role-badge-sk { background:#eef2ff; color:#3730a3; }
+  .badge-terbit { background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; }
   .role-badge-arsip { background:#ecfeff; color:#0e7490; }
   .badge-arsip { background:#ecfeff; color:#0e7490; border:1px solid #a5f3fc; }
   .role-badge-tugas {
@@ -372,6 +374,7 @@
           <option value="mahasiswa" <%= filters.role === 'mahasiswa' ? 'selected' : '' %>>Mahasiswa</option>
           <option value="dosen" <%= filters.role === 'dosen' ? 'selected' : '' %>>Dosen (Izin)</option>
           <option value="tugas" <%= filters.role === 'tugas' ? 'selected' : '' %>>Surat Tugas</option>
+          <option value="sk" <%= filters.role === 'sk' ? 'selected' : '' %>>SK Dosen (PA, Mengajar, dll.)</option>
           <option value="arsip" <%= filters.role === 'arsip' ? 'selected' : '' %>>Arsip Prodi</option>
         </select>
       </div>
@@ -383,6 +386,7 @@
           <option value="completed" <%= filters.status === 'completed' ? 'selected' : '' %>>Selesai</option>
           <option value="rejected" <%= filters.status === 'rejected' ? 'selected' : '' %>>Ditolak</option>
           <option value="cancelled" <%= filters.status === 'cancelled' ? 'selected' : '' %>>Dibatalkan</option>
+          <option value="terbit" <%= filters.status === 'terbit' ? 'selected' : '' %>>Diterbitkan (SK)</option>
           <option value="arsip" <%= filters.status === 'arsip' ? 'selected' : '' %>>Diarsipkan</option>
         </select>
       </div>
@@ -440,6 +444,8 @@
                     <span class="role-badge"><i class="bi bi-mortarboard"></i> Mahasiswa</span>
                   <% } else if (surat.role === 'tugas') { %>
                     <span class="role-badge role-badge-tugas"><i class="bi bi-file-text"></i> Surat Tugas</span>
+                  <% } else if (surat.role === 'sk') { %>
+                    <span class="role-badge role-badge-sk"><i class="bi bi-patch-check"></i> SK Dosen</span>
                   <% } else if (surat.role === 'arsip') { %>
                     <span class="role-badge role-badge-arsip"><i class="bi bi-archive"></i> Arsip Prodi</span>
                   <% } else { %>
@@ -469,13 +475,15 @@
                     <span class="badge-status badge-rejected">Ditolak</span>
                   <% } else if (surat.status === 'cancelled') { %>
                     <span class="badge-status badge-cancelled">Dibatalkan</span>
+                  <% } else if (surat.status === 'terbit') { %>
+                    <span class="badge-status badge-terbit"><i class="bi bi-patch-check me-1"></i>Diterbitkan</span>
                   <% } else if (surat.status === 'arsip') { %>
                     <span class="badge-status badge-arsip"><i class="bi bi-archive me-1"></i>Diarsipkan</span>
                   <% } %>
                  </td>
                 <td>
                   <div class="d-flex gap-1 flex-wrap">
-                    <a href="<%= surat.role === 'arsip' ? '/admin/surat-arsip/' + surat.id + '/edit' : '/admin/surat/' + surat.id + '/' + surat.role %>" class="btn-detail">
+                    <a href="<%= surat.role === 'arsip' ? '/admin/surat-arsip/' + surat.id + '/edit' : (surat.role === 'sk' ? '/admin/sk' : '/admin/surat/' + surat.id + '/' + surat.role) %>" class="btn-detail">
                       <i class="bi bi-eye"></i> Detail
                     </a>
                     <% if (surat.role === 'tugas' && surat.status === 'pending') { %>
@@ -483,7 +491,7 @@
                         <i class="bi bi-gear"></i> Generate
                       </a>
                     <% } %>
-                    <% if ((surat.status === 'completed' || surat.status === 'arsip') && surat.fileUrl) { %>
+                    <% if ((surat.status === 'completed' || surat.status === 'arsip' || surat.status === 'terbit') && surat.fileUrl) { %>
                       <a href="<%= (surat.role === 'arsip' && surat.fileTipe && surat.fileTipe !== 'application/pdf') ? surat.fileUrl : '/pratinjau?u=' + encodeURIComponent(surat.fileUrl) %>" target="_blank" class="btn-detail btn-download">
                         <i class="bi bi-download"></i> Unduh
                       </a>

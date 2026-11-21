@@ -1418,6 +1418,51 @@ router.get('/', async (req, res) => {
       }
     }
 
+    // 5. SK Dosen yang sudah diterbitkan/dirilis (collection 'sk_dosen'): SK Pembimbing Akademik,
+    //    SK Mengajar, SK Panitia/Tim, dan SK unggahan manual. Satu baris per DOKUMEN (dikelompokkan
+    //    per fileId): SK PA dipakai bersama banyak dosen -> satu baris "N dosen"; SK Mengajar
+    //    punya PDF per dosen -> satu baris per dosen. Statusnya 'terbit'.
+    if (!status || status === 'terbit') {
+      const [snapSk, snapDosenSemua] = await Promise.all([
+        db.collection('sk_dosen').get(),
+        db.collection('dosen').get()
+      ]);
+      const petaDosen = {};
+      snapDosenSemua.docs.forEach(d => { petaDosen[d.id] = d.data(); });
+      const LABEL_SK = { pa: 'SK Pembimbing Akademik', mengajar: 'SK Mengajar', panitia: 'SK Panitia / Tim' };
+      const kelompok = new Map();
+      for (const doc of snapSk.docs) {
+        const d = doc.data();
+        const kunci = d.fileId || doc.id;
+        if (!kelompok.has(kunci)) kelompok.set(kunci, { data: d, dosenIds: [] });
+        kelompok.get(kunci).dosenIds.push(d.dosenId);
+      }
+      for (const [kunci, g] of kelompok) {
+        const d = g.data;
+        const namaList = g.dosenIds.map(id => (petaDosen[id] && petaDosen[id].nama) || '').filter(Boolean);
+        const jenisSk = LABEL_SK[d.kategori] || ('SK ' + (d.kategori || 'Dosen'));
+        const tgl = d.tanggalUpload && d.tanggalUpload.toDate ? d.tanggalUpload.toDate() : (d.tanggalUpload ? new Date(d.tanggalUpload) : null);
+        if (search) {
+          const lower = search.toLowerCase();
+          const cocok = [d.judul, d.nomorSk, jenisSk, ...namaList].some(v => String(v || '').toLowerCase().includes(lower));
+          if (!cocok) continue;
+        }
+        suratList.push({
+          id: kunci,
+          role: 'sk',
+          pemohon: g.dosenIds.length === 1 ? (namaList[0] || 'Dosen') : `${g.dosenIds.length} dosen penerima`,
+          identitas: g.dosenIds.length === 1 ? ((petaDosen[g.dosenIds[0]] && petaDosen[g.dosenIds[0]].nip) || '') : namaList.slice(0, 2).join(', ') + (namaList.length > 2 ? ', ...' : ''),
+          jenis: jenisSk,
+          keperluan: d.judul || '',
+          createdAt: tgl && !isNaN(tgl.getTime()) ? tgl.toISOString() : new Date(0).toISOString(),
+          status: 'terbit',
+          fileUrl: d.fileUrl,
+          fileTipe: 'application/pdf',
+          nomorSurat: d.nomorSk || '',
+        });
+      }
+    }
+
     // Gabungkan dan urutkan
     suratList.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
