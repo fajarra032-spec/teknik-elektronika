@@ -97,12 +97,56 @@
     gap: 0.5rem;
     flex-wrap: wrap;
   }
+  .rps-panduan { background:#fff; border:1px solid var(--gray-border); border-radius:1.25rem; padding:1.25rem 1.5rem; margin-bottom:1.5rem; }
+  .rps-panduan h5 { font-weight:800; font-size:1.05rem; color:var(--primary-start); }
+  .rps-langkah { counter-reset: langkah; list-style:none; padding:0; margin:.75rem 0 0; display:grid; gap:.55rem; }
+  .rps-langkah li { counter-increment: langkah; display:flex; gap:.75rem; align-items:flex-start; font-size:.9rem; color:#334155; }
+  .rps-langkah li::before { content: counter(langkah); flex:0 0 1.65rem; height:1.65rem; border-radius:50%; background:linear-gradient(135deg,var(--primary-start),var(--primary-end)); color:#fff; font-weight:700; font-size:.8rem; display:flex; align-items:center; justify-content:center; }
+  .badge-status { border-radius:50px; padding:.2rem .65rem; font-size:.72rem; font-weight:700; }
+  .badge-status.sudah { background:#dcfce7; color:#166534; }
+  .badge-status.belum { background:#ffedd5; color:#c2410c; }
+  .rps-upload { margin-top:.75rem; padding-top:.75rem; border-top:1px dashed var(--gray-border); }
 </style>
 
 <div class="container mt-4">
   <div class="page-header">
     <h2><i class="bi bi-file-earmark-text me-2"></i>My RPS</h2>
     <p class="mb-0">Daftar mata kuliah yang Anda ampu. Kelola RPS dan materi perkuliahan.</p>
+  </div>
+
+  <% if (typeof rpsInfo !== 'undefined' && rpsInfo && rpsInfo.total > 0) { %>
+    <% if (rpsInfo.belum.length > 0) { %>
+      <div class="alert alert-warning d-flex gap-2 align-items-start">
+        <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+        <div>
+          <strong>Anda belum mengumpulkan RPS semester <%= rpsInfo.periodeLabel %>.</strong>
+          Dosen wajib mengumpulkan RPS setiap semester. Belum dikumpulkan:
+          <%= rpsInfo.belum.map(function (m) { return m.kode + (m.kelas ? ' (' + m.kelas + ')' : ''); }).join(', ') %>.
+        </div>
+      </div>
+    <% } else { %>
+      <div class="alert alert-success d-flex gap-2 align-items-center">
+        <i class="bi bi-check-circle-fill"></i>
+        <div>Semua RPS semester <%= rpsInfo.periodeLabel %> sudah dikumpulkan. Terima kasih!</div>
+      </div>
+    <% } %>
+  <% } %>
+  <% if (typeof query !== 'undefined' && query && query.upload === 'ok') { %>
+    <div class="alert alert-success">RPS berhasil diunggah.</div>
+  <% } %>
+
+  <div class="rps-panduan">
+    <h5><i class="bi bi-signpost-split-fill me-2"></i>Panduan Mengumpulkan RPS</h5>
+    <p class="mb-0 small text-muted">RPS bisa dibuat langsung di web ini, tidak perlu mengetik dari nol. Ikuti langkah berikut:</p>
+    <ol class="rps-langkah">
+      <li><span>Buka menu <strong>Mata Kuliah</strong>, lalu pilih mata kuliah yang Anda ampu.</span></li>
+      <li><span>Buka tab <strong>RPS</strong> pada mata kuliah tersebut. Isi awalnya sudah terisi dari data resmi prodi.</span></li>
+      <li><span><strong>Edit</strong> isinya sesuai rancangan pembelajaran Anda, lalu klik <strong>Simpan</strong>.</span></li>
+      <li><span>Klik <strong>Cetak</strong> (aktifkan <em>Background graphics</em> pada dialog cetak) dan cetak di kertas A4.</span></li>
+      <li><span>Minta <strong>tanda tangan dan stempel basah</strong> pada lembar RPS yang dicetak.</span></li>
+      <li><span><strong>Scan</strong> dokumen yang sudah ditandatangani menjadi file PDF.</span></li>
+      <li><span><strong>Upload</strong> file PDF tersebut di menu <strong>RPS Saya</strong> ini (tombol Upload pada kartu mata kuliah di bawah). Status berubah menjadi <em>Sudah dikumpulkan</em>.</span></li>
+    </ol>
   </div>
 
   <% if (mkList.length === 0) { %>
@@ -119,16 +163,34 @@
               <span class="badge-rps">SKS <%= mk.sks %> | Semester <%= mk.semester %></span>
             </div>
             <div class="mk-nama"><%= mk.nama %></div>
+            <% if (mk.statusRps === 'sudah') { %>
+              <div><span class="badge-status sudah"><i class="bi bi-check-circle-fill me-1"></i>Sudah dikumpulkan (<%= rpsInfo.periodeLabel %>)</span></div>
+            <% } else if (mk.statusRps === 'belum') { %>
+              <div><span class="badge-status belum"><i class="bi bi-exclamation-circle-fill me-1"></i>Belum dikumpulkan (<%= rpsInfo.periodeLabel %>)</span></div>
+            <% } %>
             <div class="card-footer-action">
               <a href="/dosen/kurikulum/<%= mk.id %>" class="btn-primary-custom">
                 <i class="bi bi-eye"></i> Detail RPS
               </a>
-              <% if (mk.rpsUrl) { %>
-                <a href="<%= mk.rpsUrl %>" target="_blank" class="btn-outline-custom">
+              <% var _pdf = mk.statusRps ? mk.rpsPeriodeUrl : mk.rpsUrl; if (_pdf) { %>
+                <a href="<%= _pdf %>" target="_blank" class="btn-outline-custom">
                   <i class="bi bi-file-pdf"></i> Lihat PDF
                 </a>
               <% } %>
+              <a href="/dosen/mk/<%= mk.id %>/rps" class="btn-outline-custom">
+                <i class="bi bi-pencil-square"></i> Buat/Edit RPS
+              </a>
             </div>
+            <% if (mk.statusRps) { %>
+              <form class="rps-upload" method="post" action="/dosen/kurikulum/<%= mk.id %>/rps" enctype="multipart/form-data">
+                <input type="hidden" name="kembali" value="my-rps">
+                <label class="form-label small fw-semibold mb-1">Upload RPS bertanda tangan &amp; stempel (PDF scan)</label>
+                <div class="input-group input-group-sm">
+                  <input type="file" class="form-control" name="rpsFile" accept=".pdf,application/pdf" required>
+                  <button class="btn btn-primary" type="submit"><i class="bi bi-cloud-upload me-1"></i><%= mk.statusRps === 'sudah' ? 'Ganti' : 'Upload' %></button>
+                </div>
+              </form>
+            <% } %>
           </div>
         </div>
       <% }) %>

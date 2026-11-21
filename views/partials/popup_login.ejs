@@ -29,6 +29,11 @@
         isi: 'Ada ' + navDosenMagang.jumlahEntri + ' entri yang belum ditinjau, di antaranya: ' + navDosenMagang.daftar.slice(0, 3).map(function (m) { return m.nama + ' (' + m.pending + ')'; }).join(', ') + (navDosenMagang.daftar.length > 3 ? ', dan ' + (navDosenMagang.daftar.length - 3) + ' lainnya' : '') + '.',
         link: navDosenMagang.linkBuka, tombol: 'Tinjau sekarang' });
     }
+    if (typeof navDosenRps !== 'undefined' && navDosenRps && navDosenRps.belum && navDosenRps.belum.length > 0) {
+      _live.unshift({ ikon: 'file-earmark-arrow-up-fill', warna: 'orange', judul: 'Anda belum mengumpulkan RPS semester ' + navDosenRps.periodeLabel,
+        isi: 'Dosen wajib mengumpulkan RPS setiap semester. Belum ada untuk: ' + navDosenRps.belum.slice(0, 3).map(function (m) { return m.kode; }).join(', ') + (navDosenRps.belum.length > 3 ? ', dan ' + (navDosenRps.belum.length - 3) + ' lainnya' : '') + '.',
+        link: '/dosen/kurikulum/my-rps', tombol: 'Kumpulkan RPS' });
+    }
     if (user.role === 'admin' && typeof navAdminPending !== 'undefined' && navAdminPending && navAdminPending.total > 0) {
       _live.push({ ikon: 'clipboard-check', warna: 'purple', judul: navAdminPending.total + ' pekerjaan menunggu tindakan Anda',
         isi: 'Kunjungan industri, peminjaman alat, seminar magang, atau pendaftar PMB.', link: '/admin/dashboard', tombol: 'Lihat' });

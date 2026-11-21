@@ -387,6 +387,11 @@ async function startServer() {
               res.locals.navMhsKonsultasi = await konsultasiReminder.cekKonsultasiMingguan(db, req.user);
             } else if (req.user.role === 'dosen' && req.user.dosenId) {
               res.locals.navDosenMagang = await logbookNotif.getRingkasanPendingDosen(db, req.user.dosenId);
+              // Pop up login: pengingat wajib kumpul RPS semester berjalan (hanya dihitung saat login)
+              if (req.session && req.session.popupNotif === true) {
+                const rps = await require('./helpers/rpsReminderHelper').getStatusRpsDosen(db, req.user.dosenId);
+                if (rps.belum.length > 0) res.locals.navDosenRps = rps;
+              }
             }
           } catch (e) {
             console.error('Gagal memuat notifikasi logbook:', e.message);

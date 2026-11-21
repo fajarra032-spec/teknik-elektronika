@@ -19,6 +19,7 @@ const { TTLCache, getAllMataKuliah } = require('./cache');
 const { parseJadwalText } = require('./jadwalHelper');
 const { createNotification } = require('./notificationHelper');
 const { getRingkasanPendingDosen } = require('./logbookNotifHelper');
+const { getStatusRpsDosen } = require('./rpsReminderHelper');
 
 // Sekali dicek, tidak dicek ulang selama 4 jam per dosen - cukup untuk
 // "terasa harian" tanpa membebani Firestore di setiap request.
@@ -122,6 +123,21 @@ async function ingatkanLogbookMenunggu(db, user, tanggal) {
   });
 }
 
+/** 4. Wajib kumpul RPS tiap semester: pengingat harian selama masih ada MK periode aktif yang belum ada RPS-nya. */
+async function ingatkanRpsBelumDikumpulkan(db, user, tanggal) {
+  const dosenId = user.dosenId;
+  if (!dosenId) return;
+  const r = await getStatusRpsDosen(db, dosenId);
+  if (!r.belum.length) return;
+  const kodeList = r.belum.slice(0, 4).map(x => x.kode).join(', ') + (r.belum.length > 4 ? `, +${r.belum.length - 4} lainnya` : '');
+  await buatJikaBelumAda(db, `rps-belum-${dosenId}-${r.periodeId}-${tanggal}`, user.id, {
+    type: 'rps-belum',
+    title: `Anda belum mengumpulkan RPS semester ${r.periodeLabel}`,
+    message: `Dosen wajib mengumpulkan RPS setiap semester. Belum ada: ${kodeList}. Buat, cetak, tanda tangan + stempel basah, scan, lalu upload di menu RPS Saya.`,
+    link: '/dosen/kurikulum/my-rps'
+  });
+}
+
 /**
  * Dipanggil dari middleware global (app.js) - lihat catatan performa di
  * bagian atas file ini soal cache 4 jam supaya aman dipanggil per request.
@@ -136,6 +152,7 @@ async function cekPengingatDosen(db, user) {
         ingatkanJadwalMengajar(db, user, tanggal),
         ingatkanTugasBelumDinilai(db, user, tanggal),
         ingatkanLogbookMenunggu(db, user, tanggal),
+        ingatkanRpsBelumDikumpulkan(db, user, tanggal),
         require('./magangNotifHelper').cekPengingatPeriodeDosen(db, user)
       ]);
     } catch (error) {

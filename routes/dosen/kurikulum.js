@@ -20,6 +20,7 @@ const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const { getPeriodeAktif } = require('../../helpers/nilaiHelper');
 const academicHelper = require('../../helpers/academicHelper');
+const { getStatusRpsDosen, resetStatusRps } = require('../../helpers/rpsReminderHelper');
 
 router.use(verifyToken);
 router.use(isDosen);
@@ -115,8 +116,12 @@ router.get('/', async (req, res) => {
     mkList.forEach(mk => semesterSet.add(mk.semester));
     const semesterList = Array.from(semesterSet).sort((a, b) => a - b);
 
+    const rpsInfo = await getStatusRpsDosen(db, dosenId);
+    mkList.forEach(mk => { const x = rpsInfo.daftar.find(d => d.id === mk.id); mk.statusRps = x ? (x.sudah ? 'sudah' : 'belum') : null; mk.rpsPeriodeUrl = x ? x.fileUrl : null; });
     res.render('dosen/kurikulum/my_rps', {
       title: 'Mata Kuliah Saya',
+      rpsInfo,
+      query: req.query,
       mkList,
       semesterList,
       selectedSemester: semester || ''
@@ -151,8 +156,12 @@ router.get('/my-rps', async (req, res) => {
       };
     });
 
+    const rpsInfo = await getStatusRpsDosen(db, dosenId);
+    mkList.forEach(mk => { const x = rpsInfo.daftar.find(d => d.id === mk.id); mk.statusRps = x ? (x.sudah ? 'sudah' : 'belum') : null; mk.rpsPeriodeUrl = x ? x.fileUrl : null; });
     res.render('dosen/kurikulum/my_rps', {
       title: 'My RPS',
+      rpsInfo,
+      query: req.query,
       mkList,
       semesterList: [],
       selectedSemester: ''
@@ -226,6 +235,8 @@ async function handleUploadRps(req, res, mkId) {
       await db.collection('mataKuliah').doc(mkId).update({ rpsUrl: fileUrl, updatedAt: new Date().toISOString() });
     }
 
+    resetStatusRps(req.dosen.id);
+    if (req.body.kembali === 'my-rps') return res.redirect('/dosen/kurikulum/my-rps?upload=ok');
     res.redirect(`/dosen/kurikulum/${mkId}?periode=${periodeId}`);
   } catch (error) {
     console.error('Error upload RPS:', error);
