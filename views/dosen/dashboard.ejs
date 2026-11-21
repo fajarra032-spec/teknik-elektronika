@@ -162,6 +162,42 @@
   .info-card .card-body {
     padding: clamp(1rem, 4vw, 1.5rem);
   }
+  /* ===== KARTU STATISTIK (KPI) ===== */
+  .kpi-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1rem; }
+  .kpi-card {
+    --kc:#2563eb; --kc-soft:rgba(37,99,235,.10); --kc-grad:linear-gradient(135deg,#1e3a8a,#3b82f6);
+    position:relative; display:flex; flex-direction:column; gap:.9rem; overflow:hidden;
+    padding:1.1rem 1.1rem 1rem; border-radius:1.25rem; text-decoration:none; color:inherit;
+    background:#fff; border:1px solid #e2e8f0; box-shadow:0 1px 2px rgba(15,23,42,.04);
+    transition:transform .25s cubic-bezier(.165,.84,.44,1), box-shadow .25s, border-color .25s;
+  }
+  .kpi-card::before { content:''; position:absolute; inset:0 0 auto 0; height:4px; background:var(--kc-grad); opacity:.9; }
+  .kpi-card::after { content:''; position:absolute; right:-28px; bottom:-28px; width:110px; height:110px; border-radius:50%; background:var(--kc-soft); }
+  .kpi-card:hover { transform:translateY(-5px); box-shadow:0 18px 30px -12px rgba(15,23,42,.22); border-color:transparent; color:inherit; }
+  .kpi-card.kpi-biru   { --kc:#2563eb; --kc-soft:rgba(37,99,235,.10); --kc-grad:linear-gradient(135deg,#1e3a8a,#3b82f6); }
+  .kpi-card.kpi-oranye { --kc:#ea580c; --kc-soft:rgba(234,88,12,.10); --kc-grad:linear-gradient(135deg,#ea580c,#fbbf24); }
+  .kpi-card.kpi-ungu   { --kc:#7c3aed; --kc-soft:rgba(124,58,237,.10); --kc-grad:linear-gradient(135deg,#6d28d9,#a78bfa); }
+  .kpi-card.kpi-teal   { --kc:#0d9488; --kc-soft:rgba(13,148,136,.10); --kc-grad:linear-gradient(135deg,#0f766e,#2dd4bf); }
+  .kpi-top { display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1; }
+  .kpi-ikon { width:46px; height:46px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.35rem; background:var(--kc-soft); color:var(--kc); }
+  .kpi-chip { font-size:.68rem; font-weight:800; letter-spacing:.03em; text-transform:uppercase; padding:.25rem .6rem; border-radius:50px; display:inline-flex; align-items:center; gap:.35rem; }
+  .kpi-chip.aktif { background:var(--kc-soft); color:var(--kc); }
+  .kpi-chip.aktif::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--kc); animation:kpiDenyut 1.6s ease-in-out infinite; }
+  .kpi-chip.aman { background:#dcfce7; color:#166534; }
+  @keyframes kpiDenyut { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.7); opacity:.35; } }
+  .kpi-isi { position:relative; z-index:1; }
+  .kpi-angka { font-size:clamp(2rem,6vw,2.6rem); font-weight:800; line-height:1; letter-spacing:-.02em; color:#0f172a; font-variant-numeric:tabular-nums; }
+  .kpi-card.kpi-nol .kpi-angka { color:#94a3b8; }
+  .kpi-label { margin-top:.4rem; font-weight:700; font-size:.92rem; color:#1e293b; }
+  .kpi-ket { font-size:.78rem; color:#64748b; }
+  .kpi-aksi { position:relative; z-index:1; margin-top:auto; font-size:.8rem; font-weight:700; color:var(--kc); display:inline-flex; align-items:center; gap:.35rem; }
+  .kpi-aksi i { transition:transform .2s; }
+  .kpi-card:hover .kpi-aksi i { transform:translateX(4px); }
+  .kpi-card.kpi-nol .kpi-aksi { color:#94a3b8; font-weight:600; }
+  @media (max-width: 992px) { .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (max-width: 480px) { .kpi-grid { gap:.7rem; } .kpi-card { padding:.9rem .85rem; } .kpi-ikon { width:40px; height:40px; font-size:1.15rem; } }
+  @media (prefers-reduced-motion: reduce) { .kpi-chip.aktif::before { animation:none; } .kpi-card, .kpi-aksi i { transition:none; } }
+
   .stat-row {
     display: flex;
     align-items: center;
@@ -407,27 +443,59 @@
     </div>
     <div class="card-body">
       <!-- BARIS STATISTIK TUGAS & LOGBOOK -->
-      <div class="stat-row">
-        <div class="stat-item">
-          <div class="stat-icon"><i class="bi bi-file-earmark-text"></i></div>
-          <div class="stat-content"><div class="stat-label">Tugas Aktif</div><div class="stat-number"><%= tugasAktif || 0 %></div></div>
-          <a href="/dosen/tugas" class="btn <%= tugasAktif > 0 ? 'btn-warning' : 'btn-outline-secondary' %> rounded-pill px-4"><%= tugasAktif > 0 ? 'Lihat Tugas' : 'Tidak Ada' %></a>
-        </div>
-        <div class="stat-item">
-          <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
-          <div class="stat-content"><div class="stat-label">Belum Dinilai</div><div class="stat-number"><%= pengumpulanBelumDinilai || 0 %></div></div>
-          <a href="/dosen/tugas" class="btn <%= pengumpulanBelumDinilai > 0 ? 'btn-warning' : 'btn-outline-secondary' %> rounded-pill px-4"><%= pengumpulanBelumDinilai > 0 ? 'Lihat Nilai' : 'Tidak Ada' %></a>
-        </div>
-        <div class="stat-item">
-          <div class="stat-icon"><i class="bi bi-journal-bookmark-fill"></i></div>
-          <div class="stat-content"><div class="stat-label">Logbook Pending</div><div class="stat-number"><%= logbookPendingCount %></div></div>
-          <a href="/dosen/magang" class="btn <%= logbookPendingCount > 0 ? 'btn-warning' : 'btn-outline-secondary' %> rounded-pill px-4"><%= logbookPendingCount > 0 ? 'Lihat Logbook' : 'Tidak Ada' %></a>
-        </div>
-        <div class="stat-item">
-          <div class="stat-icon"><i class="bi bi-pencil-square"></i></div>
-          <div class="stat-content"><div class="stat-label">LKM Belum Diperiksa</div><div class="stat-number"><%= lkmBelumDiperiksa || 0 %></div></div>
-          <a href="/dosen/mk" class="btn <%= lkmBelumDiperiksa > 0 ? 'btn-warning' : 'btn-outline-secondary' %> rounded-pill px-4"><%= lkmBelumDiperiksa > 0 ? 'Lihat Modul' : 'Tidak Ada' %></a>
-        </div>
+      <div class="kpi-grid">
+        <% var _n = Number(tugasAktif || 0); %>
+        <a href="/dosen/tugas" class="kpi-card kpi-biru <%= _n === 0 ? 'kpi-nol' : '' %>">
+          <div class="kpi-top">
+            <span class="kpi-ikon"><i class="bi bi-file-earmark-text-fill"></i></span>
+            <% if (_n > 0) { %><span class="kpi-chip aktif">Perlu tindakan</span><% } else { %><span class="kpi-chip aman"><i class="bi bi-check2"></i> Aman</span><% } %>
+          </div>
+          <div class="kpi-isi">
+            <div class="kpi-angka"><%= _n.toLocaleString('id-ID') %></div>
+            <div class="kpi-label">Tugas Aktif</div>
+            <div class="kpi-ket">Tugas yang sedang berjalan</div>
+          </div>
+          <span class="kpi-aksi"><%= _n > 0 ? 'Lihat tugas' : 'Tidak ada tugas aktif' %> <i class="bi bi-arrow-right"></i></span>
+        </a>
+        <% var _n = Number(pengumpulanBelumDinilai || 0); %>
+        <a href="/dosen/tugas" class="kpi-card kpi-oranye <%= _n === 0 ? 'kpi-nol' : '' %>">
+          <div class="kpi-top">
+            <span class="kpi-ikon"><i class="bi bi-hourglass-split"></i></span>
+            <% if (_n > 0) { %><span class="kpi-chip aktif">Perlu tindakan</span><% } else { %><span class="kpi-chip aman"><i class="bi bi-check2"></i> Aman</span><% } %>
+          </div>
+          <div class="kpi-isi">
+            <div class="kpi-angka"><%= _n.toLocaleString('id-ID') %></div>
+            <div class="kpi-label">Belum Dinilai</div>
+            <div class="kpi-ket">Pengumpulan menunggu nilai</div>
+          </div>
+          <span class="kpi-aksi"><%= _n > 0 ? 'Beri nilai' : 'Semua sudah dinilai' %> <i class="bi bi-arrow-right"></i></span>
+        </a>
+        <% var _n = Number(logbookPendingCount || 0); %>
+        <a href="/dosen/magang" class="kpi-card kpi-ungu <%= _n === 0 ? 'kpi-nol' : '' %>">
+          <div class="kpi-top">
+            <span class="kpi-ikon"><i class="bi bi-journal-bookmark-fill"></i></span>
+            <% if (_n > 0) { %><span class="kpi-chip aktif">Perlu tindakan</span><% } else { %><span class="kpi-chip aman"><i class="bi bi-check2"></i> Aman</span><% } %>
+          </div>
+          <div class="kpi-isi">
+            <div class="kpi-angka"><%= _n.toLocaleString('id-ID') %></div>
+            <div class="kpi-label">Logbook Pending</div>
+            <div class="kpi-ket">Entri menunggu persetujuan</div>
+          </div>
+          <span class="kpi-aksi"><%= _n > 0 ? 'Tinjau logbook' : 'Tidak ada antrean' %> <i class="bi bi-arrow-right"></i></span>
+        </a>
+        <% var _n = Number(lkmBelumDiperiksa || 0); %>
+        <a href="/dosen/mk" class="kpi-card kpi-teal <%= _n === 0 ? 'kpi-nol' : '' %>">
+          <div class="kpi-top">
+            <span class="kpi-ikon"><i class="bi bi-pencil-square"></i></span>
+            <% if (_n > 0) { %><span class="kpi-chip aktif">Perlu tindakan</span><% } else { %><span class="kpi-chip aman"><i class="bi bi-check2"></i> Aman</span><% } %>
+          </div>
+          <div class="kpi-isi">
+            <div class="kpi-angka"><%= _n.toLocaleString('id-ID') %></div>
+            <div class="kpi-label">LKM Belum Diperiksa</div>
+            <div class="kpi-ket">LKM mahasiswa menunggu diperiksa</div>
+          </div>
+          <span class="kpi-aksi"><%= _n > 0 ? 'Periksa LKM' : 'Semua sudah diperiksa' %> <i class="bi bi-arrow-right"></i></span>
+        </a>
       </div>
 
       <!-- ACARA MENDATANG (JIKA ADA) -->
