@@ -1,0 +1,65 @@
+<%- include('../../partials/header') %>
+
+<style>
+  body { background-color: #f8fafc; }
+  .form-card { max-width: 760px; margin: 2rem auto; background: #fff; border-radius: 1.5rem; box-shadow: 0 20px 40px rgba(0,0,0,.06); border: 1px solid rgba(0,0,0,.05); overflow: hidden; }
+  .form-head { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: #fff; padding: 2rem; text-align: center; }
+  .form-head h3 { font-weight: 800; margin: 0; }
+  .form-head p { margin: .4rem 0 0; opacity: .85; font-size: .92rem; }
+  .form-body { padding: 2rem; }
+</style>
+
+<% var edit = !!arsip; %>
+<div class="form-card">
+  <div class="form-head">
+    <h3><i class="bi bi-archive-fill me-2"></i><%= edit ? 'Edit Arsip Surat' : 'Arsipkan Surat Prodi' %></h3>
+    <p>Surat ini hanya disimpan sebagai arsip &mdash; tidak dikirim ke dosen, mahasiswa, atau pihak mana pun.</p>
+  </div>
+  <div class="form-body">
+    <% if (err) { %><div class="alert alert-danger"><%= err %></div><% } %>
+    <form method="POST" action="<%= edit ? '/admin/surat-arsip/' + arsip.id : '/admin/surat-arsip' %>" enctype="multipart/form-data" class="row g-3">
+      <div class="col-12">
+        <label class="form-label fw-semibold">Perihal <span class="text-danger">*</span></label>
+        <input type="text" name="perihal" class="form-control" maxlength="250" required value="<%= edit ? arsip.perihal : '' %>" placeholder="Contoh: Pengajuan dana kegiatan seminar nasional">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-semibold">Nomor Surat</label>
+        <input type="text" name="nomorSurat" class="form-control" maxlength="120" value="<%= edit ? (arsip.nomorSurat || '') : '' %>" placeholder="Contoh: 012/ELK/PDW/XI/2026">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-semibold">Tanggal Surat</label>
+        <input type="date" name="tanggalSurat" class="form-control" value="<%= edit ? (arsip.tanggalSurat || '') : '' %>">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-semibold">Kategori</label>
+        <select name="kategori" class="form-select">
+          <% KATEGORI.forEach(function (k) { %><option value="<%= k %>" <%= (edit ? arsip.kategori : 'Pengajuan Dana') === k ? 'selected' : '' %>><%= k %></option><% }) %>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-semibold">Tujuan / Asal Surat <span class="text-muted small">(catatan saja)</span></label>
+        <input type="text" name="tujuan" class="form-control" maxlength="200" value="<%= edit ? (arsip.tujuan || '') : '' %>" placeholder="Contoh: Direktur / Bagian Keuangan">
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-semibold">Keterangan</label>
+        <textarea name="keterangan" class="form-control" rows="3" maxlength="1000" placeholder="Catatan tambahan (opsional)"><%= edit ? (arsip.keterangan || '') : '' %></textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-semibold">File Surat <% if (!edit) { %><span class="text-danger">*</span><% } %></label>
+        <input type="file" name="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" <%= edit ? '' : 'required' %>>
+        <div class="form-text">
+          PDF, JPG, PNG, Word, atau Excel, maksimal 10 MB.
+          <% if (edit && arsip.fileUrl) { %>
+            File saat ini: <a href="<%= arsip.fileTipe === 'application/pdf' ? '/pratinjau?u=' + encodeURIComponent(arsip.fileUrl) : arsip.fileUrl %>" target="_blank"><%= arsip.fileNama || 'lihat file' %></a>. Pilih file baru hanya jika ingin menggantinya (file lama dipindah ke Sampah Drive).
+          <% } %>
+        </div>
+      </div>
+      <div class="col-12 d-flex gap-2 justify-content-end pt-2">
+        <a href="/admin/surat-arsip" class="btn btn-outline-secondary px-4">Batal</a>
+        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-archive me-2"></i><%= edit ? 'Simpan Perubahan' : 'Arsipkan' %></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

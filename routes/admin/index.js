@@ -92,6 +92,7 @@ router.use('/kunjungan-industri', require('./kunjunganIndustri'));
 router.use('/emagang', require('./emagang'));
 
 // Manajemen Surat
+router.use('/surat-arsip', require('./suratArsip')); // Arsip Surat Prodi (tidak dikirim ke siapa pun)
 router.use('/surat', require('./surat'));
 
 

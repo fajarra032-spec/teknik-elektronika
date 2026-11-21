@@ -1,0 +1,97 @@
+<%- include('../../partials/header') %>
+
+<style>
+  body { background-color: #f8fafc; }
+  .arsip-hero { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: #fff; border-radius: 1.5rem; padding: 1.75rem 2rem; margin-bottom: 1.5rem; }
+  .arsip-hero h2 { font-weight: 800; margin: 0; font-size: 1.5rem; }
+  .arsip-hero p { margin: .35rem 0 0; opacity: .85; font-size: .92rem; }
+  .arsip-filter { background: #fff; border-radius: 1.25rem; padding: 1.1rem 1.25rem; box-shadow: 0 4px 14px rgba(15,23,42,.05); margin-bottom: 1.25rem; }
+  .arsip-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 1.1rem; padding: 1rem 1.15rem; display: flex; gap: 1rem; align-items: flex-start; transition: box-shadow .2s, transform .2s; }
+  .arsip-card:hover { box-shadow: 0 12px 24px -12px rgba(15,23,42,.25); transform: translateY(-2px); }
+  .arsip-ikon { flex: 0 0 46px; height: 46px; border-radius: 14px; background: rgba(37,99,235,.1); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; }
+  .arsip-perihal { font-weight: 700; color: #0f172a; }
+  .arsip-meta { font-size: .8rem; color: #64748b; }
+  .chip { display: inline-block; font-size: .7rem; font-weight: 700; padding: .15rem .6rem; border-radius: 50px; background: #eef2ff; color: #3730a3; }
+  .nomor { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; background: #f1f5f9; padding: .15rem .45rem; border-radius: .4rem; color: #0f172a; }
+  .arsip-aksi { margin-left: auto; display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; }
+</style>
+
+<div class="container mt-4 mb-5">
+  <div class="arsip-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h2><i class="bi bi-archive-fill me-2"></i>Arsip Surat Prodi</h2>
+      <p>Simpan surat dan dokumen prodi (mis. pengajuan dana) yang tidak dikirim ke siapa pun, hanya untuk arsip dan pencarian.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="/admin/surat" class="btn btn-outline-light rounded-pill px-4"><i class="bi bi-arrow-left me-2"></i>Persuratan</a>
+      <a href="/admin/surat-arsip/baru" class="btn btn-light rounded-pill px-4 fw-semibold"><i class="bi bi-plus-lg me-2"></i>Arsipkan Surat</a>
+    </div>
+  </div>
+
+  <% if (ok) { %><div class="alert alert-success"><%= ok %></div><% } %>
+  <% if (err) { %><div class="alert alert-danger"><%= err %></div><% } %>
+
+  <form method="GET" class="arsip-filter row g-3 align-items-end">
+    <div class="col-md-5">
+      <label class="form-label fw-semibold small"><i class="bi bi-search me-1"></i>Cari</label>
+      <input type="text" name="q" class="form-control" value="<%= filters.q %>" placeholder="Perihal, nomor surat, tujuan, keterangan...">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label fw-semibold small">Kategori</label>
+      <select name="kategori" class="form-select">
+        <option value="">Semua</option>
+        <% KATEGORI.forEach(function (k) { %><option value="<%= k %>" <%= filters.kategori === k ? 'selected' : '' %>><%= k %></option><% }) %>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label fw-semibold small">Tahun</label>
+      <select name="tahun" class="form-select">
+        <option value="">Semua</option>
+        <% daftarTahun.forEach(function (t) { %><option value="<%= t %>" <%= filters.tahun === t ? 'selected' : '' %>><%= t %></option><% }) %>
+      </select>
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <button class="btn btn-primary flex-fill" type="submit">Filter</button>
+      <a href="/admin/surat-arsip" class="btn btn-outline-secondary">Reset</a>
+    </div>
+  </form>
+
+  <% if (list.length === 0) { %>
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-archive" style="font-size:2.5rem;"></i>
+      <p class="mt-2 mb-0">Belum ada surat yang diarsipkan<%= (filters.q || filters.kategori || filters.tahun) ? ' untuk filter ini' : '' %>.</p>
+    </div>
+  <% } else { %>
+    <p class="small text-muted mb-2"><%= list.length %> arsip</p>
+    <div class="d-flex flex-column gap-2">
+      <% list.forEach(function (a) {
+           var pdf = a.fileTipe === 'application/pdf';
+           var href = a.fileUrl ? (pdf ? '/pratinjau?u=' + encodeURIComponent(a.fileUrl) : a.fileUrl) : '';
+           var tgl = a.tanggalSurat ? new Date(a.tanggalSurat + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+      %>
+        <div class="arsip-card">
+          <div class="arsip-ikon"><i class="bi bi-<%= pdf ? 'file-earmark-pdf-fill' : 'file-earmark-text-fill' %>"></i></div>
+          <div style="min-width:0;">
+            <div class="arsip-perihal"><%= a.perihal %></div>
+            <div class="mt-1 d-flex flex-wrap gap-2 align-items-center">
+              <span class="chip"><%= a.kategori || 'Lainnya' %></span>
+              <% if (a.nomorSurat) { %><span class="nomor"><%= a.nomorSurat %></span><% } %>
+              <% if (tgl) { %><span class="arsip-meta"><i class="bi bi-calendar3 me-1"></i><%= tgl %></span><% } %>
+            </div>
+            <% if (a.tujuan) { %><div class="arsip-meta mt-1"><i class="bi bi-geo-alt me-1"></i><%= a.tujuan %></div><% } %>
+            <% if (a.keterangan) { %><div class="arsip-meta mt-1"><%= a.keterangan %></div><% } %>
+          </div>
+          <div class="arsip-aksi">
+            <% if (href) { %><a href="<%= href %>" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye me-1"></i>Buka</a><% } %>
+            <a href="/admin/surat-arsip/<%= a.id %>/edit" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil-square me-1"></i>Edit</a>
+            <form method="POST" action="/admin/surat-arsip/<%= a.id %>/hapus" onsubmit="return confirm('Hapus arsip ini? File dipindah ke Sampah di Google Drive.')">
+              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i></button>
+            </form>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../../partials/footer') %>
