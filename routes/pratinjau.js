@@ -46,6 +46,9 @@ router.get('/', (req, res) => {
   const u = String(req.query.u || '').trim();
   const judul = String(req.query.t || '').trim().slice(0, 140) || 'Pratinjau Dokumen';
   const urlKembali = kembaliAman(req.query.k);
+  // Tautan unduh khusus (nama file standar nosurat_perihal) - hanya rute internal yang dikenal.
+  const d = String(req.query.d || '');
+  const unduhKhusus = /^\/admin\/surat\/unduh\/(mahasiswa|dosen|tugas|arsip|sk)\/[A-Za-z0-9_-]{1,128}$/.test(d) ? d : '';
 
   const idDrive = ambilIdDrive(u);
   let data;
@@ -62,11 +65,13 @@ router.get('/', (req, res) => {
     data = { jenis: 'tidak-didukung', src: '', urlUnduh: '', urlTabBaru: '' };
   }
 
+  if (unduhKhusus && data.jenis !== 'tidak-didukung') data.urlUnduh = unduhKhusus;
   res.set('Cache-Control', 'no-store');
   res.status(data.jenis === 'tidak-didukung' ? 400 : 200).render('pratinjau', {
     title: judul,
     judul,
     urlKembali,
+    unduhKhusus: !!unduhKhusus,
     urlAsli: data.jenis === 'tidak-didukung' && /^https?:\/\//i.test(u) ? u : '',
     ...data
   });

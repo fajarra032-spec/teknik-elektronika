@@ -55,7 +55,7 @@
     <div class="aksi">
       <a class="btn-ghost" href="<%= urlTabBaru %>" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i><span>Tab baru</span></a>
       <button type="button" class="btn-utama" id="btnCetak"><i class="bi bi-printer"></i><span>Cetak</span></button>
-      <a class="btn-unduh" href="<%= urlUnduh %>" <%= jenis === 'lokal' ? 'download' : '' %>><i class="bi bi-download"></i><span>Unduh</span></a>
+      <a class="btn-unduh" href="<%= urlUnduh %>" <%= (jenis === 'lokal' || (typeof unduhKhusus !== 'undefined' && unduhKhusus)) ? 'download' : '' %>><i class="bi bi-download"></i><span>Unduh</span></a>
     </div>
     <% } %>
   </div>

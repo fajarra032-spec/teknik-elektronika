@@ -310,6 +310,7 @@
     .badge-status { font-size: 0.7rem; padding: 0.2rem 0.6rem; }
   }
 </style>
+<%- include('../../partials/surat_ui') %>
 
 <div class="container mt-4">
   <div class="page-header d-flex justify-content-between align-items-center">
@@ -492,7 +493,7 @@
                       </a>
                     <% } %>
                     <% if ((surat.status === 'completed' || surat.status === 'arsip' || surat.status === 'terbit') && surat.fileUrl) { %>
-                      <a href="<%= (surat.role === 'arsip' && surat.fileTipe && surat.fileTipe !== 'application/pdf') ? surat.fileUrl : '/pratinjau?u=' + encodeURIComponent(surat.fileUrl) %>" target="_blank" class="btn-detail btn-download">
+                      <a href="/admin/surat/unduh/<%= surat.role %>/<%= encodeURIComponent(surat.id) %>" class="btn-detail btn-download" title="Unduh sebagai nomor_perihal.pdf">
                         <i class="bi bi-download"></i> Unduh
                       </a>
                     <% } %>

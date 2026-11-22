@@ -49,6 +49,69 @@ router.use(isAdmin);
 router.use(nomorSuratMiddleware); // form urlencoded (generate, ubah nomor); multipart ditangani di 'upload' di atas
 
 // ============================================================================
+// UNDUH SURAT dengan nama file standar:  <nomor surat>_<perihal>.pdf
+// Contoh: 012-ELK-POLIDEWA-XI-2026_Pengajuan_Dana_Seminar.pdf
+// GET /admin/surat/unduh/:role/:id   (role: mahasiswa | dosen | tugas | arsip | sk)
+// Untuk role 'sk', :id adalah fileId Drive (SK dikelompokkan per berkas) atau id dokumen sk_dosen.
+// ============================================================================
+function bersihkanNamaFile(teks, maks) {
+  return String(teks || '')
+    .replace(/[\/]+/g, '-')                       // garis miring pada nomor surat -> tanda hubung
+    .replace(/[\\:*?"<>|\u0000-\u001f]/g, '')       // karakter terlarang di nama file
+    .replace(/\s+/g, '_')
+    .replace(/[_-]{2,}/g, m => m[0])
+    .replace(/^[_.-]+|[_.-]+$/g, '')
+    .slice(0, maks);
+}
+function namaFileSurat(nomor, perihal, ekstensi) {
+  const n = bersihkanNamaFile(nomor, 80);
+  const p = bersihkanNamaFile(perihal, 90);
+  const dasar = [n, p].filter(Boolean).join('_') || 'surat';
+  return dasar + (ekstensi || '.pdf');
+}
+const EKSTENSI_MIME = {
+  'application/pdf': '.pdf', 'image/jpeg': '.jpg', 'image/png': '.png',
+  'application/msword': '.doc', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+  'application/vnd.ms-excel': '.xls', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx'
+};
+router.get('/unduh/:role/:id', async (req, res) => {
+  try {
+    const { role, id } = req.params;
+    const KOLEKSI = { mahasiswa: 'surat', dosen: 'surat_dosen', tugas: 'surat_tugas', arsip: 'surat_arsip', sk: 'sk_dosen' };
+    if (!KOLEKSI[role]) return res.status(400).send('Jenis surat tidak valid');
+
+    let data = null;
+    if (role === 'sk') {
+      const q = await db.collection('sk_dosen').where('fileId', '==', id).limit(1).get();
+      if (!q.empty) data = q.docs[0].data();
+    }
+    if (!data) {
+      const doc = await db.collection(KOLEKSI[role]).doc(id).get();
+      if (!doc.exists) return res.status(404).send('Surat tidak ditemukan');
+      data = doc.data();
+    }
+    if (!data.fileId) return res.status(404).send('Surat ini belum memiliki berkas');
+
+    const nomor = data.nomorSurat || data.nomorSk || '';
+    const perihal = { mahasiswa: data.keperluan || data.jenis, dosen: data.keperluan || data.jenisSurat, tugas: data.namaKegiatan, arsip: data.perihal, sk: data.judul }[role] || '';
+    const mime = data.fileTipe || 'application/pdf';
+    const namaFile = namaFileSurat(nomor, perihal, EKSTENSI_MIME[mime] || '.pdf');
+
+    const resp = await drive.files.get({ fileId: data.fileId, alt: 'media' }, { responseType: 'stream' });
+    res.set({
+      'Content-Type': mime,
+      'Content-Disposition': `attachment; filename="${namaFile.replace(/[^\x20-\x7e]/g, '_')}"; filename*=UTF-8''${encodeURIComponent(namaFile)}`,
+      'Cache-Control': 'private, no-store'
+    });
+    resp.data.on('error', (e) => { console.error('[unduh surat] stream error:', e.message); res.destroy(e); });
+    resp.data.pipe(res);
+  } catch (e) {
+    console.error('Error unduh surat:', e);
+    if (!res.headersSent) res.status(500).send('Gagal mengunduh surat: ' + e.message);
+  }
+});
+
+// ============================================================================
 // FUNGSI BANTU
 // ============================================================================
 

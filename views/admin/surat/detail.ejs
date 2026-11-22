@@ -82,6 +82,7 @@
   .data-label { color: #64748b; font-size: 0.85rem; margin-bottom: 0.2rem; }
   .data-value { color: #1e293b; font-weight: 600; }
 </style>
+<%- include('../../partials/surat_ui') %>
 
 <div class="container mt-5">
   <div class="detail-header d-flex flex-column flex-md-row justify-content-between align-items-md-center">
@@ -267,7 +268,7 @@
       <% if (surat.fileUrl) { %>
         <div class="info-card bg-primary text-white">
           <div class="section-title text-white opacity-75">Dokumen Terbit</div>
-          <a href="/pratinjau?u=<%= encodeURIComponent(surat.fileUrl) %>" target="_blank" class="btn btn-light w-100 btn-action shadow-sm">
+          <a href="/pratinjau?u=<%= encodeURIComponent(surat.fileUrl) %>&d=<%= encodeURIComponent('/admin/surat/unduh/' + role + '/' + surat.id) %>" target="_blank" class="btn btn-light w-100 btn-action shadow-sm">
             <i class="bi bi-file-earmark-pdf-fill me-2 text-danger"></i>Buka Dokumen
           </a>
         </div>

@@ -1,0 +1,51 @@
+<%# Tampilan seragam semua halaman persuratan admin. Dimuat SETELAH <style> lokal agar menimpa. %>
+<style>
+  :root { --su-a:#1e3a8a; --su-b:#3b82f6; --su-radius:1.25rem; --su-shadow:0 10px 30px rgba(15,43,92,.08); }
+  body { background:#f4f7fc; }
+
+  /* ===== Hero / judul halaman (seragam) ===== */
+  .page-header, .form-header, .form-head {
+    background: linear-gradient(135deg, var(--su-a), var(--su-b)) !important;
+    color:#fff !important; text-align:left !important;
+    padding:1.5rem 2rem !important; position:relative;
+  }
+  .page-header { border-radius:var(--su-radius) !important; margin-bottom:1.5rem !important; box-shadow:0 12px 28px rgba(30,58,138,.22) !important; }
+  .page-header h2, .form-header h3, .form-head h3 { font-weight:700 !important; font-size:1.55rem !important; margin:0 !important; color:#fff !important; letter-spacing:-.01em; }
+  .page-header p, .form-header p, .form-head p { margin:.4rem 0 0 !important; opacity:.88; font-size:.93rem !important; color:#fff !important; }
+  .form-header .fs-1 { font-size:1.6rem !important; display:inline-block; margin-right:.5rem; }
+  .form-header > .mb-2 { display:inline-block; margin:0 !important; }
+
+  /* ===== Kartu ===== */
+  .form-card, .info-card, .card {
+    border:1px solid rgba(30,58,138,.08) !important; border-radius:var(--su-radius) !important;
+    box-shadow:var(--su-shadow) !important; background:#fff;
+  }
+  .form-card { overflow:hidden; }
+  .form-card .card-header { background:linear-gradient(135deg,var(--su-a),var(--su-b)) !important; color:#fff !important; border:0 !important; padding:1rem 1.5rem !important; }
+  .form-card .card-header h5 { font-size:1.05rem; font-weight:600; }
+  .card > .card-header.bg-white, .card-header.bg-light { background:#f8fafc !important; border-bottom:1px solid #eef2f7 !important; font-weight:600; }
+
+  /* ===== Form ===== */
+  .form-label { font-weight:600; font-size:.88rem; color:#334155; margin-bottom:.35rem; }
+  .form-control, .form-select { border-radius:.7rem !important; border:1px solid #d5dde8 !important; padding:.55rem .85rem; }
+  .form-control:focus, .form-select:focus { border-color:var(--su-b) !important; box-shadow:0 0 0 .2rem rgba(59,130,246,.18) !important; }
+  .form-text, small.text-muted { color:#64748b !important; }
+
+  /* ===== Tombol ===== */
+  .btn { border-radius:999px; font-weight:600; }
+  .btn-primary, .btn-primary-custom, .btn-submit {
+    background:linear-gradient(105deg,var(--su-a),var(--su-b)) !important; border:0 !important; color:#fff !important;
+    box-shadow:0 6px 14px rgba(30,58,138,.22); transition:transform .15s, box-shadow .15s;
+  }
+  .btn-primary:hover, .btn-primary-custom:hover, .btn-submit:hover { transform:translateY(-1px); box-shadow:0 10px 18px rgba(30,58,138,.28); }
+
+  /* ===== Tabel ===== */
+  .table > thead > tr > th { background:#f1f5fb !important; color:#1e3a8a; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; border-bottom:1px solid #e2e8f0 !important; }
+  .table > :not(caption) > * > * { padding:.8rem .9rem; vertical-align:middle; }
+  .table-hover > tbody > tr:hover > * { background:#f8fbff; }
+
+  @media (max-width:576px){
+    .page-header, .form-header, .form-head { padding:1.1rem 1.1rem !important; }
+    .page-header h2, .form-header h3, .form-head h3 { font-size:1.25rem !important; }
+  }
+</style>
