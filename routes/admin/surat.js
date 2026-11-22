@@ -77,7 +77,7 @@ const EKSTENSI_MIME = {
 router.get('/unduh/:role/:id', async (req, res) => {
   try {
     const { role, id } = req.params;
-    const KOLEKSI = { mahasiswa: 'surat', dosen: 'surat_dosen', tugas: 'surat_tugas', arsip: 'surat_arsip', sk: 'sk_dosen' };
+    const KOLEKSI = { mahasiswa: 'surat', dosen: 'surat_dosen', tugas: 'surat_tugas', arsip: 'surat_arsip', sk: 'sk_dosen', kunjungan: 'kunjunganIndustri' };
     if (!KOLEKSI[role]) return res.status(400).send('Jenis surat tidak valid');
 
     let data = null;
@@ -90,10 +90,11 @@ router.get('/unduh/:role/:id', async (req, res) => {
       if (!doc.exists) return res.status(404).send('Surat tidak ditemukan');
       data = doc.data();
     }
+    if (role === 'kunjungan') data.fileId = data.pdfFileId;
     if (!data.fileId) return res.status(404).send('Surat ini belum memiliki berkas');
 
     const nomor = data.nomorSurat || data.nomorSk || '';
-    const perihal = { mahasiswa: data.keperluan || data.jenis, dosen: data.keperluan || data.jenisSurat, tugas: data.namaKegiatan, arsip: data.perihal, sk: data.judul }[role] || '';
+    const perihal = { mahasiswa: data.keperluan || data.jenis, dosen: data.keperluan || data.jenisSurat, tugas: data.namaKegiatan, arsip: data.perihal, sk: data.judul, kunjungan: 'Permohonan Kunjungan Industri ' + (data.namaPerusahaan || '') }[role] || '';
     const mime = data.fileTipe || 'application/pdf';
     const namaFile = namaFileSurat(nomor, perihal, EKSTENSI_MIME[mime] || '.pdf');
 
@@ -1530,6 +1531,33 @@ router.get('/', async (req, res) => {
           fileUrl: d.fileUrl,
           fileTipe: 'application/pdf',
           nomorSurat: d.nomorSk || '',
+        });
+      }
+    }
+
+    // 6. Surat permohonan Kunjungan Industri yang sudah DISETUJUI (collection 'kunjunganIndustri').
+    //    Nomor/tanggal/PDF-nya dikelola di modul Kunjungan Industri; di sini hanya ditampilkan.
+    if (!status || status === 'terbit') {
+      const snapKi = await db.collection('kunjunganIndustri').where('status', '==', 'disetujui').get();
+      for (const doc of snapKi.docs) {
+        const d = doc.data();
+        if (search) {
+          const lower = search.toLowerCase();
+          if (![d.nomorSurat, d.namaPerusahaan, d.namaPengaju].some(v => String(v || '').toLowerCase().includes(lower))) continue;
+        }
+        const tgl = new Date(d.tanggalSurat || d.updatedAt || d.createdAt || 0);
+        suratList.push({
+          id: doc.id,
+          role: 'kunjungan',
+          pemohon: d.namaPengaju || '-',
+          identitas: d.namaPerusahaan || '',
+          jenis: 'Kunjungan Industri',
+          keperluan: 'Permohonan kunjungan industri ke ' + (d.namaPerusahaan || ''),
+          createdAt: isNaN(tgl.getTime()) ? new Date(0).toISOString() : tgl.toISOString(),
+          status: 'terbit',
+          fileUrl: d.pdfUrl || '',
+          fileTipe: 'application/pdf',
+          nomorSurat: d.nomorSurat || '',
         });
       }
     }

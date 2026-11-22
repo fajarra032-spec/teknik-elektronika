@@ -377,6 +377,7 @@
           <option value="tugas" <%= filters.role === 'tugas' ? 'selected' : '' %>>Surat Tugas</option>
           <option value="sk" <%= filters.role === 'sk' ? 'selected' : '' %>>SK Dosen (PA, Mengajar, dll.)</option>
           <option value="arsip" <%= filters.role === 'arsip' ? 'selected' : '' %>>Arsip Prodi</option>
+          <option value="kunjungan" <%= filters.role === 'kunjungan' ? 'selected' : '' %>>Kunjungan Industri</option>
         </select>
       </div>
       <div class="col-md-3">
@@ -447,6 +448,8 @@
                     <span class="role-badge role-badge-tugas"><i class="bi bi-file-text"></i> Surat Tugas</span>
                   <% } else if (surat.role === 'sk') { %>
                     <span class="role-badge role-badge-sk"><i class="bi bi-patch-check"></i> SK Dosen</span>
+                  <% } else if (surat.role === 'kunjungan') { %>
+                    <span class="role-badge role-badge-sk"><i class="bi bi-buildings"></i> Kunjungan Industri</span>
                   <% } else if (surat.role === 'arsip') { %>
                     <span class="role-badge role-badge-arsip"><i class="bi bi-archive"></i> Arsip Prodi</span>
                   <% } else { %>
@@ -484,7 +487,7 @@
                  </td>
                 <td>
                   <div class="d-flex gap-1 flex-wrap">
-                    <a href="<%= surat.role === 'arsip' ? '/admin/surat-arsip/' + surat.id + '/edit' : (surat.role === 'sk' ? '/admin/sk' : '/admin/surat/' + surat.id + '/' + surat.role) %>" class="btn-detail">
+                    <a href="<%= surat.role === 'arsip' ? '/admin/surat-arsip/' + surat.id + '/edit' : (surat.role === 'sk' ? '/admin/sk' : (surat.role === 'kunjungan' ? '/admin/kunjungan-industri/' + surat.id : '/admin/surat/' + surat.id + '/' + surat.role)) %>" class="btn-detail">
                       <i class="bi bi-eye"></i> Detail
                     </a>
                     <% if (surat.role === 'tugas' && surat.status === 'pending') { %>
