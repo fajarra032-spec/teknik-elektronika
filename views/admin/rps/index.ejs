@@ -209,7 +209,7 @@
   <div class="page-header-modern d-flex flex-wrap justify-content-between align-items-center">
     <div>
       <h2><i class="bi bi-file-earmark-pdf-fill me-2"></i> Arsip RPS</h2>
-      <p>Semua dokumen Rencana Pembelajaran Semester yang telah diunggah oleh dosen</p>
+      <p>Dokumen RPS yang diunggah dosen &mdash; semester <strong><%= labelPeriode %></strong><%= isAktif ? ' (aktif)' : '' %></p>
     </div>
     <div class="mt-2 mt-sm-0">
       <a href="/admin/dashboard" class="btn btn-light rounded-pill px-4">
@@ -252,7 +252,14 @@
   <!-- Search & Filter -->
   <div class="search-section">
     <form method="GET" class="row g-3 align-items-center">
-      <div class="col-md-8 col-sm-12">
+      <div class="col-md-3 col-sm-12">
+        <select name="periode" class="form-select" style="border-radius:60px;" onchange="this.form.submit()" title="Semester">
+          <% periodeOptions.forEach(function (o) { %>
+            <option value="<%= o.id %>" <%= o.id === periodeId ? 'selected' : '' %>><%= o.label %><%= o.isActive ? ' (aktif)' : '' %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-5 col-sm-12">
         <div class="search-input-group">
           <i class="bi bi-search"></i>
           <input type="text" name="search" class="form-control search-input" placeholder="Cari kode MK, nama mata kuliah, atau nama dosen..." value="<%= search %>">
