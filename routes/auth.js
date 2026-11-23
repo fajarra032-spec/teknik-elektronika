@@ -49,8 +49,8 @@ router.post('/login', async (req, res) => {
       }
     }
 
-    // 4. Buat session cookie (5 hari)
-    const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 hari
+    // 4. Buat session cookie (14 hari = batas maksimum Firebase) agar tidak sering diminta login ulang
+    const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 hari
     const sessionCookie = await admin.auth().createSessionCookie(idToken, { expiresIn });
 
     // Set cookie dengan opsi keamanan

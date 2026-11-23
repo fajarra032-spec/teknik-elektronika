@@ -24,6 +24,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ============================================================================
 // SESSION CONFIGURATION
 // ============================================================================
+// Di belakang reverse proxy (Nginx/Cloudflare/hosting) cookie 'secure' butuh trust proxy agar tetap terkirim
+app.set('trust proxy', 1);
 app.use(cookieParser());
 app.use(session({
   secret: process.env.SESSION_SECRET || 'rahasia-super-secret',
@@ -31,7 +33,7 @@ app.use(session({
   saveUninitialized: true,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 1000 * 60 * 60 * 24 * 7
+    maxAge: 1000 * 60 * 60 * 24 * 14
   }
 }));
 
