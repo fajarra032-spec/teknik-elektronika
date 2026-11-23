@@ -243,7 +243,7 @@
   <!-- TANDA TANGAN -->
   <div class="tanda-tangan-wrapper">
     <div class="tanda-tangan">
-      <p style="position: relative; z-index: 1;">Palopo, <%= new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %><br>
+      <p style="position: relative; z-index: 1;">Palopo, <%= (typeof tanggalSuratFormatted !== 'undefined' && tanggalSuratFormatted) ? tanggalSuratFormatted : new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %><br>
       Ketua Program Studi,</p>
       
       <div class="area-ttd">

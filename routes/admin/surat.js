@@ -427,6 +427,7 @@ function getTemplateAndDataForSuratMahasiswa(surat, mahasiswa, nomorSurat) {
           semester: surat.semester,
           tahunAkademik: surat.tahunAkademik,
           keperluan: surat.keperluan,
+          tanggalSuratFormatted,
           kodeValidasi: surat.kodeValidasi
         },
         fileNamePrefix: `${surat.kodeValidasi}_${kode}`
@@ -730,7 +731,8 @@ router.post('/create-tugas', upload.none(), async (req, res) => {
     const tanggalObj = new Date(tanggalAcara);
     const hari = new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(tanggalObj);
     const tanggalAcaraFormatted = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(tanggalObj);
-    const tanggalSurat = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+    const _tglTugas = bacaTanggalSurat(req.body.tanggalSurat);
+    const tanggalSurat = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(_tglTugas ? new Date(_tglTugas.createdAt) : new Date());
 
     // Untuk tabel di PDF, cuma butuh nama + jabatan (tanpa perlu tahu tipe)
     const daftarPenerimaUntukTemplate = daftarPenerimaMentah.map(p => ({ nama: p.nama, jabatan: p.jabatan }));
@@ -940,7 +942,8 @@ router.post('/undangan-magang/create', upload.none(), async (req, res) => {
     const tanggalObj = new Date(tanggalAcara);
     const hari = new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(tanggalObj);
     const tanggalAcaraFormatted = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(tanggalObj);
-    const tanggalSurat = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+    const _tglForm = bacaTanggalSurat(req.body.tanggalSurat);
+    const tanggalSurat = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(_tglForm ? new Date(_tglForm.createdAt) : new Date());
     const kodeValidasi = generateKodeValidasi();
 
     const templateData = {
