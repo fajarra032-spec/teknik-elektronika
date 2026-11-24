@@ -70,7 +70,6 @@ router.get('/', async (req, res) => {
     const data = filter === 'semua' ? semua : semua.filter(p => p.status === filter);
     res.render('admin/kunjungan/index', {
       title: 'Kunjungan Industri', user: req.user, data, hitung, filter,
-      kategoriLampiran: KATEGORI_LAMPIRAN,
       statusLabel: KI.STATUS_LABEL, tanggalPanjang: KI.tanggalPanjang, ...H.pesanDariQuery(req)
     });
   } catch (err) {
@@ -91,6 +90,7 @@ router.get('/:id', async (req, res) => {
     res.render('admin/kunjungan/detail', {
       title: 'Detail Kunjungan Industri', user: req.user, p, mkList,
       terpilih: new Set((p.mataKuliah || []).map(m => m.id)),
+      kategoriLampiran: KATEGORI_LAMPIRAN,
       statusLabel: KI.STATUS_LABEL, tanggalPanjang: KI.tanggalPanjang, rentangHari: KI.rentangHari, rentangWaktu: KI.rentangWaktu,
       hariIni: KI.hariIni(), ...H.pesanDariQuery(req)
     });
