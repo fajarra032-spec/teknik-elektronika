@@ -27,7 +27,7 @@
         <% data.forEach(p => { %>
           <tr>
             <td><span class="lab-code"><%= p.kode %></span><div class="small text-muted mt-1"><%= new Date(p.createdAt).toLocaleDateString('id-ID') %></div></td>
-            <td><div class="fw-semibold"><%= p.namaPerusahaan %></div><% if (p.nomorSurat) { %><div class="small text-success">No. <%= p.nomorSurat %></div><% } %></td>
+            <td><div class="fw-semibold"><%= p.namaPerusahaan %></div><% if (p.nomorSurat) { %><div class="small text-success">No. <%= p.nomorSurat %></div><% } %><% if ((p.lampiran || []).length || p.ulasanKunjungan) { %><div class="small text-primary"><i class="bi bi-archive"></i> <%= (p.lampiran || []).length %> lampiran<%= p.ulasanKunjungan ? ' + ulasan' : '' %></div><% } %></td>
             <td><%= p.namaPengaju %><div class="small text-muted"><%= p.noHp %></div></td>
             <td class="small"><%= tanggalPanjang(p.tanggalKunjungan) %></td>
             <td class="small"><% (p.mataKuliah || []).forEach(m => { %><span class="mk-tag"><%= m.nama %></span><% }) %></td>

@@ -77,6 +77,55 @@
     </div></div>
   <% } %>
 
+  <% if (p.status === 'disetujui') {
+       const lamp = p.lampiran || [];
+       const ukur = (b) => b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round((b || 0) / 1024)) + ' KB';
+       const ikon = (tp) => tp === 'application/pdf' ? 'file-earmark-pdf-fill text-danger' : (String(tp).startsWith('image/') ? 'file-earmark-image-fill text-primary' : 'file-earmark-text-fill text-secondary');
+  %>
+  <div class="lab-panel mb-3" id="arsip"><div class="lab-panel-body">
+    <div class="lab-sec"><i class="bi bi-archive"></i> Arsip Pelaksanaan Kunjungan</div>
+    <p class="small text-muted">Lampirkan daftar hadir peserta, dokumentasi, dan ulasan mahasiswa sebagai arsip prodi. Hanya terlihat oleh admin.</p>
+
+    <% Object.keys(kategoriLampiran).forEach(function (k) {
+         const item = lamp.filter(l => l.kategori === k); %>
+      <div class="border rounded-3 p-3 mb-3" style="border-color: var(--lab-line) !important;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+          <strong><%= kategoriLampiran[k] %> <span class="badge bg-light text-dark border"><%= item.length %></span></strong>
+        </div>
+        <% if (item.length) { %>
+          <ul class="list-unstyled mb-3">
+            <% item.forEach(function (l) { %>
+              <li class="d-flex align-items-center gap-2 py-1 border-bottom">
+                <i class="bi bi-<%= ikon(l.tipe) %> fs-5"></i>
+                <a href="<%= l.url %>" target="_blank" rel="noopener" class="flex-grow-1 text-decoration-none" style="min-width:0;overflow-wrap:anywhere;"><%= l.nama %></a>
+                <span class="small text-muted"><%= ukur(l.ukuran) %></span>
+                <form method="POST" action="/admin/kunjungan-industri/<%= p.id %>/lampiran/<%= l.id %>/hapus" onsubmit="return confirm('Hapus lampiran ini?')">
+                  <button class="btn btn-sm btn-outline-danger rounded-pill" title="Hapus"><i class="bi bi-trash"></i></button>
+                </form>
+              </li>
+            <% }) %>
+          </ul>
+        <% } else { %><div class="small text-muted mb-2">Belum ada file.</div><% } %>
+        <form method="POST" action="/admin/kunjungan-industri/<%= p.id %>/lampiran" enctype="multipart/form-data" class="d-flex gap-2 flex-wrap">
+          <input type="hidden" name="kategori" value="<%= k %>">
+          <input type="file" name="files" class="form-control form-control-sm" style="max-width:380px;" multiple required accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx">
+          <button class="btn btn-sm btn-primary rounded-pill px-3"><i class="bi bi-upload me-1"></i> Unggah</button>
+        </form>
+      </div>
+    <% }) %>
+    <div class="form-text mb-3">PDF, foto (JPG/PNG/WebP), Word, atau Excel. Maksimal 10 MB per file, 15 file sekali unggah.</div>
+
+    <form method="POST" action="/admin/kunjungan-industri/<%= p.id %>/ulasan" class="lab-form">
+      <label class="form-label"><i class="bi bi-chat-square-text me-1"></i> Ulasan kunjungan mahasiswa</label>
+      <textarea name="ulasanKunjungan" class="form-control mb-3" rows="5" maxlength="5000" placeholder="Ringkasan ulasan/kesan mahasiswa, hasil pembelajaran, temuan, dan tindak lanjut kerja sama"><%= p.ulasanKunjungan || '' %></textarea>
+      <label class="form-label"><i class="bi bi-link-45deg me-1"></i> Tautan dokumentasi (opsional)</label>
+      <input type="url" name="tautanDokumentasi" class="form-control mb-3" maxlength="500" placeholder="https://photos.google.com/... atau folder Drive" value="<%= p.tautanDokumentasi || '' %>">
+      <% if (p.tautanDokumentasi) { %><div class="small mb-3"><a href="<%= p.tautanDokumentasi %>" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> Buka tautan dokumentasi</a></div><% } %>
+      <button class="btn btn-primary rounded-pill px-4">Simpan ulasan</button>
+    </form>
+  </div></div>
+  <% } %>
+
   <div class="lab-panel mb-3"><div class="lab-panel-body lab-form">
     <details>
       <summary class="fw-bold" style="cursor:pointer;color:var(--lab-ink);"><i class="bi bi-pencil-square me-1"></i> Edit data pengajuan<% if (p.status === 'disetujui') { %> <span class="small text-muted fw-normal">(PDF dibuat ulang otomatis)</span><% } %></summary>

@@ -7,6 +7,10 @@
  */
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const crypto = require('crypto');
+const { Readable } = require('stream');
+const drive = require('../../config/googleDrive');
 const { verifyToken, isAdmin } = require('../../middleware/auth');
 const { db } = require('../../config/firebaseAdmin');
 const { getAllMataKuliah } = require('../../helpers/cache');
@@ -66,6 +70,7 @@ router.get('/', async (req, res) => {
     const data = filter === 'semua' ? semua : semua.filter(p => p.status === filter);
     res.render('admin/kunjungan/index', {
       title: 'Kunjungan Industri', user: req.user, data, hitung, filter,
+      kategoriLampiran: KATEGORI_LAMPIRAN,
       statusLabel: KI.STATUS_LABEL, tanggalPanjang: KI.tanggalPanjang, ...H.pesanDariQuery(req)
     });
   } catch (err) {
@@ -247,11 +252,141 @@ router.post('/:id/hapus', async (req, res) => {
   try {
     const ref = col().doc(req.params.id);
     const snap = await ref.get();
-    if (snap.exists) { await ref.delete(); await KI.hapusFileDrive(snap.data().pdfFileId); }
+    if (snap.exists) {
+      await ref.delete();
+      await KI.hapusFileDrive(snap.data().pdfFileId);
+      for (const l of (snap.data().lampiran || [])) await KI.hapusFileDrive(l.fileId);
+    }
     H.redirectPesan(res, '/admin/kunjungan-industri?status=semua', 'ok', 'Pengajuan dihapus.');
   } catch (err) {
     console.error(err);
     res.status(500).send('Gagal menghapus pengajuan');
+  }
+});
+
+// ============================================================================
+// LAMPIRAN ARSIP PRODI: daftar hadir, dokumentasi, ulasan mahasiswa
+// File disimpan di Drive: Data WEB / Arsip Kunjungan Industri / <tahun> / <kode>
+// ============================================================================
+const DATA_WEB_FOLDER_ID = '17Z02_5zOImG1GYfi_5gvWL97-p6dW5t0';
+const KATEGORI_LAMPIRAN = {
+  'daftar-hadir': 'Daftar Hadir Peserta',
+  'dokumentasi': 'Dokumentasi Kegiatan',
+  'ulasan': 'Ulasan / Laporan Mahasiswa'
+};
+const TIPE_LAMPIRAN = [
+  'application/pdf', 'image/jpeg', 'image/png', 'image/webp',
+  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+];
+const uploadLampiran = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 15 },
+  fileFilter: (req, file, cb) => TIPE_LAMPIRAN.includes(file.mimetype) ? cb(null, true) : cb(new Error('Tipe file tidak didukung (PDF, foto JPG/PNG/WebP, Word, Excel).'), false)
+});
+
+async function subFolder(parentId, name) {
+  const aman = String(name).replace(/'/g, '');
+  const q = await drive.files.list({ q: `'${parentId}' in parents and name='${aman}' and mimeType='application/vnd.google-apps.folder' and trashed=false`, fields: 'files(id)' });
+  if (q.data.files.length) return q.data.files[0].id;
+  const f = await drive.files.create({ resource: { name: aman, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] }, fields: 'id' });
+  return f.data.id;
+}
+
+router.post('/:id/lampiran', (req, res, next) => uploadLampiran.array('files', 15)(req, res, (err) => {
+  if (!err) return next();
+  const pesan = err.code === 'LIMIT_FILE_SIZE' ? 'Ukuran tiap file maksimal 10 MB.' : (err.code === 'LIMIT_UNEXPECTED_FILE' ? 'Maksimal 15 file sekali unggah.' : err.message);
+  H.redirectPesan(res, urlDetail(req.params.id) + '#arsip', 'err', pesan);
+}), async (req, res) => {
+  const id = req.params.id;
+  const balik = urlDetail(id) + '#arsip';
+  try {
+    const kategori = String(req.body.kategori || '');
+    if (!KATEGORI_LAMPIRAN[kategori]) return H.redirectPesan(res, balik, 'err', 'Jenis lampiran tidak valid.');
+    const files = req.files || [];
+    if (!files.length) return H.redirectPesan(res, balik, 'err', 'Pilih minimal satu file.');
+    const ref = col().doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) return res.status(404).send('Pengajuan tidak ditemukan');
+    const p = snap.data();
+    if (p.status !== STATUS.DISETUJUI) return H.redirectPesan(res, balik, 'err', 'Lampiran hanya untuk kunjungan yang suratnya sudah terbit.');
+
+    const tahun = String(p.tanggalKunjungan || new Date().toISOString()).slice(0, 4);
+    const induk = await subFolder(DATA_WEB_FOLDER_ID, 'Arsip Kunjungan Industri');
+    const fTahun = await subFolder(induk, tahun);
+    const fKode = await subFolder(fTahun, `${p.kode || id}_${String(p.namaPerusahaan || '').replace(/[^\w\- ]+/g, '').trim().slice(0, 40)}`);
+
+    const baru = [];
+    for (const f of files) {
+      const namaAman = f.originalname.replace(/[^\w.\- ]+/g, '_');
+      const r = await drive.files.create({
+        resource: { name: `${kategori}_${Date.now()}_${namaAman}`, parents: [fKode] },
+        media: { mimeType: f.mimetype, body: Readable.from(f.buffer) }, fields: 'id'
+      });
+      await drive.permissions.create({ fileId: r.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+      baru.push({
+        id: crypto.randomBytes(6).toString('hex'), kategori, nama: f.originalname, tipe: f.mimetype, ukuran: f.size,
+        fileId: r.data.id, url: `https://drive.google.com/uc?export=view&id=${r.data.id}`,
+        diunggahOleh: namaAdmin(req), diunggahAt: new Date().toISOString()
+      });
+    }
+    await ref.update({
+      lampiran: [...(p.lampiran || []), ...baru],
+      riwayat: H.tambahRiwayat(p, p.status, namaAdmin(req), `Lampiran ${KATEGORI_LAMPIRAN[kategori]} ditambahkan (${baru.length} file)`),
+      updatedAt: new Date().toISOString()
+    });
+    H.redirectPesan(res, balik, 'ok', `${baru.length} file ${KATEGORI_LAMPIRAN[kategori].toLowerCase()} berhasil diunggah.`);
+  } catch (err) {
+    console.error('Gagal mengunggah lampiran kunjungan industri:', err);
+    H.redirectPesan(res, balik, 'err', 'Gagal mengunggah lampiran: ' + err.message);
+  }
+});
+
+router.post('/:id/lampiran/:lid/hapus', async (req, res) => {
+  const id = req.params.id;
+  const balik = urlDetail(id) + '#arsip';
+  try {
+    const ref = col().doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) return res.status(404).send('Pengajuan tidak ditemukan');
+    const p = snap.data();
+    const target = (p.lampiran || []).find(l => l.id === req.params.lid);
+    if (!target) return H.redirectPesan(res, balik, 'err', 'Lampiran tidak ditemukan.');
+    await ref.update({
+      lampiran: (p.lampiran || []).filter(l => l.id !== req.params.lid),
+      riwayat: H.tambahRiwayat(p, p.status, namaAdmin(req), `Lampiran dihapus: ${target.nama}`),
+      updatedAt: new Date().toISOString()
+    });
+    await KI.hapusFileDrive(target.fileId);
+    H.redirectPesan(res, balik, 'ok', 'Lampiran dihapus.');
+  } catch (err) {
+    console.error(err);
+    H.redirectPesan(res, balik, 'err', 'Gagal menghapus lampiran.');
+  }
+});
+
+// Ulasan kunjungan (teks) + tautan dokumentasi eksternal (Google Photos/Drive, dll.)
+router.post('/:id/ulasan', express.urlencoded({ extended: true }), async (req, res) => {
+  const id = req.params.id;
+  const balik = urlDetail(id) + '#arsip';
+  try {
+    const ref = col().doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) return res.status(404).send('Pengajuan tidak ditemukan');
+    const p = snap.data();
+    const tautan = String(req.body.tautanDokumentasi || '').trim().slice(0, 500);
+    if (tautan && !/^https?:\/\//i.test(tautan)) return H.redirectPesan(res, balik, 'err', 'Tautan dokumentasi harus diawali http:// atau https://');
+    await ref.update({
+      ulasanKunjungan: String(req.body.ulasanKunjungan || '').trim().slice(0, 5000),
+      tautanDokumentasi: tautan,
+      ulasanDiperbaruiAt: new Date().toISOString(),
+      riwayat: H.tambahRiwayat(p, p.status, namaAdmin(req), 'Ulasan/tautan dokumentasi kunjungan diperbarui'),
+      updatedAt: new Date().toISOString()
+    });
+    H.redirectPesan(res, balik, 'ok', 'Ulasan kunjungan disimpan.');
+  } catch (err) {
+    console.error(err);
+    H.redirectPesan(res, balik, 'err', 'Gagal menyimpan ulasan.');
   }
 });
 
