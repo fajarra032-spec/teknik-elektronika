@@ -677,18 +677,19 @@ router.post('/send', async (req, res) => {
     // Pesan teks bebas hanya sampai bila penerima mengirim pesan dalam 24 jam terakhir.
     // Di luar itu API tetap menjawab "sukses" (pesan diterima antrean) padahal WhatsApp menolaknya
     // -> pesan tampak "terkirim" tetapi tidak pernah sampai. Cegah di sini.
-    if (mode === 'text') {
+    // Pengecekan ini HANYA memblokir bila terbukti ada pesan masuk dari penerima dan yang terakhir
+    // sudah lewat 24 jam. Bila riwayat kosong / tidak terbaca / tidak ada penanda arah pesan,
+    // pesan tetap dikirim (supaya tidak salah blokir). Matikan total: WA_CEK_JENDELA=off di .env.
+    if (mode === 'text' && String(process.env.WA_CEK_JENDELA || 'on').toLowerCase() !== 'off') {
       let riwayat = null;
       try {
         const r = await notificationRequest(`/internal/conversations/${encodeURIComponent(to)}/messages`);
         riwayat = unwrapArray(r, ['messages', 'items', 'results']);
-      } catch (e) {
-        riwayat = e && e.status === 404 ? [] : null; // 404 = belum pernah ada percakapan; error lain -> lewati pengecekan
-      }
-      if (riwayat) {
+      } catch (e) { riwayat = null; }
+      if (riwayat && riwayat.length) {
         const masuk = waktuPesanMasukTerakhir(riwayat);
-        if (!masuk || Date.now() - masuk > 24 * 60 * 60 * 1000) {
-          await tulisLog(req, { to, text: logText, status: 'ditolak', error: 'di luar jendela 24 jam (wajib template)' });
+        if (masuk && Date.now() - masuk > 24 * 60 * 60 * 1000) {
+          await tulisLog(req, { to, text: logText, status: 'ditolak', error: 'pesan masuk terakhir > 24 jam (teks bebas ditolak WhatsApp)' });
           return res.redirect(back('error=window'));
         }
       }
