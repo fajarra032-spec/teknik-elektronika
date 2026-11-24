@@ -97,8 +97,24 @@ async function notificationRequest(endpoint, options = {}) {
 }
 
 function safeWaId(value) {
-  const digits = String(value || '').replace(/\D/g, '');
+  let digits = String(value || '').replace(/\D/g, '');
+  if (digits.startsWith('00')) digits = digits.slice(2);
+  if (digits.startsWith('0')) digits = '62' + digits.slice(1);   // 0812... -> 62812...
+  else if (digits.startsWith('8')) digits = '62' + digits;       // 812...  -> 62812...
   return /^\d{8,15}$/.test(digits) ? digits : '';
+}
+
+/** Ambil waktu pesan MASUK terakhir dari riwayat percakapan (ms) atau 0 bila tidak ada. */
+function waktuPesanMasukTerakhir(messages) {
+  let terakhir = 0;
+  for (const m of messages) {
+    const dir = String(m.direction || m.dir || m.type_direction || '').toLowerCase();
+    const keluar = ['outbound','out','outgoing','sent','send'].includes(dir) || m.fromBusiness === true || m.from_me === true || m.fromMe === true;
+    if (keluar) continue;
+    const t = new Date(m.timestamp || m.createdAt || 0).getTime();
+    if (t > terakhir) terakhir = t;
+  }
+  return terakhir;
 }
 
 function renderError(error) {
@@ -308,6 +324,7 @@ router.get('/', async (req, res) => {
     'tpl': 'Mode template: judul wajib diisi dan isi pesan maksimal 300 karakter.',
     '1': 'Pesan gagal dikirim. Periksa nomor, jendela layanan WhatsApp, template, dan koneksi API.',
     'rate': 'Terlalu banyak pesan dalam waktu singkat. Tunggu sebentar lalu coba lagi.',
+    'window': 'Pesan TIDAK dikirim: penerima belum membalas/mengirim pesan dalam 24 jam terakhir, sehingga WhatsApp menolak teks bebas. Buka "Kirim sebagai template" di bawah kolom balasan, centang mode template, lalu kirim.',
     'dup': 'Pesan identik baru saja dikirim ke nomor ini. Diabaikan agar tidak terkirim ganda.'
   };
 
@@ -657,6 +674,25 @@ router.post('/send', async (req, res) => {
   }
 
   try {
+    // Pesan teks bebas hanya sampai bila penerima mengirim pesan dalam 24 jam terakhir.
+    // Di luar itu API tetap menjawab "sukses" (pesan diterima antrean) padahal WhatsApp menolaknya
+    // -> pesan tampak "terkirim" tetapi tidak pernah sampai. Cegah di sini.
+    if (mode === 'text') {
+      let riwayat = null;
+      try {
+        const r = await notificationRequest(`/internal/conversations/${encodeURIComponent(to)}/messages`);
+        riwayat = unwrapArray(r, ['messages', 'items', 'results']);
+      } catch (e) {
+        riwayat = e && e.status === 404 ? [] : null; // 404 = belum pernah ada percakapan; error lain -> lewati pengecekan
+      }
+      if (riwayat) {
+        const masuk = waktuPesanMasukTerakhir(riwayat);
+        if (!masuk || Date.now() - masuk > 24 * 60 * 60 * 1000) {
+          await tulisLog(req, { to, text: logText, status: 'ditolak', error: 'di luar jendela 24 jam (wajib template)' });
+          return res.redirect(back('error=window'));
+        }
+      }
+    }
     let body;
     if (mode === 'template') {
       let k = null;
@@ -674,8 +710,16 @@ router.post('/send', async (req, res) => {
     } else {
       body = { to, text: message };
     }
-    await notificationRequest('/internal/messages', { method: 'POST', body: JSON.stringify(body) });
-    await tulisLog(req, { to, text: logText, status: 'terkirim' });
+    const hasilApi = await notificationRequest('/internal/messages', { method: 'POST', body: JSON.stringify(body) });
+    // Respons yang menandakan penolakan walau HTTP 200
+    if (hasilApi && (hasilApi.success === false || hasilApi.ok === false || hasilApi.error)) {
+      const msg = String((hasilApi.error && (hasilApi.error.message || hasilApi.error)) || hasilApi.message || 'ditolak API');
+      await tulisLog(req, { to, text: logText, status: 'gagal', error: msg });
+      return res.redirect(back('error=1'));
+    }
+    const idPesan = hasilApi && (hasilApi.messageId || hasilApi.id || (hasilApi.data && (hasilApi.data.messageId || hasilApi.data.id)) || (hasilApi.messages && hasilApi.messages[0] && hasilApi.messages[0].id));
+    console.log('[WhatsApp Center] Diterima API untuk', to, idPesan ? '(id ' + idPesan + ')' : '', JSON.stringify(hasilApi).slice(0, 300));
+    await tulisLog(req, { to, text: logText, status: 'terkirim', error: idPesan ? 'id: ' + idPesan : null });
     return res.redirect(back('success=1'));
   } catch (error) {
     console.error('[WhatsApp Center] Gagal mengirim pesan:', error.message);

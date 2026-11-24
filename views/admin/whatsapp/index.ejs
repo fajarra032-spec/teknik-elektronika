@@ -124,7 +124,8 @@
           %>
             <div class="wa-bubble <%= outgoing ? 'wa-out' : 'wa-in' %>">
               <div><%= body %></div>
-              <div class="wa-muted text-end mt-1"><%= stamp ? new Date(stamp).toLocaleString('id-ID', {dateStyle:'short',timeStyle:'short'}) : '' %> · <%= outgoing ? 'Terkirim' : (kontak ? (kontak.role === 'dosen' ? 'Dosen' : 'Mahasiswa') : 'Penerima') %></div>
+              <% if (outgoing && (m.error || m.errorMessage || m.errorCode)) { %><div class="small text-danger mt-1"><i class="bi bi-exclamation-triangle"></i> <%= m.error && m.error.message ? m.error.message : (m.error || m.errorMessage || ('Kode ' + m.errorCode)) %></div><% } %>
+              <div class="wa-muted text-end mt-1"><%= stamp ? new Date(stamp).toLocaleString('id-ID', {dateStyle:'short',timeStyle:'short'}) : '' %> · <%= outgoing ? (({sent:'Diteruskan ke WhatsApp',delivered:'Sampai',read:'Dibaca',failed:'GAGAL sampai',undelivered:'GAGAL sampai',queued:'Antre'})[String(m.status || m.deliveryStatus || '').toLowerCase()] || 'Diterima API (status belum diketahui)') : (kontak ? (kontak.role === 'dosen' ? 'Dosen' : 'Mahasiswa') : 'Penerima') %></div>
             </div>
           <% }); %>
         </div>
